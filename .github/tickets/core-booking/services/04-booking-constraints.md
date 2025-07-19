@@ -1,7 +1,7 @@
 # Feature: Booking Constraints
 
 ## Overview
-Implement a comprehensive constraint system that manages booking rules, scheduling limitations, and service delivery restrictions based on business requirements.
+Create a comprehensive booking constraints system to enforce business rules, capacity limits, and scheduling requirements.
 
 ## User Stories
 
@@ -31,16 +31,14 @@ Implement a comprehensive constraint system that manages booking rules, scheduli
    - So that we can manage special client requirements
 
 ## Technical Tasks
-- [ ] Create constraint engine
-- [ ] Implement time restriction system
-- [ ] Build capacity manager
-- [ ] Create notice period handler
-- [ ] Implement location validator
-- [ ] Add customer rule system
-- [ ] Create constraint testing
-- [ ] Implement conflict detection
-- [ ] Add constraint analytics
-- [ ] Create reporting system
+- [ ] [Constraint Engine](./booking-constraints/07-constraint-engine.md)
+- [ ] [Time Constraints](./booking-constraints/01-time-constraints.md)
+- [ ] [Capacity Constraints](./booking-constraints/02-capacity-constraints.md)
+- [ ] [Dependency Constraints](./booking-constraints/03-dependency-constraints.md)
+- [ ] [Location Constraints](./booking-constraints/04-location-constraints.md)
+- [ ] [Conflict Resolution & Validation](./booking-constraints/05-conflict-resolution.md)
+- [ ] [Customer Constraints](./booking-constraints/06-customer-constraints.md)
+- [ ] [Analytics & Reporting](./booking-constraints/08-analytics-reporting.md)
 
 ## Acceptance Criteria
 - Time restrictions work properly

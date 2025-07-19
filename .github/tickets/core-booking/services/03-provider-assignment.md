@@ -1,7 +1,7 @@
 # Feature: Provider Assignment
 
 ## Overview
-Create a system for managing service provider assignments, skills, and availability that ensures the right staff members are matched with appropriate services.
+Create a system for managing which staff members can perform specific services, including skill tracking and availability management.
 
 ## User Stories
 
@@ -31,16 +31,14 @@ Create a system for managing service provider assignments, skills, and availabil
    - So that multi-person services are properly staffed
 
 ## Technical Tasks
-- [ ] Create skill tracking system
-- [ ] Implement assignment rules engine
-- [ ] Build preference management
-- [ ] Create workload calculator
-- [ ] Implement team assignment
-- [ ] Add validation system
-- [ ] Create assignment optimizer
-- [ ] Implement availability check
-- [ ] Add performance tracking
-- [ ] Create reporting system
+- [ ] [Skill Management](provider-assignment/01-skill-management.md)
+- [ ] [Service Assignment Rules](provider-assignment/02-assignment-rules.md)
+- [ ] [Team Assignment Management](provider-assignment/03-team-assignment.md)
+- [ ] [Workload Management](provider-assignment/04-workload-management.md)
+- [ ] [Performance Tracking](provider-assignment/05-performance-tracking.md)
+- [ ] [Assignment Optimization](provider-assignment/06-assignment-optimization.md)
+- [ ] [Availability Management](provider-assignment/07-availability-management.md)
+- [ ] [Provider Assignment Reporting](provider-assignment/08-reporting.md)
 
 ## Acceptance Criteria
 - Skills tracked accurately

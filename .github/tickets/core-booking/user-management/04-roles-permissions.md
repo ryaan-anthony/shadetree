@@ -31,16 +31,11 @@ Implement a flexible role-based access control (RBAC) system that manages permis
    - So that I can maintain security oversight
 
 ## Technical Tasks
-- [ ] Design and implement Role model
-- [ ] Create Permission model with inheritance
-- [ ] Implement role assignment system
-- [ ] Create permission verification middleware
-- [ ] Implement role hierarchy system
-- [ ] Create role auditing system
-- [ ] Add role-based UI adaptation
-- [ ] Implement comprehensive unit tests
-- [ ] Create integration tests for permission flow
-- [ ] Add role caching system
+- [ ] [Core RBAC System](roles-permissions/01-core-rbac.md)
+- [ ] [Role Templates](roles-permissions/02-role-templates.md)
+- [ ] [Permission Management](roles-permissions/03-permission-management.md)
+- [ ] [Role Assignment](roles-permissions/04-role-assignment.md)
+- [ ] [Audit & Compliance](roles-permissions/05-audit-compliance.md)
 
 ## Acceptance Criteria
 - Custom roles can be created and modified

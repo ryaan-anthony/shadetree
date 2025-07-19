@@ -20,7 +20,6 @@ Implement the foundational booking and quote management system that enables serv
 2. [Appointment Management](./core-booking/2-appointment-management.md)
 3. [Quote Generation System](./core-booking/3-quote-generation.md)
 4. [Service Configuration](./core-booking/4-service-configuration.md)
-5. [Core API Development](./core-booking/5-core-api.md)
 
 ## Timeline
 - Estimated Duration: 12 weeks

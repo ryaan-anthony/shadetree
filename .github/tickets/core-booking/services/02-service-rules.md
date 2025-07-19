@@ -31,16 +31,14 @@ Implement a flexible rules engine that governs service delivery, scheduling cons
    - So that services are delivered in appropriate areas
 
 ## Technical Tasks
-- [ ] Create rules engine
-- [ ] Implement scheduling constraints
-- [ ] Build dependency manager
-- [ ] Create resource allocation system
-- [ ] Implement seasonal logic
-- [ ] Add location management
-- [ ] Create rule validation
-- [ ] Implement rule testing
-- [ ] Add rule analytics
-- [ ] Create reporting system
+- [ ] [Rules Engine](service-rules/01-rules-engine.md)
+- [ ] [Scheduling Rules](service-rules/02-scheduling-rules.md)
+- [ ] [Dependency Rules](service-rules/03-dependency-rules.md)
+- [ ] [Requirements Rules](service-rules/04-requirements-rules.md)
+- [ ] [Rule Validation & Conflict Resolution](service-rules/05-validation-resolution.md)
+- [ ] [Resource Rules](service-rules/06-resource-rules.md)
+- [ ] [Location Rules](service-rules/07-location-rules.md)
+- [ ] [Seasonal Rules](service-rules/08-seasonal-rules.md)
 
 ## Acceptance Criteria
 - Rules apply correctly

@@ -31,16 +31,16 @@ Implement a comprehensive calendar system that handles business schedules, staff
    - So that I can manage all appointments in one place
 
 ## Technical Tasks
-- [ ] Create calendar view components
-- [ ] Implement calendar data models
-- [ ] Build Google Calendar integration
-- [ ] Create Outlook Calendar integration
-- [ ] Implement business hours management
-- [ ] Add holiday/exception handling
-- [ ] Create calendar sharing system
-- [ ] Implement real-time updates
-- [ ] Add conflict detection
-- [ ] Create calendar export feature
+- [ ] [Create calendar view components](calendar-management/01-calendar-view-components.md)
+- [ ] [Implement calendar data models](calendar-management/02-calendar-models.md)
+- [ ] [Build Google Calendar integration](calendar-management/03-google-calendar.md)
+- [ ] [Create calendar sharing system](calendar-management/04-calendar-sharing.md)
+- [ ] [Implement real-time updates](calendar-management/05-realtime-updates.md)
+- [ ] [Add calendar validation](calendar-management/06-calendar-validation.md)
+- [ ] [Create calendar versioning](calendar-management/07-calendar-versioning.md)
+- [ ] [Implement calendar testing mode](calendar-management/08-calendar-testing.md)
+- [ ] [Add calendar analytics](calendar-management/09-calendar-analytics.md)
+- [ ] [Create export/import system](calendar-management/10-calendar-export-import.md)
 
 ## Acceptance Criteria
 - All calendar views render correctly

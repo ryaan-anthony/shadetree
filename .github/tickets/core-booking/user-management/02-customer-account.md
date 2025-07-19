@@ -31,13 +31,11 @@ Implement the customer account management functionality that allows end-users to
    - So that I receive updates in my preferred manner
 
 ## Technical Tasks
-- [ ] Design and implement Customer model
-- [ ] Create CustomerProfile model with preferences
-- [ ] Implement customer registration flow
-- [ ] Create API endpoints for profile management
-- [ ] Implement service history tracking
-- [ ] Create payment method management system
-- [ ] Implement notification preferences
+- [ ] [Core Customer Models](customer-account/01-core-models.md)
+- [ ] [Registration & Onboarding](customer-account/02-registration-onboarding.md)
+- [ ] [Service History & Records](customer-account/03-service-history.md)
+- [ ] [Payment Methods Management](customer-account/04-payment-methods.md)
+- [ ] [Notification Preferences](customer-account/05-notification-preferences.md)
 - [ ] Add comprehensive unit tests
 - [ ] Create integration tests for registration flow
 - [ ] Implement proper validation

@@ -25,16 +25,16 @@ Implement comprehensive business account management functionality allowing servi
    - So that customers can only book during available times
 
 ## Technical Tasks
-- [ ] Design and implement Business model following SOLID principles
-- [ ] Create BusinessProfile model with appropriate associations
-- [ ] Implement business registration controller and views
-- [ ] Create API endpoints for business profile management
-- [ ] Implement staff management functionality
-- [ ] Add business hours management
-- [ ] Create comprehensive unit tests for all models
-- [ ] Implement integration tests for the registration flow
-- [ ] Add validation for business data
-- [ ] Implement proper error handling
+- [ ] [Core User and Business Models](business-account/01-core-models.md)
+- [ ] [Business Registration Flow](business-account/02-registration-flow.md)
+- [ ] [Profile Management System](business-account/03-profile-management.md)
+- [ ] [Staff Management Interface](business-account/04-staff-management.md)
+- [ ] [Business Hours Configuration](business-account/05-hours-config.md)
+- [ ] [Settings and Preferences](business-account/06-settings.md)
+- [ ] [Business Dashboard](business-account/07-dashboard.md)
+- [ ] [Account Status Management](business-account/08-status-management.md)
+- [ ] [Billing Information Setup](business-account/09-billing-setup.md)
+- [ ] [Data Import/Export](business-account/10-data-management.md)
 
 ## Acceptance Criteria
 - Business registration flow works end-to-end

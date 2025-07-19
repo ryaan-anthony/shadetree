@@ -1,7 +1,7 @@
 # Feature: Service Catalog
 
 ## Overview
-Create a comprehensive service catalog system that allows businesses to define, organize, and manage their service offerings with detailed configurations and pricing models.
+Create a comprehensive service catalog system that allows businesses to define, organize, and manage their service offerings.
 
 ## User Stories
 
@@ -31,39 +31,31 @@ Create a comprehensive service catalog system that allows businesses to define, 
    - So that proper resources are allocated
 
 ## Technical Tasks
-- [ ] Create service builder interface
-- [ ] Implement category management
-- [ ] Build variation system
-- [ ] Create duration calculator
-- [ ] Implement resource manager
-- [ ] Add service validation
-- [ ] Create service templates
-- [ ] Implement search functionality
-- [ ] Add service analytics
-- [ ] Create import/export system
+- [ ] [Core Service Models](service-catalog/01-core-models.md)
+- [ ] [Service Builder Interface](service-catalog/02-service-builder.md)
+- [ ] [Service Catalog UI](service-catalog/03-catalog-ui.md)
+- [ ] [Service Import/Export](service-catalog/04-import-export.md)
+- [ ] [Service Search & Discovery](service-catalog/05-search-discovery.md)
 
 ## Acceptance Criteria
-- Services create properly
-- Categories organize logically
-- Variations handle correctly
-- Durations calculate accurately
-- Resources assign properly
-- Validation works effectively
-- Search returns relevant results
-- Analytics track usage
+- Services can be created and organized into categories
+- Service variations and options can be configured
+- Service requirements and resources are properly managed
+- Search and filtering work effectively
+- Import/export functionality works reliably
+- UI is intuitive and responsive
+- Changes are properly tracked
+- Performance remains fast with many services
 
 ## Technical Notes
-- Use builder pattern
-- Implement proper validation
-- Use background jobs for imports
-- Cache service data
+- Use service objects for complex operations
+- Implement proper caching strategy
+- Use background jobs for heavy operations
 - Follow SOLID principles
 - Implement proper logging
 
-## Estimate
-- Story Points: 13
-- Time Estimate: 1.5 weeks
+## Estimated Hours: 104
 
 ## Dependencies
-- User Management System
-- Core API implementation
+- Business Account System
+- Resource Management System
