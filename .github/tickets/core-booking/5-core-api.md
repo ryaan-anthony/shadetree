@@ -11,11 +11,11 @@ Design and implement a comprehensive REST API that enables seamless integration 
 - Implement rate limiting and security measures
 
 ## Features
-1. [API Authentication](../../features/api/01-api-authentication.md)
-2. [Appointment Endpoints](../../features/api/02-appointment-endpoints.md)
-3. [Quote Endpoints](../../features/api/03-quote-endpoints.md)
-4. [Service Configuration Endpoints](../../features/api/04-service-endpoints.md)
-5. [API Documentation](../../features/api/05-api-documentation.md)
+1. [API Authentication](./api/01-api-authentication.md)
+2. [Appointment Endpoints](./api/02-appointment-endpoints.md)
+3. [Quote Endpoints](./api/03-quote-endpoints.md)
+4. [Service Configuration Endpoints](./api/04-service-endpoints.md)
+5. [API Documentation](./api/05-api-documentation.md)
 
 ## Technical Requirements
 - RESTful API design

@@ -12,11 +12,11 @@ Create a seamless authentication experience that bridges the marketing site with
 - Create email verification system
 
 ## Features
-1. [User Registration](../../features/auth/01-user-registration.md)
-2. [Login System](../../features/auth/02-login-system.md)
-3. [Trial Accounts](../../features/auth/03-trial-accounts.md)
-4. [Password Management](../../features/auth/04-password-management.md)
-5. [Social Authentication](../../features/auth/05-social-auth.md)
+1. [User Registration](./auth/01-user-registration.md)
+2. [Login System](./auth/02-login-system.md)
+3. [Trial Accounts](./auth/03-trial-accounts.md)
+4. [Password Management](./auth/04-password-management.md)
+5. [Social Authentication](./auth/05-social-auth.md)
 
 ## Technical Requirements
 - Secure authentication implementation

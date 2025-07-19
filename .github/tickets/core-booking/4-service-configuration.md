@@ -11,11 +11,11 @@ Implement a flexible service configuration system that allows businesses to defi
 - Configure service provider assignments
 
 ## Features
-1. [Service Catalog](../../features/services/01-service-catalog.md)
-2. [Service Rules](../../features/services/02-service-rules.md)
-3. [Provider Assignment](../../features/services/03-provider-assignment.md)
-4. [Pricing Configuration](../../features/services/04-pricing-config.md)
-5. [Booking Constraints](../../features/services/05-booking-constraints.md)
+1. [Service Catalog](./services/01-service-catalog.md)
+2. [Service Rules](./services/02-service-rules.md)
+3. [Provider Assignment](./services/03-provider-assignment.md)
+4. [Pricing Configuration](./services/04-pricing-config.md)
+5. [Booking Constraints](./services/05-booking-constraints.md)
 
 ## Technical Requirements
 - Use domain-driven design principles

@@ -11,11 +11,11 @@ Implement a robust and flexible appointment scheduling system that handles the c
 - Support different service types and durations
 
 ## Features
-1. [Calendar Management](../../features/appointment/01-calendar-management.md)
-2. [Appointment Scheduling](../../features/appointment/02-appointment-scheduling.md)
-3. [Availability Management](../../features/appointment/03-availability.md)
-4. [Notification System](../../features/appointment/04-notifications.md)
-5. [Cancellation & Rescheduling](../../features/appointment/05-cancellation-rescheduling.md)
+1. [Calendar Management](./appointment/01-calendar-management.md)
+2. [Appointment Scheduling](./appointment/02-appointment-scheduling.md)
+3. [Availability Management](./appointment/03-availability.md)
+4. [Notification System](./appointment/04-notifications.md)
+5. [Cancellation & Rescheduling](./appointment/05-cancellation-rescheduling.md)
 
 ## Technical Requirements
 - Implement using Ruby on Rails with proper service objects

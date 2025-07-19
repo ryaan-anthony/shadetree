@@ -12,11 +12,11 @@ Create a centralized dashboard that provides business owners with quick access t
 - Display staff activity feeds
 
 ## Features
-1. [Dashboard Overview](../../features/admin/01-dashboard-overview.md)
-2. [Business Metrics](../../features/admin/02-business-metrics.md)
-3. [Quick Actions](../../features/admin/03-quick-actions.md)
-4. [System Status](../../features/admin/04-system-status.md)
-5. [Activity Monitoring](../../features/admin/05-activity-monitoring.md)
+1. [Dashboard Overview](./admin/01-dashboard-overview.md)
+2. [Business Metrics](./admin/02-business-metrics.md)
+3. [Quick Actions](./admin/03-quick-actions.md)
+4. [System Status](./admin/04-system-status.md)
+5. [Activity Monitoring](./admin/05-activity-monitoring.md)
 
 ## Technical Requirements
 - Implement real-time dashboard updates

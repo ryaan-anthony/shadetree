@@ -11,11 +11,11 @@ Implement a flexible workflow configuration system that allows business owners t
 - Configure service-specific workflows
 
 ## Features
-1. [Quote Workflow Builder](../../features/workflow/01-quote-workflow.md)
-2. [Appointment Flow Builder](../../features/workflow/02-appointment-flow.md)
-3. [Custom Field Management](../../features/workflow/03-custom-fields.md)
-4. [Notification Rules](../../features/workflow/04-notification-rules.md)
-5. [Service Templates](../../features/workflow/05-service-templates.md)
+1. [Quote Workflow Builder](./workflow/01-quote-workflow.md)
+2. [Appointment Flow Builder](./workflow/02-appointment-flow.md)
+3. [Custom Field Management](./workflow/03-custom-fields.md)
+4. [Notification Rules](./workflow/04-notification-rules.md)
+5. [Service Templates](./workflow/05-service-templates.md)
 
 ## Technical Requirements
 - Implement drag-and-drop workflow builder

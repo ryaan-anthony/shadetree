@@ -12,11 +12,11 @@ Design and implement the main marketing website that showcases the platform's fe
 - Create customer testimonial system
 
 ## Features
-1. [Landing Page](../../features/marketing/01-landing-page.md)
-2. [Feature Showcase](../../features/marketing/02-feature-showcase.md)
-3. [Content Management](../../features/marketing/03-content-management.md)
-4. [Contact System](../../features/marketing/04-contact-system.md)
-5. [Testimonials](../../features/marketing/05-testimonials.md)
+1. [Landing Page](./marketing/01-landing-page.md)
+2. [Feature Showcase](./marketing/02-feature-showcase.md)
+3. [Content Management](./marketing/03-content-management.md)
+4. [Contact System](./marketing/04-contact-system.md)
+5. [Testimonials](./marketing/05-testimonials.md)
 
 ## Technical Requirements
 - Server-side rendering for SEO optimization
