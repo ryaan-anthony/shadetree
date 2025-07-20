@@ -1,69 +1,81 @@
 # Feature: Quote Workflow
 
 ## Overview
-Implement a configurable workflow system that manages the quote lifecycle from creation through approval, acceptance, and conversion to appointments.
+Implement a comprehensive workflow system that manages the lifecycle of quotes from creation through approval, revision, acceptance, and conversion to orders while supporting customizable business processes.
 
 ## User Stories
 
-1. Quote Status Management
+1. Workflow Configuration
    - As a business owner
-   - I want to track quote status through its lifecycle
-   - So that I can monitor progress and follow up
+   - I want to define quote approval workflows
+   - So that quotes follow our business processes
 
-2. Approval Workflow
+2. Quote Review
    - As a manager
-   - I want to review and approve quotes above certain amounts
+   - I want to review and approve quotes
    - So that we maintain pricing control
 
-3. Customer Interaction
+3. Quote Revision
+   - As a service provider
+   - I want to revise quotes based on feedback
+   - So that we can meet customer requirements
+
+4. Status Tracking
+   - As a business owner
+   - I want to track quote statuses
+   - So that I know where quotes are in the process
+
+5. Customer Interaction
    - As a customer
-   - I want to review, comment on, and accept quotes online
-   - So that I can move forward with services
-
-4. Quote to Appointment
-   - As a business owner
-   - I want accepted quotes to create appointments
-   - So that services can be scheduled
-
-5. Quote Expiration
-   - As a business owner
-   - I want quotes to expire after a set period
-   - So that prices remain current
+   - I want to view, accept, or request changes to quotes
+   - So that I can proceed with the service booking
 
 ## Technical Tasks
-- [ ] Create workflow state machine
-- [ ] Implement approval routing
-- [ ] Build customer portal interface
-- [ ] Create appointment conversion
-- [ ] Implement expiration system
-- [ ] Add notification triggers
-- [ ] Create audit logging
-- [ ] Implement analytics tracking
-- [ ] Add automated follow-ups
-- [ ] Create reporting system
+- [ ] [Workflow Engine](quote-workflow/01-workflow-engine.md)
+  - State machine implementation
+  - Transition management
+  - Event handling
+  - History tracking
+- [ ] [Approval System](quote-workflow/02-approval-system.md)
+  - Approval chains
+  - Role management
+  - Review process
+  - Decision tracking
+- [ ] [Revision Management](quote-workflow/03-revision-management.md)
+  - Version control
+  - Change tracking
+  - Comparison tools
+  - History maintenance
+- [ ] [Customer Portal](quote-workflow/04-customer-portal.md)
+  - Quote viewing
+  - Action handling
+  - Communication
+  - Status updates
 
 ## Acceptance Criteria
-- Status transitions work properly
-- Approval routes correctly
-- Customer portal functions
-- Appointments create accurately
-- Expiration handles properly
-- Notifications send timely
-- Audit trail maintains
-- Reports generate correctly
+- Workflows configured properly
+- Approvals process correctly
+- Revisions tracked accurately
+- History maintained properly
+- Notifications sent timely
+- Customer actions recorded
+- Status updates reflected
+- Audit trail complete
 
 ## Technical Notes
 - Use state machine pattern
-- Implement proper routing logic
-- Use background jobs for notifications
-- Cache workflow states
-- Follow event-driven patterns
-- Implement proper logging
+- Implement observer pattern
+- Support workflow customization
+- Enable real-time updates
+- Maintain audit logs
+- Support mobile access
+
+## Dependencies
+- Quote Builder feature
+- Quote Templates feature
+- Pricing Management feature
+- User Management system
 
 ## Estimate
 - Story Points: 13
 - Time Estimate: 1.5 weeks
-
-## Dependencies
-- Quote Builder feature
-- Appointment Scheduling feature

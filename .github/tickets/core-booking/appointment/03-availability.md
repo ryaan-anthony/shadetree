@@ -31,16 +31,26 @@ Implement a comprehensive availability management system that handles complex sc
    - So that customers can't book during those periods
 
 ## Technical Tasks
-- [ ] Create staff availability interface
-- [ ] Implement service timing rules
-- [ ] Build buffer time system
-- [ ] Create capacity management
-- [ ] Implement availability exceptions
-- [ ] Add recurring availability patterns
-- [ ] Create availability validation
-- [ ] Implement real-time updates
-- [ ] Add availability conflicts resolution
-- [ ] Create availability API endpoints
+- [ ] [Staff Availability Management](availability/01-staff-availability.md)
+  - Set up staff schedules and working hours
+  - Handle breaks and time off requests
+  - Implement recurring patterns
+  - Real-time schedule updates
+- [ ] [Service Timing Rules](availability/02-service-timing.md)
+  - Define service durations
+  - Configure preparation times
+  - Set up booking constraints
+  - Manage timing overrides
+- [ ] [Capacity Management](availability/03-capacity-management.md)
+  - Control concurrent appointments
+  - Manage resource allocation
+  - Set business-wide limits
+  - Handle peak periods
+- [ ] [Availability Exceptions & Real-time Updates](availability/04-exceptions-realtime.md)
+  - Handle holidays and special events
+  - Manage emergency closures
+  - Implement real-time updates
+  - Synchronize client state
 
 ## Acceptance Criteria
 - Staff hours set correctly

@@ -31,16 +31,11 @@ Create a flexible appointment scheduling system that handles the end-to-end book
    - So that the provider knows my requirements
 
 ## Technical Tasks
-- [ ] Create service selection interface
-- [ ] Implement availability calculation
-- [ ] Build provider selection system
-- [ ] Create booking workflow
-- [ ] Implement confirmation system
-- [ ] Add custom field support
-- [ ] Create notification system
-- [ ] Implement booking validation
-- [ ] Add conflict prevention
-- [ ] Create booking analytics
+- [ ] [Booking Engine](scheduling/01-booking-engine.md)
+- [ ] [Service Selection](scheduling/02-service-selection.md)
+- [ ] [Time Slot Selection](scheduling/03-time-slot-selection.md)
+- [ ] [Provider Selection](scheduling/04-provider-selection.md)
+- [ ] [Booking Confirmation & Payment](scheduling/05-booking-confirmation.md)
 
 ## Acceptance Criteria
 - Service selection works smoothly
@@ -48,22 +43,25 @@ Create a flexible appointment scheduling system that handles the end-to-end book
 - Provider selection functions properly
 - Bookings confirmed immediately
 - Custom fields save correctly
-- Notifications sent reliably
+- Notifications send reliably
 - Conflicts prevented effectively
 - Mobile booking works seamlessly
 
 ## Technical Notes
-- Use background jobs for notifications
+- Use background jobs for processing
 - Implement proper caching
 - Use real-time availability updates
 - Handle timezone conversions
 - Follow booking workflow patterns
 - Implement proper logging
 
-## Estimate
-- Story Points: 13
-- Time Estimate: 1.5 weeks
+## Estimated Hours: 140
+- Booking Engine (32h)
+- Service Selection (24h)
+- Time Slot Selection (28h)
+- Provider Selection (24h)
+- Booking Confirmation & Payment (32h)
 
 ## Dependencies
-- Calendar Management feature
+- Calendar Management
 - Service Configuration

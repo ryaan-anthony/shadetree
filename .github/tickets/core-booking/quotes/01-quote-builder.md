@@ -1,69 +1,77 @@
 # Feature: Quote Builder
 
 ## Overview
-Create an intuitive quote generation system that allows businesses to create detailed service quotes with customizable line items, pricing rules, and terms.
+Implement a dynamic quote building system that allows businesses to create customized service quotes with flexible line items, pricing, and terms.
 
 ## User Stories
 
 1. Quote Creation
    - As a business owner
-   - I want to create detailed service quotes
+   - I want to create new quotes with multiple services
    - So that I can provide accurate pricing to customers
 
 2. Line Item Management
-   - As a quote creator
-   - I want to add and configure line items
-   - So that I can itemize services and products
+   - As a service provider
+   - I want to add, edit, and remove line items
+   - So that I can customize quote contents
 
-3. Dynamic Pricing
+3. Service Configuration
    - As a business owner
-   - I want to apply dynamic pricing rules
-   - So that quotes reflect current rates and conditions
+   - I want to configure service options and add-ons
+   - So that quotes reflect available service variations
 
-4. Terms & Conditions
+4. Price Calculation
+   - As a service provider
+   - I want automatic price calculations with adjustments
+   - So that quotes are accurate and consistent
+
+5. Terms & Conditions
    - As a business owner
-   - I want to include custom terms
+   - I want to include custom terms and conditions
    - So that service agreements are clear
 
-5. Quote Preview
-   - As a quote creator
-   - I want to preview quotes before sending
-   - So that I can ensure accuracy
-
 ## Technical Tasks
-- [ ] Create quote builder interface
-- [ ] Implement line item system
-- [ ] Build pricing calculator
-- [ ] Create terms management
-- [ ] Implement preview generation
-- [ ] Add quote templates
-- [ ] Create validation system
-- [ ] Implement version control
-- [ ] Add PDF generation
-- [ ] Create quote analytics
+- [ ] [Core Builder System](quote-builder/01-builder-core.md)
+  - Quote data structure
+  - Line item management
+  - Basic operations
+  - State handling
+- [ ] [Service Configuration](quote-builder/02-service-config.md)
+  - Service options
+  - Add-on management
+  - Dependency handling
+  - Validation rules
+- [ ] [Price Calculator](quote-builder/03-price-calculator.md)
+  - Base price calculation
+  - Adjustment handling
+  - Tax computation
+  - Total calculation
+- [ ] [Quote Document](quote-builder/04-quote-document.md)
+  - Document generation
+  - Terms management
+  - Layout handling
+  - Export options
 
 ## Acceptance Criteria
-- Quotes create smoothly
-- Line items calculate correctly
-- Pricing rules apply properly
-- Terms display accurately
-- Preview matches final quote
-- Templates work correctly
-- PDFs generate properly
-- Mobile interface works
+- Quotes created with multiple line items
+- Services configured with options
+- Prices calculated accurately
+- Terms included correctly
+- Documents generated properly
+- Changes tracked effectively
 
 ## Technical Notes
-- Use builder pattern
-- Implement proper calculations
-- Use background jobs for PDFs
-- Cache pricing rules
-- Follow money handling patterns
-- Implement proper logging
-
-## Estimate
-- Story Points: 13
-- Time Estimate: 1.5 weeks
+- Use builder pattern for quote construction
+- Implement strategy pattern for pricing
+- Use decorator pattern for options
+- Support PDF generation
+- Enable real-time calculations
 
 ## Dependencies
-- Service Configuration
-- User Management System
+- Service Management System
+- Pricing Engine
+- Document Generator
+
+## Estimate
+- Story Points: 8
+- Time Estimate: 1 week

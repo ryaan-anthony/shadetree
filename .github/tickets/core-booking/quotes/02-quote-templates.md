@@ -1,69 +1,78 @@
 # Feature: Quote Templates
 
 ## Overview
-Implement a template system that allows businesses to create and manage reusable quote templates for different services and scenarios.
+Implement a flexible template system that allows businesses to create, manage, and use standardized quote templates with customizable sections, dynamic content, and version control.
 
 ## User Stories
 
 1. Template Creation
    - As a business owner
-   - I want to create quote templates
-   - So that I can standardize our quoting process
+   - I want to create reusable quote templates
+   - So that I can standardize our quote format
 
-2. Variable Management
-   - As a template creator
-   - I want to define dynamic variables
-   - So that templates can be customized per quote
-
-3. Section Management
-   - As a template creator
-   - I want to organize template sections
-   - So that quotes are properly structured
-
-4. Template Library
+2. Template Management
    - As a business owner
-   - I want to manage a library of templates
-   - So that staff can use approved formats
+   - I want to manage and version templates
+   - So that I can maintain consistency
 
-5. Template Version Control
-   - As a business administrator
-   - I want to track template versions
-   - So that we maintain consistency
+3. Dynamic Content
+   - As a service provider
+   - I want to use dynamic fields in templates
+   - So that content updates automatically
+
+4. Section Management
+   - As a business owner
+   - I want to organize template sections
+   - So that quotes have a logical structure
+
+5. Template Sharing
+   - As a business owner
+   - I want to share templates with staff
+   - So that everyone uses approved formats
 
 ## Technical Tasks
-- [ ] Create template builder interface
-- [ ] Implement variable system
-- [ ] Build section management
-- [ ] Create template library
-- [ ] Implement version control
-- [ ] Add template validation
-- [ ] Create import/export system
-- [ ] Implement template preview
-- [ ] Add template analytics
-- [ ] Create template sharing
+- [ ] [Template Core System](template-system/01-template-core.md)
+  - Template data structure
+  - Version control
+  - Basic operations
+  - State management
+- [ ] [Dynamic Fields](template-system/02-dynamic-fields.md)
+  - Field definition
+  - Data binding
+  - Validation rules
+  - Auto-update logic
+- [ ] [Section Builder](template-system/03-section-builder.md)
+  - Section management
+  - Content blocks
+  - Layout options
+  - Drag-and-drop support
+- [ ] [Template Rules](template-system/04-template-rules.md)
+  - Business rules
+  - Access control
+  - Usage tracking
+  - Analytics
 
 ## Acceptance Criteria
-- Templates create properly
-- Variables resolve correctly
-- Sections organize logically
-- Library manages effectively
-- Versions track accurately
-- Validation works properly
-- Import/export functions
-- Preview renders correctly
+- Templates created and saved
+- Versions managed properly
+- Dynamic fields work correctly
+- Sections organized logically
+- Templates shared appropriately
+- Changes tracked effectively
+- Preview works accurately
 
 ## Technical Notes
-- Use template engine pattern
-- Implement proper versioning
-- Use background jobs for processing
-- Cache template data
-- Follow DRY principles
-- Implement proper logging
+- Use composite pattern for sections
+- Implement observer pattern for updates
+- Support template inheritance
+- Enable real-time preview
+- Maintain audit trail
+
+## Dependencies
+- Quote Builder feature
+- Document Generation system
+- User Management system
 
 ## Estimate
 - Story Points: 8
 - Time Estimate: 1 week
-
-## Dependencies
-- Quote Builder feature
-- Document generation system

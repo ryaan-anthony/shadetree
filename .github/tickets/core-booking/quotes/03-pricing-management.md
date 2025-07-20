@@ -1,69 +1,80 @@
 # Feature: Pricing Management
 
 ## Overview
-Create a flexible pricing management system that handles complex pricing rules, discounts, and dynamic pricing based on various conditions.
+Implement a comprehensive pricing management system that handles dynamic pricing rules, discounts, tax calculations, and price customization for quotes while supporting multiple currencies and pricing strategies.
 
 ## User Stories
 
 1. Price Rule Creation
    - As a business owner
-   - I want to create complex pricing rules
-   - So that quotes reflect our pricing strategy
+   - I want to create flexible pricing rules
+   - So that I can implement different pricing strategies
 
 2. Discount Management
    - As a business owner
-   - I want to manage different types of discounts
-   - So that we can run promotions and adjust pricing
+   - I want to manage discounts and promotions
+   - So that I can offer special pricing
 
-3. Bulk Pricing
-   - As a quote creator
-   - I want to apply volume-based pricing
-   - So that larger orders get appropriate rates
-
-4. Seasonal Pricing
+3. Tax Configuration
    - As a business owner
-   - I want to set time-based pricing rules
-   - So that rates adjust for peak periods
+   - I want to set up tax rules
+   - So that quotes include correct tax calculations
 
-5. Custom Pricing Formulas
+4. Currency Support
    - As a business owner
-   - I want to create custom pricing formulas
-   - So that complex pricing scenarios are automated
+   - I want to handle multiple currencies
+   - So that I can quote in different currencies
+
+5. Custom Pricing
+   - As a service provider
+   - I want to create custom pricing for specific customers
+   - So that I can offer personalized rates
 
 ## Technical Tasks
-- [ ] Create pricing rule engine
-- [ ] Implement discount system
-- [ ] Build bulk pricing calculator
-- [ ] Create seasonal pricing manager
-- [ ] Implement formula builder
-- [ ] Add validation system
-- [ ] Create price testing tools
-- [ ] Implement audit logging
-- [ ] Add pricing analytics
-- [ ] Create reporting system
+- [ ] [Pricing Rules Engine](pricing-management/01-pricing-rules.md)
+  - Rule configuration
+  - Strategy implementation
+  - Calculation engine
+  - Priority handling
+- [ ] [Discount System](pricing-management/02-discount-system.md)
+  - Discount types
+  - Promotion management
+  - Validation rules
+  - Application logic
+- [ ] [Tax Calculator](pricing-management/03-tax-calculator.md)
+  - Tax rule configuration
+  - Rate management
+  - Jurisdiction handling
+  - Compliance system
+- [ ] [Currency Management](pricing-management/04-currency-management.md)
+  - Currency configuration
+  - Exchange rates
+  - Conversion handling
+  - Rounding rules
 
 ## Acceptance Criteria
-- Pricing rules calculate correctly
-- Discounts apply properly
-- Bulk pricing works accurately
-- Seasonal changes execute on time
-- Custom formulas work reliably
-- Validation prevents errors
-- Testing tools function
-- Reports generate accurately
+- Price rules applied correctly
+- Discounts calculated accurately
+- Taxes computed properly
+- Currencies converted accurately
+- Custom pricing works effectively
+- Changes tracked properly
+- History maintained
+- Real-time calculations work
 
 ## Technical Notes
-- Use strategy pattern for pricing
-- Implement proper calculations
-- Use background jobs for updates
-- Cache pricing calculations
-- Follow money handling patterns
-- Implement proper logging
+- Use strategy pattern for pricing rules
+- Implement decorator pattern for discounts
+- Support tax rule inheritance
+- Enable real-time currency updates
+- Maintain audit trail
+- Support bulk operations
+
+## Dependencies
+- Quote Builder feature
+- Quote Templates feature
+- Financial Management system
 
 ## Estimate
 - Story Points: 13
 - Time Estimate: 1.5 weeks
-
-## Dependencies
-- Quote Builder feature
-- Service Configuration
