@@ -31,14 +31,14 @@ Create a comprehensive booking constraints system to enforce business rules, cap
    - So that we can manage special client requirements
 
 ## Technical Tasks
-- [ ] [Constraint Engine](./booking-constraints/07-constraint-engine.md)
-- [ ] [Time Constraints](./booking-constraints/01-time-constraints.md)
-- [ ] [Capacity Constraints](./booking-constraints/02-capacity-constraints.md)
-- [ ] [Dependency Constraints](./booking-constraints/03-dependency-constraints.md)
-- [ ] [Location Constraints](./booking-constraints/04-location-constraints.md)
-- [ ] [Conflict Resolution & Validation](./booking-constraints/05-conflict-resolution.md)
-- [ ] [Customer Constraints](./booking-constraints/06-customer-constraints.md)
-- [ ] [Analytics & Reporting](./booking-constraints/08-analytics-reporting.md)
+- [ ] [Constraint Engine](booking-constraints/07-constraint-engine.md)
+- [ ] [Time Constraints](booking-constraints/01-time-constraints.md)
+- [ ] [Capacity Constraints](booking-constraints/02-capacity-constraints.md)
+- [ ] [Dependency Constraints](booking-constraints/03-dependency-constraints.md)
+- [ ] [Location Constraints](booking-constraints/04-location-constraints.md)
+- [ ] [Conflict Resolution & Validation](booking-constraints/05-conflict-resolution.md)
+- [ ] [Customer Constraints](booking-constraints/06-customer-constraints.md)
+- [ ] [Analytics & Reporting](booking-constraints/08-analytics-reporting.md)
 
 ## Acceptance Criteria
 - Time restrictions work properly

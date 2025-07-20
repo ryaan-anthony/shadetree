@@ -11,11 +11,11 @@ Implement a flexible quote generation system that allows businesses to create, m
 - Support multiple pricing models
 
 ## Features
-1. [Quote Builder](./quotes/01-quote-builder.md)
-2. [Quote Templates](./quotes/02-quote-templates.md)
-3. [Pricing Management](./quotes/03-pricing-management.md)
-4. [Quote Workflow](./quotes/04-quote-workflow.md)
-5. [Quote to Appointment](./quotes/05-quote-to-appointment.md)
+1. [Quote Builder](quotes/01-quote-builder.md)
+2. [Quote Templates](quotes/02-quote-templates.md)
+3. [Pricing Management](quotes/03-pricing-management.md)
+4. [Quote Workflow](quotes/04-quote-workflow.md)
+5. [Quote to Appointment](quotes/05-quote-to-appointment.md)
 
 ## Technical Requirements
 - Implement using modular service objects

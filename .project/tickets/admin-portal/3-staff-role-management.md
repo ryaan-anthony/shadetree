@@ -12,11 +12,11 @@ Implement a comprehensive staff management system with customizable roles, permi
 - Create performance monitoring
 
 ## Features
-1. [Role Management](./staff/01-role-management.md)
-2. [Staff Onboarding](./staff/02-staff-onboarding.md)
-3. [Service Assignment](./staff/03-service-assignment.md)
-4. [Schedule Management](./staff/04-schedule-management.md)
-5. [Performance Tracking](./staff/05-performance-tracking.md)
+1. [Role Management](staff/01-role-management.md)
+2. [Staff Onboarding](staff/02-staff-onboarding.md)
+3. [Service Assignment](staff/03-service-assignment.md)
+4. [Schedule Management](staff/04-schedule-management.md)
+5. [Performance Tracking](staff/05-performance-tracking.md)
 
 ## Technical Requirements
 - Implement RBAC system

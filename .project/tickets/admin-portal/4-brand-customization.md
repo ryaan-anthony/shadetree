@@ -12,11 +12,11 @@ Create a comprehensive branding system that allows businesses to customize the l
 - Set up customer portal branding
 
 ## Features
-1. [Brand Assets](./branding/01-brand-assets.md)
-2. [Email Templates](./branding/02-email-templates.md)
-3. [Portal Customization](./branding/03-portal-customization.md)
-4. [Document Templates](./branding/04-document-templates.md)
-5. [Mobile Branding](./branding/05-mobile-branding.md)
+1. [Brand Assets](branding/01-brand-assets.md)
+2. [Email Templates](branding/02-email-templates.md)
+3. [Portal Customization](branding/03-portal-customization.md)
+4. [Document Templates](branding/04-document-templates.md)
+5. [Mobile Branding](branding/05-mobile-branding.md)
 
 ## Technical Requirements
 - Implement asset management system

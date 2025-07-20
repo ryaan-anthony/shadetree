@@ -18,10 +18,10 @@ Create the primary marketing website (getshadetree.com) that serves as the main 
 - Successful integration with core platform authentication
 
 ## Related Epics
-1. [Marketing Site Development](./marketing-website/1-marketing-site.md)
-2. [Authentication Portal](./marketing-website/2-authentication-portal.md)
-3. [Pricing & Plans](./marketing-website/3-pricing-plans.md)
-4. [SEO & Performance](./marketing-website/4-seo-performance.md)
+1. [Marketing Site Development](marketing-website/1-marketing-site.md)
+2. [Authentication Portal](marketing-website/2-authentication-portal.md)
+3. [Pricing & Plans](marketing-website/3-pricing-plans.md)
+4. [SEO & Performance](marketing-website/4-seo-performance.md)
 
 ## Timeline
 - Estimated Duration: 6 weeks

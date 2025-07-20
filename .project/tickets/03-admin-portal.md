@@ -18,11 +18,11 @@ Build a comprehensive admin portal that enables business owners to configure the
 - Support ticket reduction for configuration tasks
 
 ## Related Epics
-1. [Workflow Configuration](./admin-portal/1-workflow-configuration.md)
-2. [Integration Management](./admin-portal/2-integration-management.md)
-3. [Staff & Role Management](./admin-portal/3-staff-role-management.md)
-4. [Brand Customization](./admin-portal/4-brand-customization.md)
-5. [Admin Dashboard](./admin-portal/5-admin-dashboard.md)
+1. [Workflow Configuration](admin-portal/1-workflow-configuration.md)
+2. [Integration Management](admin-portal/2-integration-management.md)
+3. [Staff & Role Management](admin-portal/3-staff-role-management.md)
+4. [Brand Customization](admin-portal/4-brand-customization.md)
+5. [Admin Dashboard](admin-portal/5-admin-dashboard.md)
 
 ## Timeline
 - Estimated Duration: 10 weeks

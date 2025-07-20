@@ -1,7 +1,7 @@
 # Core Requirements - Shadetree Platform
 
 ## Overview
-Shadetree is a comprehensive service booking platform that enables businesses to manage appointments, generate quotes, and handle service scheduling. The platform consists of three main initiatives designed to provide a complete solution for service-based businesses.
+Shadetree is a comprehensive service booking platform that enables businesses to manage appointments, generate quotes, and handle service scheduling. The platform consists of four main initiatives designed to provide a complete solution for service-based businesses.
 
 ## Core Initiatives
 
@@ -80,6 +80,46 @@ Administrative interface for platform management.
 - Report generation
 - Bulk operations
 - System health checks
+
+### 4. SaaS Owner Backend
+Internal platform for managing the SaaS business operations and metrics.
+
+#### Key Features
+- **Customer Management**
+  - Usage tracking and analytics
+  - Billing history and management
+  - Plan tier management
+  - Customer health monitoring
+
+- **Support Tools**
+  - User impersonation
+  - Account management
+  - Issue investigation
+  - Customer assistance
+
+- **Business Metrics**
+  - New signup tracking
+  - Churn analysis
+  - Monthly Recurring Revenue (MRR)
+  - Daily Active Users (DAU)
+  - Cohort analysis
+  - Revenue analytics
+
+- **Platform Control**
+  - Feature flag management
+  - Tier gating configuration
+  - Beta feature rollout
+  - A/B testing management
+
+#### Technical Requirements
+- Secure admin authentication
+- Activity audit logging
+- Real-time metrics dashboard
+- Data export capabilities
+- Customer segmentation
+- Role-based access control
+- Integration with billing system
+- Data warehouse connection
 
 ## Core Technologies
 
@@ -186,8 +226,16 @@ Administrative interface for platform management.
    - System maintenance
    - User management
 
+4. SaaS Owner Backend
+   - Customer retention rate
+   - Churn rate
+   - MRR growth
+   - DAU growth
+   - Support ticket resolution time
+
 ## Timeline
 - Phase 1: Core Platform (12 weeks)
 - Phase 2: Marketing Website (6 weeks)
 - Phase 3: Admin Portal (8 weeks)
-- Total Duration: 26 weeks
+- Phase 4: SaaS Owner Backend (6 weeks)
+- Total Duration: 32 weeks

@@ -12,12 +12,12 @@ Create a comprehensive integration system that allows businesses to connect and 
 - Configure webhooks and API access
 
 ## Features
-1. [Calendar Integration](./integrations/01-calendar-sync.md)
-2. [Payment Gateway Setup](./integrations/02-payment-setup.md)
-3. [CRM Connectors](./integrations/03-crm-connectors.md)
-4. [Accounting Integration](./integrations/04-accounting-sync.md)
-5. [Communication Services](./integrations/05-communication-services.md)
-6. [Webhook Management](./integrations/06-webhooks.md)
+1. [Calendar Integration](integrations/01-calendar-sync.md)
+2. [Payment Gateway Setup](integrations/02-payment-setup.md)
+3. [CRM Connectors](integrations/03-crm-connectors.md)
+4. [Accounting Integration](integrations/04-accounting-sync.md)
+5. [Communication Services](integrations/05-communication-services.md)
+6. [Webhook Management](integrations/06-webhooks.md)
 
 ## Technical Requirements
 - OAuth2 implementation for major services

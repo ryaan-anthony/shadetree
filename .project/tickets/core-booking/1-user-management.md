@@ -10,10 +10,10 @@ Implement a comprehensive user management system that handles both service provi
 - Handle user preferences and settings
 
 ## Features
-1. [Business Account Management](./user-management/01-business-account.md)
-2. [Customer Account Management](./user-management/02-customer-account.md)
-3. [Authentication System](./user-management/03-authentication.md)
-4. [Role and Permission Management](./user-management/04-roles-permissions.md)
+1. [Business Account Management](user-management/01-business-account.md)
+2. [Customer Account Management](user-management/02-customer-account.md)
+3. [Authentication System](user-management/03-authentication.md)
+4. [Role and Permission Management](user-management/04-roles-permissions.md)
 
 ## Technical Requirements
 - Implement using Ruby on Rails authentication best practices

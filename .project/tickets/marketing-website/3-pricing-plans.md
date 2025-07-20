@@ -12,11 +12,11 @@ Implement a flexible pricing and plans system that clearly communicates value pr
 - Design upgrade/downgrade flows
 
 ## Features
-1. [Pricing Page](./pricing/01-pricing-page.md)
-2. [Plan Selection](./pricing/02-plan-selection.md)
-3. [Usage Tracking](./pricing/03-usage-tracking.md)
-4. [Plan Management](./pricing/04-plan-management.md)
-5. [Billing Integration](./pricing/05-billing-integration.md)
+1. [Pricing Page](pricing/01-pricing-page.md)
+2. [Plan Selection](pricing/02-plan-selection.md)
+3. [Usage Tracking](pricing/03-usage-tracking.md)
+4. [Plan Management](pricing/04-plan-management.md)
+5. [Billing Integration](pricing/05-billing-integration.md)
 
 ## Technical Requirements
 - Dynamic pricing table implementation

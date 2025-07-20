@@ -12,11 +12,11 @@ Optimize the marketing website for search engines and implement performance best
 - Configure proper meta tags
 
 ## Features
-1. [Technical SEO](./seo/01-technical-seo.md)
-2. [Performance Optimization](./seo/02-performance.md)
-3. [Analytics Integration](./seo/03-analytics.md)
-4. [Content Strategy](./seo/04-content-strategy.md)
-5. [Social Sharing](./seo/05-social-sharing.md)
+1. [Technical SEO](seo/01-technical-seo.md)
+2. [Performance Optimization](seo/02-performance.md)
+3. [Analytics Integration](seo/03-analytics.md)
+4. [Content Strategy](seo/04-content-strategy.md)
+5. [Social Sharing](seo/05-social-sharing.md)
 
 ## Technical Requirements
 - Server-side rendering implementation

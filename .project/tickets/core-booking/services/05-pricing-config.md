@@ -31,12 +31,12 @@ Create a flexible pricing configuration system that allows businesses to define 
    - So that we maintain proper margins
 
 ## Technical Tasks
-- [ ] [Pricing Engine](./pricing-config/01-pricing-engine.md)
-- [ ] [Service Pricing](./pricing-config/02-service-pricing.md)
-- [ ] [Dynamic Pricing](./pricing-config/03-dynamic-pricing.md)
-- [ ] [Discount Management](./pricing-config/04-discount-management.md)
-- [ ] [Tax & Fee Management](./pricing-config/05-tax-fee-management.md)
-- [ ] [Pricing Analytics & Reporting](./pricing-config/06-analytics-reporting.md)
+- [ ] [Pricing Engine](pricing-config/01-pricing-engine.md)
+- [ ] [Service Pricing](pricing-config/02-service-pricing.md)
+- [ ] [Dynamic Pricing](pricing-config/03-dynamic-pricing.md)
+- [ ] [Discount Management](pricing-config/04-discount-management.md)
+- [ ] [Tax & Fee Management](pricing-config/05-tax-fee-management.md)
+- [ ] [Pricing Analytics & Reporting](pricing-config/06-analytics-reporting.md)
 
 ## Acceptance Criteria
 - Base prices set correctly
