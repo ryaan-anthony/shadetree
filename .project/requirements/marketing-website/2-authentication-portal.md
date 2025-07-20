@@ -1,40 +1,31 @@
 # Epic: Authentication Portal
 
 ## Overview
-Create a seamless authentication experience that bridges the marketing site with the core booking platform, enabling user registration, login, and trial account creation.
+Create a streamlined authentication system that connects the marketing site with the core booking platform, enabling user registration and login.
 
 ## Objectives
 - Implement user registration flow
 - Create secure login system
 - Design trial account creation process
-- Enable social authentication options
 - Implement password recovery
-- Create email verification system
 
 ## Features
 1. [User Registration](auth/01-user-registration.md)
 2. [Login System](auth/02-login-system.md)
-3. [Trial Accounts](auth/03-trial-accounts.md)
-4. [Password Management](auth/04-password-management.md)
-5. [Social Authentication](auth/05-social-auth.md)
+3. [Password Management](auth/04-password-management.md)
 
 ## Technical Requirements
 - Secure authentication implementation
 - JWT token management
-- OAuth2 integration for social login
 - Email service integration
-- Session management
 - CSRF protection
 - Rate limiting
-- Two-factor authentication support
 
 ## Acceptance Criteria
 - Registration process completes in < 1 minute
 - Password reset works reliably
-- Social login functions properly
-- Email verification is automated
-- Security best practices followed
 - Proper error handling
+- Security best practices followed
 - Trial accounts properly provisioned
 
 ## Dependencies
@@ -42,12 +33,10 @@ Create a seamless authentication experience that bridges the marketing site with
 - User Management System Epic
 
 ## Estimate
-- Story Points: 21
-- Timeline: 2 weeks
+- Story Points: 13
+- Timeline: 1.5 weeks
 
 ## Technical Notes
 - Implement Devise for authentication
-- Use OmniAuth for social integration
-- Implement proper session storage
 - Use background jobs for email handling
 - Follow OWASP security guidelines
