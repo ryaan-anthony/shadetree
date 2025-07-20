@@ -11,11 +11,11 @@ Implement a flexible feature toggle system that allows platform administrators t
 - Support temporary feature enabling for testing or demos
 
 ## Features
-1. [Feature Flag Management Dashboard](../saas-owner/feature-toggles/1-flag-dashboard.md)
-2. [Per-Tenant Feature Configuration](../saas-owner/feature-toggles/2-tenant-configuration.md)
-3. [A/B Testing Framework](../saas-owner/feature-toggles/3-ab-testing.md)
-4. [Feature Rollout Management](../saas-owner/feature-toggles/4-rollout-management.md)
-5. [Feature Change Audit System](../saas-owner/feature-toggles/5-change-auditing.md)
+1. [Feature Flag Management Dashboard](feature-toggles/1-flag-dashboard.md)
+2. [Per-Tenant Feature Configuration](feature-toggles/2-tenant-configuration.md)
+3. [A/B Testing Framework](feature-toggles/3-ab-testing.md)
+4. [Feature Rollout Management](feature-toggles/4-rollout-management.md)
+5. [Feature Change Audit System](feature-toggles/5-change-auditing.md)
 
 ## Technical Considerations
 - Performance impact of feature checking in code paths

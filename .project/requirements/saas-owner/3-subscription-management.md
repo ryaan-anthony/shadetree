@@ -11,11 +11,11 @@ Develop a comprehensive subscription management system that enables platform adm
 - Implement trial management with conversion paths
 
 ## Features
-1. [Plan Creation and Management](../saas-owner/subscription-management/1-plan-management.md)
-2. [Customer Subscription Assignment](../saas-owner/subscription-management/2-subscription-assignment.md)
-3. [Usage Tracking and Limits](../saas-owner/subscription-management/3-usage-tracking.md)
-4. [Upgrade/Downgrade Workflows](../saas-owner/subscription-management/4-plan-changes.md)
-5. [Trial Management System](../saas-owner/subscription-management/5-trial-management.md)
+1. [Plan Creation and Management](subscription-management/1-plan-management.md)
+2. [Customer Subscription Assignment](subscription-management/2-subscription-assignment.md)
+3. [Usage Tracking and Limits](subscription-management/3-usage-tracking.md)
+4. [Upgrade/Downgrade Workflows](subscription-management/4-plan-changes.md)
+5. [Trial Management System](subscription-management/5-trial-management.md)
 
 ## Technical Considerations
 - Integration with billing systems (Stripe, etc.)

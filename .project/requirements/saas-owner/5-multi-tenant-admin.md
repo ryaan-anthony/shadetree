@@ -11,11 +11,11 @@ Develop robust multi-tenant administration capabilities that enable platform own
 - Ensure data security and segmentation between tenants
 
 ## Features
-1. [Tenant Environment Management](../saas-owner/multi-tenant-admin/1-tenant-management.md)
-2. [Cross-Tenant Operations](../saas-owner/multi-tenant-admin/2-cross-tenant-operations.md)
-3. [Data Segmentation and Security](../saas-owner/multi-tenant-admin/3-data-segmentation.md)
-4. [Configuration Templates](../saas-owner/multi-tenant-admin/4-configuration-templates.md)
-5. [Bulk Operations](../saas-owner/multi-tenant-admin/5-bulk-operations.md)
+1. [Tenant Environment Management](multi-tenant-admin/1-tenant-management.md)
+2. [Cross-Tenant Operations](multi-tenant-admin/2-cross-tenant-operations.md)
+3. [Data Segmentation and Security](multi-tenant-admin/3-data-segmentation.md)
+4. [Configuration Templates](multi-tenant-admin/4-configuration-templates.md)
+5. [Bulk Operations](multi-tenant-admin/5-bulk-operations.md)
 
 ## Technical Considerations
 - Multi-tenant database architecture (shared vs. isolated)

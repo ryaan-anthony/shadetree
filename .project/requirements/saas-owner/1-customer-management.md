@@ -11,11 +11,11 @@ Develop a comprehensive system for platform administrators to manage business cu
 - Support account lifecycle management (creation to deletion)
 
 ## Features
-1. [Customer Dashboard](../saas-owner/customer-management/1-customer-dashboard.md)
-2. [Account Creation and Onboarding](../saas-owner/customer-management/2-account-creation.md)
-3. [Support Impersonation System](../saas-owner/customer-management/3-impersonation.md)
-4. [Activity History and Notes](../saas-owner/customer-management/4-activity-history.md)
-5. [Search and Filtering Tools](../saas-owner/customer-management/5-search-filtering.md)
+1. [Customer Dashboard](customer-management/1-customer-dashboard.md)
+2. [Account Creation and Onboarding](customer-management/2-account-creation.md)
+3. [Support Impersonation System](customer-management/3-impersonation.md)
+4. [Activity History and Notes](customer-management/4-activity-history.md)
+5. [Search and Filtering Tools](customer-management/5-search-filtering.md)
 
 ## Technical Considerations
 - Multi-tenant data isolation

@@ -11,11 +11,11 @@ Develop comprehensive usage analytics capabilities to track platform utilization
 - Generate exportable reports for business analysis
 
 ## Features
-1. [Analytics Dashboard](../saas-owner/usage-analytics/1-analytics-dashboard.md)
-2. [Usage Trends and Patterns](../saas-owner/usage-analytics/2-usage-trends.md)
-3. [Customer Engagement Tracking](../saas-owner/usage-analytics/3-engagement-tracking.md)
-4. [Resource Utilization Monitoring](../saas-owner/usage-analytics/4-resource-monitoring.md)
-5. [Exportable Reports](../saas-owner/usage-analytics/5-exportable-reports.md)
+1. [Analytics Dashboard](usage-analytics/1-analytics-dashboard.md)
+2. [Usage Trends and Patterns](usage-analytics/2-usage-trends.md)
+3. [Customer Engagement Tracking](usage-analytics/3-engagement-tracking.md)
+4. [Resource Utilization Monitoring](usage-analytics/4-resource-monitoring.md)
+5. [Exportable Reports](usage-analytics/5-exportable-reports.md)
 
 ## Technical Considerations
 - Data aggregation and storage optimization

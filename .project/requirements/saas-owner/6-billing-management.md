@@ -11,11 +11,11 @@ Develop a comprehensive billing management system that enables platform administ
 - Support custom billing arrangements for special cases
 
 ## Features
-1. [Invoice Generation and Tracking](../saas-owner/billing-management/1-invoice-generation.md)
-2. [Payment Processing Monitoring](../saas-owner/billing-management/2-payment-monitoring.md)
-3. [Revenue Reporting](../saas-owner/billing-management/3-revenue-reporting.md)
-4. [Failed Payment Handling](../saas-owner/billing-management/4-failed-payments.md)
-5. [Custom Billing Arrangements](../saas-owner/billing-management/5-custom-billing.md)
+1. [Invoice Generation and Tracking](billing-management/1-invoice-generation.md)
+2. [Payment Processing Monitoring](billing-management/2-payment-monitoring.md)
+3. [Revenue Reporting](billing-management/3-revenue-reporting.md)
+4. [Failed Payment Handling](billing-management/4-failed-payments.md)
+5. [Custom Billing Arrangements](billing-management/5-custom-billing.md)
 
 ## Technical Considerations
 - Integration with payment processors (Stripe, etc.)

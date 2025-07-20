@@ -1,25 +1,7 @@
 # Core Requirements - Shadetree Platform
 
 ## Overview
-Shadetree is a lightweight, Rails-based service booking platform that helps small businesses manage quotes and appointments. Built with Ruby on Rails conventions and minimal JavaScript, focusing on server-rendered pages enhanced with Hotwire for real-time features.
-
-## Vision
-Shadetree aims to provide small service businesses with an affordable, easy-to-use solution for managing their entire workflow from quote to payment. Our platform bridges the gap between expensive enterprise solutions and basic tools, enabling businesses to look professional and streamline operations without technical complexity.
-
-## Target Audience
-We focus on small service businesses (1-10 employees) across multiple niches:
-- Home & Commercial Services (Cleaning, Landscaping, HVAC, etc.)
-- Automotive Services (Repair, Detailing)
-- Business & Technical Services (IT Services, Security)
-- Creative & Event Services (Photography, Event Planning)
-- Personal Wellness & Beauty (Fitness Trainers, Salons)
-
-## Key Differentiators
-- **Quote-to-Payment Flow**: Seamless end-to-end customer journey
-- **Mobile-First Design**: Optimized for field use with minimal data requirements
-- **Easy Setup**: 5-10 minute onboarding, no technical expertise needed
-- **Usage-Based Pricing**: Pay for what you use, not per seat
-- **White-Label Ready**: Businesses can brand the platform as their own
+Shadetree is a lightweight, service booking platform that helps small businesses manage quotes and appointments. Built with Ruby on Rails conventions and minimal JavaScript, focusing on server-rendered pages enhanced with Hotwire for real-time features.
 
 ## Business Model
 - Subscription SaaS with tiered pricing based on usage metrics
