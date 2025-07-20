@@ -1,241 +1,199 @@
 # Core Requirements - Shadetree Platform
 
 ## Overview
-Shadetree is a comprehensive service booking platform that enables businesses to manage appointments, generate quotes, and handle service scheduling. The platform consists of four main initiatives designed to provide a complete solution for service-based businesses.
+Shadetree is a lightweight, Rails-based service booking platform that helps small businesses manage quotes and appointments. Built with Ruby on Rails conventions and minimal JavaScript, focusing on server-rendered pages enhanced with Hotwire for real-time features.
 
 ## Core Initiatives
 
 ### 1. Core Booking Platform
-The foundational system that handles all booking and service management functionality.
+Server-rendered Rails application handling core business logic.
 
 #### Key Components
-- **User Management System**
-  - Customer profiles
-  - Business accounts
-  - Staff management
-  - Role-based access control
+- **User Management**
+    - Devise-based authentication
+    - Pundit for authorization
+    - Multi-tenancy through account scope
+    - Simple role system (owner, staff, customer)
 
 - **Appointment Management**
-  - Calendar management
-  - Scheduling system
-  - Availability tracking
-  - Notification system
+    - Server-rendered calendar views
+    - Turbo Frame-based updates
+    - iCal feed integration
+    - Email/SMS notifications via Action Mailer/Noticed
 
-- **Quote Generation System**
-  - Quote builder
-  - Template management
-  - Pricing engine
-  - Quote-to-appointment conversion
+- **Quote Generation**
+    - PDF generation with Prawn
+    - Template system using ViewComponent
+    - Turbo Stream updates for real-time status
+    - Email delivery with attachments
 
 - **Service Configuration**
-  - Service definitions
-  - Resource management
-  - Business rules
-  - Pricing models
+    - Database-backed configuration
+    - Simple admin interface
+    - Cached settings with Redis
+    - Audit logging with Paper Trail
 
 #### Technical Requirements
-- RESTful API architecture
-- Real-time updates via WebSocket
-- Background job processing
-- Secure payment processing
-- Multi-tenant architecture
-- High availability (99.9% uptime)
-- Response time < 500ms for core operations
-- 95% test coverage
+- Standard REST APIs with JSON format
+- Turbo Streams for real-time updates
+- Sidekiq background processing
+- Stripe payment integration
+- Minimal external dependencies
+- 95% test coverage with RSpec
 
 ### 2. Marketing Website
-Public-facing website for businesses and customers.
+Rails-rendered marketing pages with minimal dynamic features.
 
 #### Key Features
-- Business onboarding
-- Service showcase
-- Customer acquisition
-- Integration documentation
-- Success stories
-- Pricing information
+- Server-rendered pages with ERB/TailwindCSS
+- Turbo Frame contact forms
+- Simple pricing calculator
+- Blog using basic Rails models
+- SEO-optimized meta tags
 
 #### Technical Requirements
-- SEO optimization
-- Mobile responsiveness
-- Fast page load times
-- Secure contact forms
-- Analytics integration
-- Content management system
+- No JavaScript frameworks
+- Heavy use of fragment caching
+- Minimal database queries
+- Server-side analytics tracking
 
 ### 3. Admin Portal
-Administrative interface for platform management.
+Rails engine for platform administration.
 
-#### Key Features
-- Business management
-- User administration
-- System monitoring
-- Analytics dashboard
-- Support tools
-- Configuration management
+#### Features
+- Rails-native admin interface
+- ViewComponent-based UI
+- Turbo Frame inline editing
+- CSV exports via Sidekiq
+- Simple charts with Chartkick
 
 #### Technical Requirements
-- Role-based access
-- Audit logging
-- Real-time monitoring
-- Report generation
-- Bulk operations
-- System health checks
+- Mounted Rails engine
+- Pundit authorization
+- Paper Trail auditing
+- Sidekiq monitoring
+- Health checks via Rack
 
 ### 4. SaaS Owner Backend
-Internal platform for managing the SaaS business operations and metrics.
+Lightweight admin namespace within main Rails app.
 
-#### Key Features
+#### Features
 - **Customer Management**
-  - Usage tracking and analytics
-  - Billing history and management
-  - Plan tier management
-  - Customer health monitoring
+    - ActiveRecord analytics
+    - Usage tracking via Redis
+    - Simple CRM features
+    - Account health monitoring
 
 - **Support Tools**
-  - User impersonation
-  - Account management
-  - Issue investigation
-  - Customer assistance
+    - Rails-based user impersonation
+    - Paper Trail audit logs
+    - Basic ticket management
+    - Knowledge base with ViewComponent
 
 - **Business Metrics**
-  - New signup tracking
-  - Churn analysis
-  - Monthly Recurring Revenue (MRR)
-  - Daily Active Users (DAU)
-  - Cohort analysis
-  - Revenue analytics
+    - Server-rendered dashboards
+    - Chartkick visualizations
+    - Sidekiq-processed exports
+    - Redis-cached metrics
 
 - **Platform Control**
-  - Feature flag management
-  - Tier gating configuration
-  - Beta feature rollout
-  - A/B testing management
-
-#### Technical Requirements
-- Secure admin authentication
-- Activity audit logging
-- Real-time metrics dashboard
-- Data export capabilities
-- Customer segmentation
-- Role-based access control
-- Integration with billing system
-- Data warehouse connection
+    - Flipper feature flags
+    - Simple A/B testing
+    - Plan management via Postgres
+    - Redis usage tracking
 
 ## Core Technologies
 
 ### Backend
-- Ruby on Rails
+- Ruby on Rails 8.0
 - PostgreSQL
 - Redis
 - Sidekiq
-- WebSocket
+- Action Cable
 
 ### Frontend
-- React.js
+- Hotwire (Turbo + Stimulus)
 - TailwindCSS
-- TypeScript
-- Service Workers
-- Progressive Web App
+- ViewComponent
+- Minimal vanilla JavaScript
 
 ### Infrastructure
-- Docker containerization
-- AWS cloud platform
-- CI/CD automation
-- Monitoring and logging
-- Data backups
+- Docker containers
+- Kamal deployment
+- Basic AWS (S3, SES)
+- Simple monitoring
 
-## Security Requirements
-- SOC 2 compliance
-- GDPR compliance
-- Data encryption at rest
-- Secure communication (SSL/TLS)
-- Regular security audits
-- Penetration testing
-- Access control
-- Audit logging
+## Security Approach
+- Rails security best practices
+- Devise + Pundit
+- Strong Parameters
+- Security audit gems
+- Regular updates
+- Basic audit logs
 
-## Performance Requirements
-- Page load time < 2s
-- API response time < 500ms
-- 99.9% uptime
-- Support for 100k+ concurrent users
-- Efficient caching
-- Database optimization
-- CDN integration
+## Performance Strategy
+- Server-side rendering
+- Fragment caching
+- Background jobs
+- Query optimization
+- Asset pipeline
 
 ## Scalability Requirements
-- Horizontal scalability
-- Multi-region support
-- Load balancing
-- Database sharding
-- Caching strategy
-- Resource optimization
+- Vertical scaling focus
+- Basic horizontal when needed
+- Database optimization
+- Background job queues
+- CDN for assets
 
-## Integration Requirements
-- Payment gateways
-- Calendar systems
-- Email providers
-- SMS services
-- Analytics platforms
-- Marketing tools
-- CRM systems
+## Testing Requirements
+- RSpec for all layers
+- System tests with Capybara
+- Factory Bot fixtures
+- Faker test data
+- SimpleCov coverage
 
-## Monitoring Requirements
-- System health monitoring
-- Performance metrics
-- Error tracking
-- User analytics
-- Business metrics
-- Resource utilization
-- Security monitoring
+## Development Process
+- Standard Rails patterns
+- GitHub Flow
+- Pull requests
+- Continuous Integration
+- Documented code
 
-## Compliance & Standards
-- WCAG 2.1 accessibility
-- GDPR compliance
-- PCI DSS for payments
-- Industry best practices
-- Coding standards
-- Documentation requirements
-- Testing standards
-
-## Development Workflow
-- Agile methodology
-- Version control (Git)
-- Code review process
-- Automated testing
-- CI/CD pipeline
-- Documentation
-- Quality assurance
+## Monitoring Plan
+- Standard Rails logging
+- Exception tracking
+- Basic metrics
+- Queue monitoring
+- Server health
 
 ## Success Metrics
 1. Core Platform
-   - Successful end-to-end bookings
-   - Quote conversion rate
-   - System performance
-   - User satisfaction
+    - Fast response times
+    - High test coverage
+    - Clean code quality
+    - Minimal dependencies
 
 2. Marketing Site
-   - Conversion rate
-   - User engagement
-   - Lead generation
-   - Page performance
+    - Quick page loads
+    - Good SEO scores
+    - Easy maintenance
+    - Clear analytics
 
 3. Admin Portal
-   - Operation efficiency
-   - Issue resolution time
-   - System maintenance
-   - User management
+    - Simple operations
+    - Clear audit trail
+    - Fast reporting
+    - Easy navigation
 
-4. SaaS Owner Backend
-   - Customer retention rate
-   - Churn rate
-   - MRR growth
-   - DAU growth
-   - Support ticket resolution time
+4. SaaS Backend
+    - Key metrics tracked
+    - Simple operations
+    - Clear reporting
+    - Low maintenance
 
 ## Timeline
-- Phase 1: Core Platform (12 weeks)
-- Phase 2: Marketing Website (6 weeks)
-- Phase 3: Admin Portal (8 weeks)
-- Phase 4: SaaS Owner Backend (6 weeks)
-- Total Duration: 32 weeks
+- Phase 1: Core Platform (8 weeks)
+- Phase 2: Marketing Site (2 weeks)
+- Phase 3: Admin Portal (4 weeks)
+- Phase 4: SaaS Backend (2 weeks)
+- Total Duration: 16 weeks
