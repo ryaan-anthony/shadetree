@@ -23,7 +23,7 @@ We focus on small service businesses (1-10 employees) across multiple niches:
 
 ## Business Model
 - Subscription SaaS with tiered pricing based on usage metrics
-- Plans ranging from Free to $199/month based on quotes/jobs processed
+- Plans ranging from Free to $99/month based on quotes/jobs processed
 - Optional add-ons for additional features
 
 ## Core Initiatives
