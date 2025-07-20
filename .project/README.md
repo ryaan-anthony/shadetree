@@ -5,9 +5,8 @@ Shadetree is a lightweight, Rails-based service booking platform that helps smal
 
 ## Core Initiatives
 
-### 1. Core Booking Platform
+### 1. [Core Booking Platform](tickets/01-core-booking-platform.md)
 Server-rendered Rails application handling core business logic.
-[View Initiative Details](tickets/01-core-booking-platform.md)
 
 #### Key Components
 - **User Management**
@@ -34,17 +33,8 @@ Server-rendered Rails application handling core business logic.
     - Cached settings with Redis
     - Audit logging with Paper Trail
 
-#### Technical Requirements
-- Standard REST APIs with JSON format
-- Turbo Streams for real-time updates
-- Sidekiq background processing
-- Stripe payment integration
-- Minimal external dependencies
-- 95% test coverage with RSpec
-
-### 2. Marketing Website
+### 2. [Marketing Website](tickets/02-marketing-website.md)
 Rails-rendered marketing pages with minimal dynamic features.
-[View Initiative Details](tickets/02-marketing-website.md)
 
 #### Key Features
 - Server-rendered pages with ERB/TailwindCSS
@@ -53,14 +43,7 @@ Rails-rendered marketing pages with minimal dynamic features.
 - Blog using basic Rails models
 - SEO-optimized meta tags
 
-#### Technical Requirements
-- No JavaScript frameworks
-- Heavy use of fragment caching
-- Minimal database queries
-- Server-side analytics tracking
-
-### 3. Admin Portal
-[View Initiative Details](tickets/03-admin-portal.md)
+### 3. [Admin Portal](tickets/03-admin-portal.md)
 Centralized administration interface for business management.
 
 #### Features
@@ -69,13 +52,6 @@ Centralized administration interface for business management.
 - Turbo Frame inline editing
 - CSV exports via Sidekiq
 - Simple charts with Chartkick
-
-#### Technical Requirements
-- Mounted Rails engine
-- Pundit authorization
-- Paper Trail auditing
-- Sidekiq monitoring
-- Health checks via Rack
 
 ### 4. SaaS Owner Backend
 Lightweight admin namespace within main Rails app.
