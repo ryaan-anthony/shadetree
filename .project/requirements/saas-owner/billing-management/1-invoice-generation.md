@@ -94,14 +94,6 @@ Implement a comprehensive system for automatically generating, managing, and tra
 7. Configures automated alerts for critical status changes
 8. Performs batch operations on invoices with similar status needs
 
-## Success Criteria
-- 100% accuracy in invoice generation based on subscription terms
-- Complete tracking of invoice lifecycle for all customer accounts
-- Successful handling of complex billing scenarios (proration, usage-based)
-- Audit compliance with financial record-keeping requirements
-- Administrator satisfaction with invoice management tools >4.5/5
-- Reduction in billing-related support inquiries by >60%
-
 ## Dependencies
 - Subscription management system
 - Usage tracking and metering
@@ -110,23 +102,6 @@ Implement a comprehensive system for automatically generating, managing, and tra
 - Email/notification system
 - Customer portal for invoice display
 - Tax calculation service (optional)
-
-## Implementation Notes
-- Use background jobs for invoice generation to handle high volume
-- Implement idempotent operations to prevent duplicate invoices
-- Create comprehensive validation checks before finalizing invoices
-- Design with financial compliance and audit requirements in mind
-- Implement proper locking mechanisms to prevent conflicting changes
-- Use database transactions for critical invoice operations
-- Build a flexible template system for invoice layouts and content
-- Consider implementing a preview mode for testing invoice generation
-- Create clear rollback procedures for invoice corrections
-- Use event-sourcing patterns to track all invoice state changes
-- Implement proper error handling with notification for failed processes
-- Design with multi-currency support in mind, even if initially single currency
-- Create detailed documentation of all calculation methodologies
-- Build analytics hooks into the invoice system for financial metrics
-- Consider implementing a scheduled invoice review step before finalization
 
 ## Implementation Tasks
 

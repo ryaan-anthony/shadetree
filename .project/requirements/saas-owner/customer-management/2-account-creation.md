@@ -85,31 +85,11 @@ Implement a streamlined process for SaaS platform administrators to create new b
 6. Updates account with intervention notes
 7. Monitors for continued progress or schedules follow-up
 
-## Success Criteria
-- New account creation completed in <2 minutes
-- Onboarding completion rate >80% within first week
-- Average time to first value-delivering action <24 hours
-- Support intervention required in <20% of new accounts
-- Customer satisfaction with onboarding process >4.5/5
-- Reduction in early churn (first 30 days) by >50%
-
 ## Dependencies
 - Multi-tenant architecture implementation
 - Template system for business types
 - Email delivery service for notifications
 - Progress tracking data model
-
-## Implementation Notes
-- Use background jobs for resource-intensive provisioning tasks
-- Implement idempotent provisioning to handle interruptions gracefully
-- Store onboarding progress in a separate schema to keep customer data clean
-- Use feature flags to gradually expose functionality during onboarding
-- Consider implementing A/B testing for different onboarding sequences
-- Create clear rollback procedures for failed provisioning
-- Implement comprehensive logging for account creation for audit purposes
-- Consider using ActionCable for real-time onboarding progress updates
-- Develop an API for bulk account creation for sales or migration scenarios
-- Ensure proper tenant isolation in both data and processing resources
 
 ## Implementation Tasks
 - [ ] Build customer account creation workflow

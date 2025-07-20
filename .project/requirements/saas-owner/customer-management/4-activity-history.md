@@ -87,35 +87,12 @@ Implement a comprehensive system for tracking, viewing, and annotating all custo
 6. Compiles relevant history for current situation
 7. References specific historical events in current work
 
-## Success Criteria
-- Complete capture of 100% of significant customer account events
-- Average time to understand customer context reduced by >50%
-- Note creation completion rate >90% for customer interactions
-- Positive feedback from support team on history usability (>4/5)
-- Reduced repeated questions to customers about previous issues
-- Improved consistency in customer support quality
-
 ## Dependencies
 - Event tracking infrastructure
 - Rich text editing component
 - Search indexing service
 - File storage for attachments
 - Notification system for @mentions
-
-## Implementation Notes
-- Implement an event sourcing pattern to capture all state changes
-- Use background jobs to index activities for search
-- Consider using Elasticsearch for efficient full-text search
-- Implement proper access controls for sensitive customer information
-- Use Action Text for rich text note capabilities
-- Consider implementing activity aggregation for high-volume events
-- Use polymorphic associations to link activities to various system entities
-- Implement soft deletion for notes to maintain complete history
-- Add sentiment analysis to automatically flag concerning interactions
-- Use Active Storage for secure file attachments
-- Consider implementing note templates for common scenarios
-- Ensure proper pagination or virtual scrolling for performance with large histories
-- Implement webhooks to capture events from integrated systems
 
 ## Implementation Tasks
 - [ ] Build integration with subscription management system

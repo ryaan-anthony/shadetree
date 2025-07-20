@@ -85,33 +85,11 @@ Implement a secure impersonation system that allows platform administrators and 
 6. Session summary available for quality assurance review
 7. Notification sent to security team for suspicious patterns (if detected)
 
-## Success Criteria
-- 100% of impersonation sessions properly logged and auditable
-- Average time to troubleshoot customer issues reduced by >40%
-- Zero security incidents related to impersonation feature
-- Support team satisfaction with troubleshooting capabilities >4.5/5
-- Full compliance with security and privacy requirements
-- Customer trust maintained through appropriate transparency
-
 ## Dependencies
 - Authentication and authorization system
 - Comprehensive audit logging infrastructure
 - Multi-tenant access controls
 - Session management system
-
-## Implementation Notes
-- Use a separate authentication context for impersonation sessions
-- Implement visual indicators that cannot be hidden or masked
-- Consider using a different color scheme for the entire UI during impersonation
-- Store impersonation logs separately from regular activity logs for easier auditing
-- Implement proper database transaction isolation during impersonation
-- Add capability to record screen captures at regular intervals for sensitive operations
-- Use secure tokens with short expiration for session management
-- Consider implementing "break glass" emergency access with additional approvals
-- Add rate limiting to prevent abuse of the impersonation feature
-- Ensure all impersonation actions are clearly marked in any resulting notifications
-- Implement proper sanitization of session data after termination
-- Consider creating read-only impersonation as the default with explicit elevation for actions
 
 ## Implementation Tasks
 - [ ] Build support agent impersonation capability
