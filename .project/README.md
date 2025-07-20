@@ -8,78 +8,64 @@ Shadetree is a lightweight, Rails-based service booking platform that helps smal
 ### 1. [Core Booking Platform](tickets/01-core-booking-platform.md)
 Server-rendered Rails application handling core business logic.
 
-#### Key Components
-- **User Management**
-    - Devise-based authentication
-    - Pundit for authorization
-    - Multi-tenancy through account scope
-    - Simple role system (owner, staff, customer)
+#### Key Features
+- User Management
+- Appointment Management
+- Quote Generation
+- Notification System
 
-- **Appointment Management**
-    - Server-rendered calendar views
-    - Turbo Frame-based updates
-    - iCal feed integration
-    - Email/SMS notifications via Action Mailer/Noticed
-
-- **Quote Generation**
-    - PDF generation with Prawn
-    - Template system using ViewComponent
-    - Turbo Stream updates for real-time status
-    - Email delivery with attachments
-
-- **Service Configuration**
-    - Database-backed configuration
-    - Simple admin interface
-    - Cached settings with Redis
-    - Audit logging with Paper Trail
+#### Additional Features
+- Audit Logs
 
 ### 2. [Marketing Website](tickets/02-marketing-website.md)
 Rails-rendered marketing pages with minimal dynamic features.
 
 #### Key Features
-- Server-rendered pages with ERB/TailwindCSS
-- Turbo Frame contact forms
-- Simple pricing calculator
-- Blog using basic Rails models
-- SEO-optimized meta tags
+- Landing Page
+- Pricing Information
+- Feature Showcase
+- Contact Form
+- Testimonials
+
+#### Additional Features
+- SEO Optimization
+- Analytics Integration
 
 ### 3. [Admin Portal](tickets/03-admin-portal.md)
 Centralized administration interface for business management.
 
-#### Features
-- Rails-native admin interface
-- ViewComponent-based UI
-- Turbo Frame inline editing
-- CSV exports via Sidekiq
-- Simple charts with Chartkick
+#### Key Features
+- Dashboard Overview
+- Business Metrics
+- System Status
+- Activity Monitoring
+- User Management
+- Integration Management
+- Audit Logs
+- Support Tools
+- Reporting Tools
+- Workflow Configuration
+- Custom Field Management
+- Notification Rules
+- Service Templates
+- Workflow Builder
+- Approval Chains
+- Service-Specific Workflows
+- Workflow Validation
+
+#### Additional Features
+- Customizable Dashboards
+- Real-time Updates
 
 ### 4. SaaS Owner Backend
-Lightweight admin namespace within main Rails app.
+Lightweight admin interface for managing business customers.
 
-#### Features
-- **Customer Management**
-    - ActiveRecord analytics
-    - Usage tracking via Redis
-    - Simple CRM features
-    - Account health monitoring
+#### Key Features
+- Customer Management
+- Feature Toggles
 
-- **Support Tools**
-    - Rails-based user impersonation
-    - Paper Trail audit logs
-    - Basic ticket management
-    - Knowledge base with ViewComponent
-
-- **Business Metrics**
-    - Server-rendered dashboards
-    - Chartkick visualizations
-    - Sidekiq-processed exports
-    - Redis-cached metrics
-
-- **Platform Control**
-    - Flipper feature flags
-    - Simple A/B testing
-    - Plan management via Postgres
-    - Redis usage tracking
+#### Additional Features
+- Basic Reporting
 
 ## Core Technologies
 
@@ -96,12 +82,6 @@ Lightweight admin namespace within main Rails app.
 - ViewComponent
 - Minimal vanilla JavaScript
 
-### Infrastructure
-- Docker containers
-- Kamal deployment
-- Basic AWS (S3, SES)
-- Simple monitoring
-
 ## Security Approach
 - Rails security best practices
 - Devise + Pundit
@@ -116,13 +96,6 @@ Lightweight admin namespace within main Rails app.
 - Background jobs
 - Query optimization
 - Asset pipeline
-
-## Scalability Requirements
-- Vertical scaling focus
-- Basic horizontal when needed
-- Database optimization
-- Background job queues
-- CDN for assets
 
 ## Testing Requirements
 - RSpec for all layers
@@ -169,10 +142,3 @@ Lightweight admin namespace within main Rails app.
     - Simple operations
     - Clear reporting
     - Low maintenance
-
-## Timeline
-- Phase 1: Core Platform (8 weeks)
-- Phase 2: Marketing Site (2 weeks)
-- Phase 3: Admin Portal (4 weeks)
-- Phase 4: SaaS Backend (2 weeks)
-- Total Duration: 16 weeks
