@@ -1,49 +1,38 @@
-# Feature: User Registration
+# Feature: User Authentication System
 
 ## Overview
-Implement a streamlined registration process that converts website visitors into trial users.
+Implement a streamlined registration and login system that converts website visitors into trial users.
 
 ## User Stories
 
-1. Trial Registration
+1. Account Creation
    - As a potential customer
    - I want to sign up for a trial account
    - So that I can evaluate the platform
 
-2. Business Profile Setup
-   - As a new user
-   - I want to set up my business profile
-   - So that my account is properly configured
-
-3. Email Verification
-   - As a new user
-   - I want to verify my email
-   - So that I can secure my account
+2. User Login
+   - As a registered user
+   - I want to securely log in to my account
+   - So that I can access the platform
 
 ## Technical Tasks
-- [ ] Create registration form with validation
+- [ ] Create registration and login forms with validation
 - [ ] Implement email verification system
-- [ ] Build basic business profile form
 - [ ] Create welcome email
-- [ ] Implement security measures
-- [ ] Add analytics tracking
+- [ ] Implement security measures (rate limiting, CSRF protection)
+- [ ] Add remember-me functionality
 
 ## Acceptance Criteria
 - Registration completes in < 1 minute
-- Email verification works reliably
-- Business profile saves correctly
-- Security measures prevent abuse
+- Login process is secure and reliable
+- Email verification works correctly
 - Mobile-friendly interface
 
 ## Technical Notes
-- Use strong password requirements
+- Use Devise for authentication
 - Implement proper email validation
 - Use background jobs for emails
-- Implement rate limiting
 
 ## Estimate
-- Story Points: 8
-- Time Estimate: 1 week
-
-## Dependencies
-- Core Authentication System
+- Story Points: 5
+- Time Estimate: 4 days

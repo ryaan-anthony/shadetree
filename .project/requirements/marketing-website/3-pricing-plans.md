@@ -1,4 +1,4 @@
-# Epic: Pricing & Plans
+# Epic: Pricing & Subscription Management
 
 ## Overview
 Implement a clear pricing system that communicates value propositions and handles plan selection during signup.
@@ -6,35 +6,29 @@ Implement a clear pricing system that communicates value propositions and handle
 ## Objectives
 - Create pricing page with plan comparison
 - Implement plan selection during signup
-- Design upgrade/downgrade flows
 - Handle basic billing integration
 
 ## Features
-1. [Pricing Page](pricing/01-pricing-page.md)
-2. [Plan Selection](pricing/02-plan-selection.md)
-3. [Billing Integration](pricing/05-billing-integration.md)
+1. [Pricing & Plan Selection](pricing/01-pricing-page.md)
+2. [Basic Billing Integration](pricing/05-billing-integration.md)
 
 ## Technical Requirements
 - Dynamic pricing table implementation
 - Stripe integration for payments
 - Plan feature flag system
-- Automated billing notifications
 
 ## Acceptance Criteria
 - Pricing clearly displayed and understood
-- Plan features accurately compared
 - Trial conversion process works smoothly
-- Billing integration functions properly
-- Proper error handling for payments
+- Basic billing integration functions correctly
 
 ## Dependencies
-- Authentication Portal Epic
+- Authentication & User Management
 
 ## Estimate
-- Story Points: 13
-- Timeline: 1 week
+- Story Points: 8
+- Timeline: 4 days
 
 ## Technical Notes
 - Use feature flags for plan restrictions
 - Implement webhook handlers for Stripe
-- Cache pricing data appropriately

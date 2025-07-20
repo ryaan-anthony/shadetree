@@ -1,42 +1,37 @@
-# Epic: Marketing Site Development
+# Epic: Marketing Site & Content
 
 ## Overview
 Design and implement the main marketing website that showcases the platform's features and drives user sign-ups.
 
 ## Objectives
-- Create engaging landing page with SEO optimization
-- Implement core feature showcase
-- Design responsive marketing components
+- Create engaging landing page with key platform features
+- Implement responsive design for all device types
 - Build contact and support functionality
+- Optimize site for search engines and performance
 
 ## Features
-1. [Landing Page](marketing/01-landing-page.md)
-2. [Feature Showcase](marketing/02-feature-showcase.md)
-3. [Contact System](marketing/04-contact-system.md)
+1. [Landing Page & Feature Showcase](marketing/01-landing-page.md)
+2. [Contact System](marketing/04-contact-system.md)
+3. [SEO & Performance](seo/01-technical-seo.md)
 
 ## Technical Requirements
-- Server-side rendering for SEO optimization
-- Progressive Web App implementation
+- Server-side rendering with Rails + Hotwire
 - Mobile-first responsive design
-- Performance optimization (images, assets, caching)
+- Image and asset optimization
 - Analytics integration
 
 ## Acceptance Criteria
 - Website loads in < 2 seconds
 - Responsive on all major devices
-- Accessibility compliance (WCAG 2.1)
 - PageSpeed score > 90
-- SEO meta tags properly configured
 
 ## Dependencies
 - Core branding guidelines
-- Authentication Portal Epic
 
 ## Estimate
-- Story Points: 21
-- Timeline: 2 weeks
+- Story Points: 18
+- Timeline: 1.5 weeks
 
 ## Technical Notes
-- Use Rails with Hotwire for dynamic content
-- Implement proper caching strategy
-- Use structured data for SEO
+- Use proper caching strategy
+- Implement structured data for SEO

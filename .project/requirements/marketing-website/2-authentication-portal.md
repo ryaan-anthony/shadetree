@@ -1,42 +1,34 @@
-# Epic: Authentication Portal
+# Epic: Authentication & User Management
 
 ## Overview
-Create a streamlined authentication system that connects the marketing site with the core booking platform, enabling user registration and login.
+Create a streamlined authentication system connecting the marketing site with the core booking platform.
 
 ## Objectives
-- Implement user registration flow
-- Create secure login system
+- Implement user registration and login
+- Create password recovery system
 - Design trial account creation process
-- Implement password recovery
 
 ## Features
-1. [User Registration](auth/01-user-registration.md)
-2. [Login System](auth/02-login-system.md)
-3. [Password Management](auth/04-password-management.md)
+1. [User Authentication System](auth/01-user-registration.md)
+2. [Password Management](auth/04-password-management.md)
 
 ## Technical Requirements
-- Secure authentication implementation
-- JWT token management
+- Secure authentication with Devise
 - Email service integration
 - CSRF protection
-- Rate limiting
 
 ## Acceptance Criteria
-- Registration process completes in < 1 minute
+- Registration completes in < 1 minute
 - Password reset works reliably
-- Proper error handling
 - Security best practices followed
-- Trial accounts properly provisioned
 
 ## Dependencies
-- Core API Epic
-- User Management System Epic
+- Core API
 
 ## Estimate
-- Story Points: 13
-- Timeline: 1.5 weeks
+- Story Points: 10
+- Timeline: 1 week
 
 ## Technical Notes
-- Implement Devise for authentication
 - Use background jobs for email handling
 - Follow OWASP security guidelines
