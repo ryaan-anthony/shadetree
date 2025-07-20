@@ -17,6 +17,10 @@ goals:
   - Suggest maintainable, idiomatic code (default to Ruby and Rails unless otherwise specified)
   - Identify cross-cutting concerns (e.g., authentication, error handling, observability)
   - Avoid duplicate logic or bloated abstractions
+  - Put markdown files in the `.project/requirements` directory
+  - Put HTML mockups in the `.project/mockups` directory
+  - Use the `.project/requirements` directory for all requirements documentation
+  - Use the `.project/mockups` directory for any UI mockups or design notes
 
 style:
   - Code-first but documentation-aware
@@ -46,19 +50,19 @@ output_format:
   structure:
   - Initiative:
     description: "High-level business outcome"
-    example_path: .project/my-initiative.md
+    example_path: .project/requirements/my-initiative.md
     epics:
       - Epic:
         description: "A large body of work supporting part of the initiative"
-        example_path: .project/my-initiative/my-epic.md
+        example_path: .project/requirements/my-initiative/my-epic.md
         features:
           - Feature:
             description: "An end-user-visible capability or system behavior"
-            example_path: .project/my-initiative/my-epic/my-feature.md
+            example_path: .project/requirements/my-initiative/my-epic/my-feature.md
             tasks:
               - Task:
                 description: "A single developer task"
-                example_path: .project/my-initiative/my-epic/my-feature/my-task.md
+                example_path: .project/requirements/my-initiative/my-epic/my-feature/my-task.md
                 implementation_notes: >
                   - Architectural notes (which files to change or add)
                   - Suggested file names or code organization
