@@ -16,6 +16,7 @@ Server-rendered Rails application handling core business logic.
 
 #### Additional Features
 - Audit Logs
+- White Label Interfaces
 
 ### 2. [Marketing Website](tickets/02-marketing-website.md)
 Rails-rendered marketing pages with minimal dynamic features.
