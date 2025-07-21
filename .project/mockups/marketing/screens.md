@@ -1,6 +1,6 @@
 # Marketing Website Screen Inventory
 
-This document lists all screens needed to complete the marketing website initiative. Each screen will have a corresponding HTML mockup linked in this document once created.
+This document lists all screens needed to complete the marketing website initiative. Each screen will have a corresponding HTML mockup linked in this document.
 
 ## Marketing Site & Content
 
@@ -12,7 +12,7 @@ This document lists all screens needed to complete the marketing website initiat
   - Testimonial section
   - Call-to-action for trial signup
   - Footer with navigation links
-- **Mockup**: [Landing Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/landing.html) (to be created)
+- **Mockup**: [Landing Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/landing.html)
 
 ### Features Page
 - **Description**: Detailed overview of platform capabilities and benefits
@@ -21,7 +21,7 @@ This document lists all screens needed to complete the marketing website initiat
   - Feature details with visual aids
   - Use cases and benefits
   - Secondary CTAs throughout
-- **Mockup**: [Features Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/features.html) (to be created)
+- **Mockup**: [Features Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/features.html)
 
 ### Contact Page
 - **Description**: Contact form and support information
@@ -30,7 +30,7 @@ This document lists all screens needed to complete the marketing website initiat
   - Support options
   - Office locations/hours
   - FAQ section
-- **Mockup**: [Contact Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/contact.html) (to be created)
+- **Mockup**: [Contact Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/contact.html)
 
 ### About Us Page
 - **Description**: Company information and team overview
@@ -38,7 +38,7 @@ This document lists all screens needed to complete the marketing website initiat
   - Company mission and vision
   - Team introduction
   - Company history
-- **Mockup**: [About Us Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/about.html) (to be created)
+- **Mockup**: [About Us Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/about.html)
 
 ## Authentication & User Management
 
@@ -49,7 +49,7 @@ This document lists all screens needed to complete the marketing website initiat
   - Email verification instructions
   - Terms of service acceptance
   - Social sign-up options (optional)
-- **Mockup**: [Registration Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/register.html) (to be created)
+- **Mockup**: [Registration Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/register.html)
 
 ### Login Page
 - **Description**: User authentication screen
@@ -58,7 +58,7 @@ This document lists all screens needed to complete the marketing website initiat
   - Remember me functionality
   - Forgot password link
   - Link to registration
-- **Mockup**: [Login Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/login.html) (to be created)
+- **Mockup**: [Login Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/login.html)
 
 ### Password Reset Page
 - **Description**: Password recovery functionality
@@ -66,7 +66,7 @@ This document lists all screens needed to complete the marketing website initiat
   - Email input form
   - Reset instructions
   - New password creation form (after email verification)
-- **Mockup**: [Password Reset Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/password-reset.html) (to be created)
+- **Mockup**: [Password Reset Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/password-reset.html)
 
 ### Email Verification Page
 - **Description**: Confirmation page after clicking verification link
@@ -74,7 +74,7 @@ This document lists all screens needed to complete the marketing website initiat
   - Success message
   - Next steps instructions
   - Return to login link
-- **Mockup**: [Email Verification Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/verify-email.html) (to be created)
+- **Mockup**: [Email Verification Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/verify-email.html)
 
 ## Pricing & Subscription Management
 
@@ -85,7 +85,7 @@ This document lists all screens needed to complete the marketing website initiat
   - Feature comparison table
   - Highlighted recommended plan
   - FAQ section
-- **Mockup**: [Pricing Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/pricing.html) (to be created)
+- **Mockup**: [Pricing Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/pricing.html)
 
 ### Plan Selection Page
 - **Description**: Plan selection during signup flow
@@ -94,7 +94,7 @@ This document lists all screens needed to complete the marketing website initiat
   - Feature highlights
   - Selection confirmation
   - Next step buttons
-- **Mockup**: [Plan Selection Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/plan-selection.html) (to be created)
+- **Mockup**: [Plan Selection Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/plan-selection.html)
 
 ### Payment Information Page
 - **Description**: Basic billing information collection
@@ -103,7 +103,7 @@ This document lists all screens needed to complete the marketing website initiat
   - Order summary
   - Terms and conditions
   - Submit button
-- **Mockup**: [Payment Information Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/payment.html) (to be created)
+- **Mockup**: [Payment Information Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/payment.html)
 
 ## Shared Components
 
@@ -114,7 +114,7 @@ This document lists all screens needed to complete the marketing website initiat
   - Main navigation links
   - CTA button
   - Mobile responsive menu
-- **Mockup**: [Header Component](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/components/header.html) (to be created)
+- **Mockup**: [Header Component](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/components/header.html)
 
 ### Footer
 - **Description**: Site-wide footer component
@@ -124,7 +124,7 @@ This document lists all screens needed to complete the marketing website initiat
   - Social media links
   - Legal links
   - Newsletter signup
-- **Mockup**: [Footer Component](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/components/footer.html) (to be created)
+- **Mockup**: [Footer Component](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/components/footer.html)
 
 ### Confirmation Modals
 - **Description**: Reusable confirmation dialogs
@@ -132,7 +132,7 @@ This document lists all screens needed to complete the marketing website initiat
   - Success message
   - Error message
   - Confirmation actions
-- **Mockup**: [Modal Components](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/components/modals.html) (to be created)
+- **Mockup**: [Modal Components](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/components/modals.html)
 
 ## Error & Status Pages
 
@@ -142,7 +142,7 @@ This document lists all screens needed to complete the marketing website initiat
   - Error message
   - Return to home
   - Search functionality
-- **Mockup**: [404 Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/404.html) (to be created)
+- **Mockup**: [404 Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/404.html)
 
 ### 500 Page
 - **Description**: Server error page
@@ -150,7 +150,7 @@ This document lists all screens needed to complete the marketing website initiat
   - Error message
   - Support contact information
   - Return to home
-- **Mockup**: [500 Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/500.html) (to be created)
+- **Mockup**: [500 Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/500.html)
 
 ### Maintenance Page
 - **Description**: Temporary page during site maintenance
@@ -158,4 +158,4 @@ This document lists all screens needed to complete the marketing website initiat
   - Maintenance notification
   - Expected downtime
   - Alternative contact method
-- **Mockup**: [Maintenance Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/maintenance.html) (to be created)
+- **Mockup**: [Maintenance Page](/Users/ryantulino/Projects/shadetree/.project/mockups/marketing/maintenance.html)

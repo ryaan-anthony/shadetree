@@ -3,585 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up - Start Your Free Trial | ShadeTree</title>
-    <meta name="description" content="Create your ShadeTree account and start your free 14-day trial. No credit card required.">
-    <style>
-        /* Reset and base styles */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
-            line-height: 1.6;
-            color: #2d3748;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem 1rem;
-        }
-
-        /* Registration Container */
-        .register-container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            overflow: hidden;
-            max-width: 500px;
-            width: 100%;
-        }
-
-        /* Header */
-        .register-header {
-            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
-            color: white;
-            padding: 2rem;
-            text-align: center;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 1rem;
-        }
-
-        .logo img {
-            height: 32px;
-            margin-right: 0.5rem;
-        }
-
-        .logo-text {
-            font-size: 1.5rem;
-            font-weight: 700;
-        }
-
-        .register-header h1 {
-            font-size: 1.8rem;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-        }
-
-        .register-header p {
-            opacity: 0.9;
-            font-size: 1rem;
-        }
-
-        /* Form Content */
-        .register-content {
-            padding: 2rem;
-        }
-
-        .register-form {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            color: #4a5568;
-            font-size: 0.9rem;
-        }
-
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 0.75rem;
-            border: 2px solid #e2e8f0;
-            border-radius: 6px;
-            font-size: 1rem;
-            transition: all 0.2s ease;
-            background-color: #ffffff;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #4299e1;
-            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
-        }
-
-        .form-group input.error,
-        .form-group select.error {
-            border-color: #e53e3e;
-        }
-
-        .error-message {
-            color: #e53e3e;
-            font-size: 0.8rem;
-            margin-top: 0.25rem;
-            display: none;
-        }
-
-        .password-requirements {
-            font-size: 0.8rem;
-            color: #718096;
-            margin-top: 0.25rem;
-        }
-
-        .requirement {
-            margin: 0.25rem 0;
-        }
-
-        .requirement.valid {
-            color: #48bb78;
-        }
-
-        .requirement.invalid {
-            color: #e53e3e;
-        }
-
-        /* Checkbox styles */
-        .checkbox-group {
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 1.5rem;
-        }
-
-        .checkbox-group input[type="checkbox"] {
-            width: auto;
-            margin-right: 0.75rem;
-            margin-top: 0.25rem;
-        }
-
-        .checkbox-group label {
-            font-size: 0.9rem;
-            line-height: 1.5;
-            font-weight: normal;
-        }
-
-        .checkbox-group a {
-            color: #4299e1;
-            text-decoration: none;
-        }
-
-        .checkbox-group a:hover {
-            text-decoration: underline;
-        }
-
-        /* Submit Button */
-        .submit-button {
-            background-color: #48bb78;
-            color: white;
-            border: none;
-            padding: 1rem;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            width: 100%;
-            margin-bottom: 1.5rem;
-        }
-
-        .submit-button:hover:not(:disabled) {
-            background-color: #38a169;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
-        }
-
-        .submit-button:disabled {
-            background-color: #a0aec0;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        /* Trial Info */
-        .trial-info {
-            background-color: #f0fff4;
-            border: 1px solid #9ae6b4;
-            border-radius: 6px;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            text-align: center;
-        }
-
-        .trial-info h3 {
-            color: #22543d;
-            font-size: 1rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .trial-info p {
-            color: #2f855a;
-            font-size: 0.9rem;
-        }
-
-        /* Social Login */
-        .social-divider {
-            display: flex;
-            align-items: center;
-            margin: 1.5rem 0;
-        }
-
-        .social-divider::before,
-        .social-divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background-color: #e2e8f0;
-        }
-
-        .social-divider span {
-            padding: 0 1rem;
-            color: #718096;
-            font-size: 0.9rem;
-        }
-
-        .social-buttons {
-            display: grid;
-            gap: 0.75rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .social-button {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.75rem;
-            border: 2px solid #e2e8f0;
-            border-radius: 6px;
-            background-color: white;
-            color: #4a5568;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .social-button:hover {
-            border-color: #cbd5e0;
-            background-color: #f8f9fa;
-        }
-
-        .social-button img {
-            width: 20px;
-            height: 20px;
-            margin-right: 0.75rem;
-        }
-
-        /* Login Link */
-        .login-link {
-            text-align: center;
-            color: #718096;
-            font-size: 0.9rem;
-        }
-
-        .login-link a {
-            color: #4299e1;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .login-link a:hover {
-            text-decoration: underline;
-        }
-
-        /* Back to Home */
-        .back-home {
-            position: absolute;
-            top: 2rem;
-            left: 2rem;
-            color: white;
-            text-decoration: none;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            transition: opacity 0.2s ease;
-        }
-
-        .back-home:hover {
-            opacity: 0.8;
-        }
-
-        .back-home::before {
-            content: '←';
-            margin-right: 0.5rem;
-            font-size: 1.2rem;
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            body {
-                padding: 1rem 0.5rem;
-            }
-
-            .register-container {
-                max-width: 100%;
-            }
-
-            .register-header,
-            .register-content {
-                padding: 1.5rem;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-
-            .back-home {
-                position: static;
-                margin-bottom: 1rem;
-                justify-content: center;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .register-header,
-            .register-content {
-                padding: 1rem;
-            }
-        }
-    </style>
+    <title>Create Account - Shadetree</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <!-- Back to Home Link -->
-    <a href="/" class="back-home">Back to Home</a>
-
-    <!-- Registration Container -->
-    <div class="register-container">
-        <!-- Header -->
-        <div class="register-header">
-            <div class="logo">
-                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDQwIDQwIj48cGF0aCBmaWxsPSIjZmZmZmZmIiBkPSJNMjAgMkMxMC4wNiAyIDIgMTAuMDYgMiAyMHM4LjA2IDE4IDE4IDE4czE4LTguMDYgMTgtMThTMjkuOTQgMiAyMCAyek0xNSAzMGMtMS42NiAwLTMtMS4zNC0zLTNzMS4zNC0zIDMtM3MzIDEuMzQgMyAzLTEuMzQgMy0zIDN6bTAtMjBjMC0xLjY2IDEuMzQtMyAzLTNzMyAxLjM0IDMgM3YxMGMwIDEuNjYtMS4zNCAzLTMgM3MtMy0xLjM0LTMtM1YxMHptMTAgMjBjLTEuNjYgMC0zLTEuMzQtMy0zczEuMzQtMyAzLTMgMyAxLjM0IDMgMy0xLjM0IDMtMyAzeiIvPjwvc3ZnPg==" alt="ShadeTree Logo">
-                <span class="logo-text">ShadeTree</span>
-            </div>
-            <h1>Start Your Free Trial</h1>
-            <p>Join thousands of service professionals</p>
+<body class="bg-gray-50 min-h-screen flex flex-col justify-center">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">
+                <span class="text-green-600">Shade</span>tree
+            </h1>
         </div>
 
-        <!-- Content -->
-        <div class="register-content">
-            <!-- Trial Information -->
-            <div class="trial-info">
-                <h3>✨ 14-Day Free Trial</h3>
-                <p>No credit card required • Cancel anytime • Full access to all features</p>
+        <div class="bg-white py-8 px-6 shadow rounded-lg sm:px-10">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Create your account</h2>
+                <p class="mt-2 text-sm text-gray-600">Start your 14-day free trial</p>
             </div>
 
-            <!-- Social Login Options -->
-            <div class="social-buttons">
-                <a href="/auth/google" class="social-button">
-                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIyLjU2IDEyLjI1YzAtLjc4LS4wNy0xLjUzLS4yLTIuMjVIMTJ2NC4yNmg1LjkyYy0uMjYgMS4zNy0xLjA0IDIuNTMtMi4yMSAzLjMxdjIuNzdoMy41N2MyLjA4LTEuOTIgMy4yOC00Ljc0IDMuMjgtOC4wOXoiIGZpbGw9IiM0Mjg1RjQiLz4KPHBhdGggZD0iTTEyIDIzYzIuOTcgMCA1LjQ2LS45OCA3LjI4LTIuNjZsLTMuNTctMi43N2MtLjk4LjY2LTIuMjMgMS4wNi0zLjcxIDEuMDYtMi44NiAwLTUuMjktMS45My02LjE2LTQuNTNIMi4xOHYyLjg0QzMuOTkgMjAuNTMgNy43IDIzIDEyIDIzeiIgZmlsbD0iIzM0QTg1MyIvPgo8cGF0aCBkPSJNNS44NCAxNC4wOWMtLjIyLS42Ni0uMzUtMS4zNi0uMzUtMi4wOXMuMTMtMS40My4zNS0yLjA5VjcuMDdIMi4xOEExMS45NSAxMS45NSAwIDAgMCAwIDEyczIuMTYgNy4xNiA1Ljg0IDcuMTZsNS44NC0yLjA3eiIgZmlsbD0iI0ZCQkMwNSIvPgo8cGF0aCBkPSJNMTIgNC43NWMxLjYxIDAgMy4wNi41NSA0LjIxIDEuNjRsMy4xNS0zLjE1QzE3LjQ1IDEuMDkgMTQuOTcgMCAxMiAwIDcuNyAwIDMuOTkgMi40NyAyLjE4IDYuMDdsNC42NyAzLjY5Yy44Ny0yLjYgMy4zLTQuNTMgNi4xNS00LjUzeiIgZmlsbD0iI0VBNDMzNSIvPgo8L3N2Zz4K" alt="Google">
-                    Continue with Google
-                </a>
-                <a href="/auth/microsoft" class="social-button">
-                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjExIiBoZWlnaHQ9IjExIiBmaWxsPSIjRjM1MzI1Ii8+CjxyZWN0IHg9IjEzIiB3aWR0aD0iMTEiIGhlaWdodD0iMTEiIGZpbGw9IiM4MUIyMDAiLz4KPHJlY3QgeT0iMTMiIHdpZHRoPSIxMSIgaGVpZ2h0PSIxMSIgZmlsbD0iIzA1QTZGMCIvPgo8cmVjdCB4PSIxMyIgeT0iMTMiIHdpZHRoPSIxMSIgaGVpZ2h0PSIxMSIgZmlsbD0iI0ZGQjkwMCIvPgo8L3N2Zz4K" alt="Microsoft">
-                    Continue with Microsoft
-                </a>
-            </div>
-
-            <!-- Divider -->
-            <div class="social-divider">
-                <span>or create an account</span>
-            </div>
-
-            <!-- Registration Form -->
-            <form class="register-form" method="POST" action="/register" id="registerForm">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="first-name">First Name *</label>
-                        <input type="text" id="first-name" name="first_name" required>
-                        <div class="error-message" id="first-name-error"></div>
+            <form class="space-y-6" action="#" method="POST">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="first-name" class="block text-sm font-medium text-gray-700">
+                            First name
+                        </label>
+                        <div class="mt-1">
+                            <input id="first-name" name="first-name" type="text" autocomplete="given-name" required
+                                   class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="last-name">Last Name *</label>
-                        <input type="text" id="last-name" name="last_name" required>
-                        <div class="error-message" id="last-name-error"></div>
+
+                    <div>
+                        <label for="last-name" class="block text-sm font-medium text-gray-700">
+                            Last name
+                        </label>
+                        <div class="mt-1">
+                            <input id="last-name" name="last-name" type="text" autocomplete="family-name" required
+                                   class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                        </div>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="email">Email Address *</label>
-                    <input type="email" id="email" name="email" required>
-                    <div class="error-message" id="email-error"></div>
-                </div>
-
-                <div class="form-group">
-                    <label for="business-name">Business Name *</label>
-                    <input type="text" id="business-name" name="business_name" required>
-                    <div class="error-message" id="business-name-error"></div>
-                </div>
-
-                <div class="form-group">
-                    <label for="business-type">Business Type *</label>
-                    <select id="business-type" name="business_type" required>
-                        <option value="">Select your business type</option>
-                        <option value="home-services">Home Services (Cleaning, Landscaping, etc.)</option>
-                        <option value="personal-care">Personal Care (Salon, Spa, Fitness)</option>
-                        <option value="professional-services">Professional Services (Consulting, Coaching)</option>
-                        <option value="mobile-services">Mobile Services (Auto, Pet Care)</option>
-                        <option value="other">Other</option>
-                    </select>
-                    <div class="error-message" id="business-type-error"></div>
-                </div>
-
-                <div class="form-group">
-                    <label for="password">Password *</label>
-                    <input type="password" id="password" name="password" required>
-                    <div class="password-requirements">
-                        <div class="requirement" id="length-req">• At least 8 characters</div>
-                        <div class="requirement" id="upper-req">• One uppercase letter</div>
-                        <div class="requirement" id="lower-req">• One lowercase letter</div>
-                        <div class="requirement" id="number-req">• One number</div>
+                <div>
+                    <label for="company" class="block text-sm font-medium text-gray-700">
+                        Company name
+                    </label>
+                    <div class="mt-1">
+                        <input id="company" name="company" type="text" autocomplete="organization" required
+                               class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
                     </div>
-                    <div class="error-message" id="password-error"></div>
                 </div>
 
-                <div class="form-group">
-                    <label for="confirm-password">Confirm Password *</label>
-                    <input type="password" id="confirm-password" name="confirm_password" required>
-                    <div class="error-message" id="confirm-password-error"></div>
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700">
+                        Email address
+                    </label>
+                    <div class="mt-1">
+                        <input id="email" name="email" type="email" autocomplete="email" required
+                               class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                    </div>
                 </div>
 
-                <div class="checkbox-group">
-                    <input type="checkbox" id="terms" name="terms" required>
-                    <label for="terms">
-                        I agree to the <a href="/terms" target="_blank">Terms of Service</a>
-                        and <a href="/privacy" target="_blank">Privacy Policy</a> *
+                <div>
+                    <label for="phone" class="block text-sm font-medium text-gray-700">
+                        Phone number
+                    </label>
+                    <div class="mt-1">
+                        <input id="phone" name="phone" type="tel" autocomplete="tel"
+                               class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">
+                        Password
+                    </label>
+                    <div class="mt-1">
+                        <input id="password" name="password" type="password" autocomplete="new-password" required
+                               class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">Must be at least 8 characters with a mix of letters and numbers</p>
+                </div>
+
+                <div>
+                    <label for="confirm-password" class="block text-sm font-medium text-gray-700">
+                        Confirm password
+                    </label>
+                    <div class="mt-1">
+                        <input id="confirm-password" name="confirm-password" type="password" autocomplete="new-password" required
+                               class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                    </div>
+                </div>
+
+                <div class="flex items-center">
+                    <input id="terms" name="terms" type="checkbox" required
+                           class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                    <label for="terms" class="ml-2 block text-sm text-gray-900">
+                        I agree to the
+                        <a href="#" class="text-green-600 hover:text-green-500">Terms of Service</a>
+                        and
+                        <a href="#" class="text-green-600 hover:text-green-500">Privacy Policy</a>
                     </label>
                 </div>
 
-                <div class="checkbox-group">
-                    <input type="checkbox" id="marketing" name="marketing_emails">
-                    <label for="marketing">
-                        Send me product updates and helpful tips for my business
-                    </label>
+                <div>
+                    <button type="submit"
+                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        Create account
+                    </button>
                 </div>
-
-                <button type="submit" class="submit-button" id="submitBtn" disabled>
-                    Create Account & Start Trial
-                </button>
             </form>
 
-            <!-- Login Link -->
-            <div class="login-link">
-                Already have an account? <a href="/login">Sign in here</a>
+            <!-- Divider -->
+            <div class="mt-6">
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-white text-gray-500">Or sign up with</span>
+                    </div>
+                </div>
+
+                <!-- Social Login -->
+                <div class="mt-6 grid grid-cols-2 gap-3">
+                    <button type="button"
+                            class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Sign up with Google</span>
+                        <div class="w-5 h-5 bg-red-500 rounded"></div>
+                    </button>
+
+                    <button type="button"
+                            class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Sign up with Microsoft</span>
+                        <div class="w-5 h-5 bg-blue-500 rounded"></div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sign in link -->
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-600">
+                    Already have an account?
+                    <a href="#" class="font-medium text-green-600 hover:text-green-500">
+                        Sign in
+                    </a>
+                </p>
             </div>
         </div>
     </div>
 
-    <!-- Simple JavaScript for form validation -->
-    <script>
-        const form = document.getElementById('registerForm');
-        const submitBtn = document.getElementById('submitBtn');
-        const passwordInput = document.getElementById('password');
-        const confirmPasswordInput = document.getElementById('confirm-password');
-        const termsCheckbox = document.getElementById('terms');
-
-        // Password requirements
-        const requirements = {
-            length: document.getElementById('length-req'),
-            upper: document.getElementById('upper-req'),
-            lower: document.getElementById('lower-req'),
-            number: document.getElementById('number-req')
-        };
-
-        // Validate password requirements
-        passwordInput.addEventListener('input', function() {
-            const password = this.value;
-
-            // Length check
-            if (password.length >= 8) {
-                requirements.length.classList.add('valid');
-                requirements.length.classList.remove('invalid');
-            } else {
-                requirements.length.classList.add('invalid');
-                requirements.length.classList.remove('valid');
-            }
-
-            // Uppercase check
-            if (/[A-Z]/.test(password)) {
-                requirements.upper.classList.add('valid');
-                requirements.upper.classList.remove('invalid');
-            } else {
-                requirements.upper.classList.add('invalid');
-                requirements.upper.classList.remove('valid');
-            }
-
-            // Lowercase check
-            if (/[a-z]/.test(password)) {
-                requirements.lower.classList.add('valid');
-                requirements.lower.classList.remove('invalid');
-            } else {
-                requirements.lower.classList.add('invalid');
-                requirements.lower.classList.remove('valid');
-            }
-
-            // Number check
-            if (/\d/.test(password)) {
-                requirements.number.classList.add('valid');
-                requirements.number.classList.remove('invalid');
-            } else {
-                requirements.number.classList.add('invalid');
-                requirements.number.classList.remove('valid');
-            }
-
-            checkFormValidity();
-        });
-
-        // Validate password confirmation
-        confirmPasswordInput.addEventListener('input', function() {
-            const password = passwordInput.value;
-            const confirmPassword = this.value;
-            const errorDiv = document.getElementById('confirm-password-error');
-
-            if (confirmPassword && password !== confirmPassword) {
-                this.classList.add('error');
-                errorDiv.textContent = 'Passwords do not match';
-                errorDiv.style.display = 'block';
-            } else {
-                this.classList.remove('error');
-                errorDiv.style.display = 'none';
-            }
-
-            checkFormValidity();
-        });
-
-        // Check overall form validity
-        function checkFormValidity() {
-            const password = passwordInput.value;
-            const confirmPassword = confirmPasswordInput.value;
-            const isPasswordValid = password.length >= 8 &&
-                                  /[A-Z]/.test(password) &&
-                                  /[a-z]/.test(password) &&
-                                  /\d/.test(password);
-            const isPasswordMatch = password === confirmPassword;
-            const isTermsChecked = termsCheckbox.checked;
-
-            const requiredFields = form.querySelectorAll('input[required], select[required]');
-            let allFieldsFilled = true;
-
-            requiredFields.forEach(field => {
-                if (!field.value.trim() && field.type !== 'checkbox') {
-                    allFieldsFilled = false;
-                }
-            });
-
-            submitBtn.disabled = !(allFieldsFilled && isPasswordValid && isPasswordMatch && isTermsChecked);
-        }
-
-        // Add event listeners to all form fields
-        form.addEventListener('input', checkFormValidity);
-        form.addEventListener('change', checkFormValidity);
-
-        // Initial check
-        checkFormValidity();
-    </script>
+    <!-- Footer -->
+    <div class="mt-8 text-center">
+        <p class="text-xs text-gray-500">
+            © 2025 Shadetree. All rights reserved.
+        </p>
+    </div>
 </body>
 </html>
-

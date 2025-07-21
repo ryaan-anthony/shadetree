@@ -3,207 +3,369 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pricing - ShadeTree</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Pricing - Shadetree</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .pricing-card-highlight {
-            transition: transform 0.3s ease;
-        }
-        .pricing-card-highlight:hover {
-            transform: translateY(-5px);
-        }
-        .toggle-checkbox:checked {
-            right: 0;
-            border-color: #68D391;
-        }
-        .toggle-checkbox:checked + .toggle-label {
-            background-color: #4F46E5;
-        }
-    </style>
 </head>
-<body class="bg-gradient-to-b from-gray-50 to-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <!-- Pricing Header -->
-        <div class="text-center mb-16">
-            <h1 class="text-4xl font-bold text-gray-900 mb-4">Simple, Transparent Pricing</h1>
-            <p class="text-xl text-gray-600 max-w-2xl mx-auto">Choose the perfect plan for your service business. No hidden fees.</p>
+<body class="bg-white">
+    <!-- Header Navigation -->
+    <header class="bg-white shadow-lg border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        <span class="text-green-600">Shade</span>tree
+                    </h1>
+                </div>
+                <nav class="hidden md:flex space-x-8">
+                    <a href="#" class="text-gray-700 hover:text-green-600 px-3 py-2 text-sm font-medium transition-colors">Features</a>
+                    <a href="#" class="text-green-600 px-3 py-2 text-sm font-medium">Pricing</a>
+                    <a href="#" class="text-gray-700 hover:text-green-600 px-3 py-2 text-sm font-medium transition-colors">About</a>
+                    <a href="#" class="text-gray-700 hover:text-green-600 px-3 py-2 text-sm font-medium transition-colors">Contact</a>
+                </nav>
+                <div class="hidden md:flex items-center space-x-4">
+                    <a href="#" class="text-gray-700 hover:text-green-600 px-3 py-2 text-sm font-medium transition-colors">Sign In</a>
+                    <a href="#" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm">
+                        Start Free Trial
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-br from-green-50 to-blue-50 py-16">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                Simple, Transparent <span class="text-green-600">Pricing</span>
+            </h1>
+            <p class="text-xl text-gray-600 mb-8">
+                Choose the plan that fits your business size and goals. All plans include our core features.
+            </p>
 
             <!-- Billing Toggle -->
-            <div class="mt-8 flex justify-center items-center gap-4">
-                <span class="text-gray-700">Monthly</span>
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" value="" class="sr-only peer toggle-checkbox">
-                    <div class="w-11 h-6 bg-blue-600 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-                </label>
-                <span class="text-gray-700">Annual <span class="text-green-600 text-sm">(Save 20%)</span></span>
+            <div class="flex items-center justify-center mb-8">
+                <span class="text-gray-600 mr-3">Monthly</span>
+                <button class="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2" id="billing-toggle">
+                    <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform" id="toggle-dot"></span>
+                </button>
+                <span class="text-gray-600 ml-3">Annual <span class="text-green-600 text-sm font-medium">(Save 20%)</span></span>
             </div>
         </div>
+    </section>
 
-        <!-- Pricing Cards -->
-        <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <!-- Starter Plan -->
-            <div class="rounded-2xl border border-gray-200 p-8 shadow-sm hover:shadow-lg transition-shadow pricing-card-highlight">
-                <h3 class="text-xl font-semibold text-gray-900 mb-2">Starter</h3>
-                <p class="text-gray-600 mb-6">Perfect for new service businesses</p>
-                <div class="mb-6">
-                    <span class="text-4xl font-bold">$29</span>
-                    <span class="text-gray-600">/month</span>
-                </div>
-                <ul class="space-y-4 mb-8">
-                    <li class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        <span>Up to 50 bookings/month</span>
-                    </li>
-                    <li class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        <span>Basic scheduling tools</span>
-                    </li>
-                    <li class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        <span>Email notifications</span>
-                    </li>
-                </ul>
-                <button class="w-full py-3 px-4 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors">
-                    Start Free Trial
-                </button>
-            </div>
+    <!-- Pricing Plans -->
+    <section class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
 
-            <!-- Professional Plan -->
-            <div class="rounded-2xl border-2 border-blue-600 p-8 shadow-md hover:shadow-lg transition-shadow relative pricing-card-highlight">
-                <div class="absolute top-0 right-6 transform -translate-y-1/2">
-                    <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium">Most Popular</span>
-                </div>
-                <h3 class="text-xl font-semibold text-gray-900 mb-2">Professional</h3>
-                <p class="text-gray-600 mb-6">For growing service teams</p>
-                <div class="mb-6">
-                    <span class="text-4xl font-bold">$79</span>
-                    <span class="text-gray-600">/month</span>
-                </div>
-                <ul class="space-y-4 mb-8">
-                    <li class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        <span>Unlimited bookings</span>
-                    </li>
-                    <li class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        <span>Team management</span>
-                    </li>
-                    <li class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        <span>Custom branding</span>
-                    </li>
-                    <li class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        <span>SMS notifications</span>
-                    </li>
-                </ul>
-                <button class="w-full py-3 px-4 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors">
-                    Start Free Trial
-                </button>
-            </div>
+                <!-- Starter Plan -->
+                <div class="border border-gray-200 rounded-lg p-8 hover:shadow-lg transition-shadow">
+                    <div class="text-center">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-4">Starter</h3>
+                        <p class="text-gray-600 mb-6">Perfect for small service businesses getting started</p>
+                        <div class="mb-6">
+                            <span class="text-4xl font-bold text-gray-900" id="starter-price">$49</span>
+                            <span class="text-gray-600">/month</span>
+                        </div>
+                        <a href="#" class="block w-full bg-gray-100 hover:bg-gray-200 text-gray-900 py-3 px-6 rounded-lg font-semibold transition-colors mb-6">
+                            Start Free Trial
+                        </a>
+                    </div>
 
-            <!-- Enterprise Plan -->
-            <div class="rounded-2xl border border-gray-200 p-8 shadow-sm hover:shadow-lg transition-shadow pricing-card-highlight">
-                <h3 class="text-xl font-semibold text-gray-900 mb-2">Enterprise</h3>
-                <p class="text-gray-600 mb-6">For large service organizations</p>
-                <div class="mb-6">
-                    <span class="text-4xl font-bold">Custom</span>
+                    <ul class="space-y-3 text-sm">
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            Up to 2 team members
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            100 customers
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            Basic scheduling
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            Invoice generation
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            Customer portal
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            Email support
+                        </li>
+                    </ul>
                 </div>
-                <ul class="space-y-4 mb-8">
-                    <li class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        <span>Everything in Professional</span>
-                    </li>
-                    <li class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        <span>API access</span>
-                    </li>
-                    <li class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        <span>Dedicated support</span>
-                    </li>
-                    <li class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        <span>Custom integrations</span>
-                    </li>
-                </ul>
-                <button class="w-full py-3 px-4 rounded-lg bg-gray-800 text-white font-semibold hover:bg-gray-900 transition-colors">
-                    Contact Sales
-                </button>
+
+                <!-- Professional Plan (Recommended) -->
+                <div class="border-2 border-green-500 rounded-lg p-8 relative shadow-lg">
+                    <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                        <span class="bg-green-500 text-white px-4 py-1 rounded-full text-sm font-medium">Recommended</span>
+                    </div>
+
+                    <div class="text-center">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-4">Professional</h3>
+                        <p class="text-gray-600 mb-6">Ideal for growing service businesses</p>
+                        <div class="mb-6">
+                            <span class="text-4xl font-bold text-gray-900" id="professional-price">$99</span>
+                            <span class="text-gray-600">/month</span>
+                        </div>
+                        <a href="#" class="block w-full bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-lg font-semibold transition-colors mb-6">
+                            Start Free Trial
+                        </a>
+                    </div>
+
+                    <ul class="space-y-3 text-sm">
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            Up to 10 team members
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            1,000 customers
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            Advanced scheduling & routing
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            Payment processing
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            Mobile app access
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            Financial reporting
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            Priority support
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Enterprise Plan -->
+                <div class="border border-gray-200 rounded-lg p-8 hover:shadow-lg transition-shadow">
+                    <div class="text-center">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-4">Enterprise</h3>
+                        <p class="text-gray-600 mb-6">For established businesses with advanced needs</p>
+                        <div class="mb-6">
+                            <span class="text-4xl font-bold text-gray-900" id="enterprise-price">$199</span>
+                            <span class="text-gray-600">/month</span>
+                        </div>
+                        <a href="#" class="block w-full bg-gray-100 hover:bg-gray-200 text-gray-900 py-3 px-6 rounded-lg font-semibold transition-colors mb-6">
+                            Contact Sales
+                        </a>
+                    </div>
+
+                    <ul class="space-y-3 text-sm">
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            Unlimited team members
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            Unlimited customers
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            AI-powered optimization
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            API access
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            Custom integrations
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            White-label options
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-2">✓</span>
+                            Dedicated account manager
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
+    </section>
 
-        <!-- Feature Comparison -->
-        <div class="mt-20">
-            <h2 class="text-2xl font-bold text-center mb-12">Compare Features</h2>
+    <!-- Feature Comparison -->
+    <section class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Compare All Features</h2>
+                <p class="text-lg text-gray-600">See what's included in each plan</p>
+            </div>
+
             <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead>
-                        <tr class="border-t border-gray-200">
-                            <th class="py-4 px-6 text-left text-gray-500 font-medium">Feature</th>
-                            <th class="py-4 px-6 text-center text-gray-500 font-medium">Starter</th>
-                            <th class="py-4 px-6 text-center text-gray-500 font-medium">Professional</th>
-                            <th class="py-4 px-6 text-center text-gray-500 font-medium">Enterprise</th>
+                <table class="w-full bg-white rounded-lg shadow-sm">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Features</th>
+                            <th class="px-6 py-4 text-center text-sm font-semibold text-gray-900">Starter</th>
+                            <th class="px-6 py-4 text-center text-sm font-semibold text-gray-900">Professional</th>
+                            <th class="px-6 py-4 text-center text-sm font-semibold text-gray-900">Enterprise</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
                         <tr>
-                            <td class="py-4 px-6 text-sm text-gray-900">Online Booking</td>
-                            <td class="py-4 px-6 text-center">✓</td>
-                            <td class="py-4 px-6 text-center">✓</td>
-                            <td class="py-4 px-6 text-center">✓</td>
+                            <td class="px-6 py-4 text-sm text-gray-900">Team Members</td>
+                            <td class="px-6 py-4 text-center text-sm text-gray-600">2</td>
+                            <td class="px-6 py-4 text-center text-sm text-gray-600">10</td>
+                            <td class="px-6 py-4 text-center text-sm text-gray-600">Unlimited</td>
+                        </tr>
+                        <tr class="bg-gray-50">
+                            <td class="px-6 py-4 text-sm text-gray-900">Customer Records</td>
+                            <td class="px-6 py-4 text-center text-sm text-gray-600">100</td>
+                            <td class="px-6 py-4 text-center text-sm text-gray-600">1,000</td>
+                            <td class="px-6 py-4 text-center text-sm text-gray-600">Unlimited</td>
                         </tr>
                         <tr>
-                            <td class="py-4 px-6 text-sm text-gray-900">Team Calendar</td>
-                            <td class="py-4 px-6 text-center">✓</td>
-                            <td class="py-4 px-6 text-center">✓</td>
-                            <td class="py-4 px-6 text-center">✓</td>
+                            <td class="px-6 py-4 text-sm text-gray-900">Mobile App</td>
+                            <td class="px-6 py-4 text-center text-sm text-gray-600">—</td>
+                            <td class="px-6 py-4 text-center text-sm text-green-600">✓</td>
+                            <td class="px-6 py-4 text-center text-sm text-green-600">✓</td>
+                        </tr>
+                        <tr class="bg-gray-50">
+                            <td class="px-6 py-4 text-sm text-gray-900">API Access</td>
+                            <td class="px-6 py-4 text-center text-sm text-gray-600">—</td>
+                            <td class="px-6 py-4 text-center text-sm text-gray-600">—</td>
+                            <td class="px-6 py-4 text-center text-sm text-green-600">✓</td>
                         </tr>
                         <tr>
-                            <td class="py-4 px-6 text-sm text-gray-900">SMS Notifications</td>
-                            <td class="py-4 px-6 text-center">—</td>
-                            <td class="py-4 px-6 text-center">✓</td>
-                            <td class="py-4 px-6 text-center">✓</td>
-                        </tr>
-                        <tr>
-                            <td class="py-4 px-6 text-sm text-gray-900">Custom Branding</td>
-                            <td class="py-4 px-6 text-center">—</td>
-                            <td class="py-4 px-6 text-center">✓</td>
-                            <td class="py-4 px-6 text-center">✓</td>
-                        </tr>
-                        <tr>
-                            <td class="py-4 px-6 text-sm text-gray-900">API Access</td>
-                            <td class="py-4 px-6 text-center">—</td>
-                            <td class="py-4 px-6 text-center">—</td>
-                            <td class="py-4 px-6 text-center">✓</td>
+                            <td class="px-6 py-4 text-sm text-gray-900">Custom Integrations</td>
+                            <td class="px-6 py-4 text-center text-sm text-gray-600">—</td>
+                            <td class="px-6 py-4 text-center text-sm text-gray-600">—</td>
+                            <td class="px-6 py-4 text-center text-sm text-green-600">✓</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
+    </section>
 
-        <!-- FAQ Section -->
-        <div class="mt-20">
-            <h2 class="text-2xl font-bold text-center mb-12">Frequently Asked Questions</h2>
-            <div class="max-w-3xl mx-auto space-y-6">
-                <div class="border-b border-gray-200 pb-6">
-                    <h3 class="text-lg font-semibold mb-2">Can I change plans later?</h3>
-                    <p class="text-gray-600">Yes, you can upgrade or downgrade your plan at any time. Changes take effect at the start of your next billing cycle.</p>
+    <!-- FAQ Section -->
+    <section class="py-20 bg-white">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
+            </div>
+
+            <div class="space-y-6">
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Can I change plans at any time?</h3>
+                    <p class="text-gray-600">Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately and we'll prorate any billing adjustments.</p>
                 </div>
-                <div class="border-b border-gray-200 pb-6">
-                    <h3 class="text-lg font-semibold mb-2">Is there a free trial?</h3>
-                    <p class="text-gray-600">Yes, all plans come with a 14-day free trial. No credit card required to start.</p>
+
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Is there a setup fee?</h3>
+                    <p class="text-gray-600">No setup fees for any plan. We'll help you get started with free onboarding and data migration assistance.</p>
                 </div>
-                <div class="border-b border-gray-200 pb-6">
-                    <h3 class="text-lg font-semibold mb-2">What payment methods do you accept?</h3>
-                    <p class="text-gray-600">We accept all major credit cards, including Visa, Mastercard, and American Express.</p>
+
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">What payment methods do you accept?</h3>
+                    <p class="text-gray-600">We accept all major credit cards and ACH payments. Enterprise customers can also pay by invoice.</p>
+                </div>
+
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Can I cancel anytime?</h3>
+                    <p class="text-gray-600">Yes, you can cancel your subscription at any time. Your account will remain active until the end of your billing period.</p>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20 bg-green-600">
+        <div class="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-6">
+                Ready to Get Started?
+            </h2>
+            <p class="text-xl text-green-100 mb-8">
+                Start your 14-day free trial today. No credit card required.
+            </p>
+            <a href="#" class="inline-block bg-white hover:bg-gray-100 text-green-600 px-8 py-4 rounded-lg text-lg font-semibold transition-colors">
+                Start Free Trial
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div class="col-span-1 md:col-span-2">
+                    <h3 class="text-2xl font-bold mb-4">
+                        <span class="text-green-500">Shade</span>tree
+                    </h3>
+                    <p class="text-gray-300 mb-6 max-w-md">
+                        Streamline your service business operations with our comprehensive management platform.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Product</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-300 hover:text-green-500 transition-colors">Features</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-green-500 transition-colors">Pricing</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-green-500 transition-colors">Integrations</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Company</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-300 hover:text-green-500 transition-colors">About</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-green-500 transition-colors">Contact</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-green-500 transition-colors">Careers</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 pt-8 mt-8 text-center">
+                <p class="text-gray-400 text-sm">© 2025 Shadetree. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Billing toggle functionality
+        const toggle = document.getElementById('billing-toggle');
+        const toggleDot = document.getElementById('toggle-dot');
+        const starterPrice = document.getElementById('starter-price');
+        const professionalPrice = document.getElementById('professional-price');
+        const enterprisePrice = document.getElementById('enterprise-price');
+
+        let isAnnual = false;
+
+        toggle.addEventListener('click', function() {
+            isAnnual = !isAnnual;
+
+            if (isAnnual) {
+                toggle.classList.add('bg-green-600');
+                toggle.classList.remove('bg-gray-200');
+                toggleDot.classList.add('translate-x-5');
+
+                starterPrice.textContent = '$39';
+                professionalPrice.textContent = '$79';
+                enterprisePrice.textContent = '$159';
+            } else {
+                toggle.classList.remove('bg-green-600');
+                toggle.classList.add('bg-gray-200');
+                toggleDot.classList.remove('translate-x-5');
+
+                starterPrice.textContent = '$49';
+                professionalPrice.textContent = '$99';
+                enterprisePrice.textContent = '$199';
+            }
+        });
+    </script>
 </body>
 </html>

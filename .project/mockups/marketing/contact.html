@@ -3,584 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contact Us - ShadeTree Support</title>
-    <meta name="description" content="Get in touch with ShadeTree support. We're here to help you succeed with your service business.">
-    <style>
-        /* Reset and base styles */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
-            line-height: 1.6;
-            color: #2d3748;
-            background-color: #ffffff;
-        }
-
-        /* Header placeholder */
-        .header-placeholder {
-            height: 70px;
-            background-color: #f8f9fa;
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #718096;
-            font-size: 0.9rem;
-        }
-
-        /* Page Header */
-        .page-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 3rem 2rem;
-            text-align: center;
-        }
-
-        .page-header-container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .page-header h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-        }
-
-        .page-header p {
-            font-size: 1.2rem;
-            opacity: 0.9;
-        }
-
-        /* Contact Options */
-        .contact-options {
-            padding: 4rem 2rem;
-            background-color: #f8f9fa;
-        }
-
-        .contact-container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .options-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-bottom: 3rem;
-        }
-
-        .contact-option {
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            text-align: center;
-            transition: transform 0.2s ease;
-        }
-
-        .contact-option:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-        }
-
-        .contact-icon {
-            width: 60px;
-            height: 60px;
-            background-color: #e6f7ff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1.5rem;
-            font-size: 2rem;
-        }
-
-        .contact-option h3 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            color: #2d3748;
-        }
-
-        .contact-option p {
-            color: #718096;
-            margin-bottom: 1.5rem;
-        }
-
-        .contact-button {
-            background-color: #4299e1;
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .contact-button:hover {
-            background-color: #3182ce;
-        }
-
-        /* Contact Form Section */
-        .contact-form-section {
-            padding: 4rem 2rem;
-            background-color: white;
-        }
-
-        .form-container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .section-title {
-            text-align: center;
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            color: #2d3748;
-        }
-
-        .section-subtitle {
-            text-align: center;
-            font-size: 1.2rem;
-            color: #718096;
-            margin-bottom: 3rem;
-        }
-
-        .contact-form {
-            background-color: #f8f9fa;
-            padding: 2rem;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            color: #4a5568;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #cbd5e0;
-            border-radius: 4px;
-            font-size: 1rem;
-            transition: border-color 0.2s ease;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #4299e1;
-            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
-        }
-
-        .form-group textarea {
-            resize: vertical;
-            min-height: 120px;
-        }
-
-        .submit-button {
-            background-color: #48bb78;
-            color: white;
-            border: none;
-            padding: 1rem 2rem;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-            width: 100%;
-        }
-
-        .submit-button:hover {
-            background-color: #38a169;
-        }
-
-        /* FAQ Section */
-        .faq-section {
-            padding: 4rem 2rem;
-            background-color: #f8f9fa;
-        }
-
-        .faq-container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .faq-item {
-            background: white;
-            margin-bottom: 1rem;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .faq-question {
-            padding: 1.5rem;
-            background-color: white;
-            border: none;
-            width: 100%;
-            text-align: left;
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #2d3748;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: background-color 0.2s ease;
-        }
-
-        .faq-question:hover {
-            background-color: #f8f9fa;
-        }
-
-        .faq-answer {
-            padding: 0 1.5rem 1.5rem;
-            color: #4a5568;
-            line-height: 1.7;
-            display: none;
-        }
-
-        .faq-answer.show {
-            display: block;
-        }
-
-        .faq-icon {
-            transition: transform 0.2s ease;
-        }
-
-        .faq-icon.rotate {
-            transform: rotate(180deg);
-        }
-
-        /* Office Info */
-        .office-info {
-            padding: 4rem 2rem;
-            background-color: white;
-        }
-
-        .office-container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .office-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-
-        .office-card {
-            background-color: #f8f9fa;
-            padding: 2rem;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .office-card h3 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            color: #2d3748;
-        }
-
-        .office-card p {
-            color: #4a5568;
-            margin-bottom: 0.5rem;
-        }
-
-        /* Footer placeholder */
-        .footer-placeholder {
-            height: 300px;
-            background-color: #2d3748;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #a0aec0;
-            font-size: 0.9rem;
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .page-header h1 {
-                font-size: 2rem;
-            }
-
-            .section-title {
-                font-size: 2rem;
-            }
-
-            .options-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .office-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .page-header {
-                padding: 2rem 1rem;
-            }
-
-            .contact-options, .contact-form-section, .faq-section, .office-info {
-                padding: 3rem 1rem;
-            }
-
-            .contact-form {
-                padding: 1.5rem;
-            }
-        }
-    </style>
+    <title>Contact Us - Shadetree</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <!-- Header Placeholder -->
-    <div class="header-placeholder">
-        [Header Component - See components/header.html]
-    </div>
+<body class="bg-white">
+    <!-- Header Navigation -->
+    <header class="bg-white shadow-lg border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        <span class="text-green-600">Shade</span>tree
+                    </h1>
+                </div>
+                <nav class="hidden md:flex space-x-8">
+                    <a href="#" class="text-gray-700 hover:text-green-600 px-3 py-2 text-sm font-medium transition-colors">Features</a>
+                    <a href="#" class="text-gray-700 hover:text-green-600 px-3 py-2 text-sm font-medium transition-colors">Pricing</a>
+                    <a href="#" class="text-gray-700 hover:text-green-600 px-3 py-2 text-sm font-medium transition-colors">About</a>
+                    <a href="#" class="text-green-600 px-3 py-2 text-sm font-medium">Contact</a>
+                </nav>
+                <div class="hidden md:flex items-center space-x-4">
+                    <a href="#" class="text-gray-700 hover:text-green-600 px-3 py-2 text-sm font-medium transition-colors">Sign In</a>
+                    <a href="#" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm">
+                        Start Free Trial
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
 
-    <!-- Page Header -->
-    <section class="page-header">
-        <div class="page-header-container">
-            <h1>Get in Touch</h1>
-            <p>We're here to help you succeed. Choose the best way to reach us.</p>
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-br from-green-50 to-blue-50 py-16">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                Get in <span class="text-green-600">Touch</span>
+            </h1>
+            <p class="text-xl text-gray-600">
+                Have questions? We're here to help you succeed with Shadetree.
+            </p>
         </div>
     </section>
 
     <!-- Contact Options -->
-    <section class="contact-options">
-        <div class="contact-container">
-            <div class="options-grid">
-                <div class="contact-option">
-                    <div class="contact-icon">💬</div>
-                    <h3>Live Chat</h3>
-                    <p>Get instant help from our support team. Available Monday through Friday, 9 AM - 6 PM EST.</p>
-                    <a href="#" class="contact-button">Start Chat</a>
+    <section class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+
+                <!-- Contact Form -->
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Send us a message</h2>
+                    <form class="space-y-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="first-name" class="block text-sm font-medium text-gray-700 mb-1">
+                                    First name
+                                </label>
+                                <input type="text" id="first-name" name="first-name" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                            </div>
+                            <div>
+                                <label for="last-name" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Last name
+                                </label>
+                                <input type="text" id="last-name" name="last-name" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+                                Email address
+                            </label>
+                            <input type="email" id="email" name="email" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        </div>
+
+                        <div>
+                            <label for="company" class="block text-sm font-medium text-gray-700 mb-1">
+                                Company name
+                            </label>
+                            <input type="text" id="company" name="company"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        </div>
+
+                        <div>
+                            <label for="subject" class="block text-sm font-medium text-gray-700 mb-1">
+                                Subject
+                            </label>
+                            <select id="subject" name="subject" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                <option value="">Select a topic</option>
+                                <option value="sales">Sales Inquiry</option>
+                                <option value="support">Technical Support</option>
+                                <option value="billing">Billing Question</option>
+                                <option value="partnership">Partnership</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="message" class="block text-sm font-medium text-gray-700 mb-1">
+                                Message
+                            </label>
+                            <textarea id="message" name="message" rows="4" required
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                      placeholder="Tell us how we can help you..."></textarea>
+                        </div>
+
+                        <div>
+                            <button type="submit"
+                                    class="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-md font-semibold transition-colors">
+                                Send Message
+                            </button>
+                        </div>
+                    </form>
                 </div>
 
-                <div class="contact-option">
-                    <div class="contact-icon">📧</div>
-                    <h3>Email Support</h3>
-                    <p>Send us a detailed message and we'll respond within 24 hours. Perfect for complex questions.</p>
-                    <a href="mailto:support@getshadetree.com" class="contact-button">Send Email</a>
-                </div>
+                <!-- Contact Information -->
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Other ways to reach us</h2>
 
-                <div class="contact-option">
-                    <div class="contact-icon">📞</div>
-                    <h3>Phone Support</h3>
-                    <p>Speak directly with our support team for urgent issues or personalized assistance.</p>
-                    <a href="tel:+1-555-123-4567" class="contact-button">Call Now</a>
+                    <div class="space-y-8">
+                        <!-- Phone Support -->
+                        <div class="flex items-start">
+                            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                                <div class="w-6 h-6 bg-green-600 rounded"></div>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">Phone Support</h3>
+                                <p class="text-gray-600 mb-2">Talk to our support team</p>
+                                <p class="text-green-600 font-medium">1-800-SHADE-TREE</p>
+                                <p class="text-sm text-gray-500">Monday - Friday, 8am - 6pm EST</p>
+                            </div>
+                        </div>
+
+                        <!-- Email Support -->
+                        <div class="flex items-start">
+                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                                <div class="w-6 h-6 bg-blue-600 rounded"></div>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">Email Support</h3>
+                                <p class="text-gray-600 mb-2">Send us an email anytime</p>
+                                <p class="text-blue-600 font-medium">support@shadetree.com</p>
+                                <p class="text-sm text-gray-500">We typically respond within 2 hours</p>
+                            </div>
+                        </div>
+
+                        <!-- Live Chat -->
+                        <div class="flex items-start">
+                            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                                <div class="w-6 h-6 bg-purple-600 rounded"></div>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">Live Chat</h3>
+                                <p class="text-gray-600 mb-2">Chat with us in real-time</p>
+                                <button class="text-purple-600 font-medium hover:text-purple-700">Start Live Chat</button>
+                                <p class="text-sm text-gray-500">Available 24/7</p>
+                            </div>
+                        </div>
+
+                        <!-- Schedule Demo -->
+                        <div class="flex items-start">
+                            <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mr-4">
+                                <div class="w-6 h-6 bg-yellow-600 rounded"></div>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">Schedule a Demo</h3>
+                                <p class="text-gray-600 mb-2">See Shadetree in action</p>
+                                <button class="text-yellow-600 font-medium hover:text-yellow-700">Book Demo Call</button>
+                                <p class="text-sm text-gray-500">30-minute personalized demo</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
-
-    <!-- Contact Form -->
-    <section class="contact-form-section">
-        <div class="form-container">
-            <h2 class="section-title">Send Us a Message</h2>
-            <p class="section-subtitle">
-                Fill out the form below and we'll get back to you as soon as possible.
-            </p>
-
-            <form class="contact-form" method="POST" action="/contact">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="first-name">First Name *</label>
-                        <input type="text" id="first-name" name="first_name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="last-name">Last Name *</label>
-                        <input type="text" id="last-name" name="last_name" required>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="email">Email Address *</label>
-                        <input type="email" id="email" name="email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="phone">Phone Number</label>
-                        <input type="tel" id="phone" name="phone">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="business-type">Business Type</label>
-                    <select id="business-type" name="business_type">
-                        <option value="">Select your business type</option>
-                        <option value="home-services">Home Services</option>
-                        <option value="personal-care">Personal Care</option>
-                        <option value="professional-services">Professional Services</option>
-                        <option value="mobile-services">Mobile Services</option>
-                        <option value="other">Other</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="subject">Subject *</label>
-                    <input type="text" id="subject" name="subject" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="message">Message *</label>
-                    <textarea id="message" name="message" placeholder="Tell us how we can help you..." required></textarea>
-                </div>
-
-                <button type="submit" class="submit-button">Send Message</button>
-            </form>
         </div>
     </section>
 
     <!-- FAQ Section -->
-    <section class="faq-section">
-        <div class="faq-container">
-            <h2 class="section-title">Frequently Asked Questions</h2>
-            <p class="section-subtitle">
-                Quick answers to common questions about ShadeTree.
-            </p>
-
-            <div class="faq-item">
-                <button class="faq-question">
-                    How quickly can I get started with ShadeTree?
-                    <span class="faq-icon">▼</span>
-                </button>
-                <div class="faq-answer">
-                    You can be up and running in under 15 minutes. Our setup wizard guides you through the initial configuration, and you can start accepting bookings immediately.
-                </div>
+    <section class="py-20 bg-gray-50">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
+                <p class="text-lg text-gray-600">Quick answers to common questions</p>
             </div>
 
-            <div class="faq-item">
-                <button class="faq-question">
-                    Do you offer training for new users?
-                    <span class="faq-icon">▼</span>
-                </button>
-                <div class="faq-answer">
-                    Yes! We provide free onboarding sessions, video tutorials, and comprehensive documentation. Our support team is also available to help you get the most out of ShadeTree.
+            <div class="space-y-6">
+                <div class="bg-white rounded-lg p-6 shadow-sm">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">How long does implementation take?</h3>
+                    <p class="text-gray-600">Most customers are up and running within 1-2 weeks. We provide free onboarding and data migration assistance to ensure a smooth transition.</p>
                 </div>
-            </div>
 
-            <div class="faq-item">
-                <button class="faq-question">
-                    Can I import my existing customer data?
-                    <span class="faq-icon">▼</span>
-                </button>
-                <div class="faq-answer">
-                    Absolutely. We support CSV imports and can help you migrate data from most popular business management systems. Contact our support team for assistance.
+                <div class="bg-white rounded-lg p-6 shadow-sm">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Do you offer training for my team?</h3>
+                    <p class="text-gray-600">Yes! We provide comprehensive training sessions, documentation, and ongoing support to ensure your team gets the most out of Shadetree.</p>
                 </div>
-            </div>
 
-            <div class="faq-item">
-                <button class="faq-question">
-                    What payment methods do you accept?
-                    <span class="faq-icon">▼</span>
-                </button>
-                <div class="faq-answer">
-                    We accept all major credit cards, bank transfers, and popular digital payment methods. Your customers can pay online securely through our integrated payment system.
+                <div class="bg-white rounded-lg p-6 shadow-sm">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Can I import my existing customer data?</h3>
+                    <p class="text-gray-600">Absolutely. Our team will help you migrate your existing customer data, scheduling information, and historical records from your current system.</p>
                 </div>
-            </div>
 
-            <div class="faq-item">
-                <button class="faq-question">
-                    Is my data secure with ShadeTree?
-                    <span class="faq-icon">▼</span>
-                </button>
-                <div class="faq-answer">
-                    Yes. We use enterprise-grade security measures including SSL encryption, regular backups, and comply with industry standards for data protection.
+                <div class="bg-white rounded-lg p-6 shadow-sm">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">What integrations do you support?</h3>
+                    <p class="text-gray-600">We integrate with popular accounting software (QuickBooks, Xero), payment processors (Square, Stripe), and many other business tools. Contact us for specific integration questions.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Office Information -->
-    <section class="office-info">
-        <div class="office-container">
-            <h2 class="section-title">Our Offices</h2>
-            <div class="office-grid">
-                <div class="office-card">
-                    <h3>🏢 Headquarters</h3>
-                    <p><strong>Address:</strong> 123 Business Ave, Suite 100<br>
-                    San Francisco, CA 94102</p>
-                    <p><strong>Phone:</strong> +1 (555) 123-4567</p>
-                    <p><strong>Hours:</strong> Monday - Friday, 9 AM - 6 PM PST</p>
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div class="col-span-1 md:col-span-2">
+                    <h3 class="text-2xl font-bold mb-4">
+                        <span class="text-green-500">Shade</span>tree
+                    </h3>
+                    <p class="text-gray-300 mb-6 max-w-md">
+                        Streamline your service business operations with our comprehensive management platform.
+                    </p>
                 </div>
-
-                <div class="office-card">
-                    <h3>🌍 Support Center</h3>
-                    <p><strong>Email:</strong> support@getshadetree.com</p>
-                    <p><strong>Response Time:</strong> Within 24 hours</p>
-                    <p><strong>Live Chat:</strong> Monday - Friday, 9 AM - 6 PM EST</p>
-                    <p><strong>Emergency Support:</strong> Available for Enterprise customers</p>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Product</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-300 hover:text-green-500 transition-colors">Features</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-green-500 transition-colors">Pricing</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-green-500 transition-colors">Integrations</a></li>
+                    </ul>
                 </div>
-
-                <div class="office-card">
-                    <h3>💼 Sales Team</h3>
-                    <p><strong>Email:</strong> sales@getshadetree.com</p>
-                    <p><strong>Phone:</strong> +1 (555) 123-4568</p>
-                    <p><strong>Hours:</strong> Monday - Friday, 8 AM - 7 PM EST</p>
-                    <p><strong>Demo Calls:</strong> Available by appointment</p>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Company</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-300 hover:text-green-500 transition-colors">About</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-green-500 transition-colors">Contact</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-green-500 transition-colors">Careers</a></li>
+                    </ul>
                 </div>
             </div>
+            <div class="border-t border-gray-800 pt-8 mt-8 text-center">
+                <p class="text-gray-400 text-sm">© 2025 Shadetree. All rights reserved.</p>
+            </div>
         </div>
-    </section>
-
-    <!-- Footer Placeholder -->
-    <div class="footer-placeholder">
-        [Footer Component - See components/footer.html]
-    </div>
-
-    <!-- Simple JavaScript for FAQ functionality -->
-    <script>
-        document.querySelectorAll('.faq-question').forEach(button => {
-            button.addEventListener('click', () => {
-                const answer = button.nextElementSibling;
-                const icon = button.querySelector('.faq-icon');
-
-                // Toggle answer visibility
-                answer.classList.toggle('show');
-                icon.classList.toggle('rotate');
-
-                // Close other open FAQs
-                document.querySelectorAll('.faq-question').forEach(otherButton => {
-                    if (otherButton !== button) {
-                        const otherAnswer = otherButton.nextElementSibling;
-                        const otherIcon = otherButton.querySelector('.faq-icon');
-                        otherAnswer.classList.remove('show');
-                        otherIcon.classList.remove('rotate');
-                    }
-                });
-            });
-        });
-    </script>
+    </footer>
 </body>
 </html>
-

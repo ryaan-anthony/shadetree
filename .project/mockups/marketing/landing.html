@@ -3,430 +3,226 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ShadeTree - Simplify Your Service Business Booking</title>
-    <meta name="description" content="ShadeTree makes booking management simple for service businesses. Start your free trial today.">
-    <style>
-        /* Reset and base styles */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
-            line-height: 1.6;
-            color: #2d3748;
-            background-color: #ffffff;
-        }
-
-        /* Header placeholder styles */
-        .header-placeholder {
-            height: 70px;
-            background-color: #f8f9fa;
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #718096;
-            font-size: 0.9rem;
-        }
-
-        /* Hero Section */
-        .hero {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 4rem 2rem;
-            text-align: center;
-            min-height: 70vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .hero-container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .hero h1 {
-            font-size: 3rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            line-height: 1.2;
-        }
-
-        .hero-subtitle {
-            font-size: 1.25rem;
-            margin-bottom: 2rem;
-            opacity: 0.9;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .cta-primary {
-            background-color: #48bb78;
-            color: white;
-            border: none;
-            padding: 1rem 2.5rem;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-decoration: none;
-            display: inline-block;
-            margin: 0.5rem;
-        }
-
-        .cta-primary:hover {
-            background-color: #38a169;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
-        }
-
-        .cta-secondary {
-            background-color: transparent;
-            color: white;
-            border: 2px solid white;
-            padding: 1rem 2.5rem;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-decoration: none;
-            display: inline-block;
-            margin: 0.5rem;
-        }
-
-        .cta-secondary:hover {
-            background-color: white;
-            color: #667eea;
-        }
-
-        /* Features Section */
-        .features {
-            padding: 5rem 2rem;
-            background-color: #f8f9fa;
-        }
-
-        .features-container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .section-title {
-            text-align: center;
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            color: #2d3748;
-        }
-
-        .section-subtitle {
-            text-align: center;
-            font-size: 1.2rem;
-            color: #718096;
-            margin-bottom: 3rem;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-top: 3rem;
-        }
-
-        .feature-card {
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            text-align: center;
-            transition: transform 0.2s ease;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-        }
-
-        .feature-icon {
-            width: 60px;
-            height: 60px;
-            background-color: #e6fffa;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1.5rem;
-            font-size: 2rem;
-        }
-
-        .feature-card h3 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            color: #2d3748;
-        }
-
-        .feature-card p {
-            color: #718096;
-            line-height: 1.7;
-        }
-
-        /* Social Proof Section */
-        .social-proof {
-            padding: 4rem 2rem;
-            background-color: white;
-        }
-
-        .social-proof-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            text-align: center;
-        }
-
-        .testimonials {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-top: 3rem;
-        }
-
-        .testimonial {
-            background-color: #f8f9fa;
-            padding: 2rem;
-            border-radius: 8px;
-            border-left: 4px solid #4299e1;
-        }
-
-        .testimonial-text {
-            font-style: italic;
-            margin-bottom: 1rem;
-            color: #4a5568;
-            font-size: 1.1rem;
-        }
-
-        .testimonial-author {
-            font-weight: 600;
-            color: #2d3748;
-        }
-
-        .testimonial-company {
-            font-size: 0.9rem;
-            color: #718096;
-        }
-
-        /* CTA Section */
-        .cta-section {
-            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
-            color: white;
-            padding: 4rem 2rem;
-            text-align: center;
-        }
-
-        .cta-container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .cta-section h2 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .cta-section p {
-            font-size: 1.2rem;
-            margin-bottom: 2rem;
-            opacity: 0.9;
-        }
-
-        /* Footer placeholder */
-        .footer-placeholder {
-            height: 300px;
-            background-color: #2d3748;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #a0aec0;
-            font-size: 0.9rem;
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 2rem;
-            }
-
-            .hero-subtitle {
-                font-size: 1.1rem;
-            }
-
-            .cta-primary, .cta-secondary {
-                display: block;
-                margin: 0.5rem auto;
-                max-width: 280px;
-            }
-
-            .section-title {
-                font-size: 2rem;
-            }
-
-            .features-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .testimonials {
-                grid-template-columns: 1fr;
-            }
-
-            .cta-section h2 {
-                font-size: 2rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .hero {
-                padding: 3rem 1rem;
-            }
-
-            .features, .social-proof, .cta-section {
-                padding: 3rem 1rem;
-            }
-
-            .hero h1 {
-                font-size: 1.75rem;
-            }
-        }
-    </style>
+    <title>Shadetree - Streamline Your Service Business</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <!-- Header Placeholder (will be replaced with actual header component) -->
-    <div class="header-placeholder">
-        [Header Component - See components/header.html]
-    </div>
+<body class="bg-white">
+    <!-- Header Navigation -->
+    <header class="bg-white shadow-lg border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        <span class="text-green-600">Shade</span>tree
+                    </h1>
+                </div>
+                <nav class="hidden md:flex space-x-8">
+                    <a href="#" class="text-gray-700 hover:text-green-600 px-3 py-2 text-sm font-medium transition-colors">Features</a>
+                    <a href="#" class="text-gray-700 hover:text-green-600 px-3 py-2 text-sm font-medium transition-colors">Pricing</a>
+                    <a href="#" class="text-gray-700 hover:text-green-600 px-3 py-2 text-sm font-medium transition-colors">About</a>
+                    <a href="#" class="text-gray-700 hover:text-green-600 px-3 py-2 text-sm font-medium transition-colors">Contact</a>
+                </nav>
+                <div class="hidden md:flex items-center space-x-4">
+                    <a href="#" class="text-gray-700 hover:text-green-600 px-3 py-2 text-sm font-medium transition-colors">Sign In</a>
+                    <a href="#" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm">
+                        Start Free Trial
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
 
     <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-container">
-            <h1>Simplify Your Service Business Booking</h1>
-            <p class="hero-subtitle">
-                ShadeTree streamlines appointment scheduling, customer management, and business operations
-                for service professionals. Focus on what you do best while we handle the rest.
-            </p>
-            <div>
-                <a href="/register" class="cta-primary">Start Your Free Trial</a>
-                <a href="#features" class="cta-secondary">See How It Works</a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section id="features" class="features">
-        <div class="features-container">
-            <h2 class="section-title">Everything You Need to Grow</h2>
-            <p class="section-subtitle">
-                Built specifically for service businesses, ShadeTree provides all the tools you need
-                to manage bookings, customers, and operations efficiently.
-            </p>
-
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">📅</div>
-                    <h3>Smart Scheduling</h3>
-                    <p>Automated booking system that prevents double-bookings and optimizes your calendar. Customers can book 24/7 while you sleep.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">👥</div>
-                    <h3>Customer Management</h3>
-                    <p>Keep detailed customer profiles, service history, and preferences in one place. Build stronger relationships with better data.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">💳</div>
-                    <h3>Payment Processing</h3>
-                    <p>Accept payments online, send invoices automatically, and track revenue. Get paid faster with integrated payment solutions.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h3>Business Insights</h3>
-                    <p>Track performance with detailed analytics. Understand your best customers, peak times, and revenue trends.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">📱</div>
-                    <h3>Mobile Ready</h3>
-                    <p>Manage your business on the go. Full mobile experience for both you and your customers.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">🔧</div>
-                    <h3>Easy Setup</h3>
-                    <p>Get started in minutes, not hours. No technical knowledge required. We'll help you every step of the way.</p>
+    <section class="bg-gradient-to-br from-green-50 to-blue-50 py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h1 class="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+                    Streamline Your <span class="text-green-600">Service Business</span>
+                </h1>
+                <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+                    From scheduling and dispatching to invoicing and customer management, Shadetree provides everything you need to run your service business efficiently.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="#" class="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors shadow-lg">
+                        Start Free 14-Day Trial
+                    </a>
+                    <a href="#" class="bg-white hover:bg-gray-50 text-gray-900 px-8 py-4 rounded-lg text-lg font-semibold border border-gray-300 transition-colors">
+                        Watch Demo
+                    </a>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Social Proof Section -->
-    <section class="social-proof">
-        <div class="social-proof-container">
-            <h2 class="section-title">Trusted by Service Professionals</h2>
-            <p class="section-subtitle">
-                Join thousands of service businesses who have simplified their operations with ShadeTree.
-            </p>
+    <!-- Features Highlights -->
+    <section class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                    Everything You Need to Grow
+                </h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                    Powerful features designed specifically for service businesses
+                </p>
+            </div>
 
-            <div class="testimonials">
-                <div class="testimonial">
-                    <p class="testimonial-text">
-                        "ShadeTree transformed how we handle bookings. We've reduced no-shows by 40% and
-                        increased our booking rate significantly. The automated reminders are a game-changer."
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="text-center p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
+                    <div class="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <div class="w-8 h-8 bg-green-600 rounded"></div>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Smart Scheduling</h3>
+                    <p class="text-gray-600">
+                        Optimize routes, manage appointments, and dispatch crews with intelligent scheduling algorithms.
                     </p>
-                    <div class="testimonial-author">Sarah Johnson</div>
-                    <div class="testimonial-company">Johnson's Landscaping Services</div>
                 </div>
 
-                <div class="testimonial">
-                    <p class="testimonial-text">
-                        "The customer management features are incredible. We can track service history,
-                        preferences, and even set up recurring appointments. Our customers love the convenience."
+                <!-- Feature 2 -->
+                <div class="text-center p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
+                    <div class="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <div class="w-8 h-8 bg-blue-600 rounded"></div>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Customer Management</h3>
+                    <p class="text-gray-600">
+                        Track customer history, preferences, and communications in one centralized location.
                     </p>
-                    <div class="testimonial-author">Mike Rodriguez</div>
-                    <div class="testimonial-company">Elite Home Cleaning</div>
                 </div>
 
-                <div class="testimonial">
-                    <p class="testimonial-text">
-                        "Setup was so easy, and the support team is fantastic. We were up and running
-                        the same day. The mobile app lets me manage everything from job sites."
+                <!-- Feature 3 -->
+                <div class="text-center p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
+                    <div class="w-16 h-16 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <div class="w-8 h-8 bg-purple-600 rounded"></div>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Automated Invoicing</h3>
+                    <p class="text-gray-600">
+                        Generate professional invoices automatically and track payments with ease.
                     </p>
-                    <div class="testimonial-author">Jennifer Chen</div>
-                    <div class="testimonial-company">Precision Plumbing Co.</div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Call to Action Section -->
-    <section class="cta-section">
-        <div class="cta-container">
-            <h2>Ready to Simplify Your Business?</h2>
-            <p>Start your free 14-day trial today. No credit card required. Cancel anytime.</p>
-            <a href="/register" class="cta-primary">Start Free Trial Now</a>
+    <!-- Testimonials -->
+    <section class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                    Trusted by Service Professionals
+                </h2>
+                <p class="text-xl text-gray-600">
+                    See what our customers are saying
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Testimonial 1 -->
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <div class="flex text-yellow-400 mb-4">
+                        <span>★★★★★</span>
+                    </div>
+                    <p class="text-gray-600 mb-6">
+                        "Shadetree has transformed how we manage our landscaping business. Scheduling is now effortless and our customers love the automated updates."
+                    </p>
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-gray-300 rounded-full mr-4"></div>
+                        <div>
+                            <p class="font-semibold text-gray-900">Sarah Johnson</p>
+                            <p class="text-gray-600 text-sm">Green Valley Landscaping</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 2 -->
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <div class="flex text-yellow-400 mb-4">
+                        <span>★★★★★</span>
+                    </div>
+                    <p class="text-gray-600 mb-6">
+                        "The invoicing features alone have saved us 10 hours per week. The customer portal is a game-changer for our HVAC business."
+                    </p>
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-gray-300 rounded-full mr-4"></div>
+                        <div>
+                            <p class="font-semibold text-gray-900">Mike Rodriguez</p>
+                            <p class="text-gray-600 text-sm">Climate Control Pro</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 3 -->
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <div class="flex text-yellow-400 mb-4">
+                        <span>★★★★★</span>
+                    </div>
+                    <p class="text-gray-600 mb-6">
+                        "Since switching to Shadetree, we've increased our booking efficiency by 40% and customer satisfaction has never been higher."
+                    </p>
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-gray-300 rounded-full mr-4"></div>
+                        <div>
+                            <p class="font-semibold text-gray-900">Lisa Chen</p>
+                            <p class="text-gray-600 text-sm">Elite Cleaning Services</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
-    <!-- Footer Placeholder (will be replaced with actual footer component) -->
-    <div class="footer-placeholder">
-        [Footer Component - See components/footer.html]
-    </div>
+    <!-- CTA Section -->
+    <section class="py-20 bg-green-600">
+        <div class="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-6">
+                Ready to Transform Your Business?
+            </h2>
+            <p class="text-xl text-green-100 mb-8">
+                Join thousands of service professionals who trust Shadetree to manage their operations.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="#" class="bg-white hover:bg-gray-100 text-green-600 px-8 py-4 rounded-lg text-lg font-semibold transition-colors">
+                    Start Your Free Trial
+                </a>
+                <a href="#" class="border-2 border-white hover:bg-white hover:text-green-600 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors">
+                    Schedule Demo
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div class="col-span-1 md:col-span-2">
+                    <h3 class="text-2xl font-bold mb-4">
+                        <span class="text-green-500">Shade</span>tree
+                    </h3>
+                    <p class="text-gray-300 mb-6 max-w-md">
+                        Streamline your service business operations with our comprehensive management platform.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Product</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-300 hover:text-green-500 transition-colors">Features</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-green-500 transition-colors">Pricing</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-green-500 transition-colors">Integrations</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Company</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-300 hover:text-green-500 transition-colors">About</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-green-500 transition-colors">Contact</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-green-500 transition-colors">Careers</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 pt-8 mt-8 text-center">
+                <p class="text-gray-400 text-sm">© 2025 Shadetree. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>
-
