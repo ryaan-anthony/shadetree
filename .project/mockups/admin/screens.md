@@ -295,3 +295,219 @@ Reusable UI components used across multiple screens.
 - Average task completion time < 3 minutes
 - User satisfaction score > 4.5/5
 - Support ticket reduction > 50%
+
+# Admin Portal Screen Inventory
+
+## Overview
+This document tracks all HTML mockups created for the Shadetree admin portal, organized by functional area and feature set.
+
+## Business Profile Management
+
+### Business Creation & Setup
+- **File**: `business-creation-setup.html`
+- **Purpose**: Multi-step wizard for creating new business profiles
+- **Features**: 
+  - Step 1 of 5 setup flow with progress indicator
+  - Business information form with validation
+  - Contact details and address capture
+  - Getting started tips and help section
+- **Status**: ✅ Complete
+
+### Business Configuration
+- **File**: `business-configuration.html`
+- **Purpose**: Comprehensive business settings and preferences management
+- **Features**:
+  - Business information editing
+  - Legal information (Tax ID, licenses)
+  - Operational preferences with toggle switches
+  - Service area management (ZIP codes and radius)
+  - Multi-business navigation support
+- **Status**: ✅ Complete
+
+### Business Branding & Customization
+- **File**: `business-branding.html`
+- **Purpose**: Brand identity management with live preview
+- **Features**:
+  - Logo upload and management
+  - Color palette customization with color pickers
+  - Real-time quote preview
+  - Branding checklist with completion tracking
+  - Typography and messaging settings
+- **Status**: ✅ Complete
+
+### Multi-Business Management
+- **File**: `multi-business-management.html`
+- **Purpose**: Portfolio overview for users managing multiple businesses
+- **Features**:
+  - Business portfolio dashboard with cards layout
+  - Business switcher dropdown in navigation
+  - Portfolio metrics (businesses, quotes, revenue)
+  - Individual business performance indicators
+  - Quick actions for bulk operations
+- **Status**: ✅ Complete
+
+## Staff Management
+
+### Staff Availability
+- **File**: `staff-availability.html`
+- **Purpose**: Manage staff schedules and time-off requests
+- **Features**:
+  - Weekly availability calendar view
+  - Staff member filtering
+  - Time-off request management
+  - Schedule conflict indicators
+- **Status**: ✅ Complete
+
+### Staff Overview
+- **File**: `staff-overview.html`
+- **Purpose**: Team member listing and management
+- **Features**:
+  - Staff directory with roles and status
+  - Contact information display
+  - Quick action buttons
+- **Status**: ✅ Complete
+
+### Staff Activity Tracking
+- **File**: `staff-activity.html`
+- **Purpose**: Monitor staff work activities and performance
+- **Features**:
+  - Activity timeline view
+  - Performance metrics
+  - Task completion tracking
+- **Status**: ✅ Complete
+
+### Staff Roles & Permissions
+- **File**: `staff-roles.html`
+- **Purpose**: Manage user roles and access permissions
+- **Features**:
+  - Role-based permission matrix
+  - User assignment interface
+  - Security access controls
+- **Status**: ✅ Complete
+
+## Services & Pricing
+
+### Service Catalog
+- **File**: `services-catalog.html`
+- **Purpose**: Manage service offerings and descriptions
+- **Features**:
+  - Service listing with categories
+  - Add/edit service forms
+  - Service status management
+- **Status**: ✅ Complete
+
+### Pricing Rules
+- **File**: `pricing-rules.html`
+- **Purpose**: Configure pricing strategies and customer tiers
+- **Features**:
+  - Price list management cards
+  - Customer type pricing (Standard, Commercial, Wholesale)
+  - Service-specific pricing matrix
+  - Discount percentage indicators
+- **Status**: ✅ Complete
+
+### Service Categories
+- **File**: `service-categories.html`
+- **Purpose**: Organize services into logical groupings
+- **Features**:
+  - Category overview cards with metrics
+  - Service count and average pricing
+  - Category management table
+  - Color-coded visual organization
+- **Status**: ✅ Complete
+
+### Quote Templates
+- **File**: `quote-templates.html`
+- **Purpose**: Manage standardized quote layouts and branding
+- **Features**:
+  - Template type overview (Standard, Detailed, Simple, Custom)
+  - Template library with previews
+  - Usage statistics and last used dates
+  - Template variable guidance
+- **Status**: ✅ Complete
+
+## Dashboard & Analytics
+
+### Admin Dashboard
+- **File**: `admin-dashboard.html`
+- **Purpose**: Main overview screen with key metrics
+- **Features**:
+  - Key performance indicators
+  - Recent activity feeds
+  - Quick access to common tasks
+- **Status**: ✅ Complete
+
+### Dashboard Metrics
+- **File**: `dashboard-metrics.html`
+- **Purpose**: Detailed analytics and reporting interface
+- **Features**:
+  - Revenue and performance charts
+  - Trend analysis
+  - Exportable reports
+- **Status**: ✅ Complete
+
+## Business Information
+
+### Company Information
+- **File**: `business-company-info.html`
+- **Purpose**: Basic company details and contact information
+- **Features**:
+  - Company profile editing
+  - Contact details management
+  - Business description
+- **Status**: ✅ Complete
+
+### Business Hours & Service Areas
+- **File**: `business-hours-areas.html`
+- **Purpose**: Operating hours and geographic coverage
+- **Features**:
+  - Weekly schedule configuration
+  - Service territory mapping
+  - Holiday schedule management
+- **Status**: ✅ Complete
+
+## Shared Components
+
+### Navigation Components
+- **File**: `shared-navigation.html`
+- **Purpose**: Reusable navigation elements
+- **Features**:
+  - Sidebar navigation with business switcher
+  - Breadcrumb components
+  - User profile dropdown
+- **Status**: ✅ Complete
+
+### Modal Components
+- **File**: `shared-modals.html`
+- **Purpose**: Common modal dialogs and overlays
+- **Features**:
+  - Confirmation dialogs
+  - Form modals
+  - Loading states
+- **Status**: �� Complete
+
+## Screen Count Summary
+- **Total Screens**: 16
+- **Business Profile**: 4 screens
+- **Staff Management**: 4 screens  
+- **Services & Pricing**: 4 screens
+- **Dashboard & Analytics**: 2 screens
+- **Business Information**: 2 screens
+- **Shared Components**: 2 files
+
+## Design Standards
+All mockups follow consistent design patterns:
+- **Framework**: Tailwind CSS for styling
+- **Icons**: Feather Icons for consistent iconography
+- **Navigation**: Multi-business support with switcher dropdown
+- **Branding**: Green color scheme (#10B981 primary)
+- **Layout**: Responsive design with sidebar navigation
+- **Typography**: Clean, professional font hierarchy
+- **State Management**: Clear active/inactive states
+- **Enterprise Grade**: Professional appearance to build customer trust
+
+## Integration Notes
+- All screens include business context switching capability
+- Consistent navigation patterns across the admin portal
+- Shared CSS classes and component patterns for maintainability
+- Mobile-responsive design considerations throughout
