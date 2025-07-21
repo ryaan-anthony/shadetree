@@ -1,88 +1,100 @@
 # Epic: Business Profile Management
 
 ## Overview
-Enable users to create, configure, and manage multiple business entities within the Shadetree platform. This epic covers everything from initial business setup to ongoing profile management and multi-business operations for users who operate multiple service companies.
+Enable users to create and configure business entities with essential profile information, branding, and operational settings. Start with single-business setup for MVP, with multi-business capability planned for Growth Phase.
 
 ## Goals
-- Enable quick business creation and onboarding
-- Support multi-business management for entrepreneurs and franchises
-- Provide comprehensive business configuration options
-- Ensure proper data isolation between businesses
-- Create scalable business context switching
+- Enable quick business creation and onboarding (< 10 minutes)
+- Support essential business configuration
+- Provide basic branding and customization
+- Prepare foundation for multi-business operations
+- Ensure proper data isolation and security
 
 ## Success Metrics
 - Business setup completion time < 10 minutes
-- Multi-business adoption rate > 25% of active users
 - Business profile completeness rate > 90%
 - Cross-business data leakage incidents = 0
-- Business switching time < 2 seconds
+- Setup abandonment rate < 15%
 
 ## User Stories
-- As an entrepreneur, I want to create multiple business profiles so I can manage different service companies
+- As a new user, I want to create my business profile so I can start using the platform
 - As a business owner, I want to configure my business details so customers see professional information
-- As a franchise owner, I want to manage multiple locations with separate configurations
-- As a user, I want to easily switch between my businesses without losing context
-- As a business owner, I want to maintain separate staff, services, and customers for each business
+- As a business owner, I want to upload my logo and set brand colors for quotes and communications
+- As a user, I want to set my business hours and service areas so customers know when and where I'm available
 
 ## Features
 
-### 1. [Business Creation & Setup](business-profile/01-business-creation.md)
-Initial business creation workflow with guided setup process.
+### MVP Phase (P0 - Critical Path)
+1. [Business Creation & Setup](business-profile/01-business-creation.md) - Initial business creation with guided setup
+2. [Business Configuration](business-profile/02-business-configuration.md) - Essential business details and settings
+3. [Business Hours & Service Areas](business-profile/03-business-hours-areas.md) - Operating hours and service territories
 
-### 2. [Business Configuration](business-profile/02-business-configuration.md)
-Comprehensive business profile management including contact details, branding, and operational settings.
+### Growth Phase (P1 - Early Value)  
+4. [Business Branding & Customization](business-profile/04-business-branding.md) - Logo, colors, and branded materials
 
-### 3. [Business Hours & Service Areas](business-profile/03-business-hours-areas.md)
-Configure operating hours, service territories, and availability calendars.
-
-### 4. [Business Branding & Customization](business-profile/04-business-branding.md)
-Logo upload, color schemes, and custom branding elements for quotes and customer-facing materials.
-
-### 5. [Multi-Business Management](business-profile/05-multi-business-management.md)
-Core functionality for users to create, manage, and switch between multiple business entities.
+### Scale Phase (P2 - Advanced Features)
+5. [Multi-Business Management](business-profile/05-multi-business-management.md) - Multiple business entities for entrepreneurs
 
 ## Technical Architecture
 
 ### Core Models
-- `Business` - Main business entity with profile information
-- `BusinessOwnership` - Join model connecting users to businesses with roles
-- `User` - Extended to support multiple business relationships
+```ruby
+# MVP Models
+class Business < ApplicationRecord
+  belongs_to :owner, class_name: 'User'
+  has_many :business_users, dependent: :destroy
+  has_many :users, through: :business_users
+  has_many :services, dependent: :destroy
+  has_many :quotes, dependent: :destroy
+  
+  validates :name, :email, :phone, presence: true
+  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }
+  
+  enum status: { active: 0, inactive: 1, suspended: 2 }
+end
+
+class BusinessUser < ApplicationRecord
+  belongs_to :business
+  belongs_to :user
+  
+  validates :role, presence: true
+  enum role: { owner: 0, admin: 1, staff: 2 }
+end
+```
 
 ### Business Context
-All admin functionality must be scoped to the current business context to ensure proper data isolation and security.
-
-### Data Isolation Strategy
-- Business-scoped queries for all domain objects
-- Session-based business context switching
+- All admin functionality scoped to current business
+- Session-based business context for multi-business users
 - Role-based access control within each business
-- Audit logging for cross-business operations
+- Audit logging for sensitive operations
 
 ## Integration Points
 - Staff Management (business-scoped teams)
 - Service & Pricing (business-specific catalogs)
-- Customer Management (separate customer bases)
-- Quote Generation (business-branded templates)
-- Dashboard Analytics (business-specific metrics)
+- Admin Dashboard (business-specific metrics)
+- Custom Fields (business-specific field definitions)
 
 ## Security Considerations
-- Prevent cross-business data access
 - Validate business ownership on all operations
-- Audit business creation and deletion events
-- Secure business switching with proper authorization
+- Prevent cross-business data access
+- Audit business creation and sensitive changes
+- Secure file uploads for branding assets
 
-## Phase 1 (MVP)
-- Single business creation and configuration
-- Basic profile management
-- Essential business settings
-
-## Phase 2 (Multi-Business)
-- Multiple business support
-- Business context switching
-- Advanced role management
-- Business-specific customization
-
-## Out of Scope
+## MVP Scope Reduction
+**Removed from MVP:**
+- Complex multi-business switching UI
+- Advanced role hierarchies
 - Business-to-business relationships
-- Complex organizational hierarchies
-- Advanced workflow automation
 - Third-party business verification
+- Advanced workflow customization per business
+
+**Simplified for MVP:**
+- Single business creation flow
+- Basic role system (owner, admin, staff)
+- Essential business information only
+- Simple branding (logo upload only)
+
+## Phase Progression
+- **MVP**: Single business setup with essential features
+- **Growth**: Enhanced branding and basic multi-business
+- **Scale**: Advanced multi-business with complex role management

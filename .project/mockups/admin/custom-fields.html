@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Fields - Shadetree Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation Sidebar -->
+    <div class="flex h-screen bg-gray-50">
+        <div class="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
+            <div class="flex flex-col flex-grow bg-white border-r border-gray-200 pt-5 pb-4 overflow-y-auto">
+                <!-- Logo -->
+                <div class="flex items-center flex-shrink-0 px-4">
+                    <h1 class="text-xl font-bold text-gray-900">
+                        <span class="text-blue-600">Shade</span>tree
+                    </h1>
+                    <span class="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">MVP</span>
+                </div>
+
+                <!-- Business Info -->
+                <div class="mt-6 px-4">
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <p class="text-sm font-medium text-gray-900">Green Valley Landscaping</p>
+                        <p class="text-xs text-gray-500">Owner: John Smith</p>
+                    </div>
+                </div>
+
+                <!-- Navigation Menu -->
+                <nav class="mt-8 flex-1 px-2 space-y-1">
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="home" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Dashboard
+                    </a>
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="building" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Business Setup
+                    </a>
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="users" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Team Members
+                    </a>
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="tag" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Services & Pricing
+                    </a>
+
+                    <!-- MVP Phase Divider -->
+                    <div class="pt-4 mt-4 border-t border-gray-200">
+                        <p class="px-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Early Features</p>
+                    </div>
+
+                    <a href="#" class="bg-blue-100 text-blue-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="edit-3" class="text-blue-500 mr-3 h-5 w-5"></i>
+                        Custom Fields
+                        <span class="ml-auto text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">P1</span>
+                    </a>
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="mail" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Email Notifications
+                        <span class="ml-auto text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">P1</span>
+                    </a>
+                </nav>
+
+                <!-- Support Section -->
+                <div class="mt-auto px-2 py-4 border-t border-gray-200">
+                    <button class="w-full flex items-center px-2 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md">
+                        <i data-feather="help-circle" class="mr-3 h-5 w-5"></i>
+                        Help & Support
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="md:pl-64 flex flex-col flex-1">
+            <!-- Top Header -->
+            <div class="sticky top-0 z-10 bg-white shadow">
+                <div class="px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between h-16">
+                        <div class="flex items-center">
+                            <h1 class="text-2xl font-semibold text-gray-900">Custom Fields</h1>
+                            <span class="ml-3 text-sm text-gray-500">Customize your quote forms</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center">
+                                <i data-feather="plus" class="mr-2 h-4 w-4"></i>
+                                Add Field
+                            </button>
+                            <!-- User Menu -->
+                            <div class="relative">
+                                <button class="flex items-center text-sm text-gray-500 hover:text-gray-700">
+                                    <span class="mr-2">John Smith</span>
+                                    <i data-feather="chevron-down" class="h-4 w-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <main class="flex-1 py-6 px-4 sm:px-6 lg:px-8">
+                <!-- Info Banner -->
+                <div class="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i data-feather="info" class="h-5 w-5 text-blue-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-blue-800">Customize Your Quote Forms</h3>
+                            <div class="mt-2 text-sm text-blue-700">
+                                <p>Add custom fields to collect specific information from customers when they request quotes. Fields will appear on your public quote request form in the order shown below.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Custom Fields List -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-white shadow rounded-lg">
+                            <div class="px-4 py-5 sm:p-6">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h3 class="text-lg font-medium text-gray-900">Quote Form Fields</h3>
+                                    <span class="text-sm text-gray-500">Drag to reorder</span>
+                                </div>
+
+                                <!-- Custom Fields List -->
+                                <div id="fields-list" class="space-y-3">
+                                    <!-- Property Type Field -->
+                                    <div class="border border-gray-200 rounded-lg p-4 cursor-move hover:bg-gray-50">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center space-x-3">
+                                                <i data-feather="move" class="h-5 w-5 text-gray-400"></i>
+                                                <div>
+                                                    <p class="text-sm font-medium text-gray-900">Property Type</p>
+                                                    <p class="text-xs text-gray-500">Select field • Required</p>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center space-x-2">
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                    Active
+                                                </span>
+                                                <button class="text-gray-400 hover:text-gray-600">
+                                                    <i data-feather="edit-2" class="h-4 w-4"></i>
+                                                </button>
+                                                <button class="text-gray-400 hover:text-red-600">
+                                                    <i data-feather="trash-2" class="h-4 w-4"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2 ml-8">
+                                            <p class="text-xs text-gray-500">Options: Residential, Commercial, HOA</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Property Size Field -->
+                                    <div class="border border-gray-200 rounded-lg p-4 cursor-move hover:bg-gray-50">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center space-x-3">
+                                                <i data-feather="move" class="h-5 w-5 text-gray-400"></i>
+                                                <div>
+                                                    <p class="text-sm font-medium text-gray-900">Property Size (sq ft)</p>
+                                                    <p class="text-xs text-gray-500">Number field • Optional</p>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center space-x-2">
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                    Active
+                                                </span>
+                                                <button class="text-gray-400 hover:text-gray-600">
+                                                    <i data-feather="edit-2" class="h-4 w-4"></i>
+                                                </button>
+                                                <button class="text-gray-400 hover:text-red-600">
+                                                    <i data-feather="trash-2" class="h-4 w-4"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Special Instructions Field -->
+                                    <div class="border border-gray-200 rounded-lg p-4 cursor-move hover:bg-gray-50">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center space-x-3">
+                                                <i data-feather="move" class="h-5 w-5 text-gray-400"></i>
+                                                <div>
+                                                    <p class="text-sm font-medium text-gray-900">Special Instructions</p>
+                                                    <p class="text-xs text-gray-500">Text area • Optional</p>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center space-x-2">
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                    Active
+                                                </span>
+                                                <button class="text-gray-400 hover:text-gray-600">
+                                                    <i data-feather="edit-2" class="h-4 w-4"></i>
+                                                </button>
+                                                <button class="text-gray-400 hover:text-red-600">
+                                                    <i data-feather="trash-2" class="h-4 w-4"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Preferred Date Field -->
+                                    <div class="border border-gray-200 rounded-lg p-4 cursor-move hover:bg-gray-50">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center space-x-3">
+                                                <i data-feather="move" class="h-5 w-5 text-gray-400"></i>
+                                                <div>
+                                                    <p class="text-sm font-medium text-gray-900">Preferred Start Date</p>
+                                                    <p class="text-xs text-gray-500">Date field • Optional</p>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center space-x-2">
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                    Active
+                                                </span>
+                                                <button class="text-gray-400 hover:text-gray-600">
+                                                    <i data-feather="edit-2" class="h-4 w-4"></i>
+                                                </button>
+                                                <button class="text-gray-400 hover:text-red-600">
+                                                    <i data-feather="trash-2" class="h-4 w-4"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Add Field Button -->
+                                <button class="mt-6 w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                                    <i data-feather="plus" class="h-6 w-6 text-gray-400 mx-auto mb-2"></i>
+                                    <span class="text-sm text-gray-600">Add Custom Field</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Usage Stats -->
+                        <div class="mt-6 bg-white shadow rounded-lg">
+                            <div class="px-4 py-5 sm:p-6">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">Field Usage Analytics</h3>
+                                <div class="space-y-4">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-gray-600">Property Type</span>
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-24 bg-gray-200 rounded-full h-2">
+                                                <div class="bg-green-600 h-2 rounded-full" style="width: 95%"></div>
+                                            </div>
+                                            <span class="text-xs text-gray-500">95% completion</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-gray-600">Property Size</span>
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-24 bg-gray-200 rounded-full h-2">
+                                                <div class="bg-yellow-500 h-2 rounded-full" style="width: 67%"></div>
+                                            </div>
+                                            <span class="text-xs text-gray-500">67% completion</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-gray-600">Special Instructions</span>
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-24 bg-gray-200 rounded-full h-2">
+                                                <div class="bg-blue-600 h-2 rounded-full" style="width: 43%"></div>
+                                            </div>
+                                            <span class="text-xs text-gray-500">43% completion</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Preview -->
+                    <div class="lg:col-span-1">
+                        <div class="bg-white shadow rounded-lg sticky top-24">
+                            <div class="px-4 py-5 sm:p-6">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">Form Preview</h3>
+                                <p class="text-sm text-gray-500 mb-6">This is how your custom fields will appear to customers</p>
+
+                                <!-- Preview Form -->
+                                <div class="space-y-4">
+                                    <!-- Standard Fields -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                                        <input type="text" disabled class="block w-full border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-500" placeholder="Customer name">
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                                        <input type="email" disabled class="block w-full border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-500" placeholder="customer@email.com">
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
+                                        <input type="tel" disabled class="block w-full border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-500" placeholder="(555) 123-4567">
+                                    </div>
+
+                                    <!-- Custom Fields -->
+                                    <div class="border-t border-gray-200 pt-4">
+                                        <div class="mb-4">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Property Type *</label>
+                                            <select disabled class="block w-full border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-500">
+                                                <option>Select property type</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-4">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Property Size (sq ft)</label>
+                                            <input type="number" disabled class="block w-full border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-500" placeholder="e.g. 5000">
+                                        </div>
+
+                                        <div class="mb-4">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Special Instructions</label>
+                                            <textarea rows="3" disabled class="block w-full border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-500" placeholder="Any special requirements..."></textarea>
+                                        </div>
+
+                                        <div class="mb-4">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Preferred Start Date</label>
+                                            <input type="date" disabled class="block w-full border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-500">
+                                        </div>
+                                    </div>
+
+                                    <button disabled class="w-full bg-gray-300 text-gray-500 py-2 px-4 rounded-md font-medium">
+                                        Request Quote
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Add Field Modal -->
+    <div id="add-field-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Add Custom Field</h3>
+
+                    <form class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Field Label</label>
+                            <input type="text" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g. Property Size">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Field Type</label>
+                            <select class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <option value="text">Text Field</option>
+                                <option value="textarea">Text Area</option>
+                                <option value="select">Select Dropdown</option>
+                                <option value="checkbox">Checkbox</option>
+                                <option value="date">Date Field</option>
+                                <option value="number">Number Field</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Placeholder Text</label>
+                            <input type="text" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g. Enter square footage">
+                        </div>
+
+                        <div class="flex items-center">
+                            <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <label class="ml-2 block text-sm text-gray-900">Required field</label>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Add Field
+                    </button>
+                    <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        feather.replace();
+
+        // Initialize sortable for field reordering
+        if (document.getElementById('fields-list')) {
+            new Sortable(document.getElementById('fields-list'), {
+                animation: 150,
+                ghostClass: 'opacity-50'
+            });
+        }
+    </script>
+</body>
+</html>

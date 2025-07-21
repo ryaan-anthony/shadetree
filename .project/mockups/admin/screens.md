@@ -1,513 +1,344 @@
-# Admin Portal Screen Inventory
+# Admin Portal Screen Inventory - Phase-Aligned
 
-This document lists all screens needed to complete the Admin Portal initiative. Each screen will have a corresponding HTML mockup linked in this document.
+This document lists all screens needed to complete the Admin Portal initiative, organized by development phases. Each screen will have a corresponding HTML mockup aligned with our MVP-first approach.
 
 ## Overview
-The Admin Portal provides business owners with comprehensive tools to manage their service operations, from business setup and staff management to service configuration and performance monitoring. The interface emphasizes ease of use for non-technical users while maintaining enterprise-grade functionality.
+The Admin Portal provides business owners with comprehensive tools to manage their service operations. The interface emphasizes ease of use for non-technical users while maintaining enterprise-grade functionality. Screens are prioritized for MVP delivery with growth features planned for later phases.
 
-## Screen Categories
+## Phase-Based Screen Categories
 
-### 1. Dashboard & Navigation
-Central hub for accessing all admin functions with key business insights.
+### MVP Phase (P0/P1) - Weeks 1-4
+Essential screens for basic business operations and quote-to-payment workflow.
 
-### 2. Business Profile Management
-Essential business setup and configuration screens.
+### Growth Phase (P2) - Weeks 5-8
+Advanced features for business optimization and automation.
 
-### 3. Staff Management
-Team member invitation, role assignment, and activity management.
-
-### 4. Service & Pricing Setup
-Service catalog, pricing configuration, and quote template management.
-
-### 5. Shared Components
-Reusable UI components used across multiple screens.
+### Scale Phase (P3) - Weeks 9-12
+Enterprise features for compliance, monitoring, and support.
 
 ---
 
-## 1. Dashboard & Navigation Screens
+## MVP Phase Screens (P0/P1)
 
-### Main Admin Dashboard
-- **Description**: Primary landing page showing business overview, key metrics, quick actions, and recent activity
+### 1. Dashboard & Navigation (P0)
+Central hub for accessing all admin functions with essential business insights.
+
+#### Main Admin Dashboard
+- **Description**: Primary landing page showing essential business metrics, quick actions, and recent activity
 - **Key Elements**:
-  - Welcome header with business name and user info
-  - Business metrics cards (quotes, revenue, jobs, conversion rate)
-  - Quick action buttons for common tasks
-  - Recent activity timeline
-  - System alerts and notifications
-  - Navigation sidebar for all admin sections
+  - Business name and user info header
+  - Core metrics cards (quotes sent this month, revenue this month, appointments this week)
+  - Quick action buttons (New Quote, View Calendar)
+  - Recent activity feed (last 5 quotes, upcoming appointments)
+  - Simplified navigation sidebar for MVP features only
+- **Phase**: MVP (P0)
 - **User Journey**: Entry point after login, central navigation hub
-- **Mockup**: [Admin Dashboard](admin-dashboard.html)
+- **Mockup**: [Admin Dashboard - MVP](admin-dashboard.html)
 
-### Dashboard Metrics Detail
-- **Description**: Expanded view of business performance metrics with charts and trends
+### 2. Business Profile Management (P0)
+
+#### Business Creation & Setup
+- **Description**: Guided business setup process for new users
 - **Key Elements**:
-  - Tabbed metric categories (Financial, Operational, Growth)
-  - Interactive charts and graphs
-  - Period selector (7 days, 30 days, 90 days)
-  - Metric comparison tables
-  - Export functionality
-- **User Journey**: Accessed from dashboard metrics cards for deeper analysis
-- **Mockup**: [Metrics Detail](dashboard-metrics.html)
+  - Multi-step setup wizard (basic info → services → complete)
+  - Progress indicator
+  - Business name, email, phone (required fields only)
+  - Business type selection
+  - Basic address information
+  - Skip option for non-essential fields
+- **Phase**: MVP (P0)
+- **User Journey**: First-time user onboarding
+- **Mockup**: [Business Setup](business-creation-setup.html)
+
+#### Company Information (P0)
+- **Description**: Essential business details configuration
+- **Key Elements**:
+  - Business name and description
+  - Contact details (email, phone, address)
+  - Timezone selection
+  - Basic business hours (simplified grid)
+  - Save/cancel actions
+- **Phase**: MVP (P0)
+- **User Journey**: Essential setup for business operations
+- **Mockup**: [Company Info - MVP](business-company-info.html)
+
+#### Business Hours & Service Areas (P0)
+- **Description**: Configure basic operating hours and service coverage
+- **Key Elements**:
+  - Simplified weekly schedule (open/closed per day)
+  - Basic time picker for business hours
+  - Simple service area definition (ZIP codes only)
+  - Customer-facing hours preview
+- **Phase**: MVP (P0)
+- **User Journey**: Essential for appointment scheduling
+- **Mockup**: [Hours & Areas - MVP](business-hours-areas.html)
+
+### 3. Staff Management (P0)
+
+#### Staff Invitations & Overview
+- **Description**: Basic team member management with simple invitation system
+- **Key Elements**:
+  - Active staff list with roles (Owner, Admin, Staff only)
+  - Simple invite form (email + role selection)
+  - Pending invitation status
+  - Basic staff actions (remove, resend invitation)
+  - Team count summary
+- **Phase**: MVP (P0)
+- **User Journey**: Essential team setup
+- **Mockup**: [Staff Overview - MVP](staff-overview.html)
+
+#### Basic Roles & Permissions
+- **Description**: Simplified role system with clear permissions
+- **Key Elements**:
+  - Three role types only (Owner, Admin, Staff)
+  - Permission comparison table
+  - Role assignment interface
+  - Clear permission descriptions
+- **Phase**: MVP (P0)
+- **User Journey**: Secure team access control
+- **Mockup**: [Staff Roles - MVP](staff-roles.html)
+
+### 4. Service & Pricing Setup (P0)
+
+#### Service Catalog Management
+- **Description**: Core service creation and management
+- **Key Elements**:
+  - Service list with essential details
+  - Add/edit service form (name, description, base price)
+  - Three pricing types (Fixed, Hourly, Custom)
+  - Active/inactive toggle
+  - Search and basic filtering
+- **Phase**: MVP (P0)
+- **User Journey**: Essential for quote generation
+- **Mockup**: [Service Catalog - MVP](services-catalog.html)
+
+#### Basic Pricing Configuration
+- **Description**: Simple pricing setup for services
+- **Key Elements**:
+  - Service selection
+  - Pricing type selector (Fixed/Hourly/Custom)
+  - Base price input
+  - Price preview calculator
+  - Save/cancel actions
+- **Phase**: MVP (P0)
+- **User Journey**: Essential for accurate quotes
+- **Mockup**: [Pricing Config - MVP](pricing-rules.html)
+
+### 5. Custom Fields (P1)
+
+#### Quote Form Custom Fields
+- **Description**: Basic custom field management for quote forms
+- **Key Elements**:
+  - Field list with drag-and-drop ordering
+  - Add field form (6 basic types: text, textarea, select, checkbox, date, number)
+  - Field configuration (label, placeholder, required)
+  - Form preview
+  - Field usage analytics
+- **Phase**: MVP (P1)
+- **User Journey**: Customize quote forms for business needs
+- **Mockup**: [Custom Fields - MVP](custom-fields.html)
+
+### 6. Email Notifications (P1)
+
+#### Basic Notification Rules
+- **Description**: Simple email notification configuration
+- **Key Elements**:
+  - Notification rule list (6 core events)
+  - Toggle switches for email notifications
+  - Basic email template editor
+  - Template preview
+  - Test email functionality
+- **Phase**: MVP (P1)
+- **User Journey**: Automate client communication
+- **Mockup**: [Notifications - MVP](notifications.html)
 
 ---
 
-## 2. Business Profile Management Screens
+## Growth Phase Screens (P2)
 
-### Company Information Setup
-- **Description**: Business details configuration including logo, contact info, and basic settings
+### 7. Business Branding (P2)
+
+#### Enhanced Business Customization
+- **Description**: Logo upload and brand customization
 - **Key Elements**:
   - Logo upload with preview
-  - Business name, description, and contact details
-  - Address information with validation
-  - Timezone selection
-  - Website and social media links
-  - Save/cancel actions
-- **User Journey**: First-time setup or ongoing profile management
-- **Mockup**: [Company Setup](business-company-info.html)
+  - Brand color picker
+  - Quote template preview with branding
+  - Social media links
+  - Website integration
+- **Phase**: Growth (P2)
+- **Mockup**: [Business Branding](business-branding.html)
 
-### Operating Hours & Service Areas
-- **Description**: Configure business hours and define service coverage areas
+### 8. Advanced Staff Features (P2)
+
+#### Staff Availability Management
+- **Description**: Detailed staff scheduling and availability
 - **Key Elements**:
-  - Weekly schedule grid with day-by-day configuration
-  - Open/closed toggles for each day
-  - Time picker inputs for start/end times
-  - Service area definition (ZIP codes or radius)
-  - Holiday schedule management
-  - Preview of customer-facing hours display
-- **User Journey**: Essential setup for scheduling and customer expectations
-- **Mockup**: [Hours & Areas](business-hours-areas.html)
-
-### Notification Preferences
-- **Description**: Configure automated notifications and email templates
-- **Key Elements**:
-  - Notification type toggles (quotes, jobs, payments, etc.)
-  - Delivery method selection (email, SMS, in-app)
-  - Email template editor with variables
-  - Template preview functionality
-  - Default template restoration
-  - Test email sending
-- **User Journey**: Customize business communication preferences
-- **Mockup**: [Notifications](business-notifications.html)
-
-### Payment Settings
-- **Description**: Configure payment methods, invoicing, and financial preferences
-- **Key Elements**:
-  - Payment method checkboxes (cash, check, credit card)
-  - Tax rate configuration
-  - Invoice numbering setup
-  - Payment terms selection
-  - Deposit requirements
-  - Invoice footer customization
-- **User Journey**: Essential for quote generation and payment processing
-- **Mockup**: [Payment Settings](business-payment.html)
-
----
-
-## 3. Staff Management Screens
-
-### Staff Overview & Invitations
-- **Description**: Team member management with invitation system
-- **Key Elements**:
-  - Active staff member list with roles
-  - Pending invitation status
-  - Invite new staff form with role selection
-  - Staff member action menu (edit, remove, resend)
-  - Role badge indicators
-  - Team statistics summary
-- **User Journey**: Manage team access and permissions
-- **Mockup**: [Staff Management](staff-overview.html)
-
-### Role & Permission Matrix
-- **Description**: Detailed role configuration and permission management
-- **Key Elements**:
-  - Role comparison table
-  - Permission categories (quotes, jobs, customers, etc.)
-  - Visual permission matrix
-  - Role editing interface
-  - Permission descriptions and help text
-  - Role assignment confirmation
-- **User Journey**: Configure team member access levels
-- **Mockup**: [Roles & Permissions](staff-roles.html)
-
-### Staff Availability Management
-- **Description**: Individual staff member availability and scheduling
-- **Key Elements**:
-  - Staff member selection dropdown
-  - Weekly availability grid
-  - Available/unavailable toggle per day
-  - Time range selectors
+  - Weekly availability grid per staff member
   - Time-off request management
   - Team calendar view
   - Availability conflict warnings
-- **User Journey**: Coordinate team schedules for optimal job assignment
+- **Phase**: Growth (P2)
 - **Mockup**: [Staff Availability](staff-availability.html)
 
-### Staff Activity Tracking
-- **Description**: Monitor team performance and activity metrics
+### 9. Quote Templates (P2)
+
+#### Professional Quote Templates
+- **Description**: Customizable quote generation templates
 - **Key Elements**:
-  - Staff member selection
-  - Activity timeline for selected period
-  - Performance metrics (quotes created, jobs completed)
-  - Activity type filters
-  - Export activity reports
-  - Individual vs team comparison
-- **User Journey**: Track productivity and manage team performance
-- **Mockup**: [Activity Tracking](staff-activity.html)
+  - Template gallery
+  - Drag-and-drop template builder
+  - Brand integration
+  - Template preview and testing
+- **Phase**: Growth (P2)
+- **Mockup**: [Quote Templates](quote-templates.html)
+
+### 10. Service Categories (P2)
+
+#### Service Organization
+- **Description**: Advanced service catalog organization
+- **Key Elements**:
+  - Category creation and management
+  - Drag-and-drop service organization
+  - Color coding
+  - Category-based filtering
+- **Phase**: Growth (P2)
+- **Mockup**: [Service Categories](service-categories.html)
+
+### 11. Workflow Builder (P2)
+
+#### Process Automation
+- **Description**: Visual workflow configuration for business processes
+- **Key Elements**:
+  - Drag-and-drop workflow designer
+  - Trigger and action selection
+  - Workflow templates
+  - Execution monitoring
+- **Phase**: Growth (P2)
+- **Mockup**: [Workflow Builder](workflow-builder.html)
+
+### 12. Reports & Analytics (P2)
+
+#### Business Intelligence Dashboard
+- **Description**: Comprehensive reporting and analytics
+- **Key Elements**:
+  - Revenue trends and charts
+  - Quote conversion analytics
+  - Job performance metrics
+  - Export functionality
+- **Phase**: Growth (P2)
+- **Mockup**: [Reports Dashboard](reports-analytics.html)
+
+### 13. Data Export (P2)
+
+#### Export Management
+- **Description**: Configurable data export capabilities
+- **Key Elements**:
+  - Export type selection
+  - Date range and filtering
+  - Format selection (CSV/PDF)
+  - Export history and downloads
+- **Phase**: Growth (P2)
+- **Mockup**: [Data Export](data-export.html)
+
+### 14. Integration Management (P2)
+
+#### Third-Party Connections
+- **Description**: Manage external service integrations
+- **Key Elements**:
+  - Integration status dashboard
+  - Connection setup flows
+  - Integration health monitoring
+  - Configuration management
+- **Phase**: Growth (P2)
+- **Mockup**: [Integrations](integrations.html)
 
 ---
 
-## 4. Service & Pricing Setup Screens
+## Scale Phase Screens (P3)
 
-### Service Catalog Management
-- **Description**: Create and manage service offerings with categories
+### 15. Multi-Business Management (P3)
+
+#### Business Switching & Management
+- **Description**: Advanced multi-business operations
 - **Key Elements**:
-  - Service list with search and filters
-  - Add/edit service form with pricing options
-  - Service category organization
-  - Bulk actions for multiple services
-  - Active/inactive service toggle
-  - Service usage statistics
-  - Import/export functionality
-- **User Journey**: Build and maintain comprehensive service catalog
-- **Mockup**: [Service Catalog](services-catalog.html)
+  - Business selector dropdown
+  - Business creation wizard
+  - Cross-business analytics
+  - Business comparison views
+- **Phase**: Scale (P3)
+- **Mockup**: [Multi-Business](multi-business-management.html)
 
-### Service Categories
-- **Description**: Organize services into logical categories with visual management
+### 16. Staff Activity Tracking (P3)
+
+#### Advanced Team Monitoring
+- **Description**: Comprehensive staff activity and performance tracking
 - **Key Elements**:
-  - Category grid with drag-and-drop reordering
-  - Category creation/editing forms
-  - Color coding for visual distinction
-  - Service count per category
-  - Uncategorized services management
-  - Bulk service assignment
-- **User Journey**: Organize services for better customer navigation
-- **Mockup**: [Service Categories](services-categories.html)
-
-### Pricing Configuration
-- **Description**: Advanced pricing management with rules and price lists
-- **Key Elements**:
-  - Price list creation and management
-  - Customer type-based pricing
-  - Pricing rule builder
-  - Price calculator tool
-  - Discount configuration
-  - Pricing preview and testing
-- **User Journey**: Implement sophisticated pricing strategies
-- **Mockup**: [Pricing Config](services-pricing.html)
-
-### Quote Templates
-- **Description**: Create and customize professional quote templates
-- **Key Elements**:
-  - Template selection grid
-  - Template editor with variable insertion
-  - Preview functionality with sample data
-  - Template duplication and customization
-  - Default template designation
-  - Brand consistency controls
-- **User Journey**: Ensure professional, consistent quote presentation
-- **Mockup**: [Quote Templates](services-templates.html)
-
----
-
-## 5. Shared Components
-
-### Main Navigation Layout
-- **Description**: Consistent navigation structure across all admin screens
-- **Key Elements**:
-  - Collapsible sidebar navigation
-  - User profile dropdown
-  - Business switcher (for multi-business users)
-  - Notification bell with badge
-  - Search functionality
-  - Mobile-responsive hamburger menu
-- **User Journey**: Seamless navigation between admin functions
-- **Mockup**: [Navigation Layout](shared-navigation.html)
-
-### Modal Components
-- **Description**: Reusable modal dialogs for various interactions
-- **Key Elements**:
-  - Confirmation dialogs
-  - Form modals for quick actions
-  - Success/error notifications
-  - Loading states
-  - Multi-step wizards
-- **User Journey**: Consistent interaction patterns across the admin portal
-- **Mockup**: [Modal Components](shared-modals.html)
-
-### Form Components
-- **Description**: Standardized form elements and validation patterns
-- **Key Elements**:
-  - Input field styles and validation states
-  - File upload components
-  - Date/time pickers
-  - Multi-select dropdowns
-  - Rich text editors
-  - Form wizard progression
-- **User Journey**: Consistent data entry experience
-- **Mockup**: [Form Components](shared-forms.html)
-
----
-
-## Screen Flow & User Journeys
-
-### First-Time Setup Flow
-1. Admin Dashboard (welcome state)
-2. Company Information Setup
-3. Operating Hours & Service Areas
-4. Service Catalog Management
-5. Staff Invitations
-6. Return to Dashboard (configured state)
-
-### Daily Management Flow
-1. Admin Dashboard (business metrics review)
-2. Quick Actions (create quote, schedule job)
-3. Staff Activity Tracking (team oversight)
-4. Recent Activity Feed (business monitoring)
-
-### Configuration Management Flow
-1. Business Profile screens (ongoing updates)
-2. Service & Pricing adjustments
-3. Staff & Permission management
-4. Notification & Template customization
-
-## Design Principles
-
-### Enterprise Trust
-- Professional color scheme and typography
-- Consistent spacing and visual hierarchy
-- Clear data presentation with proper formatting
-- Reliable interaction patterns
-
-### User Experience Priority
-- Minimal cognitive load with clear navigation
-- Progressive disclosure of complex features
-- Contextual help and validation messages
-- Mobile-responsive design for field access
-
-### Operational Efficiency
-- Quick access to common tasks
-- Bulk operations where appropriate
-- Keyboard shortcuts for power users
-- Fast loading with optimized performance
-
-## Success Metrics for UI/UX
-- Business setup completion rate > 95%
-- Average task completion time < 3 minutes
-- User satisfaction score > 4.5/5
-- Support ticket reduction > 50%
-
-# Admin Portal Screen Inventory
-
-## Overview
-This document tracks all HTML mockups created for the Shadetree admin portal, organized by functional area and feature set.
-
-## Business Profile Management
-
-### Business Creation & Setup
-- **File**: `business-creation-setup.html`
-- **Purpose**: Multi-step wizard for creating new business profiles
-- **Features**: 
-  - Step 1 of 5 setup flow with progress indicator
-  - Business information form with validation
-  - Contact details and address capture
-  - Getting started tips and help section
-- **Status**: ✅ Complete
-
-### Business Configuration
-- **File**: `business-configuration.html`
-- **Purpose**: Comprehensive business settings and preferences management
-- **Features**:
-  - Business information editing
-  - Legal information (Tax ID, licenses)
-  - Operational preferences with toggle switches
-  - Service area management (ZIP codes and radius)
-  - Multi-business navigation support
-- **Status**: ✅ Complete
-
-### Business Branding & Customization
-- **File**: `business-branding.html`
-- **Purpose**: Brand identity management with live preview
-- **Features**:
-  - Logo upload and management
-  - Color palette customization with color pickers
-  - Real-time quote preview
-  - Branding checklist with completion tracking
-  - Typography and messaging settings
-- **Status**: ✅ Complete
-
-### Multi-Business Management
-- **File**: `multi-business-management.html`
-- **Purpose**: Portfolio overview for users managing multiple businesses
-- **Features**:
-  - Business portfolio dashboard with cards layout
-  - Business switcher dropdown in navigation
-  - Portfolio metrics (businesses, quotes, revenue)
-  - Individual business performance indicators
-  - Quick actions for bulk operations
-- **Status**: ✅ Complete
-
-## Staff Management
-
-### Staff Availability
-- **File**: `staff-availability.html`
-- **Purpose**: Manage staff schedules and time-off requests
-- **Features**:
-  - Weekly availability calendar view
-  - Staff member filtering
-  - Time-off request management
-  - Schedule conflict indicators
-- **Status**: ✅ Complete
-
-### Staff Overview
-- **File**: `staff-overview.html`
-- **Purpose**: Team member listing and management
-- **Features**:
-  - Staff directory with roles and status
-  - Contact information display
-  - Quick action buttons
-- **Status**: ✅ Complete
-
-### Staff Activity Tracking
-- **File**: `staff-activity.html`
-- **Purpose**: Monitor staff work activities and performance
-- **Features**:
-  - Activity timeline view
+  - Activity timeline
   - Performance metrics
-  - Task completion tracking
-- **Status**: ✅ Complete
+  - Team comparison analytics
+  - Activity export and reporting
+- **Phase**: Scale (P3)
+- **Mockup**: [Staff Activity](staff-activity.html)
 
-### Staff Roles & Permissions
-- **File**: `staff-roles.html`
-- **Purpose**: Manage user roles and access permissions
-- **Features**:
-  - Role-based permission matrix
-  - User assignment interface
-  - Security access controls
-- **Status**: ✅ Complete
+### 17. Audit & Activity Logs (P3)
 
-## Services & Pricing
+#### Compliance & Monitoring
+- **Description**: Comprehensive audit trail and activity monitoring
+- **Key Elements**:
+  - Change history tracking
+  - User activity logs
+  - Security event monitoring
+  - Compliance reporting
+- **Phase**: Scale (P3)
+- **Mockup**: [Audit Logs](audit-logs.html)
 
-### Service Catalog
-- **File**: `services-catalog.html`
-- **Purpose**: Manage service offerings and descriptions
-- **Features**:
-  - Service listing with categories
-  - Add/edit service forms
-  - Service status management
-- **Status**: ✅ Complete
+### 18. Support Access (P3)
 
-### Pricing Rules
-- **File**: `pricing-rules.html`
-- **Purpose**: Configure pricing strategies and customer tiers
-- **Features**:
-  - Price list management cards
-  - Customer type pricing (Standard, Commercial, Wholesale)
-  - Service-specific pricing matrix
-  - Discount percentage indicators
-- **Status**: ✅ Complete
+#### Integrated Support System
+- **Description**: Help desk and support capabilities
+- **Key Elements**:
+  - Support ticket creation
+  - Live chat interface
+  - Knowledge base search
+  - Support analytics
+- **Phase**: Scale (P3)
+- **Mockup**: [Support Portal](support-portal.html)
 
-### Service Categories
-- **File**: `service-categories.html`
-- **Purpose**: Organize services into logical groupings
-- **Features**:
-  - Category overview cards with metrics
-  - Service count and average pricing
-  - Category management table
-  - Color-coded visual organization
-- **Status**: ✅ Complete
-
-### Quote Templates
-- **File**: `quote-templates.html`
-- **Purpose**: Manage standardized quote layouts and branding
-- **Features**:
-  - Template type overview (Standard, Detailed, Simple, Custom)
-  - Template library with previews
-  - Usage statistics and last used dates
-  - Template variable guidance
-- **Status**: ✅ Complete
-
-## Dashboard & Analytics
-
-### Admin Dashboard
-- **File**: `admin-dashboard.html`
-- **Purpose**: Main overview screen with key metrics
-- **Features**:
-  - Key performance indicators
-  - Recent activity feeds
-  - Quick access to common tasks
-- **Status**: ✅ Complete
-
-### Dashboard Metrics
-- **File**: `dashboard-metrics.html`
-- **Purpose**: Detailed analytics and reporting interface
-- **Features**:
-  - Revenue and performance charts
-  - Trend analysis
-  - Exportable reports
-- **Status**: ✅ Complete
-
-## Business Information
-
-### Company Information
-- **File**: `business-company-info.html`
-- **Purpose**: Basic company details and contact information
-- **Features**:
-  - Company profile editing
-  - Contact details management
-  - Business description
-- **Status**: ✅ Complete
-
-### Business Hours & Service Areas
-- **File**: `business-hours-areas.html`
-- **Purpose**: Operating hours and geographic coverage
-- **Features**:
-  - Weekly schedule configuration
-  - Service territory mapping
-  - Holiday schedule management
-- **Status**: ✅ Complete
+---
 
 ## Shared Components
 
-### Navigation Components
-- **File**: `shared-navigation.html`
-- **Purpose**: Reusable navigation elements
-- **Features**:
-  - Sidebar navigation with business switcher
-  - Breadcrumb components
-  - User profile dropdown
-- **Status**: ✅ Complete
+### Navigation & Layout
+- **Description**: Consistent navigation and layout elements
+- **Key Elements**:
+  - Responsive sidebar navigation
+  - User menu and business selector
+  - Breadcrumb navigation
+  - Page header components
+- **Mockup**: [Shared Navigation](shared-navigation.html)
 
-### Modal Components
-- **File**: `shared-modals.html`
-- **Purpose**: Common modal dialogs and overlays
-- **Features**:
+### Modals & Forms
+- **Description**: Reusable modal dialogs and form components
+- **Key Elements**:
   - Confirmation dialogs
-  - Form modals
+  - Form validation patterns
   - Loading states
-- **Status**: �� Complete
+  - Error handling
+- **Mockup**: [Shared Modals](shared-modals.html)
 
-## Screen Count Summary
-- **Total Screens**: 16
-- **Business Profile**: 4 screens
-- **Staff Management**: 4 screens  
-- **Services & Pricing**: 4 screens
-- **Dashboard & Analytics**: 2 screens
-- **Business Information**: 2 screens
-- **Shared Components**: 2 files
+---
 
-## Design Standards
-All mockups follow consistent design patterns:
-- **Framework**: Tailwind CSS for styling
-- **Icons**: Feather Icons for consistent iconography
-- **Navigation**: Multi-business support with switcher dropdown
-- **Branding**: Green color scheme (#10B981 primary)
-- **Layout**: Responsive design with sidebar navigation
-- **Typography**: Clean, professional font hierarchy
-- **State Management**: Clear active/inactive states
-- **Enterprise Grade**: Professional appearance to build customer trust
+## Implementation Notes
 
-## Integration Notes
-- All screens include business context switching capability
-- Consistent navigation patterns across the admin portal
-- Shared CSS classes and component patterns for maintainability
-- Mobile-responsive design considerations throughout
+### MVP Phase Priority
+Focus on essential business operations with simplified UX. Remove complex features that can be added in later phases.
+
+### Growth Phase Enhancement
+Add professional features that improve business efficiency and automation.
+
+### Scale Phase Enterprise
+Include compliance, monitoring, and advanced management features for larger operations.
+
+### Design Consistency
+All screens should maintain consistent design patterns, component usage, and user experience flows across phases.
