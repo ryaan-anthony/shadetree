@@ -1,259 +1,84 @@
-# Epic: Notification System
+# Epic: Notifications
 
 ## Overview
-Provide automated email and SMS notifications to clients and staff based on configurable triggers throughout the quote-to-payment workflow. Enable businesses to maintain professional communication and reduce manual follow-up tasks.
+Notifications provides a comprehensive communication system for automated messaging, alerts, and notifications across multiple channels including email, SMS, in-app notifications, and push notifications. This ensures timely communication with customers and staff.
 
-## Goals
-- Automate client communication throughout service lifecycle
-- Keep staff informed of important business events
-- Reduce manual follow-up tasks and improve response times
-- Maintain professional brand consistency in all communications
-- Support both email and SMS notification channels
-
-## Success Metrics
-- Notification delivery rate > 95%
-- Client response time improvement > 40%
-- Manual follow-up task reduction > 60%
-- Notification opt-out rate < 10%
-- Staff notification engagement > 80%
+## Business Value
+- Automated customer communication reduces manual work
+- Improved customer experience through timely updates
+- Staff coordination and alert management
+- Reduced no-shows through reminder systems
 
 ## User Stories
-- As a business owner, I want automated client notifications so I don't miss important follow-ups
-- As a client, I want timely updates on my quote and service status
-- As a staff member, I want notifications about new quotes and appointments assigned to me
-- As a business owner, I want to customize notification templates to match my brand
-- As a client, I want to choose how I receive notifications (email/SMS)
+- As a business owner, I want to send automated booking confirmations so customers feel confident
+- As a customer, I want to receive reminders so I don't miss my appointment
+- As a staff member, I want notifications about schedule changes so I stay informed
+- As a business owner, I want to customize message templates so they match my brand
 
 ## Features
 
-### MVP Phase (P1 - Early Value)
-1. [Email Notification System](notifications/01-email-notifications.md) - Core email delivery and templates
-2. [Notification Rules Engine](notifications/02-notification-rules.md) - Configure triggers and timing
+### 1. Message Template Management
+**Description**: Create, edit, and manage email and SMS templates for various business scenarios
+**Priority**: High
+**Complexity**: Medium
+**Path**: [./notifications/01-message-templates.md](./notifications/01-message-templates.md)
 
-### Growth Phase (P2 - Advanced Features)
-3. [SMS Notifications](notifications/03-sms-notifications.md) - Text message delivery integration
-4. [Template Customization](notifications/04-template-customization.md) - Brand-customized notification templates
+### 2. Automated Notification Triggers
+**Description**: Configure automatic notifications based on booking events, schedule changes, and business rules
+**Priority**: High
+**Complexity**: High
+**Path**: [./notifications/02-automated-triggers.md](./notifications/02-automated-triggers.md)
 
-## Technical Architecture
+### 3. Multi-Channel Delivery
+**Description**: Send notifications via email, SMS, push notifications, and in-app alerts
+**Priority**: High
+**Complexity**: High
+**Path**: [./notifications/03-multi-channel-delivery.md](./notifications/03-multi-channel-delivery.md)
 
-### Core Models
-```ruby
-# Notification rule configuration
-class NotificationRule < ApplicationRecord
-  belongs_to :business
-  
-  validates :name, :trigger_event, :delivery_method, presence: true
-  validates :name, uniqueness: { scope: :business_id }
-  
-  enum trigger_event: {
-    quote_sent: 0,
-    quote_viewed: 1,
-    quote_accepted: 2,
-    quote_expired: 3,
-    appointment_scheduled: 4,
-    appointment_reminder: 5,
-    payment_received: 6,
-    staff_assigned: 7
-  }
-  
-  enum delivery_method: { email: 0, sms: 1, both: 2 }
-  enum recipient_type: { client: 0, staff: 1, owner: 2 }
-  
-  scope :active, -> { where(active: true) }
-  scope :for_event, ->(event) { where(trigger_event: event) }
-end
+### 4. Customer Communication Preferences
+**Description**: Allow customers to manage their notification preferences and communication channels
+**Priority**: Medium
+**Complexity**: Medium
+**Path**: [./notifications/04-customer-preferences.md](./notifications/04-customer-preferences.md)
 
-# Notification delivery tracking
-class NotificationDelivery < ApplicationRecord
-  belongs_to :notification_rule
-  belongs_to :recipient, polymorphic: true # User or Client
-  belongs_to :source, polymorphic: true # Quote, Appointment, etc.
-  
-  validates :delivery_method, :status, presence: true
-  
-  enum delivery_method: { email: 0, sms: 1 }
-  enum status: { pending: 0, sent: 1, delivered: 2, failed: 3, bounced: 4 }
-  
-  scope :recent, -> { where(created_at: 1.week.ago..) }
-  scope :failed, -> { where(status: [:failed, :bounced]) }
-end
-```
+### 5. Broadcast Messaging
+**Description**: Send bulk messages to customer segments or all customers for announcements
+**Priority**: Medium
+**Complexity**: Medium
+**Path**: [./notifications/05-broadcast-messaging.md](./notifications/05-broadcast-messaging.md)
 
-### Notification Service
-```ruby
-class NotificationService
-  def self.trigger(event, source_object, business)
-    rules = business.notification_rules.active.for_event(event)
-    
-    rules.each do |rule|
-      recipients = determine_recipients(rule, source_object)
-      
-      recipients.each do |recipient|
-        case rule.delivery_method
-        when 'email'
-          deliver_email(rule, recipient, source_object)
-        when 'sms'
-          deliver_sms(rule, recipient, source_object)
-        when 'both'
-          deliver_email(rule, recipient, source_object)
-          deliver_sms(rule, recipient, source_object)
-        end
-      end
-    end
-  end
-  
-  private
-  
-  def self.deliver_email(rule, recipient, source)
-    delivery = create_delivery_record(rule, recipient, source, :email)
-    
-    begin
-      NotificationMailer.send_notification(rule, recipient, source).deliver_now
-      delivery.update!(status: :sent)
-    rescue => e
-      delivery.update!(status: :failed, error_message: e.message)
-      Rails.logger.error "Email notification failed: #{e.message}"
-    end
-  end
-  
-  def self.deliver_sms(rule, recipient, source)
-    # SMS delivery implementation
-    # Integration with Twilio or similar service
-  end
-end
-```
+### 6. Delivery Tracking & Analytics
+**Description**: Track notification delivery, open rates, and engagement metrics
+**Priority**: Low
+**Complexity**: Medium
+**Path**: [./notifications/06-delivery-analytics.md](./notifications/06-delivery-analytics.md)
 
-### Email Templates
-```ruby
-class NotificationMailer < ApplicationMailer
-  def send_notification(rule, recipient, source)
-    @rule = rule
-    @recipient = recipient
-    @source = source
-    @business = rule.business
-    
-    template_name = "#{rule.trigger_event}_#{rule.recipient_type}"
-    
-    mail(
-      to: recipient.email,
-      subject: render_template_subject(template_name),
-      template_name: template_name
-    )
-  end
-  
-  private
-  
-  def render_template_subject(template_name)
-    case template_name
-    when 'quote_sent_client'
-      "#{@business.name} - Your Service Quote ##{@source.id}"
-    when 'quote_accepted_owner'
-      "Quote Accepted - #{@source.client_name}"
-    # ... other templates
-    end
-  end
-end
-```
+## Acceptance Criteria
+- Notifications send reliably across all channels
+- Message templates render correctly with dynamic content
+- Customer preferences are respected for all communications
+- Delivery failures are logged and retried appropriately
+- Analytics provide actionable insights on communication effectiveness
 
-## Integration Points
-- Quote Management (quote status change triggers)
-- Appointment Scheduling (appointment event triggers)
-- Payment Processing (payment confirmation triggers)
-- Staff Management (staff assignment triggers)
-- Business Profile (notification branding and settings)
-
-## Security Considerations
-- Validate email addresses before sending notifications
-- Implement rate limiting to prevent notification spam
-- Secure notification templates to prevent injection attacks
-- Audit notification rule changes and delivery failures
-- Comply with email marketing regulations (CAN-SPAM, GDPR)
-
-## MVP Scope (P1 Priority)
-**Included in MVP:**
-- Email notifications only
-- 6 core trigger events (quote sent/viewed/accepted, appointment scheduled, payment received, staff assigned)
-- Basic notification rules configuration
-- Simple email templates with business branding
-
-**Deferred to Growth Phase:**
-- SMS notifications
-- Advanced template customization
-- Delivery scheduling and delays
-- Notification analytics and reporting
-
-## Technical Implementation Notes
-```ruby
-# Background job for notification processing
-class NotificationJob < ApplicationJob
-  queue_as :notifications
-  
-  def perform(event, source_id, source_type, business_id)
-    source = source_type.constantize.find(source_id)
-    business = Business.find(business_id)
-    
-    NotificationService.trigger(event, source, business)
-  end
-end
-
-# Usage in controllers/services
-class QuotesController < ApplicationController
-  def update
-    if @quote.update(quote_params)
-      # Trigger notification for quote status change
-      NotificationJob.perform_later(
-        'quote_accepted',
-        @quote.id,
-        'Quote',
-        current_business.id
-      ) if @quote.status_changed? && @quote.accepted?
-    end
-  end
-end
-```
-
-## Email Template Structure
-```erb
-<!-- app/views/notification_mailer/quote_sent_client.html.erb -->
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-  <div style="background: <%= @business.brand_color || '#2563eb' %>; color: white; padding: 20px;">
-    <h1><%= @business.name %></h1>
-  </div>
-  
-  <div style="padding: 20px;">
-    <h2>Your Service Quote is Ready</h2>
-    
-    <p>Hello <%= @recipient.name %>,</p>
-    
-    <p>Thank you for your interest in our services. We've prepared a quote for your project:</p>
-    
-    <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
-      <strong>Quote #<%= @source.id %></strong><br>
-      Service: <%= @source.service_description %><br>
-      Total: <%= number_to_currency(@source.total_amount) %>
-    </div>
-    
-    <p>
-      <a href="<%= quote_url(@source) %>" 
-         style="background: <%= @business.brand_color || '#2563eb' %>; 
-                color: white; 
-                padding: 12px 24px; 
-                text-decoration: none; 
-                border-radius: 5px;">
-        View Quote
-      </a>
-    </p>
-  </div>
-</div>
-```
+## Technical Considerations
+- Integration with email service providers (SendGrid, Mailgun)
+- SMS gateway integration (Twilio, AWS SNS)
+- Push notification services (Firebase, APNs)
+- Message queue system for reliable delivery
+- Template rendering engine with variable substitution
+- Delivery status tracking and webhook handling
 
 ## Dependencies
-- Business Profile Management (business branding settings)
-- Email System (ActionMailer configuration)
-- Background Job Processing (Sidekiq)
-- Quote Management System (trigger sources)
+- Customer and staff contact information
+- Business profile and branding configuration
+- Booking and scheduling system events
+- Third-party communication service accounts
+- Analytics and reporting infrastructure
 
-## Estimate
-- MVP Features: 13 story points (1.5 weeks)
-- Growth Features: 8 story points (1 week)
-- Total: 21 story points (2.5 weeks)
+## Definition of Done
+- All notification channels working reliably
+- Template system functional with preview capability
+- Customer preference management implemented
+- Delivery tracking and retry logic working
+- Performance testing for high-volume messaging
+- Integration testing with external services

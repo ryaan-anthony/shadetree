@@ -1,499 +1,683 @@
 # Feature: Quick Actions Panel
 
-## Overview
-Create a dynamic action panel that provides role-based quick access to the most common administrative tasks and business operations.
+## Description
+A widget providing fast access to common administrative tasks and frequently used functions, allowing admins to perform routine operations without navigating through multiple pages.
 
 ## User Stories
-- As a business owner, I want quick access to common tasks so I can work efficiently
-- As a staff member, I want to see only the actions I'm authorized to perform
-- As a user, I want to see relevant counts and notifications on action buttons
+- As a business owner, I want quick access to create new bookings so I can handle walk-in customers efficiently
+- As a staff member, I want to quickly mark services as unavailable so I can manage my schedule
+- As a manager, I want fast access to view today's schedule so I can coordinate operations
+- As an admin, I want shortcuts to common settings so I can make quick adjustments
 
 ## Tasks
 
-### 1. Create Quick Actions Component
-**File**: `app/components/quick_actions_component.rb`
+### Task 1: Create Quick Actions Service
+**Implementation Notes:**
+- Define available actions based on user roles
+- Implement action validation and permissions
+- Create service to handle action execution
 
-**Implementation Notes**:
 ```ruby
-class QuickActionsComponent < ViewComponent::Base
-  def initialize(business_user:, business:)
-    @business_user = business_user
-    @business = business
-    @actions_service = QuickActionsService.new(business_user)
+# app/services/admin/quick_actions_service.rb
+class Admin::QuickActionsService
+  attr_reader :admin, :business
+
+  def initialize(admin)
+    @admin = admin
+    @business = admin.business
   end
-  
-  private
-  
-  attr_reader :business_user, :business, :actions_service
-  
+
   def available_actions
-    @available_actions ||= actions_service.available_actions
-  end
-  
-  def action_icon_class(icon_name)
-    {
-      'document-plus' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
-      'calendar-plus' => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
-      'users' => 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z',
-      'cog' => 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z',
-      'chart-bar' => 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
-      'user-group' => 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
-      'adjustments' => 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4'
-    }[icon_name] || icon_name
-  end
-  
-  def color_classes(color)
-    {
-      'blue' => {
-        bg: 'bg-blue-500',
-        hover: 'hover:bg-blue-600',
-        text: 'text-white',
-        count_bg: 'bg-blue-600',
-        border: 'border-blue-200'
+    base_actions = [
+      {
+        id: 'new_booking',
+        title: 'New Booking',
+        description: 'Create a booking for a customer',
+        icon: 'fas fa-plus-circle',
+        color: 'blue',
+        path: new_admin_booking_path,
+        permission: 'create_bookings'
       },
-      'green' => {
-        bg: 'bg-green-500',
-        hover: 'hover:bg-green-600',
-        text: 'text-white',
-        count_bg: 'bg-green-600',
-        border: 'border-green-200'
+      {
+        id: 'view_schedule',
+        title: "Today's Schedule",
+        description: 'View appointments for today',
+        icon: 'fas fa-calendar-day',
+        color: 'green',
+        path: admin_schedule_path(date: Date.current),
+        permission: 'view_schedule'
       },
-      'purple' => {
-        bg: 'bg-purple-500',
-        hover: 'hover:bg-purple-600',
-        text: 'text-white',
-        count_bg: 'bg-purple-600',
-        border: 'border-purple-200'
+      {
+        id: 'add_customer',
+        title: 'Add Customer',
+        description: 'Register a new customer',
+        icon: 'fas fa-user-plus',
+        color: 'purple',
+        path: new_admin_customer_path,
+        permission: 'manage_customers'
       },
-      'yellow' => {
-        bg: 'bg-yellow-500',
-        hover: 'hover:bg-yellow-600',
-        text: 'text-white',
-        count_bg: 'bg-yellow-600',
-        border: 'border-yellow-200'
-      },
-      'indigo' => {
-        bg: 'bg-indigo-500',
-        hover: 'hover:bg-indigo-600',
-        text: 'text-white',
-        count_bg: 'bg-indigo-600',
-        border: 'border-indigo-200'
-      },
-      'pink' => {
-        bg: 'bg-pink-500',
-        hover: 'hover:bg-pink-600',
-        text: 'text-white',
-        count_bg: 'bg-pink-600',
-        border: 'border-pink-200'
-      },
-      'gray' => {
-        bg: 'bg-gray-500',
-        hover: 'hover:bg-gray-600',
-        text: 'text-white',
-        count_bg: 'bg-gray-600',
-        border: 'border-gray-200'
+      {
+        id: 'quick_note',
+        title: 'Add Note',
+        description: 'Create a quick business note',
+        icon: 'fas fa-sticky-note',
+        color: 'yellow',
+        action: 'modal',
+        modal_target: 'quick-note-modal',
+        permission: 'create_notes'
       }
-    }[color] || color_classes('gray')
+    ]
+
+    # Add manager-specific actions
+    if admin.manager? || admin.owner?
+      base_actions += manager_actions
+    end
+
+    # Add owner-specific actions
+    if admin.owner?
+      base_actions += owner_actions
+    end
+
+    # Filter by permissions
+    base_actions.select { |action| admin.can?(action[:permission]) }
+  end
+
+  def execute_action(action_id, params = {})
+    case action_id
+    when 'toggle_availability'
+      toggle_staff_availability(params[:staff_id])
+    when 'quick_block_time'
+      create_time_block(params)
+    when 'send_reminder'
+      send_appointment_reminder(params[:booking_id])
+    when 'quick_note'
+      create_quick_note(params)
+    else
+      { success: false, error: 'Unknown action' }
+    end
+  end
+
+  private
+
+  def manager_actions
+    [
+      {
+        id: 'staff_availability',
+        title: 'Staff Status',
+        description: 'View and update staff availability',
+        icon: 'fas fa-users',
+        color: 'indigo',
+        path: admin_staff_path,
+        permission: 'manage_staff'
+      },
+      {
+        id: 'block_time',
+        title: 'Block Time',
+        description: 'Block time slots for maintenance',
+        icon: 'fas fa-ban',
+        color: 'red',
+        action: 'modal',
+        modal_target: 'block-time-modal',
+        permission: 'manage_schedule'
+      }
+    ]
+  end
+
+  def owner_actions
+    [
+      {
+        id: 'business_settings',
+        title: 'Settings',
+        description: 'Quick access to business settings',
+        icon: 'fas fa-cog',
+        color: 'gray',
+        path: admin_business_settings_path,
+        permission: 'manage_business'
+      },
+      {
+        id: 'reports',
+        title: 'Reports',
+        description: 'View business reports',
+        icon: 'fas fa-chart-bar',
+        color: 'emerald',
+        path: admin_reports_path,
+        permission: 'view_reports'
+      }
+    ]
+  end
+
+  def toggle_staff_availability(staff_id)
+    staff_member = business.staff_members.find(staff_id)
+    staff_member.toggle!(:available)
+    
+    {
+      success: true,
+      message: "#{staff_member.name} is now #{staff_member.available? ? 'available' : 'unavailable'}",
+      data: { available: staff_member.available? }
+    }
+  rescue ActiveRecord::RecordNotFound
+    { success: false, error: 'Staff member not found' }
+  end
+
+  def create_time_block(params)
+    time_block = business.time_blocks.create!(
+      start_time: params[:start_time],
+      end_time: params[:end_time],
+      reason: params[:reason],
+      staff_member_id: params[:staff_member_id],
+      created_by: admin
+    )
+
+    {
+      success: true,
+      message: 'Time block created successfully',
+      data: { id: time_block.id }
+    }
+  rescue ActiveRecord::RecordInvalid => e
+    { success: false, error: e.message }
+  end
+
+  def send_appointment_reminder(booking_id)
+    booking = business.bookings.find(booking_id)
+    NotificationService.new.send_booking_reminder(booking)
+    
+    {
+      success: true,
+      message: 'Reminder sent successfully'
+    }
+  rescue ActiveRecord::RecordNotFound
+    { success: false, error: 'Booking not found' }
+  end
+
+  def create_quick_note(params)
+    note = business.notes.create!(
+      content: params[:content],
+      category: params[:category] || 'general',
+      created_by: admin,
+      priority: params[:priority] || 'normal'
+    )
+
+    {
+      success: true,
+      message: 'Note created successfully',
+      data: { id: note.id }
+    }
+  rescue ActiveRecord::RecordInvalid => e
+    { success: false, error: e.message }
   end
 end
 ```
 
-### 2. Create Quick Actions View Template
-**File**: `app/components/quick_actions_component.html.erb`
+### Task 2: Create Quick Actions Widget View
+**Implementation Notes:**
+- Grid layout with action buttons
+- Modal support for complex actions
+- Responsive design for different screen sizes
 
-**Implementation Notes**:
 ```erb
-<div class="bg-white shadow rounded-lg">
-  <div class="px-6 py-4 border-b border-gray-200">
+<!-- app/views/admin/dashboard/widgets/_quick_actions.html.erb -->
+<div 
+  class="col-span-1 md:col-span-2 bg-white rounded-lg shadow p-6"
+  data-widget="quick_actions"
+  data-controller="quick-actions"
+>
+  <div class="flex items-center justify-between mb-6">
     <h3 class="text-lg font-medium text-gray-900">Quick Actions</h3>
-    <p class="text-sm text-gray-500 mt-1">Common tasks for your business</p>
+    <button 
+      class="text-sm text-blue-600 hover:text-blue-800"
+      data-action="click->quick-actions#toggleExpanded"
+    >
+      <span data-quick-actions-target="toggleText">Show All</span>
+    </button>
   </div>
+
+  <% actions = Admin::QuickActionsService.new(current_admin).available_actions %>
   
-  <div class="p-6">
-    <div class="grid grid-cols-1 gap-4">
-      <% available_actions.each do |action| %>
-        <% colors = color_classes(action[:color]) %>
-        
-        <div class="relative group">
-          <%= link_to action[:url], 
-                      class: "block w-full #{colors[:bg]} #{colors[:hover]} #{colors[:text]} rounded-lg p-4 transition-all duration-200 transform group-hover:scale-105 shadow-sm hover:shadow-md" do %>
-            
-            <div class="flex items-center justify-between">
-              <div class="flex items-center">
-                <!-- Action Icon -->
-                <div class="flex-shrink-0">
-                  <svg class="h-6 w-6 #{colors[:text]}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="<%= action_icon_class(action[:icon]) %>" />
-                  </svg>
-                </div>
-                
-                <!-- Action Details -->
-                <div class="ml-4">
-                  <h4 class="text-sm font-semibold"><%= action[:title] %></h4>
-                  <p class="text-xs opacity-90 mt-1"><%= action[:description] %></p>
-                </div>
-              </div>
-              
-              <!-- Count Badge (if present) -->
-              <% if action[:count] && action[:count] > 0 %>
-                <div class="flex-shrink-0">
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium #{colors[:count_bg]} text-white">
-                    <%= action[:count] %>
-                  </span>
-                </div>
-              <% end %>
-            </div>
-            
-            <!-- Progress Indicator (if applicable) -->
-            <% if action[:progress] %>
-              <div class="mt-3">
-                <div class="bg-white bg-opacity-20 rounded-full h-2">
-                  <div class="bg-white rounded-full h-2 transition-all duration-300" 
-                       style="width: <%= action[:progress] %>%"></div>
-                </div>
-                <p class="text-xs opacity-75 mt-1"><%= action[:progress] %>% complete</p>
-              </div>
-            <% end %>
-          <% end %>
-        </div>
-      <% end %>
-    </div>
-    
-    <!-- Additional Actions Toggle -->
-    <% if available_actions.count > 6 %>
-      <div class="mt-6 pt-6 border-t border-gray-200">
-        <button type="button" 
-                class="w-full text-center text-sm text-gray-500 hover:text-gray-700 transition-colors"
-                data-action="click->quick-actions#toggleAdditional">
-          <span data-quick-actions-target="toggleText">Show More Actions</span>
-          <svg class="w-4 h-4 inline ml-1 transform transition-transform" data-quick-actions-target="toggleIcon">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
+  <div class="grid grid-cols-2 gap-4" data-quick-actions-target="actionsGrid">
+    <% actions.first(4).each do |action| %>
+      <div class="quick-action-item" data-expanded="false">
+        <%= render 'admin/dashboard/widgets/quick_action_button', action: action %>
       </div>
     <% end %>
+    
+    <% if actions.length > 4 %>
+      <% actions[4..-1].each do |action| %>
+        <div class="quick-action-item hidden" data-expanded="true">
+          <%= render 'admin/dashboard/widgets/quick_action_button', action: action %>
+        </div>
+      <% end %>
+    <% end %>
   </div>
-</div>
-```
 
-### 3. Create Recent Tasks Tracker Service
-**File**: `app/services/recent_tasks_service.rb`
-
-**Implementation Notes**:
-```ruby
-class RecentTasksService
-  def initialize(business_user)
-    @business_user = business_user
-    @user = business_user.user
-    @business = business_user.business
-  end
-  
-  def recent_tasks(limit: 5)
-    [
-      recent_quotes_created(limit: 2),
-      recent_jobs_scheduled(limit: 2),
-      recent_customers_added(limit: 1)
-    ].flatten.sort_by { |task| task[:timestamp] }.reverse.take(limit)
-  end
-  
-  def suggested_actions
-    suggestions = []
-    
-    # Suggest based on pending items
-    suggestions << quote_followup_suggestions
-    suggestions << scheduling_suggestions
-    suggestions << customer_engagement_suggestions
-    
-    suggestions.flatten.compact.take(3)
-  end
-  
-  def productivity_stats
-    today = Date.current
-    {
-      today: {
-        quotes_created: quotes_created_today,
-        jobs_scheduled: jobs_scheduled_today,
-        customers_contacted: customers_contacted_today
-      },
-      this_week: {
-        quotes_created: quotes_created_this_week,
-        jobs_completed: jobs_completed_this_week,
-        revenue_generated: revenue_this_week
-      }
-    }
-  end
-  
-  private
-  
-  def recent_quotes_created(limit:)
-    @business.quotes
-             .where(created_by: @user)
-             .recent
-             .limit(limit)
-             .map do |quote|
-      {
-        type: 'quote_created',
-        title: "Quote ##{quote.quote_number} created",
-        description: "For #{quote.customer_name}",
-        timestamp: quote.created_at,
-        url: admin_quote_path(quote),
-        status: quote.status
-      }
-    end
-  end
-  
-  def recent_jobs_scheduled(limit:)
-    @business.appointments
-             .where(scheduled_by: @user)
-             .recent
-             .limit(limit)
-             .map do |appointment|
-      {
-        type: 'job_scheduled',
-        title: "Job scheduled",
-        description: "#{appointment.service_name} on #{appointment.scheduled_date.strftime('%m/%d')}",
-        timestamp: appointment.created_at,
-        url: admin_appointment_path(appointment),
-        status: appointment.status
-      }
-    end
-  end
-  
-  def recent_customers_added(limit:)
-    # This would track customer creation or first contact
-    @business.quotes
-             .where(created_by: @user)
-             .joins("LEFT JOIN quotes q2 ON q2.customer_email = quotes.customer_email AND q2.created_at < quotes.created_at")
-             .where("q2.id IS NULL") # First quote for this customer
-             .recent
-             .limit(limit)
-             .map do |quote|
-      {
-        type: 'customer_added',
-        title: "New customer added",
-        description: quote.customer_name,
-        timestamp: quote.created_at,
-        url: admin_customer_path(quote.customer_email),
-        status: 'new'
-      }
-    end
-  end
-  
-  def quote_followup_suggestions
-    overdue_quotes = @business.quotes.pending.where('created_at < ?', 3.days.ago)
-    
-    return nil if overdue_quotes.empty?
-    
-    {
-      type: 'followup',
-      title: 'Follow up on pending quotes',
-      description: "#{overdue_quotes.count} quotes need attention",
-      action_url: admin_quotes_path(status: 'pending'),
-      priority: 'high'
-    }
-  end
-  
-  def scheduling_suggestions
-    approved_quotes = @business.quotes.approved.joins("LEFT JOIN appointments ON appointments.quote_id = quotes.id").where("appointments.id IS NULL")
-    
-    return nil if approved_quotes.empty?
-    
-    {
-      type: 'scheduling',
-      title: 'Schedule approved jobs',
-      description: "#{approved_quotes.count} jobs ready to schedule",
-      action_url: admin_appointments_path(filter: 'unscheduled'),
-      priority: 'medium'
-    }
-  end
-  
-  def customer_engagement_suggestions
-    # Suggest following up with customers who haven't had service in a while
-    inactive_customers = @business.quotes
-                                 .approved
-                                 .where('updated_at < ?', 6.months.ago)
-                                 .group(:customer_email)
-                                 .count
-    
-    return nil if inactive_customers.empty?
-    
-    {
-      type: 'engagement',
-      title: 'Re-engage past customers',
-      description: "#{inactive_customers.count} customers to contact",
-      action_url: admin_customers_path(filter: 'inactive'),
-      priority: 'low'
-    }
-  end
-  
-  # Productivity metrics
-  def quotes_created_today
-    @business.quotes.where(created_by: @user, created_at: Date.current.all_day).count
-  end
-  
-  def jobs_scheduled_today
-    @business.appointments.where(scheduled_by: @user, created_at: Date.current.all_day).count
-  end
-  
-  def customers_contacted_today
-    # This would track communication logs
-    @business.activity_logs.where(user: @user, action: 'customer_contacted', occurred_at: Date.current.all_day).count
-  end
-  
-  def quotes_created_this_week
-    @business.quotes.where(created_by: @user, created_at: Date.current.beginning_of_week..Date.current.end_of_week).count
-  end
-  
-  def jobs_completed_this_week
-    @business.appointments.completed.where(created_at: Date.current.beginning_of_week..Date.current.end_of_week).count
-  end
-  
-  def revenue_this_week
-    @business.quotes.approved.where(approved_at: Date.current.beginning_of_week..Date.current.end_of_week).sum(:total_amount)
-  end
-end
-```
-
-### 4. Create Shared Quick Actions Partial
-**File**: `app/views/shared/_quick_actions_panel.html.erb`
-
-**Implementation Notes**:
-```erb
-<div class="space-y-6">
-  <!-- Primary Quick Actions -->
-  <%= render QuickActionsComponent.new(
-        business_user: current_user.business_users.find_by(business: @business),
-        business: @business
-      ) %>
-  
-  <!-- Recent Activity Summary -->
-  <div class="bg-white shadow rounded-lg">
-    <div class="px-6 py-4 border-b border-gray-200">
-      <h3 class="text-lg font-medium text-gray-900">Your Recent Activity</h3>
-    </div>
-    
-    <div class="p-6">
-      <% recent_tasks = RecentTasksService.new(current_user.business_users.find_by(business: @business)).recent_tasks %>
-      
-      <% if recent_tasks.any? %>
-        <div class="space-y-3">
-          <% recent_tasks.each do |task| %>
-            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div class="flex items-center">
-                <div class="flex-shrink-0">
-                  <% case task[:type] %>
-                  <% when 'quote_created' %>
-                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                      </svg>
-                    </div>
-                  <% when 'job_scheduled' %>
-                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                      <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                      </svg>
-                    </div>
-                  <% when 'customer_added' %>
-                    <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                      <svg class="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
-                      </svg>
-                    </div>
-                  <% end %>
-                </div>
-                <div class="ml-3">
-                  <p class="text-sm font-medium text-gray-900"><%= task[:title] %></p>
-                  <p class="text-xs text-gray-500"><%= task[:description] %></p>
-                </div>
-              </div>
-              <div class="text-right">
-                <p class="text-xs text-gray-500">
-                  <%= time_ago_in_words(task[:timestamp]) %> ago
-                </p>
-                <% if task[:url] %>
-                  <%= link_to "View", task[:url], class: "text-xs text-blue-600 hover:text-blue-800" %>
-                <% end %>
-              </div>
+  <!-- Quick Note Modal -->
+  <div 
+    id="quick-note-modal" 
+    class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50"
+    data-quick-actions-target="modal"
+  >
+    <div class="flex items-center justify-center min-h-screen p-4">
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div class="p-6">
+          <h3 class="text-lg font-medium mb-4">Add Quick Note</h3>
+          
+          <%= form_with url: admin_quick_actions_path, 
+                        method: :post, 
+                        local: false,
+                        data: { 
+                          action: "submit->quick-actions#submitForm",
+                          quick_actions_target: "noteForm"
+                        } do |form| %>
+            <%= form.hidden_field :action_id, value: 'quick_note' %>
+            
+            <div class="mb-4">
+              <%= form.label :content, class: "block text-sm font-medium text-gray-700 mb-2" %>
+              <%= form.text_area :content, 
+                                 rows: 3, 
+                                 required: true,
+                                 class: "w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+            </div>
+            
+            <div class="mb-4">
+              <%= form.label :category, class: "block text-sm font-medium text-gray-700 mb-2" %>
+              <%= form.select :category, 
+                              options_for_select([
+                                ['General', 'general'],
+                                ['Customer', 'customer'],
+                                ['Staff', 'staff'],
+                                ['Operations', 'operations']
+                              ]), 
+                              {},
+                              { class: "w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500" } %>
+            </div>
+            
+            <div class="mb-6">
+              <%= form.label :priority, class: "block text-sm font-medium text-gray-700 mb-2" %>
+              <%= form.select :priority, 
+                              options_for_select([
+                                ['Normal', 'normal'],
+                                ['High', 'high'],
+                                ['Urgent', 'urgent']
+                              ]), 
+                              {},
+                              { class: "w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500" } %>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+              <button 
+                type="button" 
+                class="btn btn-secondary"
+                data-action="click->quick-actions#closeModal"
+              >
+                Cancel
+              </button>
+              <%= form.submit "Save Note", class: "btn btn-primary" %>
             </div>
           <% end %>
         </div>
-      <% else %>
-        <div class="text-center py-6">
-          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-          </svg>
-          <p class="text-sm text-gray-500 mt-2">No recent activity</p>
-          <p class="text-xs text-gray-400">Start by creating a quote or scheduling a job</p>
-        </div>
-      <% end %>
+      </div>
     </div>
   </div>
-  
-  <!-- Productivity Stats -->
-  <div class="bg-white shadow rounded-lg">
-    <div class="px-6 py-4 border-b border-gray-200">
-      <h3 class="text-lg font-medium text-gray-900">Today's Progress</h3>
-    </div>
-    
-    <div class="p-6">
-      <% productivity = RecentTasksService.new(current_user.business_users.find_by(business: @business)).productivity_stats %>
-      
-      <div class="grid grid-cols-3 gap-4 text-center">
-        <div>
-          <p class="text-2xl font-bold text-blue-600"><%= productivity[:today][:quotes_created] %></p>
-          <p class="text-xs text-gray-500">Quotes Created</p>
-        </div>
-        <div>
-          <p class="text-2xl font-bold text-green-600"><%= productivity[:today][:jobs_scheduled] %></p>
-          <p class="text-xs text-gray-500">Jobs Scheduled</p>
-        </div>
-        <div>
-          <p class="text-2xl font-bold text-purple-600"><%= productivity[:today][:customers_contacted] %></p>
-          <p class="text-xs text-gray-500">Customers Contacted</p>
+
+  <!-- Block Time Modal -->
+  <div 
+    id="block-time-modal" 
+    class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50"
+    data-quick-actions-target="modal"
+  >
+    <div class="flex items-center justify-center min-h-screen p-4">
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div class="p-6">
+          <h3 class="text-lg font-medium mb-4">Block Time Slot</h3>
+          
+          <%= form_with url: admin_quick_actions_path, 
+                        method: :post, 
+                        local: false,
+                        data: { 
+                          action: "submit->quick-actions#submitForm",
+                          quick_actions_target: "blockForm"
+                        } do |form| %>
+            <%= form.hidden_field :action_id, value: 'quick_block_time' %>
+            
+            <div class="mb-4">
+              <%= form.label :start_time, class: "block text-sm font-medium text-gray-700 mb-2" %>
+              <%= form.datetime_local_field :start_time, 
+                                           required: true,
+                                           class: "w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+            </div>
+            
+            <div class="mb-4">
+              <%= form.label :end_time, class: "block text-sm font-medium text-gray-700 mb-2" %>
+              <%= form.datetime_local_field :end_time, 
+                                           required: true,
+                                           class: "w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+            </div>
+            
+            <div class="mb-4">
+              <%= form.label :reason, class: "block text-sm font-medium text-gray-700 mb-2" %>
+              <%= form.text_field :reason, 
+                                  required: true,
+                                  placeholder: "e.g., Equipment maintenance",
+                                  class: "w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+            </div>
+            
+            <div class="mb-6">
+              <%= form.label :staff_member_id, "Staff Member (Optional)", class: "block text-sm font-medium text-gray-700 mb-2" %>
+              <%= form.select :staff_member_id, 
+                              options_from_collection_for_select(current_admin.business.staff_members, :id, :name), 
+                              { prompt: 'All staff' },
+                              { class: "w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500" } %>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+              <button 
+                type="button" 
+                class="btn btn-secondary"
+                data-action="click->quick-actions#closeModal"
+              >
+                Cancel
+              </button>
+              <%= form.submit "Block Time", class: "btn btn-primary" %>
+            </div>
+          <% end %>
         </div>
       </div>
     </div>
   </div>
 </div>
+```
 
-<script data-turbo-track="reload">
-  // Stimulus controller for Quick Actions interactivity
-  class QuickActionsController extends Stimulus.Controller {
-    static targets = ["toggleText", "toggleIcon", "additionalActions"]
+### Task 3: Create Quick Action Button Partial
+**Implementation Notes:**
+- Reusable button component
+- Support for different action types (links, modals, AJAX)
+- Visual consistency with color coding
+
+```erb
+<!-- app/views/admin/dashboard/widgets/_quick_action_button.html.erb -->
+<% 
+  color_classes = {
+    'blue' => 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100',
+    'green' => 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100',
+    'purple' => 'bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100',
+    'yellow' => 'bg-yellow-50 border-yellow-200 text-yellow-700 hover:bg-yellow-100',
+    'red' => 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100',
+    'indigo' => 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100',
+    'gray' => 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100',
+    'emerald' => 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+  }
+  
+  button_classes = "w-full p-4 border-2 rounded-lg transition-colors duration-200 text-left #{color_classes[action[:color]] || color_classes['gray']}"
+%>
+
+<% if action[:action] == 'modal' %>
+  <button 
+    class="<%= button_classes %>"
+    data-action="click->quick-actions#openModal"
+    data-modal-target="<%= action[:modal_target] %>"
+  >
+    <div class="flex items-start">
+      <div class="flex-shrink-0">
+        <i class="<%= action[:icon] %> text-lg"></i>
+      </div>
+      <div class="ml-3">
+        <h4 class="font-medium text-sm"><%= action[:title] %></h4>
+        <p class="text-xs opacity-75 mt-1"><%= action[:description] %></p>
+      </div>
+    </div>
+  </button>
+<% elsif action[:path] %>
+  <%= link_to action[:path], class: button_classes do %>
+    <div class="flex items-start">
+      <div class="flex-shrink-0">
+        <i class="<%= action[:icon] %> text-lg"></i>
+      </div>
+      <div class="ml-3">
+        <h4 class="font-medium text-sm"><%= action[:title] %></h4>
+        <p class="text-xs opacity-75 mt-1"><%= action[:description] %></p>
+      </div>
+    </div>
+  <% end %>
+<% else %>
+  <button 
+    class="<%= button_classes %>"
+    data-action="click->quick-actions#executeAction"
+    data-action-id="<%= action[:id] %>"
+  >
+    <div class="flex items-start">
+      <div class="flex-shrink-0">
+        <i class="<%= action[:icon] %> text-lg"></i>
+      </div>
+      <div class="ml-3">
+        <h4 class="font-medium text-sm"><%= action[:title] %></h4>
+        <p class="text-xs opacity-75 mt-1"><%= action[:description] %></p>
+      </div>
+    </div>
+  </button>
+<% end %>
+```
+
+### Task 4: Create Quick Actions Controller and Routes
+**Implementation Notes:**
+- Handle quick action execution via AJAX
+- Implement proper error handling and responses
+- Add authorization checks
+
+```ruby
+# Add to config/routes.rb
+namespace :admin do
+  # ...existing routes...
+  post 'quick_actions', to: 'quick_actions#execute'
+end
+
+# app/controllers/admin/quick_actions_controller.rb
+class Admin::QuickActionsController < Admin::BaseController
+  before_action :authenticate_admin!
+
+  def execute
+    service = Admin::QuickActionsService.new(current_admin)
+    result = service.execute_action(params[:action_id], action_params)
+
+    if result[:success]
+      render json: {
+        success: true,
+        message: result[:message],
+        data: result[:data]
+      }
+    else
+      render json: {
+        success: false,
+        error: result[:error]
+      }, status: :unprocessable_entity
+    end
+  rescue StandardError => e
+    Rails.logger.error "Quick action error: #{e.message}"
+    render json: {
+      success: false,
+      error: 'An unexpected error occurred'
+    }, status: :internal_server_error
+  end
+
+  private
+
+  def action_params
+    params.permit(:content, :category, :priority, :start_time, :end_time, :reason, :staff_member_id)
+  end
+end
+```
+
+### Task 5: Create Quick Actions Stimulus Controller
+**Implementation Notes:**
+- Handle modal opening/closing
+- Form submission via AJAX
+- Action execution and feedback
+
+```javascript
+// app/javascript/controllers/quick_actions_controller.js
+import { Controller } from "@hotwired/stimulus"
+
+export default class extends Controller {
+  static targets = ["actionsGrid", "modal", "noteForm", "blockForm", "toggleText"]
+
+  connect() {
+    this.expanded = false
+  }
+
+  toggleExpanded() {
+    this.expanded = !this.expanded
     
-    toggleAdditional() {
-      const isShowing = this.toggleTextTarget.textContent.includes("Show More");
+    const expandedItems = this.actionsGridTarget.querySelectorAll('[data-expanded="true"]')
+    const toggleText = this.toggleTextTarget
+    
+    if (this.expanded) {
+      expandedItems.forEach(item => item.classList.remove('hidden'))
+      toggleText.textContent = 'Show Less'
+    } else {
+      expandedItems.forEach(item => item.classList.add('hidden'))
+      toggleText.textContent = 'Show All'
+    }
+  }
+
+  openModal(event) {
+    const modalTarget = event.currentTarget.dataset.modalTarget
+    const modal = document.getElementById(modalTarget)
+    
+    if (modal) {
+      modal.classList.remove('hidden')
+      document.body.classList.add('overflow-hidden')
       
-      if (isShowing) {
-        this.toggleTextTarget.textContent = "Show Fewer Actions";
-        this.toggleIconTarget.style.transform = "rotate(180deg)";
-        // Show additional actions logic would go here
-      } else {
-        this.toggleTextTarget.textContent = "Show More Actions";
-        this.toggleIconTarget.style.transform = "rotate(0deg)";
-        // Hide additional actions logic would go here
+      // Focus first input
+      const firstInput = modal.querySelector('input, textarea, select')
+      if (firstInput) {
+        setTimeout(() => firstInput.focus(), 100)
       }
     }
   }
-  
-  Stimulus.register("quick-actions", QuickActionsController);
-</script>
+
+  closeModal() {
+    this.modalTargets.forEach(modal => {
+      modal.classList.add('hidden')
+    })
+    document.body.classList.remove('overflow-hidden')
+    
+    // Reset forms
+    this.resetForms()
+  }
+
+  submitForm(event) {
+    event.preventDefault()
+    
+    const form = event.target
+    const formData = new FormData(form)
+    
+    fetch(form.action, {
+      method: 'POST',
+      headers: {
+        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+      },
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        this.showSuccess(data.message)
+        this.closeModal()
+      } else {
+        this.showError(data.error)
+      }
+    })
+    .catch(error => {
+      console.error('Quick action error:', error)
+      this.showError('An unexpected error occurred')
+    })
+  }
+
+  executeAction(event) {
+    const actionId = event.currentTarget.dataset.actionId
+    const button = event.currentTarget
+    
+    // Show loading state
+    button.disabled = true
+    button.style.opacity = '0.6'
+    
+    fetch('/admin/quick_actions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+      },
+      body: JSON.stringify({ action_id: actionId })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        this.showSuccess(data.message)
+      } else {
+        this.showError(data.error)
+      }
+    })
+    .catch(error => {
+      console.error('Quick action error:', error)
+      this.showError('An unexpected error occurred')
+    })
+    .finally(() => {
+      // Restore button state
+      button.disabled = false
+      button.style.opacity = '1'
+    })
+  }
+
+  resetForms() {
+    if (this.hasNoteFormTarget) {
+      this.noteFormTarget.reset()
+    }
+    if (this.hasBlockFormTarget) {
+      this.blockFormTarget.reset()
+    }
+  }
+
+  showSuccess(message) {
+    this.showNotification(message, 'success')
+  }
+
+  showError(message) {
+    this.showNotification(message, 'error')
+  }
+
+  showNotification(message, type) {
+    const notification = document.createElement('div')
+    const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500'
+    
+    notification.className = `fixed top-4 right-4 ${bgColor} text-white px-4 py-2 rounded shadow-lg z-50`
+    notification.textContent = message
+    
+    document.body.appendChild(notification)
+    
+    setTimeout(() => {
+      notification.remove()
+    }, 5000)
+  }
+
+  // Handle escape key to close modals
+  keydown(event) {
+    if (event.key === 'Escape') {
+      this.closeModal()
+    }
+  }
+}
 ```
 
 ## Acceptance Criteria
-- [ ] Displays role-appropriate actions based on user permissions
-- [ ] Shows relevant count badges for actions requiring attention
-- [ ] Provides quick access to most common business operations
-- [ ] Recent activity tracking works correctly
-- [ ] Productivity stats display accurately
-- [ ] Action buttons have proper hover effects and transitions
-- [ ] Panel is responsive across different screen sizes
-- [ ] Suggested actions appear based on business state
+- [ ] Actions display based on user role and permissions
+- [ ] Modal forms submit successfully via AJAX
+- [ ] Direct action buttons execute without page refresh
+- [ ] Success/error notifications appear appropriately
+- [ ] Mobile layout displays actions clearly
+- [ ] Expand/collapse functionality works smoothly
+- [ ] Keyboard navigation (ESC to close modals) works
 
 ## Testing Requirements
-- Component tests for quick actions rendering
-- Service tests for recent tasks tracking
-- Authorization tests for role-based action visibility
-- Integration tests for action count accuracy
-- JavaScript tests for interactive elements
+- Unit tests for QuickActionsService
+- Integration tests for action execution
+- Permission testing for role-based actions
+- JavaScript functionality testing
+- Mobile responsiveness testing

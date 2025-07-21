@@ -1,674 +1,462 @@
 # Feature: Key Metrics Display
 
-## Overview
-Create focused metric components that display critical business performance indicators with visual representations and trend analysis.
+## Description
+Real-time business metrics widget that displays critical performance indicators including revenue, bookings, conversion rates, and other KPIs relevant to service businesses. The metrics are displayed in an easy-to-scan format with visual indicators for trends.
 
 ## User Stories
-- As a business owner, I want to see key performance indicators at a glance so I can track business health
-- As a business owner, I want to see trends and comparisons to understand business growth
-- As a manager, I want to drill down into specific metrics for detailed analysis
+- As a business owner, I want to see today's revenue so I can track daily performance
+- As a manager, I want to compare current metrics to previous periods so I can identify trends
+- As an admin, I want to see booking conversion rates so I can optimize our sales process
+- As a business owner, I want visual indicators (up/down arrows) so I can quickly see if metrics are improving
 
 ## Tasks
 
-### 1. Create Metrics Calculator Service
-**File**: `app/services/metrics_calculator_service.rb`
+### Task 1: Create Metrics Service
+**Implementation Notes:**
+- Create service to calculate and cache business metrics
+- Implement comparison logic for period-over-period analysis
+- Add caching for performance optimization
 
-**Implementation Notes**:
 ```ruby
-class MetricsCalculatorService
-  def initialize(business, date_range)
+# app/services/admin/metrics_service.rb
+class Admin::MetricsService
+  attr_reader :business, :date_range, :comparison_period
+
+  def initialize(business, date_range: Date.current.beginning_of_day..Date.current.end_of_day)
     @business = business
     @date_range = date_range
-    @previous_range = calculate_previous_period
+    @comparison_period = calculate_comparison_period
   end
-  
-  def financial_metrics
-    {
-      total_revenue: total_revenue,
-      pending_revenue: pending_revenue,
-      average_quote_value: average_quote_value,
-      revenue_trend: revenue_trend_data,
-      monthly_revenue: monthly_revenue_breakdown
-    }
-  end
-  
-  def operational_metrics
-    {
-      quote_volume: quote_volume_metrics,
-      job_performance: job_performance_metrics,
-      customer_metrics: customer_acquisition_metrics,
-      efficiency_metrics: efficiency_metrics
-    }
-  end
-  
-  def growth_indicators
-    {
-      revenue_growth: calculate_growth_rate(:revenue),
-      customer_growth: calculate_growth_rate(:customers),
-      quote_growth: calculate_growth_rate(:quotes),
-      job_completion_rate: job_completion_rate
-    }
-  end
-  
-  def comparative_analysis
-    {
-      vs_previous_period: previous_period_comparison,
-      vs_industry_average: industry_benchmark_comparison,
-      seasonal_trends: seasonal_analysis
-    }
-  end
-  
-  private
-  
-  def total_revenue
-    approved_quotes.sum(:total_amount)
-  end
-  
-  def pending_revenue
-    pending_quotes.sum(:total_amount)
-  end
-  
-  def average_quote_value
-    current_quotes.average(:total_amount)&.round(2) || 0
-  end
-  
-  def revenue_trend_data
-    # Generate daily revenue data for charting
-    days = (@date_range.begin.to_date..@date_range.end.to_date).to_a
-    
-    days.map do |date|
-      daily_revenue = approved_quotes.where(
-        approved_at: date.beginning_of_day..date.end_of_day
-      ).sum(:total_amount)
-      
+
+  def daily_metrics
+    Rails.cache.fetch(cache_key("daily_metrics"), expires_in: 5.minutes) do
       {
-        date: date.strftime('%m/%d'),
-        revenue: daily_revenue
+        revenue: revenue_metrics,
+        bookings: booking_metrics,
+        customers: customer_metrics,
+        conversion: conversion_metrics
       }
     end
   end
-  
-  def monthly_revenue_breakdown
-    current_quotes.approved
-                  .group_by_month(:approved_at, range: @date_range)
-                  .sum(:total_amount)
-  end
-  
-  def quote_volume_metrics
-    {
-      total_quotes: current_quotes.count,
-      pending_quotes: pending_quotes.count,
-      approved_quotes: approved_quotes.count,
-      rejected_quotes: rejected_quotes.count,
-      approval_rate: calculate_approval_rate
-    }
-  end
-  
-  def job_performance_metrics
-    jobs = current_appointments
-    
-    {
-      total_jobs: jobs.count,
-      completed_jobs: jobs.completed.count,
-      scheduled_jobs: jobs.scheduled.count,
-      cancelled_jobs: jobs.cancelled.count,
-      completion_rate: calculate_completion_rate(jobs)
-    }
-  end
-  
-  def customer_acquisition_metrics
-    {
-      new_customers: new_customers_count,
-      repeat_customers: repeat_customers_count,
-      customer_lifetime_value: calculate_customer_ltv,
-      retention_rate: calculate_retention_rate
-    }
-  end
-  
-  def efficiency_metrics
-    {
-      average_response_time: calculate_avg_response_time,
-      quote_to_job_time: calculate_quote_to_job_time,
-      staff_utilization: calculate_staff_utilization
-    }
-  end
-  
-  def calculate_growth_rate(metric)
-    current_value = case metric
-                   when :revenue then total_revenue
-                   when :customers then new_customers_count
-                   when :quotes then current_quotes.count
-                   end
-    
-    previous_value = case metric
-                    when :revenue then previous_revenue
-                    when :customers then previous_customers_count
-                    when :quotes then previous_quotes_count
-                    end
-    
-    return 0 if previous_value.zero?
-    
-    ((current_value - previous_value).to_f / previous_value * 100).round(1)
-  end
-  
-  def job_completion_rate
-    jobs = current_appointments
-    return 0 if jobs.count.zero?
-    
-    (jobs.completed.count.to_f / jobs.count * 100).round(1)
-  end
-  
-  def calculate_approval_rate
-    total = current_quotes.count
-    return 0 if total.zero?
-    
-    (approved_quotes.count.to_f / total * 100).round(1)
-  end
-  
-  def calculate_completion_rate(jobs)
-    return 0 if jobs.count.zero?
-    (jobs.completed.count.to_f / jobs.count * 100).round(1)
-  end
-  
-  def new_customers_count
-    current_quotes.select(:customer_email).distinct.count
-  end
-  
-  def repeat_customers_count
-    # Customers who have multiple quotes in the period
-    customer_quote_counts = current_quotes.group(:customer_email).count
-    customer_quote_counts.count { |_, count| count > 1 }
-  end
-  
-  def calculate_customer_ltv
-    # Simplified LTV calculation
-    avg_quote_value * (repeat_customers_count + 1)
-  end
-  
-  def calculate_retention_rate
-    # Percentage of customers who return for additional services
-    return 0 if new_customers_count.zero?
-    (repeat_customers_count.to_f / new_customers_count * 100).round(1)
-  end
-  
-  def calculate_avg_response_time
-    # Time between quote request and quote sent (in hours)
-    # This would need actual timestamp data
-    24 # Placeholder
-  end
-  
-  def calculate_quote_to_job_time
-    # Average time from quote approval to job completion
-    approved_with_jobs = approved_quotes.joins(:appointments)
-    return 0 if approved_with_jobs.empty?
-    
-    # Placeholder calculation - would use actual date differences
-    7 # days
-  end
-  
-  def calculate_staff_utilization
-    # Percentage of available staff time that's booked
-    # This would integrate with staff availability data
-    75 # Placeholder percentage
-  end
-  
-  def previous_period_comparison
-    {
-      revenue: calculate_growth_rate(:revenue),
-      quotes: calculate_growth_rate(:quotes),
-      customers: calculate_growth_rate(:customers)
-    }
-  end
-  
-  def industry_benchmark_comparison
-    # These would come from external industry data
-    {
-      approval_rate: { current: calculate_approval_rate, benchmark: 65 },
-      response_time: { current: calculate_avg_response_time, benchmark: 12 },
-      completion_rate: { current: job_completion_rate, benchmark: 85 }
-    }
-  end
-  
-  def seasonal_analysis
-    # Compare current period to same period last year
-    # This would require historical data
-    {
-      year_over_year_growth: 15.5, # Placeholder
-      seasonal_trend: 'growing' # 'growing', 'declining', 'stable'
-    }
-  end
-  
-  # Helper methods for data access
-  def current_quotes
-    @current_quotes ||= @business.quotes.where(created_at: @date_range)
-  end
-  
-  def approved_quotes
-    @approved_quotes ||= current_quotes.approved
-  end
-  
-  def pending_quotes
-    @pending_quotes ||= current_quotes.pending
-  end
-  
-  def rejected_quotes
-    @rejected_quotes ||= current_quotes.rejected
-  end
-  
-  def current_appointments
-    @current_appointments ||= @business.appointments.where(created_at: @date_range)
-  end
-  
-  def calculate_previous_period
-    period_length = @date_range.end - @date_range.begin
-    (@date_range.begin - period_length)..@date_range.begin
-  end
-  
-  def previous_revenue
-    @business.quotes.approved.where(created_at: @previous_range).sum(:total_amount)
-  end
-  
-  def previous_customers_count
-    @business.quotes.where(created_at: @previous_range).select(:customer_email).distinct.count
-  end
-  
-  def previous_quotes_count
-    @business.quotes.where(created_at: @previous_range).count
-  end
-end
-```
 
-### 2. Create Metrics Display Component
-**File**: `app/components/metrics_display_component.rb`
+  def revenue_metrics
+    current_revenue = business.bookings
+                             .confirmed
+                             .where(scheduled_at: date_range)
+                             .sum(:total_amount)
+    
+    previous_revenue = business.bookings
+                              .confirmed
+                              .where(scheduled_at: comparison_period)
+                              .sum(:total_amount)
 
-**Implementation Notes**:
-```ruby
-class MetricsDisplayComponent < ViewComponent::Base
-  def initialize(business:, date_range:, metric_type: :overview)
-    @business = business
-    @date_range = date_range
-    @metric_type = metric_type
-    @calculator = MetricsCalculatorService.new(business, date_range)
+    {
+      current: current_revenue,
+      previous: previous_revenue,
+      change_percent: calculate_percentage_change(current_revenue, previous_revenue),
+      trend: determine_trend(current_revenue, previous_revenue)
+    }
   end
-  
+
+  def booking_metrics
+    current_bookings = business.bookings
+                              .where(created_at: date_range)
+                              .count
+    
+    previous_bookings = business.bookings
+                               .where(created_at: comparison_period)
+                               .count
+
+    confirmed_today = business.bookings
+                             .confirmed
+                             .where(scheduled_at: date_range)
+                             .count
+
+    {
+      total_today: current_bookings,
+      confirmed_today: confirmed_today,
+      previous: previous_bookings,
+      change_percent: calculate_percentage_change(current_bookings, previous_bookings),
+      trend: determine_trend(current_bookings, previous_bookings)
+    }
+  end
+
+  def customer_metrics
+    new_customers = business.customers
+                           .where(created_at: date_range)
+                           .count
+    
+    previous_new_customers = business.customers
+                                    .where(created_at: comparison_period)
+                                    .count
+
+    returning_customers = business.bookings
+                                 .joins(:customer)
+                                 .where(created_at: date_range)
+                                 .where.not(customers: { created_at: date_range })
+                                 .select(:customer_id)
+                                 .distinct
+                                 .count
+
+    {
+      new_today: new_customers,
+      returning_today: returning_customers,
+      previous_new: previous_new_customers,
+      change_percent: calculate_percentage_change(new_customers, previous_new_customers),
+      trend: determine_trend(new_customers, previous_new_customers)
+    }
+  end
+
+  def conversion_metrics
+    inquiries = business.inquiries.where(created_at: date_range).count
+    bookings = business.bookings.where(created_at: date_range).count
+    
+    current_rate = inquiries > 0 ? (bookings.to_f / inquiries * 100).round(1) : 0
+    
+    previous_inquiries = business.inquiries.where(created_at: comparison_period).count
+    previous_bookings = business.bookings.where(created_at: comparison_period).count
+    previous_rate = previous_inquiries > 0 ? (previous_bookings.to_f / previous_inquiries * 100).round(1) : 0
+
+    {
+      current_rate: current_rate,
+      previous_rate: previous_rate,
+      inquiries_today: inquiries,
+      bookings_today: bookings,
+      change_percent: calculate_percentage_change(current_rate, previous_rate),
+      trend: determine_trend(current_rate, previous_rate)
+    }
+  end
+
   private
-  
-  attr_reader :business, :date_range, :metric_type, :calculator
-  
-  def metrics_data
-    @metrics_data ||= case metric_type
-                     when :financial
-                       calculator.financial_metrics
-                     when :operational
-                       calculator.operational_metrics
-                     when :growth
-                       calculator.growth_indicators
-                     else
-                       calculator.financial_metrics.merge(calculator.operational_metrics)
-                     end
+
+  def calculate_comparison_period
+    period_length = date_range.end - date_range.begin
+    (date_range.begin - period_length - 1.day)..(date_range.begin - 1.day)
   end
-  
-  def format_currency(amount)
-    number_to_currency(amount)
+
+  def calculate_percentage_change(current, previous)
+    return 0 if previous.zero?
+    ((current - previous).to_f / previous * 100).round(1)
   end
-  
-  def format_percentage(value)
-    "#{value}%"
+
+  def determine_trend(current, previous)
+    return :neutral if current == previous
+    current > previous ? :up : :down
   end
-  
-  def trend_indicator(value)
-    return 'neutral' if value.zero?
-    value > 0 ? 'positive' : 'negative'
-  end
-  
-  def trend_color_class(value)
-    case trend_indicator(value)
-    when 'positive'
-      'text-green-600'
-    when 'negative'
-      'text-red-600'
-    else
-      'text-gray-600'
-    end
-  end
-  
-  def trend_icon(value)
-    case trend_indicator(value)
-    when 'positive'
-      '↗️'
-    when 'negative'
-      '↘️'
-    else
-      '➡️'
-    end
+
+  def cache_key(suffix)
+    "metrics:#{business.id}:#{date_range.begin.to_date}:#{suffix}"
   end
 end
 ```
 
-### 3. Create Metrics Display View Template
-**File**: `app/components/metrics_display_component.html.erb`
+### Task 2: Create Metrics Widget View
+**Implementation Notes:**
+- Create responsive widget layout
+- Include trend indicators and comparison data
+- Add real-time update capability
 
-**Implementation Notes**:
 ```erb
-<div class="bg-white shadow rounded-lg p-6">
-  <div class="border-b border-gray-200 pb-4 mb-6">
-    <h3 class="text-lg font-medium text-gray-900">
-      <%= metric_type.to_s.titleize %> Metrics
-    </h3>
-    <p class="text-sm text-gray-500 mt-1">
-      <%= date_range.begin.strftime('%B %d') %> - <%= date_range.end.strftime('%B %d, %Y') %>
-    </p>
+<!-- app/views/admin/dashboard/widgets/_metrics.html.erb -->
+<div 
+  class="col-span-1 md:col-span-2 lg:col-span-4 bg-white rounded-lg shadow p-6"
+  data-widget="metrics"
+  data-widget-refresh="true"
+>
+  <div class="flex items-center justify-between mb-6">
+    <h3 class="text-lg font-medium text-gray-900">Today's Metrics</h3>
+    <div class="text-sm text-gray-500">
+      vs. yesterday
+    </div>
   </div>
-  
-  <% if metric_type == :financial || metric_type == :overview %>
-    <!-- Financial Metrics Section -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-      <!-- Total Revenue -->
-      <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-green-600">Total Revenue</p>
-            <p class="text-2xl font-bold text-green-900">
-              <%= format_currency(metrics_data[:total_revenue]) %>
-            </p>
-          </div>
-          <div class="text-right">
-            <span class="text-sm <%= trend_color_class(calculator.growth_indicators[:revenue_growth]) %>">
-              <%= trend_icon(calculator.growth_indicators[:revenue_growth]) %>
-              <%= format_percentage(calculator.growth_indicators[:revenue_growth]) %>
-            </span>
-          </div>
-        </div>
+
+  <% 
+    metrics = Admin::MetricsService.new(current_admin.business).daily_metrics
+    revenue = metrics[:revenue]
+    bookings = metrics[:bookings]
+    customers = metrics[:customers]
+    conversion = metrics[:conversion]
+  %>
+
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+    <!-- Revenue Metric -->
+    <div class="text-center">
+      <div class="text-2xl font-bold text-gray-900" data-widget-value="revenue">
+        <%= number_to_currency(revenue[:current]) %>
       </div>
-      
-      <!-- Pending Revenue -->
-      <div class="bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-lg p-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-yellow-600">Pending Revenue</p>
-            <p class="text-2xl font-bold text-yellow-900">
-              <%= format_currency(metrics_data[:pending_revenue]) %>
-            </p>
-          </div>
-          <div class="text-right">
-            <p class="text-xs text-yellow-600">
-              <%= calculator.operational_metrics[:quote_volume][:pending_quotes] %> quotes
-            </p>
-          </div>
-        </div>
+      <div class="text-sm text-gray-600 mb-2">Revenue</div>
+      <div class="flex items-center justify-center text-sm">
+        <% if revenue[:trend] == :up %>
+          <i class="fas fa-arrow-up text-green-500 mr-1"></i>
+          <span class="text-green-600">+<%= revenue[:change_percent] %>%</span>
+        <% elsif revenue[:trend] == :down %>
+          <i class="fas fa-arrow-down text-red-500 mr-1"></i>
+          <span class="text-red-600"><%= revenue[:change_percent] %>%</span>
+        <% else %>
+          <i class="fas fa-minus text-gray-400 mr-1"></i>
+          <span class="text-gray-500">No change</span>
+        <% end %>
       </div>
     </div>
-    
-    <!-- Revenue Trend Chart -->
-    <% if metrics_data[:revenue_trend] %>
-      <div class="mb-6">
-        <h4 class="text-sm font-medium text-gray-900 mb-3">Revenue Trend</h4>
-        <div class="bg-gray-50 rounded-lg p-4">
-          <canvas id="revenue-trend-chart" width="400" height="150"></canvas>
-        </div>
+
+    <!-- Bookings Metric -->
+    <div class="text-center">
+      <div class="text-2xl font-bold text-gray-900" data-widget-value="bookings">
+        <%= bookings[:total_today] %>
       </div>
-    <% end %>
-  <% end %>
-  
-  <% if metric_type == :operational || metric_type == :overview %>
-    <!-- Operational Metrics Section -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <!-- Quote Approval Rate -->
-      <div class="text-center">
-        <div class="bg-blue-100 rounded-full p-3 w-16 h-16 mx-auto mb-2 flex items-center justify-center">
-          <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-          </svg>
-        </div>
-        <p class="text-2xl font-bold text-gray-900">
-          <%= format_percentage(metrics_data[:quote_volume][:approval_rate]) %>
-        </p>
-        <p class="text-sm text-gray-500">Quote Approval Rate</p>
-      </div>
-      
-      <!-- Job Completion Rate -->
-      <div class="text-center">
-        <div class="bg-purple-100 rounded-full p-3 w-16 h-16 mx-auto mb-2 flex items-center justify-center">
-          <svg class="w-8 h-8 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-          </svg>
-        </div>
-        <p class="text-2xl font-bold text-gray-900">
-          <%= format_percentage(metrics_data[:job_performance][:completion_rate]) %>
-        </p>
-        <p class="text-sm text-gray-500">Job Completion Rate</p>
-      </div>
-      
-      <!-- Customer Retention -->
-      <div class="text-center">
-        <div class="bg-indigo-100 rounded-full p-3 w-16 h-16 mx-auto mb-2 flex items-center justify-center">
-          <svg class="w-8 h-8 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
-          </svg>
-        </div>
-        <p class="text-2xl font-bold text-gray-900">
-          <%= format_percentage(metrics_data[:customer_metrics][:retention_rate]) %>
-        </p>
-        <p class="text-sm text-gray-500">Customer Retention</p>
+      <div class="text-sm text-gray-600 mb-2">Bookings</div>
+      <div class="flex items-center justify-center text-sm">
+        <% if bookings[:trend] == :up %>
+          <i class="fas fa-arrow-up text-green-500 mr-1"></i>
+          <span class="text-green-600">+<%= bookings[:change_percent] %>%</span>
+        <% elsif bookings[:trend] == :down %>
+          <i class="fas fa-arrow-down text-red-500 mr-1"></i>
+          <span class="text-red-600"><%= bookings[:change_percent] %>%</span>
+        <% else %>
+          <i class="fas fa-minus text-gray-400 mr-1"></i>
+          <span class="text-gray-500">No change</span>
+        <% end %>
       </div>
     </div>
-  <% end %>
-  
-  <% if metric_type == :growth %>
-    <!-- Growth Indicators -->
-    <div class="space-y-4">
-      <% calculator.growth_indicators.each do |metric, value| %>
-        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-          <span class="text-sm font-medium text-gray-900 capitalize">
-            <%= metric.to_s.humanize %>
-          </span>
-          <span class="text-sm font-bold <%= trend_color_class(value) %>">
-            <%= trend_icon(value) %> <%= format_percentage(value) %>
-          </span>
-        </div>
-      <% end %>
+
+    <!-- New Customers Metric -->
+    <div class="text-center">
+      <div class="text-2xl font-bold text-gray-900" data-widget-value="new_customers">
+        <%= customers[:new_today] %>
+      </div>
+      <div class="text-sm text-gray-600 mb-2">New Customers</div>
+      <div class="flex items-center justify-center text-sm">
+        <% if customers[:trend] == :up %>
+          <i class="fas fa-arrow-up text-green-500 mr-1"></i>
+          <span class="text-green-600">+<%= customers[:change_percent] %>%</span>
+        <% elsif customers[:trend] == :down %>
+          <i class="fas fa-arrow-down text-red-500 mr-1"></i>
+          <span class="text-red-600"><%= customers[:change_percent] %>%</span>
+        <% else %>
+          <i class="fas fa-minus text-gray-400 mr-1"></i>
+          <span class="text-gray-500">No change</span>
+        <% end %>
+      </div>
     </div>
-  <% end %>
-  
-  <!-- Industry Comparison -->
+
+    <!-- Conversion Rate Metric -->
+    <div class="text-center">
+      <div class="text-2xl font-bold text-gray-900" data-widget-value="conversion_rate">
+        <%= conversion[:current_rate] %>%
+      </div>
+      <div class="text-sm text-gray-600 mb-2">Conversion</div>
+      <div class="flex items-center justify-center text-sm">
+        <% if conversion[:trend] == :up %>
+          <i class="fas fa-arrow-up text-green-500 mr-1"></i>
+          <span class="text-green-600">+<%= conversion[:change_percent] %>%</span>
+        <% elsif conversion[:trend] == :down %>
+          <i class="fas fa-arrow-down text-red-500 mr-1"></i>
+          <span class="text-red-600"><%= conversion[:change_percent] %>%</span>
+        <% else %>
+          <i class="fas fa-minus text-gray-400 mr-1"></i>
+          <span class="text-gray-500">No change</span>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Additional Details -->
   <div class="mt-6 pt-6 border-t border-gray-200">
-    <h4 class="text-sm font-medium text-gray-900 mb-3">Industry Comparison</h4>
-    <div class="space-y-3">
-      <% calculator.comparative_analysis[:vs_industry_average].each do |metric, data| %>
-        <div class="flex items-center justify-between">
-          <span class="text-sm text-gray-600 capitalize"><%= metric.to_s.humanize %></span>
-          <div class="flex items-center space-x-2">
-            <span class="text-sm font-medium text-gray-900">
-              <%= data[:current] %><%= metric.to_s.include?('rate') ? '%' : '' %>
-            </span>
-            <span class="text-xs text-gray-500">vs</span>
-            <span class="text-sm text-gray-500">
-              <%= data[:benchmark] %><%= metric.to_s.include?('rate') ? '%' : '' %>
-            </span>
-          </div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+      <div class="text-center">
+        <div class="font-medium text-gray-900"><%= bookings[:confirmed_today] %></div>
+        <div class="text-gray-600">Confirmed</div>
+      </div>
+      <div class="text-center">
+        <div class="font-medium text-gray-900"><%= customers[:returning_today] %></div>
+        <div class="text-gray-600">Returning</div>
+      </div>
+      <div class="text-center">
+        <div class="font-medium text-gray-900"><%= conversion[:inquiries_today] %></div>
+        <div class="text-gray-600">Inquiries</div>
+      </div>
+      <div class="text-center">
+        <div class="font-medium text-gray-900" data-widget-value="avg_booking_value">
+          <%= number_to_currency(revenue[:current] / [bookings[:confirmed_today], 1].max) %>
         </div>
-      <% end %>
+        <div class="text-gray-600">Avg. Value</div>
+      </div>
     </div>
   </div>
 </div>
-
-<script data-turbo-track="reload">
-  // Initialize revenue trend chart if data exists
-  <% if metrics_data[:revenue_trend] %>
-    document.addEventListener('DOMContentLoaded', function() {
-      const canvas = document.getElementById('revenue-trend-chart');
-      if (canvas) {
-        const ctx = canvas.getContext('2d');
-        const data = <%= metrics_data[:revenue_trend].to_json.html_safe %>;
-        
-        // Simple line chart implementation
-        drawRevenueChart(ctx, data);
-      }
-    });
-    
-    function drawRevenueChart(ctx, data) {
-      const width = ctx.canvas.width;
-      const height = ctx.canvas.height;
-      const padding = 40;
-      
-      // Clear canvas
-      ctx.clearRect(0, 0, width, height);
-      
-      // Set up chart area
-      const chartWidth = width - 2 * padding;
-      const chartHeight = height - 2 * padding;
-      
-      // Find min/max values
-      const values = data.map(d => d.revenue);
-      const maxValue = Math.max(...values);
-      const minValue = Math.min(...values);
-      
-      // Draw axes
-      ctx.strokeStyle = '#e5e7eb';
-      ctx.lineWidth = 1;
-      
-      // Y-axis
-      ctx.beginPath();
-      ctx.moveTo(padding, padding);
-      ctx.lineTo(padding, height - padding);
-      ctx.stroke();
-      
-      // X-axis
-      ctx.beginPath();
-      ctx.moveTo(padding, height - padding);
-      ctx.lineTo(width - padding, height - padding);
-      ctx.stroke();
-      
-      // Draw data line
-      ctx.strokeStyle = '#10b981';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      
-      data.forEach((point, index) => {
-        const x = padding + (index / (data.length - 1)) * chartWidth;
-        const y = height - padding - ((point.revenue - minValue) / (maxValue - minValue)) * chartHeight;
-        
-        if (index === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
-      });
-      
-      ctx.stroke();
-      
-      // Draw data points
-      ctx.fillStyle = '#10b981';
-      data.forEach((point, index) => {
-        const x = padding + (index / (data.length - 1)) * chartWidth;
-        const y = height - padding - ((point.revenue - minValue) / (maxValue - minValue)) * chartHeight;
-        
-        ctx.beginPath();
-        ctx.arc(x, y, 3, 0, 2 * Math.PI);
-        ctx.fill();
-      });
-    }
-  <% end %>
-</script>
 ```
 
-### 4. Create Shared Metrics Partial
-**File**: `app/views/shared/_key_metrics_display.html.erb`
+### Task 3: Add Metrics API Endpoint
+**Implementation Notes:**
+- Add API endpoint to the dashboard controller
+- Implement real-time data fetching
+- Include error handling and caching
 
-**Implementation Notes**:
-```erb
-<div class="bg-white shadow rounded-lg">
-  <div class="px-6 py-4 border-b border-gray-200">
-    <h3 class="text-lg font-medium text-gray-900">Key Performance Indicators</h3>
-  </div>
+```ruby
+# Add to app/controllers/admin/dashboard_controller.rb
+
+def widget_data
+  widget_type = params[:widget_type]
   
-  <div class="p-6">
-    <!-- Metric Tabs -->
-    <div class="border-b border-gray-200 mb-6">
-      <nav class="-mb-px flex space-x-8">
-        <button class="metric-tab border-b-2 border-blue-500 py-2 px-1 text-sm font-medium text-blue-600" data-tab="financial">
-          Financial
-        </button>
-        <button class="metric-tab border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="operational">
-          Operational
-        </button>
-        <button class="metric-tab border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="growth">
-          Growth
-        </button>
-      </nav>
-    </div>
-    
-    <!-- Financial Metrics Tab -->
-    <div id="financial-metrics" class="metric-content">
-      <%= render MetricsDisplayComponent.new(
-            business: current_user.business,
-            date_range: @date_range,
-            metric_type: :financial
-          ) %>
-    </div>
-    
-    <!-- Operational Metrics Tab -->
-    <div id="operational-metrics" class="metric-content hidden">
-      <%= render MetricsDisplayComponent.new(
-            business: current_user.business,
-            date_range: @date_range,
-            metric_type: :operational
-          ) %>
-    </div>
-    
-    <!-- Growth Metrics Tab -->
-    <div id="growth-metrics" class="metric-content hidden">
-      <%= render MetricsDisplayComponent.new(
-            business: current_user.business,
-            date_range: @date_range,
-            metric_type: :growth
-          ) %>
-    </div>
-  </div>
-</div>
+  case widget_type
+  when 'metrics'
+    metrics_data = Admin::MetricsService.new(current_admin.business).daily_metrics
+    render json: {
+      revenue: metrics_data[:revenue][:current],
+      bookings: metrics_data[:bookings][:total_today],
+      new_customers: metrics_data[:customers][:new_today],
+      conversion_rate: metrics_data[:conversion][:current_rate],
+      avg_booking_value: metrics_data[:revenue][:current] / [metrics_data[:bookings][:confirmed_today], 1].max
+    }
+  else
+    render json: { error: 'Unknown widget type' }, status: :unprocessable_entity
+  end
+rescue StandardError => e
+  Rails.logger.error "Dashboard widget error: #{e.message}"
+  render json: { error: 'Unable to fetch widget data' }, status: :internal_server_error
+end
+```
 
-<script data-turbo-track="reload">
-  // Tab switching functionality
-  document.addEventListener('DOMContentLoaded', function() {
-    const tabs = document.querySelectorAll('.metric-tab');
-    const contents = document.querySelectorAll('.metric-content');
+### Task 4: Create Background Job for Metrics Updates
+**Implementation Notes:**
+- Create job to update metrics cache
+- Schedule regular updates for real-time data
+- Implement broadcast updates using ActionCable
+
+```ruby
+# app/jobs/admin/update_metrics_job.rb
+class Admin::UpdateMetricsJob < ApplicationJob
+  queue_as :default
+
+  def perform(business_id)
+    business = Business.find(business_id)
+    metrics_service = Admin::MetricsService.new(business)
     
-    tabs.forEach(tab => {
-      tab.addEventListener('click', function() {
-        const targetTab = this.dataset.tab;
-        
-        // Update tab appearance
-        tabs.forEach(t => {
-          t.classList.remove('border-blue-500', 'text-blue-600');
-          t.classList.add('border-transparent', 'text-gray-500');
-        });
-        this.classList.remove('border-transparent', 'text-gray-500');
-        this.classList.add('border-blue-500', 'text-blue-600');
-        
-        // Show/hide content
-        contents.forEach(content => {
-          content.classList.add('hidden');
-        });
-        document.getElementById(`${targetTab}-metrics`).classList.remove('hidden');
-      });
-    });
-  });
-</script>
+    # Update metrics cache
+    updated_metrics = metrics_service.daily_metrics
+    
+    # Broadcast to dashboard users
+    ActionCable.server.broadcast(
+      "dashboard_#{business_id}",
+      {
+        widget: 'metrics',
+        data: {
+          revenue: updated_metrics[:revenue][:current],
+          bookings: updated_metrics[:bookings][:total_today],
+          new_customers: updated_metrics[:customers][:new_today],
+          conversion_rate: updated_metrics[:conversion][:current_rate]
+        }
+      }
+    )
+  end
+end
+
+# Add to config/schedule.rb (if using whenever gem)
+every 5.minutes do
+  runner "Business.find_each { |business| Admin::UpdateMetricsJob.perform_later(business.id) }"
+end
+```
+
+### Task 5: Add Stimulus Controller for Real-time Updates
+**Implementation Notes:**
+- Extend dashboard controller for metrics-specific functionality
+- Handle real-time updates via ActionCable
+- Add smooth animations for metric changes
+
+```javascript
+// Add to app/javascript/controllers/dashboard_controller.js
+
+// ...existing code...
+
+connect() {
+  this.initializeSortable()
+  this.updateTimestamp()
+  this.startAutoRefresh()
+  this.subscribeToUpdates()
+}
+
+subscribeToUpdates() {
+  if (this.data.has('businessId')) {
+    const businessId = this.data.get('businessId')
+    this.subscription = App.cable.subscriptions.create(
+      { channel: "DashboardChannel", business_id: businessId },
+      {
+        received: (data) => {
+          this.handleRealtimeUpdate(data)
+        }
+      }
+    )
+  }
+}
+
+handleRealtimeUpdate(data) {
+  if (data.widget === 'metrics') {
+    this.updateMetricsWidget(data.data)
+  }
+}
+
+updateMetricsWidget(data) {
+  const metricsWidget = this.widgetGridTarget.querySelector('[data-widget="metrics"]')
+  if (!metricsWidget) return
+
+  Object.entries(data).forEach(([key, value]) => {
+    const element = metricsWidget.querySelector(`[data-widget-value="${key}"]`)
+    if (element) {
+      this.animateValueChange(element, value)
+    }
+  })
+}
+
+animateValueChange(element, newValue) {
+  // Add highlight animation
+  element.classList.add('bg-blue-100', 'transition-colors', 'duration-500')
+  
+  // Format value based on element type
+  if (element.dataset.widgetValue === 'revenue' || element.dataset.widgetValue === 'avg_booking_value') {
+    element.textContent = this.formatCurrency(newValue)
+  } else if (element.dataset.widgetValue === 'conversion_rate') {
+    element.textContent = `${newValue}%`
+  } else {
+    element.textContent = newValue
+  }
+  
+  // Remove highlight after animation
+  setTimeout(() => {
+    element.classList.remove('bg-blue-100')
+  }, 500)
+}
+
+formatCurrency(amount) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  }).format(amount)
+}
+
+disconnect() {
+  if (this.refreshInterval) {
+    clearInterval(this.refreshInterval)
+  }
+  if (this.subscription) {
+    this.subscription.unsubscribe()
+  }
+}
+
+// ...existing code...
 ```
 
 ## Acceptance Criteria
-- [ ] Displays accurate financial metrics with trend indicators
-- [ ] Shows operational performance metrics with visual representations
-- [ ] Provides growth indicators with period-over-period comparisons
-- [ ] Includes industry benchmark comparisons where applicable
-- [ ] Charts and graphs render correctly across different screen sizes
-- [ ] Tab navigation works smoothly between different metric categories
-- [ ] Metrics update when date range is changed
-- [ ] All calculations are accurate and performant
+- [ ] Metrics display accurate real-time data
+- [ ] Trend indicators show correct up/down/neutral states
+- [ ] Percentage changes calculate correctly
+- [ ] Widget updates automatically every 5 minutes
+- [ ] Performance impact is minimal (cached data)
+- [ ] Mobile layout displays metrics clearly
+- [ ] Error states are handled gracefully
 
 ## Testing Requirements
-- Service tests for all metric calculations
-- Component tests for metrics display
-- Controller tests for data assembly
-- JavaScript tests for chart rendering
-- Performance tests for metric calculation speed
+- Unit tests for MetricsService calculations
+- Integration tests for API endpoints
+- Performance tests for metrics generation
+- Real-time update functionality testing
+- Mobile responsiveness testing

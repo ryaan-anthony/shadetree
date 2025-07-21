@@ -1,100 +1,76 @@
 # Epic: Business Profile Management
 
 ## Overview
-Enable users to create and configure business entities with essential profile information, branding, and operational settings. Start with single-business setup for MVP, with multi-business capability planned for Growth Phase.
+Business Profile Management enables business owners to configure and maintain their company information, operating hours, location details, and core business settings that affect how their service business operates and appears to customers.
 
-## Goals
-- Enable quick business creation and onboarding (< 10 minutes)
-- Support essential business configuration
-- Provide basic branding and customization
-- Prepare foundation for multi-business operations
-- Ensure proper data isolation and security
-
-## Success Metrics
-- Business setup completion time < 10 minutes
-- Business profile completeness rate > 90%
-- Cross-business data leakage incidents = 0
-- Setup abandonment rate < 15%
+## Business Value
+- Centralized business configuration management
+- Consistent business information across all customer touchpoints
+- Flexible operating hours and availability management
+- Professional business presentation to customers
 
 ## User Stories
-- As a new user, I want to create my business profile so I can start using the platform
-- As a business owner, I want to configure my business details so customers see professional information
-- As a business owner, I want to upload my logo and set brand colors for quotes and communications
-- As a user, I want to set my business hours and service areas so customers know when and where I'm available
+- As a business owner, I want to update my business information so customers see accurate details
+- As a business owner, I want to set my operating hours so customers know when I'm available
+- As a business owner, I want to manage my service locations so customers can find me
+- As a business owner, I want to configure my booking preferences so the system works as I need
 
 ## Features
 
-### MVP Phase (P0 - Critical Path)
-1. [Business Creation & Setup](business-profile/01-business-creation.md) - Initial business creation with guided setup
-2. [Business Configuration](business-profile/02-business-configuration.md) - Essential business details and settings
-3. [Business Hours & Service Areas](business-profile/03-business-hours-areas.md) - Operating hours and service territories
+### 1. Basic Business Information
+**Description**: Core business details including name, description, contact information, and branding
+**Priority**: High
+**Complexity**: Low
+**Path**: [./business-profile/01-basic-information.md](./business-profile/01-basic-information.md)
 
-### Growth Phase (P1 - Early Value)  
-4. [Business Branding & Customization](business-profile/04-business-branding.md) - Logo, colors, and branded materials
+### 2. Operating Hours Management
+**Description**: Flexible scheduling system for regular hours, holidays, and special availability
+**Priority**: High
+**Complexity**: Medium
+**Path**: [./business-profile/02-operating-hours.md](./business-profile/02-operating-hours.md)
 
-### Scale Phase (P2 - Advanced Features)
-5. [Multi-Business Management](business-profile/05-multi-business-management.md) - Multiple business entities for entrepreneurs
+### 3. Location & Service Areas
+**Description**: Physical location management and service delivery area configuration
+**Priority**: Medium
+**Complexity**: Medium
+**Path**: [./business-profile/03-locations.md](./business-profile/03-locations.md)
 
-## Technical Architecture
+### 4. Booking Preferences
+**Description**: System configuration for booking rules, policies, and customer experience settings
+**Priority**: Medium
+**Complexity**: Low
+**Path**: [./business-profile/04-booking-preferences.md](./business-profile/04-booking-preferences.md)
 
-### Core Models
-```ruby
-# MVP Models
-class Business < ApplicationRecord
-  belongs_to :owner, class_name: 'User'
-  has_many :business_users, dependent: :destroy
-  has_many :users, through: :business_users
-  has_many :services, dependent: :destroy
-  has_many :quotes, dependent: :destroy
-  
-  validates :name, :email, :phone, presence: true
-  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }
-  
-  enum status: { active: 0, inactive: 1, suspended: 2 }
-end
+### 5. Business Branding
+**Description**: Logo, colors, and visual identity management for customer-facing interfaces
+**Priority**: Low
+**Complexity**: Medium
+**Path**: [./business-profile/05-branding.md](./business-profile/05-branding.md)
 
-class BusinessUser < ApplicationRecord
-  belongs_to :business
-  belongs_to :user
-  
-  validates :role, presence: true
-  enum role: { owner: 0, admin: 1, staff: 2 }
-end
-```
+## Acceptance Criteria
+- Business information updates reflect immediately across all systems
+- Operating hours validation prevents conflicting schedules
+- Location services integrate with mapping and distance calculations
+- Booking preferences apply consistently to all booking flows
+- Changes are tracked for audit and rollback purposes
 
-### Business Context
-- All admin functionality scoped to current business
-- Session-based business context for multi-business users
-- Role-based access control within each business
-- Audit logging for sensitive operations
+## Technical Considerations
+- Image upload and processing for logos and photos
+- Timezone handling for multi-location businesses
+- Geocoding integration for address validation
+- Real-time updates for operating hours changes
+- Configuration versioning and rollback capabilities
 
-## Integration Points
-- Staff Management (business-scoped teams)
-- Service & Pricing (business-specific catalogs)
-- Admin Dashboard (business-specific metrics)
-- Custom Fields (business-specific field definitions)
+## Dependencies
+- User authentication and authorization system
+- File upload and storage infrastructure
+- Mapping and geocoding services
+- Audit logging system
 
-## Security Considerations
-- Validate business ownership on all operations
-- Prevent cross-business data access
-- Audit business creation and sensitive changes
-- Secure file uploads for branding assets
-
-## MVP Scope Reduction
-**Removed from MVP:**
-- Complex multi-business switching UI
-- Advanced role hierarchies
-- Business-to-business relationships
-- Third-party business verification
-- Advanced workflow customization per business
-
-**Simplified for MVP:**
-- Single business creation flow
-- Basic role system (owner, admin, staff)
-- Essential business information only
-- Simple branding (logo upload only)
-
-## Phase Progression
-- **MVP**: Single business setup with essential features
-- **Growth**: Enhanced branding and basic multi-business
-- **Scale**: Advanced multi-business with complex role management
+## Definition of Done
+- All features implemented and tested
+- Mobile responsive interface
+- Image upload functionality working
+- Timezone support implemented
+- Audit trail for all changes
+- Integration tests passing

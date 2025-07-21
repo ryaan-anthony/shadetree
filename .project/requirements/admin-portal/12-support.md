@@ -1,33 +1,85 @@
-# Epic: Support System
+# Epic: Support
 
-## Description
-A comprehensive support system that enables business owners to provide customer support through multiple channels, manage support tickets, access knowledge base resources, and maintain customer relationships.
+## Overview
+Support provides comprehensive help resources, documentation, and assistance tools for business owners and staff to effectively use the platform. This includes in-app help, knowledge base, contact support, and training resources.
 
 ## Business Value
-- Improve customer satisfaction through responsive support
-- Reduce support workload through self-service options
-- Track and resolve customer issues efficiently
-- Build stronger customer relationships
+- Reduced support burden through self-service resources
+- Improved user adoption and platform utilization
+- Faster issue resolution and user satisfaction
+- Training and onboarding efficiency
+
+## User Stories
+- As a new user, I want guided tutorials so I can learn to use the platform effectively
+- As a business owner, I want searchable help documentation so I can find answers quickly
+- As a user, I want to contact support when I need personalized help
+- As an admin, I want to see common support topics so I can improve the user experience
 
 ## Features
 
-### [01. Help Desk & Ticket Management](support/01-help-desk.md)
-Internal ticket management system for tracking and resolving customer issues.
+### 1. In-App Help System
+**Description**: Contextual help tooltips, guided tours, and interactive tutorials throughout the application
+**Priority**: High
+**Complexity**: Medium
+**Path**: [./support/01-in-app-help.md](./support/01-in-app-help.md)
 
-### [02. Live Chat Support](support/02-live-chat.md)
-Real-time chat functionality for immediate customer assistance.
+### 2. Knowledge Base
+**Description**: Searchable documentation, FAQs, and how-to guides organized by topic and user role
+**Priority**: High
+**Complexity**: Medium
+**Path**: [./support/02-knowledge-base.md](./support/02-knowledge-base.md)
 
-### [03. Knowledge Base Management](support/03-knowledge-base.md)
-Self-service knowledge base with articles, FAQs, and tutorials.
+### 3. Contact Support System
+**Description**: Ticketing system for users to submit support requests with priority and category management
+**Priority**: Medium
+**Complexity**: Medium
+**Path**: [./support/03-contact-support.md](./support/03-contact-support.md)
 
-### [04. Customer Communication History](support/04-customer-communication.md)
-Centralized view of all customer interactions across channels.
+### 4. Video Training Library
+**Description**: Video tutorials and training materials for platform features and best practices
+**Priority**: Medium
+**Complexity**: Low
+**Path**: [./support/04-video-training.md](./support/04-video-training.md)
 
-### [05. Support Analytics & Reporting](support/05-support-analytics.md)
-Metrics and insights on support performance and customer satisfaction.
+### 5. Community Forum
+**Description**: User community platform for peer-to-peer support and knowledge sharing
+**Priority**: Low
+**Complexity**: High
+**Path**: [./support/05-community-forum.md](./support/05-community-forum.md)
 
-## Success Criteria
-- Support ticket resolution time reduced by 40%
-- Customer satisfaction score improved through faster response times
-- 60% of common issues resolved through self-service knowledge base
-- Support team productivity increased through centralized management
+### 6. Support Analytics
+**Description**: Analytics on support usage, common issues, and user success metrics
+**Priority**: Low
+**Complexity**: Medium
+**Path**: [./support/06-support-analytics.md](./support/06-support-analytics.md)
+
+## Acceptance Criteria
+- Help content is accurate and kept up-to-date with platform changes
+- Search functionality returns relevant results quickly
+- Support ticket system routes requests to appropriate teams
+- Video content is accessible and mobile-friendly
+- Analytics provide actionable insights for platform improvement
+
+## Technical Considerations
+- Content management system for help documentation
+- Full-text search capabilities for knowledge base
+- Video hosting and streaming infrastructure
+- Ticketing system with workflow management
+- Analytics tracking for support interactions
+- Mobile-responsive design for all support features
+
+## Dependencies
+- Content management and authoring tools
+- Search infrastructure (Elasticsearch or similar)
+- Video hosting platform or CDN
+- Email integration for support notifications
+- Analytics and tracking systems
+- User authentication for personalized support
+
+## Definition of Done
+- In-app help system functional with contextual guidance
+- Knowledge base searchable and well-organized
+- Support ticketing system operational
+- Video training library accessible and organized
+- Support analytics providing useful insights
+- Mobile-responsive support interface

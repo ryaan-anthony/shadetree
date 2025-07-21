@@ -10,26 +10,8 @@ Shadetree is a lightweight, service booking platform that helps small businesses
 
 ## Core Initiatives
 
-### 1. [Core Booking Platform](requirements/01-core-booking-platform.md)
-Server-rendered Rails application handling core business logic.
-
-#### Key Features
-- User Management (Business Owner, Staff, Customers)
-- Appointment Management
-- Quote Generation and Approval
-- Payment Processing (Stripe/PayPal integration)
-- Job Scheduling and Tracking
-- Invoice Management
-- Notification System (Email/SMS)
-
-#### Additional Features
-- Audit Logs
-- White Label Interfaces
-- Mobile-Responsive Design
-- Offline Capability
-
-### 2. [Marketing Website](requirements/02-marketing-website.md)
-Rails-rendered marketing pages with minimal dynamic features.
+### 1. [Marketing Website](requirements/01-marketing-website.md)
+Static pages with minimal dynamic features. Ability to register/login to the admin portal for business management.
 
 #### Key Features
 - Landing Page
@@ -40,12 +22,7 @@ Rails-rendered marketing pages with minimal dynamic features.
 - Testimonials
 - Free Trial Signup
 
-#### Additional Features
-- SEO Optimization
-- Analytics Integration
-- Blog/Content Marketing
-
-### 3. [Admin Portal](requirements/03-admin-portal.md)
+### 2. [Admin Portal](requirements/02-admin-portal.md)
 Centralized administration interface for business management. Users may have multiple businesses.
 
 #### Key Features
@@ -65,7 +42,7 @@ Centralized administration interface for business management. Users may have mul
 - Activity Monitoring – basic logging, email/SMS status, quote views
 - Support Access – open support tickets or chat
 
-### 4. [Customer-Facing Interface](requirements/04-customer-facing.md)
+### 3. [Customer-Facing Interface](requirements/03-customer-facing.md)
 Public-facing pages for end customers to interact with businesses.
 
 #### Key Features
@@ -81,7 +58,7 @@ Public-facing pages for end customers to interact with businesses.
 - File Upload
 - Feedback Collection
 
-### 5. [SaaS Owner Backend](./requirements/05-saas-owner-backend.md)
+### 4. [SaaS Owner Backend](requirements/04-saas-owner-backend.md)
 Lightweight admin interface for managing business customers.
 
 #### Key Features
@@ -119,98 +96,3 @@ Lightweight admin interface for managing business customers.
 - TailwindCSS
 - ViewComponent
 - Minimal vanilla JavaScript
-
-### Integrations
-- Stripe/PayPal for payments
-- Twilio for SMS
-- Google/Outlook Calendar
-- Email providers
-
-## Security Approach
-- Rails security best practices
-- Devise + Pundit
-- Strong Parameters
-- Security audit gems
-- Regular updates
-- Basic audit logs
-- GDPR/CCPA compliance features
-
-## Performance Strategy
-- Server-side rendering
-- Fragment caching
-- Background jobs
-- Query optimization
-- Asset pipeline
-- Progressive Web App capabilities
-
-## Testing Requirements
-- RSpec for all layers
-- System tests with Capybara
-- Factory Bot fixtures
-- Faker test data
-- SimpleCov coverage
-
-## Development Process
-- Standard Rails patterns
-- GitHub Flow
-- Pull requests
-- Continuous Integration
-- Documented code
-
-## Monitoring Plan
-- Standard Rails logging
-- Exception tracking
-- Basic metrics
-- Queue monitoring
-- Server health
-- User behavior analytics
-
-## Success Metrics
-1. Core Platform
-    - Fast response times
-    - High test coverage
-    - Clean code quality
-    - Minimal dependencies
-    - Customer satisfaction
-
-2. Marketing Site
-    - Quick page loads
-    - Good SEO scores
-    - Easy maintenance
-    - Clear analytics
-    - Conversion rates
-
-3. Admin Portal
-    - Simple operations
-    - Clear audit trail
-    - Fast reporting
-    - Easy navigation
-    - Reduced training time
-
-4. Customer Interface
-    - High approval rate
-    - Fast quote-to-job conversion
-    - Positive customer feedback
-    - Mobile usability
-
-5. SaaS Backend
-    - Key metrics tracked
-    - Simple operations
-    - Clear reporting
-    - Low maintenance
-    - Churn reduction
-
-## Timeline & Roadmap
-- **MVP Launch**: 6 months from kickoff
-- **First Paying Customers**: 8 months
-- **Product-Market Fit**: 12-18 months
-- **Scale Phase**: 18-24 months
-
-## Pricing Strategy
-| Tier | Monthly Price | Features |
-|------|--------------|----------|
-| Free | $0 | 3 quotes/month, basic features |
-| Starter | $15 | 15 quotes/month, basic features |
-| Pro | $39 | 50 quotes/month, all core features |
-| Team | $89 | 150 quotes/month, all features + priority support |
-| Unlimited | $199 | Unlimited usage, all features, dedicated support |
