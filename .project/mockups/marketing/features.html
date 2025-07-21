@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Features - ShadeTree Service Business Platform</title>
+    <meta name="description" content="Discover all the powerful features that make ShadeTree the perfect solution for service businesses.">
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
+            line-height: 1.6;
+            color: #2d3748;
+            background-color: #ffffff;
+        }
+
+        /* Header placeholder */
+        .header-placeholder {
+            height: 70px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        /* Page Header */
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .page-header-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .page-header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        /* Feature Categories */
+        .feature-categories {
+            padding: 4rem 2rem;
+            background-color: #f8f9fa;
+        }
+
+        .categories-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .category {
+            background: white;
+            margin-bottom: 3rem;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+
+        .category-header {
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .category-header h2 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .category-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .category-content {
+            padding: 2rem;
+        }
+
+        .features-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 1.5rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #4299e1;
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background-color: #e6f7ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            flex-shrink: 0;
+            font-size: 1.5rem;
+        }
+
+        .feature-content h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: #2d3748;
+        }
+
+        .feature-content p {
+            color: #718096;
+            font-size: 0.95rem;
+        }
+
+        /* Use Cases Section */
+        .use-cases {
+            padding: 4rem 2rem;
+            background-color: white;
+        }
+
+        .use-cases-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #2d3748;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #718096;
+            margin-bottom: 3rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .use-cases-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .use-case {
+            background-color: #f8f9fa;
+            padding: 2rem;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .use-case h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+        }
+
+        .use-case-icon {
+            margin-right: 0.75rem;
+            font-size: 1.75rem;
+        }
+
+        .use-case p {
+            color: #4a5568;
+            margin-bottom: 1rem;
+        }
+
+        .benefits-list {
+            list-style: none;
+        }
+
+        .benefits-list li {
+            color: #718096;
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .benefits-list li:before {
+            content: "✓";
+            color: #48bb78;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .cta-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .cta-primary {
+            background-color: white;
+            color: #48bb78;
+            border: none;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin: 0.5rem;
+        }
+
+        .cta-primary:hover {
+            background-color: #f7fafc;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+        }
+
+        .cta-secondary {
+            background-color: transparent;
+            color: white;
+            border: 2px solid white;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin: 0.5rem;
+        }
+
+        .cta-secondary:hover {
+            background-color: white;
+            color: #48bb78;
+        }
+
+        /* Footer placeholder */
+        .footer-placeholder {
+            height: 300px;
+            background-color: #2d3748;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #a0aec0;
+            font-size: 0.9rem;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .page-header h1 {
+                font-size: 2rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .features-list {
+                grid-template-columns: 1fr;
+            }
+
+            .use-cases-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .feature-item {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .feature-icon {
+                margin-right: 0;
+                margin-bottom: 1rem;
+            }
+
+            .cta-primary, .cta-secondary {
+                display: block;
+                margin: 0.5rem auto;
+                max-width: 280px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .page-header {
+                padding: 2rem 1rem;
+            }
+
+            .feature-categories, .use-cases, .cta-section {
+                padding: 3rem 1rem;
+            }
+
+            .category-content {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Placeholder -->
+    <div class="header-placeholder">
+        [Header Component - See components/header.html]
+    </div>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="page-header-container">
+            <h1>Powerful Features for Service Businesses</h1>
+            <p>Everything you need to streamline operations, delight customers, and grow your business</p>
+        </div>
+    </section>
+
+    <!-- Feature Categories -->
+    <section class="feature-categories">
+        <div class="categories-container">
+
+            <!-- Scheduling & Booking -->
+            <div class="category">
+                <div class="category-header">
+                    <h2>📅 Scheduling & Booking</h2>
+                    <p>Smart appointment management that works 24/7</p>
+                </div>
+                <div class="category-content">
+                    <div class="features-list">
+                        <div class="feature-item">
+                            <div class="feature-icon">🗓️</div>
+                            <div class="feature-content">
+                                <h3>Online Booking</h3>
+                                <p>Let customers book appointments anytime with your custom booking page. Automatically sync with your calendar.</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">🔄</div>
+                            <div class="feature-content">
+                                <h3>Recurring Appointments</h3>
+                                <p>Set up weekly, monthly, or custom recurring services with automatic scheduling and billing.</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">⏰</div>
+                            <div class="feature-content">
+                                <h3>Automated Reminders</h3>
+                                <p>Reduce no-shows with automatic email and SMS reminders sent to customers before appointments.</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">🚫</div>
+                            <div class="feature-content">
+                                <h3>Double-Booking Prevention</h3>
+                                <p>Smart scheduling prevents conflicts and ensures optimal use of your time and resources.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Management -->
+            <div class="category">
+                <div class="category-header">
+                    <h2>👥 Customer Management</h2>
+                    <p>Build stronger relationships with comprehensive customer data</p>
+                </div>
+                <div class="category-content">
+                    <div class="features-list">
+                        <div class="feature-item">
+                            <div class="feature-icon">📋</div>
+                            <div class="feature-content">
+                                <h3>Customer Profiles</h3>
+                                <p>Detailed customer information including contact details, service history, and preferences.</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">📊</div>
+                            <div class="feature-content">
+                                <h3>Service History</h3>
+                                <p>Track all services provided, payments made, and notes from previous appointments.</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">💬</div>
+                            <div class="feature-content">
+                                <h3>Communication Hub</h3>
+                                <p>Centralized messaging system to communicate with customers via email, SMS, or in-app messages.</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">⭐</div>
+                            <div class="feature-content">
+                                <h3>Customer Ratings</h3>
+                                <p>Collect and manage customer feedback and ratings to improve service quality.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payments & Billing -->
+            <div class="category">
+                <div class="category-header">
+                    <h2>💳 Payments & Billing</h2>
+                    <p>Streamlined payment processing and financial management</p>
+                </div>
+                <div class="category-content">
+                    <div class="features-list">
+                        <div class="feature-item">
+                            <div class="feature-icon">💰</div>
+                            <div class="feature-content">
+                                <h3>Online Payments</h3>
+                                <p>Accept credit cards, bank transfers, and digital payments securely online.</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">📄</div>
+                            <div class="feature-content">
+                                <h3>Automated Invoicing</h3>
+                                <p>Generate and send professional invoices automatically after service completion.</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">📈</div>
+                            <div class="feature-content">
+                                <h3>Revenue Tracking</h3>
+                                <p>Monitor income, expenses, and profit margins with detailed financial reporting.</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">🔔</div>
+                            <div class="feature-content">
+                                <h3>Payment Reminders</h3>
+                                <p>Automatic follow-up for overdue payments with customizable reminder schedules.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Use Cases -->
+    <section class="use-cases">
+        <div class="use-cases-container">
+            <h2 class="section-title">Perfect for Any Service Business</h2>
+            <p class="section-subtitle">
+                ShadeTree adapts to your specific business needs, whether you're a solo entrepreneur or managing a team.
+            </p>
+
+            <div class="use-cases-grid">
+                <div class="use-case">
+                    <h3><span class="use-case-icon">🏠</span>Home Services</h3>
+                    <p>Perfect for cleaning services, landscaping, maintenance, and repair businesses.</p>
+                    <ul class="benefits-list">
+                        <li>Route optimization for field teams</li>
+                        <li>Before/after photo documentation</li>
+                        <li>Inventory tracking for supplies</li>
+                        <li>Customer property notes and access codes</li>
+                    </ul>
+                </div>
+
+                <div class="use-case">
+                    <h3><span class="use-case-icon">💇</span>Personal Care</h3>
+                    <p>Ideal for salons, spas, fitness trainers, and wellness professionals.</p>
+                    <ul class="benefits-list">
+                        <li>Service package management</li>
+                        <li>Staff scheduling and availability</li>
+                        <li>Membership and loyalty programs</li>
+                        <li>Treatment history tracking</li>
+                    </ul>
+                </div>
+
+                <div class="use-case">
+                    <h3><span class="use-case-icon">🔧</span>Professional Services</h3>
+                    <p>Great for consultants, coaches, tutors, and other professional service providers.</p>
+                    <ul class="benefits-list">
+                        <li>Virtual meeting integration</li>
+                        <li>Document sharing and storage</li>
+                        <li>Project milestone tracking</li>
+                        <li>Time-based billing options</li>
+                    </ul>
+                </div>
+
+                <div class="use-case">
+                    <h3><span class="use-case-icon">🚗</span>Mobile Services</h3>
+                    <p>Designed for businesses that travel to customers like mobile mechanics or pet groomers.</p>
+                    <ul class="benefits-list">
+                        <li>GPS navigation and route planning</li>
+                        <li>Mobile-first interface</li>
+                        <li>Real-time location sharing</li>
+                        <li>Equipment and vehicle tracking</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="cta-section">
+        <div class="cta-container">
+            <h2>Ready to Transform Your Business?</h2>
+            <p>Join thousands of service professionals who have streamlined their operations with ShadeTree.</p>
+            <div>
+                <a href="/register" class="cta-primary">Start Free Trial</a>
+                <a href="/pricing" class="cta-secondary">View Pricing</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer Placeholder -->
+    <div class="footer-placeholder">
+        [Footer Component - See components/footer.html]
+    </div>
+</body>
+</html>
+

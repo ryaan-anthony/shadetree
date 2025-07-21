@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email - ShadeTree</title>
+    <meta name="description" content="Verify your email address to complete your ShadeTree account setup and start your free trial.">
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
+            line-height: 1.6;
+            color: #2d3748;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+
+        /* Verification Container */
+        .verify-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        /* Header */
+        .verify-header {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .logo img {
+            height: 32px;
+            margin-right: 0.5rem;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .verify-header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .verify-header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        /* Content */
+        .verify-content {
+            padding: 2rem;
+        }
+
+        /* Success State */
+        .success-state {
+            text-align: center;
+            display: none;
+        }
+
+        .success-state.active {
+            display: block;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2.5rem;
+        }
+
+        .success-message {
+            margin-bottom: 2rem;
+        }
+
+        .success-message h2 {
+            font-size: 1.5rem;
+            color: #2d3748;
+            margin-bottom: 1rem;
+        }
+
+        .success-message p {
+            color: #4a5568;
+            font-size: 1.1rem;
+            line-height: 1.7;
+        }
+
+        /* Pending State */
+        .pending-state {
+            text-align: center;
+        }
+
+        .pending-state.active {
+            display: block;
+        }
+
+        .pending-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2.5rem;
+        }
+
+        .pending-message {
+            margin-bottom: 2rem;
+        }
+
+        .pending-message h2 {
+            font-size: 1.5rem;
+            color: #2d3748;
+            margin-bottom: 1rem;
+        }
+
+        .pending-message p {
+            color: #4a5568;
+            font-size: 1.1rem;
+            line-height: 1.7;
+            margin-bottom: 1rem;
+        }
+
+        .email-highlight {
+            background-color: #e6f7ff;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            color: #2b6cb0;
+        }
+
+        /* Error State */
+        .error-state {
+            text-align: center;
+            display: none;
+        }
+
+        .error-state.active {
+            display: block;
+        }
+
+        .error-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2.5rem;
+        }
+
+        .error-message {
+            margin-bottom: 2rem;
+        }
+
+        .error-message h2 {
+            font-size: 1.5rem;
+            color: #2d3748;
+            margin-bottom: 1rem;
+        }
+
+        .error-message p {
+            color: #4a5568;
+            font-size: 1.1rem;
+            line-height: 1.7;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .primary-button {
+            background-color: #48bb78;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .primary-button:hover {
+            background-color: #38a169;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+        }
+
+        .secondary-button {
+            background-color: transparent;
+            color: #4299e1;
+            border: 2px solid #4299e1;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .secondary-button:hover {
+            background-color: #4299e1;
+            color: white;
+        }
+
+        .secondary-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Resend Section */
+        .resend-section {
+            background-color: #f8f9fa;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .resend-section h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            color: #2d3748;
+        }
+
+        .resend-section p {
+            font-size: 0.95rem;
+            color: #718096;
+            margin-bottom: 1rem;
+        }
+
+        .resend-timer {
+            font-size: 0.9rem;
+            color: #e53e3e;
+            margin-bottom: 1rem;
+        }
+
+        /* Help Section */
+        .help-section {
+            background-color: #fffaf0;
+            border: 1px solid #fbd38d;
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .help-section h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            color: #744210;
+        }
+
+        .help-section ul {
+            color: #975a16;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            padding-left: 1.25rem;
+        }
+
+        .help-section li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Back Link */
+        .back-link {
+            text-align: center;
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .back-link a {
+            color: #4299e1;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* Back to Home */
+        .back-home {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            transition: opacity 0.2s ease;
+        }
+
+        .back-home:hover {
+            opacity: 0.8;
+        }
+
+        .back-home::before {
+            content: '←';
+            margin-right: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem 0.5rem;
+            }
+
+            .verify-container {
+                max-width: 100%;
+            }
+
+            .verify-header,
+            .verify-content {
+                padding: 1.5rem;
+            }
+
+            .action-buttons {
+                gap: 0.75rem;
+            }
+
+            .back-home {
+                position: static;
+                margin-bottom: 1rem;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .verify-header,
+            .verify-content {
+                padding: 1rem;
+            }
+
+            .success-icon,
+            .pending-icon,
+            .error-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Back to Home Link -->
+    <a href="/" class="back-home">Back to Home</a>
+
+    <!-- Verification Container -->
+    <div class="verify-container">
+        <!-- Header -->
+        <div class="verify-header">
+            <div class="logo">
+                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDQwIDQwIj48cGF0aCBmaWxsPSIjZmZmZmZmIiBkPSJNMjAgMkMxMC4wNiAyIDIgMTAuMDYgMiAyMHM4LjA2IDE4IDE4IDE4czE4LTguMDYgMTgtMThTMjkuOTQgMiAyMCAyek0xNSAzMGMtMS42NiAwLTMtMS4zNC0zLTNzMS4zNC0zIDMtM3MzIDEuMzQgMyAzLTEuMzQgMy0zIDN6bTAtMjBjMC0xLjY2IDEuMzQtMyAzLTNzMyAxLjM0IDMgM3YxMGMwIDEuNjYtMS4zNCAzLTMgM3MtMy0xLjM0LTMtM1YxMHptMTAgMjBjLTEuNjYgMC0zLTEuMzQtMy0zczEuMzQtMyAzLTMgMyAxLjM0IDMgMy0xLjM0IDMtMyAzeiIvPjwvc3ZnPg==" alt="ShadeTree Logo">
+                <span class="logo-text">ShadeTree</span>
+            </div>
+            <h1>Email Verification</h1>
+            <p>Almost there! Let's verify your email address</p>
+        </div>
+
+        <!-- Content -->
+        <div class="verify-content">
+
+            <!-- Success State (when email is verified) -->
+            <div class="success-state" id="successState">
+                <div class="success-icon">✅</div>
+                <div class="success-message">
+                    <h2>Email Verified Successfully!</h2>
+                    <p>Your account is now active and ready to use. You can start managing your service business with ShadeTree.</p>
+                </div>
+                <div class="action-buttons">
+                    <a href="/dashboard" class="primary-button">Go to Dashboard</a>
+                    <a href="/login" class="secondary-button">Sign In Later</a>
+                </div>
+            </div>
+
+            <!-- Pending State (waiting for verification) -->
+            <div class="pending-state active" id="pendingState">
+                <div class="pending-icon">📧</div>
+                <div class="pending-message">
+                    <h2>Check Your Email</h2>
+                    <p>We've sent a verification link to <span class="email-highlight" id="userEmail">user@example.com</span></p>
+                    <p>Click the link in the email to verify your account and start your free trial.</p>
+                </div>
+
+                <div class="resend-section">
+                    <h3>Didn't receive the email?</h3>
+                    <p>Check your spam folder or wait a moment for the email to arrive.</p>
+                    <div class="resend-timer" id="resendTimer">You can resend in 60 seconds</div>
+                    <button class="secondary-button" id="resendButton" disabled>Resend Verification Email</button>
+                </div>
+
+                <div class="help-section">
+                    <h3>💡 Troubleshooting Tips</h3>
+                    <ul>
+                        <li>Check your spam or junk mail folder</li>
+                        <li>Make sure you entered the correct email address</li>
+                        <li>Wait a few minutes for the email to arrive</li>
+                        <li>Add noreply@getshadetree.com to your contacts</li>
+                    </ul>
+                </div>
+
+                <div class="back-link">
+                    Wrong email? <a href="/register">Create a new account</a>
+                </div>
+            </div>
+
+            <!-- Error State (verification failed) -->
+            <div class="error-state" id="errorState">
+                <div class="error-icon">⚠️</div>
+                <div class="error-message">
+                    <h2>Verification Link Expired</h2>
+                    <p>This verification link has expired or is invalid. Please request a new verification email to complete your account setup.</p>
+                </div>
+                <div class="action-buttons">
+                    <button class="primary-button" id="newVerificationButton">Send New Verification Email</button>
+                    <a href="/register" class="secondary-button">Create New Account</a>
+                </div>
+                <div class="back-link">
+                    Need help? <a href="/contact">Contact Support</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- JavaScript for email verification flow -->
+    <script>
+        // Elements
+        const successState = document.getElementById('successState');
+        const pendingState = document.getElementById('pendingState');
+        const errorState = document.getElementById('errorState');
+        const userEmailSpan = document.getElementById('userEmail');
+        const resendButton = document.getElementById('resendButton');
+        const resendTimer = document.getElementById('resendTimer');
+        const newVerificationButton = document.getElementById('newVerificationButton');
+
+        // Get email from URL parameters or localStorage
+        const urlParams = new URLSearchParams(window.location.search);
+        const email = urlParams.get('email') || localStorage.getItem('registrationEmail') || 'user@example.com';
+        const token = urlParams.get('token');
+        const expired = urlParams.get('expired');
+
+        // Update email display
+        userEmailSpan.textContent = email;
+
+        // Check verification status
+        if (token && !expired) {
+            // Simulate token verification
+            verifyToken(token);
+        } else if (expired === 'true') {
+            // Show expired state
+            showErrorState();
+        } else {
+            // Show pending state with resend timer
+            startResendTimer();
+        }
+
+        function verifyToken(token) {
+            // Simulate API call to verify token
+            setTimeout(() => {
+                if (token === 'valid-token') {
+                    showSuccessState();
+                } else {
+                    showErrorState();
+                }
+            }, 1500);
+        }
+
+        function showSuccessState() {
+            pendingState.classList.remove('active');
+            errorState.classList.remove('active');
+            successState.classList.add('active');
+        }
+
+        function showErrorState() {
+            pendingState.classList.remove('active');
+            successState.classList.remove('active');
+            errorState.classList.add('active');
+        }
+
+        function showPendingState() {
+            successState.classList.remove('active');
+            errorState.classList.remove('active');
+            pendingState.classList.add('active');
+            startResendTimer();
+        }
+
+        function startResendTimer() {
+            let timeLeft = 60;
+            resendButton.disabled = true;
+
+            const timer = setInterval(() => {
+                timeLeft--;
+                resendTimer.textContent = `You can resend in ${timeLeft} seconds`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    resendTimer.textContent = '';
+                    resendButton.disabled = false;
+                    resendButton.textContent = 'Resend Verification Email';
+                }
+            }, 1000);
+        }
+
+        // Handle resend button click
+        resendButton.addEventListener('click', function() {
+            this.textContent = 'Sending...';
+            this.disabled = true;
+
+            // Simulate API call
+            setTimeout(() => {
+                this.textContent = 'Email Sent!';
+
+                setTimeout(() => {
+                    startResendTimer();
+                }, 2000);
+            }, 1500);
+        });
+
+        // Handle new verification button click
+        newVerificationButton.addEventListener('click', function() {
+            this.textContent = 'Sending...';
+            this.disabled = true;
+
+            // Simulate API call
+            setTimeout(() => {
+                showPendingState();
+            }, 1500);
+        });
+
+        // For demo purposes: simulate successful verification after 10 seconds
+        // Remove this in production
+        if (!token && !expired) {
+            setTimeout(() => {
+                if (pendingState.classList.contains('active')) {
+                    // Uncomment to auto-verify for demo
+                    // showSuccessState();
+                }
+            }, 10000);
+        }
+    </script>
+</body>
+</html>
+

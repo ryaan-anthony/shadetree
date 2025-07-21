@@ -8,10 +8,6 @@ Create the primary marketing website (getshadetree.com) that showcases the platf
 - Enable user authentication and account management
 - Display pricing information and enable plan selection
 
-## Success Metrics
-- Website load time under 2 seconds
-- Conversion rate from visitor to signup > 2%
-
 ## Related Epics
 1. [Marketing Site & Content](marketing-website/1-marketing-site.md)
 2. [Authentication & User Management](marketing-website/2-authentication-portal.md)

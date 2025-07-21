@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing - ShadeTree</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .pricing-card-highlight {
+            transition: transform 0.3s ease;
+        }
+        .pricing-card-highlight:hover {
+            transform: translateY(-5px);
+        }
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #68D391;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #4F46E5;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-gray-50 to-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <!-- Pricing Header -->
+        <div class="text-center mb-16">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">Simple, Transparent Pricing</h1>
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto">Choose the perfect plan for your service business. No hidden fees.</p>
+
+            <!-- Billing Toggle -->
+            <div class="mt-8 flex justify-center items-center gap-4">
+                <span class="text-gray-700">Monthly</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" value="" class="sr-only peer toggle-checkbox">
+                    <div class="w-11 h-6 bg-blue-600 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                </label>
+                <span class="text-gray-700">Annual <span class="text-green-600 text-sm">(Save 20%)</span></span>
+            </div>
+        </div>
+
+        <!-- Pricing Cards -->
+        <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <!-- Starter Plan -->
+            <div class="rounded-2xl border border-gray-200 p-8 shadow-sm hover:shadow-lg transition-shadow pricing-card-highlight">
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Starter</h3>
+                <p class="text-gray-600 mb-6">Perfect for new service businesses</p>
+                <div class="mb-6">
+                    <span class="text-4xl font-bold">$29</span>
+                    <span class="text-gray-600">/month</span>
+                </div>
+                <ul class="space-y-4 mb-8">
+                    <li class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span>Up to 50 bookings/month</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span>Basic scheduling tools</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span>Email notifications</span>
+                    </li>
+                </ul>
+                <button class="w-full py-3 px-4 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors">
+                    Start Free Trial
+                </button>
+            </div>
+
+            <!-- Professional Plan -->
+            <div class="rounded-2xl border-2 border-blue-600 p-8 shadow-md hover:shadow-lg transition-shadow relative pricing-card-highlight">
+                <div class="absolute top-0 right-6 transform -translate-y-1/2">
+                    <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium">Most Popular</span>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Professional</h3>
+                <p class="text-gray-600 mb-6">For growing service teams</p>
+                <div class="mb-6">
+                    <span class="text-4xl font-bold">$79</span>
+                    <span class="text-gray-600">/month</span>
+                </div>
+                <ul class="space-y-4 mb-8">
+                    <li class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span>Unlimited bookings</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span>Team management</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span>Custom branding</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span>SMS notifications</span>
+                    </li>
+                </ul>
+                <button class="w-full py-3 px-4 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors">
+                    Start Free Trial
+                </button>
+            </div>
+
+            <!-- Enterprise Plan -->
+            <div class="rounded-2xl border border-gray-200 p-8 shadow-sm hover:shadow-lg transition-shadow pricing-card-highlight">
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Enterprise</h3>
+                <p class="text-gray-600 mb-6">For large service organizations</p>
+                <div class="mb-6">
+                    <span class="text-4xl font-bold">Custom</span>
+                </div>
+                <ul class="space-y-4 mb-8">
+                    <li class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span>Everything in Professional</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span>API access</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span>Dedicated support</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span>Custom integrations</span>
+                    </li>
+                </ul>
+                <button class="w-full py-3 px-4 rounded-lg bg-gray-800 text-white font-semibold hover:bg-gray-900 transition-colors">
+                    Contact Sales
+                </button>
+            </div>
+        </div>
+
+        <!-- Feature Comparison -->
+        <div class="mt-20">
+            <h2 class="text-2xl font-bold text-center mb-12">Compare Features</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-t border-gray-200">
+                            <th class="py-4 px-6 text-left text-gray-500 font-medium">Feature</th>
+                            <th class="py-4 px-6 text-center text-gray-500 font-medium">Starter</th>
+                            <th class="py-4 px-6 text-center text-gray-500 font-medium">Professional</th>
+                            <th class="py-4 px-6 text-center text-gray-500 font-medium">Enterprise</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        <tr>
+                            <td class="py-4 px-6 text-sm text-gray-900">Online Booking</td>
+                            <td class="py-4 px-6 text-center">✓</td>
+                            <td class="py-4 px-6 text-center">✓</td>
+                            <td class="py-4 px-6 text-center">✓</td>
+                        </tr>
+                        <tr>
+                            <td class="py-4 px-6 text-sm text-gray-900">Team Calendar</td>
+                            <td class="py-4 px-6 text-center">✓</td>
+                            <td class="py-4 px-6 text-center">✓</td>
+                            <td class="py-4 px-6 text-center">✓</td>
+                        </tr>
+                        <tr>
+                            <td class="py-4 px-6 text-sm text-gray-900">SMS Notifications</td>
+                            <td class="py-4 px-6 text-center">—</td>
+                            <td class="py-4 px-6 text-center">✓</td>
+                            <td class="py-4 px-6 text-center">✓</td>
+                        </tr>
+                        <tr>
+                            <td class="py-4 px-6 text-sm text-gray-900">Custom Branding</td>
+                            <td class="py-4 px-6 text-center">—</td>
+                            <td class="py-4 px-6 text-center">✓</td>
+                            <td class="py-4 px-6 text-center">✓</td>
+                        </tr>
+                        <tr>
+                            <td class="py-4 px-6 text-sm text-gray-900">API Access</td>
+                            <td class="py-4 px-6 text-center">—</td>
+                            <td class="py-4 px-6 text-center">—</td>
+                            <td class="py-4 px-6 text-center">✓</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="mt-20">
+            <h2 class="text-2xl font-bold text-center mb-12">Frequently Asked Questions</h2>
+            <div class="max-w-3xl mx-auto space-y-6">
+                <div class="border-b border-gray-200 pb-6">
+                    <h3 class="text-lg font-semibold mb-2">Can I change plans later?</h3>
+                    <p class="text-gray-600">Yes, you can upgrade or downgrade your plan at any time. Changes take effect at the start of your next billing cycle.</p>
+                </div>
+                <div class="border-b border-gray-200 pb-6">
+                    <h3 class="text-lg font-semibold mb-2">Is there a free trial?</h3>
+                    <p class="text-gray-600">Yes, all plans come with a 14-day free trial. No credit card required to start.</p>
+                </div>
+                <div class="border-b border-gray-200 pb-6">
+                    <h3 class="text-lg font-semibold mb-2">What payment methods do you accept?</h3>
+                    <p class="text-gray-600">We accept all major credit cards, including Visa, Mastercard, and American Express.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

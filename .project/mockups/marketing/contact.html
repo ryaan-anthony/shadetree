@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - ShadeTree Support</title>
+    <meta name="description" content="Get in touch with ShadeTree support. We're here to help you succeed with your service business.">
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
+            line-height: 1.6;
+            color: #2d3748;
+            background-color: #ffffff;
+        }
+
+        /* Header placeholder */
+        .header-placeholder {
+            height: 70px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        /* Page Header */
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .page-header-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .page-header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        /* Contact Options */
+        .contact-options {
+            padding: 4rem 2rem;
+            background-color: #f8f9fa;
+        }
+
+        .contact-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .contact-option {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+
+        .contact-option:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        .contact-icon {
+            width: 60px;
+            height: 60px;
+            background-color: #e6f7ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2rem;
+        }
+
+        .contact-option h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #2d3748;
+        }
+
+        .contact-option p {
+            color: #718096;
+            margin-bottom: 1.5rem;
+        }
+
+        .contact-button {
+            background-color: #4299e1;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .contact-button:hover {
+            background-color: #3182ce;
+        }
+
+        /* Contact Form Section */
+        .contact-form-section {
+            padding: 4rem 2rem;
+            background-color: white;
+        }
+
+        .form-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #2d3748;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #718096;
+            margin-bottom: 3rem;
+        }
+
+        .contact-form {
+            background-color: #f8f9fa;
+            padding: 2rem;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .submit-button {
+            background-color: #48bb78;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            width: 100%;
+        }
+
+        .submit-button:hover {
+            background-color: #38a169;
+        }
+
+        /* FAQ Section */
+        .faq-section {
+            padding: 4rem 2rem;
+            background-color: #f8f9fa;
+        }
+
+        .faq-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            background: white;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .faq-question {
+            padding: 1.5rem;
+            background-color: white;
+            border: none;
+            width: 100%;
+            text-align: left;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2d3748;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s ease;
+        }
+
+        .faq-question:hover {
+            background-color: #f8f9fa;
+        }
+
+        .faq-answer {
+            padding: 0 1.5rem 1.5rem;
+            color: #4a5568;
+            line-height: 1.7;
+            display: none;
+        }
+
+        .faq-answer.show {
+            display: block;
+        }
+
+        .faq-icon {
+            transition: transform 0.2s ease;
+        }
+
+        .faq-icon.rotate {
+            transform: rotate(180deg);
+        }
+
+        /* Office Info */
+        .office-info {
+            padding: 4rem 2rem;
+            background-color: white;
+        }
+
+        .office-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .office-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .office-card {
+            background-color: #f8f9fa;
+            padding: 2rem;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .office-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #2d3748;
+        }
+
+        .office-card p {
+            color: #4a5568;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Footer placeholder */
+        .footer-placeholder {
+            height: 300px;
+            background-color: #2d3748;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #a0aec0;
+            font-size: 0.9rem;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .page-header h1 {
+                font-size: 2rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .office-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .page-header {
+                padding: 2rem 1rem;
+            }
+
+            .contact-options, .contact-form-section, .faq-section, .office-info {
+                padding: 3rem 1rem;
+            }
+
+            .contact-form {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Placeholder -->
+    <div class="header-placeholder">
+        [Header Component - See components/header.html]
+    </div>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="page-header-container">
+            <h1>Get in Touch</h1>
+            <p>We're here to help you succeed. Choose the best way to reach us.</p>
+        </div>
+    </section>
+
+    <!-- Contact Options -->
+    <section class="contact-options">
+        <div class="contact-container">
+            <div class="options-grid">
+                <div class="contact-option">
+                    <div class="contact-icon">💬</div>
+                    <h3>Live Chat</h3>
+                    <p>Get instant help from our support team. Available Monday through Friday, 9 AM - 6 PM EST.</p>
+                    <a href="#" class="contact-button">Start Chat</a>
+                </div>
+
+                <div class="contact-option">
+                    <div class="contact-icon">📧</div>
+                    <h3>Email Support</h3>
+                    <p>Send us a detailed message and we'll respond within 24 hours. Perfect for complex questions.</p>
+                    <a href="mailto:support@getshadetree.com" class="contact-button">Send Email</a>
+                </div>
+
+                <div class="contact-option">
+                    <div class="contact-icon">📞</div>
+                    <h3>Phone Support</h3>
+                    <p>Speak directly with our support team for urgent issues or personalized assistance.</p>
+                    <a href="tel:+1-555-123-4567" class="contact-button">Call Now</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Form -->
+    <section class="contact-form-section">
+        <div class="form-container">
+            <h2 class="section-title">Send Us a Message</h2>
+            <p class="section-subtitle">
+                Fill out the form below and we'll get back to you as soon as possible.
+            </p>
+
+            <form class="contact-form" method="POST" action="/contact">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="first-name">First Name *</label>
+                        <input type="text" id="first-name" name="first_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="last-name">Last Name *</label>
+                        <input type="text" id="last-name" name="last_name" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="email">Email Address *</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="business-type">Business Type</label>
+                    <select id="business-type" name="business_type">
+                        <option value="">Select your business type</option>
+                        <option value="home-services">Home Services</option>
+                        <option value="personal-care">Personal Care</option>
+                        <option value="professional-services">Professional Services</option>
+                        <option value="mobile-services">Mobile Services</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="subject">Subject *</label>
+                    <input type="text" id="subject" name="subject" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="message">Message *</label>
+                    <textarea id="message" name="message" placeholder="Tell us how we can help you..." required></textarea>
+                </div>
+
+                <button type="submit" class="submit-button">Send Message</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+        <div class="faq-container">
+            <h2 class="section-title">Frequently Asked Questions</h2>
+            <p class="section-subtitle">
+                Quick answers to common questions about ShadeTree.
+            </p>
+
+            <div class="faq-item">
+                <button class="faq-question">
+                    How quickly can I get started with ShadeTree?
+                    <span class="faq-icon">▼</span>
+                </button>
+                <div class="faq-answer">
+                    You can be up and running in under 15 minutes. Our setup wizard guides you through the initial configuration, and you can start accepting bookings immediately.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">
+                    Do you offer training for new users?
+                    <span class="faq-icon">▼</span>
+                </button>
+                <div class="faq-answer">
+                    Yes! We provide free onboarding sessions, video tutorials, and comprehensive documentation. Our support team is also available to help you get the most out of ShadeTree.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">
+                    Can I import my existing customer data?
+                    <span class="faq-icon">▼</span>
+                </button>
+                <div class="faq-answer">
+                    Absolutely. We support CSV imports and can help you migrate data from most popular business management systems. Contact our support team for assistance.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">
+                    What payment methods do you accept?
+                    <span class="faq-icon">▼</span>
+                </button>
+                <div class="faq-answer">
+                    We accept all major credit cards, bank transfers, and popular digital payment methods. Your customers can pay online securely through our integrated payment system.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">
+                    Is my data secure with ShadeTree?
+                    <span class="faq-icon">▼</span>
+                </button>
+                <div class="faq-answer">
+                    Yes. We use enterprise-grade security measures including SSL encryption, regular backups, and comply with industry standards for data protection.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Office Information -->
+    <section class="office-info">
+        <div class="office-container">
+            <h2 class="section-title">Our Offices</h2>
+            <div class="office-grid">
+                <div class="office-card">
+                    <h3>🏢 Headquarters</h3>
+                    <p><strong>Address:</strong> 123 Business Ave, Suite 100<br>
+                    San Francisco, CA 94102</p>
+                    <p><strong>Phone:</strong> +1 (555) 123-4567</p>
+                    <p><strong>Hours:</strong> Monday - Friday, 9 AM - 6 PM PST</p>
+                </div>
+
+                <div class="office-card">
+                    <h3>🌍 Support Center</h3>
+                    <p><strong>Email:</strong> support@getshadetree.com</p>
+                    <p><strong>Response Time:</strong> Within 24 hours</p>
+                    <p><strong>Live Chat:</strong> Monday - Friday, 9 AM - 6 PM EST</p>
+                    <p><strong>Emergency Support:</strong> Available for Enterprise customers</p>
+                </div>
+
+                <div class="office-card">
+                    <h3>💼 Sales Team</h3>
+                    <p><strong>Email:</strong> sales@getshadetree.com</p>
+                    <p><strong>Phone:</strong> +1 (555) 123-4568</p>
+                    <p><strong>Hours:</strong> Monday - Friday, 8 AM - 7 PM EST</p>
+                    <p><strong>Demo Calls:</strong> Available by appointment</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer Placeholder -->
+    <div class="footer-placeholder">
+        [Footer Component - See components/footer.html]
+    </div>
+
+    <!-- Simple JavaScript for FAQ functionality -->
+    <script>
+        document.querySelectorAll('.faq-question').forEach(button => {
+            button.addEventListener('click', () => {
+                const answer = button.nextElementSibling;
+                const icon = button.querySelector('.faq-icon');
+
+                // Toggle answer visibility
+                answer.classList.toggle('show');
+                icon.classList.toggle('rotate');
+
+                // Close other open FAQs
+                document.querySelectorAll('.faq-question').forEach(otherButton => {
+                    if (otherButton !== button) {
+                        const otherAnswer = otherButton.nextElementSibling;
+                        const otherIcon = otherButton.querySelector('.faq-icon');
+                        otherAnswer.classList.remove('show');
+                        otherIcon.classList.remove('rotate');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+
