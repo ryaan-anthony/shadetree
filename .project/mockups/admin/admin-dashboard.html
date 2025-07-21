@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Shadetree</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation Sidebar -->
+    <div class="flex h-screen bg-gray-50">
+        <div class="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
+            <div class="flex flex-col flex-grow bg-white border-r border-gray-200 pt-5 pb-4 overflow-y-auto">
+                <!-- Logo -->
+                <div class="flex items-center flex-shrink-0 px-4">
+                    <h1 class="text-xl font-bold text-gray-900">
+                        <span class="text-green-600">Shade</span>tree
+                    </h1>
+                    <span class="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Admin</span>
+                </div>
+
+                <!-- Business Selector -->
+                <div class="mt-6 px-4">
+                    <div class="relative">
+                        <select class="block w-full pl-3 pr-10 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-green-500 focus:border-green-500">
+                            <option>Green Valley Landscaping</option>
+                            <option>Mountain View Services</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Navigation Menu -->
+                <nav class="mt-8 flex-1 px-2 space-y-1">
+                    <a href="#" class="bg-green-100 text-green-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="home" class="text-green-500 mr-3 h-5 w-5"></i>
+                        Dashboard
+                    </a>
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="building" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Business Profile
+                    </a>
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="users" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Staff Management
+                    </a>
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="settings" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Services & Pricing
+                    </a>
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="file-text" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Quote Templates
+                    </a>
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="bar-chart-2" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Reports
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="md:pl-64 flex flex-col flex-1">
+            <!-- Top Header -->
+            <div class="sticky top-0 z-10 bg-white shadow">
+                <div class="px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between h-16">
+                        <div class="flex items-center">
+                            <h1 class="text-2xl font-semibold text-gray-900">Dashboard</h1>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <!-- Search -->
+                            <div class="relative">
+                                <input type="text" placeholder="Search..." class="w-64 pl-8 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                <i data-feather="search" class="absolute left-2 top-3 h-4 w-4 text-gray-400"></i>
+                            </div>
+                            <!-- Notifications -->
+                            <button class="relative p-1 text-gray-400 hover:text-gray-500">
+                                <i data-feather="bell" class="h-6 w-6"></i>
+                                <span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400"></span>
+                            </button>
+                            <!-- User Menu -->
+                            <div class="relative">
+                                <button class="flex items-center text-sm text-gray-500 hover:text-gray-700">
+                                    <span class="mr-2">John Smith</span>
+                                    <i data-feather="chevron-down" class="h-4 w-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <main class="flex-1 py-6 px-4 sm:px-6 lg:px-8">
+                <!-- Welcome Section -->
+                <div class="mb-8">
+                    <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg shadow-lg">
+                        <div class="px-6 py-8 text-white">
+                            <h2 class="text-2xl font-bold mb-2">Welcome back, John!</h2>
+                            <p class="text-green-100 mb-4">Here's what's happening with Green Valley Landscaping today.</p>
+                            <div class="flex space-x-4">
+                                <button class="bg-white text-green-600 px-4 py-2 rounded-md font-medium hover:bg-gray-50 transition-colors">
+                                    Create Quote
+                                </button>
+                                <button class="bg-green-400 text-white px-4 py-2 rounded-md font-medium hover:bg-green-300 transition-colors">
+                                    Schedule Job
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Key Metrics Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <i data-feather="file-text" class="h-8 w-8 text-blue-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Active Quotes</p>
+                                <p class="text-2xl font-bold text-gray-900">24</p>
+                                <p class="text-xs text-green-600">+12% from last month</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <i data-feather="dollar-sign" class="h-8 w-8 text-green-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Monthly Revenue</p>
+                                <p class="text-2xl font-bold text-gray-900">$18,500</p>
+                                <p class="text-xs text-green-600">+8% from last month</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <i data-feather="calendar" class="h-8 w-8 text-purple-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Jobs This Week</p>
+                                <p class="text-2xl font-bold text-gray-900">15</p>
+                                <p class="text-xs text-gray-500">3 completed, 12 scheduled</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <i data-feather="trending-up" class="h-8 w-8 text-orange-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Conversion Rate</p>
+                                <p class="text-2xl font-bold text-gray-900">68%</p>
+                                <p class="text-xs text-green-600">+5% from last month</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity & Quick Actions -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Recent Activity -->
+                    <div class="bg-white rounded-lg shadow-md">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h3 class="text-lg font-medium text-gray-900">Recent Activity</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="space-y-4">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <div class="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
+                                            <i data-feather="check" class="h-4 w-4 text-green-600"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ml-3 flex-1">
+                                        <p class="text-sm text-gray-900">Quote #1024 approved by customer</p>
+                                        <p class="text-xs text-gray-500">2 hours ago</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <div class="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                            <i data-feather="user-plus" class="h-4 w-4 text-blue-600"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ml-3 flex-1">
+                                        <p class="text-sm text-gray-900">New staff member Sarah joined the team</p>
+                                        <p class="text-xs text-gray-500">4 hours ago</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <div class="h-8 w-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                                            <i data-feather="file-text" class="h-4 w-4 text-yellow-600"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ml-3 flex-1">
+                                        <p class="text-sm text-gray-900">Quote #1023 sent to customer</p>
+                                        <p class="text-xs text-gray-500">6 hours ago</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <div class="h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center">
+                                            <i data-feather="calendar" class="h-4 w-4 text-purple-600"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ml-3 flex-1">
+                                        <p class="text-sm text-gray-900">Landscape installation job completed</p>
+                                        <p class="text-xs text-gray-500">Yesterday</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions & Alerts -->
+                    <div class="space-y-6">
+                        <!-- Quick Actions -->
+                        <div class="bg-white rounded-lg shadow-md">
+                            <div class="px-6 py-4 border-b border-gray-200">
+                                <h3 class="text-lg font-medium text-gray-900">Quick Actions</h3>
+                            </div>
+                            <div class="p-6">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <button class="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                                        <i data-feather="plus-circle" class="h-8 w-8 text-green-600 mb-2"></i>
+                                        <span class="text-sm font-medium text-gray-900">New Quote</span>
+                                    </button>
+                                    <button class="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                                        <i data-feather="calendar-plus" class="h-8 w-8 text-blue-600 mb-2"></i>
+                                        <span class="text-sm font-medium text-gray-900">Schedule Job</span>
+                                    </button>
+                                    <button class="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                                        <i data-feather="user-plus" class="h-8 w-8 text-purple-600 mb-2"></i>
+                                        <span class="text-sm font-medium text-gray-900">Invite Staff</span>
+                                    </button>
+                                    <button class="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                                        <i data-feather="settings" class="h-8 w-8 text-orange-600 mb-2"></i>
+                                        <span class="text-sm font-medium text-gray-900">Settings</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System Alerts -->
+                        <div class="bg-white rounded-lg shadow-md">
+                            <div class="px-6 py-4 border-b border-gray-200">
+                                <h3 class="text-lg font-medium text-gray-900">System Alerts</h3>
+                            </div>
+                            <div class="p-6">
+                                <div class="space-y-3">
+                                    <div class="flex items-center p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                                        <i data-feather="alert-triangle" class="h-5 w-5 text-yellow-600 mr-3"></i>
+                                        <div class="flex-1">
+                                            <p class="text-sm text-yellow-800">Payment setup incomplete</p>
+                                            <p class="text-xs text-yellow-600">Complete setup to process payments</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center p-3 bg-blue-50 border border-blue-200 rounded-md">
+                                        <i data-feather="info" class="h-5 w-5 text-blue-600 mr-3"></i>
+                                        <div class="flex-1">
+                                            <p class="text-sm text-blue-800">New feature available</p>
+                                            <p class="text-xs text-blue-600">Advanced scheduling is now live</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        feather.replace();
+    </script>
+</body>
+</html>

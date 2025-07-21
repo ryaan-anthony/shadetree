@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Management - Shadetree Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen bg-gray-50">
+        <!-- Sidebar Navigation -->
+        <div class="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
+            <div class="flex flex-col flex-grow bg-white border-r border-gray-200 pt-5 pb-4 overflow-y-auto">
+                <div class="flex items-center flex-shrink-0 px-4">
+                    <h1 class="text-xl font-bold text-gray-900">
+                        <span class="text-green-600">Shade</span>tree
+                    </h1>
+                    <span class="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Admin</span>
+                </div>
+
+                <div class="mt-6 px-4">
+                    <select class="block w-full pl-3 pr-10 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-green-500 focus:border-green-500">
+                        <option>Green Valley Landscaping</option>
+                    </select>
+                </div>
+
+                <nav class="mt-8 flex-1 px-2 space-y-1">
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="home" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Dashboard
+                    </a>
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="building" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Business Profile
+                    </a>
+                    <div class="space-y-1">
+                        <div class="bg-green-100 text-green-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <i data-feather="users" class="text-green-500 mr-3 h-5 w-5"></i>
+                            Staff Management
+                        </div>
+                        <div class="ml-8 space-y-1">
+                            <a href="#" class="bg-green-50 text-green-700 block px-3 py-1 text-sm rounded-md">Team Overview</a>
+                            <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Roles & Permissions</a>
+                            <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Availability</a>
+                            <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Activity Tracking</a>
+                        </div>
+                    </div>
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="settings" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Services & Pricing
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="md:pl-64 flex flex-col flex-1">
+            <div class="sticky top-0 z-10 bg-white shadow">
+                <div class="px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between h-16">
+                        <div class="flex items-center">
+                            <h1 class="text-2xl font-semibold text-gray-900">Staff Management</h1>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center">
+                                <i data-feather="user-plus" class="h-4 w-4 mr-2"></i>
+                                Invite Staff
+                            </button>
+                            <button class="relative p-1 text-gray-400 hover:text-gray-500">
+                                <i data-feather="bell" class="h-6 w-6"></i>
+                            </button>
+                            <div class="relative">
+                                <button class="flex items-center text-sm text-gray-500 hover:text-gray-700">
+                                    <span class="mr-2">John Smith</span>
+                                    <i data-feather="chevron-down" class="h-4 w-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <main class="flex-1 py-6 px-4 sm:px-6 lg:px-8">
+                <div class="max-w-6xl mx-auto">
+                    <!-- Team Statistics -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <i data-feather="users" class="h-8 w-8 text-blue-500"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-600">Total Staff</p>
+                                    <p class="text-2xl font-bold text-gray-900">8</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <i data-feather="check-circle" class="h-8 w-8 text-green-500"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-600">Active Today</p>
+                                    <p class="text-2xl font-bold text-gray-900">6</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <i data-feather="clock" class="h-8 w-8 text-yellow-500"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-600">Pending Invites</p>
+                                    <p class="text-2xl font-bold text-gray-900">2</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <i data-feather="calendar" class="h-8 w-8 text-purple-500"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-600">On Schedule</p>
+                                    <p class="text-2xl font-bold text-gray-900">5</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Staff List -->
+                    <div class="bg-white shadow rounded-lg">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-lg font-medium text-gray-900">Team Members</h3>
+                                <div class="flex items-center space-x-3">
+                                    <div class="relative">
+                                        <input type="text" placeholder="Search staff..." class="w-64 pl-8 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                        <i data-feather="search" class="absolute left-2 top-3 h-4 w-4 text-gray-400"></i>
+                                    </div>
+                                    <select class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                        <option>All Roles</option>
+                                        <option>Admin</option>
+                                        <option>Manager</option>
+                                        <option>Technician</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff Member</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Active</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jobs This Week</th>
+                                        <th class="relative px-6 py-3"><span class="sr-only">Actions</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <!-- John Smith - Owner -->
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-10 w-10">
+                                                    <div class="h-10 w-10 rounded-full bg-green-500 flex items-center justify-center">
+                                                        <span class="text-sm font-medium text-white">JS</span>
+                                                    </div>
+                                                </div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-medium text-gray-900">John Smith</div>
+                                                    <div class="text-sm text-gray-500">john@greenvalley.com</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                                Owner
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5"></span>
+                                                Active
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            2 minutes ago
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            3 jobs
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button class="text-gray-400 hover:text-gray-500">
+                                                <i data-feather="more-vertical" class="h-5 w-5"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Sarah Johnson - Manager -->
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-10 w-10">
+                                                    <div class="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
+                                                        <span class="text-sm font-medium text-white">SJ</span>
+                                                    </div>
+                                                </div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-medium text-gray-900">Sarah Johnson</div>
+                                                    <div class="text-sm text-gray-500">sarah@greenvalley.com</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                Manager
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5"></span>
+                                                Active
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            15 minutes ago
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            5 jobs
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button class="text-gray-400 hover:text-gray-500">
+                                                <i data-feather="more-vertical" class="h-5 w-5"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Mike Rodriguez - Technician -->
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-10 w-10">
+                                                    <div class="h-10 w-10 rounded-full bg-orange-500 flex items-center justify-center">
+                                                        <span class="text-sm font-medium text-white">MR</span>
+                                                    </div>
+                                                </div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-medium text-gray-900">Mike Rodriguez</div>
+                                                    <div class="text-sm text-gray-500">mike@greenvalley.com</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                Technician
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5"></span>
+                                                Active
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            1 hour ago
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            4 jobs
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button class="text-gray-400 hover:text-gray-500">
+                                                <i data-feather="more-vertical" class="h-5 w-5"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Emily Chen - Technician -->
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-10 w-10">
+                                                    <div class="h-10 w-10 rounded-full bg-pink-500 flex items-center justify-center">
+                                                        <span class="text-sm font-medium text-white">EC</span>
+                                                    </div>
+                                                </div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-medium text-gray-900">Emily Chen</div>
+                                                    <div class="text-sm text-gray-500">emily@greenvalley.com</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                Technician
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                <span class="w-1.5 h-1.5 bg-yellow-400 rounded-full mr-1.5"></span>
+                                                On Break
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            30 minutes ago
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            3 jobs
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button class="text-gray-400 hover:text-gray-500">
+                                                <i data-feather="more-vertical" class="h-5 w-5"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Pending Invitations -->
+                                    <tr class="bg-yellow-50">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-10 w-10">
+                                                    <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                                                        <i data-feather="mail" class="h-5 w-5 text-gray-500"></i>
+                                                    </div>
+                                                </div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-medium text-gray-900">David Wilson</div>
+                                                    <div class="text-sm text-gray-500">david.wilson@email.com</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                Technician
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                Invitation Pending
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            Invited 2 days ago
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            -
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button class="text-green-600 hover:text-green-700 text-sm font-medium mr-3">Resend</button>
+                                            <button class="text-gray-400 hover:text-gray-500">
+                                                <i data-feather="more-vertical" class="h-5 w-5"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center mb-4">
+                                <i data-feather="user-plus" class="h-6 w-6 text-green-500 mr-3"></i>
+                                <h3 class="text-lg font-medium text-gray-900">Invite New Staff</h3>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-4">Add team members and assign roles to grow your business.</p>
+                            <button class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                                Send Invitation
+                            </button>
+                        </div>
+
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center mb-4">
+                                <i data-feather="shield" class="h-6 w-6 text-blue-500 mr-3"></i>
+                                <h3 class="text-lg font-medium text-gray-900">Manage Permissions</h3>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-4">Configure roles and access levels for team members.</p>
+                            <button class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                                Role Settings
+                            </button>
+                        </div>
+
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center mb-4">
+                                <i data-feather="calendar" class="h-6 w-6 text-purple-500 mr-3"></i>
+                                <h3 class="text-lg font-medium text-gray-900">Schedule Management</h3>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-4">Set availability and manage team schedules.</p>
+                            <button class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                                View Schedules
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        feather.replace();
+    </script>
+</body>
+</html>

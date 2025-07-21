@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hours & Service Areas - Shadetree Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen bg-gray-50">
+        <!-- Sidebar Navigation -->
+        <div class="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
+            <div class="flex flex-col flex-grow bg-white border-r border-gray-200 pt-5 pb-4 overflow-y-auto">
+                <div class="flex items-center flex-shrink-0 px-4">
+                    <h1 class="text-xl font-bold text-gray-900">
+                        <span class="text-green-600">Shade</span>tree
+                    </h1>
+                    <span class="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Admin</span>
+                </div>
+
+                <div class="mt-6 px-4">
+                    <select class="block w-full pl-3 pr-10 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-green-500 focus:border-green-500">
+                        <option>Green Valley Landscaping</option>
+                    </select>
+                </div>
+
+                <nav class="mt-8 flex-1 px-2 space-y-1">
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="home" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Dashboard
+                    </a>
+                    <div class="space-y-1">
+                        <div class="bg-green-100 text-green-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <i data-feather="building" class="text-green-500 mr-3 h-5 w-5"></i>
+                            Business Profile
+                        </div>
+                        <div class="ml-8 space-y-1">
+                            <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Company Info</a>
+                            <a href="#" class="bg-green-50 text-green-700 block px-3 py-1 text-sm rounded-md">Hours & Areas</a>
+                            <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Notifications</a>
+                            <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Payment Settings</a>
+                        </div>
+                    </div>
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="users" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Staff Management
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="md:pl-64 flex flex-col flex-1">
+            <div class="sticky top-0 z-10 bg-white shadow">
+                <div class="px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between h-16">
+                        <div class="flex items-center">
+                            <h1 class="text-2xl font-semibold text-gray-900">Operating Hours & Service Areas</h1>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <button class="relative p-1 text-gray-400 hover:text-gray-500">
+                                <i data-feather="bell" class="h-6 w-6"></i>
+                            </button>
+                            <div class="relative">
+                                <button class="flex items-center text-sm text-gray-500 hover:text-gray-700">
+                                    <span class="mr-2">John Smith</span>
+                                    <i data-feather="chevron-down" class="h-4 w-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <main class="flex-1 py-6 px-4 sm:px-6 lg:px-8">
+                <div class="max-w-6xl mx-auto">
+                    <!-- Tabs -->
+                    <div class="border-b border-gray-200 mb-8">
+                        <nav class="-mb-px flex space-x-8">
+                            <button class="border-green-500 text-green-600 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                                Operating Hours
+                            </button>
+                            <button class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                                Service Areas
+                            </button>
+                            <button class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                                Holidays
+                            </button>
+                        </nav>
+                    </div>
+
+                    <!-- Operating Hours Section -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Hours Configuration -->
+                        <div class="bg-white shadow rounded-lg p-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-6">Weekly Schedule</h3>
+
+                            <div class="space-y-4">
+                                <!-- Monday -->
+                                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" checked class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                                        <label class="ml-3 text-sm font-medium text-gray-900 w-20">Monday</label>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <select class="text-sm border border-gray-300 rounded-md px-2 py-1">
+                                            <option>8:00 AM</option>
+                                            <option>9:00 AM</option>
+                                            <option>10:00 AM</option>
+                                        </select>
+                                        <span class="text-gray-500">to</span>
+                                        <select class="text-sm border border-gray-300 rounded-md px-2 py-1">
+                                            <option>5:00 PM</option>
+                                            <option>6:00 PM</option>
+                                            <option>7:00 PM</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Tuesday -->
+                                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" checked class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                                        <label class="ml-3 text-sm font-medium text-gray-900 w-20">Tuesday</label>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <select class="text-sm border border-gray-300 rounded-md px-2 py-1">
+                                            <option>8:00 AM</option>
+                                        </select>
+                                        <span class="text-gray-500">to</span>
+                                        <select class="text-sm border border-gray-300 rounded-md px-2 py-1">
+                                            <option>5:00 PM</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Wednesday -->
+                                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" checked class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                                        <label class="ml-3 text-sm font-medium text-gray-900 w-20">Wednesday</label>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <select class="text-sm border border-gray-300 rounded-md px-2 py-1">
+                                            <option>8:00 AM</option>
+                                        </select>
+                                        <span class="text-gray-500">to</span>
+                                        <select class="text-sm border border-gray-300 rounded-md px-2 py-1">
+                                            <option>5:00 PM</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Thursday -->
+                                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" checked class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                                        <label class="ml-3 text-sm font-medium text-gray-900 w-20">Thursday</label>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <select class="text-sm border border-gray-300 rounded-md px-2 py-1">
+                                            <option>8:00 AM</option>
+                                        </select>
+                                        <span class="text-gray-500">to</span>
+                                        <select class="text-sm border border-gray-300 rounded-md px-2 py-1">
+                                            <option>5:00 PM</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Friday -->
+                                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" checked class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                                        <label class="ml-3 text-sm font-medium text-gray-900 w-20">Friday</label>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <select class="text-sm border border-gray-300 rounded-md px-2 py-1">
+                                            <option>8:00 AM</option>
+                                        </select>
+                                        <span class="text-gray-500">to</span>
+                                        <select class="text-sm border border-gray-300 rounded-md px-2 py-1">
+                                            <option>5:00 PM</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Saturday -->
+                                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" checked class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                                        <label class="ml-3 text-sm font-medium text-gray-900 w-20">Saturday</label>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <select class="text-sm border border-gray-300 rounded-md px-2 py-1">
+                                            <option>9:00 AM</option>
+                                        </select>
+                                        <span class="text-gray-500">to</span>
+                                        <select class="text-sm border border-gray-300 rounded-md px-2 py-1">
+                                            <option>3:00 PM</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Sunday -->
+                                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-gray-50">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                                        <label class="ml-3 text-sm font-medium text-gray-500 w-20">Sunday</label>
+                                    </div>
+                                    <div class="text-sm text-gray-500">
+                                        Closed
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Quick Actions -->
+                            <div class="mt-6 flex space-x-3">
+                                <button class="text-sm text-green-600 hover:text-green-700 font-medium">Copy Monday to All</button>
+                                <button class="text-sm text-green-600 hover:text-green-700 font-medium">Standard Business Hours</button>
+                            </div>
+                        </div>
+
+                        <!-- Preview & Service Areas -->
+                        <div class="space-y-6">
+                            <!-- Hours Preview -->
+                            <div class="bg-white shadow rounded-lg p-6">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">Customer View Preview</h3>
+                                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                                    <h4 class="font-medium text-gray-900 mb-3">Business Hours</h4>
+                                    <div class="space-y-1 text-sm">
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Monday - Friday:</span>
+                                            <span class="text-gray-900">8:00 AM - 5:00 PM</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Saturday:</span>
+                                            <span class="text-gray-900">9:00 AM - 3:00 PM</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Sunday:</span>
+                                            <span class="text-gray-900">Closed</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Service Areas -->
+                            <div class="bg-white shadow rounded-lg p-6">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">Service Areas</h3>
+
+                                <!-- Area Type Selection -->
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Define Service Area By:</label>
+                                    <div class="space-y-2">
+                                        <label class="flex items-center">
+                                            <input type="radio" name="area-type" value="radius" checked class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300">
+                                            <span class="ml-2 text-sm text-gray-700">Radius from business address</span>
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="radio" name="area-type" value="zipcodes" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300">
+                                            <span class="ml-2 text-sm text-gray-700">Specific ZIP codes</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Radius Configuration -->
+                                <div class="space-y-4">
+                                    <div>
+                                        <label for="radius" class="block text-sm font-medium text-gray-700">Service Radius</label>
+                                        <div class="mt-1 flex items-center space-x-2">
+                                            <input type="number" id="radius" value="25" class="w-20 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                            <span class="text-sm text-gray-500">miles from business address</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Travel Fee -->
+                                    <div>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" checked class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                                            <span class="ml-2 text-sm text-gray-700">Charge travel fee for distances over</span>
+                                        </label>
+                                        <div class="mt-2 ml-6 flex items-center space-x-2">
+                                            <input type="number" value="15" class="w-20 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                            <span class="text-sm text-gray-500">miles</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Current Coverage -->
+                                <div class="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                                    <h4 class="text-sm font-medium text-green-800 mb-2">Current Coverage Area</h4>
+                                    <p class="text-sm text-green-700">Serving all locations within 25 miles of Green Valley, AZ. Travel fees apply beyond 15 miles.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="flex justify-end space-x-3 mt-8">
+                        <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                            Save Changes
+                        </button>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        feather.replace();
+    </script>
+</body>
+</html>
