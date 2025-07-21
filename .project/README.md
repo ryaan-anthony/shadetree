@@ -46,30 +46,24 @@ Rails-rendered marketing pages with minimal dynamic features.
 - Blog/Content Marketing
 
 ### 3. [Admin Portal](requirements/03-admin-portal.md)
-Centralized administration interface for business management.
+Centralized administration interface for business management. Users may have multiple businesses.
 
 #### Key Features
-- Dashboard Overview
-- Business Metrics
-- System Status
-- Activity Monitoring
-- User Management
-- Integration Management
-- Audit Logs
-- Support Tools
-- Reporting Tools
-- Workflow Configuration
-- Custom Field Management
-- Notification Rules
-- Service Templates
-- Workflow Builder
-- Approval Chains
-- Service-Specific Workflows
-- Workflow Validation
-
-#### Additional Features
-- Customizable Dashboards
-- Real-time Updates
+- Business Metrics (quotes sent, jobs scheduled, payments received)
+- Activity Feed (recent quotes, appointments, invoices)
+- User Management (invite/remove team members, set roles)
+- Staff Availability Settings (new) – schedule & availability per employee
+- Company Profile (logo, timezone, contact info)
+- Service Templates – define standard services, durations, pricing
+- Custom Fields – for quote forms, client info, job records
+- Notification Rules – email/SMS triggers for clients & staff
+- Workflow Builder – define custom flows (quote → schedule → invoice)
+- Reports – revenue, jobs, outstanding payments, quote conversion
+- Export Data (CSV/PDF for quotes, jobs, contacts)
+- Integration Management – Stripe, Google Calendar, QuickBooks, Zapier, etc.
+- Audit Logs – who changed what and when (helpful for agencies or partners)
+- Activity Monitoring – basic logging, email/SMS status, quote views
+- Support Access – open support tickets or chat
 
 ### 4. [Customer-Facing Interface](requirements/04-customer-facing.md)
 Public-facing pages for end customers to interact with businesses.

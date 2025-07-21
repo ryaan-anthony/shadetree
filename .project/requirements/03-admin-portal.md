@@ -1,39 +1,45 @@
-# Initiative: Admin Portal & Business Configuration
+# Initiative: Admin Portal & Business Management
 
 ## Overview
-Build a comprehensive admin portal that enables business owners to configure their entire service operation, from quote and appointment workflows to staff management and branding customization.
+Build a streamlined admin portal that enables business owners to manage their core service operations efficiently. Focus on essential business management features that directly impact quote-to-payment workflow.
 
 ## Goals
-- Provide intuitive workflow configuration tools
-- Enable third-party tool integration management
-- Implement role-based staff management
-- Create brand customization capabilities
+- Enable quick business setup and configuration
+- Provide essential staff management capabilities
+- Implement basic branding and customization
+- Create simple reporting and activity monitoring
 - Ensure high usability for non-technical users
 
 ## Success Metrics
-- Average workflow setup time < 15 minutes
-- Integration setup success rate > 90%
+- Business setup completion time < 10 minutes
 - Staff onboarding completion rate > 95%
-- UI customization satisfaction > 85%
-- Support ticket reduction for configuration tasks
+- Time to first quote sent < 5 minutes
+- Support ticket reduction for basic operations > 50%
 
 ## Related Epics
-1. [Workflow Configuration](admin-portal/1-workflow-configuration.md)
-2. [Integration Management](admin-portal/2-integration-management.md)
-3. [Staff & Role Management](admin-portal/3-staff-role-management.md)
-4. [Brand Customization](admin-portal/4-brand-customization.md)
-5. [Admin Dashboard](admin-portal/5-admin-dashboard.md)
+1. [Business Profile Management](admin-portal/1-business-profile.md)
+2. [Staff Management](admin-portal/2-staff-management.md)
+3. [Service & Pricing Setup](admin-portal/3-service-pricing.md)
+4. [Admin Dashboard](admin-portal/4-admin-dashboard.md)
 
 ## Timeline
-- Estimated Duration: 10 weeks
+- Estimated Duration: 4 weeks
 - Priority: P0 (Critical Path)
 
 ## Dependencies
 - Core Booking Platform Initiative
 - User Management System Epic
 
-## Risks
-- Complex workflow configuration UX
-- Third-party API reliability
-- Role permission complexity
-- Performance impact of customizations
+## Out of Scope for MVP
+- Complex workflow builders
+- Multiple third-party integrations
+- Advanced customization options
+- Real-time analytics
+- Webhook management
+- CRM/Accounting sync
+
+## Phase 2 Considerations
+- Payment gateway integration (Stripe only)
+- Google Calendar sync
+- Basic email automation
+- Simple reporting enhancements
