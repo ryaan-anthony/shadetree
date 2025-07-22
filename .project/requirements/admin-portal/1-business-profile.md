@@ -12,4 +12,4 @@ Business Profile Management enables business owners to configure and maintain th
 1. [**Basic Business Information**](./business-profile/01-basic-information.md) - Core business details including name, description, contact information, and branding
 2. [**Operating Hours Management**](./business-profile/02-operating-hours.md) - Flexible scheduling system for regular hours, holidays, and special availability
 3. [**Location & Service Areas**](./business-profile/03-locations.md) - Physical location management and service delivery area configuration
-4. [**Business Branding**](./business-profile/05-branding.md) - Logo, colors, and visual identity management for customer-facing interfaces
+4. [**Business Branding**](./business-profile/04-branding.md) - Logo, colors, and visual identity management for customer-facing interfaces
