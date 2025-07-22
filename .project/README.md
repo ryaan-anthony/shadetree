@@ -26,21 +26,17 @@ Static pages with minimal dynamic features. Ability to register/login to the adm
 Centralized administration interface for business management. Users may have multiple businesses.
 
 #### Key Features
-- Business Metrics (quotes sent, jobs scheduled, payments received)
-- Activity Feed (recent quotes, appointments, invoices)
-- User Management (invite/remove team members, set roles)
-- Staff Availability Settings (new) – schedule & availability per employee
+- Staff Availability Settings (schedule & availability per employee)
 - Company Profile (logo, timezone, contact info)
-- Service Templates – define standard services, durations, pricing
-- Custom Fields – for quote forms, client info, job records
-- Notification Rules – email/SMS triggers for clients & staff
-- Workflow Builder – define custom flows (quote → schedule → invoice)
-- Reports – revenue, jobs, outstanding payments, quote conversion
+- User Management (invite/remove team members, set roles)
+- Workflow Builder (define custom flows: quote → schedule → invoice)
+- Service Templates (define standard services, durations, pricing)
+- Notification Rules (email/SMS triggers for clients & staff)
+- Support Access (open support tickets or chat)
 - Export Data (CSV/PDF for quotes, jobs, contacts)
-- Integration Management – Stripe, Google Calendar, QuickBooks, Zapier, etc.
-- Audit Logs – who changed what and when (helpful for agencies or partners)
-- Activity Monitoring – basic logging, email/SMS status, quote views
-- Support Access – open support tickets or chat
+- Business Metrics (quotes sent, jobs scheduled, payments received)- Audit Logs (who changed what and when)
+- Activity Monitoring (basic logging, email/SMS status, quote views)
+- Activity Feed (recent quotes, appointments, invoices)
 
 ### 3. [Customer-Facing Interface](requirements/03-customer-facing.md)
 Public-facing pages for end customers to interact with businesses.

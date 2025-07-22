@@ -14,7 +14,7 @@ The Admin Portal provides business owners and managers with tools to manage thei
 2. [**Staff Management**](./admin-portal/2-staff-management.md) - Manage team members, roles, and permissions
 3. [**Service & Pricing Management**](./admin-portal/3-service-pricing.md) - Define services, pricing tiers, and availability
 4. [**Admin Dashboard**](./admin-portal/4-admin-dashboard.md) - Central command center with key metrics and quick actions
-5. [**Notifications**](./admin-portal/6-notifications.md) - Communication preferences and automated messaging
-6. [**Workflows**](./admin-portal/7-workflows.md) - Business process automation and approval chains
-7. [**Data Export**](./admin-portal/9-data-export.md) - Backup and data portability features
-8. [**Support**](./admin-portal/12-support.md) - Customer inquiry management and support ticketing
+5. [**Notifications**](./admin-portal/5-notifications.md) - Communication preferences and automated messaging
+6. [**Workflows**](./admin-portal/6-workflows.md) - Business process automation and approval chains
+7. [**Data Export**](./admin-portal/7-data-export.md) - Backup and data portability features
+8. [**Support**](./admin-portal/8-support.md) - Customer inquiry management and support ticketing
