@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing Configuration - Shadetree</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <!--
+    Target Persona: Business Owner
+    User Story: As a business owner, I want to configure service pricing with taxes and fees so customers see accurate costs
+    Key Interactions: Set base prices, configure taxes, add fees, preview total pricing
+    -->
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen bg-gray-50">
+        <!-- Sidebar Navigation -->
+        <div class="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
+            <div class="flex flex-col flex-grow bg-white border-r border-gray-200 pt-5 pb-4 overflow-y-auto">
+                <!-- Logo -->
+                <div class="flex items-center flex-shrink-0 px-4">
+                    <h1 class="text-xl font-bold text-gray-900">
+                        <span class="text-green-600">Shade</span>tree
+                    </h1>
+                </div>
+
+                <!-- Business Info -->
+                <div class="mt-6 px-4">
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <p class="text-sm font-medium text-gray-900">Pine Valley Landscaping</p>
+                        <p class="text-xs text-gray-500">Owner: John Smith</p>
+                    </div>
+                </div>
+
+                <!-- Navigation Menu -->
+                <nav class="mt-8 flex-1 px-2 space-y-1">
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="home" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Dashboard
+                    </a>
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="calendar" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Bookings
+                    </a>
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="users" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Staff
+                    </a>
+                    <a href="#" class="bg-blue-100 text-blue-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="tag" class="text-blue-500 mr-3 h-5 w-5"></i>
+                        Services
+                    </a>
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="settings" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Settings
+                    </a>
+                </nav>
+
+                <!-- Support Section -->
+                <div class="mt-auto px-2 py-4 border-t border-gray-200">
+                    <button class="w-full flex items-center px-2 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md">
+                        <i data-feather="help-circle" class="mr-3 h-5 w-5"></i>
+                        Help & Support
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="md:pl-64 flex flex-col flex-1">
+            <!-- Top Header -->
+            <div class="sticky top-0 z-10 bg-white shadow">
+                <div class="px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between h-16">
+                        <div class="flex items-center">
+                            <h1 class="text-2xl font-semibold text-gray-900">Pricing Configuration</h1>
+                            <span class="ml-3 text-sm text-gray-500">Garden Design - Landscaping</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <button class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                Cancel
+                            </button>
+                            <button class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <main class="flex-1 py-6 px-4 sm:px-6 lg:px-8">
+                <div class="max-w-4xl mx-auto">
+                    <!-- Base Pricing -->
+                    <div class="bg-white shadow rounded-lg mb-6">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">Base Pricing</h3>
+                            <p class="mt-1 text-sm text-gray-500">Configure the fundamental pricing for this service</p>
+                        </div>
+                        <div class="p-6">
+                            <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Base Price</label>
+                                    <div class="mt-1 relative rounded-md shadow-sm">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <span class="text-gray-500 sm:text-sm">$</span>
+                                        </div>
+                                        <input type="number" value="150.00" step="0.01" class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Duration</label>
+                                    <div class="mt-1 flex rounded-md shadow-sm">
+                                        <input type="number" value="4" class="focus:ring-blue-500 focus:border-blue-500 flex-1 block w-full rounded-none rounded-l-md sm:text-sm border-gray-300">
+                                        <select class="focus:ring-blue-500 focus:border-blue-500 block w-20 rounded-none rounded-r-md sm:text-sm border-gray-300">
+                                            <option>hours</option>
+                                            <option>minutes</option>
+                                            <option>days</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Price Per</label>
+                                    <div class="mt-1">
+                                        <select class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                            <option>Per Service</option>
+                                            <option>Per Hour</option>
+                                            <option>Per Square Foot</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tax Configuration -->
+                    <div class="bg-white shadow rounded-lg mb-6">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-lg leading-6 font-medium text-gray-900">Tax Configuration</h3>
+                                    <p class="mt-1 text-sm text-gray-500">Configure tax rates that apply to this service</p>
+                                </div>
+                                <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200">
+                                    <i data-feather="plus" class="mr-2 h-4 w-4"></i>
+                                    Add Tax
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <div class="space-y-4">
+                                <div class="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
+                                    <div class="flex-1">
+                                        <label class="block text-sm font-medium text-gray-700">Tax Name</label>
+                                        <div class="mt-1">
+                                            <input type="text" value="Sales Tax" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                        </div>
+                                    </div>
+                                    <div class="w-32">
+                                        <label class="block text-sm font-medium text-gray-700">Rate (%)</label>
+                                        <div class="mt-1">
+                                            <input type="number" value="8.75" step="0.01" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                        </div>
+                                    </div>
+                                    <div class="w-32">
+                                        <label class="block text-sm font-medium text-gray-700">Type</label>
+                                        <div class="mt-1">
+                                            <select class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                                <option>Exclusive</option>
+                                                <option>Inclusive</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button class="p-2 text-red-500 hover:text-red-700">
+                                        <i data-feather="trash-2" class="h-5 w-5"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fee Configuration -->
+                    <div class="bg-white shadow rounded-lg mb-6">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-lg leading-6 font-medium text-gray-900">Additional Fees</h3>
+                                    <p class="mt-1 text-sm text-gray-500">Configure additional fees beyond the base price</p>
+                                </div>
+                                <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200">
+                                    <i data-feather="plus" class="mr-2 h-4 w-4"></i>
+                                    Add Fee
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <div class="space-y-4">
+                                <div class="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
+                                    <div class="flex-1">
+                                        <label class="block text-sm font-medium text-gray-700">Fee Name</label>
+                                        <div class="mt-1">
+                                            <input type="text" value="Material Delivery" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                        </div>
+                                    </div>
+                                    <div class="w-32">
+                                        <label class="block text-sm font-medium text-gray-700">Amount</label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">$</span>
+                                            </div>
+                                            <input type="number" value="25.00" step="0.01" class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-7 sm:text-sm border-gray-300 rounded-md">
+                                        </div>
+                                    </div>
+                                    <div class="w-32">
+                                        <label class="block text-sm font-medium text-gray-700">Type</label>
+                                        <div class="mt-1">
+                                            <select class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                                <option>Fixed</option>
+                                                <option>Percentage</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center pt-6">
+                                        <input type="checkbox" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label class="ml-2 block text-sm text-gray-900">Required</label>
+                                    </div>
+                                    <button class="p-2 text-red-500 hover:text-red-700">
+                                        <i data-feather="trash-2" class="h-5 w-5"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pricing Preview -->
+                    <div class="bg-white shadow rounded-lg">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">Pricing Preview</h3>
+                            <p class="mt-1 text-sm text-gray-500">How customers will see this service pricing</p>
+                        </div>
+                        <div class="p-6">
+                            <div class="bg-gray-50 rounded-lg p-6">
+                                <dl class="space-y-3">
+                                    <div class="flex justify-between">
+                                        <dt class="text-sm text-gray-600">Garden Design (4 hours)</dt>
+                                        <dd class="text-sm font-medium text-gray-900">$150.00</dd>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <dt class="text-sm text-gray-600">Material Delivery Fee</dt>
+                                        <dd class="text-sm font-medium text-gray-900">$25.00</dd>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <dt class="text-sm text-gray-600">Subtotal</dt>
+                                        <dd class="text-sm font-medium text-gray-900">$175.00</dd>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <dt class="text-sm text-gray-600">Sales Tax (8.75%)</dt>
+                                        <dd class="text-sm font-medium text-gray-900">$15.31</dd>
+                                    </div>
+                                    <div class="border-t border-gray-200 pt-3">
+                                        <div class="flex justify-between">
+                                            <dt class="text-base font-medium text-gray-900">Total</dt>
+                                            <dd class="text-base font-medium text-gray-900">$190.31</dd>
+                                        </div>
+                                    </div>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        feather.replace()
+    </script>
+</body>
+</html>

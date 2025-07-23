@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Catalog - Shadetree</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <!--
+    Target Persona: Business Owner
+    User Story: As a business owner, I want to manage my services so customers know what I offer
+    Key Interactions: Create services, edit pricing, organize categories, configure add-ons
+    -->
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen bg-gray-50">
+        <!-- Sidebar Navigation -->
+        <div class="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
+            <div class="flex flex-col flex-grow bg-white border-r border-gray-200 pt-5 pb-4 overflow-y-auto">
+                <!-- Logo -->
+                <div class="flex items-center flex-shrink-0 px-4">
+                    <h1 class="text-xl font-bold text-gray-900">
+                        <span class="text-green-600">Shade</span>tree
+                    </h1>
+                </div>
+
+                <!-- Business Info -->
+                <div class="mt-6 px-4">
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <p class="text-sm font-medium text-gray-900">Pine Valley Landscaping</p>
+                        <p class="text-xs text-gray-500">Owner: John Smith</p>
+                    </div>
+                </div>
+
+                <!-- Navigation Menu -->
+                <nav class="mt-8 flex-1 px-2 space-y-1">
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="home" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Dashboard
+                    </a>
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="calendar" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Bookings
+                    </a>
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="users" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Staff
+                    </a>
+                    <a href="#" class="bg-blue-100 text-blue-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="tag" class="text-blue-500 mr-3 h-5 w-5"></i>
+                        Services
+                    </a>
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="settings" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Settings
+                    </a>
+                </nav>
+
+                <!-- Support Section -->
+                <div class="mt-auto px-2 py-4 border-t border-gray-200">
+                    <button class="w-full flex items-center px-2 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md">
+                        <i data-feather="help-circle" class="mr-3 h-5 w-5"></i>
+                        Help & Support
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="md:pl-64 flex flex-col flex-1">
+            <!-- Top Header -->
+            <div class="sticky top-0 z-10 bg-white shadow">
+                <div class="px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between h-16">
+                        <div class="flex items-center">
+                            <h1 class="text-2xl font-semibold text-gray-900">Service Catalog</h1>
+                            <span class="ml-3 text-sm text-gray-500">Manage your service offerings</span>
+                        </div>
+                        <div class="flex items-center">
+                            <button class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                                <i data-feather="plus" class="mr-2 h-4 w-4"></i>
+                                Add Service
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <main class="flex-1 py-6 px-4 sm:px-6 lg:px-8">
+                <!-- Service Categories -->
+                <div class="mb-6">
+                    <nav class="flex space-x-8" aria-label="Tabs">
+                        <a href="#" class="border-blue-500 text-blue-600 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                            All Services
+                        </a>
+                        <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                            Lawn Care
+                        </a>
+                        <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                            Landscaping
+                        </a>
+                        <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                            Maintenance
+                        </a>
+                        <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                            Seasonal
+                        </a>
+                    </nav>
+                </div>
+
+                <!-- Services Grid -->
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+                    <!-- Service Card 1 -->
+                    <div class="bg-white overflow-hidden shadow rounded-lg">
+                        <div class="px-6 py-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-lg font-medium text-gray-900">Weekly Lawn Mowing</h3>
+                                    <p class="text-sm text-gray-500">Lawn Care</p>
+                                </div>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Active
+                                </span>
+                            </div>
+                            <p class="mt-2 text-sm text-gray-600">Regular lawn mowing service including edging and cleanup.</p>
+
+                            <dl class="mt-4 grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Base Price</dt>
+                                    <dd class="text-sm text-gray-900">$45.00</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Duration</dt>
+                                    <dd class="text-sm text-gray-900">1 hour</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Tax Rate</dt>
+                                    <dd class="text-sm text-gray-900">8.75%</dd>
+                                </div>
+                            </dl>
+
+                            <div class="mt-4 flex space-x-3">
+                                <button class="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    Edit
+                                </button>
+                                <button class="inline-flex items-center p-2 border border-transparent rounded-md text-gray-400 hover:text-gray-600">
+                                    <i data-feather="more-horizontal" class="h-4 w-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Service Card 2 -->
+                    <div class="bg-white overflow-hidden shadow rounded-lg">
+                        <div class="px-6 py-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-lg font-medium text-gray-900">Garden Design</h3>
+                                    <p class="text-sm text-gray-500">Landscaping</p>
+                                </div>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Active
+                                </span>
+                            </div>
+                            <p class="mt-2 text-sm text-gray-600">Custom garden design and installation services.</p>
+
+                            <dl class="mt-4 grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Base Price</dt>
+                                    <dd class="text-sm text-gray-900">$150.00</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Duration</dt>
+                                    <dd class="text-sm text-gray-900">4 hours</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Add-ons</dt>
+                                    <dd class="text-sm text-blue-600">3 available</dd>
+                                </div>
+                            </dl>
+
+                            <div class="mt-4 flex space-x-3">
+                                <button class="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    Edit
+                                </button>
+                                <button class="inline-flex items-center p-2 border border-transparent rounded-md text-gray-400 hover:text-gray-600">
+                                    <i data-feather="more-horizontal" class="h-4 w-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Service Card 3 -->
+                    <div class="bg-white overflow-hidden shadow rounded-lg">
+                        <div class="px-6 py-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-lg font-medium text-gray-900">Seasonal Cleanup</h3>
+                                    <p class="text-sm text-gray-500">Seasonal</p>
+                                </div>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                    Seasonal
+                                </span>
+                            </div>
+                            <p class="mt-2 text-sm text-gray-600">Spring and fall cleanup including leaf removal and pruning.</p>
+
+                            <dl class="mt-4 grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Base Price</dt>
+                                    <dd class="text-sm text-gray-900">$85.00</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Duration</dt>
+                                    <dd class="text-sm text-gray-900">2.5 hours</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Seasonal Rate</dt>
+                                    <dd class="text-sm text-green-600">+15%</dd>
+                                </div>
+                            </dl>
+
+                            <div class="mt-4 flex space-x-3">
+                                <button class="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    Edit
+                                </button>
+                                <button class="inline-flex items-center p-2 border border-transparent rounded-md text-gray-400 hover:text-gray-600">
+                                    <i data-feather="more-horizontal" class="h-4 w-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add Service Card -->
+                    <div class="bg-white overflow-hidden shadow rounded-lg border-2 border-dashed border-gray-300">
+                        <div class="px-6 py-8 text-center">
+                            <i data-feather="plus-circle" class="mx-auto h-12 w-12 text-gray-400"></i>
+                            <h3 class="mt-2 text-sm font-medium text-gray-900">Add New Service</h3>
+                            <p class="mt-1 text-sm text-gray-500">Create a new service offering for your customers</p>
+                            <div class="mt-6">
+                                <button class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                                    <i data-feather="plus" class="mr-2 h-4 w-4"></i>
+                                    Create Service
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="bg-white shadow rounded-lg">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Service Overview</h3>
+                    </div>
+                    <div class="px-6 py-4">
+                        <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-4">
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Total Services</dt>
+                                <dd class="mt-1 text-2xl font-semibold text-gray-900">12</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Active Services</dt>
+                                <dd class="mt-1 text-2xl font-semibold text-green-600">10</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Average Price</dt>
+                                <dd class="mt-1 text-2xl font-semibold text-blue-600">$75</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Categories</dt>
+                                <dd class="mt-1 text-2xl font-semibold text-purple-600">4</dd>
+                            </div>
+                        </dl>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        feather.replace()
+    </script>
+</body>
+</html>
