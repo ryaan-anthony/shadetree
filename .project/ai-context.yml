@@ -12,7 +12,7 @@ roles:
     - Store files in `.project/mockups` directory with format: `{persona}-{story}.html`
     - Address specific user stories and personas 
     - Support core user workflows and interactions
-    - Maintain consistent styling
+    - Maintain consistent styling per design system guidelines
     - Include brief context header with:
       * Target persona
       * User story/goal
@@ -35,6 +35,98 @@ roles:
     - Maintain system cohesion
     - Follow established patterns
     - Store docs in `.project/requirements`
+
+design_system:
+  branding:
+    logo: 'Green "Shade" + black "tree" styling'
+    primary_colors:
+      blue: "#3B82F6" # Primary actions, links, active states
+      green: "#10B981" # Success states, positive indicators
+      red: "#EF4444" # Error states, destructive actions
+      yellow: "#F59E0B" # Warning states, pending items
+      purple: "#8B5CF6" # Secondary metrics, categories
+    neutral_colors:
+      gray_50: "#F9FAFB" # Page backgrounds
+      gray_100: "#F3F4F6" # Card backgrounds, subtle areas
+      gray_200: "#E5E7EB" # Borders, dividers
+      gray_500: "#6B7280" # Secondary text
+      gray_900: "#111827" # Primary text, headings
+
+  layout:
+    sidebar:
+      width: "w-64" # 256px fixed width
+      background: "bg-white"
+      border: "border-r border-gray-200"
+      structure: |
+        - Logo section with business info card
+        - Navigation menu with Feather icons
+        - Support section at bottom
+    main_content:
+      padding_left: "md:pl-64" # Account for fixed sidebar
+      header: "sticky top-0 z-10 bg-white shadow"
+      content_padding: "py-6 px-4 sm:px-6 lg:px-8"
+
+  components:
+    navigation:
+      icon_library: "Feather Icons"
+      active_state: "bg-blue-100 text-blue-900"
+      hover_state: "hover:bg-gray-50 hover:text-gray-900"
+      icon_size: "h-5 w-5"
+
+    buttons:
+      primary: "bg-blue-600 text-white hover:bg-blue-700"
+      secondary: "border border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+      sizes:
+        default: "px-4 py-2 text-sm font-medium rounded-md"
+        small: "px-3 py-2 text-sm leading-4 font-medium rounded-md"
+
+    cards:
+      background: "bg-white"
+      shadow: "shadow rounded-lg"
+      header: "px-6 py-4 border-b border-gray-200"
+      content: "p-6"
+      title: "text-lg leading-6 font-medium text-gray-900"
+      subtitle: "mt-1 text-sm text-gray-500"
+
+    forms:
+      input: "shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+      label: "block text-sm font-medium text-gray-700"
+      select: "shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+
+    status_badges:
+      active: "bg-green-100 text-green-800"
+      inactive: "bg-gray-100 text-gray-800"
+      warning: "bg-yellow-100 text-yellow-800"
+      error: "bg-red-100 text-red-800"
+      size: "px-2.5 py-0.5 rounded-full text-xs font-medium"
+
+  typography:
+    page_title: "text-2xl font-semibold text-gray-900"
+    page_subtitle: "ml-3 text-sm text-gray-500"
+    section_title: "text-lg leading-6 font-medium text-gray-900"
+    section_subtitle: "mt-1 text-sm text-gray-500"
+    body_text: "text-sm text-gray-600"
+    label_text: "text-sm font-medium text-gray-700"
+    metadata: "text-xs text-gray-500"
+
+  patterns:
+    business_info_card:
+      structure: "bg-gray-50 rounded-lg p-3"
+      business_name: "text-sm font-medium text-gray-900"
+      owner_info: "text-xs text-gray-500"
+
+    metric_cards:
+      layout: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+      card_structure: "bg-white overflow-hidden shadow rounded-lg p-5"
+      icon_container: "w-8 h-8 bg-{color}-100 rounded-md flex items-center justify-center"
+      value: "text-lg font-medium text-gray-900"
+      label: "text-sm font-medium text-gray-500 truncate"
+
+    data_tables:
+      container: "bg-white shadow rounded-lg"
+      header: "px-6 py-4 border-b border-gray-200"
+      content: "overflow-hidden"
+      row_hover: "hover:bg-gray-50"
 
 goals:
   requirements:

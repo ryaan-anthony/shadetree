@@ -1,41 +1,69 @@
 # Admin Portal Screen Mockups
 
-This directory contains UX mockups for the Admin Portal interface, organized by epic and feature.
+## Overview
+This directory contains HTML mockups for the admin portal interface, designed for business owners to manage their tree care services. Each mockup follows the established design system with Tailwind CSS classes and includes specific user stories and interaction patterns.
 
-## Screen Index
+## Screen Mockups
 
-### Dashboard & Overview
-- **dashboard-overview.html** - Main admin dashboard with key metrics and quick actions
-- **notifications-center.html** - Notification management interface
+### Core Admin Screens
 
-### Business Management
-- **business-profile-edit.html** - Business information and settings configuration
-- **location-management.html** - Multiple location management interface
-- **operating-hours.html** - Location-specific hours configuration
+[dashboard-overview.html](./dashboard-overview.html) - Main admin dashboard with key metrics and quick actions for business status overview
+
+[business-profile-edit.html](./business-profile-edit.html) - Business information management screen for updating company details, logo, and location settings
+
+[service-catalog.html](./service-catalog.html) - Service management interface for creating, editing, and organizing tree care services with categories and add-ons
+
+[pricing-configuration.html](./pricing-configuration.html) - Pricing setup screen for configuring service costs, taxes, fees, and total pricing preview
 
 ### Staff Management
-- **staff-directory.html** - Staff member listing and management
-- **staff-profile-edit.html** - Individual staff member profile management
-- **staff-availability.html** - Staff scheduling and availability management
 
-### Service & Pricing
-- **service-catalog.html** - Service management and organization
-- **pricing-configuration.html** - Service pricing with tax and fee setup
-- **promotions-management.html** - Discount codes and promotional campaigns
+[staff-management.html](./staff-management.html) - Staff member management interface for adding, editing, and organizing team members with roles, schedules, and permissions
 
-### Customer Support
-- **support-tickets.html** - Customer support ticket management
-- **customer-communication.html** - Unified customer communication hub
+### Communication & Notifications
 
-### Data & Reports
-- **data-export.html** - Data export and backup management
-- **pricing-audit.html** - Pricing change history and audit trail
+[notification-management.html](./notification-management.html) - Message template and notification management system for automated customer communications, triggers, and delivery analytics
 
-## Design Principles
+### Data Management
 
-- **Responsive Design**: All screens use Tailwind CSS for mobile-first responsive design
-- **Consistent Navigation**: Sidebar navigation with clear section organization
-- **Action-Oriented**: Prominent CTAs and quick action buttons
-- **Information Hierarchy**: Clear visual hierarchy with proper typography scales
-- **Accessibility**: ARIA labels and semantic HTML structure
-- **Business Owner Focus**: Simplified interfaces appropriate for small business users
+[data-export.html](./data-export.html) - Data export and backup interface for extracting customer, booking, financial, and staff data in various formats for compliance and analysis
+
+### Process Automation
+
+[workflow-management.html](./workflow-management.html) - Visual workflow designer for automating booking processes, approvals, customer journeys, and task automation with drag-and-drop interface
+
+### Support & Help
+
+[support-center.html](./support-center.html) - Support and help center with knowledge base access, ticket management, platform support, team communication, and system status
+
+## Design Patterns Used
+- Fixed sidebar navigation with Feather icons
+- Metric cards for dashboard statistics
+- Form layouts with proper validation states
+- Card-based content organization
+- Consistent button and input styling
+- Status badges for various states
+- Grid layouts for feature categories
+- Table views for data management
+- Visual workflow representations
+- Support ticket tracking interfaces
+
+## Target Personas
+All mockups are designed for the **Business Owner** persona, focusing on operational management tasks and business configuration needs. Each screen addresses specific user stories related to:
+
+- Business operations oversight
+- Staff and team management
+- Customer communication
+- Process automation
+- Data analysis and compliance
+- Support and troubleshooting
+
+## Feature Coverage
+These mockups cover the complete admin portal feature set including:
+- **Admin Dashboard**: Core metrics and quick actions
+- **Business Profile**: Company information and branding
+- **Service Management**: Catalog and pricing configuration
+- **Staff Operations**: Team member and role management
+- **Notification System**: Template management and automation
+- **Data Export**: Compliance and analysis tools
+- **Workflow Automation**: Process design and management
+- **Support Resources**: Help desk and knowledge base
