@@ -13,227 +13,246 @@
     -->
 </head>
 <body class="bg-gray-50">
+    <!-- Navigation Sidebar -->
     <div class="flex h-screen bg-gray-50">
-        <!-- Sidebar -->
-        <div class="w-64 bg-white shadow-sm">
-            <div class="p-4">
-                <h1 class="text-xl font-semibold text-gray-800">Shadetree Admin</h1>
+        <div class="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
+            <div class="flex flex-col flex-grow bg-white border-r border-gray-200 pt-5 pb-4 overflow-y-auto">
+                <!-- Logo -->
+                <div class="flex items-center flex-shrink-0 px-4">
+                    <h1 class="text-xl font-bold text-gray-900">
+                        <span class="text-green-600">Shade</span>tree
+                    </h1>
+                </div>
+
+                <!-- Business Info -->
+                <div class="mt-6 px-4">
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <p class="text-sm font-medium text-gray-900">Pine Valley Landscaping</p>
+                        <p class="text-xs text-gray-500">Owner: John Smith</p>
+                    </div>
+                </div>
+
+                <!-- Navigation Menu -->
+                <nav class="mt-8 flex-1 px-2 space-y-1">
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="home" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Dashboard
+                    </a>
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="calendar" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Bookings
+                    </a>
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="users" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Staff
+                    </a>
+                    <a href="#" class="bg-blue-100 text-blue-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="git-branch" class="text-blue-500 mr-3 h-5 w-5"></i>
+                        Workflows
+                    </a>
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="tag" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Services
+                    </a>
+                    <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i data-feather="settings" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                        Settings
+                    </a>
+                </nav>
+
+                <!-- Support Section -->
+                <div class="mt-auto px-2 py-4 border-t border-gray-200">
+                    <button class="w-full flex items-center px-2 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md">
+                        <i data-feather="help-circle" class="mr-3 h-5 w-5"></i>
+                        Help & Support
+                    </button>
+                </div>
             </div>
-            <nav class="mt-8">
-                <a href="#" class="flex items-center px-4 py-2 text-gray-600 hover:bg-gray-50">
-                    <i data-feather="home" class="w-5 h-5 mr-3"></i>
-                    Dashboard
-                </a>
-                <a href="#" class="flex items-center px-4 py-2 text-gray-600 hover:bg-gray-50">
-                    <i data-feather="users" class="w-5 h-5 mr-3"></i>
-                    Staff
-                </a>
-                <a href="#" class="flex items-center px-4 py-2 bg-blue-50 text-blue-700 border-r-2 border-blue-700">
-                    <i data-feather="git-branch" class="w-5 h-5 mr-3"></i>
-                    Workflows
-                </a>
-                <a href="#" class="flex items-center px-4 py-2 text-gray-600 hover:bg-gray-50">
-                    <i data-feather="briefcase" class="w-5 h-5 mr-3"></i>
-                    Services
-                </a>
-            </nav>
         </div>
 
         <!-- Main Content -->
-        <div class="flex-1 overflow-hidden">
-            <div class="p-8">
-                <!-- Header -->
-                <div class="flex justify-between items-center mb-6">
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-900">Workflow Management</h2>
-                        <p class="text-gray-600">Automate your business processes and approvals</p>
+        <div class="md:pl-64 flex flex-col flex-1">
+            <!-- Top Header -->
+            <div class="sticky top-0 z-10 bg-white shadow">
+                <div class="px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between h-16">
+                        <div class="flex items-center">
+                            <h1 class="text-2xl font-semibold text-gray-900">Workflow Management</h1>
+                            <span class="ml-3 text-sm text-gray-500">Automate business processes</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <button class="flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                                <i data-feather="plus" class="mr-2 h-4 w-4"></i>
+                                Create Workflow
+                            </button>
+                            <!-- User Menu -->
+                            <div class="relative">
+                                <button class="flex items-center text-sm text-gray-500 hover:text-gray-700">
+                                    <span class="mr-2">John Smith</span>
+                                    <i data-feather="chevron-down" class="h-4 w-4"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center">
-                        <i data-feather="plus" class="w-4 h-4 mr-2"></i>
-                        Create Workflow
-                    </button>
                 </div>
+            </div>
 
+            <!-- Workflow Management Content -->
+            <main class="flex-1 py-6 px-4 sm:px-6 lg:px-8">
                 <!-- Workflow Stats -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                    <div class="bg-white p-6 rounded-lg shadow-sm">
-                        <div class="flex items-center">
-                            <div class="p-2 bg-blue-100 rounded-lg">
-                                <i data-feather="git-branch" class="w-6 h-6 text-blue-600"></i>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-600">Active Workflows</p>
-                                <p class="text-2xl font-semibold text-gray-900">8</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-white p-6 rounded-lg shadow-sm">
-                        <div class="flex items-center">
-                            <div class="p-2 bg-green-100 rounded-lg">
-                                <i data-feather="check-circle" class="w-6 h-6 text-green-600"></i>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-600">Completed Today</p>
-                                <p class="text-2xl font-semibold text-gray-900">47</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white overflow-hidden shadow rounded-lg">
+                        <div class="p-5">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center">
+                                        <i data-feather="git-branch" class="h-4 w-4 text-blue-600"></i>
+                                    </div>
+                                </div>
+                                <div class="ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt class="text-sm font-medium text-gray-500 truncate">Active Workflows</dt>
+                                        <dd class="text-lg font-medium text-gray-900">8</dd>
+                                    </dl>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="bg-white p-6 rounded-lg shadow-sm">
-                        <div class="flex items-center">
-                            <div class="p-2 bg-yellow-100 rounded-lg">
-                                <i data-feather="clock" class="w-6 h-6 text-yellow-600"></i>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-600">Pending Approval</p>
-                                <p class="text-2xl font-semibold text-gray-900">12</p>
+
+                    <div class="bg-white overflow-hidden shadow rounded-lg">
+                        <div class="p-5">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center">
+                                        <i data-feather="check-circle" class="h-4 w-4 text-green-600"></i>
+                                    </div>
+                                </div>
+                                <div class="ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt class="text-sm font-medium text-gray-500 truncate">Completed Today</dt>
+                                        <dd class="text-lg font-medium text-gray-900">47</dd>
+                                    </dl>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="bg-white p-6 rounded-lg shadow-sm">
-                        <div class="flex items-center">
-                            <div class="p-2 bg-purple-100 rounded-lg">
-                                <i data-feather="zap" class="w-6 h-6 text-purple-600"></i>
+
+                    <div class="bg-white overflow-hidden shadow rounded-lg">
+                        <div class="p-5">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="w-8 h-8 bg-yellow-100 rounded-md flex items-center justify-center">
+                                        <i data-feather="clock" class="h-4 w-4 text-yellow-600"></i>
+                                    </div>
+                                </div>
+                                <div class="ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt class="text-sm font-medium text-gray-500 truncate">Pending Approval</dt>
+                                        <dd class="text-lg font-medium text-gray-900">12</dd>
+                                    </dl>
+                                </div>
                             </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-600">Automation Rate</p>
-                                <p class="text-2xl font-semibold text-gray-900">89%</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white overflow-hidden shadow rounded-lg">
+                        <div class="p-5">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="w-8 h-8 bg-purple-100 rounded-md flex items-center justify-center">
+                                        <i data-feather="zap" class="h-4 w-4 text-purple-600"></i>
+                                    </div>
+                                </div>
+                                <div class="ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt class="text-sm font-medium text-gray-500 truncate">Automation Rate</dt>
+                                        <dd class="text-lg font-medium text-gray-900">89%</dd>
+                                    </dl>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Workflow Categories -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-white p-6 rounded-lg shadow-sm">
-                        <div class="flex items-center mb-4">
-                            <div class="p-2 bg-green-100 rounded-lg">
-                                <i data-feather="calendar" class="w-6 h-6 text-green-600"></i>
-                            </div>
-                            <div class="ml-4">
-                                <h3 class="text-lg font-medium text-gray-900">Booking Workflows</h3>
-                                <p class="text-sm text-gray-600">4 active workflows</p>
-                            </div>
+                <!-- Workflow Categories & Designer Preview -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                    <!-- Workflow Categories -->
+                    <div class="bg-white shadow rounded-lg">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">Booking Workflows</h3>
                         </div>
-                        <div class="space-y-3">
+                        <div class="p-6 space-y-3">
                             <div class="flex justify-between items-center">
                                 <span class="text-sm text-gray-700">High-Value Approval</span>
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                                <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-sm text-gray-700">Auto Confirmation</span>
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                                <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-sm text-gray-700">Reminder Sequence</span>
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                                <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="bg-white p-6 rounded-lg shadow-sm">
-                        <div class="flex items-center mb-4">
-                            <div class="p-2 bg-blue-100 rounded-lg">
-                                <i data-feather="users" class="w-6 h-6 text-blue-600"></i>
-                            </div>
-                            <div class="ml-4">
-                                <h3 class="text-lg font-medium text-gray-900">Customer Journey</h3>
-                                <p class="text-sm text-gray-600">3 active workflows</p>
+                    <!-- Workflow Designer Preview -->
+                    <div class="lg:col-span-2 bg-white shadow rounded-lg">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900">Workflow Designer</h3>
+                                <button class="text-blue-600 hover:text-blue-900 text-sm">Open Full Designer</button>
                             </div>
                         </div>
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm text-gray-700">Welcome Series</span>
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm text-gray-700">Follow-up Sequence</span>
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm text-gray-700">Feedback Request</span>
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Draft</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-lg shadow-sm">
-                        <div class="flex items-center mb-4">
-                            <div class="p-2 bg-purple-100 rounded-lg">
-                                <i data-feather="clipboard" class="w-6 h-6 text-purple-600"></i>
-                            </div>
-                            <div class="ml-4">
-                                <h3 class="text-lg font-medium text-gray-900">Task Automation</h3>
-                                <p class="text-sm text-gray-600">2 active workflows</p>
-                            </div>
-                        </div>
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm text-gray-700">Quote Generation</span>
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm text-gray-700">Invoice Processing</span>
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Workflow Designer Preview -->
-                <div class="bg-white rounded-lg shadow-sm mb-8">
-                    <div class="p-6 border-b border-gray-200">
-                        <div class="flex justify-between items-center">
-                            <h3 class="text-lg font-medium text-gray-900">Workflow Designer</h3>
-                            <button class="text-blue-600 hover:text-blue-900 text-sm">Open Full Designer</button>
-                        </div>
-                    </div>
-                    <div class="p-6">
-                        <div class="bg-gray-50 rounded-lg p-6 min-h-64">
-                            <div class="flex items-center justify-center space-x-8">
-                                <!-- Trigger -->
-                                <div class="bg-green-100 border-2 border-green-300 rounded-lg p-4 text-center">
-                                    <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-2">
-                                        <i data-feather="play" class="w-4 h-4 text-white"></i>
+                        <div class="p-6">
+                            <div class="bg-gray-50 rounded-lg p-6 min-h-64">
+                                <div class="flex items-center justify-center space-x-8">
+                                    <!-- Trigger -->
+                                    <div class="bg-green-100 border-2 border-green-300 rounded-lg p-4 text-center">
+                                        <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                                            <i data-feather="play" class="w-4 h-4 text-white"></i>
+                                        </div>
+                                        <div class="text-sm font-medium text-gray-900">Trigger</div>
+                                        <div class="text-xs text-gray-600">New Booking</div>
                                     </div>
-                                    <div class="text-sm font-medium text-gray-900">Trigger</div>
-                                    <div class="text-xs text-gray-600">New Booking</div>
-                                </div>
 
-                                <!-- Arrow -->
-                                <i data-feather="arrow-right" class="w-6 h-6 text-gray-400"></i>
+                                    <!-- Arrow -->
+                                    <i data-feather="arrow-right" class="w-6 h-6 text-gray-400"></i>
 
-                                <!-- Condition -->
-                                <div class="bg-yellow-100 border-2 border-yellow-300 rounded-lg p-4 text-center">
-                                    <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-2">
-                                        <i data-feather="help-circle" class="w-4 h-4 text-white"></i>
+                                    <!-- Condition -->
+                                    <div class="bg-yellow-100 border-2 border-yellow-300 rounded-lg p-4 text-center">
+                                        <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                                            <i data-feather="help-circle" class="w-4 h-4 text-white"></i>
+                                        </div>
+                                        <div class="text-sm font-medium text-gray-900">Condition</div>
+                                        <div class="text-xs text-gray-600">Value > $1000</div>
                                     </div>
-                                    <div class="text-sm font-medium text-gray-900">Condition</div>
-                                    <div class="text-xs text-gray-600">Value > $1000</div>
-                                </div>
 
-                                <!-- Arrow -->
-                                <i data-feather="arrow-right" class="w-6 h-6 text-gray-400"></i>
+                                    <!-- Arrow -->
+                                    <i data-feather="arrow-right" class="w-6 h-6 text-gray-400"></i>
 
-                                <!-- Action -->
-                                <div class="bg-blue-100 border-2 border-blue-300 rounded-lg p-4 text-center">
-                                    <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-2">
-                                        <i data-feather="check" class="w-4 h-4 text-white"></i>
+                                    <!-- Action -->
+                                    <div class="bg-blue-100 border-2 border-blue-300 rounded-lg p-4 text-center">
+                                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                                            <i data-feather="check" class="w-4 h-4 text-white"></i>
+                                        </div>
+                                        <div class="text-sm font-medium text-gray-900">Action</div>
+                                        <div class="text-xs text-gray-600">Require Approval</div>
                                     </div>
-                                    <div class="text-sm font-medium text-gray-900">Action</div>
-                                    <div class="text-xs text-gray-600">Require Approval</div>
                                 </div>
-                            </div>
-                            <div class="text-center mt-6">
-                                <p class="text-sm text-gray-600">Drag and drop components to build your workflow</p>
+                                <div class="text-center mt-6">
+                                    <p class="text-sm text-gray-600">Drag and drop components to build your workflow</p>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Active Workflows -->
-                <div class="bg-white rounded-lg shadow-sm">
-                    <div class="p-6 border-b border-gray-200">
-                        <h3 class="text-lg font-medium text-gray-900">Active Workflows</h3>
+                <div class="bg-white shadow rounded-lg">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Active Workflows</h3>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
@@ -248,7 +267,7 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                <tr>
+                                <tr class="hover:bg-gray-50">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-gray-900">High-Value Booking Approval</div>
                                         <div class="text-sm text-gray-500">Requires manager approval for bookings > $1000</div>
@@ -263,7 +282,7 @@
                                         96%
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                        <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                             Active
                                         </span>
                                     </td>
@@ -272,7 +291,7 @@
                                         <button class="text-gray-600 hover:text-gray-900">View</button>
                                     </td>
                                 </tr>
-                                <tr>
+                                <tr class="hover:bg-gray-50">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-gray-900">Auto Booking Confirmation</div>
                                         <div class="text-sm text-gray-500">Sends confirmation email and SMS automatically</div>
@@ -287,7 +306,7 @@
                                         99%
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                        <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                             Active
                                         </span>
                                     </td>
@@ -300,7 +319,7 @@
                         </table>
                     </div>
                 </div>
-            </div>
+            </main>
         </div>
     </div>
 
