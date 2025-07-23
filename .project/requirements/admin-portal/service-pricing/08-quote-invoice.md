@@ -37,5 +37,5 @@ Provide automated invoice creation from approved quotes with payment integration
 - Add invoice generation workflow from approved quotes
 - Create invoice template system with customizable formatting
 - Build invoice tracking and payment status management
-- Implement invoice delivery system with email and PDF options
+- Implement invoice delivery system with SMS/email and PDF options
 - Add invoice modification and correction capabilities

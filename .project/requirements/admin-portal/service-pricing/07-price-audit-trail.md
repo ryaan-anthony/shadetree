@@ -1,41 +1,41 @@
 # Feature: Price Change Audit Trail
 
 ## Overview
-Price Change Audit Trail maintains a comprehensive history of all pricing modifications for compliance, transparency, and business analysis. This includes tracking who made changes, when they occurred, and the rationale behind pricing decisions.
+Price Change Audit Trail maintains a simple history of all pricing-related modifications including service prices, promotions, discounts, packages, and pricing rules. This provides transparency and accountability for all pricing decisions.
 
 ## User Stories
-- As a business owner, I want to track price changes so I can understand pricing history and trends
-- As a business owner, I want to see who changed prices so I can maintain accountability
-- As a business owner, I want pricing change notifications so I'm aware of adjustments made by staff
+- As a business owner, I want to see all pricing changes so I can track what was modified and when
+- As a business owner, I want to know who made pricing changes so I can maintain accountability
+- As a business owner, I want simple pricing history so I can understand my pricing decisions
 
 ## Tasks
 
-### 1. Price History Tracking
-Create comprehensive logging system for all pricing modifications across services and locations.
+### 1. Universal Pricing Change Logging
+Create simple logging system that captures all pricing modifications across the platform.
 
 **Implementation Notes:**
-- Add PriceHistory model with service_id, old_price, new_price, changed_by, change_reason, changed_at fields
-- Create automatic price change logging in service pricing controllers
-- Build price history display interface with timeline view
-- Implement price change comparison and analysis tools
-- Add price change export functionality for business records
+- Add PricingAuditLog model with item_type, item_id, field_changed, old_value, new_value, changed_by, changed_at fields
+- Create audit logging for service prices, discount codes, promotional campaigns, packages, and add-ons
+- Build automatic logging using Rails callbacks on pricing model updates
+- Implement simple audit trail display showing chronological changes
+- Add basic filtering by date range and change type
 
-### 2. Change Authorization and Notifications
-Implement approval workflows and notification system for significant pricing changes.
-
-**Implementation Notes:**
-- Add price change approval requirements based on change magnitude
-- Create price change notification system for business owners and managers
-- Build price change approval interface with justification requirements
-- Implement automatic price change alerts and summaries
-- Add price change rollback capabilities for authorized users
-
-### 3. Pricing Analytics and Reporting
-Provide analytical tools for understanding pricing performance and market positioning.
+### 2. Change Tracking Display
+Provide easy-to-read interface showing pricing change history.
 
 **Implementation Notes:**
-- Add pricing trend analysis with visual charts and graphs
-- Create pricing performance reports showing revenue impact
-- Build competitive pricing comparison tools
-- Implement pricing optimization suggestions based on historical data
-- Add pricing report generation and scheduling capabilities
+- Create pricing_audit controller with simple list and detail views
+- Build audit log display with clear before/after values
+- Implement change grouping by date and user for readability
+- Add search functionality for specific services or time periods
+- Include change reason field for optional staff notes
+
+### 3. Basic Notifications
+Send simple notifications when significant pricing changes occur.
+
+**Implementation Notes:**
+- Add email notifications for pricing changes above configurable thresholds
+- Create daily/weekly pricing change summary emails for business owners
+- Build simple notification preferences for different types of pricing changes
+- Implement basic change alerts for discount code creation and expiration
+- Add audit log export for record keeping and compliance
