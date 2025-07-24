@@ -19,6 +19,8 @@ Central registry for all platform features with metadata and control settings
 - Implement feature dependency tracking for related features
 - Create feature migration system for adding new toggleable features
 
+**Estimation:** 16-20 hours
+
 ### 2. Build Global Toggle Interface
 Admin interface for managing global feature switches
 
@@ -28,6 +30,8 @@ Admin interface for managing global feature switches
 - Add bulk enable/disable functionality for feature categories
 - Implement feature status indicators (enabled, disabled, partially enabled)
 - Include feature impact warnings for critical features
+
+**Estimation:** 12-16 hours
 
 ### 3. Implement Feature Flag Service
 Backend service for checking feature availability across the application
@@ -39,6 +43,8 @@ Backend service for checking feature availability across the application
 - Create middleware for API endpoint feature gating
 - Add feature flag caching for performance optimization
 
+**Estimation:** 14-18 hours
+
 ### 4. Add Feature Change Logging
 Audit trail for all global feature toggle changes
 
@@ -48,3 +54,5 @@ Audit trail for all global feature toggle changes
 - Build feature change history view in admin interface
 - Add feature change notifications for critical features
 - Implement rollback functionality for recent feature changes
+
+**Estimation:** 10-14 hours

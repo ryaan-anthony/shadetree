@@ -19,6 +19,8 @@ Database structure for tracking customer subscription assignments and history
 - Create subscription renewal tracking with automatic expiration handling
 - Add subscription metadata fields for custom configurations
 
+**Estimation:** 14-18 hours
+
 ### 2. Build Subscription Assignment Interface
 Administrative interface for assigning and managing customer subscriptions
 
@@ -28,6 +30,8 @@ Administrative interface for assigning and managing customer subscriptions
 - Implement subscription status management with reason tracking
 - Add subscription preview showing access changes before confirmation
 - Create bulk subscription assignment for multiple customers
+
+**Estimation:** 16-20 hours
 
 ### 3. Implement Subscription Validation System
 Business logic for validating subscription assignments and changes
@@ -39,6 +43,8 @@ Business logic for validating subscription assignments and changes
 - Create subscription dependency validation for required features
 - Add subscription change impact analysis for existing usage
 
+**Estimation:** 12-16 hours
+
 ### 4. Add Subscription Monitoring Tools
 Tools for monitoring subscription health and identifying issues
 
@@ -48,3 +54,5 @@ Tools for monitoring subscription health and identifying issues
 - Implement subscription usage monitoring against plan limits
 - Build subscription health scoring based on usage patterns
 - Create subscription anomaly detection for unusual usage or changes
+
+**Estimation:** 18-22 hours

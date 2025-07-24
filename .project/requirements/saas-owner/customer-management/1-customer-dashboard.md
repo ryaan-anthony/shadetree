@@ -19,6 +19,8 @@ Build main dashboard page displaying customer list with essential information
 - Add search bar in header for quick customer lookup
 - Implement sorting by name, signup date, and activity
 
+**Estimation:** 12-16 hours
+
 ### 2. Add Customer Metrics Cards
 Display key platform metrics in card format above customer list
 
@@ -28,6 +30,8 @@ Display key platform metrics in card format above customer list
 - Use background jobs to calculate metrics if performance becomes an issue
 - Cache metric calculations for better performance
 - Style cards using design system metric card patterns
+
+**Estimation:** 8-12 hours
 
 ### 3. Implement Status Indicators
 Visual indicators for customer account health and subscription status
@@ -39,6 +43,8 @@ Visual indicators for customer account health and subscription status
 - Add tooltip hover states explaining each status
 - Ensure status updates reflect real-time subscription changes
 
+**Estimation:** 6-8 hours
+
 ### 4. Build Customer Quick Actions
 Action buttons for common customer management tasks
 
@@ -48,3 +54,5 @@ Action buttons for common customer management tasks
 - Implement permissions checking for each action
 - Add confirmation dialogs for destructive actions
 - Use Stimulus controllers for interactive behaviors
+
+**Estimation:** 10-14 hours

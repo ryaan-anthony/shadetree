@@ -19,6 +19,8 @@ Integration with payment processing services for secure transaction handling
 - Implement webhook handling for payment status updates from gateway
 - Create payment retry logic for failed transactions with exponential backoff
 
+**Estimation:** 24-30 hours
+
 ### 2. Build Payment Method Management
 System for managing customer payment methods and preferences
 
@@ -28,6 +30,8 @@ System for managing customer payment methods and preferences
 - Implement payment method validation and verification processes
 - Create default payment method selection for automatic billing
 - Add payment method deletion with proper cleanup and customer notification
+
+**Estimation:** 18-22 hours
 
 ### 3. Implement Transaction Processing
 Comprehensive transaction processing system with status tracking and reconciliation
@@ -39,6 +43,8 @@ Comprehensive transaction processing system with status tracking and reconciliat
 - Create transaction reconciliation tools for matching gateway and system records
 - Add transaction reporting for financial analysis and audit requirements
 
+**Estimation:** 20-24 hours
+
 ### 4. Add Fraud Protection and Security
 Security measures and fraud detection for payment processing
 
@@ -48,3 +54,5 @@ Security measures and fraud detection for payment processing
 - Create suspicious activity monitoring and alerting system
 - Implement PCI compliance measures for handling payment data securely
 - Add transaction dispute handling and chargeback management processes
+
+**Estimation:** 16-20 hours

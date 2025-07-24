@@ -19,6 +19,8 @@ Secure system for storing and managing customer payment methods with tokenizatio
 - Create payment method categorization (credit card, bank account, digital wallet)
 - Add payment method status tracking (active, expired, failed, suspended)
 
+**Estimation:** 16-20 hours
+
 ### 2. Build Payment Method Management Interface
 Administrative interface for viewing and managing customer payment methods
 
@@ -28,6 +30,8 @@ Administrative interface for viewing and managing customer payment methods
 - Implement payment method update forms for expired or failed cards
 - Add payment method deletion workflow with billing impact warnings
 - Create bulk payment method management for handling expired cards across customers
+
+**Estimation:** 14-18 hours
 
 ### 3. Implement Payment Method Monitoring
 Automated monitoring and alerting for payment method issues and expirations
@@ -39,6 +43,8 @@ Automated monitoring and alerting for payment method issues and expirations
 - Create payment method update reminders sent to customers before expiration
 - Add payment method backup system encouraging multiple payment options
 
+**Estimation:** 12-16 hours
+
 ### 4. Add Payment Method Security Features
 Security controls and compliance features for payment method management
 
@@ -48,3 +54,5 @@ Security controls and compliance features for payment method management
 - Create payment method encryption at rest and in transit protections
 - Implement PCI compliance measures for payment method data handling
 - Add payment method fraud monitoring for suspicious update patterns
+
+**Estimation:** 18-22 hours

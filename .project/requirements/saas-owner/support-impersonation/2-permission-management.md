@@ -19,6 +19,8 @@ Role-based permission system defining impersonation access levels and restrictio
 - Create customer tier restrictions limiting access to high-value accounts
 - Add time-based permissions with scheduled access for temporary support needs
 
+**Estimation:** 16-20 hours
+
 ### 2. Build Permission Management Interface
 Administrative interface for managing support staff roles and impersonation permissions
 
@@ -28,6 +30,8 @@ Administrative interface for managing support staff roles and impersonation perm
 - Add permission visualization showing access matrix for roles and customers
 - Implement bulk permission updates for organizational changes
 - Create permission template system for common support role configurations
+
+**Estimation:** 14-18 hours
 
 ### 3. Implement Access Control Validation
 Service layer for validating impersonation requests against permission settings
@@ -39,6 +43,8 @@ Service layer for validating impersonation requests against permission settings
 - Create permission override system for emergency support scenarios
 - Add permission caching for performance optimization during validation
 
+**Estimation:** 12-16 hours
+
 ### 4. Add Permission Monitoring and Reporting
 Tools for monitoring permission usage and identifying access control issues
 
@@ -48,3 +54,5 @@ Tools for monitoring permission usage and identifying access control issues
 - Implement permission effectiveness analysis showing unused or over-broad permissions
 - Create permission audit reports for compliance and security reviews
 - Add permission recommendation engine suggesting optimal role configurations
+
+**Estimation:** 18-22 hours

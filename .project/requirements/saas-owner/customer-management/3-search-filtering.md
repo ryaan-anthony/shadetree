@@ -19,6 +19,8 @@ Add search capability to customer dashboard for name and email lookup
 - Add search result highlighting in customer list
 - Clear search functionality with reset button
 
+**Estimation:** 8-10 hours
+
 ### 2. Create Status Filter System
 Filter customers by account and subscription status
 
@@ -28,6 +30,8 @@ Filter customers by account and subscription status
 - Update URL parameters to maintain filter state on refresh
 - Add active filter indicators showing current selections
 - Combine status filters with search functionality
+
+**Estimation:** 10-12 hours
 
 ### 3. Build Subscription Filter Options
 Filter customers by subscription plan and billing status
@@ -39,6 +43,8 @@ Filter customers by subscription plan and billing status
 - Implement filter combination logic for multiple criteria
 - Show customer count for each filter option
 
+**Estimation:** 12-14 hours
+
 ### 4. Add Advanced Filter Panel
 Collapsible panel with additional filtering options
 
@@ -48,3 +54,5 @@ Collapsible panel with additional filtering options
 - Implement saved filter presets for common searches
 - Add filter reset functionality to clear all selections
 - Include export filtered results functionality
+
+**Estimation:** 14-16 hours

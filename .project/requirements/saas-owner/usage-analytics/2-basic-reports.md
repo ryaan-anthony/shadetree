@@ -19,6 +19,8 @@ Framework for defining and generating standardized platform reports
 - Create report generation service with background job processing
 - Add report output formats (HTML, PDF, CSV) with configurable options
 
+**Estimation:** 20-24 hours
+
 ### 2. Build Standard Report Library
 Pre-built reports covering common administrative and business analysis needs
 
@@ -28,6 +30,8 @@ Pre-built reports covering common administrative and business analysis needs
 - Implement feature adoption report tracking feature usage across customers
 - Create revenue report showing billing and payment trends
 - Add system performance report covering platform health and usage statistics
+
+**Estimation:** 18-22 hours
 
 ### 3. Implement Report Generation Interface
 Administrative interface for creating, scheduling, and managing reports
@@ -39,6 +43,8 @@ Administrative interface for creating, scheduling, and managing reports
 - Implement report history view showing past generations and status
 - Create report sharing functionality with secure access controls
 
+**Estimation:** 16-20 hours
+
 ### 4. Add Report Distribution System
 Automated system for delivering reports to stakeholders via email or download
 
@@ -48,3 +54,5 @@ Automated system for delivering reports to stakeholders via email or download
 - Implement report notification system for completion and failure alerts
 - Create report access controls ensuring appropriate data privacy
 - Add report retention policies for automatic cleanup of old reports
+
+**Estimation:** 12-16 hours

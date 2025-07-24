@@ -19,6 +19,8 @@ Database and service layer for managing trial subscriptions with expiration trac
 - Implement trial extension capabilities with reason tracking
 - Add trial conversion tracking linking to paid subscriptions
 
+**Estimation:** 16-20 hours
+
 ### 2. Build Trial Management Interface
 Administrative interface for managing trial subscriptions and conversions
 
@@ -28,6 +30,8 @@ Administrative interface for managing trial subscriptions and conversions
 - Build trial extension interface with approval workflow
 - Implement trial conversion tools for upgrading to paid plans
 - Add trial analytics showing conversion rates and trial performance
+
+**Estimation:** 14-18 hours
 
 ### 3. Implement Trial Expiration Automation
 Automated system for handling trial expiration and customer notifications
@@ -39,6 +43,8 @@ Automated system for handling trial expiration and customer notifications
 - Create grace period handling for recently expired trials
 - Add trial data retention policy for expired accounts
 
+**Estimation:** 12-16 hours
+
 ### 4. Add Trial Conversion Tools
 Tools and workflows for converting trial customers to paid subscriptions
 
@@ -48,3 +54,5 @@ Tools and workflows for converting trial customers to paid subscriptions
 - Implement conversion tracking and success metrics
 - Build conversion follow-up automation for unsuccessful trials
 - Create trial feedback collection system for improvement insights
+
+**Estimation:** 10-14 hours

@@ -19,6 +19,8 @@ Automated system for generating invoices based on subscription plans and usage
 - Create invoice line item system for subscription fees, usage charges, and adjustments
 - Add invoice template system with customizable branding and layout options
 
+**Estimation:** 22-28 hours
+
 ### 2. Build Invoice Management Interface
 Administrative interface for viewing, editing, and managing customer invoices
 
@@ -28,6 +30,8 @@ Administrative interface for viewing, editing, and managing customer invoices
 - Add invoice detail view showing line items, payments, and status history
 - Implement manual invoice creation for custom billing scenarios
 - Create invoice adjustment capabilities for credits, discounts, and corrections
+
+**Estimation:** 18-22 hours
 
 ### 3. Implement Invoice Delivery System
 Automated system for delivering invoices to customers via email and portal access
@@ -39,6 +43,8 @@ Automated system for delivering invoices to customers via email and portal acces
 - Create invoice reminder system for overdue payments
 - Add invoice delivery preferences management for customer communication options
 
+**Estimation:** 16-20 hours
+
 ### 4. Add Invoice Status Tracking
 Comprehensive tracking of invoice lifecycle from generation to payment
 
@@ -48,3 +54,5 @@ Comprehensive tracking of invoice lifecycle from generation to payment
 - Implement invoice payment matching with automatic status updates
 - Create invoice dispute tracking for customer billing questions
 - Add invoice reporting for financial analysis and cash flow management
+
+**Estimation:** 14-18 hours

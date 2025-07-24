@@ -19,6 +19,8 @@ Service layer for orchestrating subscription plan changes with business logic va
 - Create rollback capabilities for reversing recent plan changes
 - Add plan change approval workflow for high-value accounts
 
+**Estimation:** 20-24 hours
+
 ### 2. Build Proration Calculation System
 Financial calculation engine for handling mid-cycle billing adjustments
 
@@ -28,6 +30,8 @@ Financial calculation engine for handling mid-cycle billing adjustments
 - Implement credit and charge calculation for plan differences
 - Create proration preview functionality showing financial impact
 - Add proration override capabilities for custom billing arrangements
+
+**Estimation:** 16-20 hours
 
 ### 3. Implement Change Management Interface
 Administrative interface for processing and managing subscription changes
@@ -39,6 +43,8 @@ Administrative interface for processing and managing subscription changes
 - Implement bulk plan changes for customer segments
 - Add change impact analysis showing feature and billing effects
 
+**Estimation:** 14-18 hours
+
 ### 4. Add Automated Change Processing
 Background job system for processing scheduled plan changes and billing updates
 
@@ -48,3 +54,5 @@ Background job system for processing scheduled plan changes and billing updates
 - Implement change notification system for customers and administrators
 - Create change failure handling with retry logic and error reporting
 - Add change completion verification ensuring all systems are updated
+
+**Estimation:** 18-22 hours

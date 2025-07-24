@@ -19,6 +19,8 @@ Backend service for extracting and formatting platform data for external use
 - Create export templates for common data export scenarios
 - Add export compression and file management for large datasets
 
+**Estimation:** 14-18 hours
+
 ### 2. Build Export Management Interface
 Administrative interface for configuring and managing data exports
 
@@ -28,6 +30,8 @@ Administrative interface for configuring and managing data exports
 - Add export history view showing past exports and download status
 - Implement export scheduling for regular automated exports
 - Create export sharing functionality with secure download links
+
+**Estimation:** 12-16 hours
 
 ### 3. Implement Standard Export Templates
 Pre-configured export templates for common business and compliance needs
@@ -39,6 +43,8 @@ Pre-configured export templates for common business and compliance needs
 - Create audit trail export template with user actions and system changes
 - Add subscription data export template with plan and billing cycle information
 
+**Estimation:** 16-20 hours
+
 ### 4. Add Export Security and Compliance
 Security controls and compliance features for sensitive data exports
 
@@ -48,3 +54,5 @@ Security controls and compliance features for sensitive data exports
 - Create export audit logging tracking who exported what data and when
 - Implement export retention policies for automatic cleanup of old files
 - Add export encryption for sensitive data protection during transfer
+
+**Estimation:** 10-14 hours

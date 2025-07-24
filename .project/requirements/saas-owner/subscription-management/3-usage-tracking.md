@@ -19,6 +19,8 @@ Database and service layer for tracking customer usage across all platform featu
 - Create usage data retention policy for historical tracking
 - Add usage metric categorization (API calls, storage, users, transactions)
 
+**Estimation:** 20-24 hours
+
 ### 2. Build Limit Enforcement Engine
 Service layer for checking usage against subscription limits and enforcing restrictions
 
@@ -28,6 +30,8 @@ Service layer for checking usage against subscription limits and enforcing restr
 - Implement hard limit enforcement preventing usage beyond subscription boundaries
 - Create grace period handling for temporary limit overages
 - Add limit bypass capabilities for enterprise customers or emergencies
+
+**Estimation:** 18-22 hours
 
 ### 3. Implement Usage Monitoring Dashboard
 Administrative interface for monitoring customer usage patterns and limit compliance
@@ -39,6 +43,8 @@ Administrative interface for monitoring customer usage patterns and limit compli
 - Implement usage comparison tools for analyzing customer segments
 - Add usage export functionality for billing and analysis purposes
 
+**Estimation:** 16-20 hours
+
 ### 4. Add Overage Management System
 Tools for handling customers who exceed their subscription limits
 
@@ -48,3 +54,5 @@ Tools for handling customers who exceed their subscription limits
 - Implement automatic plan upgrade suggestions for consistent overage customers
 - Create overage notification system for customers and administrators
 - Add overage dispute resolution workflow for billing adjustments
+
+**Estimation:** 14-18 hours

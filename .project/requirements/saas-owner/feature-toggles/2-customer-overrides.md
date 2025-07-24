@@ -19,6 +19,8 @@ Database and service layer for managing per-customer feature overrides
 - Create service methods for checking customer-specific feature availability
 - Add cascade deletion when customers or features are removed
 
+**Estimation:** 18-22 hours
+
 ### 2. Build Customer Feature Management Interface
 Admin interface for managing individual customer feature access
 
@@ -28,6 +30,8 @@ Admin interface for managing individual customer feature access
 - Implement bulk override management for multiple features
 - Add override inheritance indicators showing source of feature state
 - Include quick actions for common override scenarios (trial features, beta access)
+
+**Estimation:** 16-20 hours
 
 ### 3. Implement Override Resolution Logic
 Service layer for determining final feature state considering global and customer overrides
@@ -39,6 +43,8 @@ Service layer for determining final feature state considering global and custome
 - Create feature state explanation for debugging (global/override source)
 - Add feature availability API endpoints for customer-facing applications
 
+**Estimation:** 20-24 hours
+
 ### 4. Add Override Management Tools
 Administrative tools for managing customer feature overrides at scale
 
@@ -48,3 +54,5 @@ Administrative tools for managing customer feature overrides at scale
 - Implement override expiration dates for temporary feature access
 - Build override reporting to show feature adoption by customer segment
 - Create override sync tools for matching subscription plan features
+
+**Estimation:** 14-18 hours

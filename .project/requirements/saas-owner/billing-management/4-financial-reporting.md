@@ -19,6 +19,8 @@ Database and service layer for tracking revenue metrics and financial performanc
 - Create revenue recognition logic for subscription and usage-based billing
 - Add revenue trend tracking for period-over-period analysis
 
+**Estimation:** 18-22 hours
+
 ### 2. Build Financial Dashboard
 Visual dashboard displaying key financial metrics and performance indicators
 
@@ -28,6 +30,8 @@ Visual dashboard displaying key financial metrics and performance indicators
 - Implement revenue charts using Chart.js for trend visualization over time
 - Create accounts receivable dashboard showing outstanding invoices and aging
 - Add financial health indicators including churn rate and customer lifetime value
+
+**Estimation:** 16-20 hours
 
 ### 3. Implement Standard Financial Reports
 Pre-built reports covering common financial analysis and accounting needs
@@ -39,6 +43,8 @@ Pre-built reports covering common financial analysis and accounting needs
 - Create customer revenue report showing top customers and revenue concentration
 - Add billing summary report for accounting reconciliation and tax reporting
 
+**Estimation:** 20-24 hours
+
 ### 4. Add Financial Data Export
 Export capabilities for financial data integration with accounting and ERP systems
 
@@ -48,3 +54,5 @@ Export capabilities for financial data integration with accounting and ERP syste
 - Implement automated export scheduling for regular accounting data transfer
 - Create export validation ensuring accurate financial data transfer
 - Add export audit trail tracking all financial data exports for compliance
+
+**Estimation:** 14-18 hours

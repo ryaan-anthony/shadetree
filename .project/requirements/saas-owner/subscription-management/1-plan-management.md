@@ -19,6 +19,8 @@ Database structure and models for managing subscription plans and their attribut
 - Implement plan versioning system for pricing and feature changes
 - Add plan categorization (trial, basic, professional, enterprise)
 
+**Estimation:** 16-20 hours
+
 ### 2. Build Plan Management Interface
 Administrative interface for creating and editing subscription plans
 
@@ -28,6 +30,8 @@ Administrative interface for creating and editing subscription plans
 - Add plan preview functionality showing customer-facing plan details
 - Implement plan activation/deactivation with customer impact warnings
 - Create plan comparison view for analyzing competitive positioning
+
+**Estimation:** 18-22 hours
 
 ### 3. Implement Feature Assignment System
 Interface for associating platform features with subscription plans
@@ -39,6 +43,8 @@ Interface for associating platform features with subscription plans
 - Create feature conflict detection for incompatible combinations
 - Add bulk feature assignment for multiple plans simultaneously
 
+**Estimation:** 14-18 hours
+
 ### 4. Add Plan Pricing Management
 Tools for managing plan pricing across different billing cycles and regions
 
@@ -48,3 +54,5 @@ Tools for managing plan pricing across different billing cycles and regions
 - Implement promotional pricing with start/end dates
 - Create pricing history tracking for audit and rollback purposes
 - Add pricing comparison tools for competitive analysis
+
+**Estimation:** 12-16 hours

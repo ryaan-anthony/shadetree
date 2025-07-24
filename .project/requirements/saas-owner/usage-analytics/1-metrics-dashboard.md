@@ -19,6 +19,8 @@ Backend service for collecting and aggregating platform usage statistics
 - Create metric categories (customers, features, system, billing)
 - Add metric retention policies for historical data management
 
+**Estimation:** 18-22 hours
+
 ### 2. Build Dashboard Interface
 Main dashboard displaying key platform metrics with visual indicators
 
@@ -28,6 +30,8 @@ Main dashboard displaying key platform metrics with visual indicators
 - Implement simple charts using Chart.js for usage trends over time
 - Create metric comparison tools showing period-over-period changes
 - Add dashboard refresh functionality with real-time updates
+
+**Estimation:** 16-20 hours
 
 ### 3. Implement Activity Monitoring
 Real-time monitoring of platform activity and customer engagement
@@ -39,6 +43,8 @@ Real-time monitoring of platform activity and customer engagement
 - Create activity segmentation by customer type and subscription plan
 - Add activity export functionality for detailed analysis
 
+**Estimation:** 20-24 hours
+
 ### 4. Add Health Indicators
 System health metrics and status indicators for platform monitoring
 
@@ -48,3 +54,5 @@ System health metrics and status indicators for platform monitoring
 - Implement automated health checks for critical platform components
 - Create health trend analysis showing platform stability over time
 - Add health alert system for critical issues requiring immediate attention
+
+**Estimation:** 14-18 hours

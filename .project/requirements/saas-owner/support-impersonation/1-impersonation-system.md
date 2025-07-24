@@ -19,6 +19,8 @@ Secure authentication and authorization system for support staff impersonation
 - Create impersonation token system with short expiration for security
 - Add impersonation permission checking throughout application controllers
 
+**Estimation:** 22-28 hours
+
 ### 2. Build Impersonation Interface
 User interface for initiating and managing customer impersonation sessions
 
@@ -28,6 +30,8 @@ User interface for initiating and managing customer impersonation sessions
 - Implement impersonation banner in customer interface showing support context
 - Add impersonation session termination controls for both support and customers
 - Create impersonation quick-start tools for common support scenarios
+
+**Estimation:** 16-20 hours
 
 ### 3. Implement Session Management
 Comprehensive session management with security controls and automatic cleanup
@@ -39,6 +43,8 @@ Comprehensive session management with security controls and automatic cleanup
 - Create session conflict detection preventing multiple concurrent impersonations
 - Add emergency session termination capabilities for security incidents
 
+**Estimation:** 18-22 hours
+
 ### 4. Add Impersonation Security Controls
 Security measures and restrictions for impersonation access and activities
 
@@ -48,3 +54,5 @@ Security measures and restrictions for impersonation access and activities
 - Create impersonation approval workflow for high-value or sensitive accounts
 - Implement impersonation session encryption and secure communication
 - Add impersonation security alerts for unusual patterns or violations
+
+**Estimation:** 20-24 hours

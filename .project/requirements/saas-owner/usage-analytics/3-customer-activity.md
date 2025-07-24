@@ -19,6 +19,8 @@ System for capturing and storing detailed customer activity data
 - Create activity categorization (authentication, feature usage, billing, support)
 - Add activity data retention policies balancing insight needs with storage costs
 
+**Estimation:** 16-20 hours
+
 ### 2. Build Activity Timeline View
 Chronological view of customer activities for support and success teams
 
@@ -28,6 +30,8 @@ Chronological view of customer activities for support and success teams
 - Implement activity search functionality for finding specific events
 - Create activity detail views with expanded context and related information
 - Add activity export functionality for detailed customer analysis
+
+**Estimation:** 14-18 hours
 
 ### 3. Implement Usage Pattern Analysis
 Analytics tools for identifying customer engagement patterns and trends
@@ -39,6 +43,8 @@ Analytics tools for identifying customer engagement patterns and trends
 - Create customer health scoring combining multiple activity indicators
 - Add usage comparison tools for benchmarking against similar customers
 
+**Estimation:** 18-22 hours
+
 ### 4. Add Activity-Based Insights
 Automated insights and recommendations based on customer activity data
 
@@ -48,3 +54,5 @@ Automated insights and recommendations based on customer activity data
 - Implement upsell opportunity identification from feature usage patterns
 - Create activity-based customer segmentation for targeted outreach
 - Add proactive alert system for customers showing concerning activity changes
+
+**Estimation:** 20-24 hours

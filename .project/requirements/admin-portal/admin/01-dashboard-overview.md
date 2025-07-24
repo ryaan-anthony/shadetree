@@ -20,6 +20,8 @@ Create responsive dashboard layout that organizes information logically and prov
 - Implement role-based dashboard customization and permissions
 - Add dashboard personalization settings for individual users
 
+**Estimation:** 16-20 hours
+
 ### 2. Business Status Summary
 Provide high-level business health indicators and current operational status.
 
@@ -30,6 +32,8 @@ Provide high-level business health indicators and current operational status.
 - Implement real-time status updates using Hotwire and Action Cable
 - Add status trend indicators showing improvement or decline
 
+**Estimation:** 12-16 hours
+
 ### 3. Navigation and Quick Access
 Implement efficient navigation system for accessing key business management functions.
 
@@ -38,3 +42,16 @@ Implement efficient navigation system for accessing key business management func
 - Build quick access toolbar for frequently used administrative tasks
 - Implement search functionality for rapid access to specific records
 - Include contextual navigation based on current business operations
+
+**Estimation:** 8-12 hours
+
+### 4. Location Selector
+Enable multi-location businesses to switch context and view location-specific data.
+
+**Implementation Notes:**
+- Add location selector component to dashboard for active location display
+- Implement location switching logic in the Dashboard controller
+- Ensure all dashboard data is filtered by the selected location
+- Add user interface elements for location management and selection
+
+**Estimation:** 10-14 hours

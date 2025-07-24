@@ -19,6 +19,8 @@ Automated system for managing recurring billing cycles and schedule processing
 - Create billing pause and resume functionality for temporary account suspensions
 - Add billing cycle adjustment tools for handling plan changes mid-cycle
 
+**Estimation:** 20-24 hours
+
 ### 2. Build Dunning Management System
 Automated workflow for handling failed payments and customer communication
 
@@ -28,6 +30,8 @@ Automated workflow for handling failed payments and customer communication
 - Implement automatic retry scheduling with increasing intervals for failed payments
 - Create account suspension workflow for customers with repeated payment failures
 - Add dunning escape mechanisms for successful payment recovery
+
+**Estimation:** 18-22 hours
 
 ### 3. Implement Proration Calculations
 Service for calculating partial billing periods and mid-cycle adjustments
@@ -39,6 +43,8 @@ Service for calculating partial billing periods and mid-cycle adjustments
 - Create proration preview functionality for showing customers billing impacts
 - Add proration reconciliation tools for ensuring accurate billing adjustments
 
+**Estimation:** 16-20 hours
+
 ### 4. Add Billing Automation Monitoring
 Monitoring and alerting system for billing process health and failures
 
@@ -48,3 +54,5 @@ Monitoring and alerting system for billing process health and failures
 - Implement billing anomaly detection for unusual patterns or amounts
 - Create billing reconciliation reports comparing processed vs expected billing
 - Add billing performance metrics dashboard for operational monitoring
+
+**Estimation:** 14-18 hours

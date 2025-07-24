@@ -19,6 +19,8 @@ Create comprehensive form for manual customer account setup
 - Generate secure temporary passwords for new accounts
 - Send welcome email with login instructions after account creation
 
+**Estimation:** 14-18 hours
+
 ### 2. Implement Trial Account Setup
 Specialized workflow for creating trial accounts with time limits
 
@@ -28,6 +30,8 @@ Specialized workflow for creating trial accounts with time limits
 - Set up trial conversion tracking
 - Add trial status indicators throughout admin interface
 - Implement automatic trial expiration notifications
+
+**Estimation:** 12-16 hours
 
 ### 3. Create Onboarding Checklist System
 Track customer onboarding progress and completion status
@@ -39,6 +43,8 @@ Track customer onboarding progress and completion status
 - Implement automated checklist item completion detection
 - Generate onboarding completion reports for customer success team
 
+**Estimation:** 16-20 hours
+
 ### 4. Build Welcome Email Automation
 Automated email sequences for new customer onboarding
 
@@ -48,3 +54,5 @@ Automated email sequences for new customer onboarding
 - Add email tracking for open rates and engagement
 - Create email sequence scheduling system
 - Include personalized onboarding links and resources
+
+**Estimation:** 10-14 hours

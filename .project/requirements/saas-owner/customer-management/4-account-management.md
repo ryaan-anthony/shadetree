@@ -19,6 +19,8 @@ Interface for changing customer account status and permissions
 - Log all status changes with timestamps and admin user
 - Send automated notifications to customers on status changes
 
+**Estimation:** 16-20 hours
+
 ### 2. Create Settings Management Interface
 Form-based interface for modifying customer account settings
 
@@ -28,6 +30,8 @@ Form-based interface for modifying customer account settings
 - Implement settings change validation and rollback capability
 - Create settings change history tracking
 - Add bulk settings update for multiple customers
+
+**Estimation:** 18-22 hours
 
 ### 3. Implement Account Lifecycle Tools
 Tools for handling account cancellations, reactivations, and transfers
@@ -39,6 +43,8 @@ Tools for handling account cancellations, reactivations, and transfers
 - Add account data export functionality for departing customers
 - Create account deletion workflow with compliance considerations
 
+**Estimation:** 20-24 hours
+
 ### 4. Add Administrative Actions Panel
 Quick actions panel for common administrative tasks
 
@@ -48,3 +54,5 @@ Quick actions panel for common administrative tasks
 - Add batch actions for multiple customer selection
 - Implement action permission checking based on admin role
 - Create action history log for audit trail
+
+**Estimation:** 14-18 hours
