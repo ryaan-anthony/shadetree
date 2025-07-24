@@ -11,6 +11,7 @@ Automated invoice creation, customization, and delivery system for business cust
 
 ### 1. Create Invoice Generation System
 Automated system for generating invoices based on subscription plans and usage
+
 **Implementation Notes:**
 - Create Invoice model with customer_id, amount, due_date, status, line_items fields
 - Add invoice generation service creating invoices from subscription and usage data
@@ -20,6 +21,7 @@ Automated system for generating invoices based on subscription plans and usage
 
 ### 2. Build Invoice Management Interface
 Administrative interface for viewing, editing, and managing customer invoices
+
 **Implementation Notes:**
 - Create invoices controller with index, show, edit, and generate actions
 - Build invoice list view with filtering by customer, status, and date range
@@ -29,6 +31,7 @@ Administrative interface for viewing, editing, and managing customer invoices
 
 ### 3. Implement Invoice Delivery System
 Automated system for delivering invoices to customers via email and portal access
+
 **Implementation Notes:**
 - Create invoice delivery service with email and customer portal options
 - Add invoice email templates with PDF attachment generation
@@ -38,6 +41,7 @@ Automated system for delivering invoices to customers via email and portal acces
 
 ### 4. Add Invoice Status Tracking
 Comprehensive tracking of invoice lifecycle from generation to payment
+
 **Implementation Notes:**
 - Create invoice status system (draft, sent, viewed, paid, overdue, cancelled)
 - Add invoice aging analysis for accounts receivable management

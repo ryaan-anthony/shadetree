@@ -11,6 +11,7 @@ Simple on/off switches for features that apply to all customers by default, allo
 
 ### 1. Create Feature Registry System
 Central registry for all platform features with metadata and control settings
+
 **Implementation Notes:**
 - Create Feature model with name, description, default_enabled, created_at fields
 - Build feature seeding system to register all platform features
@@ -20,6 +21,7 @@ Central registry for all platform features with metadata and control settings
 
 ### 2. Build Global Toggle Interface
 Admin interface for managing global feature switches
+
 **Implementation Notes:**
 - Create features controller with index and update actions
 - Design feature toggle list with switch components
@@ -29,6 +31,7 @@ Admin interface for managing global feature switches
 
 ### 3. Implement Feature Flag Service
 Backend service for checking feature availability across the application
+
 **Implementation Notes:**
 - Create FeatureFlag service class with enabled? method
 - Add view helpers for feature flag checking in templates
@@ -38,6 +41,7 @@ Backend service for checking feature availability across the application
 
 ### 4. Add Feature Change Logging
 Audit trail for all global feature toggle changes
+
 **Implementation Notes:**
 - Create FeatureChange model to log all toggle modifications
 - Track admin user, timestamp, old value, new value for each change

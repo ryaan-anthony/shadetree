@@ -11,6 +11,7 @@ Automated recurring billing workflows with proration and dunning management to e
 
 ### 1. Create Billing Cycle Engine
 Automated system for managing recurring billing cycles and schedule processing
+
 **Implementation Notes:**
 - Create BillingCycle model with customer_id, cycle_type, next_billing_date, status fields
 - Add billing job scheduler running daily to process upcoming billing events
@@ -20,6 +21,7 @@ Automated system for managing recurring billing cycles and schedule processing
 
 ### 2. Build Dunning Management System
 Automated workflow for handling failed payments and customer communication
+
 **Implementation Notes:**
 - Create DunningProcess model tracking failed payment attempts and recovery steps
 - Add dunning email sequence with escalating messaging for overdue accounts
@@ -29,6 +31,7 @@ Automated workflow for handling failed payments and customer communication
 
 ### 3. Implement Proration Calculations
 Service for calculating partial billing periods and mid-cycle adjustments
+
 **Implementation Notes:**
 - Create ProrationService for calculating daily proration amounts
 - Add proration logic for plan upgrades, downgrades, and mid-cycle changes
@@ -38,6 +41,7 @@ Service for calculating partial billing periods and mid-cycle adjustments
 
 ### 4. Add Billing Automation Monitoring
 Monitoring and alerting system for billing process health and failures
+
 **Implementation Notes:**
 - Create billing process monitoring with success/failure rate tracking
 - Add automated alerts for billing job failures or processing delays
