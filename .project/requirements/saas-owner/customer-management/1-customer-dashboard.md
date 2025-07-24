@@ -1,57 +1,46 @@
 # Feature: Customer Dashboard
 
-## Overview
-Provide a centralized dashboard view showing all business customers with key metrics, status indicators, and quick access to customer details for platform administrators.
+Centralized view of all customers with key metrics and status indicators for platform administrators to monitor platform usage and customer health.
 
 ## User Stories
-- As a platform administrator, I want to see all customers at a glance so I can monitor overall platform health
-- As a support specialist, I want to quickly identify customer status so I can prioritize support requests
-- As a business analyst, I want to see customer metrics so I can understand platform usage patterns
+- As a platform administrator, I want to see all customers at a glance so I can monitor platform adoption
+- As a support manager, I want to view customer metrics so I can identify accounts needing attention  
+- As an operations manager, I want customer status indicators so I can track account health
 
 ## Tasks
 
-### 1. Create Customer Dashboard Controller and Routes
-Create the main dashboard controller to handle customer overview displays.
-#### Implementation Notes:
-- Add route `GET /admin/customers` to `config/routes.rb`
-- Create `Admin::CustomersController` with `index` action
-- Implement pagination for large customer lists
-- Add filtering capabilities (active, inactive, trial, etc.)
-- Implement search functionality by company name or email
+### 1. Create Customer Overview Page
+Build main dashboard page displaying customer list with essential information
+**Implementation Notes:**
+- Create customers controller with index action
+- Design responsive table layout with pagination
+- Include customer name, signup date, subscription status, last activity
+- Add search bar in header for quick customer lookup
+- Implement sorting by name, signup date, and activity
 
-### 2. Build Customer Model and Database Schema
-Define the core Customer model with necessary attributes and relationships.
-#### Implementation Notes:
-- Create `Customer` model with fields: name, email, company, status, created_at, plan_type
-- Add database migration for customers table
-- Include status enum (active, inactive, trial, suspended)
-- Add validation for required fields and email format
-- Create indexes on frequently queried fields (status, created_at)
+### 2. Add Customer Metrics Cards
+Display key platform metrics in card format above customer list
+**Implementation Notes:**
+- Create dashboard service to calculate metrics
+- Add metric cards for total customers, active customers, trial customers, churned customers
+- Use background jobs to calculate metrics if performance becomes an issue
+- Cache metric calculations for better performance
+- Style cards using design system metric card patterns
 
-### 3. Design Dashboard View Template
-Create the main dashboard interface showing customer overview and metrics.
-#### Implementation Notes:
-- Create `app/views/admin/customers/index.html.erb`
-- Implement metric cards showing total customers, active customers, trials
-- Build customer table with sortable columns
-- Add status badges using design system colors
-- Include search bar and status filters
-- Implement responsive design for mobile/tablet viewing
+### 3. Implement Status Indicators
+Visual indicators for customer account health and subscription status
+**Implementation Notes:**
+- Add status column to customers table
+- Create status badge component with colors from design system
+- Include statuses: active, trial, suspended, cancelled, overdue
+- Add tooltip hover states explaining each status
+- Ensure status updates reflect real-time subscription changes
 
-### 4. Add Customer Metrics Calculation
-Implement business logic to calculate and display key customer metrics.
-#### Implementation Notes:
-- Create service class `CustomerMetricsService` for metric calculations
-- Calculate total customers, active customers, trial conversions
-- Add monthly/weekly growth indicators
-- Implement caching for expensive metric calculations
-- Create background job to refresh metrics periodically
-
-### 5. Implement Customer Status Management
-Allow administrators to view and update customer status from the dashboard.
-#### Implementation Notes:
-- Add status update actions to `Admin::CustomersController`
-- Create partial views for status change forms
-- Implement AJAX updates for status changes
-- Add confirmation dialogs for status changes
-- Log all status changes for audit trail
+### 4. Build Customer Quick Actions
+Action buttons for common customer management tasks
+**Implementation Notes:**
+- Add action column with dropdown menu
+- Include quick actions: view details, impersonate, add note, suspend account
+- Implement permissions checking for each action
+- Add confirmation dialogs for destructive actions
+- Use Stimulus controllers for interactive behaviors

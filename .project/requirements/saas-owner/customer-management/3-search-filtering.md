@@ -1,56 +1,46 @@
 # Feature: Customer Search and Filtering
 
-## Overview
-Advanced search capabilities with filters for customer segmentation and analysis, allowing administrators to quickly find specific accounts or analyze customer groups.
+Basic search capabilities with filters for customer segmentation and analysis to help support staff quickly find specific accounts.
 
 ## User Stories
-- As a platform administrator, I want to search customers by various criteria so I can quickly find specific accounts
-- As a support specialist, I want to filter customers by status so I can focus on accounts needing attention
-- As a business analyst, I want to segment customers so I can analyze different customer groups
+- As a support specialist, I want to search customers by name or email so I can quickly find specific accounts
+- As a platform administrator, I want to filter customers by status so I can segment accounts for analysis
+- As a customer success manager, I want to filter by subscription type so I can identify upsell opportunities
 
 ## Tasks
 
-### 1. Implement Full-Text Search Functionality
-Build comprehensive search across customer data fields.
-#### Implementation Notes:
-- Add search scope to Customer model using PostgreSQL full-text search
-- Create search indexes on name, company, email, and notes fields
-- Implement fuzzy matching for typo tolerance
-- Add search result highlighting in views
-- Optimize search queries with proper indexing
+### 1. Implement Basic Search Functionality
+Add search capability to customer dashboard for name and email lookup
+**Implementation Notes:**
+- Add search input field to customer dashboard header
+- Implement case-insensitive search across customer name, email, company fields
+- Use database ILIKE queries for PostgreSQL compatibility
+- Add search result highlighting in customer list
+- Clear search functionality with reset button
 
-### 2. Build Advanced Filter System
-Create multi-criteria filtering interface for customer segmentation.
-#### Implementation Notes:
-- Add filter scopes to Customer model (status, plan_type, created_date_range)
-- Create filter form with dropdown selects and date pickers
-- Implement URL parameter handling for bookmarkable filtered views
-- Add filter persistence in user session
-- Create filter reset functionality
+### 2. Create Status Filter System
+Filter customers by account and subscription status
+**Implementation Notes:**
+- Add filter dropdown for customer status (active, trial, suspended, cancelled)
+- Implement multiple status selection with checkboxes
+- Update URL parameters to maintain filter state on refresh
+- Add active filter indicators showing current selections
+- Combine status filters with search functionality
 
-### 3. Design Search Interface Components
-User-friendly search and filter interface integrated with the dashboard.
-#### Implementation Notes:
-- Create search bar component with autocomplete suggestions
-- Build collapsible advanced filters panel
-- Add active filter indicators with remove buttons
-- Implement search result count display
-- Create saved search functionality for common queries
+### 3. Build Subscription Filter Options
+Filter customers by subscription plan and billing status
+**Implementation Notes:**
+- Add subscription plan filter dropdown
+- Include billing status filters (current, overdue, cancelled)
+- Add date range filters for signup date and last activity
+- Implement filter combination logic for multiple criteria
+- Show customer count for each filter option
 
-### 4. Add Customer Export Functionality
-Allow exporting filtered customer lists for external analysis.
-#### Implementation Notes:
-- Create export action in CustomersController
-- Implement CSV export with selectable fields
-- Add background job for large exports
-- Create export status tracking and download links
-- Include export activity in audit logs
-
-### 5. Implement Search Analytics
-Track search patterns to improve search functionality and user experience.
-#### Implementation Notes:
-- Log search queries and filter usage
-- Create analytics dashboard for search patterns
-- Identify most common searches and filters
-- Add search performance monitoring
-- Generate reports on search effectiveness
+### 4. Add Advanced Filter Panel
+Collapsible panel with additional filtering options
+**Implementation Notes:**
+- Create expandable filter section with advanced options
+- Add filters for customer size, industry, geographic location
+- Implement saved filter presets for common searches
+- Add filter reset functionality to clear all selections
+- Include export filtered results functionality

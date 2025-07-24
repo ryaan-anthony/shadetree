@@ -1,56 +1,46 @@
 # Feature: Financial Reporting Tools
 
-## Overview
-Basic financial dashboards and reports for revenue tracking and business analysis, providing essential financial insights for SaaS operations.
+Basic financial dashboards and reports for revenue tracking and business analysis to help administrators understand platform financial performance.
 
 ## User Stories
-- As a finance manager, I want revenue reports so I can track business performance
-- As an executive, I want financial dashboards so I can understand business health quickly
-- As an accounting specialist, I want detailed financial data so I can prepare financial statements
+- As a finance manager, I want financial reports so I can track revenue and business performance
+- As an accounting specialist, I want billing summaries so I can reconcile accounts and prepare statements
+- As a business owner, I want revenue dashboards so I can monitor platform profitability
 
 ## Tasks
 
-### 1. Create Financial Data Models
-Build data structures for storing and calculating financial metrics.
-#### Implementation Notes:
-- Create FinancialSummary model with monthly/quarterly revenue aggregations
-- Add RevenueRecognition model for subscription revenue tracking
-- Include financial period management (monthly, quarterly, yearly)
-- Create financial metric calculations (MRR, ARR, churn rate)
-- Add database indexes for efficient financial queries
+### 1. Create Revenue Tracking System
+Database and service layer for tracking revenue metrics and financial performance
+**Implementation Notes:**
+- Create RevenueMetric model with period, revenue_type, amount, recorded_at fields
+- Add revenue calculation service aggregating billing, payments, and adjustments
+- Implement revenue categorization by subscription plan, customer segment, and billing type
+- Create revenue recognition logic for subscription and usage-based billing
+- Add revenue trend tracking for period-over-period analysis
 
-### 2. Build Revenue Tracking System
-Automated system for tracking and categorizing revenue streams.
-#### Implementation Notes:
-- Create RevenueTracker service for recording revenue events
-- Add revenue categorization (subscription, one-time, refunds)
-- Implement deferred revenue calculation for annual subscriptions
-- Create revenue recognition automation based on billing cycles
-- Add revenue reconciliation with payment data
+### 2. Build Financial Dashboard
+Visual dashboard displaying key financial metrics and performance indicators
+**Implementation Notes:**
+- Create financial dashboard controller with revenue and billing metrics
+- Add revenue cards showing monthly recurring revenue, total revenue, and growth rates
+- Implement revenue charts using Chart.js for trend visualization over time
+- Create accounts receivable dashboard showing outstanding invoices and aging
+- Add financial health indicators including churn rate and customer lifetime value
 
-### 3. Design Financial Dashboard Interface
-Visual dashboard showing key financial metrics and trends.
-#### Implementation Notes:
-- Create Admin::FinancialDashboardController with metrics view
-- Add route GET /admin/financial-dashboard
-- Display key metrics cards (MRR, total revenue, growth rate)
-- Include simple revenue charts showing trends over time
-- Add financial period selector for historical analysis
+### 3. Implement Standard Financial Reports
+Pre-built reports covering common financial analysis and accounting needs
+**Implementation Notes:**
+- Create monthly revenue report with subscription and usage breakdowns
+- Add accounts receivable aging report showing outstanding invoice categories
+- Implement cash flow report tracking payments, refunds, and adjustments
+- Create customer revenue report showing top customers and revenue concentration
+- Add billing summary report for accounting reconciliation and tax reporting
 
-### 4. Implement Standard Financial Reports
-Pre-built reports for common financial analysis needs.
-#### Implementation Notes:
-- Create monthly revenue report with breakdown by plan type
-- Add customer lifetime value (CLV) analysis report
-- Implement churn and retention rate reporting
-- Create revenue forecasting based on current trends
-- Add financial export capability for accounting systems
-
-### 5. Add Financial Alerting System
-Automated alerts for significant financial events and anomalies.
-#### Implementation Notes:
-- Create financial threshold monitoring for revenue targets
-- Add alerts for unusual payment patterns or failures
-- Implement churn rate alerts when exceeding targets
-- Create monthly financial summary email for stakeholders
-- Add configurable alert thresholds for different metrics
+### 4. Add Financial Data Export
+Export capabilities for financial data integration with accounting and ERP systems
+**Implementation Notes:**
+- Create financial export service with support for CSV, Excel, and accounting formats
+- Add export templates for QuickBooks, Xero, and other accounting integrations
+- Implement automated export scheduling for regular accounting data transfer
+- Create export validation ensuring accurate financial data transfer
+- Add export audit trail tracking all financial data exports for compliance

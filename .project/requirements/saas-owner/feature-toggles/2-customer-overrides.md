@@ -1,56 +1,46 @@
-# Feature: Customer Feature Overrides
+# Feature: Customer Feature Overrides  
 
-## Overview
-Ability to enable or disable specific features for individual business customers, overriding global feature settings on a per-customer basis.
+Ability to enable or disable specific features for individual business customers, overriding global settings for targeted feature access control.
 
 ## User Stories
-- As a platform administrator, I want to enable features for specific customers so I can provide custom access
+- As a platform administrator, I want to enable/disable features for specific customers so I can control their access
+- As a sales representative, I want to enable premium features for prospects so I can demonstrate advanced capabilities
 - As a support specialist, I want to disable problematic features for customers so I can resolve issues quickly
-- As a sales manager, I want to enable premium features for trial customers so I can demonstrate value
 
 ## Tasks
 
-### 1. Create Customer Feature Override Model
-Build data structure for storing customer-specific feature overrides.
-#### Implementation Notes:
-- Create CustomerFeatureOverride model with customer_id, feature_flag_id, enabled fields
-- Add unique constraint on customer_id and feature_flag_id combination
-- Include created_at, updated_at, and admin_user_id for tracking
-- Add belongs_to relationships to Customer and FeatureFlag models
-- Create database indexes for efficient customer feature lookups
+### 1. Create Customer Override System
+Database and service layer for managing per-customer feature overrides
+**Implementation Notes:**
+- Create CustomerFeatureOverride model with customer_id, feature_id, enabled fields
+- Add unique constraint on customer_id and feature_id combination
+- Implement override precedence logic (customer override beats global setting)
+- Create service methods for checking customer-specific feature availability
+- Add cascade deletion when customers or features are removed
 
 ### 2. Build Customer Feature Management Interface
-Administrative interface for managing features at the customer level.
-#### Implementation Notes:
-- Add feature management section to customer detail page
-- Create toggle switches for each available feature flag
-- Show visual indicators for global vs. customer-specific settings
-- Implement bulk feature updates for multiple customers
-- Add customer feature history tracking
+Admin interface for managing individual customer feature access
+**Implementation Notes:**
+- Add feature overrides section to customer detail page
+- Create feature toggle grid showing global vs customer-specific settings
+- Implement bulk override management for multiple features
+- Add override inheritance indicators showing source of feature state
+- Include quick actions for common override scenarios (trial features, beta access)
 
-### 3. Implement Customer Feature Service
-Service layer for evaluating features with customer-specific overrides.
-#### Implementation Notes:
-- Extend FeatureFlagService to accept customer parameter
-- Implement override logic: customer override > global setting
-- Add caching for customer-specific feature evaluations
-- Create batch loading for multiple feature checks
-- Add performance monitoring for feature evaluation calls
+### 3. Implement Override Resolution Logic
+Service layer for determining final feature state considering global and customer overrides
+**Implementation Notes:**
+- Extend FeatureFlag service to check customer-specific overrides
+- Add customer context to all feature flag checks throughout application
+- Implement feature resolution caching per customer session
+- Create feature state explanation for debugging (global/override source)
+- Add feature availability API endpoints for customer-facing applications
 
-### 4. Add Customer Feature Filtering
-Ability to filter and search customers based on their feature overrides.
-#### Implementation Notes:
-- Add feature-based filtering to customer search interface
-- Create customer segments based on enabled features
-- Implement "customers with feature X" queries
-- Add feature override statistics to customer dashboard
-- Create reports showing feature adoption by customer
-
-### 5. Create Feature Override Audit System
-Track all changes to customer-specific feature settings.
-#### Implementation Notes:
-- Log all customer feature override changes with timestamps
-- Track which admin user made each change and why
-- Create audit trail view within customer profile
-- Add bulk audit reports for compliance requirements
-- Implement rollback capability for feature override changes
+### 4. Add Override Management Tools
+Administrative tools for managing customer feature overrides at scale
+**Implementation Notes:**
+- Create bulk override assignment for customer segments
+- Add override templates for common customer types (trial, enterprise, beta)
+- Implement override expiration dates for temporary feature access
+- Build override reporting to show feature adoption by customer segment
+- Create override sync tools for matching subscription plan features

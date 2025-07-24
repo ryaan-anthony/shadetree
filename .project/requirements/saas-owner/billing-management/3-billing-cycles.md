@@ -1,56 +1,46 @@
 # Feature: Billing Cycle Automation
 
-## Overview
-Automated recurring billing workflows with proration, dunning management, and retry logic to handle subscription billing without manual intervention.
+Automated recurring billing workflows with proration and dunning management to ensure consistent revenue collection and customer billing processes.
 
 ## User Stories
-- As a billing administrator, I want automated billing cycles so I can reduce manual work
+- As a billing administrator, I want automated recurring billing so I can reduce manual work and errors
 - As a finance manager, I want dunning management so I can handle failed payments systematically
-- As a platform administrator, I want billing automation so I can scale without increasing overhead
+- As a customer success manager, I want billing notifications so I can proactively address payment issues
 
 ## Tasks
 
-### 1. Create Billing Cycle Management System
-Build framework for managing recurring billing schedules and cycles.
-#### Implementation Notes:
-- Create BillingCycle model with customer_id, next_billing_date, billing_frequency, status
-- Add billing cycle calculation logic for monthly, quarterly, annual cycles
-- Implement billing date adjustment for weekends and holidays
-- Create billing cycle suspension and resumption functionality
-- Add billing cycle history tracking for audit purposes
+### 1. Create Billing Cycle Engine
+Automated system for managing recurring billing cycles and schedule processing
+**Implementation Notes:**
+- Create BillingCycle model with customer_id, cycle_type, next_billing_date, status fields
+- Add billing job scheduler running daily to process upcoming billing events
+- Implement billing cycle calculation for monthly, annual, and custom periods
+- Create billing pause and resume functionality for temporary account suspensions
+- Add billing cycle adjustment tools for handling plan changes mid-cycle
 
-### 2. Implement Automated Billing Job
-Background job system for processing recurring billing automatically.
-#### Implementation Notes:
-- Create BillingProcessor job using Sidekiq for scheduled execution
-- Add daily billing job to process customers due for billing
-- Implement billing batch processing for performance optimization
-- Create billing failure handling and retry logic
-- Add billing job monitoring and error alerting
+### 2. Build Dunning Management System
+Automated workflow for handling failed payments and customer communication
+**Implementation Notes:**
+- Create DunningProcess model tracking failed payment attempts and recovery steps
+- Add dunning email sequence with escalating messaging for overdue accounts
+- Implement automatic retry scheduling with increasing intervals for failed payments
+- Create account suspension workflow for customers with repeated payment failures
+- Add dunning escape mechanisms for successful payment recovery
 
-### 3. Build Dunning Management System
-Automated system for handling failed payments and customer communication.
-#### Implementation Notes:
-- Create DunningProcess model with escalation rules and email templates
-- Add graduated dunning sequence (3 days, 7 days, 14 days overdue)
-- Implement automatic service suspension for prolonged non-payment
-- Create dunning email templates with personalization
-- Add dunning bypass for customers with special payment arrangements
+### 3. Implement Proration Calculations
+Service for calculating partial billing periods and mid-cycle adjustments
+**Implementation Notes:**
+- Create ProrationService for calculating daily proration amounts
+- Add proration logic for plan upgrades, downgrades, and mid-cycle changes
+- Implement credit and adjustment calculation for billing period overlaps
+- Create proration preview functionality for showing customers billing impacts
+- Add proration reconciliation tools for ensuring accurate billing adjustments
 
-### 4. Add Proration and Billing Adjustments
-Handle mid-cycle changes and billing corrections automatically.
-#### Implementation Notes:
-- Create ProrationCalculator service for mid-cycle plan changes
-- Add credit and debit adjustment capabilities
-- Implement automatic proration for upgrades and downgrades
-- Create billing adjustment approval workflow for large amounts
-- Add proration preview functionality for customer service
-
-### 5. Create Billing Automation Monitoring
-Monitor billing automation performance and identify issues.
-#### Implementation Notes:
-- Create billing automation dashboard with success/failure rates
-- Track billing processing times and bottlenecks
-- Add billing revenue tracking and reconciliation
-- Generate billing automation reports for operations team
-- Create automated alerts for billing system failures
+### 4. Add Billing Automation Monitoring
+Monitoring and alerting system for billing process health and failures
+**Implementation Notes:**
+- Create billing process monitoring with success/failure rate tracking
+- Add automated alerts for billing job failures or processing delays
+- Implement billing anomaly detection for unusual patterns or amounts
+- Create billing reconciliation reports comparing processed vs expected billing
+- Add billing performance metrics dashboard for operational monitoring

@@ -1,56 +1,46 @@
 # Feature: Invoice Generation and Management
 
-## Overview
-Automated invoice creation, customization, and delivery system for business customers with multi-format support and tracking capabilities.
+Automated invoice creation, customization, and delivery system for business customers to ensure proper revenue collection and professional billing processes.
 
 ## User Stories
-- As a billing administrator, I want to generate invoices automatically so I can ensure timely billing
-- As a finance manager, I want customizable invoice templates so I can maintain brand consistency
-- As an accounting specialist, I want invoice tracking so I can monitor payment status
+- As a billing administrator, I want to generate invoices for business customers so I can ensure proper revenue collection
+- As an accounting specialist, I want to customize invoice templates so I can meet business branding requirements
+- As a finance manager, I want automated invoice delivery so I can ensure timely billing communications
 
 ## Tasks
 
-### 1. Create Invoice Data Model
-Build comprehensive invoice structure with line items and tax support.
-#### Implementation Notes:
-- Create Invoice model with customer_id, invoice_number, amount, tax_amount, status, due_date
-- Add InvoiceLineItem model for detailed billing breakdown
-- Include invoice status enum (draft, sent, paid, overdue, cancelled)
-- Create unique invoice numbering system with customizable format
-- Add database indexes for efficient invoice queries and reporting
+### 1. Create Invoice Generation System
+Automated system for generating invoices based on subscription plans and usage
+**Implementation Notes:**
+- Create Invoice model with customer_id, amount, due_date, status, line_items fields
+- Add invoice generation service creating invoices from subscription and usage data
+- Implement invoice numbering system with configurable formats and sequences
+- Create invoice line item system for subscription fees, usage charges, and adjustments
+- Add invoice template system with customizable branding and layout options
 
-### 2. Build Invoice Generation Service
-Automated system for creating invoices based on subscription billing cycles.
-#### Implementation Notes:
-- Create InvoiceGeneratorService for subscription-based invoice creation
-- Add support for proration, discounts, and tax calculations
-- Implement invoice preview before final generation
-- Create bulk invoice generation for multiple customers
-- Add invoice validation and error handling
+### 2. Build Invoice Management Interface
+Administrative interface for viewing, editing, and managing customer invoices
+**Implementation Notes:**
+- Create invoices controller with index, show, edit, and generate actions
+- Build invoice list view with filtering by customer, status, and date range
+- Add invoice detail view showing line items, payments, and status history
+- Implement manual invoice creation for custom billing scenarios
+- Create invoice adjustment capabilities for credits, discounts, and corrections
 
-### 3. Design Invoice Management Interface
-Administrative interface for viewing, editing, and managing invoices.
-#### Implementation Notes:
-- Create Admin::InvoicesController with CRUD operations
-- Add routes for /admin/invoices resource
-- Build invoice list view with filtering and search capabilities
-- Create invoice detail view with payment tracking
-- Add invoice status management and manual adjustments
+### 3. Implement Invoice Delivery System
+Automated system for delivering invoices to customers via email and portal access
+**Implementation Notes:**
+- Create invoice delivery service with email and customer portal options
+- Add invoice email templates with PDF attachment generation
+- Implement delivery tracking showing sent, opened, and downloaded status
+- Create invoice reminder system for overdue payments
+- Add invoice delivery preferences management for customer communication options
 
-### 4. Implement Invoice Delivery System
-Multi-channel invoice delivery with tracking and confirmation.
-#### Implementation Notes:
-- Create invoice email delivery using Action Mailer
-- Add PDF invoice generation using Prawn gem
-- Implement delivery status tracking and retry logic
-- Create invoice download portal for customers
-- Add delivery preferences management per customer
-
-### 5. Add Invoice Analytics and Reporting
-Track invoice performance and payment patterns for business insights.
-#### Implementation Notes:
-- Create invoice aging reports showing outstanding balances
-- Track average payment times and overdue patterns
-- Generate revenue recognition reports for accounting
-- Add invoice volume and trend analysis
-- Create automated alerts for overdue invoices
+### 4. Add Invoice Status Tracking
+Comprehensive tracking of invoice lifecycle from generation to payment
+**Implementation Notes:**
+- Create invoice status system (draft, sent, viewed, paid, overdue, cancelled)
+- Add invoice aging analysis for accounts receivable management
+- Implement invoice payment matching with automatic status updates
+- Create invoice dispute tracking for customer billing questions
+- Add invoice reporting for financial analysis and cash flow management
