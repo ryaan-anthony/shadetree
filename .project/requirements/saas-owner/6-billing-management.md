@@ -1,39 +1,18 @@
 # Epic: Billing Management
 
 ## Overview
-Develop a comprehensive billing management system that enables platform administrators to handle invoice generation, payment processing, revenue reporting, failed payment handling, and custom billing arrangements for business customers.
-
-## Goals
-- Create tools for invoice generation and tracking
-- Implement payment processing monitoring capabilities
-- Provide comprehensive revenue reporting
-- Develop failed payment handling workflows
-- Support custom billing arrangements for special cases
-
-## Features
-1. [Invoice Generation and Tracking](billing-management/1-invoice-generation.md)
-2. [Payment Processing Monitoring](billing-management/2-payment-monitoring.md)
-3. [Revenue Reporting](billing-management/3-revenue-reporting.md)
-4. [Failed Payment Handling](billing-management/4-failed-payments.md)
-5. [Custom Billing Arrangements](billing-management/5-custom-billing.md)
-
-## Technical Considerations
-- Integration with payment processors (Stripe, etc.)
-- Invoice data storage and archiving
-- Tax calculation and compliance
-- Security of financial data
-- Audit trails for all billing operations
+Implement comprehensive billing management capabilities to handle invoicing, payment processing, subscription billing cycles, and financial reporting for the SaaS platform.
 
 ## User Stories
-- As a finance manager, I want to generate and track invoices so I can manage platform revenue
-- As an operations manager, I want to monitor payment processing so I can identify and resolve issues
-- As a business analyst, I want to generate revenue reports so I can track business performance
-- As a support specialist, I want to handle failed payments so I can recover revenue
-- As an account manager, I want to create custom billing arrangements so I can accommodate special cases
+- As a billing administrator, I want to generate accurate invoices so I can ensure proper revenue collection
+- As a finance manager, I want to track payment statuses so I can manage cash flow and collections
+- As a customer success manager, I want to handle billing disputes so I can maintain customer relationships
+- As an accounting specialist, I want to export financial data so I can integrate with accounting systems
+- As a platform administrator, I want to manage payment methods so I can ensure uninterrupted service
 
-## Success Metrics
-- Invoice accuracy 100%
-- Payment processing success rate >99%
-- Failed payment recovery rate >80%
-- Revenue report generation time <1 minute
-- Billing operation audit trail completeness 100%
+## Features
+1. [Invoice Generation and Management](billing-management/1-invoice-management.md) - Automated invoice creation, customization, and delivery system with multi-format support
+2. [Payment Processing Integration](billing-management/2-payment-processing.md) - Secure payment gateway integration with multiple payment methods and fraud protection
+3. [Billing Cycle Automation](billing-management/3-billing-cycles.md) - Automated recurring billing workflows with proration, dunning management, and retry logic
+4. [Financial Reporting Tools](billing-management/4-financial-reporting.md) - Comprehensive financial dashboards and reports for revenue tracking and business analysis
+5. [Payment Method Administration](billing-management/5-payment-methods.md) - Customer payment method management with secure storage and automatic payment updates
