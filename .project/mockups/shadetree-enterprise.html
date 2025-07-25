@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shadetree - Job & Quote Software for the Rest of Us</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'shadetree-blue': '#1E40AF',
+                        'shadetree-green': '#059669',
+                        'shadetree-red': '#DC2626',
+                        'shadetree-yellow': '#D97706',
+                        'shadetree-purple': '#7C3AED',
+                        'enterprise-navy': '#0F172A',
+                        'enterprise-gray': '#334155'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!--
+    Context Header:
+    - Target Persona: Small Service Business Owner
+    - User Story: As a small service business owner, I want a simple quote-to-appointment solution that gets me paid quickly
+    - Key Interactions: Quick quote creation, Easy scheduling, Fast payment processing
+    -->
+
+    <!-- Navigation Header -->
+    <nav class="sticky top-0 z-20 bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <div class="text-2xl font-bold">
+                        <span class="text-shadetree-green">Shade</span><span class="text-enterprise-navy">tree</span>
+                    </div>
+                    <div class="ml-3 text-sm text-gray-500 hidden sm:block">Simple Service Business Software</div>
+                </div>
+
+                <!-- Navigation Links -->
+                <div class="hidden lg:flex items-center space-x-8">
+                    <div class="relative group">
+                        <button class="flex items-center text-enterprise-gray hover:text-enterprise-navy">
+                            Solutions
+                            <i data-feather="chevron-down" class="ml-1 h-4 w-4"></i>
+                        </button>
+                    </div>
+                    <div class="relative group">
+                        <button class="flex items-center text-enterprise-gray hover:text-enterprise-navy">
+                            Industries
+                            <i data-feather="chevron-down" class="ml-1 h-4 w-4"></i>
+                        </button>
+                    </div>
+                    <a href="#integrations" class="text-enterprise-gray hover:text-enterprise-navy">Integrations</a>
+                    <a href="#pricing" class="text-enterprise-gray hover:text-enterprise-navy">Pricing</a>
+                    <a href="#resources" class="text-enterprise-gray hover:text-enterprise-navy">Resources</a>
+                </div>
+
+                <!-- CTA Buttons -->
+                <div class="flex items-center space-x-4">
+                    <a href="#contact" class="text-enterprise-gray hover:text-enterprise-navy">Contact Sales</a>
+                    <a href="#demo" class="bg-shadetree-blue text-white px-6 py-2.5 text-sm font-medium rounded-md hover:bg-blue-800 shadow-sm">
+                        Request Demo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Enterprise Hero Section -->
+    <section class="relative bg-gradient-to-b from-slate-50 to-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <!-- Hero Content -->
+                <div>
+                    <div class="mb-6">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-shadetree-green">
+                            <i data-feather="zap" class="mr-2 h-4 w-4"></i>
+                            Paper to paid in under 60 seconds
+                        </span>
+                    </div>
+
+                    <h1 class="text-4xl lg:text-5xl font-bold text-enterprise-navy mb-6 leading-tight">
+                        Job & Quote Software
+                        <span class="text-shadetree-blue">for the Rest of Us</span>
+                    </h1>
+
+                    <p class="text-xl text-enterprise-gray mb-8 leading-relaxed">
+                        Quote it, book it, get paid — no bloated dashboards. Simple service business software that helps you win more jobs and get paid faster.
+                    </p>
+
+                    <!-- Simple Stats -->
+                    <div class="grid grid-cols-3 gap-6 mb-10">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-enterprise-navy">&lt;60sec</div>
+                            <div class="text-sm text-gray-600">Quote to Send</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-enterprise-navy">90%</div>
+                            <div class="text-sm text-gray-600">Faster Booking</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-enterprise-navy">$0</div>
+                            <div class="text-sm text-gray-600">Setup Fees</div>
+                        </div>
+                    </div>
+
+                    <!-- Primary CTAs -->
+                    <div class="flex flex-col sm:flex-row gap-4 mb-10">
+                        <a href="#trial" class="bg-shadetree-green text-white px-8 py-4 text-lg font-medium rounded-md hover:bg-green-700 shadow-lg text-center">
+                            Start Free Trial
+                        </a>
+                        <a href="#demo" class="border-2 border-enterprise-gray text-enterprise-gray px-8 py-4 text-lg font-medium rounded-md hover:bg-gray-50 text-center">
+                            Watch 2-Min Demo
+                        </a>
+                    </div>
+
+                    <!-- Simple Customer Logos -->
+                    <div class="space-y-4">
+                        <p class="text-sm text-gray-600 font-medium">Trusted by small service businesses nationwide</p>
+                        <div class="flex flex-wrap gap-8 items-center opacity-70">
+                            <div class="bg-gray-100 px-6 py-3 rounded text-sm font-medium">Mike's HVAC</div>
+                            <div class="bg-gray-100 px-6 py-3 rounded text-sm font-medium">Elite Landscaping</div>
+                            <div class="bg-gray-100 px-6 py-3 rounded text-sm font-medium">Pro Plumbing</div>
+                            <div class="bg-gray-100 px-6 py-3 rounded text-sm font-medium">Clean & Simple</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service Management Dashboard Mockup -->
+                <div class="relative">
+                    <div class="bg-white rounded-lg shadow-2xl border border-gray-200 overflow-hidden">
+                        <!-- Dashboard Header -->
+                        <div class="bg-enterprise-navy px-6 py-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 bg-shadetree-green rounded-md flex items-center justify-center">
+                                        <i data-feather="calendar" class="w-4 h-4 text-white"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-white font-medium">Service Operations Dashboard</div>
+                                        <div class="text-blue-200 text-sm">Multi-Location Performance</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                                    <span class="text-green-400 text-sm">Live</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dashboard Content -->
+                        <div class="p-6 space-y-6">
+                            <!-- Key Metrics Row -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border-l-4 border-shadetree-blue">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="text-sm text-gray-600">Active Quotes</div>
+                                            <div class="text-2xl font-bold text-enterprise-navy">247</div>
+                                            <div class="text-xs text-shadetree-blue">↗ +18% this week</div>
+                                        </div>
+                                        <i data-feather="file-text" class="w-8 h-8 text-shadetree-blue"></i>
+                                    </div>
+                                </div>
+                                <div class="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border-l-4 border-shadetree-green">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="text-sm text-gray-600">Scheduled Jobs</div>
+                                            <div class="text-2xl font-bold text-enterprise-navy">1,243</div>
+                                            <div class="text-xs text-shadetree-green">↗ 95% capacity</div>
+                                        </div>
+                                        <i data-feather="check-circle" class="w-8 h-8 text-shadetree-green"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Workflow Status -->
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-medium text-gray-700">Today's Workflow Status</span>
+                                    <span class="text-xs text-gray-500">Real-time updates</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-20 text-xs text-gray-500">Quotes Sent</div>
+                                        <div class="flex-1 h-3 bg-gray-200 rounded">
+                                            <div class="h-3 bg-shadetree-blue rounded w-4/5"></div>
+                                        </div>
+                                        <div class="text-xs text-gray-600">67</div>
+                                    </div>
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-20 text-xs text-gray-500">Approved</div>
+                                        <div class="flex-1 h-3 bg-gray-200 rounded">
+                                            <div class="h-3 bg-shadetree-green rounded w-3/4"></div>
+                                        </div>
+                                        <div class="text-xs text-gray-600">52</div>
+                                    </div>
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-20 text-xs text-gray-500">Scheduled</div>
+                                        <div class="flex-1 h-3 bg-gray-200 rounded">
+                                            <div class="h-3 bg-shadetree-purple rounded w-full"></div>
+                                        </div>
+                                        <div class="text-xs text-gray-600">48</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Team Performance -->
+                            <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                                <div class="flex items-center space-x-4 text-xs text-gray-500">
+                                    <span>Team Members: 247</span>
+                                    <span>•</span>
+                                    <span>Locations: 12</span>
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                                    <span class="text-xs text-gray-500">All systems operational</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Floating Integration Badge -->
+                    <div class="absolute -top-4 -right-4 bg-white rounded-full p-3 shadow-lg border border-gray-200">
+                        <i data-feather="zap" class="w-6 h-6 text-shadetree-yellow"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enterprise Testimonial -->
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+            <div class="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
+                <div class="flex items-start space-x-6">
+                    <div class="flex-shrink-0">
+                        <div class="w-16 h-16 bg-gradient-to-br from-shadetree-blue to-shadetree-purple rounded-full flex items-center justify-center">
+                            <span class="text-white text-xl font-bold">JS</span>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <blockquote class="text-lg text-enterprise-gray italic mb-4">
+                            "Shadetree transformed our multi-location HVAC business. We went from 60% quote-to-appointment conversion to 89% in just 6 months. The automation and scheduling efficiency across our 15 locations has been game-changing."
+                        </blockquote>
+                        <div class="flex items-center justify-between">
+                            <cite class="not-italic">
+                                <div class="font-medium text-enterprise-navy">Jennifer Martinez</div>
+                                <div class="text-sm text-gray-600">VP of Operations, Elite HVAC Corp (15 locations)</div>
+                            </cite>
+                            <div class="text-right">
+                                <div class="text-2xl font-bold text-shadetree-green">89%</div>
+                                <div class="text-sm text-gray-600">Conversion Rate</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Service Business Capabilities Section -->
+    <section class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Section Header -->
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-enterprise-navy mb-4">
+                    Complete Service Business Management Suite
+                </h2>
+                <p class="text-xl text-enterprise-gray max-w-3xl mx-auto">
+                    From initial quote request to final payment, manage every aspect of your service business with enterprise-grade tools and automation.
+                </p>
+            </div>
+
+            <!-- Capabilities Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Quote Management -->
+                <div class="bg-white shadow-lg rounded-lg p-8 border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
+                        <i data-feather="file-text" class="w-6 h-6 text-shadetree-blue"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-enterprise-navy mb-4">Professional Quote Management</h3>
+                    <p class="text-enterprise-gray mb-6">
+                        Create, send, and track professional quotes with custom templates, pricing rules, and automated follow-ups.
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Custom quote templates
+                        </li>
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Digital signatures
+                        </li>
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            One-click approvals
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Appointment Scheduling -->
+                <div class="bg-white shadow-lg rounded-lg p-8 border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-6">
+                        <i data-feather="calendar" class="w-6 h-6 text-shadetree-green"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-enterprise-navy mb-4">Smart Appointment Scheduling</h3>
+                    <p class="text-enterprise-gray mb-6">
+                        Automated scheduling with staff availability, service duration optimization, and customer self-service booking.
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Multi-location scheduling
+                        </li>
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Staff availability management
+                        </li>
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Customer self-scheduling
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Workflow Automation -->
+                <div class="bg-white shadow-lg rounded-lg p-8 border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-6">
+                        <i data-feather="zap" class="w-6 h-6 text-shadetree-purple"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-enterprise-navy mb-4">Custom Workflow Builder</h3>
+                    <p class="text-enterprise-gray mb-6">
+                        Design custom workflows from quote to payment with automated notifications, approvals, and follow-ups.
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Visual workflow builder
+                        </li>
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Automated notifications
+                        </li>
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Custom approval chains
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Payment Processing -->
+                <div class="bg-white shadow-lg rounded-lg p-8 border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mb-6">
+                        <i data-feather="credit-card" class="w-6 h-6 text-shadetree-yellow"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-enterprise-navy mb-4">Integrated Payment Processing</h3>
+                    <p class="text-enterprise-gray mb-6">
+                        Accept payments online with automatic invoicing, payment tracking, and financial reporting integration.
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Online payment collection
+                        </li>
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Automated invoicing
+                        </li>
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Financial reporting
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Team Management -->
+                <div class="bg-white shadow-lg rounded-lg p-8 border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-6">
+                        <i data-feather="users" class="w-6 h-6 text-shadetree-red"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-enterprise-navy mb-4">Multi-Location Team Management</h3>
+                    <p class="text-enterprise-gray mb-6">
+                        Manage staff across multiple locations with role-based permissions, availability tracking, and performance metrics.
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Role-based access control
+                        </li>
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Staff scheduling
+                        </li>
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Performance tracking
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Analytics & Reporting -->
+                <div class="bg-white shadow-lg rounded-lg p-8 border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                    <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-6">
+                        <i data-feather="bar-chart-2" class="w-6 h-6 text-indigo-600"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-enterprise-navy mb-4">Enterprise Reporting & Analytics</h3>
+                    <p class="text-enterprise-gray mb-6">
+                        Comprehensive business insights with conversion tracking, revenue analysis, and operational efficiency metrics.
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Real-time dashboards
+                        </li>
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Conversion analytics
+                        </li>
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Custom reports
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Industry Solutions Section -->
+    <section class="py-20 bg-gradient-to-b from-gray-50 to-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-enterprise-navy mb-4">
+                    Built for Service Industries
+                </h2>
+                <p class="text-xl text-enterprise-gray">
+                    Specialized workflows and features designed for the unique needs of service businesses.
+                </p>
+            </div>
+
+            <!-- Industry Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+                <div class="bg-white rounded-lg shadow-lg p-8 text-center border border-gray-200">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <i data-feather="home" class="w-6 h-6 text-shadetree-blue"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-enterprise-navy mb-2">HVAC & Plumbing</h3>
+                    <p class="text-sm text-gray-600">Emergency dispatch, parts inventory, seasonal scheduling</p>
+                </div>
+                <div class="bg-white rounded-lg shadow-lg p-8 text-center border border-gray-200">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <i data-feather="scissors" class="w-6 h-6 text-shadetree-green"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-enterprise-navy mb-2">Landscaping</h3>
+                    <p class="text-sm text-gray-600">Seasonal services, recurring maintenance, weather tracking</p>
+                </div>
+                <div class="bg-white rounded-lg shadow-lg p-8 text-center border border-gray-200">
+                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <i data-feather="truck" class="w-6 h-6 text-shadetree-yellow"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-enterprise-navy mb-2">Construction</h3>
+                    <p class="text-sm text-gray-600">Project phases, material tracking, subcontractor management</p>
+                </div>
+                <div class="bg-white rounded-lg shadow-lg p-8 text-center border border-gray-200">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <i data-feather="shield" class="w-6 h-6 text-shadetree-purple"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-enterprise-navy mb-2">Cleaning Services</h3>
+                    <p class="text-sm text-gray-600">Recurring schedules, quality checklists, team assignments</p>
+                </div>
+            </div>
+
+            <!-- ROI Case Studies -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div class="bg-white rounded-lg shadow-lg p-8 border border-gray-200">
+                    <div class="flex items-center mb-6">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i data-feather="home" class="w-6 h-6 text-shadetree-blue"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-semibold text-enterprise-navy">Regional HVAC Company</h3>
+                            <p class="text-sm text-gray-600">12 locations • 150 technicians</p>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Quote-to-Job Conversion</span>
+                            <span class="text-lg font-semibold text-shadetree-green">+34%</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Administrative Time Saved</span>
+                            <span class="text-lg font-semibold text-shadetree-blue">15 hrs/week</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Customer Satisfaction</span>
+                            <span class="text-lg font-semibold text-shadetree-purple">4.8/5 stars</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-lg p-8 border border-gray-200">
+                    <div class="flex items-center mb-6">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i data-feather="scissors" class="w-6 h-6 text-shadetree-green"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-semibold text-enterprise-navy">National Landscaping Chain</h3>
+                            <p class="text-sm text-gray-600">25 locations • 300+ crew members</p>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Seasonal Booking Efficiency</span>
+                            <span class="text-lg font-semibold text-shadetree-green">+67%</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">No-Show Reduction</span>
+                            <span class="text-lg font-semibold text-shadetree-blue">-45%</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Revenue Growth</span>
+                            <span class="text-lg font-semibold text-shadetree-purple">+$2.3M/year</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Enterprise CTA Section -->
+    <section class="py-20 bg-enterprise-navy">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl font-bold text-white mb-6">
+                Ready to Transform Your Service Business?
+            </h2>
+            <p class="text-xl text-blue-200 mb-10">
+                Join hundreds of service businesses already streamlining their operations from quote to payment with Shadetree's enterprise platform.
+            </p>
+
+            <!-- Enterprise Contact Form -->
+            <div class="bg-white rounded-lg p-10 max-w-2xl mx-auto">
+                <h3 class="text-xl font-semibold text-enterprise-navy mb-8">Schedule Your Enterprise Demo</h3>
+
+                <form class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                            <input
+                                type="text"
+                                class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-3"
+                                required
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Business Email</label>
+                            <input
+                                type="email"
+                                class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-3"
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
+                            <input
+                                type="text"
+                                class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-3"
+                                required
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Service Industry</label>
+                            <select class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-3">
+                                <option>HVAC & Plumbing</option>
+                                <option>Landscaping & Lawn Care</option>
+                                <option>Construction & Contracting</option>
+                                <option>Cleaning Services</option>
+                                <option>Home Services</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Number of Locations</label>
+                            <select class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-3">
+                                <option>1-3 locations</option>
+                                <option>4-10 locations</option>
+                                <option>11-25 locations</option>
+                                <option>25+ locations</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Team Size</label>
+                            <select class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-3">
+                                <option>10-25 employees</option>
+                                <option>25-50 employees</option>
+                                <option>50-100 employees</option>
+                                <option>100+ employees</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Current Business Challenge</label>
+                        <textarea
+                            rows="4"
+                            class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-3"
+                            placeholder="What's your biggest challenge with quotes, scheduling, or customer management?"
+                        ></textarea>
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="w-full bg-shadetree-blue text-white px-8 py-4 text-lg font-medium rounded-md hover:bg-blue-800 shadow-lg"
+                    >
+                        Schedule Enterprise Demo
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-600">
+                        Our team will contact you within 24 hours to schedule your personalized demonstration.
+                    </p>
+                    <div class="flex items-center justify-center mt-4 space-x-6 text-xs text-gray-500">
+                        <span class="flex items-center">
+                            <i data-feather="shield" class="w-4 h-4 mr-1"></i>
+                            SOC 2 Certified
+                        </span>
+                        <span class="flex items-center">
+                            <i data-feather="clock" class="w-4 h-4 mr-1"></i>
+                            99.9% Uptime
+                        </span>
+                        <span class="flex items-center">
+                            <i data-feather="check-circle" class="w-4 h-4 mr-1"></i>
+                            14-Day Free Trial
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Enterprise Footer -->
+    <footer class="bg-gray-900 text-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Company Info -->
+                <div class="lg:col-span-2">
+                    <div class="text-2xl font-bold mb-4">
+                        <span class="text-shadetree-green">Shade</span><span class="text-white">tree</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-6 max-w-md">
+                        The complete service business management platform. Streamline your workflow from quote to payment across multiple locations.
+                    </p>
+                    <div class="flex space-x-4">
+                        <div class="bg-gray-800 p-2 rounded">
+                            <i data-feather="file-text" class="w-4 h-4 text-shadetree-blue"></i>
+                        </div>
+                        <div class="bg-gray-800 p-2 rounded">
+                            <i data-feather="calendar" class="w-4 h-4 text-shadetree-green"></i>
+                        </div>
+                        <div class="bg-gray-800 p-2 rounded">
+                            <i data-feather="credit-card" class="w-4 h-4 text-shadetree-yellow"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Solutions -->
+                <div>
+                    <h4 class="text-sm font-semibold text-white mb-4">Solutions</h4>
+                    <ul class="space-y-3 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-white">Quote Management</a></li>
+                        <li><a href="#" class="hover:text-white">Appointment Scheduling</a></li>
+                        <li><a href="#" class="hover:text-white">Payment Processing</a></li>
+                        <li><a href="#" class="hover:text-white">Team Management</a></li>
+                    </ul>
+                </div>
+
+                <!-- Industries -->
+                <div>
+                    <h4 class="text-sm font-semibold text-white mb-4">Industries</h4>
+                    <ul class="space-y-3 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-white">HVAC & Plumbing</a></li>
+                        <li><a href="#" class="hover:text-white">Landscaping</a></li>
+                        <li><a href="#" class="hover:text-white">Construction</a></li>
+                        <li><a href="#" class="hover:text-white">Cleaning Services</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-800 mt-12 pt-8">
+                <div class="flex flex-col lg:flex-row justify-between items-center">
+                    <div class="text-gray-400 text-sm mb-4 lg:mb-0">
+                        �� 2025 Shadetree Service Management Platform. All rights reserved.
+                    </div>
+                    <div class="flex items-center space-x-6 text-sm text-gray-400">
+                        <span>Trusted by 1000+ Service Businesses</span>
+                        <span>•</span>
+                        <span>SOC 2 Certified</span>
+                        <span>•</span>
+                        <span>99.9% Uptime</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Initialize Feather Icons -->
+    <script>
+        feather.replace();
+
+        // Service business focused tracking
+        let serviceEngagement = {
+            demoRequested: false,
+            industrySpecific: false,
+            multiLocationInterest: false,
+            workflowBuilderViewed: false
+        };
+
+        // Track service business specific interactions
+        window.addEventListener('scroll', () => {
+            const scrollPercent = Math.round((window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100);
+            if (scrollPercent > 60 && !serviceEngagement.workflowBuilderViewed) {
+                serviceEngagement.workflowBuilderViewed = true;
+                // Track engagement with workflow automation section
+            }
+        });
+    </script>
+</body>
+</html>
