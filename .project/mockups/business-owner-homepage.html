@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shadetree - Drive Business Growth with Data-Driven Insights</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'shadetree-blue': '#3B82F6',
+                        'shadetree-green': '#10B981',
+                        'shadetree-red': '#EF4444',
+                        'shadetree-yellow': '#F59E0B',
+                        'shadetree-purple': '#8B5CF6'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!--
+    Context Header:
+    - Target Persona: Business Owner (CEO, Founder, Executive)
+    - User Story: As a business owner, I want to see how Shadetree solves my specific problems and potential ROI impact
+    - Key Interactions: ROI calculator, Case studies, Implementation timeline, Pricing assessment
+    -->
+
+    <!-- Navigation Header -->
+    <nav class="sticky top-0 z-10 bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <div class="text-2xl font-bold">
+                        <span class="text-shadetree-green">Shade</span><span class="text-gray-900">tree</span>
+                    </div>
+                </div>
+
+                <!-- Navigation Links -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#roi" class="text-gray-600 hover:text-gray-900">ROI Calculator</a>
+                    <a href="#case-studies" class="text-gray-600 hover:text-gray-900">Case Studies</a>
+                    <a href="#pricing" class="text-gray-600 hover:text-gray-900">Pricing</a>
+                    <a href="#implementation" class="text-gray-600 hover:text-gray-900">Implementation</a>
+                </div>
+
+                <!-- CTA Buttons -->
+                <div class="flex items-center space-x-4">
+                    <a href="#demo" class="text-gray-600 hover:text-gray-900">Request Demo</a>
+                    <a href="#consultation" class="bg-shadetree-blue text-white px-4 py-2 text-sm font-medium rounded-md hover:bg-blue-700">
+                        Free Consultation
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section - Business Owner Focused -->
+    <section class="relative bg-gradient-to-br from-shadetree-blue to-shadetree-purple overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <!-- Hero Content -->
+                <div class="text-white">
+                    <h1 class="text-2xl font-semibold text-white mb-6">
+                        Scale Your Business
+                        <span class="text-shadetree-green">40% Faster</span>
+                        with Intelligent Operations
+                    </h1>
+
+                    <p class="text-lg text-blue-100 mb-8">
+                        Join 500+ business owners who've increased revenue and reduced operational costs using Shadetree's comprehensive business intelligence platform.
+                    </p>
+
+                    <!-- ROI Preview -->
+                    <div class="bg-white bg-opacity-10 rounded-lg p-6 mb-8">
+                        <h3 class="text-lg font-medium text-white mb-4">Potential Annual Savings</h3>
+                        <div class="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                                <div class="text-2xl font-bold text-shadetree-green">$125K</div>
+                                <div class="text-sm text-blue-200">Operational Costs</div>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-shadetree-green">160hrs</div>
+                                <div class="text-sm text-blue-200">Monthly Time Saved</div>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-shadetree-green">40%</div>
+                                <div class="text-sm text-blue-200">Faster Growth</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Primary CTAs -->
+                    <div class="flex flex-col sm:flex-row gap-4 mb-12">
+                        <a href="#consultation" class="bg-shadetree-green text-white px-6 py-3 text-lg font-medium rounded-md hover:bg-green-600 text-center">
+                            Get ROI Assessment
+                        </a>
+                        <a href="#demo" class="border-2 border-white text-white px-6 py-3 text-lg font-medium rounded-md hover:bg-white hover:text-shadetree-blue text-center">
+                            Schedule Demo
+                        </a>
+                    </div>
+
+                    <!-- Executive Social Proof -->
+                    <div class="space-y-4">
+                        <p class="text-sm text-blue-200 uppercase tracking-wide">Trusted by industry leaders</p>
+                        <div class="flex flex-wrap gap-6 items-center">
+                            <div class="bg-white bg-opacity-20 px-4 py-2 rounded text-sm">TechCorp CEO</div>
+                            <div class="bg-white bg-opacity-20 px-4 py-2 rounded text-sm">InnovateCo Founder</div>
+                            <div class="bg-white bg-opacity-20 px-4 py-2 rounded text-sm">StartupX President</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Business Dashboard Mockup -->
+                <div class="flex justify-center">
+                    <div class="bg-white rounded-lg shadow-2xl p-6 max-w-md w-full">
+                        <!-- Executive Dashboard -->
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-medium text-gray-900">Executive Dashboard</h3>
+                                <div class="flex space-x-1">
+                                    <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                                    <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                                </div>
+                            </div>
+
+                            <!-- Key Business Metrics -->
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-green-50 p-3 rounded border-l-4 border-shadetree-green">
+                                    <div class="text-xs text-gray-500">Monthly Revenue</div>
+                                    <div class="text-lg font-medium text-gray-900">$284K</div>
+                                    <div class="text-xs text-shadetree-green">↗ +18% vs last month</div>
+                                </div>
+                                <div class="bg-blue-50 p-3 rounded border-l-4 border-shadetree-blue">
+                                    <div class="text-xs text-gray-500">Profit Margin</div>
+                                    <div class="text-lg font-medium text-gray-900">32.4%</div>
+                                    <div class="text-xs text-shadetree-blue">↗ +5.2% vs last month</div>
+                                </div>
+                                <div class="bg-purple-50 p-3 rounded border-l-4 border-shadetree-purple">
+                                    <div class="text-xs text-gray-500">Team Efficiency</div>
+                                    <div class="text-lg font-medium text-gray-900">94%</div>
+                                    <div class="text-xs text-shadetree-purple">↗ +12% vs last month</div>
+                                </div>
+                                <div class="bg-yellow-50 p-3 rounded border-l-4 border-shadetree-yellow">
+                                    <div class="text-xs text-gray-500">Cost Savings</div>
+                                    <div class="text-lg font-medium text-gray-900">$42K</div>
+                                    <div class="text-xs text-shadetree-yellow">This month</div>
+                                </div>
+                            </div>
+
+                            <!-- Growth Trend -->
+                            <div class="space-y-2">
+                                <div class="flex justify-between text-xs text-gray-500">
+                                    <span>Growth Trend (6 months)</span>
+                                    <span>40% increase</span>
+                                </div>
+                                <div class="h-2 bg-gray-200 rounded w-full"></div>
+                                <div class="h-2 bg-shadetree-green rounded w-4/5 -mt-2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Executive Testimonial -->
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
+            <div class="bg-white bg-opacity-10 rounded-lg p-6 border-l-4 border-shadetree-green">
+                <blockquote class="text-lg text-white italic mb-4">
+                    "As CEO, I needed visibility into every aspect of our operations. Shadetree gave me the insights to make data-driven decisions that increased our revenue by $2M in the first year."
+                </blockquote>
+                <cite class="text-blue-200 font-medium">— Michael Chen, CEO at TechCorp (250 employees)</cite>
+            </div>
+        </div>
+    </section>
+
+    <!-- Business Impact Section -->
+    <section class="py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Section Header -->
+            <div class="text-center mb-16">
+                <h2 class="text-2xl font-semibold text-gray-900 mb-4">
+                    Proven Business Impact Across Industries
+                </h2>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                    See how business owners like you have transformed their operations and accelerated growth.
+                </p>
+            </div>
+
+            <!-- Case Studies Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Case Study 1 -->
+                <div class="bg-white shadow rounded-lg p-6 border-l-4 border-shadetree-green">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-green-100 rounded-md flex items-center justify-center">
+                            <i data-feather="trending-up" class="w-6 h-6 text-shadetree-green"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-medium text-gray-900">Manufacturing</h3>
+                            <p class="text-sm text-gray-500">150 employees</p>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Revenue Growth</span>
+                            <span class="text-sm font-medium text-shadetree-green">+45%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Cost Reduction</span>
+                            <span class="text-sm font-medium text-shadetree-green">-$180K/year</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">ROI Timeline</span>
+                            <span class="text-sm font-medium text-gray-900">4 months</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Case Study 2 -->
+                <div class="bg-white shadow rounded-lg p-6 border-l-4 border-shadetree-blue">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-md flex items-center justify-center">
+                            <i data-feather="users" class="w-6 h-6 text-shadetree-blue"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-medium text-gray-900">Professional Services</h3>
+                            <p class="text-sm text-gray-500">75 employees</p>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Productivity Gain</span>
+                            <span class="text-sm font-medium text-shadetree-blue">+60%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Client Retention</span>
+                            <span class="text-sm font-medium text-shadetree-blue">95%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Implementation</span>
+                            <span class="text-sm font-medium text-gray-900">6 weeks</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Case Study 3 -->
+                <div class="bg-white shadow rounded-lg p-6 border-l-4 border-shadetree-purple">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-purple-100 rounded-md flex items-center justify-center">
+                            <i data-feather="bar-chart-2" class="w-6 h-6 text-shadetree-purple"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-medium text-gray-900">E-commerce</h3>
+                            <p class="text-sm text-gray-500">200 employees</p>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Sales Increase</span>
+                            <span class="text-sm font-medium text-shadetree-purple">+85%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Operational Savings</span>
+                            <span class="text-sm font-medium text-shadetree-purple">-$320K/year</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Payback Period</span>
+                            <span class="text-sm font-medium text-gray-900">3 months</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ROI Calculator Section -->
+    <section id="roi" class="py-24 bg-gray-50">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-2xl font-semibold text-gray-900 mb-4">
+                    Calculate Your Potential ROI
+                </h2>
+                <p class="text-lg text-gray-600">
+                    See how much Shadetree could save your business in the first year.
+                </p>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Input Section -->
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Number of Employees
+                            </label>
+                            <select class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                <option>10-25</option>
+                                <option>26-50</option>
+                                <option>51-100</option>
+                                <option>101-250</option>
+                                <option>250+</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Industry
+                            </label>
+                            <select class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                <option>Manufacturing</option>
+                                <option>Professional Services</option>
+                                <option>E-commerce</option>
+                                <option>Healthcare</option>
+                                <option>Technology</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Annual Revenue
+                            </label>
+                            <select class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                <option>Under $1M</option>
+                                <option>$1M - $5M</option>
+                                <option>$5M - $10M</option>
+                                <option>$10M - $25M</option>
+                                <option>$25M+</option>
+                            </select>
+                        </div>
+
+                        <button class="w-full bg-shadetree-blue text-white px-6 py-3 text-lg font-medium rounded-md hover:bg-blue-700">
+                            Calculate ROI
+                        </button>
+                    </div>
+
+                    <!-- Results Section -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Estimated Annual Impact</h3>
+
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600">Cost Savings</span>
+                                <span class="text-lg font-medium text-shadetree-green">$125,000</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600">Productivity Gains</span>
+                                <span class="text-lg font-medium text-shadetree-blue">$89,000</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600">Revenue Growth</span>
+                                <span class="text-lg font-medium text-shadetree-purple">$240,000</span>
+                            </div>
+                            <hr class="border-gray-200">
+                            <div class="flex justify-between items-center">
+                                <span class="text-lg font-medium text-gray-900">Total Annual Benefit</span>
+                                <span class="text-2xl font-bold text-shadetree-green">$454,000</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600">ROI</span>
+                                <span class="text-lg font-medium text-gray-900">1,260%</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 p-4 bg-blue-50 rounded">
+                            <p class="text-sm text-gray-700">
+                                <strong>Payback Period:</strong> 2.8 months
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Implementation Timeline -->
+    <section class="py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-2xl font-semibold text-gray-900 mb-4">
+                    Get Results in 90 Days or Less
+                </h2>
+                <p class="text-lg text-gray-600">
+                    Our proven implementation process gets you seeing ROI quickly.
+                </p>
+            </div>
+
+            <div class="relative">
+                <!-- Timeline -->
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-8 md:space-y-0">
+                    <!-- Phase 1 -->
+                    <div class="flex-1 text-center">
+                        <div class="w-16 h-16 bg-shadetree-blue rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-xl font-bold text-white">1</span>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">Discovery & Setup</h3>
+                        <p class="text-sm text-gray-600 mb-2">Week 1-2</p>
+                        <p class="text-sm text-gray-500">Business analysis, data integration, team training</p>
+                    </div>
+
+                    <!-- Phase 2 -->
+                    <div class="flex-1 text-center">
+                        <div class="w-16 h-16 bg-shadetree-green rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-xl font-bold text-white">2</span>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">Launch & Optimize</h3>
+                        <p class="text-sm text-gray-600 mb-2">Week 3-6</p>
+                        <p class="text-sm text-gray-500">Go-live, workflow optimization, performance monitoring</p>
+                    </div>
+
+                    <!-- Phase 3 -->
+                    <div class="flex-1 text-center">
+                        <div class="w-16 h-16 bg-shadetree-purple rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-xl font-bold text-white">3</span>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">Scale & Grow</h3>
+                        <p class="text-sm text-gray-600 mb-2">Week 7-12</p>
+                        <p class="text-sm text-gray-500">Advanced features, growth initiatives, ROI measurement</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Executive CTA Section -->
+    <section class="py-24 bg-shadetree-blue">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-2xl font-semibold text-white mb-6">
+                Ready to Transform Your Business?
+            </h2>
+            <p class="text-lg text-blue-100 mb-8">
+                Schedule a personalized consultation with our business experts. No sales pitch - just strategic insights for your business.
+            </p>
+
+            <!-- Executive Contact Form -->
+            <div class="bg-white rounded-lg p-8 max-w-2xl mx-auto">
+                <h3 class="text-lg font-medium text-gray-900 mb-6">Get Your Free Business Assessment</h3>
+
+                <form class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input
+                            type="text"
+                            placeholder="Full Name"
+                            class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-3"
+                            required
+                        >
+                        <input
+                            type="email"
+                            placeholder="Business Email"
+                            class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-3"
+                            required
+                        >
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input
+                            type="text"
+                            placeholder="Company Name"
+                            class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-3"
+                            required
+                        >
+                        <input
+                            type="tel"
+                            placeholder="Phone Number"
+                            class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-3"
+                            required
+                        >
+                    </div>
+                    <textarea
+                        placeholder="What's your biggest business challenge right now?"
+                        rows="3"
+                        class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-3"
+                    ></textarea>
+
+                    <button
+                        type="submit"
+                        class="w-full bg-shadetree-green text-white px-6 py-3 text-lg font-medium rounded-md hover:bg-green-600"
+                    >
+                        Schedule Free Consultation
+                    </button>
+                </form>
+
+                <p class="text-xs text-gray-500 mt-4">
+                    Our team will contact you within 24 hours to schedule your consultation.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- Company Info -->
+                <div>
+                    <div class="text-xl font-bold mb-4">
+                        <span class="text-shadetree-green">Shade</span><span class="text-white">tree</span>
+                    </div>
+                    <p class="text-gray-400 text-sm">
+                        Empowering business owners to scale operations and drive profitable growth.
+                    </p>
+                </div>
+
+                <!-- Solutions -->
+                <div>
+                    <h4 class="text-sm font-medium text-white mb-4">Solutions</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-white">Executive Dashboard</a></li>
+                        <li><a href="#" class="hover:text-white">Business Intelligence</a></li>
+                        <li><a href="#" class="hover:text-white">Cost Management</a></li>
+                        <li><a href="#" class="hover:text-white">Growth Analytics</a></li>
+                    </ul>
+                </div>
+
+                <!-- Resources -->
+                <div>
+                    <h4 class="text-sm font-medium text-white mb-4">Resources</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-white">Case Studies</a></li>
+                        <li><a href="#" class="hover:text-white">ROI Calculator</a></li>
+                        <li><a href="#" class="hover:text-white">Implementation Guide</a></li>
+                        <li><a href="#" class="hover:text-white">Business Blog</a></li>
+                    </ul>
+                </div>
+
+                <!-- Support -->
+                <div>
+                    <h4 class="text-sm font-medium text-white mb-4">Support</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-white">Executive Support</a></li>
+                        <li><a href="#" class="hover:text-white">Implementation Team</a></li>
+                        <li><a href="#" class="hover:text-white">Success Manager</a></li>
+                        <li><a href="#" class="hover:text-white">Contact Us</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center">
+                <p class="text-gray-400 text-sm">
+                    © 2025 Shadetree. All rights reserved. | Trusted by 500+ Business Leaders
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Initialize Feather Icons -->
+    <script>
+        feather.replace();
+
+        // Business-focused tracking
+        let consultationInterest = false;
+        let roiCalculated = false;
+
+        // Track executive engagement
+        window.addEventListener('scroll', () => {
+            const scrollPercent = Math.round((window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100);
+            if (scrollPercent > 50 && !consultationInterest) {
+                consultationInterest = true;
+                // Track high-intent behavior for sales team
+            }
+        });
+    </script>
+</body>
+</html>

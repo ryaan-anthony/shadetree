@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shadetree - Enterprise Business Intelligence Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'shadetree-blue': '#1E40AF',
+                        'shadetree-green': '#059669',
+                        'shadetree-red': '#DC2626',
+                        'shadetree-yellow': '#D97706',
+                        'shadetree-purple': '#7C3AED',
+                        'enterprise-navy': '#0F172A',
+                        'enterprise-gray': '#334155'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!--
+    Context Header:
+    - Target Persona: Enterprise Decision Maker (CTO, VP Operations, Enterprise Buyer)
+    - User Story: As an enterprise buyer, I want to evaluate a mature, secure platform that can scale with our organization
+    - Key Interactions: Security compliance, Integration capabilities, Enterprise support, ROI analysis
+    -->
+
+    <!-- Navigation Header -->
+    <nav class="sticky top-0 z-20 bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <div class="text-2xl font-bold">
+                        <span class="text-shadetree-green">Shade</span><span class="text-enterprise-navy">tree</span>
+                    </div>
+                    <div class="ml-3 text-sm text-gray-500 hidden sm:block">Enterprise Platform</div>
+                </div>
+
+                <!-- Navigation Links -->
+                <div class="hidden lg:flex items-center space-x-8">
+                    <div class="relative group">
+                        <button class="flex items-center text-enterprise-gray hover:text-enterprise-navy">
+                            Platform
+                            <i data-feather="chevron-down" class="ml-1 h-4 w-4"></i>
+                        </button>
+                    </div>
+                    <div class="relative group">
+                        <button class="flex items-center text-enterprise-gray hover:text-enterprise-navy">
+                            Solutions
+                            <i data-feather="chevron-down" class="ml-1 h-4 w-4"></i>
+                        </button>
+                    </div>
+                    <a href="#security" class="text-enterprise-gray hover:text-enterprise-navy">Security</a>
+                    <a href="#enterprise" class="text-enterprise-gray hover:text-enterprise-navy">Enterprise</a>
+                    <a href="#resources" class="text-enterprise-gray hover:text-enterprise-navy">Resources</a>
+                </div>
+
+                <!-- CTA Buttons -->
+                <div class="flex items-center space-x-4">
+                    <a href="#contact" class="text-enterprise-gray hover:text-enterprise-navy">Contact Sales</a>
+                    <a href="#demo" class="bg-shadetree-blue text-white px-6 py-2.5 text-sm font-medium rounded-md hover:bg-blue-800 shadow-sm">
+                        Request Demo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Enterprise Hero Section -->
+    <section class="relative bg-gradient-to-b from-slate-50 to-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <!-- Hero Content -->
+                <div>
+                    <div class="mb-6">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-shadetree-blue">
+                            <i data-feather="shield" class="mr-2 h-4 w-4"></i>
+                            SOC 2 Type II Certified
+                        </span>
+                    </div>
+
+                    <h1 class="text-4xl lg:text-5xl font-bold text-enterprise-navy mb-6 leading-tight">
+                        Enterprise Business Intelligence
+                        <span class="text-shadetree-blue">Platform</span>
+                    </h1>
+
+                    <p class="text-xl text-enterprise-gray mb-8 leading-relaxed">
+                        Trusted by Fortune 500 companies to drive data-driven decisions, optimize operations, and accelerate growth at enterprise scale.
+                    </p>
+
+                    <!-- Enterprise Stats -->
+                    <div class="grid grid-cols-3 gap-6 mb-10">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-enterprise-navy">99.99%</div>
+                            <div class="text-sm text-gray-600">Uptime SLA</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-enterprise-navy">500M+</div>
+                            <div class="text-sm text-gray-600">Data Points/Day</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-enterprise-navy">150+</div>
+                            <div class="text-sm text-gray-600">Integrations</div>
+                        </div>
+                    </div>
+
+                    <!-- Primary CTAs -->
+                    <div class="flex flex-col sm:flex-row gap-4 mb-10">
+                        <a href="#demo" class="bg-shadetree-blue text-white px-8 py-4 text-lg font-medium rounded-md hover:bg-blue-800 shadow-lg text-center">
+                            Schedule Enterprise Demo
+                        </a>
+                        <a href="#assessment" class="border-2 border-enterprise-gray text-enterprise-gray px-8 py-4 text-lg font-medium rounded-md hover:bg-gray-50 text-center">
+                            Security Assessment
+                        </a>
+                    </div>
+
+                    <!-- Enterprise Customer Logos -->
+                    <div class="space-y-4">
+                        <p class="text-sm text-gray-600 font-medium">Trusted by leading enterprises</p>
+                        <div class="flex flex-wrap gap-8 items-center opacity-70">
+                            <div class="bg-gray-100 px-6 py-3 rounded text-sm font-medium">Fortune 100 Corp</div>
+                            <div class="bg-gray-100 px-6 py-3 rounded text-sm font-medium">Global Tech Inc</div>
+                            <div class="bg-gray-100 px-6 py-3 rounded text-sm font-medium">Enterprise Solutions</div>
+                            <div class="bg-gray-100 px-6 py-3 rounded text-sm font-medium">MegaCorp Industries</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enterprise Dashboard Mockup -->
+                <div class="relative">
+                    <div class="bg-white rounded-lg shadow-2xl border border-gray-200 overflow-hidden">
+                        <!-- Dashboard Header -->
+                        <div class="bg-enterprise-navy px-6 py-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 bg-shadetree-green rounded-md flex items-center justify-center">
+                                        <i data-feather="bar-chart-2" class="w-4 h-4 text-white"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-white font-medium">Executive Dashboard</div>
+                                        <div class="text-blue-200 text-sm">Real-time Enterprise Metrics</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                                    <span class="text-green-400 text-sm">Live</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dashboard Content -->
+                        <div class="p-6 space-y-6">
+                            <!-- Key Metrics Row -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border-l-4 border-shadetree-blue">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="text-sm text-gray-600">Annual Revenue</div>
+                                            <div class="text-2xl font-bold text-enterprise-navy">$847M</div>
+                                            <div class="text-xs text-shadetree-blue">↗ +23% YoY</div>
+                                        </div>
+                                        <i data-feather="trending-up" class="w-8 h-8 text-shadetree-blue"></i>
+                                    </div>
+                                </div>
+                                <div class="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border-l-4 border-shadetree-green">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="text-sm text-gray-600">Operational Efficiency</div>
+                                            <div class="text-2xl font-bold text-enterprise-navy">94.2%</div>
+                                            <div class="text-xs text-shadetree-green">↗ +8.7% QoQ</div>
+                                        </div>
+                                        <i data-feather="activity" class="w-8 h-8 text-shadetree-green"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Chart Visualization -->
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-medium text-gray-700">Performance Trends</span>
+                                    <span class="text-xs text-gray-500">Last 12 months</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-20 text-xs text-gray-500">Q1 2024</div>
+                                        <div class="flex-1 h-3 bg-gray-200 rounded">
+                                            <div class="h-3 bg-shadetree-blue rounded w-3/4"></div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-20 text-xs text-gray-500">Q2 2024</div>
+                                        <div class="flex-1 h-3 bg-gray-200 rounded">
+                                            <div class="h-3 bg-shadetree-blue rounded w-4/5"></div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-20 text-xs text-gray-500">Q3 2024</div>
+                                        <div class="flex-1 h-3 bg-gray-200 rounded">
+                                            <div class="h-3 bg-shadetree-green rounded w-full"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Data Sources -->
+                            <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                                <div class="flex items-center space-x-4 text-xs text-gray-500">
+                                    <span>Data Sources: 47</span>
+                                    <span>•</span>
+                                    <span>Last Updated: 2 min ago</span>
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                                    <span class="text-xs text-gray-500">Real-time</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Floating Security Badge -->
+                    <div class="absolute -top-4 -right-4 bg-white rounded-full p-3 shadow-lg border border-gray-200">
+                        <i data-feather="shield-check" class="w-6 h-6 text-shadetree-green"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enterprise Testimonial -->
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+            <div class="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
+                <div class="flex items-start space-x-6">
+                    <div class="flex-shrink-0">
+                        <div class="w-16 h-16 bg-gradient-to-br from-shadetree-blue to-shadetree-purple rounded-full flex items-center justify-center">
+                            <span class="text-white text-xl font-bold">MC</span>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <blockquote class="text-lg text-enterprise-gray italic mb-4">
+                            "Shadetree's enterprise platform transformed our data strategy across 40+ business units. The security, scalability, and insights have been game-changing for our $2B organization."
+                        </blockquote>
+                        <div class="flex items-center justify-between">
+                            <cite class="not-italic">
+                                <div class="font-medium text-enterprise-navy">Michael Rodriguez</div>
+                                <div class="text-sm text-gray-600">Chief Technology Officer, Global Industries Corp</div>
+                            </cite>
+                            <div class="text-right">
+                                <div class="text-2xl font-bold text-shadetree-green">$45M</div>
+                                <div class="text-sm text-gray-600">Annual Savings</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Enterprise Capabilities Section -->
+    <section class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Section Header -->
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-enterprise-navy mb-4">
+                    Enterprise-Grade Platform Capabilities
+                </h2>
+                <p class="text-xl text-enterprise-gray max-w-3xl mx-auto">
+                    Built for the most demanding enterprise environments with security, compliance, and scale at the foundation.
+                </p>
+            </div>
+
+            <!-- Capabilities Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Security & Compliance -->
+                <div class="bg-white shadow-lg rounded-lg p-8 border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-6">
+                        <i data-feather="shield" class="w-6 h-6 text-shadetree-red"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-enterprise-navy mb-4">Security & Compliance</h3>
+                    <p class="text-enterprise-gray mb-6">
+                        SOC 2 Type II, GDPR, HIPAA compliant with enterprise-grade security controls and audit trails.
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            End-to-end encryption
+                        </li>
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Role-based access control
+                        </li>
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Compliance reporting
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Scalability -->
+                <div class="bg-white shadow-lg rounded-lg p-8 border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
+                        <i data-feather="layers" class="w-6 h-6 text-shadetree-blue"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-enterprise-navy mb-4">Enterprise Scalability</h3>
+                    <p class="text-enterprise-gray mb-6">
+                        Handle billions of data points with auto-scaling infrastructure and global deployment options.
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Auto-scaling compute
+                        </li>
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Multi-region deployment
+                        </li>
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            99.99% uptime SLA
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Integration -->
+                <div class="bg-white shadow-lg rounded-lg p-8 border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-6">
+                        <i data-feather="git-merge" class="w-6 h-6 text-shadetree-purple"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-enterprise-navy mb-4">Enterprise Integrations</h3>
+                    <p class="text-enterprise-gray mb-6">
+                        Connect to any enterprise system with 150+ pre-built connectors and enterprise APIs.
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            ERP/CRM connectors
+                        </li>
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Real-time data sync
+                        </li>
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Custom API development
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Analytics -->
+                <div class="bg-white shadow-lg rounded-lg p-8 border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-6">
+                        <i data-feather="bar-chart-2" class="w-6 h-6 text-shadetree-green"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-enterprise-navy mb-4">Advanced Analytics</h3>
+                    <p class="text-enterprise-gray mb-6">
+                        AI-powered insights with predictive analytics and machine learning for enterprise decision-making.
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Predictive modeling
+                        </li>
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Custom dashboards
+                        </li>
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Automated insights
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Governance -->
+                <div class="bg-white shadow-lg rounded-lg p-8 border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mb-6">
+                        <i data-feather="users" class="w-6 h-6 text-shadetree-yellow"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-enterprise-navy mb-4">Data Governance</h3>
+                    <p class="text-enterprise-gray mb-6">
+                        Enterprise data governance with lineage tracking, quality monitoring, and policy enforcement.
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Data lineage tracking
+                        </li>
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Quality monitoring
+                        </li>
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Policy enforcement
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Support -->
+                <div class="bg-white shadow-lg rounded-lg p-8 border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                    <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-6">
+                        <i data-feather="headphones" class="w-6 h-6 text-indigo-600"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-enterprise-navy mb-4">Enterprise Support</h3>
+                    <p class="text-enterprise-gray mb-6">
+                        Dedicated support team with SLA guarantees, training, and strategic advisory services.
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            24/7 dedicated support
+                        </li>
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Success management
+                        </li>
+                        <li class="flex items-center">
+                            <i data-feather="check" class="w-4 h-4 text-shadetree-green mr-2"></i>
+                            Strategic consulting
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Enterprise ROI Section -->
+    <section class="py-20 bg-gradient-to-b from-gray-50 to-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-enterprise-navy mb-4">
+                    Proven Enterprise ROI
+                </h2>
+                <p class="text-xl text-enterprise-gray">
+                    See how leading enterprises achieve measurable results with Shadetree.
+                </p>
+            </div>
+
+            <!-- ROI Metrics -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+                <div class="bg-white rounded-lg shadow-lg p-8 text-center border border-gray-200">
+                    <div class="text-4xl font-bold text-shadetree-green mb-2">$45M</div>
+                    <div class="text-sm font-medium text-gray-600 mb-2">Average Annual Savings</div>
+                    <div class="text-xs text-gray-500">Fortune 500 customers</div>
+                </div>
+                <div class="bg-white rounded-lg shadow-lg p-8 text-center border border-gray-200">
+                    <div class="text-4xl font-bold text-shadetree-blue mb-2">340%</div>
+                    <div class="text-sm font-medium text-gray-600 mb-2">Average ROI</div>
+                    <div class="text-xs text-gray-500">Within 18 months</div>
+                </div>
+                <div class="bg-white rounded-lg shadow-lg p-8 text-center border border-gray-200">
+                    <div class="text-4xl font-bold text-shadetree-purple mb-2">85%</div>
+                    <div class="text-sm font-medium text-gray-600 mb-2">Faster Decision Making</div>
+                    <div class="text-xs text-gray-500">C-suite executives</div>
+                </div>
+                <div class="bg-white rounded-lg shadow-lg p-8 text-center border border-gray-200">
+                    <div class="text-4xl font-bold text-shadetree-yellow mb-2">6 Mo</div>
+                    <div class="text-sm font-medium text-gray-600 mb-2">Average Payback</div>
+                    <div class="text-xs text-gray-500">Enterprise deployments</div>
+                </div>
+            </div>
+
+            <!-- Case Study Highlights -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div class="bg-white rounded-lg shadow-lg p-8 border border-gray-200">
+                    <div class="flex items-center mb-6">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i data-feather="building" class="w-6 h-6 text-shadetree-blue"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-semibold text-enterprise-navy">Global Manufacturing</h3>
+                            <p class="text-sm text-gray-600">$5B Revenue • 25,000 Employees</p>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Operational Cost Reduction</span>
+                            <span class="text-lg font-semibold text-shadetree-green">-$67M/year</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Decision Speed Improvement</span>
+                            <span class="text-lg font-semibold text-shadetree-blue">75% faster</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Data Quality Enhancement</span>
+                            <span class="text-lg font-semibold text-shadetree-purple">99.2% accuracy</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-lg p-8 border border-gray-200">
+                    <div class="flex items-center mb-6">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i data-feather="trending-up" class="w-6 h-6 text-shadetree-green"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-semibold text-enterprise-navy">Financial Services</h3>
+                            <p class="text-sm text-gray-600">$12B AUM • 15,000 Employees</p>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Revenue Growth Attribution</span>
+                            <span class="text-lg font-semibold text-shadetree-green">+$180M/year</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Risk Management Improvement</span>
+                            <span class="text-lg font-semibold text-shadetree-blue">92% reduction</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Regulatory Compliance</span>
+                            <span class="text-lg font-semibold text-shadetree-purple">100% automated</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Enterprise CTA Section -->
+    <section class="py-20 bg-enterprise-navy">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl font-bold text-white mb-6">
+                Ready for Enterprise Transformation?
+            </h2>
+            <p class="text-xl text-blue-200 mb-10">
+                Join the Fortune 500 companies already transforming their operations with Shadetree's enterprise platform.
+            </p>
+
+            <!-- Enterprise Contact Form -->
+            <div class="bg-white rounded-lg p-10 max-w-2xl mx-auto">
+                <h3 class="text-xl font-semibold text-enterprise-navy mb-8">Schedule Your Enterprise Consultation</h3>
+
+                <form class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                            <input
+                                type="text"
+                                class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-3"
+                                required
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Business Email</label>
+                            <input
+                                type="email"
+                                class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-3"
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Company</label>
+                            <input
+                                type="text"
+                                class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-3"
+                                required
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Company Size</label>
+                            <select class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-3">
+                                <option>1,000-5,000 employees</option>
+                                <option>5,000-10,000 employees</option>
+                                <option>10,000-25,000 employees</option>
+                                <option>25,000+ employees</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Current Business Intelligence Challenge</label>
+                        <textarea
+                            rows="4"
+                            class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-3"
+                            placeholder="Describe your current data and analytics challenges..."
+                        ></textarea>
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="w-full bg-shadetree-blue text-white px-8 py-4 text-lg font-medium rounded-md hover:bg-blue-800 shadow-lg"
+                    >
+                        Schedule Enterprise Demo
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-600">
+                        Our enterprise team will contact you within 4 hours to schedule your personalized demonstration.
+                    </p>
+                    <div class="flex items-center justify-center mt-4 space-x-6 text-xs text-gray-500">
+                        <span class="flex items-center">
+                            <i data-feather="shield" class="w-4 h-4 mr-1"></i>
+                            SOC 2 Certified
+                        </span>
+                        <span class="flex items-center">
+                            <i data-feather="lock" class="w-4 h-4 mr-1"></i>
+                            GDPR Compliant
+                        </span>
+                        <span class="flex items-center">
+                            <i data-feather="check-circle" class="w-4 h-4 mr-1"></i>
+                            99.99% Uptime
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Enterprise Footer -->
+    <footer class="bg-gray-900 text-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Company Info -->
+                <div class="lg:col-span-2">
+                    <div class="text-2xl font-bold mb-4">
+                        <span class="text-shadetree-green">Shade</span><span class="text-white">tree</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-6 max-w-md">
+                        The enterprise business intelligence platform trusted by Fortune 500 companies to drive data-driven transformation at scale.
+                    </p>
+                    <div class="flex space-x-4">
+                        <div class="bg-gray-800 p-2 rounded">
+                            <i data-feather="shield" class="w-4 h-4 text-shadetree-green"></i>
+                        </div>
+                        <div class="bg-gray-800 p-2 rounded">
+                            <i data-feather="award" class="w-4 h-4 text-shadetree-blue"></i>
+                        </div>
+                        <div class="bg-gray-800 p-2 rounded">
+                            <i data-feather="check-circle" class="w-4 h-4 text-shadetree-purple"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enterprise Solutions -->
+                <div>
+                    <h4 class="text-sm font-semibold text-white mb-4">Enterprise Solutions</h4>
+                    <ul class="space-y-3 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-white">Business Intelligence</a></li>
+                        <li><a href="#" class="hover:text-white">Data Analytics</a></li>
+                        <li><a href="#" class="hover:text-white">Operational Excellence</a></li>
+                        <li><a href="#" class="hover:text-white">Digital Transformation</a></li>
+                    </ul>
+                </div>
+
+                <!-- Enterprise Support -->
+                <div>
+                    <h4 class="text-sm font-semibold text-white mb-4">Enterprise Support</h4>
+                    <ul class="space-y-3 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-white">Implementation Services</a></li>
+                        <li><a href="#" class="hover:text-white">Success Management</a></li>
+                        <li><a href="#" class="hover:text-white">Training & Certification</a></li>
+                        <li><a href="#" class="hover:text-white">Technical Documentation</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-800 mt-12 pt-8">
+                <div class="flex flex-col lg:flex-row justify-between items-center">
+                    <div class="text-gray-400 text-sm mb-4 lg:mb-0">
+                        © 2025 Shadetree Enterprise Platform. All rights reserved.
+                    </div>
+                    <div class="flex items-center space-x-6 text-sm text-gray-400">
+                        <span>SOC 2 Type II Certified</span>
+                        <span>•</span>
+                        <span>GDPR Compliant</span>
+                        <span>•</span>
+                        <span>ISO 27001</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Initialize Feather Icons -->
+    <script>
+        feather.replace();
+
+        // Enterprise-level tracking
+        let enterpriseEngagement = {
+            demoRequested: false,
+            securityAssessed: false,
+            roiCalculated: false,
+            consultationScheduled: false
+        };
+
+        // Track high-value enterprise interactions
+        window.addEventListener('scroll', () => {
+            const scrollPercent = Math.round((window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100);
+            if (scrollPercent > 75 && !enterpriseEngagement.demoRequested) {
+                // Track deep engagement for enterprise sales team
+                enterpriseEngagement.demoRequested = true;
+            }
+        });
+    </script>
+</body>
+</html>
