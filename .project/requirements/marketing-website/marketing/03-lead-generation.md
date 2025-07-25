@@ -20,7 +20,7 @@ Multi-step contact forms with lead qualification questions and intelligent routi
 - Implement lead routing system to appropriate sales representatives based on criteria
 - Create form analytics tracking with conversion rate monitoring and A/B testing
 
-**Estimation:** 14-18 hours
+**Estimation:** 7-9 hours
 
 ### 2. Newsletter Subscription
 Email capture with content preferences and segmentation options for targeted marketing.
@@ -32,7 +32,7 @@ Email capture with content preferences and segmentation options for targeted mar
 - Implement email marketing platform integration with automated welcome sequences
 - Create subscription analytics dashboard with growth metrics and engagement tracking
 
-**Estimation:** 12-16 hours
+**Estimation:** 6-8 hours
 
 ### 3. Resource Downloads
 Gated content system for whitepapers, guides, and case studies with lead capture.
@@ -44,4 +44,4 @@ Gated content system for whitepapers, guides, and case studies with lead capture
 - Implement progressive profiling to collect additional information over time
 - Create automated follow-up email sequences based on downloaded content type
 
-**Estimation:** 16-20 hours
+**Estimation:** 8-10 hours

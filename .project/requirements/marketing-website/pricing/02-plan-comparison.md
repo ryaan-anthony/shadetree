@@ -20,7 +20,7 @@ Side-by-side plan comparison with feature availability and limitations clearly d
 - Implement comparison sharing functionality for team decision-making processes
 - Create comparison analytics tracking to understand which features drive conversions
 
-**Estimation:** 16-20 hours
+**Estimation:** 8-10 hours
 
 ### 2. Feature Filtering
 Advanced filtering options to customize comparison view based on business needs and priorities.
@@ -32,7 +32,7 @@ Advanced filtering options to customize comparison view based on business needs 
 - Create saved comparison functionality for returning visitors
 - Add filter analytics to understand which features are most important to prospects
 
-**Estimation:** 12-16 hours
+**Estimation:** 6-8 hours
 
 ### 3. Decision Support Tools
 Calculators and assessment tools to help visitors determine the most appropriate plan.
@@ -44,4 +44,4 @@ Calculators and assessment tools to help visitors determine the most appropriate
 - Implement plan upgrade path visualization showing growth trajectory options
 - Create decision timeline tools for businesses planning future expansion
 
-**Estimation:** 14-18 hours
+**Estimation:** 7-9 hours

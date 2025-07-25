@@ -20,7 +20,7 @@ Self-service password reset with secure token-based verification.
 - Design password reset email template with clear instructions
 - Implement new password creation form with strength validation
 
-**Estimation:** 10-14 hours
+**Estimation:** 5-7 hours
 
 ### 2. Password Change Interface
 In-account password modification with current password verification.
@@ -32,7 +32,7 @@ In-account password modification with current password verification.
 - Build password history tracking to prevent reuse of recent passwords
 - Create confirmation email notification for password changes
 
-**Estimation:** 8-12 hours
+**Estimation:** 4-6 hours
 
 ### 3. Security Requirements
 Password policy enforcement and security guidelines for users.
@@ -44,4 +44,4 @@ Password policy enforcement and security guidelines for users.
 - Build password expiration reminders for enterprise accounts
 - Add breach detection integration to warn about compromised passwords
 
-**Estimation:** 12-16 hours
+**Estimation:** 6-8 hours

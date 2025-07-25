@@ -20,7 +20,7 @@ User-friendly login form with secure authentication and error handling.
 - Implement login attempt tracking and temporary account lockout
 - Create forgot password link integration with password reset flow
 
-**Estimation:** 8-12 hours
+**Estimation:** 4-6 hours
 
 ### 2. Session Management
 Robust session handling with security features and timeout management.
@@ -32,7 +32,7 @@ Robust session handling with security features and timeout management.
 - Build session activity tracking for security monitoring
 - Create secure logout functionality that clears all session data
 
-**Estimation:** 12-16 hours
+**Estimation:** 6-8 hours
 
 ### 3. Authentication Security
 Enhanced security features including two-factor authentication and device tracking.
@@ -44,4 +44,4 @@ Enhanced security features including two-factor authentication and device tracki
 - Build IP address tracking and geolocation-based alerts
 - Add account lockout policies for failed login attempts
 
-**Estimation:** 16-20 hours
+**Estimation:** 8-10 hours

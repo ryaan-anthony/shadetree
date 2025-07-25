@@ -20,7 +20,7 @@ Multi-step account creation with business information collection and validation.
 - Implement password strength requirements and confirmation matching
 - Include business information fields (name, industry, company size)
 
-**Estimation:** 12-16 hours
+**Estimation:** 6-8 hours
 
 ### 2. Email Verification
 Email confirmation process to activate new accounts and ensure valid contact information.
@@ -32,7 +32,7 @@ Email confirmation process to activate new accounts and ensure valid contact inf
 - Implement token expiration handling and resend functionality
 - Add email delivery tracking and bounce handling
 
-**Estimation:** 8-12 hours
+**Estimation:** 4-6 hours
 
 ### 3. Onboarding Flow
 Guided tour introducing key features and collecting initial business setup information.
@@ -44,4 +44,4 @@ Guided tour introducing key features and collecting initial business setup infor
 - Implement progress tracking and ability to skip or return later
 - Create onboarding completion tracking for analytics
 
-**Estimation:** 16-20 hours
+**Estimation:** 8-10 hours

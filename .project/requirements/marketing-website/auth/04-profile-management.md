@@ -20,7 +20,7 @@ Personal and business profile editing with validation and data persistence.
 - Implement form validation with real-time feedback and error handling
 - Create profile completion progress tracking and missing information alerts
 
-**Estimation:** 14-18 hours
+**Estimation:** 7-9 hours
 
 ### 2. Account Settings
 Core account configuration including email, notifications, and security preferences.
@@ -32,7 +32,7 @@ Core account configuration including email, notifications, and security preferen
 - Create timezone and locale settings for international users
 - Add account deactivation and data export options for GDPR compliance
 
-**Estimation:** 12-16 hours
+**Estimation:** 6-8 hours
 
 ### 3. Business Preferences
 Business-specific settings and preferences that affect platform behavior and display.
@@ -44,4 +44,4 @@ Business-specific settings and preferences that affect platform behavior and dis
 - Implement service category preferences and default settings
 - Create preference inheritance system for multi-location businesses
 
-**Estimation:** 16-20 hours
+**Estimation:** 8-10 hours

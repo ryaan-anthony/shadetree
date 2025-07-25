@@ -20,7 +20,7 @@ Compelling headline and subheading that communicate core value proposition with 
 - Implement social proof elements including customer logos and testimonial rotation
 - Create responsive design optimized for mobile and desktop viewing experiences
 
-**Estimation:** 16-20 hours
+**Estimation:** 8-10 hours
 
 ### 2. Feature Highlights Section
 Key platform capabilities display with visual elements and brief descriptions for quick comprehension.
@@ -32,7 +32,7 @@ Key platform capabilities display with visual elements and brief descriptions fo
 - Implement feature linking to detailed pages with smooth scrolling navigation
 - Create content management interface for marketing team to update highlights
 
-**Estimation:** 14-18 hours
+**Estimation:** 7-9 hours
 
 ### 3. Conversion Elements
 Strategic placement of signup forms, contact buttons, and lead magnets throughout the page.
@@ -44,4 +44,4 @@ Strategic placement of signup forms, contact buttons, and lead magnets throughou
 - Build conversion tracking system with Google Analytics and custom event monitoring
 - Add lead scoring integration with marketing automation platform webhooks
 
-**Estimation:** 12-16 hours
+**Estimation:** 6-8 hours
