@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title><%= content_for?(:title) ? yield(:title) : "Shadetree - Job & Quote Software for the Rest of Us" %></title>
+    <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "Quote it, book it, get paid. Simple service business software that helps you win more jobs and get paid faster." %>">
+
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'shadetree-blue': '#3B82F6',
+              'shadetree-green': '#10B981',
+              'shadetree-red': '#EF4444',
+              'shadetree-yellow': '#F59E0B',
+              'shadetree-purple': '#8B5CF6',
+              'enterprise-navy': '#0F172A',
+              'enterprise-gray': '#334155'
+            }
+          }
+        }
+      }
+    </script>
+  </head>
+
+  <body class="bg-gray-50">
+    <%= render 'shared/marketing/top_bar' %>
+    <%= render 'shared/marketing/navigation' %>
+
+    <main>
+      <%= yield %>
+    </main>
+
+    <%= render 'shared/marketing/footer' %>
+
+    <script>
+      // Initialize Feather Icons
+      feather.replace();
+
+      // Dropdown functionality
+      function toggleDropdown(dropdownId) {
+        const dropdown = document.getElementById(dropdownId);
+        dropdown.classList.toggle('hidden');
+      }
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', function(event) {
+        const solutionsDropdown = document.getElementById('solutions-dropdown');
+        const industriesDropdown = document.getElementById('industries-dropdown');
+        const solutionsButton = event.target.closest('[onclick*="solutions-dropdown"]');
+        const industriesButton = event.target.closest('[onclick*="industries-dropdown"]');
+
+        // Close Solutions dropdown if clicking outside
+        if (!solutionsButton && solutionsDropdown && !solutionsDropdown.contains(event.target)) {
+          solutionsDropdown.classList.add('hidden');
+        }
+
+        // Close Industries dropdown if clicking outside
+        if (!industriesButton && industriesDropdown && !industriesDropdown.contains(event.target)) {
+          industriesDropdown.classList.add('hidden');
+        }
+      });
+    </script>
+  </body>
+</html>
