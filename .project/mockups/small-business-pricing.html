@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shadetree - Simple Pricing for Service Businesses</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'shadetree-blue': '#1E40AF',
+                        'shadetree-green': '#059669',
+                        'shadetree-red': '#DC2626',
+                        'shadetree-yellow': '#D97706',
+                        'shadetree-purple': '#7C3AED',
+                        'enterprise-navy': '#0F172A',
+                        'enterprise-gray': '#334155'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!--
+    Context Header:
+    - Target Persona: Small Service Business Owner evaluating pricing
+    - User Story: As a small service business owner, I want transparent pricing that scales with my business
+    - Key Interactions: Plan comparison, Feature evaluation, Trial signup, Contact sales
+    -->
+
+    <!-- Navigation Header -->
+    <nav class="sticky top-0 z-20 bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <div class="text-2xl font-bold">
+                        <span class="text-shadetree-green">Shade</span><span class="text-enterprise-navy">tree</span>
+                    </div>
+                    <div class="ml-3 text-sm text-gray-500 hidden sm:block">Simple Service Business Software</div>
+                </div>
+
+                <!-- Navigation Links -->
+                <div class="hidden lg:flex items-center space-x-8">
+                    <a href="#" class="text-enterprise-gray hover:text-enterprise-navy">Features</a>
+                    <a href="#" class="text-shadetree-blue hover:text-blue-800 font-medium">Pricing</a>
+                    <a href="#" class="text-enterprise-gray hover:text-enterprise-navy">Industries</a>
+                    <a href="#" class="text-enterprise-gray hover:text-enterprise-navy">Resources</a>
+                </div>
+
+                <!-- CTA Buttons -->
+                <div class="flex items-center space-x-4">
+                    <a href="#" class="text-enterprise-gray hover:text-enterprise-navy">Sign In</a>
+                    <a href="#trial" class="bg-shadetree-green text-white px-6 py-2.5 text-sm font-medium rounded-md hover:bg-green-700 shadow-sm">
+                        Start Free Trial
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Pricing Hero Section -->
+    <section class="relative bg-gradient-to-b from-slate-50 to-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="mb-8">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-shadetree-green">
+                    <i data-feather="zap" class="mr-2 h-4 w-4"></i>
+                    No setup fees • Cancel anytime
+                </span>
+            </div>
+
+            <h1 class="text-4xl lg:text-5xl font-bold text-enterprise-navy mb-6 leading-tight">
+                Simple Pricing That
+                <span class="text-shadetree-blue">Grows With You</span>
+            </h1>
+
+            <p class="text-xl text-enterprise-gray mb-12 max-w-3xl mx-auto">
+                Start free, pay only for what you use. No hidden fees, no long-term contracts.
+                Just simple pricing that makes sense for service businesses.
+            </p>
+
+            <!-- Billing Toggle -->
+            <div class="flex items-center justify-center mb-12">
+                <span class="text-sm font-medium text-gray-900 mr-3">Monthly</span>
+                <button class="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-shadetree-blue focus:ring-offset-2">
+                    <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1"></span>
+                </button>
+                <span class="text-sm font-medium text-gray-900 ml-3">
+                    Annual
+                    <span class="text-shadetree-green font-semibold">(Save 20%)</span>
+                </span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Plans Section -->
+    <section class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+                <!-- Starter Plan -->
+                <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
+                    <div class="text-center mb-8">
+                        <h3 class="text-2xl font-bold text-enterprise-navy mb-2">Starter</h3>
+                        <p class="text-enterprise-gray mb-6">Perfect for solo operators and small teams</p>
+                        <div class="mb-6">
+                            <span class="text-4xl font-bold text-enterprise-navy">$0</span>
+                            <span class="text-lg text-gray-500">/month</span>
+                        </div>
+                        <a href="#trial" class="w-full bg-gray-600 text-white px-6 py-3 text-lg font-medium rounded-md hover:bg-gray-700 block text-center">
+                            Start Free
+                        </a>
+                    </div>
+
+                    <div class="space-y-4">
+                        <h4 class="font-semibold text-enterprise-navy">What's included:</h4>
+                        <ul class="space-y-3">
+                            <li class="flex items-center">
+                                <i data-feather="check" class="w-5 h-5 text-shadetree-green mr-3"></i>
+                                <span class="text-sm text-gray-700">Up to 10 quotes per month</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i data-feather="check" class="w-5 h-5 text-shadetree-green mr-3"></i>
+                                <span class="text-sm text-gray-700">Basic scheduling</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i data-feather="check" class="w-5 h-5 text-shadetree-green mr-3"></i>
+                                <span class="text-sm text-gray-700">Email notifications</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i data-feather="check" class="w-5 h-5 text-shadetree-green mr-3"></i>
+                                <span class="text-sm text-gray-700">Mobile app access</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i data-feather="check" class="w-5 h-5 text-shadetree-green mr-3"></i>
+                                <span class="text-sm text-gray-700">Community support</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Professional Plan (Popular) -->
+                <div class="bg-white rounded-lg shadow-xl border-2 border-shadetree-blue p-8 relative">
+                    <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                        <span class="bg-shadetree-blue text-white px-4 py-1 text-sm font-medium rounded-full">
+                            Most Popular
+                        </span>
+                    </div>
+
+                    <div class="text-center mb-8">
+                        <h3 class="text-2xl font-bold text-enterprise-navy mb-2">Professional</h3>
+                        <p class="text-enterprise-gray mb-6">For growing service businesses</p>
+                        <div class="mb-6">
+                            <span class="text-4xl font-bold text-enterprise-navy">$39</span>
+                            <span class="text-lg text-gray-500">/month</span>
+                        </div>
+                        <a href="#trial" class="w-full bg-shadetree-blue text-white px-6 py-3 text-lg font-medium rounded-md hover:bg-blue-800 block text-center">
+                            Start Free Trial
+                        </a>
+                    </div>
+
+                    <div class="space-y-4">
+                        <h4 class="font-semibold text-enterprise-navy">Everything in Starter, plus:</h4>
+                        <ul class="space-y-3">
+                            <li class="flex items-center">
+                                <i data-feather="check" class="w-5 h-5 text-shadetree-green mr-3"></i>
+                                <span class="text-sm text-gray-700">Unlimited quotes & appointments</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i data-feather="check" class="w-5 h-5 text-shadetree-green mr-3"></i>
+                                <span class="text-sm text-gray-700">Online payments & invoicing</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i data-feather="check" class="w-5 h-5 text-shadetree-green mr-3"></i>
+                                <span class="text-sm text-gray-700">Custom quote templates</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i data-feather="check" class="w-5 h-5 text-shadetree-green mr-3"></i>
+                                <span class="text-sm text-gray-700">Digital signatures</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i data-feather="check" class="w-5 h-5 text-shadetree-green mr-3"></i>
+                                <span class="text-sm text-gray-700">SMS notifications</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i data-feather="check" class="w-5 h-5 text-shadetree-green mr-3"></i>
+                                <span class="text-sm text-gray-700">Customer portal</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i data-feather="check" class="w-5 h-5 text-shadetree-green mr-3"></i>
+                                <span class="text-sm text-gray-700">Priority email support</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Business Plan -->
+                <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
+                    <div class="text-center mb-8">
+                        <h3 class="text-2xl font-bold text-enterprise-navy mb-2">Business</h3>
+                        <p class="text-enterprise-gray mb-6">For multi-location operations</p>
+                        <div class="mb-6">
+                            <span class="text-4xl font-bold text-enterprise-navy">$99</span>
+                            <span class="text-lg text-gray-500">/month</span>
+                        </div>
+                        <a href="#contact" class="w-full bg-shadetree-green text-white px-6 py-3 text-lg font-medium rounded-md hover:bg-green-700 block text-center">
+                            Contact Sales
+                        </a>
+                    </div>
+
+                    <div class="space-y-4">
+                        <h4 class="font-semibold text-enterprise-navy">Everything in Professional, plus:</h4>
+                        <ul class="space-y-3">
+                            <li class="flex items-center">
+                                <i data-feather="check" class="w-5 h-5 text-shadetree-green mr-3"></i>
+                                <span class="text-sm text-gray-700">Multi-location management</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i data-feather="check" class="w-5 h-5 text-shadetree-green mr-3"></i>
+                                <span class="text-sm text-gray-700">Team management & roles</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i data-feather="check" class="w-5 h-5 text-shadetree-green mr-3"></i>
+                                <span class="text-sm text-gray-700">Advanced reporting</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i data-feather="check" class="w-5 h-5 text-shadetree-green mr-3"></i>
+                                <span class="text-sm text-gray-700">Workflow automation</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i data-feather="check" class="w-5 h-5 text-shadetree-green mr-3"></i>
+                                <span class="text-sm text-gray-700">API access</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i data-feather="check" class="w-5 h-5 text-shadetree-green mr-3"></i>
+                                <span class="text-sm text-gray-700">Phone support</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i data-feather="check" class="w-5 h-5 text-shadetree-green mr-3"></i>
+                                <span class="text-sm text-gray-700">Dedicated success manager</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Feature Comparison Table -->
+    <section class="py-16 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-enterprise-navy mb-4">
+                    Compare All Features
+                </h2>
+                <p class="text-xl text-enterprise-gray">
+                    See exactly what's included in each plan
+                </p>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-sm font-medium text-gray-900">Features</th>
+                                <th class="px-6 py-4 text-center text-sm font-medium text-gray-900">Starter</th>
+                                <th class="px-6 py-4 text-center text-sm font-medium text-gray-900">Professional</th>
+                                <th class="px-6 py-4 text-center text-sm font-medium text-gray-900">Business</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 text-sm text-gray-900">Monthly quotes</td>
+                                <td class="px-6 py-4 text-center text-sm text-gray-600">Up to 10</td>
+                                <td class="px-6 py-4 text-center">
+                                    <i data-feather="check" class="w-5 h-5 text-shadetree-green mx-auto"></i>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <i data-feather="check" class="w-5 h-5 text-shadetree-green mx-auto"></i>
+                                </td>
+                            </tr>
+                            <tr class="bg-gray-50">
+                                <td class="px-6 py-4 text-sm text-gray-900">Online payments</td>
+                                <td class="px-6 py-4 text-center">
+                                    <i data-feather="x" class="w-5 h-5 text-gray-400 mx-auto"></i>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <i data-feather="check" class="w-5 h-5 text-shadetree-green mx-auto"></i>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <i data-feather="check" class="w-5 h-5 text-shadetree-green mx-auto"></i>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 text-sm text-gray-900">Custom templates</td>
+                                <td class="px-6 py-4 text-center">
+                                    <i data-feather="x" class="w-5 h-5 text-gray-400 mx-auto"></i>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <i data-feather="check" class="w-5 h-5 text-shadetree-green mx-auto"></i>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <i data-feather="check" class="w-5 h-5 text-shadetree-green mx-auto"></i>
+                                </td>
+                            </tr>
+                            <tr class="bg-gray-50">
+                                <td class="px-6 py-4 text-sm text-gray-900">Multi-location support</td>
+                                <td class="px-6 py-4 text-center">
+                                    <i data-feather="x" class="w-5 h-5 text-gray-400 mx-auto"></i>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <i data-feather="x" class="w-5 h-5 text-gray-400 mx-auto"></i>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <i data-feather="check" class="w-5 h-5 text-shadetree-green mx-auto"></i>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 text-sm text-gray-900">API access</td>
+                                <td class="px-6 py-4 text-center">
+                                    <i data-feather="x" class="w-5 h-5 text-gray-400 mx-auto"></i>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <i data-feather="x" class="w-5 h-5 text-gray-400 mx-auto"></i>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <i data-feather="check" class="w-5 h-5 text-shadetree-green mx-auto"></i>
+                                </td>
+                            </tr>
+                            <tr class="bg-gray-50">
+                                <td class="px-6 py-4 text-sm text-gray-900">Phone support</td>
+                                <td class="px-6 py-4 text-center">
+                                    <i data-feather="x" class="w-5 h-5 text-gray-400 mx-auto"></i>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <i data-feather="x" class="w-5 h-5 text-gray-400 mx-auto"></i>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <i data-feather="check" class="w-5 h-5 text-shadetree-green mx-auto"></i>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="py-16 bg-white">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-enterprise-navy mb-4">
+                    Frequently Asked Questions
+                </h2>
+                <p class="text-xl text-enterprise-gray">
+                    Everything you need to know about Shadetree pricing
+                </p>
+            </div>
+
+            <div class="space-y-8">
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-enterprise-navy mb-3">
+                        Do you offer a free trial?
+                    </h3>
+                    <p class="text-enterprise-gray">
+                        Yes! All paid plans come with a 14-day free trial. No credit card required to start.
+                        You can also use our Starter plan free forever with up to 10 quotes per month.
+                    </p>
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-enterprise-navy mb-3">
+                        Can I change plans anytime?
+                    </h3>
+                    <p class="text-enterprise-gray">
+                        Absolutely! You can upgrade or downgrade your plan at any time. Changes take effect immediately,
+                        and we'll prorate any billing adjustments.
+                    </p>
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-enterprise-navy mb-3">
+                        Are there any setup fees or contracts?
+                    </h3>
+                    <p class="text-enterprise-gray">
+                        No setup fees, no contracts, no hidden costs. Pay month-to-month or save 20% with annual billing.
+                        Cancel anytime with no penalties.
+                    </p>
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-enterprise-navy mb-3">
+                        What payment methods do you accept?
+                    </h3>
+                    <p class="text-enterprise-gray">
+                        We accept all major credit cards (Visa, MasterCard, American Express, Discover) and ACH bank transfers
+                        for annual plans. All payments are processed securely through Stripe.
+                    </p>
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-enterprise-navy mb-3">
+                        Do you offer discounts for non-profits?
+                    </h3>
+                    <p class="text-enterprise-gray">
+                        Yes! We offer a 50% discount on all plans for qualified non-profit organizations.
+                        Contact our sales team to learn more about our non-profit program.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA Section -->
+    <section class="py-20 bg-enterprise-navy">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl font-bold text-white mb-6">
+                Ready to Get Started?
+            </h2>
+            <p class="text-xl text-blue-200 mb-10">
+                Join thousands of service businesses already using Shadetree to quote it, book it, and get paid faster.
+            </p>
+
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="#trial" class="bg-shadetree-green text-white px-8 py-4 text-lg font-medium rounded-md hover:bg-green-700 shadow-lg">
+                    Start Free Trial
+                </a>
+                <a href="#contact" class="border-2 border-white text-white px-8 py-4 text-lg font-medium rounded-md hover:bg-white hover:text-enterprise-navy">
+                    Contact Sales
+                </a>
+            </div>
+
+            <p class="text-blue-200 text-sm mt-6">
+                No credit card required • 14-day free trial • Cancel anytime
+            </p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Company Info -->
+                <div class="lg:col-span-2">
+                    <div class="text-2xl font-bold mb-4">
+                        <span class="text-shadetree-green">Shade</span><span class="text-white">tree</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-6 max-w-md">
+                        Simple quote-to-appointment software for service businesses. Quote it, book it, get paid.
+                    </p>
+                </div>
+
+                <!-- Solutions -->
+                <div>
+                    <h4 class="text-sm font-semibold text-white mb-4">Solutions</h4>
+                    <ul class="space-y-3 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-white">Quote Management</a></li>
+                        <li><a href="#" class="hover:text-white">Appointment Scheduling</a></li>
+                        <li><a href="#" class="hover:text-white">Payment Processing</a></li>
+                        <li><a href="#" class="hover:text-white">Mobile App</a></li>
+                    </ul>
+                </div>
+
+                <!-- Support -->
+                <div>
+                    <h4 class="text-sm font-semibold text-white mb-4">Support</h4>
+                    <ul class="space-y-3 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-white">Help Center</a></li>
+                        <li><a href="#" class="hover:text-white">Contact Support</a></li>
+                        <li><a href="#" class="hover:text-white">System Status</a></li>
+                        <li><a href="#" class="hover:text-white">Privacy Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-800 mt-12 pt-8">
+                <div class="flex flex-col lg:flex-row justify-between items-center">
+                    <div class="text-gray-400 text-sm mb-4 lg:mb-0">
+                        © 2025 Shadetree. All rights reserved.
+                    </div>
+                    <div class="flex items-center space-x-6 text-sm text-gray-400">
+                        <span>Trusted by 1000+ Service Businesses</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Initialize Feather Icons -->
+    <script>
+        feather.replace();
+
+        // Pricing page tracking
+        let pricingEngagement = {
+            planCompared: false,
+            faqViewed: false,
+            trialStarted: false
+        };
+
+        // Track pricing specific interactions
+        window.addEventListener('scroll', () => {
+            const scrollPercent = Math.round((window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100);
+            if (scrollPercent > 40 && !pricingEngagement.planCompared) {
+                pricingEngagement.planCompared = true;
+                // Track plan comparison engagement
+            }
+        });
+    </script>
+</body>
+</html>
