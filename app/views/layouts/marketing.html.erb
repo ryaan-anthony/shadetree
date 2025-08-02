@@ -1,78 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= content_for?(:title) ? yield(:title) : "Shadetree - Job & Quote Software for the Rest of Us" %></title>
-    <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "Quote it, book it, get paid. Simple service business software that helps you win more jobs and get paid faster." %>">
 
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'shadetree-blue': '#1E40AF',
+                        'shadetree-green': '#059669',
+                        'shadetree-red': '#DC2626',
+                        'shadetree-yellow': '#D97706',
+                        'shadetree-purple': '#7C3AED',
+                        'enterprise-navy': '#0F172A',
+                        'enterprise-gray': '#334155'
+                    }
+                }
+            }
+        }
+    </script>
+
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
-
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Feather Icons -->
-    <script src="https://unpkg.com/feather-icons"></script>
-
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              'shadetree-blue': '#3B82F6',
-              'shadetree-green': '#10B981',
-              'shadetree-red': '#EF4444',
-              'shadetree-yellow': '#F59E0B',
-              'shadetree-purple': '#8B5CF6',
-              'enterprise-navy': '#0F172A',
-              'enterprise-gray': '#334155'
-            }
-          }
-        }
-      }
-    </script>
-  </head>
-
-  <body class="bg-gray-50">
+</head>
+<body class="bg-gray-50">
     <%= render 'shared/marketing/top_bar' %>
     <%= render 'shared/marketing/navigation' %>
 
-    <main>
-      <%= yield %>
-    </main>
+    <%= yield %>
 
     <%= render 'shared/marketing/footer' %>
 
+    <!-- Initialize Feather Icons -->
     <script>
-      // Initialize Feather Icons
-      feather.replace();
+        feather.replace();
 
-      // Dropdown functionality
-      function toggleDropdown(dropdownId) {
-        const dropdown = document.getElementById(dropdownId);
-        dropdown.classList.toggle('hidden');
-      }
-
-      // Close dropdown when clicking outside
-      document.addEventListener('click', function(event) {
-        const solutionsDropdown = document.getElementById('solutions-dropdown');
-        const industriesDropdown = document.getElementById('industries-dropdown');
-        const solutionsButton = event.target.closest('[onclick*="solutions-dropdown"]');
-        const industriesButton = event.target.closest('[onclick*="industries-dropdown"]');
-
-        // Close Solutions dropdown if clicking outside
-        if (!solutionsButton && solutionsDropdown && !solutionsDropdown.contains(event.target)) {
-          solutionsDropdown.classList.add('hidden');
+        // Dropdown functionality
+        function toggleDropdown(dropdownId) {
+            const dropdown = document.getElementById(dropdownId);
+            dropdown.classList.toggle('hidden');
         }
 
-        // Close Industries dropdown if clicking outside
-        if (!industriesButton && industriesDropdown && !industriesDropdown.contains(event.target)) {
-          industriesDropdown.classList.add('hidden');
-        }
-      });
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const solutionsDropdown = document.getElementById('solutions-dropdown');
+            const industriesDropdown = document.getElementById('industries-dropdown');
+            const solutionsButton = event.target.closest('[onclick*="solutions-dropdown"]');
+            const industriesButton = event.target.closest('[onclick*="industries-dropdown"]');
+
+            // Close Features dropdown if clicking outside
+            if (!solutionsButton && solutionsDropdown && !solutionsDropdown.contains(event.target)) {
+                solutionsDropdown.classList.add('hidden');
+            }
+
+            // Close Industries dropdown if clicking outside
+            if (!industriesButton && industriesDropdown && !industriesDropdown.contains(event.target)) {
+                industriesDropdown.classList.add('hidden');
+            }
+        });
+
+        // Service business focused tracking
+        let serviceEngagement = {
+            demoRequested: false,
+            industrySpecific: false,
+            multiLocationInterest: false,
+            workflowBuilderViewed: false
+        };
+
+        // Track service business specific interactions
+        window.addEventListener('scroll', () => {
+            const scrollPercent = Math.round((window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100);
+            if (scrollPercent > 60 && !serviceEngagement.workflowBuilderViewed) {
+                serviceEngagement.workflowBuilderViewed = true;
+                // Track engagement with workflow automation section
+            }
+        });
     </script>
-  </body>
+</body>
 </html>

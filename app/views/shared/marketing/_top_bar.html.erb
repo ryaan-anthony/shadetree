@@ -1,24 +1,23 @@
 <!-- Top Bar with Language and Login -->
 <div class="bg-gray-100 border-b border-gray-200">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex justify-between items-center py-2">
-      <!-- Language Selection -->
-      <div class="flex items-center space-x-2">
-        <i data-feather="globe" class="h-4 w-4 text-gray-500"></i>
-        <select class="text-sm text-gray-600 bg-transparent border-none focus:ring-0 focus:outline-none cursor-pointer">
-          <option value="en">English</option>
-          <option value="es">Español</option>
-        </select>
-      </div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-2">
+            <!-- Language Selection -->
+            <div class="flex items-center space-x-2">
+                <i data-feather="globe" class="h-4 w-4 text-gray-500"></i>
+                <select class="text-sm text-gray-600 bg-transparent border-none focus:ring-0 focus:outline-none cursor-pointer">
+                    <option value="en">English</option>
+                    <option value="es">Español</option>
+                </select>
+            </div>
 
-      <!-- Login Button -->
-      <div>
-        <%= link_to "#login", class: "text-sm text-gray-600 hover:text-enterprise-navy font-medium flex items-center" do %>
-          <i data-feather="log-in" class="h-4 w-4 mr-1"></i>
-          Login
-        <% end %>
-      </div>
+            <!-- Login Button -->
+            <div>
+                <%= link_to "#login", class: "text-sm text-gray-600 hover:text-enterprise-navy font-medium flex items-center" do %>
+                    <i data-feather="log-in" class="h-4 w-4 mr-1"></i>
+                    Login
+                <% end %>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
-

@@ -1,95 +1,91 @@
 <!-- Navigation Header -->
 <nav class="sticky top-0 z-20 bg-white border-b border-gray-200">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex justify-between items-center py-4">
-      <!-- Logo -->
-      <div class="flex items-center">
-        <%= link_to root_path, class: "text-2xl font-bold" do %>
-          <span class="text-shadetree-green">Shade</span><span class="text-enterprise-navy">tree</span>
-        <% end %>
-        <div class="ml-3 text-sm text-gray-500 hidden sm:block">Service Business Software</div>
-      </div>
-
-      <!-- Navigation Links -->
-      <div class="hidden lg:flex items-center space-x-8">
-        <!-- Solutions Dropdown -->
-        <div class="relative group">
-          <button class="flex items-center text-enterprise-gray hover:text-enterprise-navy" onclick="toggleDropdown('solutions-dropdown')">
-            Solutions
-            <i data-feather="chevron-down" class="ml-1 h-4 w-4"></i>
-          </button>
-          <!-- Solutions Dropdown Menu -->
-          <div id="solutions-dropdown" class="hidden absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
-            <div class="py-1" role="menu" aria-orientation="vertical">
-              <%= link_to "#quote-management", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
-                <i data-feather="file-text" class="mr-3 h-4 w-4 text-shadetree-blue"></i>
-                Quote Management
-              <% end %>
-              <%= link_to "#appointment-scheduling", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
-                <i data-feather="calendar" class="mr-3 h-4 w-4 text-shadetree-green"></i>
-                Appointment Scheduling
-              <% end %>
-              <%= link_to "#payment-processing", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
-                <i data-feather="credit-card" class="mr-3 h-4 w-4 text-shadetree-yellow"></i>
-                Payment Processing
-              <% end %>
-              <%= link_to "#team-management", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
-                <i data-feather="users" class="mr-3 h-4 w-4 text-shadetree-red"></i>
-                Team Management
-              <% end %>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-4">
+            <!-- Logo -->
+            <div class="flex items-center">
+                <div class="text-2xl font-bold">
+                    <span class="text-shadetree-green">Shade</span><span class="text-enterprise-navy">tree</span>
+                </div>
+                <div class="ml-3 text-sm text-gray-500 hidden sm:block">Service Business Software</div>
             </div>
-          </div>
-        </div>
 
-        <!-- Industries Dropdown -->
-        <div class="relative group">
-          <button class="flex items-center text-enterprise-gray hover:text-enterprise-navy" onclick="toggleDropdown('industries-dropdown')">
-            Industries
-            <i data-feather="chevron-down" class="ml-1 h-4 w-4"></i>
-          </button>
-          <!-- Industries Dropdown Menu -->
-          <div id="industries-dropdown" class="hidden absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
-            <div class="py-1" role="menu" aria-orientation="vertical">
-              <%= link_to "#handyman", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
-                <i data-feather="tool" class="mr-3 h-4 w-4 text-shadetree-blue"></i>
-                Handyman
-              <% end %>
-              <%= link_to "#landscaping", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
-                <i data-feather="scissors" class="mr-3 h-4 w-4 text-shadetree-green"></i>
-                Landscaping
-              <% end %>
-              <%= link_to "#cleaning", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
-                <i data-feather="shield" class="mr-3 h-4 w-4 text-shadetree-purple"></i>
-                Cleaning
-              <% end %>
-              <%= link_to "#electrical", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
-                <i data-feather="zap" class="mr-3 h-4 w-4 text-shadetree-yellow"></i>
-                Electrical
-              <% end %>
-              <div class="border-t border-gray-100">
-                <%= link_to "#all-industries", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-medium", role: "menuitem" do %>
-                  <i data-feather="grid" class="mr-3 h-4 w-4 text-gray-500"></i>
-                  View More Industries
+            <!-- Navigation Links -->
+            <div class="hidden lg:flex items-center space-x-8">
+                <div class="relative group">
+                    <button class="flex items-center text-enterprise-gray hover:text-enterprise-navy" onclick="toggleDropdown('solutions-dropdown')">
+                        Features
+                        <i data-feather="chevron-down" class="ml-1 h-4 w-4"></i>
+                    </button>
+                    <!-- Dropdown Menu -->
+                    <div id="solutions-dropdown" class="hidden absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                        <div class="py-1" role="menu" aria-orientation="vertical">
+                            <%= link_to "#quote-management", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
+                                <i data-feather="file-text" class="mr-3 h-4 w-4 text-shadetree-blue"></i>
+                                Quote Management
+                            <% end %>
+                            <%= link_to "#appointment-scheduling", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
+                                <i data-feather="calendar" class="mr-3 h-4 w-4 text-shadetree-green"></i>
+                                Appointment Scheduling
+                            <% end %>
+                            <%= link_to "#payment-processing", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
+                                <i data-feather="credit-card" class="mr-3 h-4 w-4 text-shadetree-yellow"></i>
+                                Payment Processing
+                            <% end %>
+                            <%= link_to "#team-management", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
+                                <i data-feather="users" class="mr-3 h-4 w-4 text-shadetree-red"></i>
+                                Team Management
+                            <% end %>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative group">
+                    <button class="flex items-center text-enterprise-gray hover:text-enterprise-navy" onclick="toggleDropdown('industries-dropdown')">
+                        Industries
+                        <i data-feather="chevron-down" class="ml-1 h-4 w-4"></i>
+                    </button>
+                    <!-- Industries Dropdown Menu -->
+                    <div id="industries-dropdown" class="hidden absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                        <div class="py-1" role="menu" aria-orientation="vertical">
+                            <%= link_to "#handyman", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
+                                <i data-feather="tool" class="mr-3 h-4 w-4 text-shadetree-blue"></i>
+                                Handyman
+                            <% end %>
+                            <%= link_to "#landscaping", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
+                                <i data-feather="scissors" class="mr-3 h-4 w-4 text-shadetree-green"></i>
+                                Landscaping
+                            <% end %>
+                            <%= link_to "#cleaning", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
+                                <i data-feather="shield" class="mr-3 h-4 w-4 text-shadetree-purple"></i>
+                                Cleaning
+                            <% end %>
+                            <%= link_to "#electrical", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
+                                <i data-feather="zap" class="mr-3 h-4 w-4 text-shadetree-yellow"></i>
+                                Electrical
+                            <% end %>
+                            <div class="border-t border-gray-100">
+                                <%= link_to "#all-industries", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-medium", role: "menuitem" do %>
+                                    <i data-feather="grid" class="mr-3 h-4 w-4 text-gray-500"></i>
+                                    View More Industries
+                                <% end %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <%= link_to "#pricing", class: "text-enterprise-gray hover:text-enterprise-navy" do %>
+                    Pricing
                 <% end %>
-              </div>
             </div>
-          </div>
+
+            <!-- CTA Buttons -->
+            <div class="flex items-center space-x-4">
+                <%= link_to "#contact", class: "text-enterprise-gray hover:text-enterprise-navy" do %>
+                    Contact Sales
+                <% end %>
+                <%= link_to "#", class: "bg-shadetree-blue text-white px-6 py-2.5 text-sm font-medium rounded-md hover:bg-blue-800 shadow-sm" do %>
+                    Start Free Trial
+                <% end %>
+            </div>
         </div>
-
-        <%= link_to "#pricing", class: "text-enterprise-gray hover:text-enterprise-navy" do %>
-          Pricing
-        <% end %>
-      </div>
-
-      <!-- CTA Buttons -->
-      <div class="flex items-center space-x-4">
-        <%= link_to "#contact", class: "text-enterprise-gray hover:text-enterprise-navy" do %>
-          Contact Sales
-        <% end %>
-        <%= link_to "#trial", class: "bg-shadetree-blue text-white px-6 py-2.5 text-sm font-medium rounded-md hover:bg-blue-800 shadow-sm" do %>
-          Start Free Trial
-        <% end %>
-      </div>
     </div>
-  </div>
 </nav>
