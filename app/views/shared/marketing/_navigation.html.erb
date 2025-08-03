@@ -5,7 +5,9 @@
             <!-- Logo -->
             <div class="flex items-center">
                 <div class="text-2xl font-bold">
+                  <%= link_to root_path do %>
                     <span class="text-shadetree-green">Shade</span><span class="text-enterprise-navy">tree</span>
+                  <% end %>
                 </div>
                 <div class="ml-3 text-sm text-gray-500 hidden sm:block">Service Business Software</div>
             </div>
@@ -13,12 +15,12 @@
             <!-- Navigation Links -->
             <div class="hidden lg:flex items-center space-x-8">
                 <div class="relative group">
-                    <button class="flex items-center text-enterprise-gray hover:text-enterprise-navy" onclick="toggleDropdown('solutions-dropdown')">
+                    <button class="flex items-center text-enterprise-gray hover:text-enterprise-navy" onclick="toggleDropdown('features-dropdown')">
                         Features
                         <i data-feather="chevron-down" class="ml-1 h-4 w-4"></i>
                     </button>
                     <!-- Dropdown Menu -->
-                    <div id="solutions-dropdown" class="hidden absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                    <div id="features-dropdown" class="hidden absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
                         <div class="py-1" role="menu" aria-orientation="vertical">
                             <%= link_to "#quote-management", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
                                 <i data-feather="file-text" class="mr-3 h-4 w-4 text-shadetree-blue"></i>
@@ -79,13 +81,38 @@
 
             <!-- CTA Buttons -->
             <div class="flex items-center space-x-4">
-                <%= link_to "#contact", class: "text-enterprise-gray hover:text-enterprise-navy" do %>
+                <%= link_to contact_path, class: "text-enterprise-gray hover:text-enterprise-navy" do %>
                     Contact Sales
                 <% end %>
-                <%= link_to "#", class: "bg-shadetree-blue text-white px-6 py-2.5 text-sm font-medium rounded-md hover:bg-blue-800 shadow-sm" do %>
+                <%= link_to new_user_registration_path, class: "bg-shadetree-blue text-white px-6 py-2.5 text-sm font-medium rounded-md hover:bg-blue-800 shadow-sm" do %>
                     Start Free Trial
                 <% end %>
             </div>
         </div>
     </div>
 </nav>
+<script>
+    // Dropdown functionality
+    function toggleDropdown(dropdownId) {
+        const dropdown = document.getElementById(dropdownId);
+        dropdown.classList.toggle('hidden');
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        const solutionsDropdown = document.getElementById('features-dropdown');
+        const industriesDropdown = document.getElementById('industries-dropdown');
+        const solutionsButton = event.target.closest('[onclick*="features-dropdown"]');
+        const industriesButton = event.target.closest('[onclick*="industries-dropdown"]');
+
+        // Close Features dropdown if clicking outside
+        if (!solutionsButton && solutionsDropdown && !solutionsDropdown.contains(event.target)) {
+            solutionsDropdown.classList.add('hidden');
+        }
+
+        // Close Industries dropdown if clicking outside
+        if (!industriesButton && industriesDropdown && !industriesDropdown.contains(event.target)) {
+            industriesDropdown.classList.add('hidden');
+        }
+    });
+</script>

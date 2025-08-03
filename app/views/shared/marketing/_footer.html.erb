@@ -5,7 +5,9 @@
             <!-- Company Info -->
             <div class="lg:col-span-2">
                 <div class="text-2xl font-bold mb-4">
+                  <%= link_to root_path do %>
                     <span class="text-shadetree-green">Shade</span><span class="text-white">tree</span>
+                  <% end %>
                 </div>
                 <p class="text-gray-400 text-sm mb-6 max-w-md">
                     The complete service business management platform. Streamline your workflow from quote to payment across multiple locations.
@@ -38,9 +40,9 @@
             <div>
                 <h4 class="text-sm font-semibold text-white mb-4">Company</h4>
                 <ul class="space-y-3 text-sm text-gray-400">
-                    <li><%= link_to "#", class: "hover:text-white" do %>About<% end %></li>
-                    <li><%= link_to "#", class: "hover:text-white" do %>Contact<% end %></li>
-                    <li><%= link_to "#", class: "hover:text-white" do %>Pricing<% end %></li>
+                    <li><%= link_to about_path, class: "hover:text-white" do %>About<% end %></li>
+                    <li><%= link_to contact_path, class: "hover:text-white" do %>Contact<% end %></li>
+                    <li><%= link_to pricing_path, class: "hover:text-white" do %>Pricing<% end %></li>
                 </ul>
             </div>
         </div>
