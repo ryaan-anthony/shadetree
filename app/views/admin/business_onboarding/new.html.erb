@@ -1,0 +1,186 @@
+<% content_for :title, "Set Up Your Business" %>
+<% content_for :page_title, "Business Setup" %>
+
+<!-- Enterprise-grade onboarding layout -->
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- Header Section -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">Welcome to Shadetree</h1>
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                Let's set up your business profile to get you started with professional service management
+            </p>
+        </div>
+
+        <!-- Progress Navigation -->
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 mb-8">
+            <div class="flex items-center justify-between">
+                <% %w[basics hours location branding].each_with_index do |step, index| %>
+                    <%
+                    is_current = @step == step
+                    is_completed = Admin::BusinessOnboardingController::STEPS.index(@step) > index
+                    is_accessible = Admin::BusinessOnboardingController::STEPS.index(@step) >= index
+                    %>
+
+                    <div class="flex items-center <%= index < 3 ? 'flex-1' : '' %>">
+                        <!-- Step Circle -->
+                        <%= link_to new_admin_business_onboarding_path(step: step),
+                            class: "group flex items-center #{'pointer-events-none' unless is_accessible}" do %>
+                            <div class="relative">
+                                <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300 <%=
+                                    if is_completed
+                                        'bg-shadetree-green border-shadetree-green shadow-lg shadow-green-200'
+                                    elsif is_current
+                                        'bg-shadetree-blue border-shadetree-blue shadow-lg shadow-blue-200 scale-110'
+                                    else
+                                        'bg-white border-gray-300 group-hover:border-gray-400'
+                                    end
+                                %>">
+                                    <% if is_completed %>
+                                        <i data-feather="check" class="h-6 w-6 text-white"></i>
+                                    <% else %>
+                                        <span class="text-sm font-semibold <%= is_current ? 'text-white' : 'text-gray-500' %>">
+                                            <%= index + 1 %>
+                                        </span>
+                                    <% end %>
+                                </div>
+
+                                <!-- Step Label -->
+                                <div class="absolute top-14 left-1/2 transform -translate-x-1/2 text-center whitespace-nowrap">
+                                    <div class="text-sm font-medium <%= is_current ? 'text-shadetree-blue' : is_completed ? 'text-shadetree-green' : 'text-gray-500' %>">
+                                        <%= step.humanize %>
+                                    </div>
+                                </div>
+                            </div>
+                        <% end %>
+
+                        <!-- Progress Line -->
+                        <% unless index == 3 %>
+                            <div class="flex-1 h-0.5 mx-4 <%= is_completed ? 'bg-shadetree-green' : 'bg-gray-200' %> rounded-full transition-all duration-300"></div>
+                        <% end %>
+                    </div>
+                <% end %>
+            </div>
+
+            <div class="px-8 py-12">
+                <%= render "step_#{@step}" %>
+            </div>
+        </div>
+
+        <!-- Help Section -->
+        <div class="text-center mt-8">
+            <div class="inline-flex items-center space-x-2 text-sm text-gray-600">
+                <i data-feather="help-circle" class="h-4 w-4"></i>
+                <span>Need assistance?</span>
+                <%= link_to "Contact our setup specialists", contact_path,
+                    class: "font-medium text-shadetree-blue hover:text-blue-700 transition-colors" %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    feather.replace();
+
+    // Enhanced form validation and UX
+    const form = document.querySelector('form[data-step-form]');
+    if (form) {
+        setupFormEnhancements(form);
+    }
+
+    // Animate step transitions
+    const stepContent = document.querySelector('[data-step-content]');
+    if (stepContent) {
+        stepContent.style.opacity = '0';
+        stepContent.style.transform = 'translateY(20px)';
+
+        setTimeout(() => {
+            stepContent.style.transition = 'all 0.3s ease-out';
+            stepContent.style.opacity = '1';
+            stepContent.style.transform = 'translateY(0)';
+        }, 100);
+    }
+});
+
+function setupFormEnhancements(form) {
+    let hasChanges = false;
+    const inputs = form.querySelectorAll('input, textarea, select');
+
+    // Add floating labels animation
+    inputs.forEach(input => {
+        if (input.type !== 'hidden' && input.type !== 'checkbox' && input.type !== 'radio') {
+            setupFloatingLabel(input);
+        }
+
+        input.addEventListener('change', () => {
+            hasChanges = true;
+            validateField(input);
+        });
+
+        input.addEventListener('blur', () => {
+            validateField(input);
+        });
+    });
+
+    // Enhanced form submission
+    form.addEventListener('submit', (e) => {
+        hasChanges = false;
+        showLoadingState(e.target);
+    });
+
+    // Warn before leaving with unsaved changes
+    window.addEventListener('beforeunload', (e) => {
+        if (hasChanges) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+}
+
+function setupFloatingLabel(input) {
+    const wrapper = input.parentElement;
+    if (wrapper.querySelector('.floating-label')) return;
+
+    input.addEventListener('focus', () => {
+        wrapper.classList.add('focused');
+    });
+
+    input.addEventListener('blur', () => {
+        if (!input.value) {
+            wrapper.classList.remove('focused');
+        }
+    });
+
+    if (input.value) {
+        wrapper.classList.add('focused');
+    }
+}
+
+function validateField(field) {
+    const wrapper = field.closest('.form-group');
+    if (!wrapper) return;
+
+    const isValid = field.checkValidity();
+    wrapper.classList.toggle('error', !isValid);
+    wrapper.classList.toggle('success', isValid && field.value);
+}
+
+function showLoadingState(form) {
+    const submitButton = form.querySelector('button[type="submit"], input[type="submit"]');
+    if (submitButton) {
+        const originalText = submitButton.textContent;
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i data-feather="loader" class="h-4 w-4 mr-2 animate-spin"></i>Processing...';
+        feather.replace();
+
+        // Restore button after timeout (fallback)
+        setTimeout(() => {
+            submitButton.disabled = false;
+            submitButton.textContent = originalText;
+        }, 5000);
+    }
+}
+</script>

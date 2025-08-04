@@ -1,0 +1,126 @@
+<div class="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
+    <div class="flex flex-col flex-grow bg-white border-r border-gray-200 pt-5 pb-4 overflow-y-auto">
+        <!-- Logo -->
+        <div class="flex items-center flex-shrink-0 px-4">
+            <h1 class="text-xl font-bold text-gray-900">
+                <span class="text-shadetree-green">Shade</span>tree
+            </h1>
+            <span class="ml-2 text-xs bg-shadetree-green bg-opacity-10 text-shadetree-green px-2 py-1 rounded-full">Admin</span>
+        </div>
+
+        <!-- Business Selector -->
+        <div class="mt-6 px-4">
+            <div class="relative">
+                <select class="block w-full pl-3 pr-10 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-shadetree-green focus:border-shadetree-green">
+                    <% if current_business.present? %>
+                        <option><%= current_business.name %></option>
+                        <!-- TODO: Add other businesses when multi-business support is implemented -->
+                    <% else %>
+                        <option>Setting up business...</option>
+                    <% end %>
+                </select>
+                <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                    <i data-feather="chevron-down" class="h-4 w-4 text-gray-400"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="mt-8 flex-1 px-2 space-y-1">
+            <!-- Dashboard -->
+            <%= link_to admin_dashboard_index_path, class: "#{current_page?(admin_dashboard_index_path) ? 'bg-shadetree-green bg-opacity-10 text-shadetree-green' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'} group flex items-center px-2 py-2 text-sm font-medium rounded-md" do %>
+                <i data-feather="home" class="<%= current_page?(admin_dashboard_index_path) ? 'text-shadetree-green' : 'text-gray-400 group-hover:text-gray-500' %> mr-3 h-5 w-5"></i>
+                Dashboard
+            <% end %>
+
+            <!-- Business Profile -->
+            <div class="space-y-1">
+                <div class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md cursor-pointer" onclick="toggleSubmenu('business-profile')">
+                    <i data-feather="building" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                    <span class="flex-1">Business Profile</span>
+                    <i data-feather="chevron-right" id="business-profile-icon" class="ml-auto h-4 w-4 text-gray-400 group-hover:text-gray-500 transition-transform"></i>
+                </div>
+                <div id="business-profile-menu" class="ml-8 space-y-1 hidden">
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Company Info</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Hours & Areas</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Notifications</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Payment Settings</a>
+                </div>
+            </div>
+
+            <!-- Staff Management -->
+            <div class="space-y-1">
+                <div class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md cursor-pointer" onclick="toggleSubmenu('staff-management')">
+                    <i data-feather="users" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                    <span class="flex-1">Staff Management</span>
+                    <i data-feather="chevron-right" id="staff-management-icon" class="ml-auto h-4 w-4 text-gray-400 group-hover:text-gray-500 transition-transform"></i>
+                </div>
+                <div id="staff-management-menu" class="ml-8 space-y-1 hidden">
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Team Overview</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Roles & Permissions</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Availability</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Activity Tracking</a>
+                </div>
+            </div>
+
+            <!-- Services & Pricing -->
+            <div class="space-y-1">
+                <div class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md cursor-pointer" onclick="toggleSubmenu('services-pricing')">
+                    <i data-feather="settings" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                    <span class="flex-1">Services & Pricing</span>
+                    <i data-feather="chevron-right" id="services-pricing-icon" class="ml-auto h-4 w-4 text-gray-400 group-hover:text-gray-500 transition-transform"></i>
+                </div>
+                <div id="services-pricing-menu" class="ml-8 space-y-1 hidden">
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Service Catalog</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Categories</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Pricing Rules</a>
+                </div>
+            </div>
+
+            <!-- Quote Templates -->
+            <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                <i data-feather="file-text" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                Quote Templates
+            </a>
+
+            <!-- Reports -->
+            <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                <i data-feather="bar-chart-2" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
+                Reports
+            </a>
+        </nav>
+
+        <!-- Bottom Section -->
+        <div class="flex-shrink-0 flex border-t border-gray-200 p-4">
+            <div class="flex-shrink-0 w-full group block">
+                <div class="flex items-center">
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-gray-700 group-hover:text-gray-900">
+                            <%= current_user&.email || "Admin User" %>
+                        </p>
+                        <div class="flex items-center text-xs text-gray-500 group-hover:text-gray-700">
+                            <%= link_to "Settings", "#", class: "hover:underline" %>
+                            <span class="mx-2">•</span>
+                            <%= link_to "Sign out", destroy_user_session_path, method: :delete, class: "hover:underline" %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleSubmenu(menuId) {
+    const menu = document.getElementById(menuId + '-menu');
+    const icon = document.getElementById(menuId + '-icon');
+
+    if (menu.classList.contains('hidden')) {
+        menu.classList.remove('hidden');
+        icon.style.transform = 'rotate(90deg)';
+    } else {
+        menu.classList.add('hidden');
+        icon.style.transform = 'rotate(0deg)';
+    }
+}
+</script>

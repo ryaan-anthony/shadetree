@@ -1,0 +1,95 @@
+<div class="relative flex-1 flex flex-col max-w-xs w-full bg-white">
+    <div class="absolute top-0 right-0 -mr-12 pt-2">
+        <button id="close-sidebar" class="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+            <i data-feather="x" class="h-6 w-6 text-white"></i>
+        </button>
+    </div>
+
+    <!-- Mobile Navigation Content -->
+    <div class="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
+        <div class="flex-shrink-0 flex items-center px-4">
+            <h1 class="text-xl font-bold text-gray-900">
+                <span class="text-shadetree-green">Shade</span>tree
+            </h1>
+            <span class="ml-2 text-xs bg-shadetree-green bg-opacity-10 text-shadetree-green px-2 py-1 rounded-full">Admin</span>
+        </div>
+
+        <!-- Business Selector -->
+        <div class="mt-6 px-4">
+            <div class="relative">
+                <select class="block w-full pl-3 pr-10 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-shadetree-green focus:border-shadetree-green">
+                    <% if current_business.present? %>
+                        <option><%= current_business.name %></option>
+                    <% else %>
+                        <option>Setting up business...</option>
+                    <% end %>
+                </select>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Menu -->
+        <nav class="mt-5 px-2 space-y-1">
+            <!-- Dashboard -->
+            <%= link_to admin_dashboard_index_path, class: "#{current_page?(admin_dashboard_index_path) ? 'bg-shadetree-green bg-opacity-10 text-shadetree-green' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'} group flex items-center px-2 py-2 text-base font-medium rounded-md" do %>
+                <i data-feather="home" class="<%= current_page?(admin_dashboard_index_path) ? 'text-shadetree-green' : 'text-gray-400 group-hover:text-gray-500' %> mr-4 h-6 w-6"></i>
+                Dashboard
+            <% end %>
+
+            <!-- Business Profile -->
+            <div class="space-y-1">
+                <button class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center w-full px-2 py-2 text-left text-base font-medium rounded-md">
+                    <i data-feather="building" class="text-gray-400 group-hover:text-gray-500 mr-4 h-6 w-6"></i>
+                    <span class="flex-1">Business Profile</span>
+                    <i data-feather="chevron-down" class="ml-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"></i>
+                </button>
+                <div class="ml-10 space-y-1">
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-2 text-sm font-medium rounded-md">Company Info</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-2 text-sm font-medium rounded-md">Hours & Areas</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-2 text-sm font-medium rounded-md">Notifications</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-2 text-sm font-medium rounded-md">Payment Settings</a>
+                </div>
+            </div>
+
+            <!-- Staff Management -->
+            <div class="space-y-1">
+                <button class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center w-full px-2 py-2 text-left text-base font-medium rounded-md">
+                    <i data-feather="users" class="text-gray-400 group-hover:text-gray-500 mr-4 h-6 w-6"></i>
+                    <span class="flex-1">Staff Management</span>
+                    <i data-feather="chevron-down" class="ml-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"></i>
+                </button>
+                <div class="ml-10 space-y-1">
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-2 text-sm font-medium rounded-md">Team Overview</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-2 text-sm font-medium rounded-md">Roles & Permissions</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-2 text-sm font-medium rounded-md">Availability</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-2 text-sm font-medium rounded-md">Activity Tracking</a>
+                </div>
+            </div>
+
+            <!-- Services & Pricing -->
+            <div class="space-y-1">
+                <button class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center w-full px-2 py-2 text-left text-base font-medium rounded-md">
+                    <i data-feather="settings" class="text-gray-400 group-hover:text-gray-500 mr-4 h-6 w-6"></i>
+                    <span class="flex-1">Services & Pricing</span>
+                    <i data-feather="chevron-down" class="ml-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"></i>
+                </button>
+                <div class="ml-10 space-y-1">
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-2 text-sm font-medium rounded-md">Service Catalog</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-2 text-sm font-medium rounded-md">Categories</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-2 text-sm font-medium rounded-md">Pricing Rules</a>
+                </div>
+            </div>
+
+            <!-- Quote Templates -->
+            <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-base font-medium rounded-md">
+                <i data-feather="file-text" class="text-gray-400 group-hover:text-gray-500 mr-4 h-6 w-6"></i>
+                Quote Templates
+            </a>
+
+            <!-- Reports -->
+            <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-base font-medium rounded-md">
+                <i data-feather="bar-chart-2" class="text-gray-400 group-hover:text-gray-500 mr-4 h-6 w-6"></i>
+                Reports
+            </a>
+        </nav>
+    </div>
+</div>

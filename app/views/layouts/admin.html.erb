@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "Admin Dashboard - Shadetree" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'shadetree-blue': '#1E40AF',
+                        'shadetree-green': '#059669',
+                        'shadetree-red': '#DC2626',
+                        'shadetree-yellow': '#D97706',
+                        'shadetree-purple': '#7C3AED',
+                        'enterprise-navy': '#0F172A',
+                        'enterprise-gray': '#334155'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body class="bg-gray-50">
+    <!-- Mobile menu overlay -->
+    <div id="mobile-menu-overlay" class="fixed inset-0 flex z-40 md:hidden hidden">
+        <div class="fixed inset-0 bg-gray-600 bg-opacity-75"></div>
+        <%= render 'admin/shared/mobile_sidebar' %>
+    </div>
+
+    <!-- Desktop Layout -->
+    <div class="flex h-screen bg-gray-50">
+        <!-- Desktop Sidebar -->
+        <%= render 'admin/shared/sidebar' %>
+
+        <!-- Main Content -->
+        <div class="md:pl-64 flex flex-col flex-1">
+            <!-- Top Navigation -->
+            <%= render 'admin/shared/top_navigation' %>
+
+            <!-- Page Content -->
+            <main class="flex-1 py-6 px-4 sm:px-6 lg:px-8">
+                <%= yield %>
+            </main>
+        </div>
+    </div>
+
+    <!-- Initialize Feather Icons -->
+    <script>
+        feather.replace();
+
+        // Mobile menu toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+            const closeSidebarButton = document.getElementById('close-sidebar');
+
+            if (mobileMenuButton) {
+                mobileMenuButton.addEventListener('click', function() {
+                    mobileMenuOverlay.classList.remove('hidden');
+                });
+            }
+
+            if (closeSidebarButton) {
+                closeSidebarButton.addEventListener('click', function() {
+                    mobileMenuOverlay.classList.add('hidden');
+                });
+            }
+
+            // Close mobile menu when clicking overlay
+            mobileMenuOverlay.addEventListener('click', function(e) {
+                if (e.target === mobileMenuOverlay) {
+                    mobileMenuOverlay.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+  </body>
+</html>
