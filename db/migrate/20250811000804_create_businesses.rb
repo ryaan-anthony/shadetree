@@ -1,25 +1,31 @@
 class CreateBusinesses < ActiveRecord::Migration[8.0]
   def change
     create_table :businesses do |t|
+      # Core business information
       t.string :name, null: false
+      t.string :timezone
       t.string :email, null: false
       t.string :phone
-      t.text :address
-      t.string :city
-      t.string :state
-      t.string :zip_code
-      t.string :industry
-      t.text :description
       t.string :website
+
+      # Business settings
+      t.string :currency, default: 'USD'
+
+      # Branding
       t.string :brand_color, default: '#059669'
-      t.decimal :service_area_radius, precision: 8, scale: 2
+      t.string :logo_url
+
+      # Status
       t.boolean :active, default: true
+
+      # Owner relationship
       t.references :owner, null: false, foreign_key: { to_table: :users }
 
       t.timestamps
     end
 
-    add_index :businesses, :email, unique: true
-    add_index :businesses, :owner_id
+    # Add indexes for better query performance
+    add_index :businesses, :email
+    add_index :businesses, :active
   end
 end
