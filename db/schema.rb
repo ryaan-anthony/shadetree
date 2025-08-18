@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_12_003851) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_18_232549) do
   create_table "business_closures", force: :cascade do |t|
     t.integer "location_id", null: false
     t.date "date", null: false
@@ -58,6 +58,22 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_12_003851) do
     t.index ["owner_id"], name: "index_businesses_on_owner_id"
   end
 
+  create_table "customer_notification_preferences", force: :cascade do |t|
+    t.integer "customer_id", null: false
+    t.integer "business_id", null: false
+    t.boolean "email_notifications", default: true
+    t.boolean "sms_notifications", default: true
+    t.boolean "booking_confirmations", default: true
+    t.boolean "appointment_reminders", default: true
+    t.boolean "payment_notifications", default: true
+    t.boolean "promotional_messages", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id"], name: "index_customer_notification_preferences_on_business_id"
+    t.index ["customer_id", "business_id"], name: "index_customer_notification_prefs_on_customer_and_business", unique: true
+    t.index ["customer_id"], name: "index_customer_notification_preferences_on_customer_id"
+  end
+
   create_table "locations", force: :cascade do |t|
     t.integer "business_id", null: false
     t.string "name", null: false
@@ -78,6 +94,42 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_12_003851) do
     t.index ["business_id"], name: "index_locations_on_business_id"
     t.index ["is_primary"], name: "index_locations_on_is_primary"
     t.index ["latitude", "longitude"], name: "index_locations_on_latitude_and_longitude"
+  end
+
+  create_table "message_templates", force: :cascade do |t|
+    t.integer "business_id", null: false
+    t.string "name", null: false
+    t.string "event", null: false
+    t.string "message_type", null: false
+    t.text "message_content", null: false
+    t.string "subject_line"
+    t.boolean "is_active", default: true
+    t.integer "usage_count", default: 0
+    t.datetime "last_used_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "event"], name: "index_message_templates_on_business_id_and_event"
+    t.index ["business_id", "message_type"], name: "index_message_templates_on_business_id_and_message_type"
+    t.index ["business_id"], name: "index_message_templates_on_business_id"
+  end
+
+  create_table "notification_triggers", force: :cascade do |t|
+    t.integer "business_id", null: false
+    t.integer "message_template_id", null: false
+    t.string "trigger_name", null: false
+    t.string "trigger_event", null: false
+    t.json "trigger_conditions", default: {}
+    t.integer "timing_offset", default: 0
+    t.boolean "is_active", default: true
+    t.json "delivery_channels", default: {}
+    t.datetime "last_triggered_at"
+    t.integer "trigger_count", default: 0
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "is_active"], name: "index_notification_triggers_on_business_id_and_is_active"
+    t.index ["business_id", "trigger_event"], name: "index_notification_triggers_on_business_id_and_trigger_event"
+    t.index ["business_id"], name: "index_notification_triggers_on_business_id"
+    t.index ["message_template_id"], name: "index_notification_triggers_on_message_template_id"
   end
 
   create_table "operating_hours", force: :cascade do |t|
@@ -272,7 +324,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_12_003851) do
   add_foreign_key "business_closures", "locations"
   add_foreign_key "business_roles", "businesses"
   add_foreign_key "businesses", "users", column: "owner_id"
+  add_foreign_key "customer_notification_preferences", "businesses"
+  add_foreign_key "customer_notification_preferences", "users", column: "customer_id"
   add_foreign_key "locations", "businesses"
+  add_foreign_key "message_templates", "businesses"
+  add_foreign_key "notification_triggers", "businesses"
+  add_foreign_key "notification_triggers", "message_templates"
   add_foreign_key "operating_hours", "locations"
   add_foreign_key "service_area_restrictions", "service_areas"
   add_foreign_key "service_areas", "locations"
