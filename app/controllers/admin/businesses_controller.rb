@@ -1,6 +1,7 @@
 class Admin::BusinessesController < Admin::BaseController
   skip_before_action :require_business_setup, only: [:new, :create]
   layout "business_setup", only: [:new]
+  layout "admin", only: [:edit, :update]
 
   def new
     @business = current_user.owned_businesses.build

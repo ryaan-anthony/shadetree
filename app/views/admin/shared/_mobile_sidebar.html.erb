@@ -35,18 +35,24 @@
                 Dashboard
             <% end %>
 
-            <!-- Business Profile -->
-            <div class="space-y-1">
+            <!-- Business Profile --><div class="space-y-1">
                 <button class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center w-full px-2 py-2 text-left text-base font-medium rounded-md">
                     <i data-feather="building" class="text-gray-400 group-hover:text-gray-500 mr-4 h-6 w-6"></i>
                     <span class="flex-1">Business Profile</span>
                     <i data-feather="chevron-down" class="ml-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"></i>
                 </button>
                 <div class="ml-10 space-y-1">
-                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-2 text-sm font-medium rounded-md">Company Info</a>
-                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-2 text-sm font-medium rounded-md">Hours & Areas</a>
-                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-2 text-sm font-medium rounded-md">Notifications</a>
-                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-2 text-sm font-medium rounded-md">Payment Settings</a>
+                    <%= link_to edit_admin_business_path, class: "text-gray-600 hover:text-gray-900 block px-3 py-2 text-sm font-medium rounded-md" do %>
+                        Company Info
+                    <% end %>
+                    <%= link_to edit_admin_settings_hours_path, class: "text-gray-600 hover:text-gray-900 block px-3 py-2 text-sm font-medium rounded-md" do %>
+                        Operating Hours
+                    <% end %>
+                    <%= link_to edit_admin_settings_branding_path, class: "text-gray-600 hover:text-gray-900 block px-3 py-2 text-sm font-medium rounded-md" do %>
+                        Branding
+                    <% end %>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-2 text-sm font-medium rounded-md opacity-50">Notifications</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-2 text-sm font-medium rounded-md opacity-50">Payment Settings</a>
                 </div>
             </div>
 

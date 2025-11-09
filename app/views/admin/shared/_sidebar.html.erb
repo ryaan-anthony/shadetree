@@ -41,10 +41,17 @@
                     <i data-feather="chevron-right" id="business-profile-icon" class="ml-auto h-4 w-4 text-gray-400 group-hover:text-gray-500 transition-transform"></i>
                 </div>
                 <div id="business-profile-menu" class="ml-8 space-y-1 hidden">
-                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Company Info</a>
-                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Hours & Areas</a>
-                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Notifications</a>
-                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Payment Settings</a>
+                    <%= link_to edit_admin_business_path, class: "text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md" do %>
+                        Company Info
+                    <% end %>
+                    <%= link_to edit_admin_settings_hours_path, class: "text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md" do %>
+                        Operating Hours
+                    <% end %>
+                    <%= link_to edit_admin_settings_branding_path, class: "text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md" do %>
+                        Branding
+                    <% end %>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md opacity-50 cursor-not-allowed">Notifications</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md opacity-50 cursor-not-allowed">Payment Settings</a>
                 </div>
             </div>
 
