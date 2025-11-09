@@ -12,22 +12,22 @@ class BusinessUser < ApplicationRecord
   validates :user_id, presence: true, uniqueness: { scope: :business_id }
   validates :business_id, presence: true
   validates :role, presence: true, inclusion: { in: %w[owner admin member] }
-  validates :active, inclusion: { in: [true, false] }
+  validates :active, inclusion: { in: [ true, false ] }
 
   # Scopes
   scope :active, -> { where(active: true) }
-  scope :owners, -> { where(role: 'owner') }
-  scope :admins, -> { where(role: 'admin') }
-  scope :members, -> { where(role: 'member') }
+  scope :owners, -> { where(role: "owner") }
+  scope :admins, -> { where(role: "admin") }
+  scope :members, -> { where(role: "member") }
 
   # Check if user is owner of this business
   def owner?
-    role == 'owner'
+    role == "owner"
   end
 
   # Check if user is admin of this business
   def admin?
-    role == 'admin'
+    role == "admin"
   end
 
   # Check if user can manage this business

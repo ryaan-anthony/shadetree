@@ -17,6 +17,6 @@ class CreateServiceTaxes < ActiveRecord::Migration[8.0]
     # Add indexes for better query performance
     add_index :service_taxes, :tax_type
     add_index :service_taxes, :is_inclusive
-    add_index :service_taxes, [:service_id, :location_id, :tax_name], unique: true, name: 'index_service_taxes_on_service_location_name'
+    add_index :service_taxes, [ :service_id, :location_id, :tax_name ], unique: true, name: 'index_service_taxes_on_service_location_name'
   end
 end

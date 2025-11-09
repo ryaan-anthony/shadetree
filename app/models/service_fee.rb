@@ -22,28 +22,28 @@ class ServiceFee < ApplicationRecord
   validates :fee_amount, presence: true, numericality: { greater_than: 0 }
   validates :fee_type, presence: true, inclusion: { in: %w[percentage fixed] }
   validates :fee_name, uniqueness: {
-    scope: [:service_id, :location_id],
+    scope: [ :service_id, :location_id ],
     message: "already exists for this service and location combination"
   }
   validate :service_and_location_belong_to_same_business
   validate :percentage_fee_amount_within_bounds
 
   # Scopes
-  scope :percentage_fees, -> { where(fee_type: 'percentage') }
-  scope :fixed_fees, -> { where(fee_type: 'fixed') }
+  scope :percentage_fees, -> { where(fee_type: "percentage") }
+  scope :fixed_fees, -> { where(fee_type: "fixed") }
   scope :mandatory_fees, -> { where(is_mandatory: true) }
   scope :optional_fees, -> { where(is_mandatory: false) }
   scope :for_location, ->(location_id) { where(location_id: location_id) }
   scope :global_fees, -> { where(location_id: nil) }
-  scope :applicable_to_location, ->(location_id) { where(location_id: [nil, location_id]) }
+  scope :applicable_to_location, ->(location_id) { where(location_id: [ nil, location_id ]) }
 
   # Instance methods
   def percentage_fee?
-    fee_type == 'percentage'
+    fee_type == "percentage"
   end
 
   def fixed_fee?
-    fee_type == 'fixed'
+    fee_type == "fixed"
   end
 
   def mandatory?
@@ -71,16 +71,16 @@ class ServiceFee < ApplicationRecord
   end
 
   def formatted_amount
-    service.business.currency == 'USD' ? "$#{fee_amount.to_f}" : "#{fee_amount.to_f}"
+    service.business.currency == "USD" ? "$#{fee_amount.to_f}" : "#{fee_amount.to_f}"
   end
 
   def calculate_fee_amount(base_price)
     return 0 if base_price.nil? || base_price <= 0
 
     case fee_type
-    when 'percentage'
+    when "percentage"
       base_price * (fee_amount / 100)
-    when 'fixed'
+    when "fixed"
       fee_amount
     else
       0
@@ -116,7 +116,7 @@ class ServiceFee < ApplicationRecord
   end
 
   def location_name
-    location&.name || 'All locations'
+    location&.name || "All locations"
   end
 
   def fee_description

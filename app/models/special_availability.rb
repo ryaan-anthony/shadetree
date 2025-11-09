@@ -25,8 +25,8 @@ class SpecialAvailability < ApplicationRecord
 
   # Scopes
   scope :for_date, ->(date) { where(date: date) }
-  scope :upcoming, -> { where('date >= ?', Date.current) }
-  scope :past, -> { where('date < ?', Date.current) }
+  scope :upcoming, -> { where("date >= ?", Date.current) }
+  scope :past, -> { where("date < ?", Date.current) }
   scope :this_week, -> { where(date: Date.current.beginning_of_week..Date.current.end_of_week) }
   scope :this_month, -> { where(date: Date.current.beginning_of_month..Date.current.end_of_month) }
 
@@ -36,7 +36,7 @@ class SpecialAvailability < ApplicationRecord
   end
 
   def hours_range
-    return 'Times not set' unless start_time && end_time
+    return "Times not set" unless start_time && end_time
 
     "#{formatted_time(start_time)} - #{formatted_time(end_time)}"
   end
@@ -101,7 +101,7 @@ class SpecialAvailability < ApplicationRecord
   private
 
   def end_time_after_start_time
-    return unless start_time && end_time
+    nil unless start_time && end_time
 
     # Allow times that cross midnight (e.g., 10 PM to 2 AM)
     # This is valid for extended hours, so we don't enforce end > start
@@ -109,6 +109,6 @@ class SpecialAvailability < ApplicationRecord
   end
 
   def formatted_time(time)
-    time.strftime('%I:%M %p')
+    time.strftime("%I:%M %p")
   end
 end

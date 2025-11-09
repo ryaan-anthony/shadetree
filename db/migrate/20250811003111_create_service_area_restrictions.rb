@@ -16,8 +16,8 @@ class CreateServiceAreaRestrictions < ActiveRecord::Migration[8.0]
 
     # Add indexes for better query performance
     add_index :service_area_restrictions, :restriction_type
-    add_index :service_area_restrictions, [:restriction_type, :city]
-    add_index :service_area_restrictions, [:restriction_type, :state]
-    add_index :service_area_restrictions, [:restriction_type, :zip_code]
+    add_index :service_area_restrictions, [ :restriction_type, :city ]
+    add_index :service_area_restrictions, [ :restriction_type, :state ]
+    add_index :service_area_restrictions, [ :restriction_type, :zip_code ]
   end
 end

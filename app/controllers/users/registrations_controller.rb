@@ -1,5 +1,5 @@
 class Users::RegistrationsController < Devise::RegistrationsController
-  layout 'marketing'
+  layout "marketing"
 
   # GET /resource/sign_up
   # def new
@@ -32,7 +32,7 @@ class Users::RegistrationsController < Devise::RegistrationsController
 
   # If you have extra params to permit, append them to the sanitizer.
   def configure_sign_up_params
-    devise_parameter_sanitizer.permit(:sign_up, keys: [:account_tier])
+    devise_parameter_sanitizer.permit(:sign_up, keys: [ :account_tier ])
   end
 
   # If you have extra params to permit, append them to the sanitizer.

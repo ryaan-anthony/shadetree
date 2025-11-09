@@ -25,22 +25,22 @@ class StaffMember < ApplicationRecord
   validates :user_id, uniqueness: { scope: :business_id, message: "is already a staff member for this business" }
 
   # Scopes
-  scope :active, -> { where(status: 'active') }
-  scope :inactive, -> { where(status: 'inactive') }
-  scope :pending, -> { where(status: 'pending') }
+  scope :active, -> { where(status: "active") }
+  scope :inactive, -> { where(status: "inactive") }
+  scope :pending, -> { where(status: "pending") }
   scope :by_status, ->(status) { where(status: status) }
 
   # Instance methods
   def active?
-    status == 'active'
+    status == "active"
   end
 
   def inactive?
-    status == 'inactive'
+    status == "inactive"
   end
 
   def pending?
-    status == 'pending'
+    status == "pending"
   end
 
   def full_name
@@ -88,14 +88,14 @@ class StaffMember < ApplicationRecord
   end
 
   def deactivate!
-    update!(status: 'inactive')
+    update!(status: "inactive")
   end
 
   def activate!
-    update!(status: 'active')
+    update!(status: "active")
   end
 
   def set_pending!
-    update!(status: 'pending')
+    update!(status: "pending")
   end
 end

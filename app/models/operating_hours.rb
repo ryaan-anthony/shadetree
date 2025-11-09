@@ -29,13 +29,13 @@ class OperatingHours < ApplicationRecord
 
   # Constants
   DAYS_OF_WEEK = {
-    0 => 'Sunday',
-    1 => 'Monday',
-    2 => 'Tuesday',
-    3 => 'Wednesday',
-    4 => 'Thursday',
-    5 => 'Friday',
-    6 => 'Saturday'
+    0 => "Sunday",
+    1 => "Monday",
+    2 => "Tuesday",
+    3 => "Wednesday",
+    4 => "Thursday",
+    5 => "Friday",
+    6 => "Saturday"
   }.freeze
 
   # Instance methods
@@ -52,8 +52,8 @@ class OperatingHours < ApplicationRecord
   end
 
   def hours_range
-    return 'Closed' if is_closed?
-    return 'Hours not set' unless open_time && close_time
+    return "Closed" if is_closed?
+    return "Hours not set" unless open_time && close_time
 
     "#{formatted_time(open_time)} - #{formatted_time(close_time)}"
   end
@@ -87,7 +87,7 @@ class OperatingHours < ApplicationRecord
   private
 
   def close_time_after_open_time
-    return unless open_time && close_time
+    nil unless open_time && close_time
 
     # Allow times that cross midnight (e.g., 10 PM to 2 AM)
     # This is valid, so we don't need to validate that close > open
@@ -95,6 +95,6 @@ class OperatingHours < ApplicationRecord
   end
 
   def formatted_time(time)
-    time.strftime('%I:%M %p')
+    time.strftime("%I:%M %p")
   end
 end

@@ -17,6 +17,6 @@ class CreateServiceFees < ActiveRecord::Migration[8.0]
     # Add indexes for better query performance
     add_index :service_fees, :fee_type
     add_index :service_fees, :is_mandatory
-    add_index :service_fees, [:service_id, :location_id, :fee_name], unique: true, name: 'index_service_fees_on_service_location_name'
+    add_index :service_fees, [ :service_id, :location_id, :fee_name ], unique: true, name: 'index_service_fees_on_service_location_name'
   end
 end

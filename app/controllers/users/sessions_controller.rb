@@ -1,5 +1,5 @@
 class Users::SessionsController < Devise::SessionsController
-  layout 'marketing'
+  layout "marketing"
 
   # GET /resource/sign_in
   # def new

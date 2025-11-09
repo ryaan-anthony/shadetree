@@ -2,7 +2,7 @@ class Admin::BaseController < ApplicationController
   before_action :authenticate_user!
   before_action :require_confirmed_account
   before_action :require_business_setup
-  layout 'admin'
+  layout "admin"
 
   private
 
@@ -15,11 +15,11 @@ class Admin::BaseController < ApplicationController
 
   def require_business_setup
     # Skip business setup check for the onboarding controller itself
-    return if controller_name == 'business_onboarding'
+    return if controller_name == "business_onboarding"
 
     unless current_user.has_business?
       redirect_to new_admin_business_onboarding_path
-      return
+      nil
     end
   end
 

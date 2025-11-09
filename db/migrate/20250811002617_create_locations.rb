@@ -26,7 +26,7 @@ class CreateLocations < ActiveRecord::Migration[8.0]
     end
 
     # Add indexes for better query performance
-    add_index :locations, [:latitude, :longitude]
+    add_index :locations, [ :latitude, :longitude ]
     add_index :locations, :is_primary
     add_index :locations, :active
   end

@@ -159,4 +159,3 @@ class PricingControllerTest < ActionDispatch::IntegrationTest
     assert_select "meta[name='viewport'][content*='width=device-width']"
   end
 end
-

@@ -14,14 +14,14 @@
 class ServiceCategory < ApplicationRecord
   # Relationships
   belongs_to :business
-  belongs_to :parent, class_name: 'ServiceCategory', optional: true
-  has_many :subcategories, class_name: 'ServiceCategory', foreign_key: 'parent_id', dependent: :destroy
+  belongs_to :parent, class_name: "ServiceCategory", optional: true
+  has_many :subcategories, class_name: "ServiceCategory", foreign_key: "parent_id", dependent: :destroy
   has_many :services, dependent: :destroy
 
   # Validations
   validates :business_id, presence: true
   validates :name, presence: true
-  validates :name, uniqueness: { scope: [:business_id, :parent_id], message: "already exists in this category level for this business" }
+  validates :name, uniqueness: { scope: [ :business_id, :parent_id ], message: "already exists in this category level for this business" }
   validates :sort_order, numericality: { greater_than_or_equal_to: 0 }
   validate :parent_must_belong_to_same_business
   validate :cannot_be_parent_of_itself
@@ -76,7 +76,7 @@ class ServiceCategory < ApplicationRecord
   def all_services
     if has_subcategories?
       Service.joins(:service_category).where(
-        service_category: [self] + all_subcategories.to_a
+        service_category: [ self ] + all_subcategories.to_a
       )
     else
       services
@@ -118,11 +118,11 @@ class ServiceCategory < ApplicationRecord
 
   def ancestors
     return [] if root_category?
-    [parent] + parent.ancestors
+    [ parent ] + parent.ancestors
   end
 
   def descendants
-    subcategories.flat_map { |sub| [sub] + sub.descendants }
+    subcategories.flat_map { |sub| [ sub ] + sub.descendants }
   end
 
   def siblings

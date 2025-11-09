@@ -111,13 +111,13 @@ class Service < ApplicationRecord
   end
 
   def total_taxes_for_location(location)
-    service_taxes.where(location: [nil, location]).sum do |tax|
+    service_taxes.where(location: [ nil, location ]).sum do |tax|
       next 0 unless base_price = base_price_for_location(location)
 
       case tax.tax_type
-      when 'percentage'
+      when "percentage"
         base_price * (tax.tax_rate / 100)
-      when 'fixed'
+      when "fixed"
         tax.tax_rate
       else
         0
@@ -126,13 +126,13 @@ class Service < ApplicationRecord
   end
 
   def total_fees_for_location(location)
-    service_fees.where(location: [nil, location], is_mandatory: true).sum do |fee|
+    service_fees.where(location: [ nil, location ], is_mandatory: true).sum do |fee|
       next 0 unless base_price = base_price_for_location(location)
 
       case fee.fee_type
-      when 'percentage'
+      when "percentage"
         base_price * (fee.fee_amount / 100)
-      when 'fixed'
+      when "fixed"
         fee.fee_amount
       else
         0

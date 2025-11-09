@@ -30,8 +30,8 @@ class BusinessClosure < ApplicationRecord
   scope :recurring, -> { where(is_recurring: true) }
   scope :one_time, -> { where(is_recurring: false) }
   scope :for_date, ->(date) { where(date: date) }
-  scope :upcoming, -> { where('date >= ?', Date.current) }
-  scope :past, -> { where('date < ?', Date.current) }
+  scope :upcoming, -> { where("date >= ?", Date.current) }
+  scope :past, -> { where("date < ?", Date.current) }
 
   # Instance methods
   def full_day_closure?
@@ -59,8 +59,8 @@ class BusinessClosure < ApplicationRecord
   end
 
   def hours_range
-    return 'Closed all day' if is_full_day?
-    return 'Modified hours not set' unless modified_open_time && modified_close_time
+    return "Closed all day" if is_full_day?
+    return "Modified hours not set" unless modified_open_time && modified_close_time
 
     "#{formatted_time(modified_open_time)} - #{formatted_time(modified_close_time)}"
   end
@@ -106,13 +106,13 @@ class BusinessClosure < ApplicationRecord
   private
 
   def modified_close_time_after_open_time
-    return unless modified_open_time && modified_close_time
+    nil unless modified_open_time && modified_close_time
 
     # Allow times that cross midnight (e.g., 10 PM to 2 AM)
     # This is valid for some special hours, so we don't enforce close > open
   end
 
   def formatted_time(time)
-    time.strftime('%I:%M %p')
+    time.strftime("%I:%M %p")
   end
 end

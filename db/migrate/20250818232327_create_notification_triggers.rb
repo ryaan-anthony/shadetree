@@ -16,7 +16,7 @@ class CreateNotificationTriggers < ActiveRecord::Migration[8.0]
     end
 
     # Add indexes for common queries
-    add_index :notification_triggers, [:business_id, :trigger_event]
-    add_index :notification_triggers, [:business_id, :is_active]
+    add_index :notification_triggers, [ :business_id, :trigger_event ]
+    add_index :notification_triggers, [ :business_id, :is_active ]
   end
 end

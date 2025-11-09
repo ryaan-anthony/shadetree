@@ -23,7 +23,7 @@ class StaffAvailability < ApplicationRecord
   validates :end_time, presence: true
   validate :end_time_after_start_time
   validates :staff_member_id, uniqueness: {
-    scope: [:day_of_week, :location_id],
+    scope: [ :day_of_week, :location_id ],
     message: "already has availability set for this day and location"
   }
 
@@ -36,13 +36,13 @@ class StaffAvailability < ApplicationRecord
 
   # Constants
   DAYS_OF_WEEK = {
-    0 => 'Sunday',
-    1 => 'Monday',
-    2 => 'Tuesday',
-    3 => 'Wednesday',
-    4 => 'Thursday',
-    5 => 'Friday',
-    6 => 'Saturday'
+    0 => "Sunday",
+    1 => "Monday",
+    2 => "Tuesday",
+    3 => "Wednesday",
+    4 => "Thursday",
+    5 => "Friday",
+    6 => "Saturday"
   }.freeze
 
   # Instance methods
@@ -59,8 +59,8 @@ class StaffAvailability < ApplicationRecord
   end
 
   def hours_range
-    return 'Not available' unless is_available?
-    return 'Times not set' unless start_time && end_time
+    return "Not available" unless is_available?
+    return "Times not set" unless start_time && end_time
 
     "#{formatted_time(start_time)} - #{formatted_time(end_time)}"
   end
@@ -92,7 +92,7 @@ class StaffAvailability < ApplicationRecord
   end
 
   def location_assignment
-    location ? location.name : 'Any location'
+    location ? location.name : "Any location"
   end
 
   def staff_name
@@ -104,7 +104,7 @@ class StaffAvailability < ApplicationRecord
   end
 
   def availability_description
-    status = is_available? ? 'Available' : 'Not available'
+    status = is_available? ? "Available" : "Not available"
     location_text = location ? " at #{location.name}" : " (any location)"
     "#{day_name}: #{status} #{hours_range}#{location_text}"
   end
@@ -129,13 +129,13 @@ class StaffAvailability < ApplicationRecord
   private
 
   def end_time_after_start_time
-    return unless start_time && end_time
+    nil unless start_time && end_time
 
     # Allow times that cross midnight (e.g., 10 PM to 6 AM)
     # This is valid for staff working overnight shifts
   end
 
   def formatted_time(time)
-    time.strftime('%I:%M %p')
+    time.strftime("%I:%M %p")
   end
 end

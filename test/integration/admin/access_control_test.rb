@@ -157,4 +157,3 @@ class Admin::AccessControlTest < ActionDispatch::IntegrationTest
     assert_response :redirect  # Could be to sign_in or root depending on middleware execution order
   end
 end
-

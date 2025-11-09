@@ -15,6 +15,6 @@ class CreateBusinessRoles < ActiveRecord::Migration[8.0]
 
     # Add indexes for better query performance
     add_index :business_roles, :is_default
-    add_index :business_roles, [:business_id, :name], unique: true, name: 'index_business_roles_on_business_and_name'
+    add_index :business_roles, [ :business_id, :name ], unique: true, name: 'index_business_roles_on_business_and_name'
   end
 end

@@ -44,7 +44,7 @@ class Users::RegistrationsTest < ActionDispatch::IntegrationTest
   end
 
   test "should create new user with valid params" do
-    assert_difference('User.count', 1) do
+    assert_difference("User.count", 1) do
       post user_registration_path, params: @user_params
     end
 
@@ -83,7 +83,7 @@ class Users::RegistrationsTest < ActionDispatch::IntegrationTest
   test "should not create user without email" do
     @user_params[:user][:email] = ""
 
-    assert_no_difference('User.count') do
+    assert_no_difference("User.count") do
       post user_registration_path, params: @user_params
     end
 
@@ -93,7 +93,7 @@ class Users::RegistrationsTest < ActionDispatch::IntegrationTest
   test "should not create user with invalid email" do
     @user_params[:user][:email] = "invalid-email"
 
-    assert_no_difference('User.count') do
+    assert_no_difference("User.count") do
       post user_registration_path, params: @user_params
     end
 
@@ -104,7 +104,7 @@ class Users::RegistrationsTest < ActionDispatch::IntegrationTest
     @user_params[:user][:password] = ""
     @user_params[:user][:password_confirmation] = ""
 
-    assert_no_difference('User.count') do
+    assert_no_difference("User.count") do
       post user_registration_path, params: @user_params
     end
 
@@ -115,7 +115,7 @@ class Users::RegistrationsTest < ActionDispatch::IntegrationTest
     @user_params[:user][:password] = "short"
     @user_params[:user][:password_confirmation] = "short"
 
-    assert_no_difference('User.count') do
+    assert_no_difference("User.count") do
       post user_registration_path, params: @user_params
     end
 
@@ -125,7 +125,7 @@ class Users::RegistrationsTest < ActionDispatch::IntegrationTest
   test "should not create user with mismatched passwords" do
     @user_params[:user][:password_confirmation] = "different123"
 
-    assert_no_difference('User.count') do
+    assert_no_difference("User.count") do
       post user_registration_path, params: @user_params
     end
 
@@ -137,7 +137,7 @@ class Users::RegistrationsTest < ActionDispatch::IntegrationTest
     post user_registration_path, params: @user_params
 
     # Try to create second user with same email
-    assert_no_difference('User.count') do
+    assert_no_difference("User.count") do
       post user_registration_path, params: @user_params
     end
 
@@ -224,4 +224,3 @@ class Users::RegistrationsTest < ActionDispatch::IntegrationTest
     assert_no_match /password123/, response.body
   end
 end
-

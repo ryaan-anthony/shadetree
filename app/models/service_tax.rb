@@ -22,28 +22,28 @@ class ServiceTax < ApplicationRecord
   validates :tax_rate, presence: true, numericality: { greater_than: 0 }
   validates :tax_type, presence: true, inclusion: { in: %w[percentage fixed] }
   validates :tax_name, uniqueness: {
-    scope: [:service_id, :location_id],
+    scope: [ :service_id, :location_id ],
     message: "already exists for this service and location combination"
   }
   validate :service_and_location_belong_to_same_business
   validate :percentage_tax_rate_within_bounds
 
   # Scopes
-  scope :percentage_taxes, -> { where(tax_type: 'percentage') }
-  scope :fixed_taxes, -> { where(tax_type: 'fixed') }
+  scope :percentage_taxes, -> { where(tax_type: "percentage") }
+  scope :fixed_taxes, -> { where(tax_type: "fixed") }
   scope :inclusive_taxes, -> { where(is_inclusive: true) }
   scope :exclusive_taxes, -> { where(is_inclusive: false) }
   scope :for_location, ->(location_id) { where(location_id: location_id) }
   scope :global_taxes, -> { where(location_id: nil) }
-  scope :applicable_to_location, ->(location_id) { where(location_id: [nil, location_id]) }
+  scope :applicable_to_location, ->(location_id) { where(location_id: [ nil, location_id ]) }
 
   # Instance methods
   def percentage_tax?
-    tax_type == 'percentage'
+    tax_type == "percentage"
   end
 
   def fixed_tax?
-    tax_type == 'fixed'
+    tax_type == "fixed"
   end
 
   def inclusive?
@@ -71,16 +71,16 @@ class ServiceTax < ApplicationRecord
   end
 
   def formatted_rate
-    service.business.currency == 'USD' ? "$#{tax_rate.to_f}" : "#{tax_rate.to_f}"
+    service.business.currency == "USD" ? "$#{tax_rate.to_f}" : "#{tax_rate.to_f}"
   end
 
   def calculate_tax_amount(base_price)
     return 0 if base_price.nil? || base_price <= 0
 
     case tax_type
-    when 'percentage'
+    when "percentage"
       base_price * (tax_rate / 100)
-    when 'fixed'
+    when "fixed"
       tax_rate
     else
       0
@@ -139,7 +139,7 @@ class ServiceTax < ApplicationRecord
   end
 
   def location_name
-    location&.name || 'All locations'
+    location&.name || "All locations"
   end
 
   def tax_description

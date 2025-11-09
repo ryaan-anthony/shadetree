@@ -1,5 +1,5 @@
 class Users::ConfirmationsController < Devise::ConfirmationsController
-  layout 'marketing'
+  layout "marketing"
 
   # GET /users/awaiting_confirmation
   def awaiting_confirmation
@@ -38,4 +38,3 @@ class Users::ConfirmationsController < Devise::ConfirmationsController
     admin_root_path
   end
 end
-

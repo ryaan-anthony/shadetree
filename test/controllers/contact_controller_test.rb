@@ -162,4 +162,3 @@ class ContactControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to contact_path
   end
 end
-

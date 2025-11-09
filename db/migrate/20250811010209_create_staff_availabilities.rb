@@ -17,7 +17,7 @@ class CreateStaffAvailabilities < ActiveRecord::Migration[8.0]
     # Add indexes for better query performance
     add_index :staff_availabilities, :day_of_week
     add_index :staff_availabilities, :is_available
-    add_index :staff_availabilities, [:staff_member_id, :day_of_week, :location_id],
+    add_index :staff_availabilities, [ :staff_member_id, :day_of_week, :location_id ],
               unique: true, name: 'index_staff_availabilities_on_staff_day_location'
   end
 end

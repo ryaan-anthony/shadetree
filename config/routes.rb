@@ -1,22 +1,22 @@
 Rails.application.routes.draw do
   devise_for :users,
              controllers: {
-               sessions: 'users/sessions',
-               registrations: 'users/registrations',
-               confirmations: 'users/confirmations'
+               sessions: "users/sessions",
+               registrations: "users/registrations",
+               confirmations: "users/confirmations"
              }
 
   # Custom confirmation routes
   devise_scope :user do
-    get 'users/awaiting_confirmation', to: 'users/confirmations#awaiting_confirmation', as: :awaiting_confirmation_users_confirmation
-    post 'users/confirmation/resend', to: 'users/confirmations#resend', as: :resend_users_confirmation
+    get "users/awaiting_confirmation", to: "users/confirmations#awaiting_confirmation", as: :awaiting_confirmation_users_confirmation
+    post "users/confirmation/resend", to: "users/confirmations#resend", as: :resend_users_confirmation
   end
 
   # Admin routes
   namespace :admin do
-    resources :business_onboarding, only: [:new, :create]
-    resources :dashboard, only: [:index]
-    root 'dashboard#index'
+    resources :business_onboarding, only: [ :new, :create ]
+    resources :dashboard, only: [ :index ]
+    root "dashboard#index"
   end
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

@@ -14,7 +14,7 @@ class CreateMessageTemplates < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :message_templates, [:business_id, :event]
-    add_index :message_templates, [:business_id, :message_type]
+    add_index :message_templates, [ :business_id, :event ]
+    add_index :message_templates, [ :business_id, :message_type ]
   end
 end

@@ -1,5 +1,5 @@
 class AboutController < ApplicationController
-  layout 'marketing'
+  layout "marketing"
 
   def index
     # Display the about page

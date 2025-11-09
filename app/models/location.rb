@@ -46,12 +46,12 @@ class Location < ApplicationRecord
 
   # Instance methods
   def full_address
-    [address, city, state, zip_code].compact.join(', ')
+    [ address, city, state, zip_code ].compact.join(", ")
   end
 
   def coordinates
     return nil unless latitude.present? && longitude.present?
-    [latitude, longitude]
+    [ latitude, longitude ]
   end
 
   def has_coordinates?

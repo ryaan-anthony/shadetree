@@ -12,16 +12,16 @@ class MessageTemplate < ApplicationRecord
 
   # Enums
   enum event: {
-    booking: 'booking',
-    reminder: 'reminder',
-    cancellation: 'cancellation',
-    payment: 'payment',
-    general: 'general'
+    booking: "booking",
+    reminder: "reminder",
+    cancellation: "cancellation",
+    payment: "payment",
+    general: "general"
   }
 
   enum message_type: {
-    email: 'email',
-    sms: 'sms'
+    email: "email",
+    sms: "sms"
   }
 
   # Callbacks

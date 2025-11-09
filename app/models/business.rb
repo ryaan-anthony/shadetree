@@ -32,7 +32,7 @@
 # @attr [Integer] owner_id Business owner (foreign key to users)
 class Business < ApplicationRecord
   # Relationships
-  belongs_to :owner, class_name: 'User'
+  belongs_to :owner, class_name: "User"
   has_many :business_users, dependent: :destroy
   has_many :users, through: :business_users
   has_many :locations, dependent: :destroy
@@ -57,17 +57,17 @@ class Business < ApplicationRecord
 
   # Industry display names
   INDUSTRIES = {
-    'landscaping' => 'Landscaping & Lawn Care',
-    'maintenance' => 'Home Maintenance & Repair',
-    'cleaning' => 'Cleaning Services',
-    'hvac' => 'HVAC Services',
-    'plumbing' => 'Plumbing Services',
-    'electrical' => 'Electrical Services',
-    'roofing' => 'Roofing Services',
-    'painting' => 'Painting Services',
-    'pool' => 'Pool & Spa Services',
-    'pest' => 'Pest Control',
-    'other' => 'Other Service Business'
+    "landscaping" => "Landscaping & Lawn Care",
+    "maintenance" => "Home Maintenance & Repair",
+    "cleaning" => "Cleaning Services",
+    "hvac" => "HVAC Services",
+    "plumbing" => "Plumbing Services",
+    "electrical" => "Electrical Services",
+    "roofing" => "Roofing Services",
+    "painting" => "Painting Services",
+    "pool" => "Pool & Spa Services",
+    "pest" => "Pest Control",
+    "other" => "Other Service Business"
   }.freeze
 
   # Instance methods
@@ -79,7 +79,7 @@ class Business < ApplicationRecord
     INDUSTRIES[industry] || industry
   end
 
-  def add_user(user, role: 'member')
+  def add_user(user, role: "member")
     business_users.create!(user: user, role: role, active: true)
   end
 
@@ -94,11 +94,11 @@ class Business < ApplicationRecord
   private
 
   def set_default_brand_color
-    self.brand_color = '#059669' if brand_color.blank?
+    self.brand_color = "#059669" if brand_color.blank?
   end
 
   def add_owner_to_business_users
     # Automatically add the owner to business_users with owner role
-    business_users.create!(user: owner, role: 'owner', active: true) unless business_users.exists?(user: owner)
+    business_users.create!(user: owner, role: "owner", active: true) unless business_users.exists?(user: owner)
   end
 end

@@ -69,15 +69,15 @@ class ServicePrice < ApplicationRecord
 
   def price_with_currency
     case currency
-    when 'USD'
+    when "USD"
       "$#{base_price.to_f}"
-    when 'EUR'
+    when "EUR"
       "€#{base_price.to_f}"
-    when 'GBP'
+    when "GBP"
       "£#{base_price.to_f}"
-    when 'CAD'
+    when "CAD"
       "C$#{base_price.to_f}"
-    when 'AUD'
+    when "AUD"
       "A$#{base_price.to_f}"
     else
       "#{base_price.to_f} #{currency}"
@@ -97,8 +97,8 @@ class ServicePrice < ApplicationRecord
   end
 
   def pricing_period
-    start_date = effective_date&.strftime('%m/%d/%Y') || 'Start of time'
-    end_date = expires_date&.strftime('%m/%d/%Y') || 'Indefinite'
+    start_date = effective_date&.strftime("%m/%d/%Y") || "Start of time"
+    end_date = expires_date&.strftime("%m/%d/%Y") || "Indefinite"
     "#{start_date} - #{end_date}"
   end
 
@@ -143,7 +143,7 @@ class ServicePrice < ApplicationRecord
     {
       amount_change: change,
       percentage_change: percentage_change,
-      direction: change >= 0 ? 'increase' : 'decrease'
+      direction: change >= 0 ? "increase" : "decrease"
     }
   end
 

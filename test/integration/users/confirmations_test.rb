@@ -249,4 +249,3 @@ class Users::ConfirmationsTest < ActionDispatch::IntegrationTest
     assert_match /confirmation email has been resent/i, response.body
   end
 end
-

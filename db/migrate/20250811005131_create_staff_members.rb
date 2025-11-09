@@ -13,6 +13,6 @@ class CreateStaffMembers < ActiveRecord::Migration[8.0]
 
     # Add indexes for better query performance
     add_index :staff_members, :status
-    add_index :staff_members, [:business_id, :user_id], unique: true, name: 'index_staff_members_on_business_and_user'
+    add_index :staff_members, [ :business_id, :user_id ], unique: true, name: 'index_staff_members_on_business_and_user'
   end
 end

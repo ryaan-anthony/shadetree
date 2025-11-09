@@ -18,6 +18,6 @@ class CreateBusinessClosures < ActiveRecord::Migration[8.0]
     # Add indexes for better query performance
     add_index :business_closures, :date
     add_index :business_closures, :is_recurring
-    add_index :business_closures, [:location_id, :date], unique: true, name: 'index_business_closures_on_location_and_date'
+    add_index :business_closures, [ :location_id, :date ], unique: true, name: 'index_business_closures_on_location_and_date'
   end
 end

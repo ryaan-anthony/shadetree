@@ -18,6 +18,6 @@ class CreateServicePrices < ActiveRecord::Migration[8.0]
     add_index :service_prices, :effective_date
     add_index :service_prices, :expires_date
     add_index :service_prices, :currency
-    add_index :service_prices, [:service_id, :location_id], unique: true, name: 'index_service_prices_on_service_and_location'
+    add_index :service_prices, [ :service_id, :location_id ], unique: true, name: 'index_service_prices_on_service_and_location'
   end
 end

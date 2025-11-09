@@ -238,7 +238,7 @@ class Users::SessionsTest < ActionDispatch::IntegrationTest
       }
     }
 
-    assert_not_nil cookies['remember_user_token']
+    assert_not_nil cookies["remember_user_token"]
   end
 
   # Layout and UI Tests
@@ -331,4 +331,3 @@ class Users::SessionsTest < ActionDispatch::IntegrationTest
     assert_response :success  # Second user can access admin
   end
 end
-

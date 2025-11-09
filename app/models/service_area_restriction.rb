@@ -23,41 +23,41 @@ class ServiceAreaRestriction < ApplicationRecord
 
   # Scopes
   scope :by_type, ->(type) { where(restriction_type: type) }
-  scope :city_restrictions, -> { where(restriction_type: 'city') }
-  scope :state_restrictions, -> { where(restriction_type: 'state') }
-  scope :zip_code_restrictions, -> { where(restriction_type: 'zip_code') }
+  scope :city_restrictions, -> { where(restriction_type: "city") }
+  scope :state_restrictions, -> { where(restriction_type: "state") }
+  scope :zip_code_restrictions, -> { where(restriction_type: "zip_code") }
 
   # Instance methods
   def city_restriction?
-    restriction_type == 'city'
+    restriction_type == "city"
   end
 
   def state_restriction?
-    restriction_type == 'state'
+    restriction_type == "state"
   end
 
   def zip_code_restriction?
-    restriction_type == 'zip_code'
+    restriction_type == "zip_code"
   end
 
   def restricted_location
     case restriction_type
-    when 'city'
+    when "city"
       city
-    when 'state'
+    when "state"
       state
-    when 'zip_code'
+    when "zip_code"
       zip_code
     end
   end
 
   def display_restriction
     case restriction_type
-    when 'city'
+    when "city"
       "City: #{city}"
-    when 'state'
+    when "state"
       "State: #{state}"
-    when 'zip_code'
+    when "zip_code"
       "Zip Code: #{zip_code}"
     end
   end

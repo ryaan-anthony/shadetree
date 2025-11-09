@@ -20,7 +20,7 @@ class User < ApplicationRecord
   # Relationships
   has_many :business_users, dependent: :destroy
   has_many :businesses, through: :business_users
-  has_many :owned_businesses, class_name: 'Business', foreign_key: 'owner_id', dependent: :destroy
+  has_many :owned_businesses, class_name: "Business", foreign_key: "owner_id", dependent: :destroy
   has_one :staff_member, dependent: :destroy
 
   # Validations
@@ -31,7 +31,7 @@ class User < ApplicationRecord
   # Instance methods
   def full_name
     return email if first_name.blank? && last_name.blank?
-    [first_name, last_name].compact.join(' ')
+    [ first_name, last_name ].compact.join(" ")
   end
 
   def has_business?
@@ -52,7 +52,7 @@ class User < ApplicationRecord
   end
 
   def owner_of?(business)
-    business_users.where(business: business, role: 'owner').exists? ||
+    business_users.where(business: business, role: "owner").exists? ||
       owned_businesses.include?(business)
   end
 

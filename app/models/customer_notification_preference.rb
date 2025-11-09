@@ -1,6 +1,6 @@
 class CustomerNotificationPreference < ApplicationRecord
   # Associations
-  belongs_to :customer, class_name: 'User'
+  belongs_to :customer, class_name: "User"
   belongs_to :business
 
   # Default values for preferences

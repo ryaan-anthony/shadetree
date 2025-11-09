@@ -1,5 +1,5 @@
 class PricingController < ApplicationController
-  layout 'marketing'
+  layout "marketing"
 
   def index
   end

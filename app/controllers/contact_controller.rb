@@ -1,5 +1,5 @@
 class ContactController < ApplicationController
-  layout 'marketing'
+  layout "marketing"
 
   def index
     # Display the contact form
@@ -15,6 +15,6 @@ class ContactController < ApplicationController
 
     # Here you would typically send an email or save to database
     # For now, we'll just redirect with a success message
-    redirect_to contact_path, notice: 'Thank you for your message! We\'ll get back to you soon.'
+    redirect_to contact_path, notice: "Thank you for your message! We'll get back to you soon."
   end
 end

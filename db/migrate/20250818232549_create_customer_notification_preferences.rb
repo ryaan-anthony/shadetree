@@ -14,6 +14,6 @@ class CreateCustomerNotificationPreferences < ActiveRecord::Migration[8.0]
     end
 
     # Add a unique index to ensure one preference set per customer/business
-    add_index :customer_notification_preferences, [:customer_id, :business_id], unique: true, name: 'index_customer_notification_prefs_on_customer_and_business'
+    add_index :customer_notification_preferences, [ :customer_id, :business_id ], unique: true, name: 'index_customer_notification_prefs_on_customer_and_business'
   end
 end

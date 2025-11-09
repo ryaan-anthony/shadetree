@@ -15,6 +15,6 @@ class CreateSpecialAvailabilities < ActiveRecord::Migration[8.0]
 
     # Add indexes for better query performance
     add_index :special_availabilities, :date
-    add_index :special_availabilities, [:location_id, :date], unique: true, name: 'index_special_availabilities_on_location_and_date'
+    add_index :special_availabilities, [ :location_id, :date ], unique: true, name: 'index_special_availabilities_on_location_and_date'
   end
 end
