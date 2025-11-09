@@ -11,24 +11,17 @@ class Users::RegistrationsController < Devise::RegistrationsController
   #   super
   # end
 
-  # GET /resource/edit
-  # def edit
-  #   super
-  # end
+  protected
 
-  # PUT /resource
-  # def update
-  #   super
-  # end
+  # Override after_sign_up_path_for to redirect to awaiting confirmation
+  def after_sign_up_path_for(resource)
+    awaiting_confirmation_users_confirmation_path(email: resource.email)
+  end
 
-  # DELETE /resource
-  # def destroy
-  #   super
-  # end
-
-  # GET /resource/cancel
-  # Forces the session data which is usually expired after sign
-  # in to be expired now. This is useful if the user wants to
+  # Override after_inactive_sign_up_path_for to redirect to awaiting confirmation
+  def after_inactive_sign_up_path_for(resource)
+    awaiting_confirmation_users_confirmation_path(email: resource.email)
+  end
   # cancel oauth signing in/up in the middle of the process,
   # removing all OAuth session data.
   # def cancel

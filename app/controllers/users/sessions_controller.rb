@@ -16,10 +16,17 @@ class Users::SessionsController < Devise::SessionsController
   #   super
   # end
 
-  # protected
+  protected
 
-  # If you have extra params to permit, append them to the sanitizer.
-  # def configure_sign_in_params
-  #   devise_parameter_sanitizer.permit(:sign_in, keys: [:attribute])
-  # end
+  # Redirect confirmed users to admin dashboard after sign in
+  def after_sign_in_path_for(resource)
+    if resource.confirmed?
+      admin_root_path
+    else
+      # Sign out the user and redirect to awaiting confirmation page
+      sign_out(resource)
+      flash[:alert] = "Please confirm your email address before signing in."
+      awaiting_confirmation_users_confirmation_path(email: resource.email)
+    end
+  end
 end

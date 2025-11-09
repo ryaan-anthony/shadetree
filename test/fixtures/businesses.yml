@@ -1,0 +1,25 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: Test Business One
+  owner: one
+  phone: 555-0100
+  email: business1@example.com
+  timezone: America/New_York
+  website: https://business1.example.com
+  currency: USD
+  brand_color: '#059669'
+  active: true
+  industry: landscaping
+
+two:
+  name: Test Business Two
+  owner: two
+  phone: 555-0200
+  email: business2@example.com
+  timezone: America/Los_Angeles
+  website: https://business2.example.com
+  currency: USD
+  brand_color: '#1E40AF'
+  active: true
+  industry: maintenance

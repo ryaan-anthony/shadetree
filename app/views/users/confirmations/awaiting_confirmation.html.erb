@@ -1,0 +1,160 @@
+<% content_for :title, "Check Your Email - Shadetree" %>
+
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-slate-50 to-white">
+    <div class="max-w-md w-full space-y-8">
+        <!-- Icon -->
+        <div class="text-center">
+            <div class="mx-auto h-24 w-24 bg-shadetree-blue rounded-full flex items-center justify-center mb-6 shadow-lg">
+                <i data-feather="mail" class="h-12 w-12 text-white"></i>
+            </div>
+            <h2 class="text-3xl font-bold text-enterprise-navy mb-2">
+                Check Your Email
+            </h2>
+            <p class="text-lg text-enterprise-gray">
+                We've sent you a confirmation link
+            </p>
+        </div>
+
+        <!-- Main Content -->
+        <div class="bg-white py-8 px-6 shadow-lg rounded-lg border border-gray-200">
+            <div class="space-y-6">
+                <!-- Flash Messages -->
+                <% if flash[:notice].present? %>
+                    <div class="rounded-lg bg-green-50 border border-green-200 p-4">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <i data-feather="check-circle" class="h-5 w-5 text-green-600"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-green-800"><%= flash[:notice] %></p>
+                            </div>
+                        </div>
+                    </div>
+                <% end %>
+
+                <% if flash[:alert].present? %>
+                    <div class="rounded-lg bg-red-50 border border-red-200 p-4">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <i data-feather="alert-circle" class="h-5 w-5 text-red-600"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-red-800"><%= flash[:alert] %></p>
+                            </div>
+                        </div>
+                    </div>
+                <% end %>
+
+                <!-- Email Address Display -->
+                <% if @email.present? %>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <i data-feather="info" class="h-5 w-5 text-blue-600 mt-0.5"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-blue-800">
+                                    We sent a confirmation email to:
+                                </p>
+                                <p class="text-base font-semibold text-blue-900 mt-1">
+                                    <%= @email %>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                <% end %>
+
+                <!-- Instructions -->
+                <div class="space-y-4">
+                    <h3 class="font-semibold text-gray-900 flex items-center">
+                        <i data-feather="check-circle" class="h-5 w-5 text-shadetree-green mr-2"></i>
+                        What to do next:
+                    </h3>
+                    <ol class="space-y-3 text-gray-700">
+                        <li class="flex items-start">
+                            <span class="flex-shrink-0 h-6 w-6 rounded-full bg-shadetree-blue text-white flex items-center justify-center text-sm font-semibold mr-3">1</span>
+                            <span>Check your email inbox (and spam folder)</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="flex-shrink-0 h-6 w-6 rounded-full bg-shadetree-blue text-white flex items-center justify-center text-sm font-semibold mr-3">2</span>
+                            <span>Click the confirmation link in the email</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="flex-shrink-0 h-6 w-6 rounded-full bg-shadetree-blue text-white flex items-center justify-center text-sm font-semibold mr-3">3</span>
+                            <span>Sign in and start using Shadetree!</span>
+                        </li>
+                    </ol>
+                </div>
+
+                <!-- Help Section -->
+                <div class="border-t border-gray-200 pt-6">
+                    <h4 class="text-sm font-semibold text-gray-900 mb-3">Didn't receive the email?</h4>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-start">
+                            <i data-feather="arrow-right" class="h-4 w-4 text-gray-400 mr-2 mt-0.5"></i>
+                            <span>Check your spam or junk folder</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-feather="arrow-right" class="h-4 w-4 text-gray-400 mr-2 mt-0.5"></i>
+                            <span>Make sure <%= @email || 'your email address' %> is correct</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-feather="arrow-right" class="h-4 w-4 text-gray-400 mr-2 mt-0.5"></i>
+                            <span>Wait a few minutes for the email to arrive</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Resend Link -->
+                <div class="text-center pt-4">
+                    <% if @email.present? %>
+                        <%= button_to resend_users_confirmation_path,
+                            params: { email: @email },
+                            method: :post,
+                            class: "inline-flex items-center text-shadetree-blue hover:text-blue-800 font-medium bg-transparent border-0 cursor-pointer" do %>
+                            <i data-feather="refresh-cw" class="h-4 w-4 mr-2"></i>
+                            Resend confirmation email
+                        <% end %>
+                    <% else %>
+                        <%= link_to new_user_confirmation_path,
+                            class: "inline-flex items-center text-shadetree-blue hover:text-blue-800 font-medium" do %>
+                            <i data-feather="refresh-cw" class="h-4 w-4 mr-2"></i>
+                            Resend confirmation email
+                        <% end %>
+                    <% end %>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Links -->
+        <div class="text-center space-y-3">
+            <p class="text-sm text-gray-600">
+                Already confirmed your email?
+                <%= link_to "Sign in here", new_user_session_path, class: "text-shadetree-blue hover:text-blue-800 font-medium" %>
+            </p>
+            <p class="text-sm text-gray-600">
+                Need help?
+                <%= link_to "Contact support", contact_path, class: "text-shadetree-blue hover:text-blue-800 font-medium" %>
+            </p>
+        </div>
+
+        <!-- Trust Indicators -->
+        <div class="text-center pt-6">
+            <div class="flex items-center justify-center space-x-6 text-xs text-gray-500">
+                <span class="flex items-center">
+                    <i data-feather="shield" class="w-4 h-4 mr-1"></i>
+                    Secure
+                </span>
+                <span class="flex items-center">
+                    <i data-feather="lock" class="w-4 h-4 mr-1"></i>
+                    Encrypted
+                </span>
+                <span class="flex items-center">
+                    <i data-feather="check-circle" class="w-4 h-4 mr-1"></i>
+                    Private
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+

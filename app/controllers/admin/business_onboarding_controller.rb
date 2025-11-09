@@ -23,7 +23,7 @@ class Admin::BusinessOnboardingController < Admin::BaseController
         redirect_to new_admin_business_onboarding_path(step: next_step)
       end
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -60,11 +60,8 @@ class Admin::BusinessOnboardingController < Admin::BaseController
   end
 
   def complete_onboarding
-    # Set this business as the user's current business if not already set
-    unless current_user.has_business?
-      current_user.update!(business: @business)
-    end
-
+    # The after_create callback on Business model already added owner to business_users
+    # Just redirect to admin dashboard
     redirect_to admin_root_path, notice: 'Welcome to Shadetree! Your business profile has been set up successfully.'
   end
 

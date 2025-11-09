@@ -1,9 +1,17 @@
 class Admin::BaseController < ApplicationController
   before_action :authenticate_user!
+  before_action :require_confirmed_account
   before_action :require_business_setup
   layout 'admin'
 
   private
+
+  def require_confirmed_account
+    if current_user && !current_user.confirmed?
+      flash[:alert] = "Please confirm your email address before accessing the admin area."
+      redirect_to root_path
+    end
+  end
 
   def require_business_setup
     # Skip business setup check for the onboarding controller itself
