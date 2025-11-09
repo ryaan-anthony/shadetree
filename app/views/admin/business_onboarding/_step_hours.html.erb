@@ -10,60 +10,10 @@
         </p>
     </div>
 
-    <%= form_with(model: [@business], url: admin_business_onboarding_index_path, local: true,
+    <%= form_with(url: admin_business_onboarding_index_path, method: :post, local: true,
                   html: { class: "space-y-8", "data-step-form": true }) do |form| %>
         <%= hidden_field_tag :step, 'hours' %>
 
-        <!-- Quick Setup Presets -->
-        <div class="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-xl p-8">
-            <h3 class="text-xl font-semibold text-emerald-900 mb-6 flex items-center">
-                <i data-feather="zap" class="h-5 w-5 mr-2"></i>
-                Quick Setup Options
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <label class="relative cursor-pointer">
-                    <input type="radio" name="hours_preset" value="business_hours" class="sr-only peer">
-                    <div class="bg-white border-2 border-gray-200 rounded-xl p-6 transition-all duration-200 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 hover:border-gray-300 hover:shadow-md">
-                        <div class="text-center">
-                            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <i data-feather="briefcase" class="h-6 w-6 text-blue-600"></i>
-                            </div>
-                            <h4 class="font-semibold text-gray-900 mb-2">Standard Business</h4>
-                            <p class="text-sm text-gray-600 mb-3">9 AM - 5 PM<br>Monday - Friday</p>
-                            <div class="text-xs text-gray-500">Perfect for office-based services</div>
-                        </div>
-                    </div>
-                </label>
-
-                <label class="relative cursor-pointer">
-                    <input type="radio" name="hours_preset" value="extended" class="sr-only peer">
-                    <div class="bg-white border-2 border-gray-200 rounded-xl p-6 transition-all duration-200 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 hover:border-gray-300 hover:shadow-md">
-                        <div class="text-center">
-                            <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <i data-feather="sun" class="h-6 w-6 text-orange-600"></i>
-                            </div>
-                            <h4 class="font-semibold text-gray-900 mb-2">Extended Hours</h4>
-                            <p class="text-sm text-gray-600 mb-3">7 AM - 7 PM<br>Monday - Saturday</p>
-                            <div class="text-xs text-gray-500">Great for field services</div>
-                        </div>
-                    </div>
-                </label>
-
-                <label class="relative cursor-pointer">
-                    <input type="radio" name="hours_preset" value="custom" class="sr-only peer" checked>
-                    <div class="bg-white border-2 border-gray-200 rounded-xl p-6 transition-all duration-200 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 hover:border-gray-300 hover:shadow-md">
-                        <div class="text-center">
-                            <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <i data-feather="settings" class="h-6 w-6 text-purple-600"></i>
-                            </div>
-                            <h4 class="font-semibold text-gray-900 mb-2">Custom Schedule</h4>
-                            <p class="text-sm text-gray-600 mb-3">Set individual<br>days & times</p>
-                            <div class="text-xs text-gray-500">Full flexibility</div>
-                        </div>
-                    </div>
-                </label>
-            </div>
-        </div>
 
         <!-- Custom Hours Configuration -->
         <div id="custom-hours-section" class="space-y-6">
@@ -82,7 +32,7 @@
                         <div class="flex items-center min-w-[140px]">
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" name="<%= day.downcase %>_enabled" value="1"
-                                       class="sr-only peer" <%= 'checked' unless day == 'Sunday' %>>
+                                       class="sr-only peer day-toggle" <%= 'checked' if index < 5 %>>
                                 <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
                                 <span class="ml-3 font-medium text-gray-900"><%= day %></span>
                             </label>
@@ -92,7 +42,7 @@
                         <div class="flex items-center space-x-4 ml-auto">
                             <div class="flex items-center space-x-2">
                                 <select name="<%= day.downcase %>_start"
-                                        class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                                        class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 time-select">
                                     <% (6..11).each do |hour| %>
                                         <option value="<%= hour %>:00" <%= 'selected' if hour == 9 %>><%= hour %>:00 AM</option>
                                         <option value="<%= hour %>:30"><%= hour %>:30 AM</option>
@@ -104,7 +54,7 @@
                                 <span class="text-gray-500 font-medium">to</span>
 
                                 <select name="<%= day.downcase %>_end"
-                                        class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                                        class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 time-select">
                                     <% (1..11).each do |hour| %>
                                         <option value="<%= hour + 12 %>:00" <%= 'selected' if hour == 5 %>><%= hour %>:00 PM</option>
                                         <option value="<%= hour + 12 %>:30"><%= hour %>:30 PM</option>
@@ -139,12 +89,28 @@
                 <h4 class="font-semibold text-gray-900 mb-4">Schedule Summary</h4>
                 <div id="schedule-summary" class="space-y-2 text-sm">
                     <div class="flex justify-between">
-                        <span class="text-gray-600">Weekdays:</span>
+                        <span class="text-gray-600">Monday:</span>
+                        <span class="font-medium">9:00 AM - 5:00 PM</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Tuesday:</span>
+                        <span class="font-medium">9:00 AM - 5:00 PM</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Wednesday:</span>
+                        <span class="font-medium">9:00 AM - 5:00 PM</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Thursday:</span>
+                        <span class="font-medium">9:00 AM - 5:00 PM</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Friday:</span>
                         <span class="font-medium">9:00 AM - 5:00 PM</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">Saturday:</span>
-                        <span class="font-medium">9:00 AM - 5:00 PM</span>
+                        <span class="text-gray-500">Closed</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">Sunday:</span>
@@ -200,52 +166,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function setupHoursPresets() {
-    const presetRadios = document.querySelectorAll('input[name="hours_preset"]');
-
-    presetRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            if (this.value === 'business_hours') {
-                setPresetHours('business');
-            } else if (this.value === 'extended') {
-                setPresetHours('extended');
-            }
-            updateScheduleSummary();
-        });
-    });
-
-    // Listen for manual changes
-    document.querySelectorAll('select[name*="_start"], select[name*="_end"], input[name*="_enabled"]').forEach(input => {
+    // Listen for manual changes to checkboxes and time selects
+    document.querySelectorAll('.day-toggle, .time-select').forEach(input => {
         input.addEventListener('change', updateScheduleSummary);
-    });
-}
-
-function setPresetHours(type) {
-    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-
-    days.forEach((day, index) => {
-        const checkbox = document.querySelector(`input[name="${day}_enabled"]`);
-        const startSelect = document.querySelector(`select[name="${day}_start"]`);
-        const endSelect = document.querySelector(`select[name="${day}_end"]`);
-
-        if (type === 'business') {
-            // Mon-Fri 9-5
-            if (index < 5) {
-                checkbox.checked = true;
-                startSelect.value = '9:00';
-                endSelect.value = '17:00';
-            } else {
-                checkbox.checked = false;
-            }
-        } else if (type === 'extended') {
-            // Mon-Sat 7-7
-            if (index < 6) {
-                checkbox.checked = true;
-                startSelect.value = '7:00';
-                endSelect.value = '19:00';
-            } else {
-                checkbox.checked = false;
-            }
-        }
     });
 }
 
@@ -272,7 +195,8 @@ function updateScheduleSummary() {
                     <span class="font-medium">${startTime} - ${endTime}</span>
                 </div>
             `;
-        } else if (index === 6) { // Sunday
+        } else {
+            // Show "Closed" for any unchecked day
             summaryHTML += `
                 <div class="flex justify-between">
                     <span class="text-gray-600">${dayNames[index]}:</span>

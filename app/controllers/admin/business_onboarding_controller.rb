@@ -1,26 +1,29 @@
 class Admin::BusinessOnboardingController < Admin::BaseController
   STEPS = %w[basics hours location branding complete].freeze
 
+  before_action :set_business
+  before_action :validate_step, only: [:new, :create]
+  before_action :authorize_business, only: [:create]
+
   def new
     @step = params[:step] || "basics"
-    @business = current_user.owned_businesses.build
 
-    # Load existing business if user is editing
-    if current_user.has_business?
-      @business = current_user.current_business
-    end
+    # Set current onboarding step if not set
+    @business.update(onboarding_step: @step) if @business.persisted? && @business.onboarding_step.blank?
   end
 
   def create
     @step = params[:step] || "basics"
-    @business = find_or_initialize_business
 
     if update_business_for_step(@step)
+      @business.update(onboarding_step: @step)
+
       next_step = get_next_step(@step)
       if next_step == "complete"
         complete_onboarding
       else
-        redirect_to new_admin_business_onboarding_path(step: next_step)
+        redirect_to new_admin_business_onboarding_path(step: next_step),
+                    notice: "#{@step.capitalize} information saved successfully."
       end
     else
       render :new, status: :unprocessable_content
@@ -29,11 +32,27 @@ class Admin::BusinessOnboardingController < Admin::BaseController
 
   private
 
-  def find_or_initialize_business
-    if current_user.has_business?
-      current_user.current_business
+  def set_business
+    @business = if current_user.has_business?
+      current_user.owned_businesses.first || current_user.businesses.first
     else
       current_user.owned_businesses.build(owner: current_user)
+    end
+  end
+
+  def authorize_business
+    # Ensure user owns the business they're trying to onboard
+    if @business.persisted? && @business.owner_id != current_user.id
+      redirect_to admin_root_path, alert: "Unauthorized access."
+      return false
+    end
+  end
+
+  def validate_step
+    @step = params[:step] || "basics"
+    unless STEPS.include?(@step) || @step == "complete"
+      redirect_to new_admin_business_onboarding_path(step: "basics"),
+                  alert: "Invalid onboarding step."
     end
   end
 
@@ -60,9 +79,13 @@ class Admin::BusinessOnboardingController < Admin::BaseController
   end
 
   def complete_onboarding
-    # The after_create callback on Business model already added owner to business_users
-    # Just redirect to admin dashboard
-    redirect_to admin_root_path, notice: "Welcome to Shadetree! Your business profile has been set up successfully."
+    if @business.complete_onboarding!
+      redirect_to admin_root_path,
+                  notice: "Welcome to Shadetree! Your business profile has been set up successfully."
+    else
+      redirect_to new_admin_business_onboarding_path(step: "basics"),
+                  alert: "Unable to complete onboarding. Please try again."
+    end
   end
 
   def basics_params
@@ -70,12 +93,25 @@ class Admin::BusinessOnboardingController < Admin::BaseController
   end
 
   def hours_params
-    # For now, we'll skip complex hours logic and just mark as completed
-    {}
+    permitted = params.permit(
+      :timezone,
+      :monday_enabled, :monday_start, :monday_end,
+      :tuesday_enabled, :tuesday_start, :tuesday_end,
+      :wednesday_enabled, :wednesday_start, :wednesday_end,
+      :thursday_enabled, :thursday_start, :thursday_end,
+      :friday_enabled, :friday_start, :friday_end,
+      :saturday_enabled, :saturday_start, :saturday_end,
+      :sunday_enabled, :sunday_start, :sunday_end
+    )
+
+    # Only return timezone for now - we'll store hours in a separate model later
+    { timezone: permitted[:timezone] }
   end
 
   def location_params
-    params.require(:business).permit(:service_area_radius, :latitude, :longitude)
+    # Location/service area will be implemented later with Location model
+    # For now, just allow this step to pass through
+    {}
   end
 
   def branding_params

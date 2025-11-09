@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_09_174200) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_09_193715) do
   create_table "business_closures", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.date "date", null: false
@@ -56,13 +56,17 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_09_174200) do
 
   create_table "businesses", force: :cascade do |t|
     t.boolean "active", default: true
+    t.text "address"
     t.string "brand_color", default: "#059669"
     t.datetime "created_at", null: false
     t.string "currency", default: "USD"
+    t.text "description"
     t.string "email", null: false
     t.string "industry"
     t.string "logo_url"
     t.string "name", null: false
+    t.datetime "onboarded_at"
+    t.string "onboarding_step"
     t.integer "owner_id", null: false
     t.string "phone"
     t.string "timezone"
@@ -71,6 +75,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_09_174200) do
     t.index ["active"], name: "index_businesses_on_active"
     t.index ["email"], name: "index_businesses_on_email"
     t.index ["industry"], name: "index_businesses_on_industry"
+    t.index ["onboarded_at"], name: "index_businesses_on_onboarded_at"
+    t.index ["onboarding_step"], name: "index_businesses_on_onboarding_step"
     t.index ["owner_id"], name: "index_businesses_on_owner_id"
   end
 

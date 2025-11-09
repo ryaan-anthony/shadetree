@@ -6,6 +6,7 @@ class Admin::AccessControlTest < ActionDispatch::IntegrationTest
     @confirmed_user = User.new(
       email: "admin_confirmed@example.com",
       password: "password123",
+      password_confirmation: "password123",
       confirmed_at: Time.current
     )
     @confirmed_user.skip_confirmation_notification!
@@ -14,7 +15,8 @@ class Admin::AccessControlTest < ActionDispatch::IntegrationTest
     # Create unconfirmed user
     @unconfirmed_user = User.new(
       email: "admin_unconfirmed@example.com",
-      password: "password123"
+      password: "password123",
+      password_confirmation: "password123"
     )
     @unconfirmed_user.skip_confirmation_notification!
     @unconfirmed_user.save!
@@ -75,11 +77,14 @@ class Admin::AccessControlTest < ActionDispatch::IntegrationTest
   # Business Setup Tests
 
   test "confirmed user without business redirected to onboarding" do
-    user_without_business = User.create!(
+    user_without_business = User.new(
       email: "nobusiness@example.com",
       password: "password123",
+      password_confirmation: "password123",
       confirmed_at: Time.current
     )
+    user_without_business.skip_confirmation_notification!
+    user_without_business.save!
 
     sign_in user_without_business
     get admin_root_path
@@ -87,11 +92,14 @@ class Admin::AccessControlTest < ActionDispatch::IntegrationTest
   end
 
   test "business onboarding accessible without business" do
-    user_without_business = User.create!(
-      email: "nobusiness@example.com",
+    user_without_business = User.new(
+      email: "nobusiness2@example.com",
       password: "password123",
+      password_confirmation: "password123",
       confirmed_at: Time.current
     )
+    user_without_business.skip_confirmation_notification!
+    user_without_business.save!
 
     sign_in user_without_business
     get new_admin_business_onboarding_path

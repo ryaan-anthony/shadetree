@@ -7,7 +7,7 @@
         </p>
     </div>
 
-    <%= form_with(model: [@business], url: admin_business_onboarding_index_path, local: true,
+    <%= form_with(url: admin_business_onboarding_index_path, method: :post, local: true,
                   html: { class: "space-y-8", "data-step-form": true }) do |form| %>
         <%= hidden_field_tag :step, 'basics' %>
 

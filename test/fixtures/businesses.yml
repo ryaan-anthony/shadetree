@@ -11,6 +11,8 @@ one:
   brand_color: '#059669'
   active: true
   industry: landscaping
+  address: 123 Main St, New York, NY 10001
+  description: A premier landscaping service company
 
 two:
   name: Test Business Two
@@ -23,3 +25,5 @@ two:
   brand_color: '#1E40AF'
   active: true
   industry: maintenance
+  address: 456 Oak Ave, Los Angeles, CA 90001
+  description: Professional home maintenance services

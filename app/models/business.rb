@@ -5,22 +5,9 @@
 # multiple users and locations associated with it.
 #
 # @attr [String] name Business name (required)
-# @attr [String] timezone Business timezone
-# @attr [String] email Primary business email (required)
-# @attr [String] phone Primary business phone
-# @attr [String] website Business website URL
-# @attr [String] currency Business currency (default: 'USD')
-# @attr [String] brand_color Primary brand color (default: '#059669')
-# @attr [String] logo_url Business logo URL
-# @attr [Boolean] active Business status (default: true)
-# Primary business entity containing core company information.
-#
-# The Business model represents a company or organization that provides services
-# through the Shadetree platform. Each business has an owner (User) and can have
-# multiple users and locations associated with it.
-#
-# @attr [String] name Business name (required)
 # @attr [String] industry Business industry type
+# @attr [Text] address Business physical address
+# @attr [Text] description Business description
 # @attr [String] timezone Business timezone
 # @attr [String] email Primary business email (required)
 # @attr [String] phone Primary business phone
@@ -54,6 +41,12 @@ class Business < ApplicationRecord
   # Scopes
   scope :active, -> { where(active: true) }
   scope :by_industry, ->(industry) { where(industry: industry) }
+  scope :onboarded, -> { where.not(onboarded_at: nil) }
+  scope :pending_onboarding, -> { where(onboarded_at: nil) }
+  scope :at_onboarding_step, ->(step) { where(onboarding_step: step) }
+
+  # Onboarding steps
+  ONBOARDING_STEPS = %w[basics hours location branding].freeze
 
   # Industry display names
   INDUSTRIES = {
@@ -71,6 +64,30 @@ class Business < ApplicationRecord
   }.freeze
 
   # Instance methods
+  def onboarded?
+    onboarded_at.present?
+  end
+
+  def complete_onboarding!
+    update!(onboarded_at: Time.current, onboarding_step: nil)
+  end
+
+  def basics_complete?
+    name.present? && email.present? && industry.present?
+  end
+
+  def hours_complete?
+    timezone.present?
+  end
+
+  def location_complete?
+    address.present?
+  end
+
+  def branding_complete?
+    brand_color.present?
+  end
+
   def complete_setup?
     name.present? && email.present? && phone.present?
   end
