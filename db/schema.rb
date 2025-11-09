@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_09_193715) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_09_205422) do
   create_table "business_closures", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.date "date", null: false
@@ -61,7 +61,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_09_193715) do
     t.datetime "created_at", null: false
     t.string "currency", default: "USD"
     t.text "description"
-    t.string "email", null: false
+    t.string "email"
     t.string "industry"
     t.string "logo_url"
     t.string "name", null: false

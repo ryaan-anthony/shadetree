@@ -30,7 +30,7 @@ class Business < ApplicationRecord
 
   # Validations
   validates :name, presence: true
-  validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
+  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
   validates :owner_id, presence: true
   validates :brand_color, format: { with: /\A#[0-9A-Fa-f]{6}\z/ }, allow_blank: true
   validates :currency, inclusion: { in: %w[USD EUR GBP CAD AUD] }, allow_blank: true
@@ -41,12 +41,6 @@ class Business < ApplicationRecord
   # Scopes
   scope :active, -> { where(active: true) }
   scope :by_industry, ->(industry) { where(industry: industry) }
-  scope :onboarded, -> { where.not(onboarded_at: nil) }
-  scope :pending_onboarding, -> { where(onboarded_at: nil) }
-  scope :at_onboarding_step, ->(step) { where(onboarding_step: step) }
-
-  # Onboarding steps
-  ONBOARDING_STEPS = %w[basics hours location branding].freeze
 
   # Industry display names
   INDUSTRIES = {
@@ -64,33 +58,6 @@ class Business < ApplicationRecord
   }.freeze
 
   # Instance methods
-  def onboarded?
-    onboarded_at.present?
-  end
-
-  def complete_onboarding!
-    update!(onboarded_at: Time.current, onboarding_step: nil)
-  end
-
-  def basics_complete?
-    name.present? && email.present? && industry.present?
-  end
-
-  def hours_complete?
-    timezone.present?
-  end
-
-  def location_complete?
-    address.present?
-  end
-
-  def branding_complete?
-    brand_color.present?
-  end
-
-  def complete_setup?
-    name.present? && email.present? && phone.present?
-  end
 
   def industry_name
     INDUSTRIES[industry] || industry

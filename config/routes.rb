@@ -14,8 +14,17 @@ Rails.application.routes.draw do
 
   # Admin routes
   namespace :admin do
-    resources :business_onboarding, only: [ :new, :create ]
-    resources :dashboard, only: [ :index ]
+    # Business management
+    resource :business, only: [:new, :create, :edit, :update]
+
+    # Settings pages
+    namespace :settings do
+      resource :hours, only: [:edit, :update]
+      resource :branding, only: [:edit, :update]
+    end
+
+    # Dashboard
+    resources :dashboard, only: [:index]
     root "dashboard#index"
   end
 

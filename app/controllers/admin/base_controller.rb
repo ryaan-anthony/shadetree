@@ -14,12 +14,14 @@ class Admin::BaseController < ApplicationController
   end
 
   def require_business_setup
-    # Skip business setup check for the onboarding controller itself
-    return if controller_name == "business_onboarding"
+    # Skip business check for business creation controller
+    return if controller_name == "businesses"
 
+    # If user has no business, show modal to create one on dashboard
+    # The dashboard will handle showing the creation modal
     unless current_user.has_business?
-      redirect_to new_admin_business_onboarding_path
-      nil
+      # For non-dashboard routes, redirect to dashboard which will show modal
+      redirect_to admin_root_path unless controller_name == "dashboard"
     end
   end
 

@@ -1,0 +1,134 @@
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-2xl w-full">
+    <!-- Header Section -->
+    <div class="text-center mb-12">
+      <!-- Logo -->
+      <div class="flex justify-center mb-6">
+        <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 shadow-lg">
+          <i data-feather="briefcase" class="h-10 w-10 text-white"></i>
+        </div>
+      </div>
+
+      <h1 class="text-4xl font-extrabold text-gray-900 mb-3">
+        Welcome to <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-green-600">Shadetree</span>
+      </h1>
+      <p class="text-xl text-gray-600 mb-2">
+        Let's set up your business
+      </p>
+    </div>
+
+    <!-- Form Card -->
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+      <!-- Progress Indicator -->
+      <div class="bg-gradient-to-r from-emerald-500 to-green-600 h-2"></div>
+
+      <div class="p-8 sm:p-12">
+        <%= form_with(model: @business, url: admin_business_path, method: :post, local: true, class: "space-y-8") do |form| %>
+          <!-- Error Messages -->
+          <% if @business.errors.any? %>
+            <div class="rounded-xl bg-red-50 border border-red-200 p-6 animate-shake">
+              <div class="flex">
+                <div class="flex-shrink-0">
+                  <i data-feather="alert-circle" class="h-6 w-6 text-red-600"></i>
+                </div>
+                <div class="ml-3">
+                  <h3 class="text-sm font-semibold text-red-800 mb-2">
+                    <%= pluralize(@business.errors.count, "error") %> prevented your business from being created
+                  </h3>
+                  <ul class="list-disc list-inside text-sm text-red-700 space-y-1">
+                    <% @business.errors.full_messages.each do |message| %>
+                      <li><%= message %></li>
+                    <% end %>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          <% end %>
+
+          <!-- Business Name Field -->
+          <div class="space-y-2">
+            <%= form.label :name, class: "block text-sm font-semibold text-gray-900" do %>
+              Business Name <span class="text-red-500">*</span>
+            <% end %>
+            <div class="relative group">
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <i data-feather="briefcase" class="h-5 w-5 text-gray-400 group-focus-within:text-emerald-500 transition-colors"></i>
+              </div>
+              <%= form.text_field :name,
+                  class: "block w-full pl-12 pr-4 py-4 text-lg border-2 border-gray-200 rounded-xl placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 #{@business.errors[:name].any? ? 'border-red-300 focus:ring-red-500' : ''}",
+                  placeholder: "e.g., Green Lawn Care Services",
+                  required: true,
+                  autofocus: true %>
+            </div>
+            <p class="text-xs text-gray-500 flex items-center">
+              <i data-feather="info" class="h-3 w-3 mr-1"></i>
+              This is how customers will see your business
+            </p>
+          </div>
+
+          <!-- Industry Field -->
+          <div class="space-y-2">
+            <%= form.label :industry, class: "block text-sm font-semibold text-gray-900" do %>
+              Industry <span class="text-gray-400 font-normal">(Optional)</span>
+            <% end %>
+            <div class="relative group">
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <i data-feather="tag" class="h-5 w-5 text-gray-400 group-focus-within:text-emerald-500 transition-colors"></i>
+              </div>
+              <%= form.select :industry,
+                  options_for_select(Business::INDUSTRIES.map { |k, v| [v, k] }, @business.industry),
+                  { include_blank: "Select your industry" },
+                  class: "block w-full pl-12 pr-10 py-4 text-lg border-2 border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 appearance-none cursor-pointer" %>
+              <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                <i data-feather="chevron-down" class="h-5 w-5 text-gray-400"></i>
+              </div>
+            </div>
+            <p class="text-xs text-gray-500 flex items-center">
+              <i data-feather="info" class="h-3 w-3 mr-1"></i>
+              Helps us customize features for your business type
+            </p>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="pt-4">
+            <%= form.submit "Create My Business",
+                class: "group relative w-full flex justify-center items-center py-4 px-6 border border-transparent text-lg font-semibold rounded-xl text-white bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 cursor-pointer" %>
+          </div>
+
+          <!-- Help Text -->
+          <div class="pt-4 border-t border-gray-100">
+            <div class="flex items-start space-x-3 text-sm text-gray-600">
+              <i data-feather="lock" class="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5"></i>
+              <p>
+                Your information is secure and private. You can update your business details, add team members, and configure settings after creation.
+              </p>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-8 text-center">
+      <p class="text-sm text-gray-500">
+        Need help?
+        <a href="#" class="font-medium text-emerald-600 hover:text-emerald-700 transition-colors">
+          Contact support
+        </a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<style>
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+  }
+
+  .animate-shake {
+    animation: shake 0.5s ease-in-out;
+  }
+</style>
+

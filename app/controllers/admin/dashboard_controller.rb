@@ -1,5 +1,14 @@
 class Admin::DashboardController < Admin::BaseController
+  skip_before_action :require_business_setup, only: [:index]
+
   def index
+    # If user has no business, redirect to business creation
+    unless current_user.has_business?
+      redirect_to new_admin_business_path
+      return
+    end
+
+    @business = current_user.current_business
     @metrics = calculate_dashboard_metrics
     @recent_quotes = recent_quotes_data
     @service_performance = service_performance_data
