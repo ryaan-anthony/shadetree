@@ -33,27 +33,11 @@
                 Dashboard
             <% end %>
 
-            <!-- Business Profile -->
-            <div class="space-y-1">
-                <div class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md cursor-pointer" onclick="toggleSubmenu('business-profile')">
-                    <i data-feather="building" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
-                    <span class="flex-1">Business Profile</span>
-                    <i data-feather="chevron-right" id="business-profile-icon" class="ml-auto h-4 w-4 text-gray-400 group-hover:text-gray-500 transition-transform"></i>
-                </div>
-                <div id="business-profile-menu" class="ml-8 space-y-1 hidden">
-                    <%= link_to edit_admin_business_path, class: "text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md" do %>
-                        Company Info
-                    <% end %>
-                    <%= link_to edit_admin_settings_hours_path, class: "text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md" do %>
-                        Operating Hours
-                    <% end %>
-                    <%= link_to edit_admin_settings_branding_path, class: "text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md" do %>
-                        Branding
-                    <% end %>
-                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md opacity-50 cursor-not-allowed">Notifications</a>
-                    <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md opacity-50 cursor-not-allowed">Payment Settings</a>
-                </div>
-            </div>
+            <!-- Business Settings -->
+            <%= link_to edit_admin_business_path, class: "#{current_page?(edit_admin_business_path) ? 'bg-shadetree-green bg-opacity-10 text-shadetree-green' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'} group flex items-center px-2 py-2 text-sm font-medium rounded-md" do %>
+                <i data-feather="settings" class="<%= current_page?(edit_admin_business_path) ? 'text-shadetree-green' : 'text-gray-400 group-hover:text-gray-500' %> mr-3 h-5 w-5"></i>
+                Business Settings
+            <% end %>
 
             <!-- Staff Management -->
             <div class="space-y-1">

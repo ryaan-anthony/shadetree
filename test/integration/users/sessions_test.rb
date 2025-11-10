@@ -143,7 +143,7 @@ class Users::SessionsTest < ActionDispatch::IntegrationTest
       }
     }
 
-    assert_response :unprocessable_entity
+    assert_response :unprocessable_content
     # User not signed in, form re-rendered
   end
 
@@ -155,7 +155,7 @@ class Users::SessionsTest < ActionDispatch::IntegrationTest
       }
     }
 
-    assert_response :unprocessable_entity
+    assert_response :unprocessable_content
     # User not signed in, form re-rendered
   end
 
@@ -167,7 +167,7 @@ class Users::SessionsTest < ActionDispatch::IntegrationTest
       }
     }
 
-    assert_response :unprocessable_entity
+    assert_response :unprocessable_content
     # User not signed in, form re-rendered
   end
 
@@ -179,7 +179,7 @@ class Users::SessionsTest < ActionDispatch::IntegrationTest
       }
     }
 
-    assert_response :unprocessable_entity
+    assert_response :unprocessable_content
     # User should not be signed in, form re-rendered with error
   end
 
@@ -191,7 +191,7 @@ class Users::SessionsTest < ActionDispatch::IntegrationTest
       }
     }
 
-    assert_response :unprocessable_entity
+    assert_response :unprocessable_content
     # Just check that it's showing the sign in form again, error handling works
   end
 

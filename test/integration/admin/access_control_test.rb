@@ -24,9 +24,13 @@ class Admin::AccessControlTest < ActionDispatch::IntegrationTest
     # Create business for confirmed user
     @business = Business.create!(
       name: "Test Business",
-      email: "admin_business@example.com",
       owner: @confirmed_user
     )
+  end
+
+  teardown do
+    Business.destroy_all
+    User.destroy_all
   end
 
   # Authentication Tests

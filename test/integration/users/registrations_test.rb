@@ -87,7 +87,7 @@ class Users::RegistrationsTest < ActionDispatch::IntegrationTest
       post user_registration_path, params: @user_params
     end
 
-    assert_response :unprocessable_entity
+    assert_response :unprocessable_content
   end
 
   test "should not create user with invalid email" do
@@ -97,7 +97,7 @@ class Users::RegistrationsTest < ActionDispatch::IntegrationTest
       post user_registration_path, params: @user_params
     end
 
-    assert_response :unprocessable_entity
+    assert_response :unprocessable_content
   end
 
   test "should not create user without password" do
@@ -108,7 +108,7 @@ class Users::RegistrationsTest < ActionDispatch::IntegrationTest
       post user_registration_path, params: @user_params
     end
 
-    assert_response :unprocessable_entity
+    assert_response :unprocessable_content
   end
 
   test "should not create user with short password" do
@@ -119,7 +119,7 @@ class Users::RegistrationsTest < ActionDispatch::IntegrationTest
       post user_registration_path, params: @user_params
     end
 
-    assert_response :unprocessable_entity
+    assert_response :unprocessable_content
   end
 
   test "should not create user with mismatched passwords" do
@@ -129,7 +129,7 @@ class Users::RegistrationsTest < ActionDispatch::IntegrationTest
       post user_registration_path, params: @user_params
     end
 
-    assert_response :unprocessable_entity
+    assert_response :unprocessable_content
   end
 
   test "should not create user with duplicate email" do
@@ -141,14 +141,14 @@ class Users::RegistrationsTest < ActionDispatch::IntegrationTest
       post user_registration_path, params: @user_params
     end
 
-    assert_response :unprocessable_entity
+    assert_response :unprocessable_content
   end
 
   test "should display error messages for invalid registration" do
     @user_params[:user][:email] = ""
     post user_registration_path, params: @user_params
 
-    assert_response :unprocessable_entity
+    assert_response :unprocessable_content
     assert_match /error|blank|invalid/i, response.body
   end
 
