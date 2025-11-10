@@ -9,10 +9,13 @@
         </div>
 
         <!-- Business Selector -->
-        <div class="mt-6 px-4">
+        <div class="mt-6 px-4" data-controller="business-selector" data-business-selector-switch-url-value="<%= switch_admin_business_path %>">
             <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Business</label>
             <div class="relative">
-                <select id="business-selector" class="block w-full pl-3 pr-10 py-2.5 text-sm border border-gray-300 rounded-lg bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors appearance-none cursor-pointer">
+                <select
+                  data-business-selector-target="select"
+                  data-action="change->business-selector#change"
+                  class="block w-full pl-3 pr-10 py-2.5 text-sm border border-gray-300 rounded-lg bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors appearance-none cursor-pointer">
                     <% if current_user.businesses.any? %>
                         <% current_user.businesses.each do |business| %>
                             <option value="<%= business.id %>" <%= 'selected' if business == current_business %>><%= business.name %></option>
@@ -30,85 +33,6 @@
             </div>
         </div>
 
-        <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const selector = document.getElementById('business-selector');
-            if (!selector) {
-                console.warn('Business selector not found');
-                return;
-            }
-
-            console.log('Business selector initialized');
-
-            // Ensure the correct option is selected on page load
-            const selectedOption = selector.querySelector('option[selected]');
-            if (selectedOption) {
-                selector.value = selectedOption.value;
-                console.log('Set selector to:', selectedOption.value, selectedOption.text);
-            }
-
-            selector.addEventListener('change', function(e) {
-                const value = e.target.value;
-                console.log('Business selector changed to:', value);
-
-                if (value === 'new') {
-                    console.log('Navigating to new business page');
-                    window.location.href = '/admin/business/new';
-                } else if (value && value !== 'Setting up business...') {
-                    // Switch to selected business
-                    console.log('Switching to business ID:', value);
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-
-                    if (!csrfToken) {
-                        console.error('CSRF token not found');
-                        alert('Security token missing. Please refresh the page.');
-                        return;
-                    }
-
-                    // Show loading state
-                    selector.disabled = true;
-
-                    fetch('/admin/business/switch', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-Token': csrfToken
-                        },
-                        body: JSON.stringify({ business_id: value })
-                    })
-                    .then(response => {
-                        console.log('Switch response status:', response.status);
-                        return response.json();
-                    })
-                    .then(data => {
-                        console.log('Switch response data:', data);
-                        if (data.success) {
-                            console.log('Successfully switched to:', data.business.name);
-                            // Reload page to show new business context
-                            window.location.reload();
-                        } else {
-                            console.error('Failed to switch business:', data.error);
-                            alert('Failed to switch business: ' + (data.error || 'Unknown error'));
-                            selector.disabled = false;
-                            // Reset selector to previous value
-                            if (selectedOption) {
-                                selector.value = selectedOption.value;
-                            }
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error switching business:', error);
-                        alert('An error occurred while switching businesses. Please try again.');
-                        selector.disabled = false;
-                        // Reset selector to previous value
-                        if (selectedOption) {
-                            selector.value = selectedOption.value;
-                        }
-                    });
-                }
-            });
-        });
-        </script>
 
         <!-- Navigation Menu -->
         <nav class="mt-8 flex-1 px-2 space-y-1">
@@ -125,13 +49,13 @@
             <% end %>
 
             <!-- Staff Management -->
-            <div class="space-y-1">
-                <div class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md cursor-pointer" onclick="toggleSubmenu('staff-management')">
+            <div class="space-y-1" data-controller="submenu">
+                <div class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md cursor-pointer" data-action="click->submenu#toggle">
                     <i data-feather="users" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
                     <span class="flex-1">Staff Management</span>
-                    <i data-feather="chevron-right" id="staff-management-icon" class="ml-auto h-4 w-4 text-gray-400 group-hover:text-gray-500 transition-transform"></i>
+                    <i data-feather="chevron-right" data-submenu-target="icon" class="ml-auto h-4 w-4 text-gray-400 group-hover:text-gray-500 transition-transform"></i>
                 </div>
-                <div id="staff-management-menu" class="ml-8 space-y-1 hidden">
+                <div data-submenu-target="menu" class="ml-8 space-y-1 hidden">
                     <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Team Overview</a>
                     <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Roles & Permissions</a>
                     <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Availability</a>
@@ -140,13 +64,13 @@
             </div>
 
             <!-- Services & Pricing -->
-            <div class="space-y-1">
-                <div class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md cursor-pointer" onclick="toggleSubmenu('services-pricing')">
+            <div class="space-y-1" data-controller="submenu">
+                <div class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md cursor-pointer" data-action="click->submenu#toggle">
                     <i data-feather="settings" class="text-gray-400 group-hover:text-gray-500 mr-3 h-5 w-5"></i>
                     <span class="flex-1">Services & Pricing</span>
-                    <i data-feather="chevron-right" id="services-pricing-icon" class="ml-auto h-4 w-4 text-gray-400 group-hover:text-gray-500 transition-transform"></i>
+                    <i data-feather="chevron-right" data-submenu-target="icon" class="ml-auto h-4 w-4 text-gray-400 group-hover:text-gray-500 transition-transform"></i>
                 </div>
-                <div id="services-pricing-menu" class="ml-8 space-y-1 hidden">
+                <div data-submenu-target="menu" class="ml-8 space-y-1 hidden">
                     <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Service Catalog</a>
                     <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Categories</a>
                     <a href="#" class="text-gray-600 hover:text-gray-900 block px-3 py-1 text-sm rounded-md">Pricing Rules</a>
@@ -186,23 +110,3 @@
     </div>
 </div>
 
-<script>
-function toggleSubmenu(menuId) {
-    const menu = document.getElementById(menuId + '-menu');
-    const icon = document.getElementById(menuId + '-icon');
-
-    // Check if elements exist before trying to access them
-    if (!menu || !icon) {
-        console.warn('Menu or icon not found for:', menuId);
-        return;
-    }
-
-    if (menu.classList.contains('hidden')) {
-        menu.classList.remove('hidden');
-        icon.style.transform = 'rotate(90deg)';
-    } else {
-        menu.classList.add('hidden');
-        icon.style.transform = 'rotate(0deg)';
-    }
-}
-</script>

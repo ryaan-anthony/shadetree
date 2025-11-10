@@ -31,9 +31,9 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="bg-gray-50">
+  <body class="bg-gray-50" data-controller="feather-icons">
     <!-- Mobile menu overlay -->
-    <div id="mobile-menu-overlay" class="fixed inset-0 flex z-40 md:hidden hidden">
+    <div id="mobile-menu-overlay" class="fixed inset-0 flex z-40 md:hidden hidden" data-controller="mobile-menu" data-mobile-menu-target="overlay" data-action="click->mobile-menu#closeOnOverlayClick">
         <div class="fixed inset-0 bg-gray-600 bg-opacity-75"></div>
         <%= render 'admin/shared/mobile_sidebar' %>
     </div>
@@ -55,34 +55,23 @@
         </div>
     </div>
 
-    <!-- Initialize Feather Icons -->
-    <script>
-        feather.replace();
-
-        // Mobile menu toggle functionality
-        document.addEventListener('DOMContentLoaded', function() {
+    <!-- Mobile menu button handlers -->
+    <script data-turbo-track="reload">
+        document.addEventListener('turbo:load', function() {
             const mobileMenuButton = document.getElementById('mobile-menu-button');
-            const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
             const closeSidebarButton = document.getElementById('close-sidebar');
+            const overlayElement = document.getElementById('mobile-menu-overlay');
 
-            if (mobileMenuButton && mobileMenuOverlay) {
+            if (mobileMenuButton && overlayElement) {
+                const app = window.Stimulus;
                 mobileMenuButton.addEventListener('click', function() {
-                    mobileMenuOverlay.classList.remove('hidden');
+                    overlayElement.classList.remove('hidden');
                 });
             }
 
-            if (closeSidebarButton && mobileMenuOverlay) {
+            if (closeSidebarButton && overlayElement) {
                 closeSidebarButton.addEventListener('click', function() {
-                    mobileMenuOverlay.classList.add('hidden');
-                });
-            }
-
-            // Close mobile menu when clicking overlay
-            if (mobileMenuOverlay) {
-                mobileMenuOverlay.addEventListener('click', function(e) {
-                    if (e.target === mobileMenuOverlay) {
-                        mobileMenuOverlay.classList.add('hidden');
-                    }
+                    overlayElement.classList.add('hidden');
                 });
             }
         });

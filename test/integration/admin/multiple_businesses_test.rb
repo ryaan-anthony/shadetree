@@ -41,10 +41,10 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
     get admin_root_path
 
     assert_response :success
-    assert_select "select#business-selector" do
-      assert_select "option[value='#{@business1.id}']", text: "First Business"
-      assert_select "option[value='#{@business2.id}']", text: "Second Business"
-    end
+    # Check for Stimulus business selector
+    assert_select "[data-business-selector-target='select']"
+    assert_select "[data-business-selector-target='select'] option[value='#{@business1.id}']"
+    assert_select "[data-business-selector-target='select'] option[value='#{@business2.id}']"
   end
 
   test "business selector shows create new business option" do
@@ -52,7 +52,8 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
     get admin_root_path
 
     assert_response :success
-    assert_select "select#business-selector option[value='new']", text: /Create New Business/
+    # Check for "Create New Business" option in Stimulus selector
+    assert_select "[data-business-selector-target='select'] option[value='new']", text: /Create New Business/
   end
 
   test "business selector has proper styling without double arrows" do
@@ -60,16 +61,9 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
     get admin_root_path
 
     assert_response :success
-    # Check for appearance-none class to remove default arrow
-    assert_select "select#business-selector.appearance-none"
-    # Check for custom arrow SVG within the business selector container
-    # The SVG should be in the sibling div after the select element
-    assert_select "select#business-selector" do
-      # Can't directly select sibling, so we'll just verify the selector exists with appearance-none
-      # and check that there's an SVG on the page (could be multiple from Feather icons elsewhere)
-    end
-    # Instead, let's verify the structure - select has appearance-none (no default arrow)
-    # and there's a pointer-events-none div with SVG (custom arrow)
+    # Check for appearance-none class on Stimulus selector (removes browser default arrow)
+    assert_select "[data-business-selector-target='select'].appearance-none"
+    # Check for custom arrow SVG within pointer-events-none container
     assert_select "div.pointer-events-none svg", minimum: 1
   end
 
@@ -185,8 +179,13 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
     get admin_root_path
     assert_response :success
 
-    # Should show all three businesses
-    assert_select "select#business-selector option", count: 4 # 3 businesses + 1 "Create New"
+    # Should show all three businesses in Stimulus selector
+    # Note: There are 2 selectors (desktop + mobile), so options appear twice
+    assert_select "[data-business-selector-target='select'] option", minimum: 4 # At least 3 businesses + 1 "Create New"
+    # Verify each business appears
+    assert_select "[data-business-selector-target='select'] option[value='#{@business1.id}']"
+    assert_select "[data-business-selector-target='select'] option[value='#{@business2.id}']"
+    assert_select "[data-business-selector-target='select'] option[value='#{@business3.id}']"
   end
 
   test "business selector only shows user's own businesses" do
@@ -209,11 +208,11 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
     get admin_root_path
 
     assert_response :success
-    # Should NOT show other user's business
-    assert_select "select#business-selector option[value='#{other_business.id}']", count: 0
-    # Should show own businesses
-    assert_select "select#business-selector option[value='#{@business1.id}']", count: 1
-    assert_select "select#business-selector option[value='#{@business2.id}']", count: 1
+    # Should NOT show other user's business in Stimulus selector
+    assert_select "[data-business-selector-target='select'] option[value='#{other_business.id}']", count: 0
+    # Should show own businesses (appears twice: desktop + mobile selector)
+    assert_select "[data-business-selector-target='select'] option[value='#{@business1.id}']", count: 2
+    assert_select "[data-business-selector-target='select'] option[value='#{@business2.id}']", count: 2
   end
 
   # Mobile Selector Tests
@@ -223,8 +222,9 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
     get admin_root_path
 
     assert_response :success
-    # Check mobile selector exists with businesses
-    assert_match /mobile-business-selector/, response.body
+    # Check for business selector with Stimulus controller (works for both desktop and mobile)
+    assert_select "[data-controller~='business-selector']", minimum: 1
+    assert_select "[data-business-selector-target='select']", minimum: 1
   end
 
   # Edge Cases
@@ -349,8 +349,8 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
     get admin_root_path
 
     assert_response :success
-    # First business should be selected by default (current_business)
-    assert_select "select#business-selector option[selected]"
+    # First business should be selected by default (current_business) in Stimulus selector
+    assert_select "[data-business-selector-target='select'] option[selected]"
   end
 
   # JavaScript Functionality Tests (behavior verification)
@@ -360,10 +360,10 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
     get admin_root_path
 
     assert_response :success
-    # Verify selector has ID for JavaScript to target
-    assert_select "select#business-selector"
-    # Verify script tag exists for handling changes
-    assert_match /addEventListener\('change'/, response.body
+    # Verify Stimulus controller and targets are present
+    assert_select "[data-controller~='business-selector']"
+    assert_select "[data-business-selector-target='select']"
+    assert_select "[data-action='change->business-selector#change']"
   end
 
   test "create new business option redirects to correct path" do
@@ -371,8 +371,9 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
     get admin_root_path
 
     assert_response :success
-    # Verify the new option value and redirect logic exists
-    assert_match /value="new"/, response.body
-    assert_match /admin\/business\/new/, response.body
+    # Verify the new option value exists in Stimulus selector
+    assert_select "[data-business-selector-target='select'] option[value='new']"
+    # Verify Stimulus controller has switch URL configured
+    assert_select "[data-controller~='business-selector'][data-business-selector-switch-url-value*='admin/business/switch']"
   end
 end

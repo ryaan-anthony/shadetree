@@ -1,4 +1,4 @@
-<div class="p-8 max-w-3xl">
+<div class="p-8 max-w-3xl" data-controller="operating-hours">
 
   <!-- Section Header -->
   <div class="mb-8">
@@ -132,61 +132,4 @@
     </div>
   <% end %>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  setupHoursTracking();
-  updateScheduleSummary();
-});
-
-function setupHoursTracking() {
-  document.querySelectorAll('.day-toggle, .time-select').forEach(input => {
-    input.addEventListener('change', updateScheduleSummary);
-  });
-}
-
-function updateScheduleSummary() {
-  const summary = document.getElementById('schedule-summary');
-  if (!summary) return;
-
-  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-  const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-
-  let summaryHTML = '';
-
-  days.forEach((day, index) => {
-    const checkbox = document.querySelector(`input[name="${day}_enabled"]`);
-    const startSelect = document.querySelector(`select[name="${day}_start"]`);
-    const endSelect = document.querySelector(`select[name="${day}_end"]`);
-
-    if (checkbox && checkbox.checked) {
-      const startTime = formatTime(startSelect.value);
-      const endTime = formatTime(endSelect.value);
-      summaryHTML += `
-        <div class="flex justify-between">
-          <span class="text-emerald-700">${dayNames[index]}:</span>
-          <span class="font-medium text-emerald-900">${startTime} - ${endTime}</span>
-        </div>
-      `;
-    } else {
-      summaryHTML += `
-        <div class="flex justify-between">
-          <span class="text-emerald-700">${dayNames[index]}:</span>
-          <span class="text-gray-500">Closed</span>
-        </div>
-      `;
-    }
-  });
-
-  summary.innerHTML = summaryHTML;
-}
-
-function formatTime(time24) {
-  const [hours, minutes] = time24.split(':');
-  const hour = parseInt(hours);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
-  return `${displayHour}:${minutes} ${ampm}`;
-}
-</script>
 
