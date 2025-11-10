@@ -27,12 +27,20 @@
 <script>
 function toggleUserMenu() {
     const menu = document.getElementById('user-menu');
+    if (!menu) {
+        console.warn('User menu element not found');
+        return;
+    }
     menu.classList.toggle('hidden');
 }
 
 // Close user menu when clicking outside
 document.addEventListener('click', function(event) {
     const userMenu = document.getElementById('user-menu');
+    if (!userMenu) {
+        return;
+    }
+
     const userMenuButton = event.target.closest('button');
 
     if (!userMenuButton || !userMenuButton.onclick) {

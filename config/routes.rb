@@ -15,7 +15,9 @@ Rails.application.routes.draw do
   # Admin routes
   namespace :admin do
     # Business management (with tabs for profile, hours, branding)
-    resource :business, only: [:new, :create, :edit, :update]
+    resource :business, only: [:new, :create, :edit, :update] do
+      post :switch, on: :collection
+    end
 
     # Dashboard
     resources :dashboard, only: [:index]

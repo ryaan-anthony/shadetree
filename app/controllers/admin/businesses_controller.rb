@@ -4,12 +4,7 @@ class Admin::BusinessesController < Admin::BaseController
   layout :determine_layout
 
   def new
-    # If user already has a business, redirect to edit instead
-    if current_user.has_business?
-      redirect_to edit_admin_business_path, notice: "You already have a business. Edit it here."
-      return
-    end
-
+    # Allow creating additional businesses
     @business = current_user.owned_businesses.build
   end
 
@@ -50,6 +45,21 @@ class Admin::BusinessesController < Admin::BaseController
       redirect_to edit_admin_business_path(tab: params[:tab]), notice: "#{params[:tab]&.capitalize || 'Business'} updated successfully."
     else
       render :edit, status: :unprocessable_content
+    end
+  end
+
+  def switch
+    Rails.logger.info "Business switch requested by user #{current_user.id} for business_id: #{params[:business_id]}"
+
+    business = current_user.businesses.find_by(id: params[:business_id])
+
+    if business
+      session[:current_business_id] = business.id
+      Rails.logger.info "Successfully switched to business #{business.id} (#{business.name})"
+      render json: { success: true, business: { id: business.id, name: business.name } }
+    else
+      Rails.logger.warn "Business switch failed - business not found or not accessible. User businesses: #{current_user.businesses.pluck(:id).inspect}"
+      render json: { success: false, error: "Business not found" }, status: :not_found
     end
   end
 

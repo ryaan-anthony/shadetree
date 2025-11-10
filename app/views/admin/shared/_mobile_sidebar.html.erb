@@ -16,16 +16,105 @@
 
         <!-- Business Selector -->
         <div class="mt-6 px-4">
+            <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Business</label>
             <div class="relative">
-                <select class="block w-full pl-3 pr-10 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-shadetree-green focus:border-shadetree-green">
-                    <% if current_business.present? %>
-                        <option><%= current_business.name %></option>
+                <select id="mobile-business-selector" class="block w-full pl-3 pr-10 py-2.5 text-sm border border-gray-300 rounded-lg bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors appearance-none cursor-pointer">
+                    <% if current_user.businesses.any? %>
+                        <% current_user.businesses.each do |business| %>
+                            <option value="<%= business.id %>" <%= 'selected' if business == current_business %>><%= business.name %></option>
+                        <% end %>
+                        <option value="new" class="font-medium">+ Create New Business</option>
                     <% else %>
                         <option>Setting up business...</option>
                     <% end %>
                 </select>
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
             </div>
         </div>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileSelector = document.getElementById('mobile-business-selector');
+            if (!mobileSelector) {
+                console.warn('Mobile business selector not found');
+                return;
+            }
+
+            console.log('Mobile business selector initialized');
+
+            // Ensure the correct option is selected on page load
+            const selectedOption = mobileSelector.querySelector('option[selected]');
+            if (selectedOption) {
+                mobileSelector.value = selectedOption.value;
+                console.log('Set mobile selector to:', selectedOption.value, selectedOption.text);
+            }
+
+            mobileSelector.addEventListener('change', function(e) {
+                const value = e.target.value;
+                console.log('Mobile business selector changed to:', value);
+
+                if (value === 'new') {
+                    console.log('Navigating to new business page');
+                    window.location.href = '/admin/business/new';
+                } else if (value && value !== 'Setting up business...') {
+                    // Switch to selected business
+                    console.log('Switching to business ID:', value);
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
+                    if (!csrfToken) {
+                        console.error('CSRF token not found');
+                        alert('Security token missing. Please refresh the page.');
+                        return;
+                    }
+
+                    // Show loading state
+                    mobileSelector.disabled = true;
+
+                    fetch('/admin/business/switch', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': csrfToken
+                        },
+                        body: JSON.stringify({ business_id: value })
+                    })
+                    .then(response => {
+                        console.log('Switch response status:', response.status);
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Switch response data:', data);
+                        if (data.success) {
+                            console.log('Successfully switched to:', data.business.name);
+                            // Reload page to show new business context
+                            window.location.reload();
+                        } else {
+                            console.error('Failed to switch business:', data.error);
+                            alert('Failed to switch business: ' + (data.error || 'Unknown error'));
+                            mobileSelector.disabled = false;
+                            // Reset selector to previous value
+                            if (selectedOption) {
+                                mobileSelector.value = selectedOption.value;
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error switching business:', error);
+                        alert('An error occurred while switching businesses. Please try again.');
+                        mobileSelector.disabled = false;
+                        // Reset selector to previous value
+                        if (selectedOption) {
+                            mobileSelector.value = selectedOption.value;
+                        }
+                    });
+                }
+            });
+        });
+        </script>
 
         <!-- Mobile Navigation Menu -->
         <nav class="mt-5 px-2 space-y-1">

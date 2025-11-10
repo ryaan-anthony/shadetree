@@ -65,24 +65,26 @@
             const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
             const closeSidebarButton = document.getElementById('close-sidebar');
 
-            if (mobileMenuButton) {
+            if (mobileMenuButton && mobileMenuOverlay) {
                 mobileMenuButton.addEventListener('click', function() {
                     mobileMenuOverlay.classList.remove('hidden');
                 });
             }
 
-            if (closeSidebarButton) {
+            if (closeSidebarButton && mobileMenuOverlay) {
                 closeSidebarButton.addEventListener('click', function() {
                     mobileMenuOverlay.classList.add('hidden');
                 });
             }
 
             // Close mobile menu when clicking overlay
-            mobileMenuOverlay.addEventListener('click', function(e) {
-                if (e.target === mobileMenuOverlay) {
-                    mobileMenuOverlay.classList.add('hidden');
-                }
-            });
+            if (mobileMenuOverlay) {
+                mobileMenuOverlay.addEventListener('click', function(e) {
+                    if (e.target === mobileMenuOverlay) {
+                        mobileMenuOverlay.classList.add('hidden');
+                    }
+                });
+            }
         });
     </script>
   </body>

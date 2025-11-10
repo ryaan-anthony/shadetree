@@ -33,7 +33,23 @@ class Admin::BaseController < ApplicationController
   end
 
   def current_business
-    @current_business ||= current_user.current_business
+    @current_business ||= begin
+      business = nil
+
+      # Try to get business from session
+      if session[:current_business_id]
+        business = current_user.businesses.find_by(id: session[:current_business_id])
+      end
+
+      # If session business not found or not set, get default business
+      unless business
+        business = current_user.current_business
+        # Set session to this business for consistency
+        session[:current_business_id] = business.id if business
+      end
+
+      business
+    end
   end
   helper_method :current_business
 end

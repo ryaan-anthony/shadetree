@@ -89,10 +89,14 @@
             </p>
           </div>
 
-          <!-- Submit Button -->
-          <div class="pt-4">
+          <!-- Action Buttons -->
+          <div class="pt-4 space-y-3">
             <%= form.submit "Create My Business",
                 class: "group relative w-full flex justify-center items-center py-4 px-6 border border-transparent text-lg font-semibold rounded-xl text-white bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 cursor-pointer" %>
+
+            <% if current_user.has_business? %>
+              <%= link_to "Cancel", admin_root_path, class: "w-full flex justify-center items-center py-3 px-6 border-2 border-gray-300 text-base font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200" %>
+            <% end %>
           </div>
 
           <!-- Help Text -->
