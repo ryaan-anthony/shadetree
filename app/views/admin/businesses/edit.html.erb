@@ -1,303 +1,197 @@
-<div class="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-  <!-- Header -->
-  <div class="mb-8">
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-3xl font-bold text-gray-900 flex items-center">
-          <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 shadow-md mr-4">
-            <i data-feather="building" class="h-6 w-6 text-white"></i>
-          </div>
-          Business Settings
-        </h1>
-        <p class="mt-2 text-lg text-gray-600">
-          Manage your business profile, hours, and branding
-        </p>
-      </div>
-      <%= link_to admin_root_path, class: "inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors" do %>
-        <i data-feather="arrow-left" class="h-4 w-4 mr-2"></i>
-        Back to Dashboard
-      <% end %>
-    </div>
-  </div>
+<% content_for :page_title, "Business Settings" %>
 
-  <!-- Tab Navigation -->
-  <div class="mb-6">
-    <div class="border-b border-gray-200">
-      <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-        <%= link_to edit_admin_business_path,
-            class: "#{params[:tab].blank? || params[:tab] == 'profile' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center transition-colors" do %>
-          <i data-feather="building" class="h-4 w-4 mr-2"></i>
-          Profile
+<!-- Professional SaaS Settings Page -->
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Page Header - Clean & Minimal -->
+    <div class="mb-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-semibold text-gray-900">Settings</h1>
+          <p class="mt-1 text-sm text-gray-500">Manage your business information and preferences</p>
+        </div>
+        <%= link_to admin_root_path, class: "text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors" do %>
+          ← Back
         <% end %>
-
-        <%= link_to edit_admin_business_path(tab: 'hours'),
-            class: "#{params[:tab] == 'hours' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center transition-colors" do %>
-          <i data-feather="clock" class="h-4 w-4 mr-2"></i>
-          Hours
-        <% end %>
-
-        <%= link_to edit_admin_business_path(tab: 'branding'),
-            class: "#{params[:tab] == 'branding' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center transition-colors" do %>
-          <i data-feather="droplet" class="h-4 w-4 mr-2"></i>
-          Branding
-        <% end %>
-      </nav>
-    </div>
-  </div>
-
-  <!-- Tab Content -->
-  <% if params[:tab] == 'hours' %>
-    <%= render 'hours_tab' %>
-  <% elsif params[:tab] == 'branding' %>
-    <%= render 'branding_tab' %>
-  <% else %>
-    <!-- Profile Tab (Default) -->
-    <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-      <div class="bg-gradient-to-r from-emerald-500 to-green-600 h-2"></div>
-
-      <div class="p-8">
-      <%= form_with(model: @business, url: admin_business_path, method: :patch, local: true, class: "space-y-8") do |form| %>
-        <!-- Error Messages -->
-        <% if @business.errors.any? %>
-          <div class="rounded-xl bg-red-50 border border-red-200 p-6 animate-shake">
-            <div class="flex">
-              <div class="flex-shrink-0">
-                <i data-feather="alert-circle" class="h-6 w-6 text-red-600"></i>
-              </div>
-              <div class="ml-3">
-                <h3 class="text-sm font-semibold text-red-800 mb-2">
-                  <%= pluralize(@business.errors.count, "error") %> prevented your business from being saved
-                </h3>
-                <ul class="list-disc list-inside text-sm text-red-700 space-y-1">
-                  <% @business.errors.full_messages.each do |message| %>
-                    <li><%= message %></li>
-                  <% end %>
-                </ul>
-              </div>
-            </div>
-          </div>
-        <% end %>
-
-        <!-- Basic Information Section -->
-        <div class="space-y-4">
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold text-gray-900">Basic Information</h3>
-            <span class="text-sm text-gray-500">Core business details</span>
-          </div>
-
-          <div class="bg-gray-50 border-2 border-gray-200 rounded-xl p-6 space-y-6">
-            <!-- Business Name -->
-            <div class="space-y-2">
-              <%= form.label :name, class: "block text-sm font-semibold text-gray-900" do %>
-                Business Name <span class="text-red-500">*</span>
-              <% end %>
-              <div class="relative group">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <i data-feather="briefcase" class="h-5 w-5 text-gray-400 group-focus-within:text-emerald-500 transition-colors"></i>
-                </div>
-                <%= form.text_field :name,
-                    class: "block w-full pl-12 pr-4 py-4 text-lg border-2 border-gray-200 rounded-xl placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 bg-white #{@business.errors[:name].any? ? 'border-red-300 focus:ring-red-500' : ''}",
-                    placeholder: "e.g., Green Lawn Care Services" %>
-              </div>
-              <p class="text-xs text-gray-500 flex items-center">
-                <i data-feather="info" class="h-3 w-3 mr-1"></i>
-                This is how customers will see your business
-              </p>
-            </div>
-
-            <!-- Industry -->
-            <div class="space-y-2">
-              <%= form.label :industry, class: "block text-sm font-semibold text-gray-900" do %>
-                Industry <span class="text-gray-400 font-normal">(Optional)</span>
-              <% end %>
-              <div class="relative group">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <i data-feather="tag" class="h-5 w-5 text-gray-400 group-focus-within:text-emerald-500 transition-colors"></i>
-                </div>
-                <%= form.select :industry,
-                    options_for_select(Business::INDUSTRIES.map { |k, v| [v, k] }, @business.industry),
-                    { include_blank: "Select your industry" },
-                    class: "block w-full pl-12 pr-10 py-4 text-lg border-2 border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 appearance-none cursor-pointer bg-white" %>
-                <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                  <i data-feather="chevron-down" class="h-5 w-5 text-gray-400"></i>
-                </div>
-              </div>
-              <p class="text-xs text-gray-500 flex items-center">
-                <i data-feather="info" class="h-3 w-3 mr-1"></i>
-                Helps us customize features for your business type
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Contact Information Section -->
-        <div class="space-y-4">
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold text-gray-900">Contact Information</h3>
-            <span class="text-sm text-gray-500">How customers reach you</span>
-          </div>
-
-          <div class="bg-gray-50 border-2 border-gray-200 rounded-xl p-6 space-y-6">
-            <!-- Email -->
-            <div class="space-y-2">
-              <%= form.label :email, class: "block text-sm font-semibold text-gray-900" do %>
-                Business Email <span class="text-gray-400 font-normal">(Optional)</span>
-              <% end %>
-              <div class="relative group">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <i data-feather="mail" class="h-5 w-5 text-gray-400 group-focus-within:text-emerald-500 transition-colors"></i>
-                </div>
-                <%= form.email_field :email,
-                    class: "block w-full pl-12 pr-4 py-4 text-lg border-2 border-gray-200 rounded-xl placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 bg-white",
-                    placeholder: "business@example.com" %>
-              </div>
-              <p class="text-xs text-gray-500 flex items-center">
-                <i data-feather="info" class="h-3 w-3 mr-1"></i>
-                Customers can use this to contact you
-              </p>
-            </div>
-
-            <!-- Phone -->
-            <div class="space-y-2">
-              <%= form.label :phone, class: "block text-sm font-semibold text-gray-900" do %>
-                Phone Number <span class="text-gray-400 font-normal">(Optional)</span>
-              <% end %>
-              <div class="relative group">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <i data-feather="phone" class="h-5 w-5 text-gray-400 group-focus-within:text-emerald-500 transition-colors"></i>
-                </div>
-                <%= form.telephone_field :phone,
-                    class: "block w-full pl-12 pr-4 py-4 text-lg border-2 border-gray-200 rounded-xl placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 bg-white",
-                    placeholder: "(555) 123-4567" %>
-              </div>
-              <p class="text-xs text-gray-500 flex items-center">
-                <i data-feather="info" class="h-3 w-3 mr-1"></i>
-                Primary contact number for your business
-              </p>
-            </div>
-
-            <!-- Website -->
-            <div class="space-y-2">
-              <%= form.label :website, class: "block text-sm font-semibold text-gray-900" do %>
-                Website <span class="text-gray-400 font-normal">(Optional)</span>
-              <% end %>
-              <div class="relative group">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <i data-feather="globe" class="h-5 w-5 text-gray-400 group-focus-within:text-emerald-500 transition-colors"></i>
-                </div>
-                <%= form.url_field :website,
-                    class: "block w-full pl-12 pr-4 py-4 text-lg border-2 border-gray-200 rounded-xl placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 bg-white",
-                    placeholder: "https://yourbusiness.com" %>
-              </div>
-              <p class="text-xs text-gray-500 flex items-center">
-                <i data-feather="info" class="h-3 w-3 mr-1"></i>
-                Link to your business website or social media
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Location Section -->
-        <div class="space-y-4">
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold text-gray-900">Location</h3>
-            <span class="text-sm text-gray-500">Where you're based</span>
-          </div>
-
-          <div class="bg-gray-50 border-2 border-gray-200 rounded-xl p-6">
-            <!-- Address -->
-            <div class="space-y-2">
-              <%= form.label :address, class: "block text-sm font-semibold text-gray-900" do %>
-                Business Address <span class="text-gray-400 font-normal">(Optional)</span>
-              <% end %>
-              <div class="relative group">
-                <div class="absolute top-4 left-4 pointer-events-none">
-                  <i data-feather="map-pin" class="h-5 w-5 text-gray-400 group-focus-within:text-emerald-500 transition-colors"></i>
-                </div>
-                <%= form.text_area :address,
-                    rows: 3,
-                    class: "block w-full pl-12 pr-4 py-4 text-lg border-2 border-gray-200 rounded-xl placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 bg-white resize-none",
-                    placeholder: "123 Main Street\nCity, State 12345" %>
-              </div>
-              <p class="text-xs text-gray-500 flex items-center">
-                <i data-feather="info" class="h-3 w-3 mr-1"></i>
-                Your physical business location or service area
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Description Section -->
-        <div class="space-y-4">
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold text-gray-900">About Your Business</h3>
-            <span class="text-sm text-gray-500">Tell your story</span>
-          </div>
-
-          <div class="bg-gray-50 border-2 border-gray-200 rounded-xl p-6">
-            <!-- Description -->
-            <div class="space-y-2">
-              <%= form.label :description, class: "block text-sm font-semibold text-gray-900" do %>
-                Business Description <span class="text-gray-400 font-normal">(Optional)</span>
-              <% end %>
-              <div class="relative group">
-                <div class="absolute top-4 left-4 pointer-events-none">
-                  <i data-feather="edit-3" class="h-5 w-5 text-gray-400 group-focus-within:text-emerald-500 transition-colors"></i>
-                </div>
-                <%= form.text_area :description,
-                    rows: 5,
-                    class: "block w-full pl-12 pr-4 py-4 text-lg border-2 border-gray-200 rounded-xl placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 bg-white resize-none",
-                    placeholder: "Tell customers about your business, services, and what makes you unique..." %>
-              </div>
-              <p class="text-xs text-gray-500 flex items-center">
-                <i data-feather="info" class="h-3 w-3 mr-1"></i>
-                This will be displayed on your public profile and quotes
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Pro Tips -->
-        <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
-          <div class="flex items-start">
-            <div class="flex-shrink-0">
-              <i data-feather="lightbulb" class="h-6 w-6 text-blue-600"></i>
-            </div>
-            <div class="ml-4">
-              <h4 class="text-lg font-semibold text-blue-900 mb-2">Profile Tips</h4>
-              <ul class="text-blue-800 space-y-1 text-sm">
-                <li>• Complete information builds trust with potential customers</li>
-                <li>• A good description helps customers understand your services</li>
-                <li>• Keep your contact information up to date</li>
-                <li>• Add your website to drive more traffic to your online presence</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        <!-- Submit Buttons -->
-        <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
-          <%= link_to "Cancel", admin_root_path, class: "inline-flex items-center px-6 py-3 border-2 border-gray-300 rounded-xl shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200" %>
-          <button type="submit" class="inline-flex items-center px-8 py-3 border border-transparent text-base font-semibold rounded-xl text-white bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
-            <i data-feather="save" class="h-5 w-5 mr-2"></i>
-            Save Changes
-          </button>
-        </div>
-      <% end %>
       </div>
     </div>
-  <% end %>
+
+    <!-- Settings Container with Sidebar Navigation (like Stripe, Linear, Notion) -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div class="flex">
+
+        <!-- Sidebar Navigation -->
+        <div class="w-64 border-r border-gray-200 bg-gray-50/50">
+          <nav class="p-3 space-y-1" aria-label="Settings">
+            <%= link_to edit_admin_business_path,
+                class: "#{(params[:tab].blank? || params[:tab] == 'profile') ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:bg-white/50 hover:text-gray-900'} group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all" do %>
+              Profile
+            <% end %>
+
+            <%= link_to edit_admin_business_path(tab: 'hours'),
+                class: "#{params[:tab] == 'hours' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:bg-white/50 hover:text-gray-900'} group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all" do %>
+              Operating Hours
+            <% end %>
+
+            <%= link_to edit_admin_business_path(tab: 'branding'),
+                class: "#{params[:tab] == 'branding' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:bg-white/50 hover:text-gray-900'} group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all" do %>
+              Branding
+            <% end %>
+
+            <!-- Disabled Tabs -->
+            <div class="opacity-50 cursor-not-allowed group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-500">
+              Notifications
+              <span class="ml-auto text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded">Soon</span>
+            </div>
+
+            <div class="opacity-50 cursor-not-allowed group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-500">
+              Payment Settings
+              <span class="ml-auto text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded">Soon</span>
+            </div>
+          </nav>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 min-w-0">
+          <% if params[:tab] == 'hours' %>
+            <%= render 'hours_tab' %>
+          <% elsif params[:tab] == 'branding' %>
+            <%= render 'branding_tab' %>
+          <% else %>
+            <!-- Profile Tab Content -->
+            <div class="p-8 max-w-3xl">
+
+              <!-- Section Header -->
+              <div class="mb-8">
+                <h2 class="text-lg font-semibold text-gray-900">Business Profile</h2>
+                <p class="mt-1 text-sm text-gray-500">Basic information about your business</p>
+              </div>
+
+              <%= form_with(model: @business, url: admin_business_path, method: :patch, local: true, class: "space-y-8") do |form| %>
+
+                <!-- Error Messages - Modern Alert -->
+                <% if @business.errors.any? %>
+                  <div class="rounded-lg bg-red-50 border border-red-200 p-4">
+                    <div class="flex">
+                      <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                      </div>
+                      <div class="ml-3">
+                        <h3 class="text-sm font-medium text-red-800">
+                          There <%= @business.errors.count == 1 ? 'was' : 'were' %> <%= pluralize(@business.errors.count, "error") %> with your submission
+                        </h3>
+                        <div class="mt-2 text-sm text-red-700">
+                          <ul class="list-disc pl-5 space-y-1">
+                            <% @business.errors.full_messages.each do |message| %>
+                              <li><%= message %></li>
+                            <% end %>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <% end %>
+
+                <!-- Form Fields - Clean & Spacious -->
+                <div class="space-y-6">
+
+                  <!-- Business Name -->
+                  <div>
+                    <%= form.label :name, class: "block text-sm font-medium text-gray-700 mb-2" do %>
+                      Business Name <span class="text-red-500">*</span>
+                    <% end %>
+                    <%= form.text_field :name,
+                        class: "block w-full px-4 py-3 border border-gray-300 rounded-lg text-sm placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all #{@business.errors[:name].any? ? 'border-red-300 focus:ring-red-500' : ''}",
+                        placeholder: "Enter your business name" %>
+                    <p class="mt-1.5 text-xs text-gray-500">This is how your business will appear to customers</p>
+                  </div>
+
+                  <!-- Industry -->
+                  <div>
+                    <%= form.label :industry, class: "block text-sm font-medium text-gray-700 mb-2" do %>
+                      Industry <span class="text-gray-400 text-xs font-normal">(Optional)</span>
+                    <% end %>
+                    <%= form.select :industry,
+                        options_for_select(Business::INDUSTRIES.map { |k, v| [v, k] }, @business.industry),
+                        { include_blank: "Select an industry" },
+                        class: "block w-full px-4 py-3 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer" %>
+                  </div>
+
+                  <!-- Divider -->
+                  <div class="border-t border-gray-200 pt-6">
+                    <h3 class="text-sm font-medium text-gray-900 mb-4">Contact Information</h3>
+                  </div>
+
+                  <!-- Email -->
+                  <div>
+                    <%= form.label :email, "Business Email", class: "block text-sm font-medium text-gray-700 mb-2" %>
+                    <%= form.email_field :email,
+                        class: "block w-full px-4 py-3 border border-gray-300 rounded-lg text-sm placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all",
+                        placeholder: "business@example.com" %>
+                  </div>
+
+                  <!-- Phone -->
+                  <div>
+                    <%= form.label :phone, "Phone Number", class: "block text-sm font-medium text-gray-700 mb-2" %>
+                    <%= form.telephone_field :phone,
+                        class: "block w-full px-4 py-3 border border-gray-300 rounded-lg text-sm placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all",
+                        placeholder: "(555) 123-4567" %>
+                  </div>
+
+                  <!-- Website -->
+                  <div>
+                    <%= form.label :website, class: "block text-sm font-medium text-gray-700 mb-2" %>
+                    <%= form.url_field :website,
+                        class: "block w-full px-4 py-3 border border-gray-300 rounded-lg text-sm placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all",
+                        placeholder: "https://yourbusiness.com" %>
+                  </div>
+
+                  <!-- Divider -->
+                  <div class="border-t border-gray-200 pt-6">
+                    <h3 class="text-sm font-medium text-gray-900 mb-4">Location</h3>
+                  </div>
+
+                  <!-- Address -->
+                  <div>
+                    <%= form.label :address, "Business Address", class: "block text-sm font-medium text-gray-700 mb-2" %>
+                    <%= form.text_area :address,
+                        rows: 3,
+                        class: "block w-full px-4 py-3 border border-gray-300 rounded-lg text-sm placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all resize-none",
+                        placeholder: "123 Main Street&#10;City, State 12345" %>
+                  </div>
+
+                  <!-- Divider -->
+                  <div class="border-t border-gray-200 pt-6">
+                    <h3 class="text-sm font-medium text-gray-900 mb-4">About</h3>
+                  </div>
+
+                  <!-- Description -->
+                  <div>
+                    <%= form.label :description, "Business Description", class: "block text-sm font-medium text-gray-700 mb-2" %>
+                    <%= form.text_area :description,
+                        rows: 4,
+                        class: "block w-full px-4 py-3 border border-gray-300 rounded-lg text-sm placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all resize-none",
+                        placeholder: "Tell customers about your business and what makes you unique..." %>
+                    <p class="mt-1.5 text-xs text-gray-500">This will be displayed on your public profile</p>
+                  </div>
+                </div>
+
+                <!-- Form Actions - Sticky Bottom Bar (like modern SaaS) -->
+                <div class="flex items-center justify-end gap-3 pt-6 border-t border-gray-200">
+                  <%= link_to "Cancel", admin_root_path, class: "px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors" %>
+                  <button type="submit" class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                    Save Changes
+                  </button>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-
-<style>
-  @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-10px); }
-    75% { transform: translateX(10px); }
-  }
-
-  .animate-shake {
-    animation: shake 0.5s ease-in-out;
-  }
-</style>
 

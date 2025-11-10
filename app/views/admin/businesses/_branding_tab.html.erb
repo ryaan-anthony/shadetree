@@ -1,20 +1,28 @@
-<div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-  <div class="bg-gradient-to-r from-emerald-500 to-green-600 h-2"></div>
+<div class="p-8 max-w-3xl">
 
-  <div class="p-8">
-    <%= form_with(model: @business, url: admin_business_path(tab: 'branding'), method: :patch, local: true, class: "space-y-8") do |form| %>
-      <!-- Error Messages -->
-      <% if @business.errors.any? %>
-        <div class="rounded-xl bg-red-50 border border-red-200 p-6 animate-shake">
-          <div class="flex">
-            <div class="flex-shrink-0">
-              <i data-feather="alert-circle" class="h-6 w-6 text-red-600"></i>
-            </div>
-            <div class="ml-3">
-              <h3 class="text-sm font-semibold text-red-800 mb-2">
-                <%= pluralize(@business.errors.count, "error") %> prevented your branding from being saved
-              </h3>
-              <ul class="list-disc list-inside text-sm text-red-700 space-y-1">
+  <!-- Section Header -->
+  <div class="mb-8">
+    <h2 class="text-lg font-semibold text-gray-900">Branding</h2>
+    <p class="mt-1 text-sm text-gray-500">Customize your business look and feel</p>
+  </div>
+
+  <%= form_with(model: @business, url: admin_business_path(tab: 'branding'), method: :patch, local: true, class: "space-y-8") do |form| %>
+
+    <!-- Error Messages -->
+    <% if @business.errors.any? %>
+      <div class="rounded-lg bg-red-50 border border-red-200 p-4">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-red-800">
+              There <%= @business.errors.count == 1 ? 'was' : 'were' %> <%= pluralize(@business.errors.count, "error") %> with your submission
+            </h3>
+            <div class="mt-2 text-sm text-red-700">
+              <ul class="list-disc pl-5 space-y-1">
                 <% @business.errors.full_messages.each do |message| %>
                   <li><%= message %></li>
                 <% end %>
@@ -22,131 +30,103 @@
             </div>
           </div>
         </div>
-      <% end %>
+      </div>
+    <% end %>
+
+    <!-- Form Fields -->
+    <div class="space-y-6">
 
       <!-- Brand Color -->
-      <div class="space-y-3">
-        <%= form.label :brand_color, class: "block text-sm font-semibold text-gray-900" do %>
-          <i data-feather="droplet" class="h-4 w-4 inline mr-1"></i>
-          Brand Color
-        <% end %>
-        <div class="flex items-center space-x-4">
-          <div class="relative group">
-            <%= form.color_field :brand_color,
-                value: @business.brand_color || '#059669',
-                class: "h-16 w-32 border-2 border-gray-200 rounded-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all duration-200",
-                id: "color-picker" %>
-          </div>
+      <div>
+        <%= form.label :brand_color, "Brand Color", class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <div class="flex items-center gap-4">
+          <%= form.color_field :brand_color,
+              value: @business.brand_color || '#059669',
+              class: "h-12 w-24 border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all",
+              id: "color-picker" %>
           <div class="flex-1">
-            <p class="text-sm text-gray-900 font-medium mb-1">
-              Current Color: <span id="color-display" class="font-mono"><%= @business.brand_color || '#059669' %></span>
+            <p class="text-sm text-gray-900">
+              <span id="color-display" class="font-mono font-medium"><%= @business.brand_color || '#059669' %></span>
             </p>
-            <p class="text-xs text-gray-500">
-              This color will be used throughout your customer-facing materials
-            </p>
+            <p class="text-xs text-gray-500 mt-0.5">Used in your customer-facing materials</p>
           </div>
         </div>
 
         <!-- Color Presets -->
-        <div class="mt-4">
-          <p class="text-xs font-medium text-gray-700 mb-2">Quick Presets:</p>
-          <div class="flex space-x-2">
-            <button type="button" onclick="setColor('#059669')" class="w-10 h-10 rounded-lg border-2 border-gray-300 hover:border-emerald-500 transition-all" style="background-color: #059669;" title="Emerald"></button>
-            <button type="button" onclick="setColor('#0EA5E9')" class="w-10 h-10 rounded-lg border-2 border-gray-300 hover:border-emerald-500 transition-all" style="background-color: #0EA5E9;" title="Sky Blue"></button>
-            <button type="button" onclick="setColor('#8B5CF6')" class="w-10 h-10 rounded-lg border-2 border-gray-300 hover:border-emerald-500 transition-all" style="background-color: #8B5CF6;" title="Purple"></button>
-            <button type="button" onclick="setColor('#F59E0B')" class="w-10 h-10 rounded-lg border-2 border-gray-300 hover:border-emerald-500 transition-all" style="background-color: #F59E0B;" title="Amber"></button>
-            <button type="button" onclick="setColor('#EF4444')" class="w-10 h-10 rounded-lg border-2 border-gray-300 hover:border-emerald-500 transition-all" style="background-color: #EF4444;" title="Red"></button>
-            <button type="button" onclick="setColor('#06B6D4')" class="w-10 h-10 rounded-lg border-2 border-gray-300 hover:border-emerald-500 transition-all" style="background-color: #06B6D4;" title="Cyan"></button>
-            <button type="button" onclick="setColor('#10B981')" class="w-10 h-10 rounded-lg border-2 border-gray-300 hover:border-emerald-500 transition-all" style="background-color: #10B981;" title="Green"></button>
-            <button type="button" onclick="setColor('#EC4899')" class="w-10 h-10 rounded-lg border-2 border-gray-300 hover:border-emerald-500 transition-all" style="background-color: #EC4899;" title="Pink"></button>
+        <div class="mt-3">
+          <p class="text-xs font-medium text-gray-700 mb-2">Quick presets:</p>
+          <div class="flex gap-2">
+            <button type="button" onclick="setColor('#059669')" class="w-8 h-8 rounded-md border border-gray-300 hover:border-gray-400 transition-all" style="background-color: #059669;" title="Emerald"></button>
+            <button type="button" onclick="setColor('#0EA5E9')" class="w-8 h-8 rounded-md border border-gray-300 hover:border-gray-400 transition-all" style="background-color: #0EA5E9;" title="Blue"></button>
+            <button type="button" onclick="setColor('#8B5CF6')" class="w-8 h-8 rounded-md border border-gray-300 hover:border-gray-400 transition-all" style="background-color: #8B5CF6;" title="Purple"></button>
+            <button type="button" onclick="setColor('#F59E0B')" class="w-8 h-8 rounded-md border border-gray-300 hover:border-gray-400 transition-all" style="background-color: #F59E0B;" title="Amber"></button>
+            <button type="button" onclick="setColor('#EF4444')" class="w-8 h-8 rounded-md border border-gray-300 hover:border-gray-400 transition-all" style="background-color: #EF4444;" title="Red"></button>
+            <button type="button" onclick="setColor('#06B6D4')" class="w-8 h-8 rounded-md border border-gray-300 hover:border-gray-400 transition-all" style="background-color: #06B6D4;" title="Cyan"></button>
+            <button type="button" onclick="setColor('#10B981')" class="w-8 h-8 rounded-md border border-gray-300 hover:border-gray-400 transition-all" style="background-color: #10B981;" title="Green"></button>
+            <button type="button" onclick="setColor('#EC4899')" class="w-8 h-8 rounded-md border border-gray-300 hover:border-gray-400 transition-all" style="background-color: #EC4899;" title="Pink"></button>
           </div>
         </div>
       </div>
 
-      <!-- Logo Upload -->
-      <div class="space-y-3">
-        <%= form.label :logo_url, class: "block text-sm font-semibold text-gray-900" do %>
-          <i data-feather="image" class="h-4 w-4 inline mr-1"></i>
-          Business Logo <span class="text-gray-400 font-normal">(Optional)</span>
-        <% end %>
+      <!-- Divider -->
+      <div class="border-t border-gray-200"></div>
 
-        <!-- Logo Preview -->
+      <!-- Logo URL -->
+      <div>
+      <!-- Logo URL -->
+      <div>
+        <%= form.label :logo_url, "Business Logo", class: "block text-sm font-medium text-gray-700 mb-2" %>
+
         <% if @business.logo_url.present? %>
-          <div class="mb-4 p-4 bg-gray-50 border-2 border-gray-200 rounded-xl">
-            <p class="text-xs font-medium text-gray-700 mb-2">Current Logo:</p>
-            <img src="<%= @business.logo_url %>" alt="Business Logo" class="h-24 w-auto rounded-lg shadow-sm">
+          <div class="mb-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+            <p class="text-xs font-medium text-gray-700 mb-2">Current logo:</p>
+            <img src="<%= @business.logo_url %>" alt="Business Logo" class="h-16 w-auto rounded">
           </div>
         <% end %>
 
-        <!-- Logo URL Input -->
-        <div class="relative group">
-          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <i data-feather="link" class="h-5 w-5 text-gray-400 group-focus-within:text-emerald-500 transition-colors"></i>
-          </div>
-          <%= form.text_field :logo_url,
-              class: "block w-full pl-12 pr-4 py-4 text-base border-2 border-gray-200 rounded-xl placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200",
-              placeholder: "https://example.com/logo.png" %>
-        </div>
-        <p class="text-xs text-gray-500 flex items-center">
-          <i data-feather="info" class="h-3 w-3 mr-1"></i>
-          Enter the URL of your logo image. Recommended size: 400x400px
-        </p>
+        <%= form.text_field :logo_url,
+            class: "block w-full px-4 py-3 border border-gray-300 rounded-lg text-sm placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all",
+            placeholder: "https://example.com/logo.png" %>
+        <p class="mt-1.5 text-xs text-gray-500">Enter the URL of your logo image (recommended: 400x400px)</p>
       </div>
 
-      <!-- Preview Card -->
-      <div class="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 rounded-xl p-6">
-        <h4 class="font-semibold text-gray-900 mb-4 flex items-center">
-          <i data-feather="eye" class="h-5 w-5 mr-2"></i>
-          Preview
-        </h4>
-        <div class="bg-white rounded-lg p-8 border-2 shadow-sm" id="brand-preview" style="border-color: <%= @business.brand_color || '#059669' %>;">
-          <div class="text-center space-y-4">
-            <% if @business.logo_url.present? %>
-              <img src="<%= @business.logo_url %>" alt="Logo" class="h-16 w-auto mx-auto" id="preview-logo">
-            <% else %>
-              <div class="inline-flex items-center justify-center w-16 h-16 rounded-xl" id="preview-icon" style="background-color: <%= @business.brand_color || '#059669' %>;">
-                <i data-feather="briefcase" class="h-8 w-8 text-white"></i>
-              </div>
-            <% end %>
-            <h3 class="text-xl font-bold text-gray-900"><%= @business.name %></h3>
-            <button type="button" id="preview-button" class="px-6 py-3 rounded-lg text-white font-medium transition-all" style="background-color: <%= @business.brand_color || '#059669' %>;">
-              Get a Quote
-            </button>
-          </div>
-        </div>
-        <p class="text-xs text-gray-500 mt-3 text-center">
-          This is how your brand will appear to customers
-        </p>
-      </div>
+      <!-- Divider -->
+      <div class="border-t border-gray-200"></div>
 
-      <!-- Pro Tips -->
-      <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
-        <div class="flex items-start">
-          <div class="flex-shrink-0">
-            <i data-feather="lightbulb" class="h-6 w-6 text-blue-600"></i>
+      <!-- Preview -->
+      <div>
+        <h3 class="text-sm font-medium text-gray-900 mb-3">Preview</h3>
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
+          <div class="bg-white rounded-lg p-6 border-2 shadow-sm" id="brand-preview" style="border-color: <%= @business.brand_color || '#059669' %>;">
+            <div class="text-center space-y-3">
+              <% if @business.logo_url.present? %>
+                <img src="<%= @business.logo_url %>" alt="Logo" class="h-12 w-auto mx-auto" id="preview-logo">
+              <% else %>
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg" id="preview-icon" style="background-color: <%= @business.brand_color || '#059669' %>;">
+                  <svg class="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+              <% end %>
+              <h3 class="text-base font-semibold text-gray-900"><%= @business.name %></h3>
+              <button type="button" id="preview-button" class="px-4 py-2 rounded-md text-white text-sm font-medium transition-all" style="background-color: <%= @business.brand_color || '#059669' %>;">
+                Get a Quote
+              </button>
+            </div>
           </div>
-          <div class="ml-4">
-            <h4 class="text-lg font-semibold text-blue-900 mb-2">Branding Tips</h4>
-            <ul class="text-blue-800 space-y-1 text-sm">
-              <li>• Choose colors that reflect your business personality</li>
-              <li>• Use high-quality logo images for best results</li>
-              <li>• Maintain consistency across all your materials</li>
-              <li>• Test your color choices for readability</li>
-            </ul>
-          </div>
+          <p class="text-xs text-gray-500 mt-2 text-center">How your brand appears to customers</p>
         </div>
       </div>
+    </div>
 
-      <!-- Submit Button -->
-      <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
-        <%= link_to "Cancel", edit_admin_business_path, class: "inline-flex items-center px-6 py-3 border-2 border-gray-300 rounded-xl shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200" %>
-        <button type="submit" class="inline-flex items-center px-8 py-3 border border-transparent text-base font-semibold rounded-xl text-white bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
-          <i data-feather="save" class="h-5 w-5 mr-2"></i>
-          Save Branding
-        </button>
-      </div>
-    <% end %>
-  </div>
+    <!-- Form Actions -->
+    <div class="flex items-center justify-end gap-3 pt-6 border-t border-gray-200">
+      <%= link_to "Cancel", edit_admin_business_path, class: "px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors" %>
+      <button type="submit" class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+        Save Branding
+      </button>
+    </div>
+  <% end %>
 </div>
 
 <script>
