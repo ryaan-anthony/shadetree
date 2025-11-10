@@ -182,4 +182,3 @@ class Admin::BusinessesControllerTest < ActionDispatch::IntegrationTest
     assert_not_equal "My Business", other_business.reload.name
   end
 end
-

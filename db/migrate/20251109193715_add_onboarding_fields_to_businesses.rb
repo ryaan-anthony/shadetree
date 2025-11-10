@@ -6,4 +6,3 @@ class AddOnboardingFieldsToBusinesses < ActiveRecord::Migration[8.1]
     add_index :businesses, :onboarding_step
   end
 end
-

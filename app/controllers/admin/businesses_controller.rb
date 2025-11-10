@@ -1,5 +1,5 @@
 class Admin::BusinessesController < Admin::BaseController
-  skip_before_action :require_business_setup, only: [:new, :create]
+  skip_before_action :require_business_setup, only: [ :new, :create ]
 
   layout :determine_layout
 
@@ -33,9 +33,9 @@ class Admin::BusinessesController < Admin::BaseController
 
     # Determine which params to use based on tab
     update_params = case params[:tab]
-    when 'hours'
+    when "hours"
       hours_params
-    when 'branding'
+    when "branding"
       branding_params
     else
       business_params
@@ -90,7 +90,6 @@ class Admin::BusinessesController < Admin::BaseController
   end
 
   def determine_layout
-    action_name == 'new' ? 'business_setup' : 'admin'
+    action_name == "new" ? "business_setup" : "admin"
   end
 end
-

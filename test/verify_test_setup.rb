@@ -3,7 +3,7 @@
 # Quick test verification script
 puts "Testing Rails environment..."
 
-require_relative '../config/environment'
+require_relative "../config/environment"
 
 begin
   # Test user creation
@@ -45,4 +45,3 @@ rescue => e
   puts "✗ Error: #{e.message}"
   puts e.backtrace.first(5)
 end
-

@@ -19,4 +19,3 @@ class Admin::Settings::BrandingController < Admin::BaseController
     params.require(:business).permit(:logo_url, :brand_color)
   end
 end
-

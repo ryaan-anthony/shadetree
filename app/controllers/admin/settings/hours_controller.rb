@@ -31,4 +31,3 @@ class Admin::Settings::HoursController < Admin::BaseController
     { timezone: permitted[:timezone] }
   end
 end
-

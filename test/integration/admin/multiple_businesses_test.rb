@@ -256,9 +256,9 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     response_data = JSON.parse(response.body)
-    assert_equal true, response_data['success']
-    assert_equal @business2.id, response_data['business']['id']
-    assert_equal @business2.name, response_data['business']['name']
+    assert_equal true, response_data["success"]
+    assert_equal @business2.id, response_data["business"]["id"]
+    assert_equal @business2.name, response_data["business"]["name"]
 
     # Verify session was updated
     assert_equal @business2.id, session[:current_business_id]
@@ -276,8 +276,8 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
     assert_response :not_found
 
     response_data = JSON.parse(response.body)
-    assert_equal false, response_data['success']
-    assert_equal "Business not found", response_data['error']
+    assert_equal false, response_data["success"]
+    assert_equal "Business not found", response_data["error"]
   end
 
   test "switching to another user's business is not allowed" do
@@ -303,7 +303,7 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
     assert_response :not_found
 
     response_data = JSON.parse(response.body)
-    assert_equal false, response_data['success']
+    assert_equal false, response_data["success"]
 
     # Session should not be updated
     assert_not_equal other_business.id, session[:current_business_id]
@@ -376,4 +376,3 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
     assert_match /admin\/business\/new/, response.body
   end
 end
-
