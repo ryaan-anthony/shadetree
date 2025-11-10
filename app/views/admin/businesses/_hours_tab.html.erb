@@ -1,0 +1,214 @@
+<div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+  <div class="bg-gradient-to-r from-emerald-500 to-green-600 h-2"></div>
+
+  <div class="p-8">
+    <%= form_with(url: admin_business_path(tab: 'hours'), method: :patch, local: true, class: "space-y-8") do |form| %>
+      <!-- Error Messages -->
+      <% if @business.errors.any? %>
+        <div class="rounded-xl bg-red-50 border border-red-200 p-6 animate-shake">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <i data-feather="alert-circle" class="h-6 w-6 text-red-600"></i>
+            </div>
+            <div class="ml-3">
+              <h3 class="text-sm font-semibold text-red-800 mb-2">
+                <%= pluralize(@business.errors.count, "error") %> prevented your hours from being saved
+              </h3>
+              <ul class="list-disc list-inside text-sm text-red-700 space-y-1">
+                <% @business.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- Timezone Selection -->
+      <div class="space-y-3">
+        <label class="block text-sm font-semibold text-gray-900">
+          <i data-feather="globe" class="h-4 w-4 inline mr-1"></i>
+          Time Zone <span class="text-red-500">*</span>
+        </label>
+        <div class="relative group">
+          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <i data-feather="map-pin" class="h-5 w-5 text-gray-400 group-focus-within:text-emerald-500 transition-colors"></i>
+          </div>
+          <select name="timezone" class="block w-full pl-12 pr-10 py-4 text-lg border-2 border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 appearance-none cursor-pointer">
+            <option value="America/New_York" <%= 'selected' if @business.timezone == 'America/New_York' %>>Eastern Time (EST/EDT)</option>
+            <option value="America/Chicago" <%= 'selected' if @business.timezone == 'America/Chicago' %>>Central Time (CST/CDT)</option>
+            <option value="America/Denver" <%= 'selected' if @business.timezone == 'America/Denver' %>>Mountain Time (MST/MDT)</option>
+            <option value="America/Los_Angeles" <%= 'selected' if @business.timezone == 'America/Los_Angeles' %>>Pacific Time (PST/PDT)</option>
+            <option value="America/Phoenix" <%= 'selected' if @business.timezone == 'America/Phoenix' %>>Arizona Time (MST)</option>
+            <option value="America/Anchorage" <%= 'selected' if @business.timezone == 'America/Anchorage' %>>Alaska Time (AKST/AKDT)</option>
+            <option value="Pacific/Honolulu" <%= 'selected' if @business.timezone == 'Pacific/Honolulu' %>>Hawaii Time (HST)</option>
+          </select>
+          <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+            <i data-feather="chevron-down" class="h-5 w-5 text-gray-400"></i>
+          </div>
+        </div>
+        <p class="text-xs text-gray-500 flex items-center">
+          <i data-feather="info" class="h-3 w-3 mr-1"></i>
+          All appointments and quotes will use this timezone
+        </p>
+      </div>
+
+      <!-- Weekly Schedule -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-gray-900">Weekly Schedule</h3>
+          <span class="text-sm text-gray-500">Toggle days on/off</span>
+        </div>
+
+        <div class="bg-gray-50 border-2 border-gray-200 rounded-xl overflow-hidden divide-y divide-gray-200">
+          <% %w[Monday Tuesday Wednesday Thursday Friday Saturday Sunday].each_with_index do |day, index| %>
+            <div class="flex items-center p-4 hover:bg-white transition-colors">
+              <!-- Day Toggle -->
+              <div class="flex items-center min-w-[140px]">
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" name="<%= day.downcase %>_enabled" value="1" class="sr-only peer day-toggle" <%= 'checked' if index < 5 %>>
+                  <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                  <span class="ml-3 font-medium text-gray-900"><%= day %></span>
+                </label>
+              </div>
+
+              <!-- Time Selection -->
+              <div class="flex items-center space-x-4 ml-auto">
+                <div class="flex items-center space-x-2">
+                  <select name="<%= day.downcase %>_start" class="border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 time-select">
+                    <% (6..11).each do |hour| %>
+                      <option value="<%= hour %>:00" <%= 'selected' if hour == 9 %>><%= hour %>:00 AM</option>
+                      <option value="<%= hour %>:30"><%= hour %>:30 AM</option>
+                    <% end %>
+                    <option value="12:00">12:00 PM</option>
+                    <option value="12:30">12:30 PM</option>
+                    <% (1..11).each do |hour| %>
+                      <option value="<%= hour + 12 %>:00"><%= hour %>:00 PM</option>
+                      <option value="<%= hour + 12 %>:30"><%= hour %>:30 PM</option>
+                    <% end %>
+                  </select>
+
+                  <span class="text-gray-500 font-medium">to</span>
+
+                  <select name="<%= day.downcase %>_end" class="border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 time-select">
+                    <% (6..11).each do |hour| %>
+                      <option value="<%= hour %>:00"><%= hour %>:00 AM</option>
+                      <option value="<%= hour %>:30"><%= hour %>:30 AM</option>
+                    <% end %>
+                    <option value="12:00">12:00 PM</option>
+                    <option value="12:30">12:30 PM</option>
+                    <% (1..11).each do |hour| %>
+                      <option value="<%= hour + 12 %>:00" <%= 'selected' if hour == 5 %>><%= hour %>:00 PM</option>
+                      <option value="<%= hour + 12 %>:30"><%= hour %>:30 PM</option>
+                    <% end %>
+                  </select>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Schedule Summary -->
+      <div class="bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-200 rounded-xl p-6">
+        <h4 class="font-semibold text-emerald-900 mb-4 flex items-center">
+          <i data-feather="calendar" class="h-5 w-5 mr-2"></i>
+          Schedule Summary
+        </h4>
+        <div id="schedule-summary" class="space-y-2 text-sm">
+          <div class="flex justify-between"><span class="text-emerald-700">Monday:</span><span class="font-medium text-emerald-900">9:00 AM - 5:00 PM</span></div>
+          <div class="flex justify-between"><span class="text-emerald-700">Tuesday:</span><span class="font-medium text-emerald-900">9:00 AM - 5:00 PM</span></div>
+          <div class="flex justify-between"><span class="text-emerald-700">Wednesday:</span><span class="font-medium text-emerald-900">9:00 AM - 5:00 PM</span></div>
+          <div class="flex justify-between"><span class="text-emerald-700">Thursday:</span><span class="font-medium text-emerald-900">9:00 AM - 5:00 PM</span></div>
+          <div class="flex justify-between"><span class="text-emerald-700">Friday:</span><span class="font-medium text-emerald-900">9:00 AM - 5:00 PM</span></div>
+          <div class="flex justify-between"><span class="text-emerald-700">Saturday:</span><span class="text-gray-500">Closed</span></div>
+          <div class="flex justify-between"><span class="text-emerald-700">Sunday:</span><span class="text-gray-500">Closed</span></div>
+        </div>
+      </div>
+
+      <!-- Pro Tips -->
+      <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
+        <div class="flex items-start">
+          <div class="flex-shrink-0">
+            <i data-feather="lightbulb" class="h-6 w-6 text-blue-600"></i>
+          </div>
+          <div class="ml-4">
+            <h4 class="text-lg font-semibold text-blue-900 mb-2">Scheduling Tips</h4>
+            <ul class="text-blue-800 space-y-1 text-sm">
+              <li>• Your hours help customers know when to expect service</li>
+              <li>• You can always update these later as your business needs change</li>
+              <li>• Consider your target customers' schedules for optimal availability</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+        <%= link_to "Cancel", edit_admin_business_path, class: "inline-flex items-center px-6 py-3 border-2 border-gray-300 rounded-xl shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200" %>
+        <button type="submit" class="inline-flex items-center px-8 py-3 border border-transparent text-base font-semibold rounded-xl text-white bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+          <i data-feather="save" class="h-5 w-5 mr-2"></i>
+          Save Hours
+        </button>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  setupHoursTracking();
+  updateScheduleSummary();
+});
+
+function setupHoursTracking() {
+  document.querySelectorAll('.day-toggle, .time-select').forEach(input => {
+    input.addEventListener('change', updateScheduleSummary);
+  });
+}
+
+function updateScheduleSummary() {
+  const summary = document.getElementById('schedule-summary');
+  if (!summary) return;
+
+  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+  let summaryHTML = '';
+
+  days.forEach((day, index) => {
+    const checkbox = document.querySelector(`input[name="${day}_enabled"]`);
+    const startSelect = document.querySelector(`select[name="${day}_start"]`);
+    const endSelect = document.querySelector(`select[name="${day}_end"]`);
+
+    if (checkbox && checkbox.checked) {
+      const startTime = formatTime(startSelect.value);
+      const endTime = formatTime(endSelect.value);
+      summaryHTML += `
+        <div class="flex justify-between">
+          <span class="text-emerald-700">${dayNames[index]}:</span>
+          <span class="font-medium text-emerald-900">${startTime} - ${endTime}</span>
+        </div>
+      `;
+    } else {
+      summaryHTML += `
+        <div class="flex justify-between">
+          <span class="text-emerald-700">${dayNames[index]}:</span>
+          <span class="text-gray-500">Closed</span>
+        </div>
+      `;
+    }
+  });
+
+  summary.innerHTML = summaryHTML;
+}
+
+function formatTime(time24) {
+  const [hours, minutes] = time24.split(':');
+  const hour = parseInt(hours);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+  return `${displayHour}:${minutes} ${ampm}`;
+}
+</script>
+
