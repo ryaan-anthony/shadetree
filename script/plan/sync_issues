@@ -32,7 +32,17 @@ OptionParser.new do |o|
 end.parse!
 
 def gh(*args, input: nil)
-  out, err, status = Open3.capture3("gh", *args, stdin_data: input.to_s)
+  attempts = 0
+  begin
+    attempts += 1
+    out, err, status = Open3.capture3("gh", *args, stdin_data: input.to_s)
+    # Retry transient server errors for reads only; writes are re-run safely via the spec marker.
+    raise "retry" if !status.success? && err =~ /HTTP 5\d\d/ && args.include?("GET") && attempts < 4
+  rescue RuntimeError => e
+    raise unless e.message == "retry"
+    sleep attempts * 2
+    retry
+  end
   raise "gh #{args.first(3).join(' ')} failed: #{err.strip}" unless status.success?
   out.empty? ? nil : JSON.parse(out)
 end
@@ -125,7 +135,9 @@ specs.each do |s|
   payload = { title: "[#{s.id}] #{s.title}", body: body_for.call(s), labels: labels,
               milestone: milestones[milestone_title.call(s.milestone)] }
   if (issue = by_spec[s.id])
-    changed = issue["title"] != payload[:title] || issue["body"].to_s.strip != payload[:body].strip
+    # Compare only up to our footer; tools may append their own trailers to issue bodies.
+    norm = ->(t) { t.to_s.split("not this issue body._").first.gsub(/\s+/, " ").strip }
+    changed = issue["title"] != payload[:title] || norm.call(issue["body"]) != norm.call(payload[:body])
     next unless changed
     log.call("update ##{issue['number']} #{payload[:title]}")
     gh_api("PATCH", "repos/#{repo}/issues/#{issue['number']}", payload) unless dry
