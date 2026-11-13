@@ -24,8 +24,8 @@ invoice generation, dunning, payment-method storage, proration and financial rep
 | --- | --- | --- | --- | --- |
 | Free | $0 | 5 | 2 | Core loop, online payments, "Powered by Shadetree" |
 | Starter | ~$19 | 30 | 3 | Remove branding badge |
-| Pro | ~$49 | 150 | 10 | SMS (metered), automations (when built) |
-| Business | ~$99 | Unlimited | Unlimited | Priority support |
+| Pro | ~$49 | 150 | 10 | Message templates, automations, custom roles |
+| Business | ~$99 | Unlimited | Unlimited | Multiple locations, priority support |
 
 ### Usage metering
 - **R4** Billable usage (quotes sent, pending G3) is counted per business per billing period,

@@ -28,6 +28,8 @@ the same way.
       change roles per the capability table in 02-accounts (Admins cannot grant or revoke Owner).
 - [ ] A central authorization approach is used for every staff action; actions without an
       explicit rule are denied by default.
+- [ ] Rules are expressed as named permissions mapped to roles (not role-name checks scattered
+      through features), so custom roles (ACC-07) need no feature changes.
 - [ ] Unauthorized actions return a consistent response (hidden in navigation, "not found" or
       "not allowed" page as appropriate) and are logged without PII.
 - [ ] Navigation and actions are shown or hidden per role (e.g. Technicians don't see Settings,
@@ -38,7 +40,7 @@ the same way.
 
 ## Out of scope
 
-- Custom roles or per-member permission toggles (explicitly not planned).
+- Custom roles (ACC-07). Per-member permission overrides (not planned).
 - Per-business setting allowing Technicians to see prices (JOB-04 adds that toggle).
 
 ## Open questions

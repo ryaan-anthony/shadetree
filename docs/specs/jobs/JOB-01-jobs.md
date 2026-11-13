@@ -27,7 +27,8 @@ invoice. Jobs can also be created directly for work agreed by phone.
 - [ ] Owners/Admins create a job from an approved quote (client, property, line items, notes and
       attachments copied; quote ↔ job linked) or from scratch (client, property, title, line
       items optional, instructions).
-- [ ] Optionally, approving a quote can auto-create the job (business setting, default on).
+- [ ] Optionally, approving a quote can auto-create the job (business setting, default on;
+      may later become an automation recipe, NTF-04).
 - [ ] Job statuses: Unscheduled, Scheduled, In progress, Completed, Cancelled — derived from
       visits where possible, with manual Complete/Cancel (with reason) available.
 - [ ] The job page shows client & property (with access notes), line items, instructions for

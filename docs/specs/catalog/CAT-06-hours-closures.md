@@ -36,6 +36,7 @@ scheduled on closed days, and so self-booking can build on it later.
 ## Out of scope
 
 - Per-member availability and time off (backlog with self-scheduling).
+- Hours per location — CAT-07 extends these same settings per location.
 - Recurring annual closures (e.g. every Dec 25) — see open question.
 
 ## Open questions

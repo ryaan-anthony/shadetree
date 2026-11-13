@@ -35,9 +35,9 @@ module Plan
     "quotes" => "Build, send, view, approve, revise quotes",
     "jobs" => "Jobs, visits, calendar, technician day view",
     "payments" => "Invoices, online payments, recorded payments",
-    "notifications" => "Email delivery and team notifications",
+    "notifications" => "Email, team notifications, templates, automations",
     "billing" => "Our plans, usage limits and subscriptions",
-    "operator" => "Internal operator console",
+    "operator" => "Internal operator console and support tickets",
     "marketing" => "Public website, legal pages, lead capture",
     "insights" => "Action dashboard, data export"
   }.freeze

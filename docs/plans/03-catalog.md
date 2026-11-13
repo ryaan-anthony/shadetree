@@ -55,11 +55,19 @@ few taps and client-facing pages look like the business, not like Shadetree.
 - **R15** Weekly business hours (per weekday open/close or closed) and one-off closures (date
   ranges with a reason). Used by scheduling and later client self-booking.
 
+### Locations (paid plans)
+- **R16** A business can add locations, each with its own address, contact details, time zone,
+  hours, closures and assigned members. Documents and visits belong to a location. A
+  single-location business never sees location settings.
+- **R17** Client-facing documents show the location's contact details. Lists, the calendar and
+  the dashboard can be filtered by location.
+- **R18** Catalog prices and default tax rates can be overridden per location.
+
 ## Decisions
 
 | # | Decision | Rationale |
 | --- | --- | --- |
-| D1 | No multi-location. Remove locations, per-location prices/taxes/fees, service areas. | Biggest source of schema complexity; target market is single-base. Revisit post-launch. |
+| D1 | Single-location core through M4. Multi-location (locations, per-location hours, prices and tax defaults) added in M5. Service areas and per-location fees are dropped. | Most target businesses have one base. Adding locations on top keeps M1–M4 simple while supporting growing businesses. |
 | D2 | Fees are services. | One concept instead of two; users already think of trip fees as line items. |
 | D3 | Discounts live on documents, not in the catalog. | Promotions/discount-code engines were speculative. |
 | D4 | Single-level categories, optional. | Nested categories add UI complexity for no clear benefit. |
@@ -75,13 +83,15 @@ few taps and client-facing pages look like the business, not like Shadetree.
 | [CAT-04](../specs/catalog/CAT-04-tax-rates.md) | Tax rates | M1 | CAT-03 |
 | [CAT-05](../specs/catalog/CAT-05-industry-presets.md) | Industry presets | M1 | CAT-03 |
 | [CAT-06](../specs/catalog/CAT-06-hours-closures.md) | Business hours & closures | M3 | CAT-01 |
+| [CAT-07](../specs/catalog/CAT-07-locations.md) | Locations | M5 | CAT-06, JOB-03, BIL-01 |
+| [CAT-08](../specs/catalog/CAT-08-location-pricing.md) | Location pricing & taxes | M5 | CAT-07, CAT-04, QTE-01 |
 
 ## Backlog (M6)
 
 - Service areas (zip/radius) to filter public requests.
 - Optional service add-ons / options shown on quotes.
 - Price lists (e.g. commercial vs residential).
-- Multi-location businesses.
+- Separate payment accounts per location; location-scoped permissions.
 
 ## Open questions
 

@@ -53,6 +53,10 @@ Owner, Admin, Technician (see vision glossary). Operators are covered in `10-ope
 | Data export | ✔ | ✔ | |
 
 - **R11** Role checks are enforced server-side for every action and covered by tests.
+  Authorization is expressed as named permissions (the rows of the table above) mapped to
+  roles, so custom roles can be added without changing features.
+- **R14** Owners can define custom roles from the permission catalog, alongside the built-in
+  roles (paid plans). A few permissions stay Owner-only.
 
 ### Onboarding
 - **R12** A new owner is guided through: business basics → choose industry (seeds starter
@@ -65,7 +69,7 @@ Owner, Admin, Technician (see vision glossary). Operators are covered in `10-ope
 
 | # | Decision | Rationale |
 | --- | --- | --- |
-| D1 | Three fixed roles; no custom roles or permission matrices. | Target businesses are 1–10 people. Removes `business_roles`/`staff_roles` complexity. |
+| D1 | Three built-in roles at launch; custom roles built from a fixed permission catalog in M5. | Built-in roles cover 1–10 person crews; the permission catalog keeps custom roles cheap to add later. Replaces the free-form JSON permissions. |
 | D2 | One membership concept for every person in a business. | The separate staff model duplicated memberships. |
 | D3 | Plan/tier belongs to the business, not the user. | A user may be in several businesses on different plans. |
 | D4 | Keep email + password at launch; passwordless is backlog. | Already built; magic links add email deliverability dependency on sign-in. |
@@ -81,6 +85,7 @@ Owner, Admin, Technician (see vision glossary). Operators are covered in `10-ope
 | [ACC-04](../specs/accounts/ACC-04-roles-permissions.md) | Roles & permissions | M1 | ACC-02 |
 | [ACC-05](../specs/accounts/ACC-05-onboarding.md) | Guided onboarding | M2 | CAT-01, CAT-05, QTE-03, QTE-04 |
 | [ACC-06](../specs/accounts/ACC-06-account-settings.md) | Account settings & deletion | M5 | ACC-01 |
+| [ACC-07](../specs/accounts/ACC-07-custom-roles.md) | Custom roles | M5 | ACC-04, BIL-01 |
 
 ## Backlog (M6)
 

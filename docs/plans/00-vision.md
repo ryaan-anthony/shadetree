@@ -79,9 +79,9 @@ original plan (sometimes the business, sometimes the business's client).
 | [05 Quotes](05-quotes.md) | Build, send, view, approve/decline, revise quotes. |
 | [06 Jobs](06-jobs.md) | Jobs, visits, calendar, technician day view. |
 | [07 Payments](07-payments.md) | Invoices, online payments, recorded payments, balances. |
-| [08 Notifications](08-notifications.md) | Email (and later SMS) to clients and team. |
+| [08 Notifications](08-notifications.md) | Email to clients and team, message templates, workflow automations. |
 | [09 Billing](09-billing.md) | Our plans, usage limits, subscriptions. |
-| [10 Operator](10-operator.md) | Internal console: tenants, impersonation, account actions. |
+| [10 Operator](10-operator.md) | Internal console: tenants, impersonation, account actions, support tickets. |
 | [11 Marketing](11-marketing.md) | Public website, legal pages, lead capture. |
 | [12 Insights](12-insights.md) | Action dashboard, data export, (later) reporting. |
 
@@ -96,7 +96,7 @@ Milestones are ordered; work inside a milestone is parallelizable unless a spec 
 | **M2 Quote → Approval** | First real value: send a branded quote and get it approved online. | A new owner is guided from sign-up to a sent quote; a client receives it by email, views it on a phone, and approves it; the business is notified. Public request form feeds an inbox. |
 | **M3 Schedule → Work** | Turn approved work into scheduled visits that technicians complete. | Approved quote → job → visit on calendar → technician completes it from a phone. |
 | **M4 Invoice → Paid** | Close the loop with invoicing and online payment. **MVP / private beta.** | Completed job → invoice → client pays by card → business sees it paid. |
-| **M5 Launch** | Everything needed to charge money and open sign-ups publicly. | Plans and limits enforced, subscriptions live, operator console, legal pages, marketing site, exports. |
+| **M5 Launch** | Everything needed to charge money and open sign-ups publicly, plus the paid-tier features. | Plans and limits enforced, subscriptions live, operator console with support tickets, legal pages, marketing site, exports; automations, custom roles and multi-location available on paid plans. |
 | **M6 Growth** | Features that widen the funnel and deepen retention. | Specified after M4 based on beta feedback (see each domain's backlog). |
 
 ## What changed from the original plan
@@ -107,11 +107,11 @@ new principal engineer, these are the decisions that were questioned and changed
 | Original | Now | Why |
 | --- | --- | --- |
 | Admin portal had no quote builder, jobs, or invoices; those only existed as "customer-facing" features. | Quotes, jobs and invoices are first-class domains with both a staff side and a client side. | The core loop was split across documents and the staff half was missing. |
-| Workflow builder, approval chains, task automation. | Cut. A fixed, opinionated flow with a few toggles. | Contradicts "minimal setup"; huge cost; no evidence of demand. |
-| Support ticketing, knowledge base, internal chat inside the admin portal. | Cut. Support is email + operator impersonation. | Businesses of 1–10 people don't need a help desk. |
+| Workflow builder, approval chains, task automation. | Kept, but rebuilt as **automations** (trigger → delay → condition → action from fixed catalogs, with ready-made recipes) in M5, after the core loop exists. No visual flow builder. | A free-form builder contradicts "minimal setup"; recipes deliver the follow-up value with little setup. |
+| Support ticketing, knowledge base, internal chat inside the admin portal. | Kept as **support tickets between businesses and Shadetree** (M5), with email threading. Knowledge base and internal chat cut. A helpdesk for businesses' own clients is an open question. | One support channel with full context; the rest had no clear owner. |
 | Dynamic/seasonal pricing, bundles, packages, upsells, price audit trail. | Cut to: services with a default price, optional per-quote overrides, discounts, taxes. | Quotes are hand-tuned anyway; complexity hurts setup time. |
-| Multi-location with per-location prices, taxes, fees, hours. | One business = one operating base. Multiple businesses per user remains. | Target market is single-location; per-location pricing tables were the largest part of the schema. |
-| Custom roles with JSON permission sets, plus a separate staff/member model. | Three fixed roles: Owner, Admin, Technician. One membership concept. | Two overlapping models existed; custom roles are an enterprise feature. |
+| Multi-location with per-location prices, taxes, fees, hours. | Kept, but **added on top** of a single-location core in M5 (`CAT-07`, `CAT-08`) and invisible until a second location is added. Fees become ordinary services. | Most target businesses have one base; building the core single-location first keeps M1–M4 simple. |
+| Custom roles with JSON permission sets, plus a separate staff/member model. | One membership concept. Three built-in roles at launch, built on a permission catalog, with **custom roles** in M5 (`ACC-07`). | Two overlapping models existed; built-in roles cover the MVP and custom roles come once the permission catalog is proven. |
 | Notification trigger builder, broadcast messaging, delivery analytics. | Fixed transactional messages; editable copy later; SMS later and metered. | Marketing broadcasts carry legal/compliance risk and cost. |
 | Digital signatures as a legal compliance framework with multiple capture methods. | Approval records name, typed signature, timestamp, IP and the exact quote version approved. | Sufficient evidence for service quotes; drawn signatures optional later. |
 | Building our own SaaS invoicing, dunning and payment-method storage. | Use the payment provider's hosted subscription billing. | Billing is not our differentiator; PCI scope and dunning are solved problems. |
@@ -148,8 +148,8 @@ These apply to every spec; acceptance criteria assume them without repeating the
 
 - **Free plan** forever, limited by usage (e.g. a small number of quotes sent per month), with
   full core loop.
-- **Paid plans** unlock higher usage and premium features (SMS, custom branding removal,
-  multiple team members, automations). Price range roughly $15–$99/month.
+- **Paid plans** unlock higher usage and premium features (custom branding removal, more
+  team members, message templates, automations, custom roles, multiple locations, later SMS). Price range roughly $15–$99/month.
 - **Usage, not seats.** Team size is not the primary price lever.
 - **Optional platform fee** on online client payments is a possible revenue line (open question).
 - Exact limits and prices are owned by `09-billing` and are configurable without a deploy.

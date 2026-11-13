@@ -43,6 +43,13 @@ management.
   (with confirmation and a waiting period), satisfying privacy erasure requests.
 - **R12** Edit plans (09-billing), industry presets (03-catalog) and feature flags (PLT-11).
 
+### Support tickets
+- **R14** Members open support tickets from inside the app, with page and browser context
+  attached automatically, and follow replies in the app or by email.
+- **R15** Operators work from a single ticket inbox: assign, reply, add internal notes, set
+  status. The business's context sits beside each ticket.
+- **R16** Email replies and emails to the support address thread into tickets.
+
 ### Audit
 - **R13** Every operator action (impersonation start/stop and reason, account actions, plan
   changes, flag changes) is recorded with who, when, what and target, and is viewable and
@@ -53,6 +60,7 @@ management.
 | # | Decision | Rationale |
 | --- | --- | --- |
 | D1 | One operator role at launch; no permission matrix. | Team is 1–3 people. |
+| D5 | Support tickets are between businesses and Shadetree; no knowledge base or live chat at launch. | One accountable support channel with context. |
 | D2 | Financial reporting (MRR, churn) comes from the billing provider's dashboard at launch. | Duplicating it is wasted effort pre-scale. |
 | D3 | Impersonation is read-only by default. | Limits blast radius of mistakes and abuse. |
 | D4 | Console built in-app with the same UI foundation; no third-party admin framework unless an ADR argues for it. | Keeps one stack; operator needs are narrow. |
@@ -65,6 +73,7 @@ management.
 | [OPS-02](../specs/operator/OPS-02-business-directory.md) | Business directory | M5 | OPS-01, BIL-01 |
 | [OPS-03](../specs/operator/OPS-03-impersonation.md) | Impersonation | M5 | OPS-02, ACC-04 |
 | [OPS-04](../specs/operator/OPS-04-account-actions.md) | Account actions | M5 | OPS-02, BIL-05, PLT-11 |
+| [OPS-05](../specs/operator/OPS-05-support-tickets.md) | Support tickets | M5 | OPS-02, NTF-02 |
 
 ## Backlog (M6)
 

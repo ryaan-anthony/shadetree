@@ -27,7 +27,7 @@ Requirement (plans/)  ──▶  Spec (specs/)  ──▶  Issue (GitHub)  ─�
 | 05 | Quotes | [05-quotes](plans/05-quotes.md) | `QTE` | `area:quotes` |
 | 06 | Jobs & scheduling | [06-jobs](plans/06-jobs.md) | `JOB` | `area:jobs` |
 | 07 | Invoices & payments | [07-payments](plans/07-payments.md) | `PAY` | `area:payments` |
-| 08 | Notifications | [08-notifications](plans/08-notifications.md) | `NTF` | `area:notifications` |
+| 08 | Notifications & automations | [08-notifications](plans/08-notifications.md) | `NTF` | `area:notifications` |
 | 09 | Plans & subscription billing | [09-billing](plans/09-billing.md) | `BIL` | `area:billing` |
 | 10 | Operator console | [10-operator](plans/10-operator.md) | `OPS` | `area:operator` |
 | 11 | Marketing site | [11-marketing](plans/11-marketing.md) | `MKT` | `area:marketing` |
