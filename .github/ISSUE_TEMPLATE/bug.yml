@@ -1,0 +1,28 @@
+name: Bug report
+description: Something doesn't work as the spec or common sense says it should.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: Steps to reproduce, and what you expected instead.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [platform, accounts, catalog, clients, quotes, jobs, payments, notifications, billing, operator, marketing, insights, not sure]
+    validations:
+      required: true
+  - type: input
+    id: spec
+    attributes:
+      label: Related spec (if any)
+      placeholder: e.g. QTE-05
+  - type: textarea
+    id: context
+    attributes:
+      label: Environment and screenshots
+      description: Browser/device, environment (local, staging, production). Never include client personal data.

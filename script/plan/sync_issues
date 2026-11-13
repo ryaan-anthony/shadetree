@@ -1,0 +1,163 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Creates or updates GitHub labels, milestones and one issue per spec in docs/specs, and links
+# "blocked by" dependencies between issues. Safe to re-run: issues are matched by a hidden
+# marker (<!-- spec:ID -->) in their body, so edits to specs update existing issues.
+#
+# Requires an authenticated `gh` CLI with repo access.
+#
+# Usage:
+#   script/plan/sync_issues --dry-run                 # print what would change
+#   script/plan/sync_issues                           # apply
+#   script/plan/sync_issues --only M0,M1              # limit to milestones
+#   script/plan/sync_issues --ref main                # branch/tag used for spec links
+#   script/plan/sync_issues --project-owner USER --project-number N
+#                                                     # also add issues to a Projects (v2) board
+#                                                     # (needs a token with the `project` scope)
+
+require "json"
+require "open3"
+require "optparse"
+require_relative "lib/specs"
+
+options = { dry_run: false, ref: "main", only: nil, repo: nil }
+OptionParser.new do |o|
+  o.on("--dry-run") { options[:dry_run] = true }
+  o.on("--ref REF") { |v| options[:ref] = v }
+  o.on("--only LIST") { |v| options[:only] = v.split(",") }
+  o.on("--repo OWNER/NAME") { |v| options[:repo] = v }
+  o.on("--project-owner USER") { |v| options[:project_owner] = v }
+  o.on("--project-number N", Integer) { |v| options[:project_number] = v }
+end.parse!
+
+def gh(*args, input: nil)
+  out, err, status = Open3.capture3("gh", *args, stdin_data: input.to_s)
+  raise "gh #{args.first(3).join(' ')} failed: #{err.strip}" unless status.success?
+  out.empty? ? nil : JSON.parse(out)
+end
+
+def gh_api(method, path, body = nil)
+  args = [ "api", "-X", method, path, "-H", "Accept: application/vnd.github+json" ]
+  args += [ "--input", "-" ] if body
+  gh(*args, input: body&.to_json)
+end
+
+def paginate(path)
+  page = 1
+  results = []
+  loop do
+    batch = gh_api("GET", "#{path}#{path.include?('?') ? '&' : '?'}per_page=100&page=#{page}")
+    results.concat(batch)
+    break if batch.size < 100
+    page += 1
+  end
+  results
+end
+
+repo = options[:repo] || `git remote get-url origin`.strip[%r{github\.com[:/](.+?)(\.git)?$}, 1]
+dry = options[:dry_run]
+log = ->(msg) { puts(dry ? "[dry-run] #{msg}" : msg) }
+
+DOMAIN_COLORS = %w[1d76db 5319e7 0e8a16 fbca04 d93f0b b60205 006b75 c5def5 bfd4f2 7057ff f9d0c4 0052cc].freeze
+
+specs = Plan::Specs.topological(Plan::Specs.load)
+specs.select! { |s| options[:only].include?(s.milestone) } if options[:only]
+
+# --- labels ---------------------------------------------------------------------------------
+existing_labels = paginate("repos/#{repo}/labels").map { |l| l["name"] }
+wanted_labels = Plan::DOMAINS.each_with_index.map do |(domain, desc), i|
+  { name: "area:#{domain}", color: DOMAIN_COLORS[i % DOMAIN_COLORS.size], description: desc }
+end
+wanted_labels << { name: "spec", color: "ededed", description: "Issue tracks a spec in docs/specs" }
+wanted_labels << { name: "chore", color: "cfd3d7", description: "Maintenance with no user-visible change" }
+wanted_labels << { name: "idea", color: "d4c5f9", description: "Feature idea, not yet specified" }
+wanted_labels << { name: "has-open-questions", color: "fef2c0", description: "Spec has blocking open questions to resolve before starting" }
+wanted_labels.each do |label|
+  next if existing_labels.include?(label[:name])
+  log.call("create label #{label[:name]}")
+  gh_api("POST", "repos/#{repo}/labels", label) unless dry
+end
+
+# --- milestones -----------------------------------------------------------------------------
+milestones = paginate("repos/#{repo}/milestones?state=all").to_h { |m| [ m["title"], m["number"] ] }
+milestone_title = ->(key) { "#{key} · #{Plan::MILESTONES[key]}" }
+specs.map(&:milestone).uniq.each do |key|
+  title = milestone_title.call(key)
+  next if milestones[title]
+  log.call("create milestone #{title}")
+  next if dry
+  m = gh_api("POST", "repos/#{repo}/milestones", { title: title, description: Plan::MILESTONE_DESCRIPTIONS[key] })
+  milestones[title] = m["number"]
+end
+
+# --- issues ---------------------------------------------------------------------------------
+issues = paginate("repos/#{repo}/issues?state=all&labels=spec").reject { |i| i["pull_request"] }
+by_spec = issues.to_h { |i| [ i["body"].to_s[/<!-- spec:([A-Z]{3}-\d{2}) -->/, 1], i ] }.compact
+
+blob = "https://github.com/#{repo}/blob/#{options[:ref]}"
+body_for = lambda do |s|
+  deps = s.depends_on.map { |d| by_spec[d] ? "- ##{by_spec[d]['number']} (#{d})" : "- #{d}" }
+  bullets = s.open_questions.split(/^(?=- )/).map { |b| b.gsub(/\s*\n\s*/, " ").strip }
+  blocking = bullets.grep(/\(blocking\)/i)
+  <<~MD
+    <!-- spec:#{s.id} -->
+    **Spec:** [#{s.id} · #{s.title}](#{blob}/#{s.path})
+
+    #{s.summary}
+
+    ## Acceptance criteria
+
+    #{s.acceptance_criteria}
+
+    ## Depends on
+
+    #{deps.any? ? deps.join("\n") : "_Nothing — can start now._"}
+    #{blocking.any? ? "\n## Blocking questions\n\nResolve before starting (see spec):\n\n#{blocking.join("\n")}\n" : ''}
+    ---
+    _Generated from the spec by `script/plan/sync_issues`. Edit the spec, not this issue body._
+  MD
+end
+
+specs.each do |s|
+  labels = [ "spec", "area:#{s.domain}" ]
+  labels << "has-open-questions" if s.open_questions =~ /\(blocking\)/i
+  payload = { title: "[#{s.id}] #{s.title}", body: body_for.call(s), labels: labels,
+              milestone: milestones[milestone_title.call(s.milestone)] }
+  if (issue = by_spec[s.id])
+    changed = issue["title"] != payload[:title] || issue["body"].to_s.strip != payload[:body].strip
+    next unless changed
+    log.call("update ##{issue['number']} #{payload[:title]}")
+    gh_api("PATCH", "repos/#{repo}/issues/#{issue['number']}", payload) unless dry
+  else
+    log.call("create #{payload[:title]} (#{s.milestone})")
+    next if dry
+    by_spec[s.id] = gh_api("POST", "repos/#{repo}/issues", payload)
+  end
+end
+
+# --- blocked-by relationships ---------------------------------------------------------------
+specs.each do |s|
+  issue = by_spec[s.id] or next
+  current = dry ? [] : gh_api("GET", "repos/#{repo}/issues/#{issue['number']}/dependencies/blocked_by").map { |i| i["id"] }
+  s.depends_on.each do |dep|
+    blocker = by_spec[dep] or next
+    next if current.include?(blocker["id"])
+    log.call("link ##{issue['number']} (#{s.id}) blocked by ##{blocker['number']} (#{dep})")
+    gh_api("POST", "repos/#{repo}/issues/#{issue['number']}/dependencies/blocked_by", { issue_id: blocker["id"] }) unless dry
+  end
+end
+
+# --- project board (optional) ---------------------------------------------------------------
+if options[:project_owner] && options[:project_number]
+  base = "users/#{options[:project_owner]}/projectsV2/#{options[:project_number]}/items"
+  in_project = dry ? [] : paginate(base).map { |i| i.dig("content", "id") || i["content_id"] }.compact
+  specs.each do |s|
+    issue = by_spec[s.id] or next
+    next if in_project.include?(issue["id"])
+    log.call("add ##{issue['number']} to project #{options[:project_number]}")
+    gh_api("POST", base, { type: "Issue", id: issue["id"] }) unless dry
+  end
+end
+
+puts "done: #{specs.size} specs"

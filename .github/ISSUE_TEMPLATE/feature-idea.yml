@@ -1,0 +1,23 @@
+name: Feature idea
+description: Propose something new. Accepted ideas become a spec in docs/specs and a spec issue.
+labels: [idea]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Who has this problem and how do they cope today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed outcome
+      description: What would they be able to do? Describe outcomes, not implementation.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [platform, accounts, catalog, clients, quotes, jobs, payments, notifications, billing, operator, marketing, insights, new area]
