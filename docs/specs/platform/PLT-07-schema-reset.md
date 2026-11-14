@@ -43,4 +43,6 @@ the new plan reverses.
 
 ## Open questions
 
-- **(blocking)** Confirm no production or staging data needs preserving (global question G4).
+- Resolved: no production or staging data needs preserving (G4), so migrations can be squashed.
+- This spec also switches the database to PostgreSQL ([ADR 0002](../../adr/0002-postgresql.md)):
+  configuration, CI service container, setup docs.

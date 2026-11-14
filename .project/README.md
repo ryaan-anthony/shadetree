@@ -1,4 +1,4 @@
-> **Superseded (Nov 2026).** The current plan lives in [`docs/`](../docs/README.md). This folder is kept for reference only.
+> **Superseded (Nov 2026).** The current plan lives in [`docs/`](../docs/README.md). This folder is kept for reference only. Technical decisions in [`docs/adr`](../docs/adr/README.md) override anything here.
 
 # Core Requirements - Shadetree Platform
 

@@ -65,12 +65,12 @@ Write an ADR when a decision is hard to reverse, affects more than one spec, or 
 real alternatives: a new dependency, a data-model pattern, an external service, a security
 approach.
 
-1. Copy the template in `docs/adr` (added by PLT-01) to the next number, for example
-   `docs/adr/0012-pdf-generation.md`.
+1. Copy [`docs/adr/template.md`](docs/adr/template.md) to the next number, for example
+   `docs/adr/0013-feature-flags.md`, and add it to the index in `docs/adr/README.md`.
 2. Fill in context, options considered, decision and consequences, including the cost for the
    free tier.
-3. Open it as its own PR, or with the first code that depends on it. Mark it `Proposed`; it
-   becomes `Accepted` when the PR merges.
+3. Open it as its own PR, or with the first code that depends on it. The PR is the proposal;
+   merging it accepts the decision, so write `Status: Accepted`.
 4. To change a decision, write a new ADR that supersedes the old one. Don't rewrite history.
 
 ## Changing the plan

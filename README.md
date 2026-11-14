@@ -13,8 +13,21 @@ Rails 8.1 on Ruby 3.4, server-rendered HTML with Hotwire (Turbo and Stimulus) an
 Devise for authentication, Solid Queue, Solid Cache and Solid Cable, Minitest and Capybara for
 tests, and Kamal for deploys.
 
-Significant technical decisions are recorded as ADRs. The database is moving from SQLite to
-PostgreSQL; see `docs/adr` (added by PLT-01) for that and the other foundational choices.
+Decisions and their reasons are recorded as [architecture decision records](docs/adr/README.md):
+
+| Area | Decision |
+| --- | --- |
+| Database | PostgreSQL, managed in production; the switch from SQLite lands in PLT-07 ([0002](docs/adr/0002-postgresql.md)) |
+| Tenancy | Row-level scoping by business in the application ([0003](docs/adr/0003-tenancy-row-level-scoping.md)) |
+| CSS | Tailwind compiled at build time, no CDN ([0004](docs/adr/0004-tailwind-compiled-css.md)) |
+| UI | Partials and helpers; Stimulus and Turbo for behavior ([0005](docs/adr/0005-ui-partials-and-stimulus.md)) |
+| Tests | Minitest, fixtures, Capybara ([0006](docs/adr/0006-minitest.md)) |
+| Background work | Solid Queue, no Redis ([0007](docs/adr/0007-solid-queue-jobs.md)) |
+| Files | Active Storage on S3-compatible storage ([0008](docs/adr/0008-active-storage-object-storage.md)) |
+| Hosting | Kamal 2 on a VPS, managed PostgreSQL ([0009](docs/adr/0009-hosting-kamal-vps.md)) |
+| PDFs | Same HTML as the web page, rendered by headless Chrome ([0010](docs/adr/0010-pdf-headless-chrome.md)) |
+| Email | Postmark via Action Mailer ([0011](docs/adr/0011-transactional-email-postmark.md)) |
+| Authentication | Devise, upgraded to 5.x in PLT-04 ([0012](docs/adr/0012-keep-devise.md)) |
 
 ## Getting started
 

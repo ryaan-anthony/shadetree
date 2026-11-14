@@ -41,9 +41,9 @@ the foundational decisions so every later spec builds on agreed ground.
 
 ## Open questions
 
-- **(blocking)** SQLite (current) vs PostgreSQL — see global question G1. Considerations:
-  hosting cost, backup/restore story, concurrent writes from background jobs, analytics queries,
-  tooling, and how tenancy guardrails are enforced.
-- Keep Minitest (current) or adopt RSpec (original docs)? Recommendation: keep Minitest.
-- Is a view-component library worth adopting, or are partials/helpers sufficient?
-- PDF generation can be expensive in memory; does it fit on the chosen hosting?
+Resolved in [`docs/adr`](../../adr/README.md) (Nov 2026):
+
+- Database: PostgreSQL ([ADR 0002](../../adr/0002-postgresql.md)); the switch happens in PLT-07.
+- Test framework: keep Minitest ([ADR 0006](../../adr/0006-minitest.md)).
+- Components: partials and helpers, no component library ([ADR 0005](../../adr/0005-ui-partials-and-stimulus.md)).
+- PDF memory: one render at a time on the VPS, moveable to a worker ([ADR 0010](../../adr/0010-pdf-headless-chrome.md)).
