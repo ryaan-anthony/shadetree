@@ -2,7 +2,4 @@
 # Ignore an advisory only when it doesn't apply or its fix needs a planned upgrade.
 # Every entry needs a reason and the issue that removes it.
 
-ignore:
-  # Devise 4.9.x: both fixes require Devise 5 (a major upgrade). Removed by PLT-04 (#54).
-  - CVE-2026-32700
-  - CVE-2026-40295
+ignore: []
