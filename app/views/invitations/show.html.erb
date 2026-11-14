@@ -1,0 +1,37 @@
+<% inviter = @invitation.invited_by.full_name %>
+<% role = @invitation.role.humanize.downcase %>
+<%= render layout: "devise/shared/card", locals: {
+      title: "Join #{@business.name}",
+      lede: "#{inviter} invited you as #{role == "admin" ? "an" : "a"} #{role}." } do %>
+  <% if user_signed_in? && @invitation.for?(current_user) %>
+    <p class="text-sm text-subtle">You're signed in as <span class="font-semibold text-ink"><%= current_user.email %></span>.</p>
+    <%= button_to "Accept and open #{@business.name}", accept_invitation_path(params[:token]), class: button_classes(:primary, :lg, extra: "mt-5 w-full") %>
+  <% elsif user_signed_in? %>
+    <div class="banner banner-warning" role="status"><%= icon "alert-triangle" %>
+      <p>This invitation is for <span class="font-semibold"><%= @invitation.email %></span>, but you're signed in as <span class="font-semibold"><%= current_user.email %></span>.</p>
+    </div>
+    <p class="mt-4 text-sm text-subtle">Sign out and come back to this link with the invited account, or ask <%= inviter %> to invite <%= current_user.email %> instead.</p>
+    <%= button_to "Sign out", destroy_user_session_path, method: :delete, class: button_classes(:secondary, extra: "mt-5 w-full") %>
+  <% elsif @existing_account %>
+    <p class="text-sm text-subtle"><span class="font-semibold text-ink"><%= @invitation.email %></span> already has a Shadetree account. Sign in to accept.</p>
+    <%= link_to "Sign in to accept", new_user_session_path, class: button_classes(:primary, :lg, extra: "mt-5 w-full") %>
+  <% else %>
+    <%= form_with model: @user, url: sign_up_invitation_path(params[:token]), scope: :user do |f| %>
+      <%= render "devise/shared/error_messages", resource: @user %>
+      <%= f.field :email, as: :email, disabled: true, help: "Accepting confirms this address." %>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <%= f.field :first_name, autocomplete: "given-name", required: true %>
+        <%= f.field :last_name, autocomplete: "family-name", optional: true %>
+      </div>
+      <%= render "devise/shared/password_field", form: f %>
+      <div class="field">
+        <%= f.check :terms_of_service, required: true,
+                    label: safe_join([ "I agree to the ", link_to("terms", terms_path, class: "underline", target: "_blank"), " and ", link_to("privacy policy", privacy_path, class: "underline", target: "_blank") ]) %>
+        <% if @user.errors[:terms_of_service].any? %>
+          <p class="error-text"><%= icon "alert-circle" %><%= @user.errors.full_messages_for(:terms_of_service).to_sentence %></p>
+        <% end %>
+      </div>
+      <%= f.submit_button "Create account and join", class: "mt-5 w-full btn-lg" %>
+    <% end %>
+  <% end %>
+<% end %>

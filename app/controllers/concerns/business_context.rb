@@ -26,12 +26,20 @@ module BusinessContext
     session[:current_business_id] = membership&.business_id
     Current.membership = membership
     Current.business = membership&.business
+    touch_last_active(membership)
   end
 
   def switch_business_to(business)
     session[:current_business_id] = business.id
     current_user.update_column(:last_business_id, business.id)
     set_current_business
+  end
+
+  # "Last active" on the team page, written at most every 10 minutes.
+  def touch_last_active(membership)
+    return unless membership && (membership.last_active_at.nil? || membership.last_active_at < 10.minutes.ago)
+
+    membership.update_column(:last_active_at, Time.current)
   end
 
   # The business this session was using is gone (membership removed or deactivated).

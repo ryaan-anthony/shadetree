@@ -1,0 +1,100 @@
+<%= page_header "Team", lede: "Who can use #{current_business.name}, and what they can do." %>
+
+<div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+  <div class="space-y-4">
+    <%= card title: "Members", subtitle: pluralize(@active.size, "person"), flush: true do %>
+      <div class="table-wrap">
+        <table class="data-table data-table-stack">
+          <thead><tr><th scope="col">Person</th><th scope="col">Role</th><th scope="col">Last active</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+          <tbody>
+            <% @active.each do |member| %>
+              <tr id="member-<%= member.uid %>">
+                <td class="primary"><%= member.user.full_name %><span class="sub"><%= member.user.email %></span></td>
+                <td>
+                  <% options = BusinessUser::ROLES.select { current_membership.can_assign_role?(member, _1) } %>
+                  <% if member != current_membership && options.size > 1 && current_membership.can_assign_role?(member, member.role) %>
+                    <%= form_with url: admin_member_path(member), method: :patch, scope: :member, class: "flex items-center gap-2" do |f| %>
+                      <%= f.select :role, options.map { [ _1.humanize, _1 ] }, { selected: member.role }, class: "select h-8 w-32 text-sm2", "aria-label": "Role for #{member.user.full_name}" %>
+                      <%= f.submit "Save", class: button_classes(:secondary, :sm) %>
+                    <% end %>
+                  <% else %>
+                    <%= badge member.role.humanize, tone: member.owner? ? :dark : :neutral, dot: false %>
+                  <% end %>
+                </td>
+                <td class="text-muted"><%= member.last_active_at ? "#{time_ago_in_words(member.last_active_at)} ago" : "Not yet" %></td>
+                <td class="text-right">
+                  <% if member != current_membership && current_membership.can_assign_role?(member, member.role) %>
+                    <%= button_to "Deactivate", deactivate_admin_member_path(member), method: :patch, class: button_classes(:ghost, :sm),
+                                  form: { data: { turbo_confirm: "#{member.user.full_name} will lose access to #{current_business.name} right away. Their name stays on past work.", turbo_confirm_button: "Deactivate" } } %>
+                  <% elsif member == current_membership %>
+                    <span class="text-xs text-muted">You</span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+
+    <%= card title: "Invitations", flush: true do %>
+      <% if @invitations.empty? %>
+        <%= empty_state title: "No open invitations", text: "Invite your crew so they can see their visits on their phones.", icon: "user-plus" %>
+      <% else %>
+        <ul class="list">
+          <% @invitations.each do |invitation| %>
+            <li id="invitation-<%= invitation.uid %>" class="flex-wrap">
+              <div class="min-w-0 flex-1">
+                <p class="font-semibold text-ink"><%= invitation.email %></p>
+                <p class="text-sm2 text-muted">
+                  <%= invitation.role.humanize %> · invited by <%= invitation.invited_by.full_name %> ·
+                  <% if invitation.pending? %>expires in <%= distance_of_time_in_words_to_now(invitation.expires_at) %><% else %><span class="font-medium text-warning">expired</span><% end %>
+                </p>
+              </div>
+              <div class="flex flex-wrap items-center gap-1.5" data-controller="clipboard">
+                <% if invitation.pending? %>
+                  <input type="hidden" value="<%= invitation_url(invitation.token) %>" data-clipboard-target="source">
+                  <button type="button" class="<%= button_classes(:ghost, :sm) %>" data-action="clipboard#copy" data-clipboard-target="button"><%= icon "link" %> Copy link</button>
+                <% end %>
+                <%= button_to "Resend", resend_admin_invitation_path(invitation), class: button_classes(:secondary, :sm) %>
+                <%= button_to "Revoke", revoke_admin_invitation_path(invitation), method: :patch, class: button_classes(:ghost, :sm),
+                              form: { data: { turbo_confirm: "Revoke the invitation to #{invitation.email}? The link will stop working.", turbo_confirm_button: "Revoke" } } %>
+              </div>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    <% end %>
+
+    <% if @deactivated.any? %>
+      <%= card title: "Deactivated", subtitle: "No access. Their names stay on past work.", flush: true do %>
+        <ul class="list">
+          <% @deactivated.each do |member| %>
+            <li>
+              <div class="min-w-0 flex-1">
+                <p class="font-semibold text-ink"><%= member.user.full_name %></p>
+                <p class="text-sm2 text-muted"><%= member.role.humanize %> · deactivated <%= member.deactivated_at ? "#{time_ago_in_words(member.deactivated_at)} ago" : "" %></p>
+              </div>
+              <% if current_membership.can_assign_role?(member, member.role) %>
+                <%= button_to "Reactivate", reactivate_admin_member_path(member), method: :patch, class: button_classes(:secondary, :sm) %>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    <% end %>
+  </div>
+
+  <%= card title: "Invite someone" do %>
+    <%= form_with model: @invitation, url: admin_invitations_path do |f| %>
+      <%= f.field :email, as: :email, required: true, placeholder: "name@example.com" %>
+      <% roles = BusinessUser::ROLES.select { current_membership.can_assign_role?(BusinessUser.new(business: current_business, role: "technician"), _1) } %>
+      <%= f.field :role, as: :select, choices: roles.reverse.map { [ _1.humanize, _1 ] },
+                  help: "Technicians see their own visits. Admins run the office. Owners also handle billing." %>
+      <%= f.submit_button "Send invitation", class: "mt-4 w-full" %>
+    <% end %>
+    <% unless current_user.can_send_to_clients? %>
+      <p class="mt-3 text-sm2 text-warning">Confirm your email address to send invitations.</p>
+    <% end %>
+  <% end %>
+</div>
