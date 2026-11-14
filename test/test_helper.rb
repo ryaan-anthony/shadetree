@@ -10,6 +10,7 @@ end
 
 require_relative "../config/environment"
 require "rails/test_help"
+Dir[File.expand_path("support/**/*.rb", __dir__)].each { |file| require file }
 
 # Rails 8 loads routes lazily; Devise builds its user mappings when routes load. Load them up
 # front so tests that sign users in before the first request don't fail intermittently.

@@ -1,13 +1,5 @@
 class Admin::DashboardController < Admin::BaseController
-  skip_before_action :require_business_setup, only: [ :index ]
-
   def index
-    # If user has no business, redirect to business creation
-    unless current_user.has_business?
-      redirect_to new_admin_business_path
-      return
-    end
-
     @business = current_business
     @setup_steps = setup_steps(@business)
   end

@@ -2,6 +2,7 @@
 
 one:
   name: Test Business One
+  uid: bizOneUid001
   owner: one
   phone: 555-0100
   email: business1@example.com
@@ -16,6 +17,7 @@ one:
 
 two:
   name: Test Business Two
+  uid: bizTwoUid002
   owner: two
   phone: 555-0200
   email: business2@example.com

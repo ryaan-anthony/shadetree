@@ -37,11 +37,6 @@ class User < ApplicationRecord
     business_users.active.any?
   end
 
-  def current_business
-    # Return the first active business or the most recently created one
-    business_users.active.order(created_at: :desc).first&.business
-  end
-
   def is_business_owner?
     owned_businesses.any? || business_users.owners.any?
   end

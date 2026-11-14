@@ -11,6 +11,7 @@ class Admin::BusinessesController < Admin::BaseController
     @business.owner = current_user
 
     if @business.save
+      switch_business_to(@business)
       redirect_to admin_root_path, notice: "Business created successfully!"
     else
       render :new, status: :unprocessable_content
@@ -18,16 +19,11 @@ class Admin::BusinessesController < Admin::BaseController
   end
 
   def edit
-    @business = current_user.current_business
-    redirect_to admin_root_path, alert: "Please create a business first." unless @business
+    @business = current_business
   end
 
   def update
-    @business = current_user.current_business
-    unless @business
-      redirect_to admin_root_path, alert: "Please create a business first."
-      return
-    end
+    @business = current_business
 
     # Determine which params to use based on tab
     update_params = case params[:tab]
@@ -46,20 +42,18 @@ class Admin::BusinessesController < Admin::BaseController
     end
   end
 
+  # Switch the current business. Only active memberships count; anything else is "not found"
+  # (ADR 0014). Businesses are identified by their opaque uid, never the sequential id.
   def switch
-    Rails.logger.info "Business switch requested by user #{current_user.id} for business_id: #{params[:business_id]}"
+    membership = current_user.business_users.active.joins(:business).find_by(businesses: { uid: params[:business].to_s })
 
-    business = current_user.businesses.find_by(id: params[:business_id])
-
-    if business
-      session[:current_business_id] = business.id
-      Rails.logger.info "Successfully switched to business #{business.id} (#{business.name})"
+    if membership
+      switch_business_to(membership.business)
       respond_to do |format|
-        format.html { redirect_to admin_root_path, notice: "Switched to #{business.name}." }
-        format.json { render json: { success: true, business: { id: business.id, name: business.name } } }
+        format.html { redirect_to admin_root_path, notice: "Switched to #{membership.business.name}." }
+        format.json { render json: { success: true, business: { id: membership.business.uid, name: membership.business.name } } }
       end
     else
-      Rails.logger.warn "Business switch failed - business not found or not accessible. User businesses: #{current_user.businesses.pluck(:id).inspect}"
       respond_to do |format|
         format.html { redirect_to admin_root_path, alert: "That business isn't available to you." }
         format.json { render json: { success: false, error: "Business not found" }, status: :not_found }

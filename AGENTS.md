@@ -29,8 +29,11 @@ Shadetree is a low-cost quoting, scheduling and invoicing platform for small ser
 
 See `docs/plans/00-vision.md` → Cross-cutting requirements.
 
-- **Tenancy:** a business's data is never visible to another business. Every data feature has a
-  test proving cross-tenant access is denied.
+- **Tenancy:** a business's data is never visible to another business. Business-owned models
+  `include BusinessOwned` (needs `business_id` and `uid`), form-settable associations use
+  `belongs_to_business_record`, and every data feature has a test using
+  `assert_not_found_across_businesses`. `Tenancy.across_businesses(reason:)` is the only bypass
+  and needs a reviewer's eye ([ADR 0014](docs/adr/0014-tenant-scoping-enforcement.md)).
 - **Roles:** Owner, Admin and Technician, enforced server-side and tested.
 - **Clients** (a business's customers) never have accounts; they act through secure client links.
 - **Money and time:** money is exact (never floats); times are stored in UTC and shown in the

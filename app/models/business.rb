@@ -24,6 +24,7 @@ class Business < ApplicationRecord
   has_many :users, through: :business_users
 
   # Callbacks
+  before_validation(on: :create) { self.uid ||= SecureRandom.base58(BusinessOwned::UID_LENGTH) }
   before_save :set_default_brand_color
   after_create :add_owner_to_business_users
 
@@ -58,6 +59,9 @@ class Business < ApplicationRecord
   }.freeze
 
   # Instance methods
+
+  # Opaque id for URLs and forms (ADR 0014).
+  def to_param = uid
 
   def industry_name
     INDUSTRIES[industry] || industry
