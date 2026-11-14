@@ -66,51 +66,6 @@
                     </div>
                 </div>
 
-                <!-- Account Tier Selection -->
-                <div>
-                    <%= form.label :account_tier, "Choose your plan", class: "block text-sm font-medium text-gray-700 mb-3" %>
-                    <div class="grid grid-cols-1 gap-3">
-                        <%
-                        default_tier = params[:tier] || 'crew'
-                        tiers = [
-                            { value: 'solo', name: 'Solo', description: 'Perfect for solo operators', features: 'Up to 50 quotes • Basic scheduling' },
-                            { value: 'crew', name: 'Crew', description: 'For growing service businesses', features: 'Unlimited quotes • Online payments • Custom templates', popular: true },
-                            { value: 'fleet', name: 'Fleet', description: 'For multi-location operations', features: 'Multi-location • Team management • Advanced reporting' }
-                        ]
-                        %>
-                        <% tiers.each do |tier| %>
-                            <label class="relative flex cursor-pointer rounded-lg border <%= tier[:popular] ? 'border-shadetree-blue bg-blue-50' : 'border-gray-300 bg-white' %> p-4 shadow-sm focus:outline-none hover:bg-gray-50">
-                                <%= form.radio_button :account_tier, tier[:value],
-                                    checked: (tier[:value] == default_tier),
-                                    class: "sr-only peer" %>
-                                <span class="w-full">
-                                    <span class="flex flex-col">
-                                        <span class="flex items-center">
-                                            <span class="block text-sm font-medium text-gray-900"><%= tier[:name] %></span>
-                                            <% if tier[:popular] %>
-                                                <span class="ml-auto inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-shadetree-blue text-white">
-                                                    Most Popular
-                                                </span>
-                                            <% end %>
-                                        </span>
-                                        <span class="mt-1 flex items-center text-sm text-gray-500">
-                                            <%= tier[:description] %>
-                                        </span>
-                                        <span class="mt-1 text-xs text-gray-400">
-                                            <%= tier[:features] %>
-                                        </span>
-                                    </span>
-                                </span>
-                                <div class="absolute -inset-px rounded-lg border-2 pointer-events-none peer-checked:border-shadetree-blue" aria-hidden="true"></div>
-                            </label>
-                        <% end %>
-                    </div>
-                    <p class="mt-2 text-xs text-gray-500">
-                        <i data-feather="info" class="inline h-3 w-3 mr-1"></i>
-                        Start with a 14-day free trial. Change plans anytime.
-                    </p>
-                </div>
-
                 <!-- Terms and Privacy -->
                 <div class="text-xs text-gray-500">
                     By creating an account, you agree to our

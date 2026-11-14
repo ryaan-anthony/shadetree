@@ -21,7 +21,6 @@ class User < ApplicationRecord
   has_many :business_users, dependent: :destroy
   has_many :businesses, through: :business_users
   has_many :owned_businesses, class_name: "Business", foreign_key: "owner_id", dependent: :destroy
-  has_one :staff_member, dependent: :destroy
 
   # Validations
   validates :email, presence: true, uniqueness: true
@@ -45,10 +44,6 @@ class User < ApplicationRecord
 
   def is_business_owner?
     owned_businesses.any? || business_users.owners.any?
-  end
-
-  def is_staff_member?
-    staff_member.present?
   end
 
   def owner_of?(business)

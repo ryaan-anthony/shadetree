@@ -2,7 +2,7 @@
 #
 # The Business model represents a company or organization that provides services
 # through the Shadetree platform. Each business has an owner (User) and can have
-# multiple users and locations associated with it.
+# multiple members (see BusinessUser).
 #
 # @attr [String] name Business name (required)
 # @attr [String] industry Business industry type
@@ -22,7 +22,6 @@ class Business < ApplicationRecord
   belongs_to :owner, class_name: "User"
   has_many :business_users, dependent: :destroy
   has_many :users, through: :business_users
-  has_many :locations, dependent: :destroy
 
   # Callbacks
   before_save :set_default_brand_color
@@ -63,7 +62,7 @@ class Business < ApplicationRecord
     INDUSTRIES[industry] || industry
   end
 
-  def add_user(user, role: "member")
+  def add_user(user, role: "technician")
     business_users.create!(user: user, role: role, active: true)
   end
 
