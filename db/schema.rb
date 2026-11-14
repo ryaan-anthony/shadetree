@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_14_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_14_000100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -51,6 +51,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_000000) do
     t.index ["owner_id"], name: "index_businesses_on_owner_id"
   end
 
+  create_table "document_sequences", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "kind", null: false
+    t.bigint "last_value", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "kind"], name: "index_document_sequences_on_business_id_and_kind", unique: true
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -73,4 +82,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_000000) do
   add_foreign_key "business_users", "businesses"
   add_foreign_key "business_users", "users"
   add_foreign_key "businesses", "users", column: "owner_id"
+  add_foreign_key "document_sequences", "businesses"
 end

@@ -1,0 +1,14 @@
+# Date and time formats for the app (ADR 0013). 12-hour clock, month names, no zone suffix:
+# every time on a page is already in the business's zone.
+en:
+  date:
+    formats:
+      default: "%b %-d, %Y"
+      short: "%b %-d"
+      long: "%A, %B %-d, %Y"
+  time:
+    formats:
+      default: "%b %-d, %Y, %-l:%M %p"
+      short: "%b %-d, %-l:%M %p"
+      time: "%-l:%M %p"
+      long: "%A, %B %-d, %Y at %-l:%M %p %Z"

@@ -45,6 +45,6 @@ behavior behind them) before any feature stores a price or a date.
 
 ## Open questions
 
-- Should tax be calculated per line and summed, or on the document subtotal per rate?
-  Recommend per rate on the subtotal (matches how most small businesses expect it) — confirm.
-- Which currencies are supported at launch? Recommend the current list (USD, CAD, GBP, EUR, AUD).
+- ~~Should tax be calculated per line and summed, or on the document subtotal per rate?~~
+  Resolved: per rate on the sum of the lines carrying it, rounded half-up (ADR 0013).
+- ~~Which currencies are supported at launch?~~ Resolved: USD, CAD, GBP, EUR, AUD.

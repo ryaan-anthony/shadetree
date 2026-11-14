@@ -28,6 +28,7 @@ Decisions and their reasons are recorded as [architecture decision records](docs
 | PDFs | Same HTML as the web page, rendered by headless Chrome ([0010](docs/adr/0010-pdf-headless-chrome.md)) |
 | Email | Postmark via Action Mailer ([0011](docs/adr/0011-transactional-email-postmark.md)) |
 | Authentication | Devise, upgraded to 5.x in PLT-04 ([0012](docs/adr/0012-keep-devise.md)) |
+| Money and time | Integer cents, per-rate tax, UTC storage, per-business numbering ([0013](docs/adr/0013-money-time-and-numbering.md)) |
 
 ## Getting started
 

@@ -34,7 +34,9 @@ See `docs/plans/00-vision.md` → Cross-cutting requirements.
 - **Roles:** Owner, Admin and Technician, enforced server-side and tested.
 - **Clients** (a business's customers) never have accounts; they act through secure client links.
 - **Money and time:** money is exact (never floats); times are stored in UTC and shown in the
-  business's time zone.
+  business's time zone. Use `Money`, `money :price` (`HasMoney`), `Pricing::DocumentTotals`,
+  `business.today`, `business.local_time`, `local_time`/`money` helpers, `HasPublicToken` and
+  `business.next_document_number` ([ADR 0013](docs/adr/0013-money-time-and-numbering.md)).
 - **Mobile:** every page works at 360 px wide.
 - **Secrets and data:** no secrets, client personal data or production data in code, logs,
   fixtures, screenshots or PRs.
