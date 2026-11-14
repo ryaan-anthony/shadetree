@@ -45,6 +45,7 @@ quotes, visits and invoices all share the same security, branding and expiry beh
 
 ## Open questions
 
-- Should links in emails be one-click while links copied for SMS require a short verification
-  (e.g. last 4 of phone)? Recommend no verification at launch.
-- Default expiry durations per document type — confirm with QTE/PAY owners.
+- ~~Should links copied for SMS require a short verification?~~ Resolved: no verification at
+  launch (ADR 0016).
+- Default expiry per document type: the mechanism lets each document set its own
+  (`client_link_expires_at`), with 90 days as the fallback. QTE-03 and PAY-02 pick their values.

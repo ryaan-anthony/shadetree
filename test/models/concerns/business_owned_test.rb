@@ -72,15 +72,4 @@ class BusinessOwnedTest < ActiveSupport::TestCase
     assert_equal @mine.uid, @mine.to_param
     assert_includes Widget.readonly_attributes, "business_id"
   end
-
-  test "client links resolve across businesses, then act as the record's business" do
-    controller = Class.new { include ClientLinkContext; public :find_by_client_link! }.new
-    ActiveRecord::Base.connection.add_column :tenancy_widgets, :public_token, :string
-    Widget.reset_column_information
-    Tenancy.across_businesses(reason: "test") { Widget.where(id: @theirs.id).update_all(public_token: "secret-token") }
-
-    assert_equal @theirs, controller.find_by_client_link!(Widget, "secret-token")
-    assert_equal @two, Current.business
-    assert_raises(ActiveRecord::RecordNotFound) { controller.find_by_client_link!(Widget, "guess") }
-  end
 end

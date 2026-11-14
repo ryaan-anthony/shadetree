@@ -1,0 +1,17 @@
+<% content_for :title, "Link not active · #{@business.name}" %>
+<div class="client-card p-6 text-center sm:p-8">
+  <span class="empty-icon"><%= icon(@client_link.status == :expired ? "clock" : "link") %></span>
+  <% if @requested %>
+    <h1 class="text-lg font-bold text-ink">Request sent</h1>
+    <p class="mx-auto mt-2 max-w-sm text-sm text-subtle"><%= @business.name %> will send you a new link.</p>
+  <% elsif @client_link.status == :unavailable %>
+    <h1 class="text-lg font-bold text-ink">This page isn't available right now</h1>
+    <p class="mx-auto mt-2 max-w-sm text-sm text-subtle">Please contact <%= @business.name %> directly.</p>
+  <% else %>
+    <h1 class="text-lg font-bold text-ink"><%= @client_link.status == :expired ? "This link has expired" : "This link is no longer active" %></h1>
+    <p class="mx-auto mt-2 max-w-sm text-sm text-subtle">Ask <%= @business.name %> for a new one. It only takes a tap.</p>
+    <%= button_to "Request a new link", request_fresh_client_link_path(@client_link.token),
+                  class: button_classes(:brand, :lg), form: { class: "mt-5" } %>
+  <% end %>
+  <%= render "client_links/business_contact" %>
+</div>

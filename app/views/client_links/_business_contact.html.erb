@@ -1,0 +1,10 @@
+<% if @business.phone.present? || @business.email.present? %>
+  <div class="mt-5 flex flex-wrap justify-center gap-2">
+    <% if @business.phone.present? %>
+      <%= link_to "tel:#{@business.phone}", class: button_classes(:secondary) do %><%= icon "phone" %> Call <%= @business.phone %><% end %>
+    <% end %>
+    <% if @business.email.present? %>
+      <%= mail_to @business.email, class: button_classes(:secondary) do %><%= icon "mail" %> Email us<% end %>
+    <% end %>
+  </div>
+<% end %>
