@@ -1,4 +1,5 @@
 class Admin::DashboardController < Admin::BaseController
+  allow_any_member
   def index
     @business = current_business
     @setup_steps = setup_steps(@business)

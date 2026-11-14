@@ -3,6 +3,7 @@ class Admin::BaseController < ApplicationController
   include BusinessContext
   include ConfirmedSender
   before_action :require_business_setup
+  include Authorization # after setup, so users without a business are sent to create one
   layout "app"
 
   private

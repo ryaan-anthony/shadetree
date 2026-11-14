@@ -2,6 +2,7 @@ require "test_helper"
 
 class ConfirmedSenderTest < ActionDispatch::IntegrationTest
   class SendController < Admin::BaseController
+    allow_any_member
     before_action :require_confirmed_sender
     def create = head(:ok)
   end

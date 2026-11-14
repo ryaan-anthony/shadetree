@@ -40,9 +40,15 @@ class BusinessUser < ApplicationRecord
     role == "admin"
   end
 
-  # Check if user can manage this business
-  def can_manage?
-    owner? || admin?
+  # Named permissions (ACC-04). Inactive memberships grant nothing.
+  def can?(permission) = active? && Permissions.granted?(role, permission)
+
+  # May `self` give `target` the role `new_role`? Admins manage the team but never Owners.
+  def can_assign_role?(target, new_role)
+    return false unless can?(:manage_team) && ROLES.include?(new_role.to_s) && target.business_id == business_id
+    return can?(:manage_owners) if target.owner? || new_role.to_s == "owner"
+
+    true
   end
 
   def last_active_owner?

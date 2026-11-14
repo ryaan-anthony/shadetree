@@ -1,5 +1,8 @@
 class Admin::BusinessesController < Admin::BaseController
   skip_before_action :require_business_setup, only: [ :new, :create ]
+  allow_without_business only: %i[new create]
+  allow_any_member only: :switch
+  requires_permission :business_settings, only: %i[edit update]
 
   # First business after sign-up, or another one from the switcher. Only name and industry.
   def new

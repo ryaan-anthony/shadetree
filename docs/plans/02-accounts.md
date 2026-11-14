@@ -42,15 +42,18 @@ Owner, Admin, Technician (see vision glossary). Operators are covered in `10-ope
 - **R9** Members can be deactivated (lose access immediately, history kept) and reactivated.
 - **R10** Fixed roles:
 
-| Capability | Owner | Admin | Technician |
-| --- | --- | --- | --- |
-| Billing, plan, delete business, transfer ownership | ✔ | | |
-| Manage team & roles (except Owners) | ✔ | ✔ | |
-| Business settings, catalog, taxes | ✔ | ✔ | |
-| Clients, requests, quotes, invoices, payments (all) | ✔ | ✔ | |
-| Schedule and assign visits | ✔ | ✔ | |
-| See own assigned visits, their client contact & property, add notes/photos, mark complete | ✔ | ✔ | ✔ |
-| Data export | ✔ | ✔ | |
+| Capability | Permission (code) | Owner | Admin | Technician |
+| --- | --- | --- | --- | --- |
+| Billing, plan, delete business, transfer ownership | `billing`, `manage_owners` | ✔ | | |
+| Manage team & roles (except Owners) | `manage_team` | ✔ | ✔ | |
+| Business settings, catalog, taxes | `business_settings` | ✔ | ✔ | |
+| Clients, requests, quotes, invoices, payments (all) | `office` | ✔ | ✔ | |
+| Schedule and assign visits | `schedule` | ✔ | ✔ | |
+| See own assigned visits, their client contact & property, add notes/photos, mark complete | `field_work` | ✔ | ✔ | ✔ |
+| Data export | `export_data` | ✔ | ✔ | |
+
+The **Permission** column names the code permissions in `app/models/permissions.rb`. This
+table is the source of truth: change both together.
 
 - **R11** Role checks are enforced server-side for every action and covered by tests.
   Authorization is expressed as named permissions (the rows of the table above) mapped to
