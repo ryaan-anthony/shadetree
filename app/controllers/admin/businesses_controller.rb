@@ -1,8 +1,6 @@
 class Admin::BusinessesController < Admin::BaseController
   skip_before_action :require_business_setup, only: [ :new, :create ]
 
-  layout :determine_layout
-
   def new
     # Allow creating additional businesses
     @business = current_user.owned_businesses.build
@@ -56,10 +54,16 @@ class Admin::BusinessesController < Admin::BaseController
     if business
       session[:current_business_id] = business.id
       Rails.logger.info "Successfully switched to business #{business.id} (#{business.name})"
-      render json: { success: true, business: { id: business.id, name: business.name } }
+      respond_to do |format|
+        format.html { redirect_to admin_root_path, notice: "Switched to #{business.name}." }
+        format.json { render json: { success: true, business: { id: business.id, name: business.name } } }
+      end
     else
       Rails.logger.warn "Business switch failed - business not found or not accessible. User businesses: #{current_user.businesses.pluck(:id).inspect}"
-      render json: { success: false, error: "Business not found" }, status: :not_found
+      respond_to do |format|
+        format.html { redirect_to admin_root_path, alert: "That business isn't available to you." }
+        format.json { render json: { success: false, error: "Business not found" }, status: :not_found }
+      end
     end
   end
 
@@ -87,9 +91,5 @@ class Admin::BusinessesController < Admin::BaseController
 
   def branding_params
     params.require(:business).permit(:logo_url, :brand_color)
-  end
-
-  def determine_layout
-    action_name == "new" ? "business_setup" : "admin"
   end
 end

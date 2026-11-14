@@ -49,5 +49,7 @@ screens in [`docs/mockups`](../../mockups/README.md). Treat them as design direc
 
 ## Open questions
 
-- Icon set: keep the current one or switch? Choose one and use it consistently.
-- Dark mode: not planned; confirm.
+- ~~Icon set: keep the current one or switch?~~ Resolved: keep Feather, rendered as inline SVG
+  on the server (no icon font or script).
+- ~~Dark mode: not planned; confirm.~~ Resolved: not planned. Tokens are CSS variables, so it
+  can be added later without touching components.

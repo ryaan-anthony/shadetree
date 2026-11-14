@@ -17,25 +17,25 @@
                 <div class="relative group">
                     <button class="flex items-center text-enterprise-gray hover:text-enterprise-navy" onclick="toggleDropdown('features-dropdown')">
                         Features
-                        <i data-feather="chevron-down" class="ml-1 h-4 w-4"></i>
+                        <%= icon "chevron-down", class: "ml-1 h-4 w-4" %>
                     </button>
                     <!-- Dropdown Menu -->
-                    <div id="features-dropdown" class="hidden absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                    <div id="features-dropdown" class="hidden absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black/5 z-10">
                         <div class="py-1" role="menu" aria-orientation="vertical">
                             <%= link_to "#quote-management", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
-                                <i data-feather="file-text" class="mr-3 h-4 w-4 text-shadetree-blue"></i>
+                                <%= icon "file-text", class: "mr-3 h-4 w-4 text-shadetree-blue" %>
                                 Quote Management
                             <% end %>
                             <%= link_to "#appointment-scheduling", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
-                                <i data-feather="calendar" class="mr-3 h-4 w-4 text-shadetree-green"></i>
+                                <%= icon "calendar", class: "mr-3 h-4 w-4 text-shadetree-green" %>
                                 Appointment Scheduling
                             <% end %>
                             <%= link_to "#payment-processing", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
-                                <i data-feather="credit-card" class="mr-3 h-4 w-4 text-shadetree-yellow"></i>
+                                <%= icon "credit-card", class: "mr-3 h-4 w-4 text-shadetree-yellow" %>
                                 Payment Processing
                             <% end %>
                             <%= link_to "#team-management", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
-                                <i data-feather="users" class="mr-3 h-4 w-4 text-shadetree-red"></i>
+                                <%= icon "users", class: "mr-3 h-4 w-4 text-shadetree-red" %>
                                 Team Management
                             <% end %>
                         </div>
@@ -44,30 +44,30 @@
                 <div class="relative group">
                     <button class="flex items-center text-enterprise-gray hover:text-enterprise-navy" onclick="toggleDropdown('industries-dropdown')">
                         Industries
-                        <i data-feather="chevron-down" class="ml-1 h-4 w-4"></i>
+                        <%= icon "chevron-down", class: "ml-1 h-4 w-4" %>
                     </button>
                     <!-- Industries Dropdown Menu -->
-                    <div id="industries-dropdown" class="hidden absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                    <div id="industries-dropdown" class="hidden absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black/5 z-10">
                         <div class="py-1" role="menu" aria-orientation="vertical">
                             <%= link_to "#handyman", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
-                                <i data-feather="tool" class="mr-3 h-4 w-4 text-shadetree-blue"></i>
+                                <%= icon "tool", class: "mr-3 h-4 w-4 text-shadetree-blue" %>
                                 Handyman
                             <% end %>
                             <%= link_to "#landscaping", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
-                                <i data-feather="scissors" class="mr-3 h-4 w-4 text-shadetree-green"></i>
+                                <%= icon "scissors", class: "mr-3 h-4 w-4 text-shadetree-green" %>
                                 Landscaping
                             <% end %>
                             <%= link_to "#cleaning", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
-                                <i data-feather="shield" class="mr-3 h-4 w-4 text-shadetree-purple"></i>
+                                <%= icon "shield", class: "mr-3 h-4 w-4 text-shadetree-purple" %>
                                 Cleaning
                             <% end %>
                             <%= link_to "#electrical", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
-                                <i data-feather="zap" class="mr-3 h-4 w-4 text-shadetree-yellow"></i>
+                                <%= icon "zap", class: "mr-3 h-4 w-4 text-shadetree-yellow" %>
                                 Electrical
                             <% end %>
                             <div class="border-t border-gray-100">
                                 <%= link_to "#all-industries", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-medium", role: "menuitem" do %>
-                                    <i data-feather="grid" class="mr-3 h-4 w-4 text-gray-500"></i>
+                                    <%= icon "grid", class: "mr-3 h-4 w-4 text-gray-500" %>
                                     View More Industries
                                 <% end %>
                             </div>
@@ -84,7 +84,7 @@
                 <%= link_to contact_path, class: "text-enterprise-gray hover:text-enterprise-navy" do %>
                     Contact Sales
                 <% end %>
-                <%= link_to new_user_registration_path, class: "bg-shadetree-blue text-white px-6 py-2.5 text-sm font-medium rounded-md hover:bg-blue-800 shadow-sm" do %>
+                <%= link_to new_user_registration_path, class: "bg-shadetree-blue text-white px-6 py-2.5 text-sm font-medium rounded-md hover:bg-blue-800 shadow-xs" do %>
                     Start Free Trial
                 <% end %>
             </div>

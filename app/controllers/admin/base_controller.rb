@@ -2,7 +2,7 @@ class Admin::BaseController < ApplicationController
   before_action :authenticate_user!
   before_action :require_confirmed_account
   before_action :require_business_setup
-  layout "admin"
+  layout "app"
 
   private
 

@@ -1,0 +1,18 @@
+<% content_for :title, "Quote #1042 · #{@business.name}" %>
+<div class="client-card p-6">
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <p class="text-sm2 text-muted">Quote #1042</p>
+      <h1 class="mt-1 text-xl font-bold text-ink">Spring cleanup for Maria Lopez</h1>
+    </div>
+    <%= badge "Awaiting your approval", tone: :warning %>
+  </div>
+  <div class="mt-6 flex items-baseline justify-between border-t border-line pt-4">
+    <span class="font-semibold text-ink">Total</span>
+    <span class="money text-2xl font-extrabold text-ink">$1,250.00</span>
+  </div>
+  <div class="mt-6 flex flex-wrap gap-2">
+    <button class="<%= button_classes(:brand, :lg) %> flex-1">Approve quote</button>
+    <button class="<%= button_classes(:secondary, :lg) %>">Ask a question</button>
+  </div>
+</div>

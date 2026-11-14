@@ -1,0 +1,31 @@
+<%# Staff app: sidebar on desktop, drawer on phones, business switcher, flash toasts. %>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%= render "layouts/head" %>
+  </head>
+  <body class="bg-canvas text-sm text-body">
+    <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[200] btn btn-secondary">Skip to content</a>
+    <div class="shell" data-controller="drawer" data-action="keydown->drawer#closeOnEscape">
+      <div class="side-scrim" data-drawer-target="scrim" data-action="click->drawer#close" hidden></div>
+      <%= render "layouts/app/sidebar" %>
+
+      <div class="flex min-w-0 flex-col">
+        <header class="topbar">
+          <button type="button" class="<%= button_classes(:ghost, :icon) %> min-[960px]:hidden"
+                  data-drawer-target="toggle" data-action="drawer#open" aria-controls="app-sidebar" aria-expanded="false" aria-label="Open navigation">
+            <%= icon "menu", class: "size-5" %>
+          </button>
+          <p class="min-w-0 truncate text-sm font-semibold text-ink"><%= content_for(:title) %></p>
+          <div class="ml-auto flex items-center gap-1.5"><%= yield :topbar_actions %></div>
+        </header>
+
+        <main id="main" class="content">
+          <%= yield %>
+        </main>
+      </div>
+    </div>
+    <%= flash_toasts %>
+    <%= render "components/confirm_dialog" %>
+  </body>
+</html>

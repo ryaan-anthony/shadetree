@@ -1,0 +1,11 @@
+<%# Rendered by ShadetreeFormBuilder#field. locals: (id:, label:, optional:, help:, errors:, input:) %>
+<div class="field">
+  <% if label %>
+    <label class="label" for="<%= id %>"><%= label %><% if optional %> <span class="label-optional">(optional)</span><% end %></label>
+  <% end %>
+  <%= input %>
+  <% if help %><p class="help" id="<%= id %>_help"><%= help %></p><% end %>
+  <% if errors.any? %>
+    <p class="error-text" id="<%= id %>_error"><%= icon "alert-circle" %><%= errors.to_sentence %></p>
+  <% end %>
+</div>

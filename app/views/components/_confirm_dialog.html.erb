@@ -1,0 +1,13 @@
+<%# The dialog behind data-turbo-confirm (see app/javascript/confirm.js). One per page, in each layout. %>
+<dialog id="confirm-dialog" class="modal max-w-md" aria-labelledby="confirm-dialog-title">
+  <form method="dialog">
+    <div class="modal-head">
+      <h2 class="modal-title" id="confirm-dialog-title" data-confirm-title>Are you sure?</h2>
+    </div>
+    <div class="modal-body text-subtle" data-confirm-message></div>
+    <div class="modal-foot">
+      <button value="cancel" class="<%= button_classes(:secondary) %>" autofocus>Cancel</button>
+      <button value="confirm" class="<%= button_classes(:danger_solid) %>" data-confirm-button>Confirm</button>
+    </div>
+  </form>
+</dialog>

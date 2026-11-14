@@ -1,0 +1,8 @@
+<%# locals: (title:, lede:, actions:) %>
+<div class="page-head">
+  <div class="min-w-0">
+    <h1 class="page-title"><%= title %></h1>
+    <% if lede %><p class="page-lede"><%= lede %></p><% end %>
+  </div>
+  <% if actions %><div class="flex flex-wrap gap-2"><%= actions %></div><% end %>
+</div>

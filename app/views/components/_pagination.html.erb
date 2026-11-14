@@ -1,0 +1,16 @@
+<%# locals: (page:, total_pages:, total_count:, first:, last:, url_for_page:) %>
+<nav class="pagination" aria-label="Pagination">
+  <p>Showing <span class="tabular font-semibold text-ink"><%= first %>–<%= last %></span> of <span class="tabular"><%= total_count %></span></p>
+  <div class="pagination-links">
+    <% if page > 1 %>
+      <%= link_to url_for_page.call(page - 1), class: button_classes(:secondary, :sm), rel: "prev" do %><%= icon "chevron-left" %> Previous<% end %>
+    <% else %>
+      <span class="<%= button_classes(:secondary, :sm) %>" aria-disabled="true"><%= icon "chevron-left" %> Previous</span>
+    <% end %>
+    <% if page < total_pages %>
+      <%= link_to url_for_page.call(page + 1), class: button_classes(:secondary, :sm), rel: "next" do %>Next <%= icon "chevron-right" %><% end %>
+    <% else %>
+      <span class="<%= button_classes(:secondary, :sm) %>" aria-disabled="true">Next <%= icon "chevron-right" %></span>
+    <% end %>
+  </div>
+</nav>

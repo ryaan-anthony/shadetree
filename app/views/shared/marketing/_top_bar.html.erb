@@ -4,8 +4,8 @@
         <div class="flex justify-between items-center py-2">
             <!-- Language Selection -->
             <div class="flex items-center space-x-2">
-                <i data-feather="globe" class="h-4 w-4 text-gray-500"></i>
-                <select class="text-sm text-gray-600 bg-transparent border-none focus:ring-0 focus:outline-none cursor-pointer">
+                <%= icon "globe", class: "h-4 w-4 text-gray-500" %>
+                <select class="text-sm text-gray-600 bg-transparent border-none focus:ring-0 focus:outline-hidden cursor-pointer">
                     <option value="en">English</option>
                     <option value="es">Español</option>
                 </select>
@@ -14,7 +14,7 @@
             <!-- Login Button -->
             <div>
                 <%= link_to new_user_session_path, class: "text-sm text-gray-600 hover:text-enterprise-navy font-medium flex items-center" do %>
-                    <i data-feather="log-in" class="h-4 w-4 mr-1"></i>
+                    <%= icon "log-in", class: "h-4 w-4 mr-1" %>
                     Login
                 <% end %>
             </div>

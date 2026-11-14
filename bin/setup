@@ -15,6 +15,9 @@ FileUtils.chdir APP_ROOT do
   puts "== Installing dependencies =="
   system("bundle check") || system!("bundle install")
 
+  puts "\n== Building CSS =="
+  system! "bin/rails tailwindcss:build"
+
   puts "\n== Preparing database =="
   system! "bin/rails db:drop" if ARGV.include?("--reset")
   system("bin/rails db:prepare") || abort(<<~MSG)

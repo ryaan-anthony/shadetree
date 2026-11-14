@@ -1,0 +1,96 @@
+/*
+ * Design tokens. Source of truth: docs/mockups/assets/shadetree.css.
+ * Every token becomes a Tailwind utility (bg-canopy, text-muted, rounded-card, shadow-pop...)
+ * and a CSS variable (var(--color-canopy)) for the component classes.
+ *
+ * Contrast (WCAG 2.1 AA, 4.5:1 for body text): ink, body, subtle, muted, canopy, and every
+ * semantic foreground pass on white and on their own -50 tint. `faint` is for placeholders,
+ * borders and decoration only, never for text a user must read.
+ */
+@theme static {
+  --font-sans: "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* Ink and neutrals */
+  --color-ink: #0f172a;
+  --color-ink-2: #1e293b;
+  --color-body: #1e293b;
+  --color-subtle: #475569;
+  --color-muted: #64748b;
+  --color-faint: #94a3b8;
+  --color-line: #e2e8f0;
+  --color-line-2: #eef2f6;
+  --color-control: #d5dbe3;
+  --color-canvas: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-sunken: #f1f4f7;
+
+  /* Brand: canopy green is the single action color */
+  --color-canopy: #047857;
+  --color-canopy-50: #ecfdf5;
+  --color-canopy-100: #d1fae5;
+  --color-canopy-600: #059669;
+  --color-canopy-700: #047857;
+  --color-canopy-800: #065f46;
+  --color-leaf: #34d399;
+
+  /* Staff app sidebar */
+  --color-side: #0b1221;
+  --color-side-2: #131c2e;
+  --color-side-active: #17233a;
+  --color-side-text: #a3adbf;
+  --color-side-label: #7d8aa1;
+  --color-side-line: #1e293b;
+
+  /* Semantic status colors: foreground, tint, border */
+  --color-success: #047857;
+  --color-success-50: #ecfdf5;
+  --color-success-100: #d1fae5;
+  --color-success-ink: #064e3b;
+  --color-info: #1d4ed8;
+  --color-info-50: #eff6ff;
+  --color-info-100: #dbeafe;
+  --color-info-ink: #1e3a8a;
+  --color-warning: #b45309;
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-ink: #78350f;
+  --color-danger: #b91c1c;
+  --color-danger-50: #fef2f2;
+  --color-danger-100: #fee2e2;
+  --color-danger-ink: #7f1d1d;
+  --color-violet: #6d28d9;
+  --color-violet-50: #f5f3ff;
+
+  /* Per-business brand. The client layout overrides these on <body> from the business's settings. */
+  --color-brand: #047857;
+  --color-brand-ink: #ffffff;
+  --color-brand-soft: #ecfdf5;
+
+  /* Legacy palette from the original pages, kept so existing markup renders unchanged.
+     New screens use the tokens above. */
+  --color-shadetree-blue: #1e40af;
+  --color-shadetree-green: #059669;
+  --color-shadetree-green-dark: #047857;
+  --color-shadetree-red: #dc2626;
+  --color-shadetree-yellow: #d97706;
+  --color-shadetree-purple: #7c3aed;
+  --color-enterprise-navy: #0f172a;
+  --color-enterprise-gray: #334155;
+
+  /* Shape. Tailwind's default radius scale stays as is; these name the kit's three sizes. */
+  --radius-control: 6px;
+  --radius-card: 10px;
+  --radius-dialog: 14px;
+
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.05);
+  --shadow-raised: 0 1px 3px rgb(15 23 42 / 0.06), 0 1px 2px rgb(15 23 42 / 0.04);
+  --shadow-pop: 0 16px 40px -12px rgb(15 23 42 / 0.28), 0 2px 8px rgb(15 23 42 / 0.08);
+
+  /* Type scale: Tailwind's default scale (text-xs ... text-6xl) plus the app's 13px step. */
+  --text-sm2: 0.8125rem;
+  --text-sm2--line-height: 1.25rem;
+
+  /* Spacing: Tailwind's 4px scale. Layout widths used by the shells: */
+  --spacing-sidebar: 15.25rem;
+  --spacing-topbar: 3.5rem;
+}

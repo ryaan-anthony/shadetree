@@ -1,11 +1,11 @@
 <% content_for :title, "About Us" %>
 
 <!-- Hero Section -->
-<section class="bg-gradient-to-b from-slate-50 to-white py-20">
+<section class="bg-linear-to-b from-slate-50 to-white py-20">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div class="mb-8">
             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-shadetree-green">
-                <i data-feather="heart" class="mr-2 h-4 w-4"></i>
+                <%= icon "heart", class: "mr-2 h-4 w-4" %>
                 Built by small business owners, for small business owners
             </span>
         </div>
@@ -67,7 +67,7 @@
             <div class="bg-white rounded-lg p-8 shadow-lg border border-gray-200 text-center">
                 <div class="mb-6">
                     <div class="mx-auto h-16 w-16 bg-shadetree-blue rounded-full flex items-center justify-center">
-                        <i data-feather="minimize" class="h-8 w-8 text-white"></i>
+                        <%= icon "minimize", class: "h-8 w-8 text-white" %>
                     </div>
                 </div>
                 <h3 class="text-xl font-bold text-enterprise-navy mb-4">Simplicity First</h3>
@@ -80,7 +80,7 @@
             <div class="bg-white rounded-lg p-8 shadow-lg border border-gray-200 text-center">
                 <div class="mb-6">
                     <div class="mx-auto h-16 w-16 bg-shadetree-green rounded-full flex items-center justify-center">
-                        <i data-feather="bar-chart" class="h-8 w-8 text-white"></i>
+                        <%= icon "bar-chart", class: "h-8 w-8 text-white" %>
                     </div>
                 </div>
                 <h3 class="text-xl font-bold text-enterprise-navy mb-4">Rock-Solid Reliability</h3>
@@ -94,7 +94,7 @@
             <div class="bg-white rounded-lg p-8 shadow-lg border border-gray-200 text-center">
                 <div class="mb-6">
                     <div class="mx-auto h-16 w-16 bg-shadetree-purple rounded-full flex items-center justify-center">
-                        <i data-feather="users" class="h-8 w-8 text-white"></i>
+                        <%= icon "users", class: "h-8 w-8 text-white" %>
                     </div>
                 </div>
                 <h3 class="text-xl font-bold text-enterprise-navy mb-4">Your Success is Our Success</h3>
@@ -124,8 +124,8 @@
             <!-- Team Member 1 -->
             <div class="text-center">
                 <div class="mb-4">
-                    <div class="mx-auto h-24 w-24 bg-gradient-to-br from-shadetree-blue to-shadetree-green rounded-full flex items-center justify-center">
-                        <i data-feather="user" class="h-12 w-12 text-white"></i>
+                    <div class="mx-auto h-24 w-24 bg-linear-to-br from-shadetree-blue to-shadetree-green rounded-full flex items-center justify-center">
+                        <%= icon "user", class: "h-12 w-12 text-white" %>
                     </div>
                 </div>
                 <h3 class="text-lg font-bold text-enterprise-navy">Dave</h3>
@@ -138,8 +138,8 @@
             <!-- Team Member 2 -->
             <div class="text-center">
                 <div class="mb-4">
-                    <div class="mx-auto h-24 w-24 bg-gradient-to-br from-shadetree-green to-shadetree-blue rounded-full flex items-center justify-center">
-                        <i data-feather="code" class="h-12 w-12 text-white"></i>
+                    <div class="mx-auto h-24 w-24 bg-linear-to-br from-shadetree-green to-shadetree-blue rounded-full flex items-center justify-center">
+                        <%= icon "code", class: "h-12 w-12 text-white" %>
                     </div>
                 </div>
                 <h3 class="text-lg font-bold text-enterprise-navy">Raj</h3>
@@ -152,8 +152,8 @@
             <!-- Team Member 3 -->
             <div class="text-center">
                 <div class="mb-4">
-                    <div class="mx-auto h-24 w-24 bg-gradient-to-br from-shadetree-purple to-shadetree-green rounded-full flex items-center justify-center">
-                        <i data-feather="heart" class="h-12 w-12 text-white"></i>
+                    <div class="mx-auto h-24 w-24 bg-linear-to-br from-shadetree-purple to-shadetree-green rounded-full flex items-center justify-center">
+                        <%= icon "heart", class: "h-12 w-12 text-white" %>
                     </div>
                 </div>
                 <h3 class="text-lg font-bold text-enterprise-navy">Sarah</h3>
@@ -187,8 +187,3 @@
         </p>
     </div>
 </section>
-
-<!-- Initialize Feather Icons -->
-<script>
-    feather.replace();
-</script>

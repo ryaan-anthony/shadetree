@@ -34,6 +34,12 @@ Rails.application.routes.draw do
   get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
   get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
 
+  # UI kit reference (PLT-05). Development and test only.
+  if Rails.env.local?
+    get "styleguide", to: "styleguide#show"
+    get "styleguide/client", to: "styleguide#client"
+  end
+
   # Marketing homepage
   root "home#index"
 

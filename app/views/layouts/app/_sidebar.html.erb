@@ -1,0 +1,57 @@
+<aside id="app-sidebar" class="side" data-drawer-target="panel" aria-label="Main">
+  <div class="side-top">
+    <% if current_business %>
+      <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
+        <button type="button" class="biz-switch" data-menu-target="button" data-action="menu#toggle"
+                aria-haspopup="true" aria-expanded="false">
+          <span class="biz-logo" style="<%= business_mark_style(current_business) %>"><%= initials(current_business.name) %></span>
+          <span class="min-w-0 flex-1">
+            <span class="block truncate text-[0.84rem] font-semibold leading-tight"><%= current_business.name %></span>
+            <span class="block text-xs text-side-text"><%= current_role_label %></span>
+          </span>
+          <%= icon "selector", class: "size-4 text-side-text" %>
+        </button>
+        <div class="menu left-0 right-0 top-full mt-1" data-menu-target="menu" hidden>
+          <p class="menu-label">Switch business</p>
+          <% current_user.businesses.order(:name).each do |business| %>
+            <%= button_to switch_admin_business_path, params: { business_id: business.id }, class: "menu-item",
+                          "aria-current": (business == current_business).to_s, form: { class: "contents" } do %>
+              <span class="biz-logo size-6 rounded-md text-[0.65rem]" style="<%= business_mark_style(business) %>"><%= initials(business.name) %></span>
+              <span class="flex-1 truncate"><%= business.name %></span>
+              <% if business == current_business %><%= icon "check", class: "size-4 text-canopy" %><% end %>
+            <% end %>
+          <% end %>
+          <div class="menu-sep"></div>
+          <%= link_to new_admin_business_path, class: "menu-item" do %><%= icon "plus" %> Create a business<% end %>
+        </div>
+      </div>
+    <% else %>
+      <%= link_to root_path, class: "logo logo-light px-2 py-1.5 text-[1.0625rem]" do %>
+        <span class="logo-mark"><%= logo_mark %></span><span>Shadetree</span>
+      <% end %>
+    <% end %>
+  </div>
+
+  <nav class="side-nav" aria-label="Primary">
+    <% if current_business %>
+      <%= side_link "Home", admin_root_path, icon: "home", active: controller_name == "dashboard" %>
+      <p class="side-group">Business</p>
+      <%= side_link "Settings", edit_admin_business_path, icon: "settings", active: controller_name == "businesses" && action_name.in?(%w[edit update]) %>
+    <% else %>
+      <%= side_link "Set up your business", new_admin_business_path, icon: "briefcase", active: true %>
+    <% end %>
+  </nav>
+
+  <div class="side-foot">
+    <div class="flex items-center gap-2.5 px-1 text-[0.8125rem] text-slate-200">
+      <%= avatar current_user.full_name.presence || current_user.email %>
+      <div class="min-w-0 flex-1">
+        <p class="truncate font-medium"><%= current_user.full_name.presence || current_user.email %></p>
+        <p class="truncate text-xs text-side-text"><%= current_user.email %></p>
+      </div>
+      <%= button_to destroy_user_session_path, method: :delete, class: "btn btn-ghost btn-sm btn-icon text-side-text hover:bg-side-2 hover:text-white", form: { class: "contents" }, "aria-label": "Sign out", title: "Sign out" do %>
+        <%= icon "log-out" %>
+      <% end %>
+    </div>
+  </div>
+</aside>

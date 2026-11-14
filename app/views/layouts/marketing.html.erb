@@ -1,47 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= content_for?(:title) ? yield(:title) : "Shadetree - Job & Quote Software for the Rest of Us" %></title>
-
-    <%= csrf_meta_tags %>
-    <%= csp_meta_tag %>
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/feather-icons"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'shadetree-blue': '#1E40AF',
-                        'shadetree-green': '#059669',
-                        'shadetree-red': '#DC2626',
-                        'shadetree-yellow': '#D97706',
-                        'shadetree-purple': '#7C3AED',
-                        'enterprise-navy': '#0F172A',
-                        'enterprise-gray': '#334155'
-                    }
-                }
-            }
-        }
-    </script>
-
-    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-    <%= javascript_importmap_tags %>
-</head>
-<body class="bg-gray-50">
-    <%= render 'shared/marketing/top_bar' %>
-    <%= render 'shared/marketing/navigation' %>
-
-    <%= yield %>
-
-    <%= render 'shared/marketing/footer' %>
-
-    <!-- Initialize Feather Icons -->
-    <script>
-        feather.replace();
-    </script>
-</body>
+  <head>
+    <% content_for(:title, "Job & quote software for the rest of us") unless content_for?(:title) %>
+    <%= render "layouts/head" %>
+  </head>
+  <body class="bg-gray-50">
+    <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 btn btn-secondary">Skip to content</a>
+    <%= render "shared/marketing/top_bar" %>
+    <%= render "shared/marketing/navigation" %>
+    <main id="main">
+      <%= yield %>
+    </main>
+    <%= render "shared/marketing/footer" %>
+    <%= flash_toasts %>
+    <%= render "components/confirm_dialog" %>
+  </body>
 </html>

@@ -1,0 +1,33 @@
+/*
+ * Shadetree stylesheet. Compiled by tailwindcss-rails (ADR 0004) into app/assets/builds/tailwind.css.
+ *
+ *   theme.css       design tokens (the only place colors, fonts, radii and shadows are defined)
+ *   base.css        element defaults
+ *   components.css  the UI kit's classes (see /styleguide in development)
+ */
+@import "tailwindcss";
+
+/* The mockups are design references, not app markup: don't generate utilities from them. */
+@source not "../../../docs";
+@source not "../../../vendor";
+@source not "../../../coverage";
+
+/* Public Sans (SIL OFL 1.1, see app/assets/fonts/OFL.txt), self-hosted. */
+@font-face {
+  font-family: "Public Sans";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("public-sans-latin-wght-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Public Sans";
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("public-sans-latin-wght-italic.woff2") format("woff2");
+}
+
+@import "./theme.css";
+@import "./base.css";
+@import "./components.css";
