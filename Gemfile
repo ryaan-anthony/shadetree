@@ -82,3 +82,5 @@ group :test do
 end
 
 gem "tailwindcss-rails", "~> 4.7"
+
+gem "aws-sdk-s3", "~> 1.242", require: false

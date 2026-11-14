@@ -24,7 +24,7 @@ Decisions and their reasons are recorded as [architecture decision records](docs
 | Tests | Minitest, fixtures, Capybara ([0006](docs/adr/0006-minitest.md)) |
 | Background work | Solid Queue, no Redis ([0007](docs/adr/0007-solid-queue-jobs.md)) |
 | Files | Active Storage on S3-compatible storage ([0008](docs/adr/0008-active-storage-object-storage.md)) |
-| Hosting | Kamal 2 on a VPS, managed PostgreSQL ([0009](docs/adr/0009-hosting-kamal-vps.md)) |
+| Hosting | Kamal 2 on a VPS, managed PostgreSQL ([0009](docs/adr/0009-hosting-kamal-vps.md)); deploy, rollback, backups and restore in the [operations runbook](docs/runbooks/operations.md) |
 | PDFs | Same HTML as the web page, rendered by headless Chrome ([0010](docs/adr/0010-pdf-headless-chrome.md)) |
 | Email | Postmark via Action Mailer ([0011](docs/adr/0011-transactional-email-postmark.md)) |
 | Authentication | Devise, upgraded to 5.x in PLT-04 ([0012](docs/adr/0012-keep-devise.md)) |

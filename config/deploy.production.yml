@@ -1,0 +1,13 @@
+# Production: deployed deliberately (a GitHub release or a manual run of the deploy workflow).
+servers:
+  web:
+    - <%= ENV.fetch("PRODUCTION_HOST", "production.invalid") %>
+
+proxy:
+  ssl: true
+  host: <%= ENV.fetch("PRODUCTION_DOMAIN", "production.invalid") %>
+
+env:
+  clear:
+    APP_HOST: <%= ENV.fetch("PRODUCTION_DOMAIN", "production.invalid") %>
+    APP_ENVIRONMENT: production

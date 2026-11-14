@@ -54,5 +54,7 @@ Set per environment in the secret store. Email (NTF-01, ADR 0017):
 
 ## Open questions
 
-- Hosting target (VPS with the existing deploy tool vs PaaS) — decided in PLT-01.
-- Staging data: seeded demo data only, or anonymized copy of production later?
+- ~~Hosting target?~~ Resolved: Kamal on a VPS with managed PostgreSQL (ADR 0009). **Still open:
+  which provider and region**, and the production and staging domains (vision G8). Needed
+  before the environments can be created.
+- ~~Staging data?~~ Resolved: seeded demo data only. Production data never goes to staging.

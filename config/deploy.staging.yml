@@ -1,0 +1,17 @@
+# Staging: deployed automatically after CI passes on main (.github/workflows/deploy.yml).
+servers:
+  web:
+    - <%= ENV.fetch("STAGING_HOST", "staging.invalid") %>
+
+proxy:
+  ssl: true
+  host: <%= ENV.fetch("STAGING_DOMAIN", "staging.invalid") %>
+
+env:
+  clear:
+    APP_HOST: <%= ENV.fetch("STAGING_DOMAIN", "staging.invalid") %>
+    # Mail only reaches allow-listed addresses; everything else goes to the sandbox inbox.
+    MAIL_SANDBOX: "true"
+    MAIL_ALLOWLIST: "<%= ENV.fetch("STAGING_MAIL_ALLOWLIST", "") %>"
+    MAIL_SANDBOX_TO: "<%= ENV.fetch("STAGING_MAIL_SANDBOX_TO", "") %>"
+    APP_ENVIRONMENT: staging
