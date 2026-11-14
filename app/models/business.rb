@@ -32,7 +32,8 @@ class Business < ApplicationRecord
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
   validates :owner_id, presence: true
   validates :brand_color, format: { with: /\A#[0-9A-Fa-f]{6}\z/ }, allow_blank: true
-  validates :currency, inclusion: { in: %w[USD EUR GBP CAD AUD] }, allow_blank: true
+  validates :currency, inclusion: { in: Money::CURRENCIES.keys }, allow_blank: true
+  validate :timezone_must_be_known
   validates :industry, inclusion: {
     in: %w[landscaping maintenance cleaning hvac plumbing electrical roofing painting pool pest other]
   }, allow_blank: true
@@ -62,6 +63,33 @@ class Business < ApplicationRecord
     INDUSTRIES[industry] || industry
   end
 
+  # Money, time and numbering conventions (ADR 0013).
+
+  def currency_code = currency.presence || "USD"
+
+  def money(amount) = Money.parse(amount, currency_code)
+
+  # The business's ActiveSupport::TimeZone. Times are stored in UTC and shown in this zone.
+  def time_zone
+    ActiveSupport::TimeZone[timezone.to_s] || ActiveSupport::TimeZone["UTC"]
+  end
+
+  # Run a block (a job, a mailer, a PDF render) in the business's zone.
+  def use_time_zone(&) = Time.use_zone(time_zone, &)
+
+  # Today in the business's zone; use this, not Date.today, for due dates and "today" views.
+  def today = time_zone.today
+
+  # A wall-clock time on a local date, e.g. a 09:00 visit on 2026-03-08, as a TimeWithZone.
+  # Times skipped by a spring-forward move ahead an hour (02:30 becomes 03:30); times repeated
+  # by a fall-back resolve to the first occurrence.
+  def local_time(date, clock)
+    hour, minute = clock.to_s.split(":").map { Integer(_1, 10) }
+    time_zone.local(date.year, date.month, date.day, hour, minute || 0)
+  end
+
+  def next_document_number(kind) = DocumentNumber.next!(self, kind)
+
   def add_user(user, role: "technician")
     business_users.create!(user: user, role: role, active: true)
   end
@@ -75,6 +103,12 @@ class Business < ApplicationRecord
   end
 
   private
+
+  def timezone_must_be_known
+    return if timezone.blank? || ActiveSupport::TimeZone[timezone.to_s]
+
+    errors.add(:timezone, "is not a time zone we recognise")
+  end
 
   def set_default_brand_color
     self.brand_color = "#059669" if brand_color.blank?

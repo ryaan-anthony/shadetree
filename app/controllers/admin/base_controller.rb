@@ -4,6 +4,9 @@ class Admin::BaseController < ApplicationController
   before_action :require_business_setup
   layout "app"
 
+  # Staff pages show times in the current business's zone (ADR 0013).
+  around_action :use_business_time_zone
+
   private
 
   def require_confirmed_account
@@ -30,6 +33,12 @@ class Admin::BaseController < ApplicationController
     # For now, we'll allow all authenticated users
     # In production, you'd check for admin role or permissions
     redirect_to root_path unless user_signed_in?
+  end
+
+  # Every staff page shows times in the current business's zone (ADR 0013).
+  def use_business_time_zone(&)
+    zone = current_user && current_business ? current_business.time_zone : Time.zone
+    Time.use_zone(zone, &)
   end
 
   def current_business
