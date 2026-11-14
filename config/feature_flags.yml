@@ -1,0 +1,10 @@
+# Release flags (PLT-11). Every flag used in code must be declared here: checking an undeclared
+# flag raises in test and logs a warning in development, and returns false everywhere.
+#
+#   new_quote_editor:
+#     description: Rebuilt quote editor (QTE-02)
+#     owner: "@ryaan-anthony"
+#     remove_by: M3          # milestone by which the flag and its old code path are deleted
+#
+# Turn flags on and off at runtime with `bin/rails flags:...` (see CONTRIBUTING.md).
+{}
