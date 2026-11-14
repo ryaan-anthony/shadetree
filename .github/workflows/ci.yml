@@ -86,6 +86,8 @@ jobs:
         with:
           ruby-version: .ruby-version
           bundler-cache: true
+      - name: Build CSS
+        run: bin/rails tailwindcss:build
       - name: Prepare database
         run: bin/rails db:test:prepare
       - name: Unit and integration tests
@@ -130,6 +132,8 @@ jobs:
         with:
           ruby-version: .ruby-version
           bundler-cache: true
+      - name: Build CSS
+        run: bin/rails tailwindcss:build
       - name: Prepare database
         run: bin/rails db:test:prepare
       - name: System tests (headless Chrome)

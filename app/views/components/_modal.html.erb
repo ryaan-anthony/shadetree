@@ -1,0 +1,15 @@
+<%# locals: (id:, title:, description:, footer:, body:) %>
+<dialog id="<%= id %>" class="modal" aria-labelledby="<%= id %>-title" <%= %(aria-describedby="#{id}-description").html_safe if description %>
+        data-modal-target="dialog" data-action="click->modal#backdropClose">
+  <div class="modal-head">
+    <div>
+      <h2 class="modal-title" id="<%= id %>-title"><%= title %></h2>
+      <% if description %><p class="mt-1 text-sm text-muted" id="<%= id %>-description"><%= description %></p><% end %>
+    </div>
+    <button type="button" class="<%= button_classes(:ghost, :sm, :icon) %>" data-action="modal#close" aria-label="Close">
+      <%= icon "x" %>
+    </button>
+  </div>
+  <div class="modal-body"><%= body %></div>
+  <% if footer %><div class="modal-foot"><%= footer %></div><% end %>
+</dialog>

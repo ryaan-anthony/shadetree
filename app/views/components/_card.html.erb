@@ -1,0 +1,14 @@
+<%# locals: (title:, subtitle:, actions:, flush:, footer:, attributes:, body:) %>
+<%= tag.section class: [ "card", attributes[:class] ].compact.join(" "), **attributes.except(:class) do %>
+  <% if title || actions %>
+    <header class="card-head">
+      <div class="min-w-0">
+        <% if title %><h2 class="card-title"><%= title %></h2><% end %>
+        <% if subtitle %><p class="card-subtitle"><%= subtitle %></p><% end %>
+      </div>
+      <% if actions %><div class="flex shrink-0 items-center gap-2"><%= actions %></div><% end %>
+    </header>
+  <% end %>
+  <div class="<%= flush ? "" : "card-body" %>"><%= body %></div>
+  <% if footer %><footer class="card-foot"><%= footer %></footer><% end %>
+<% end %>

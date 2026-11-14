@@ -69,3 +69,5 @@ group :test do
   # Test coverage reporting (CI publishes a summary on every run)
   gem "simplecov", require: false
 end
+
+gem "tailwindcss-rails", "~> 4.7"

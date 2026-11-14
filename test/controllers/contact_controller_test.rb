@@ -90,7 +90,7 @@ class ContactControllerTest < ActionDispatch::IntegrationTest
     }
 
     follow_redirect!
-    assert_select ".bg-green-50", text: /Thank you for your message/
+    assert_select "#flash .toast", text: /Thank you for your message/
   end
 
   # Response Format Tests

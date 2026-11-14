@@ -36,36 +36,8 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
 
   # Business Selector Tests
 
-  test "business selector shows all user businesses" do
-    sign_in @user
-    get admin_root_path
 
-    assert_response :success
-    # Check for Stimulus business selector
-    assert_select "[data-business-selector-target='select']"
-    assert_select "[data-business-selector-target='select'] option[value='#{@business1.id}']"
-    assert_select "[data-business-selector-target='select'] option[value='#{@business2.id}']"
-  end
 
-  test "business selector shows create new business option" do
-    sign_in @user
-    get admin_root_path
-
-    assert_response :success
-    # Check for "Create New Business" option in Stimulus selector
-    assert_select "[data-business-selector-target='select'] option[value='new']", text: /Create New Business/
-  end
-
-  test "business selector has proper styling without double arrows" do
-    sign_in @user
-    get admin_root_path
-
-    assert_response :success
-    # Check for appearance-none class on Stimulus selector (removes browser default arrow)
-    assert_select "[data-business-selector-target='select'].appearance-none"
-    # Check for custom arrow SVG within pointer-events-none container
-    assert_select "div.pointer-events-none svg", minimum: 1
-  end
 
   # Business Creation Flow Tests
 
@@ -167,65 +139,10 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
 
   # Business Listing Tests
 
-  test "user can see all their businesses in selector" do
-    sign_in @user
 
-    # Create a third business
-    @business3 = Business.create!(
-      name: "Third Business",
-      owner: @user
-    )
-
-    get admin_root_path
-    assert_response :success
-
-    # Should show all three businesses in Stimulus selector
-    # Note: There are 2 selectors (desktop + mobile), so options appear twice
-    assert_select "[data-business-selector-target='select'] option", minimum: 4 # At least 3 businesses + 1 "Create New"
-    # Verify each business appears
-    assert_select "[data-business-selector-target='select'] option[value='#{@business1.id}']"
-    assert_select "[data-business-selector-target='select'] option[value='#{@business2.id}']"
-    assert_select "[data-business-selector-target='select'] option[value='#{@business3.id}']"
-  end
-
-  test "business selector only shows user's own businesses" do
-    # Create another user with their own business
-    other_user = User.new(
-      email: "other_#{SecureRandom.hex(4)}@example.com",
-      password: "password123",
-      password_confirmation: "password123",
-      confirmed_at: Time.current
-    )
-    other_user.skip_confirmation_notification!
-    other_user.save!
-
-    other_business = Business.create!(
-      name: "Other User Business",
-      owner: other_user
-    )
-
-    sign_in @user
-    get admin_root_path
-
-    assert_response :success
-    # Should NOT show other user's business in Stimulus selector
-    assert_select "[data-business-selector-target='select'] option[value='#{other_business.id}']", count: 0
-    # Should show own businesses (appears twice: desktop + mobile selector)
-    assert_select "[data-business-selector-target='select'] option[value='#{@business1.id}']", count: 2
-    assert_select "[data-business-selector-target='select'] option[value='#{@business2.id}']", count: 2
-  end
 
   # Mobile Selector Tests
 
-  test "mobile business selector shows all businesses" do
-    sign_in @user
-    get admin_root_path
-
-    assert_response :success
-    # Check for business selector with Stimulus controller (works for both desktop and mobile)
-    assert_select "[data-controller~='business-selector']", minimum: 1
-    assert_select "[data-business-selector-target='select']", minimum: 1
-  end
 
   # Edge Cases
 
@@ -344,36 +261,63 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_admin_business_path
   end
 
-  test "business selector maintains selection state" do
-    sign_in @user
-    get admin_root_path
-
-    assert_response :success
-    # First business should be selected by default (current_business) in Stimulus selector
-    assert_select "[data-business-selector-target='select'] option[selected]"
-  end
 
   # JavaScript Functionality Tests (behavior verification)
 
-  test "business selector has correct JavaScript attributes" do
+  # Business switcher (sidebar menu)
+
+  test "business switcher lists each of the user's businesses as a switch form" do
+    @business3 = Business.create!(name: "Third Business", owner: @user)
     sign_in @user
     get admin_root_path
 
     assert_response :success
-    # Verify Stimulus controller and targets are present
-    assert_select "[data-controller~='business-selector']"
-    assert_select "[data-business-selector-target='select']"
-    assert_select "[data-action='change->business-selector#change']"
+    [ @business1, @business2, @business3 ].each do |business|
+      assert_select "form[action='#{switch_admin_business_path}'] input[name='business_id'][value='#{business.id}']", count: 1
+    end
   end
 
-  test "create new business option redirects to correct path" do
+  test "business switcher marks the current business" do
     sign_in @user
     get admin_root_path
 
-    assert_response :success
-    # Verify the new option value exists in Stimulus selector
-    assert_select "[data-business-selector-target='select'] option[value='new']"
-    # Verify Stimulus controller has switch URL configured
-    assert_select "[data-controller~='business-selector'][data-business-selector-switch-url-value*='admin/business/switch']"
+    assert_select ".biz-switch", text: /#{current_name = @user.current_business.name}/
+    assert_select "button.menu-item[aria-current='true']", text: /#{current_name}/, count: 1
+  end
+
+  test "business switcher offers to create a business" do
+    sign_in @user
+    get admin_root_path
+
+    assert_select "[data-controller='menu'] a.menu-item[href='#{new_admin_business_path}']", text: /Create a business/
+  end
+
+  test "business switcher hides other users' businesses" do
+    other_user = User.new(email: "other_#{SecureRandom.hex(4)}@example.com", password: "password123", confirmed_at: Time.current)
+    other_user.skip_confirmation_notification!
+    other_user.save!
+    other_business = Business.create!(name: "Other User Business", owner: other_user)
+
+    sign_in @user
+    get admin_root_path
+
+    assert_select "input[name='business_id'][value='#{other_business.id}']", count: 0
+  end
+
+  test "switching from the menu redirects home with a notice" do
+    sign_in @user
+    post switch_admin_business_path, params: { business_id: @business2.id }
+
+    assert_redirected_to admin_root_path
+    assert_equal "Switched to #{@business2.name}.", flash[:notice]
+    assert_equal @business2.id, session[:current_business_id]
+  end
+
+  test "switching to a business you can't access redirects with an alert" do
+    sign_in @user
+    post switch_admin_business_path, params: { business_id: 0 }
+
+    assert_redirected_to admin_root_path
+    assert_match "isn't available", flash[:alert]
   end
 end

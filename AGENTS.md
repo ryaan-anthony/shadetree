@@ -40,6 +40,21 @@ See `docs/plans/00-vision.md` → Cross-cutting requirements.
   fixtures, screenshots or PRs.
 - **CI:** lint, security scans, unit/integration and system tests must be green.
 
+## Building UI
+
+- Use the kit before writing new markup: browse `/styleguide` in development. Classes live in
+  `app/assets/tailwind/components.css`, partials in `app/views/components`, helpers in
+  `ComponentsHelper` (`button_classes`, `badge`, `card`, `empty_state`, `page_header`, `modal`,
+  `pagination`) and `IconsHelper` (`icon "calendar"`, Feather names).
+- Forms use the default builder's `f.field`, `f.check` and `f.submit_button`: labels, help,
+  errors and ARIA come for free.
+- Colours, radii and shadows come from `app/assets/tailwind/theme.css` tokens (`text-muted`,
+  `bg-canopy`, `rounded-card`). Don't hard-code hex values or add a CDN.
+- Pick the layout by audience: `app` (staff, under `Admin::`), `client` (business-branded, no
+  staff chrome) or `marketing` (public). Confirmations use `data-turbo-confirm`, flashes render
+  as toasts, behaviour goes in a Stimulus controller, not an inline `<script>`.
+- `bin/dev` runs the Tailwind watcher; CI and the Docker build compile the CSS.
+
 ## Commands
 
 | Task | Command |

@@ -1,0 +1,11 @@
+<%# locals: (messages:) %>
+<div class="toast-stack" id="flash" aria-live="polite" role="status">
+  <% messages.each do |key, message| %>
+    <% tone = flash_tone(key) %>
+    <div class="toast <%= "toast-danger" if tone == :danger %>" data-controller="dismiss" data-dismiss-after-value="<%= tone == :danger ? 0 : 6000 %>">
+      <%= icon tone %>
+      <span><%= message %></span>
+      <button type="button" data-action="dismiss#close" aria-label="Dismiss"><%= icon "x" %></button>
+    </div>
+  <% end %>
+</div>
