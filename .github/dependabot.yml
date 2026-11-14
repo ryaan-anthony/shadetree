@@ -1,12 +1,31 @@
+# Dependency updates arrive once a week, grouped, so they don't pile up.
+# Security updates are not grouped by schedule: Dependabot opens them as soon as an advisory lands.
+# Ruby itself (.ruby-version + Dockerfile) is upgraded deliberately, not by Dependabot.
 version: 2
 updates:
-- package-ecosystem: bundler
-  directory: "/"
-  schedule:
-    interval: daily
-  open-pull-requests-limit: 10
-- package-ecosystem: github-actions
-  directory: "/"
-  schedule:
-    interval: daily
-  open-pull-requests-limit: 10
+  - package-ecosystem: bundler
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/New_York
+    open-pull-requests-limit: 5
+    groups:
+      ruby-minor-and-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, area:platform]
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/New_York
+    open-pull-requests-limit: 5
+    groups:
+      github-actions:
+        patterns: ["*"]
+    labels: [dependencies, area:platform]
+

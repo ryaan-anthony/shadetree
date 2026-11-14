@@ -43,6 +43,10 @@ jobs:
           bundler-cache: true
       - name: RuboCop
         run: bin/rubocop -f github
+      - name: Ruby version has one source of truth
+        run: |
+          want="$(cat .ruby-version)"
+          grep -q "^ARG RUBY_VERSION=${want}$" Dockerfile || { echo "::error file=Dockerfile::RUBY_VERSION must match .ruby-version (${want})"; exit 1; }
 
   security:
     name: Security
