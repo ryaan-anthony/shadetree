@@ -59,7 +59,7 @@ Dir["docs/plans/*.md"].each do |plan|
   end
 end
 
-Dir["docs/**/*.md", "*.md", ".github/**/*.md"].reject { |f| f.end_with?("_template.md") }.each do |file|
+Dir["docs/**/*.md", "*.md", ".github/**/*.md"].reject { |f| f.end_with?("template.md") }.each do |file|
   File.read(file).scan(/\]\(([^)#\s]+)(?:#[^)]*)?\)/).flatten.each do |link|
     next if link.start_with?("http", "mailto:")
     path = File.expand_path(link, File.dirname(file))

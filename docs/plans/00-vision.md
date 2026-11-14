@@ -158,10 +158,10 @@ These apply to every spec; acceptance criteria assume them without repeating the
 
 | # | Question | Recommendation | Owner spec |
 | --- | --- | --- | --- |
-| G1 | Primary database: stay on SQLite (single server, lowest cost) or move to PostgreSQL? | Decide in `PLT-01` before any M1 schema work. Lean SQLite only if single-server hosting and backups are proven. | PLT-01 |
+| G1 | ~~Primary database?~~ **Decided: PostgreSQL** ([ADR 0002](../adr/0002-postgresql.md)). | Switch happens in PLT-07. | PLT-01 |
 | G2 | Which payment provider for client payments and our subscriptions? | Stripe (Connect for client payments, Billing for subscriptions). | PAY-03, BIL-04 |
 | G3 | What is the billable usage metric? | Quotes sent per month (simple, understood, maps to value). | BIL-01 |
-| G4 | Is there any production data that must be preserved? | Assume no; allows a schema reset (`PLT-07`). | PLT-07 |
+| G4 | ~~Production data to preserve?~~ **Decided: none.** | Schema reset and squashed migrations in PLT-07. | PLT-07 |
 | G5 | Is the marketing site staying inside the Rails app? | Yes until launch; revisit if marketing needs a CMS. | MKT-01 |
 | G6 | Do we keep `.project/` in the repo? | Keep until M1 completes, then delete (history is in git). | — |
 | G7 | Primary market and currency at launch? | US/USD first, data model allows other currencies. | PLT-08 |

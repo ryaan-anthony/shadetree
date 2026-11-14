@@ -9,7 +9,7 @@ Shadetree is a low-cost quoting, scheduling and invoicing platform for small ser
 - `docs/plans/`: requirements per domain (the why and what). Start with `00-vision.md`.
 - `docs/specs/<domain>/`: one spec per deliverable feature, with acceptance criteria.
 - `docs/mockups/`: clickable HTML screens per spec. This is design direction, not code to copy.
-- `docs/adr/`: architecture decision records (from PLT-01). Follow accepted ADRs.
+- `docs/adr/`: architecture decision records. Follow them; propose a new ADR to change one.
 - GitHub Issues: one per spec (`[ID] Title`), with labels, milestones and "blocked by" links.
 - `.project/`: the original 2025 plan. **Superseded**; ignore it unless asked.
 
