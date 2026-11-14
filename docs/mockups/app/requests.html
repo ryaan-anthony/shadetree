@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Requests · Shadetree</title>
+  <link rel="stylesheet" href="../assets/shadetree.css">
+  <!-- Spec: CLI-04 Request inbox (statuses, manual entry, create quote pre-filled). Requests arrive from CLI-03. -->
+  <style>
+    .inbox > * { min-width: 0; }
+    .inbox { display: grid; grid-template-columns: 380px minmax(0, 1fr); min-height: 640px; }
+    .inbox-list { border-right: 1px solid var(--line); }
+    .req { display: block; padding: 14px 16px; border-bottom: 1px solid var(--line-2); color: inherit; text-decoration: none !important; position: relative; }
+    .req:hover { background: #fafbfc; }
+    .req.is-active { background: var(--canopy-50); box-shadow: inset 3px 0 0 var(--canopy); }
+    .req.unread .who::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--blue); margin-right: 7px; vertical-align: 1px; }
+    .req .who { font-weight: 650; color: var(--ink); }
+    .req .snip { color: var(--muted); font-size: 13px; margin-top: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .detail { padding: 22px 24px; }
+    .photos { display: grid; grid-template-columns: repeat(3, minmax(0, 120px)); gap: 8px; }
+    .photos .ph { height: 92px; }
+    .src { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+    @media (max-width: 960px) { .inbox { grid-template-columns: 1fr; } .detail { border-top: 1px solid var(--line); } }
+  </style>
+</head>
+<body data-app="staff" data-nav="requests" data-crumbs="Requests">
+<main class="content" style="max-width:1360px">
+  <div class="page-head">
+    <div><h1>Requests</h1><p class="lede">New work from your request form and phone calls.</p></div>
+    <div class="actions"><button class="btn btn-secondary" data-toast="Request form link copied"><i data-i="link"></i>Copy form link</button><button class="btn btn-primary" data-open="new-req"><i data-i="plus"></i>Log a request</button></div>
+  </div>
+
+  <section class="panel inbox">
+    <div class="inbox-list">
+      <div class="tabs" data-tabs="rs" style="padding:0 8px">
+        <button class="is-active" data-tab="">New <span class="n">3</span></button>
+        <button data-tab="">In progress <span class="n">2</span></button>
+        <button data-tab="">Quoted</button>
+        <button data-tab="">Archived</button>
+      </div>
+      <a class="req unread is-active" href="#"><div class="row between"><span class="who">Rosa Delgado</span><span class="t-xs t-muted">42 min</span></div><div class="t-sm t-ink mt-4">Weekly mowing, Hedge trimming</div><div class="snip">Looking for someone to mow every week through the end of the season and tidy up the hedges along the driveway…</div><div class="src mt-8"><i data-i="globe" class="i-sm"></i>Request form · 88 Juniper Ln</div></a>
+      <a class="req unread" href="#"><div class="row between"><span class="who">Greg Patel</span><span class="t-xs t-muted">3 h</span></div><div class="t-sm t-ink mt-4">Leaf removal, Gutter clean-out</div><div class="snip">Big oak dropped everything at once this year. Gutters are overflowing on the back side of the house.</div><div class="src mt-8"><i data-i="image" class="i-sm"></i>2 photos · 45 Hemlock St</div></a>
+      <a class="req unread" href="#"><div class="row between"><span class="who">Sunrise Learning Center</span><span class="t-xs t-muted">Yesterday</span></div><div class="t-sm t-ink mt-4">Monthly grounds maintenance</div><div class="snip">Logged by Priya from a phone call. Wants a quote for next season, decision by Dec 15.</div><div class="src mt-8"><i data-i="phone" class="i-sm"></i>Phone · logged by Priya Shah</div></a>
+    </div>
+
+    <div class="detail">
+      <div class="row between wrap gap-12">
+        <div class="row gap-12"><span class="avatar avatar-lg av-5">RD</span><div><h2 style="font-size:18px">Rosa Delgado</h2><div class="t-sm t-muted">New client · submitted today at 9:32 AM</div></div></div>
+        <div class="row">
+          <select class="select" style="width:auto"><option>New</option><option>In progress</option><option>Archived</option></select>
+          <a class="btn btn-primary" href="quote-builder.html"><i data-i="quote"></i>Create quote</a>
+        </div>
+      </div>
+
+      <div class="grid-2 mt-24">
+        <dl class="kv">
+          <dt>Email</dt><dd><a href="#">rosa.delgado@email.com</a></dd>
+          <dt>Phone</dt><dd>(555) 448-2290</dd>
+          <dt>Address</dt><dd>88 Juniper Lane, Brookfield, CT</dd>
+        </dl>
+        <dl class="kv">
+          <dt>Services</dt><dd>Weekly mowing<br>Hedge trimming</dd>
+          <dt>Timing</dt><dd>As soon as possible</dd>
+          <dt>Best contact</dt><dd>Text</dd>
+        </dl>
+      </div>
+
+      <div class="mt-24">
+        <div class="section-title">What they need</div>
+        <p style="color:var(--text-2);max-width:62ch">Looking for someone to mow every week through the end of the season and tidy up the hedges along the driveway. The lot is about a third of an acre. There’s a gate on the left side of the house that’s usually unlocked.</p>
+      </div>
+
+      <div class="mt-24">
+        <div class="section-title">Photos</div>
+        <div class="photos"><div class="ph"></div><div class="ph ph-2"></div><div class="ph ph-3"></div></div>
+      </div>
+
+      <div class="banner banner-neutral mt-24"><i data-i="info"></i><div>Creating a quote adds Rosa as a client, fills in the address and both services, and attaches these photos. Nothing is sent until you choose to send it.</div></div>
+
+      <hr>
+      <div class="section-title">Internal notes</div>
+      <div class="row-top"><span class="avatar avatar-sm av-4">DW</span><textarea class="textarea" style="min-height:64px" placeholder="Add a note for your team"></textarea></div>
+    </div>
+  </section>
+</main>
+
+<div class="drawer" id="new-req" role="dialog" aria-labelledby="nr-title">
+  <div class="drawer-head"><h2 id="nr-title" style="font-size:16px">Log a request</h2><button class="icon-btn" data-close aria-label="Close"><i data-i="x"></i></button></div>
+  <div class="drawer-body">
+    <div class="field"><label class="label">Client</label><div class="input-icon"><i data-i="search"></i><input class="input" placeholder="Search clients or add new"></div></div>
+    <div class="field"><label class="label">How did they reach you?</label><div class="seg" data-tabs="src"><button class="is-active" data-tab="">Phone</button><button data-tab="">Email</button><button data-tab="">In person</button><button data-tab="">Other</button></div></div>
+    <div class="field"><label class="label">Services <span class="opt">(optional)</span></label><div class="row wrap"><button class="chip is-on">Weekly mowing</button><button class="chip">Spring cleanup</button><button class="chip">Hedge trimming</button><button class="chip">Mulch install</button><button class="chip"><i data-i="plus" class="i-sm"></i>More</button></div></div>
+    <div class="field"><label class="label">Details</label><textarea class="textarea" placeholder="What did they ask for?"></textarea></div>
+  </div>
+  <div class="drawer-foot"><button class="btn btn-secondary" data-close>Cancel</button><button class="btn btn-primary" data-close data-toast="Request logged">Log request</button></div>
+</div>
+<script src="../assets/icons.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

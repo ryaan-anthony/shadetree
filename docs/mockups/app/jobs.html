@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jobs · Shadetree</title>
+  <link rel="stylesheet" href="../assets/shadetree.css">
+  <!-- Spec: JOB-01 Jobs list with "approved but unscheduled" shortcut. -->
+</head>
+<body data-app="staff" data-nav="jobs" data-crumbs="Jobs">
+<main class="content">
+  <div class="page-head">
+    <div><h1>Jobs</h1><p class="lede">Work your clients have agreed to. Each job has one or more visits.</p></div>
+    <div class="actions"><a class="btn btn-secondary" href="schedule.html"><i data-i="calendar"></i>Calendar</a><a class="btn btn-primary" href="job.html"><i data-i="plus"></i>New job</a></div>
+  </div>
+  <section class="panel">
+    <div class="tabs" data-tabs="status" style="padding:0 10px">
+      <button data-tab="">All <span class="n">412</span></button>
+      <button class="is-active" data-tab="">Needs scheduling <span class="n">2</span></button>
+      <button data-tab="">Scheduled <span class="n">23</span></button>
+      <button data-tab="">In progress <span class="n">1</span></button>
+      <button data-tab="">Ready to invoice <span class="n">2</span></button>
+      <button data-tab="">Completed <span class="n">380</span></button>
+    </div>
+    <div class="toolbar"><div class="input-icon" style="flex:1;max-width:340px"><i data-i="search"></i><input class="input" placeholder="Search by client, title, address or number"></div><button class="chip"><i data-i="plus" class="i-sm"></i>Assigned to</button></div>
+    <table class="table table-cards">
+      <thead><tr><th>Job</th><th>Client &amp; property</th><th class="hide-sm">From</th><th>Next visit</th><th class="num">Value</th><th style="width:120px"></th></tr></thead>
+      <tbody>
+        <tr class="is-link" onclick="location.href='job.html'"><td class="primary">Spring cleanup<span class="sub">J-0391</span></td><td>Hannah Brooks<span class="sub">12 Maple Street</span></td><td class="hide-sm"><a href="quote.html">Q-1041</a></td><td><span class="badge b-amber">Not scheduled</span></td><td class="num money t-strong">$1,189.74</td><td class="t-right"><a class="btn btn-secondary btn-sm" href="job.html">Schedule</a></td></tr>
+        <tr class="is-link" onclick="location.href='job.html'"><td class="primary">Paver patio sealing<span class="sub">J-0386</span></td><td>Kim Okafor<span class="sub">61 Ridge Rd</span></td><td class="hide-sm"><a href="quote.html">Q-1036</a></td><td><span class="badge b-amber">Not scheduled</span></td><td class="num money t-strong">$1,450.00</td><td class="t-right"><a class="btn btn-secondary btn-sm" href="job.html">Schedule</a></td></tr>
+      </tbody>
+    </table>
+    <div class="panel-foot t-sm t-muted">Approved quotes become jobs automatically. Change this in <a href="automations.html">Automations</a>.</div>
+  </section>
+</main>
+<script src="../assets/icons.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

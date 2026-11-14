@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Request a quote · Oakline Lawn & Landscape</title>
+  <link rel="stylesheet" href="../assets/shadetree.css">
+  <!-- Spec: CLI-03 Public request form (branded, services from catalog, photos, invisible spam protection, confirmation). -->
+  <style>
+    body { --brand: #9a3412; --brand-ink: #fff; --brand-soft: #fdeee4; }
+    .intro { padding: 28px 24px 8px; }
+    .intro h1 { font-size: 26px; letter-spacing: -0.025em; }
+    .svc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .svc-opt { display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: var(--r); cursor: pointer; font-size: 14px; font-weight: 500; }
+    .svc-opt input { accent-color: var(--brand); width: 16px; height: 16px; }
+    .svc-opt:has(input:checked) { border-color: var(--brand); background: var(--brand-soft); }
+    .upload { border: 1.5px dashed #cbd5e1; border-radius: var(--r-lg); padding: 20px; text-align: center; color: var(--muted); font-size: 13.5px; }
+    .timing { display: flex; gap: 8px; flex-wrap: wrap; }
+    .timing label { padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; font-size: 13.5px; cursor: pointer; }
+    .timing input { display: none; }
+    .timing label:has(input:checked) { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); font-weight: 600; }
+    .input:focus, .textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+    @media (max-width: 520px) { .svc-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body class="cl">
+<header class="cl-head">
+  <div class="cl-wrap">
+    <span class="cl-logo">OL</span>
+    <div class="grow"><div class="t-strong">Oakline Lawn &amp; Landscape</div><div class="t-xs t-muted">Lawn care and landscaping in Brookfield, New Fairfield and Danbury</div></div>
+  </div>
+</header>
+<main class="cl-wrap" style="padding-top:20px">
+  <form class="cl-card" id="form" onsubmit="event.preventDefault();document.getElementById('form').hidden=true;document.getElementById('thanks').hidden=false;window.scrollTo(0,0)">
+    <div class="intro">
+      <h1>Request a quote</h1>
+      <p class="t-muted mt-4">Tell us what you need and we’ll get back to you within one business day, usually sooner.</p>
+    </div>
+    <div class="cl-pad">
+      <div class="field"><label class="label">What can we help with? <span class="opt">(choose any)</span></label>
+        <div class="svc-grid">
+          <label class="svc-opt"><input type="checkbox" checked>Weekly mowing</label>
+          <label class="svc-opt"><input type="checkbox">Spring or fall cleanup</label>
+          <label class="svc-opt"><input type="checkbox" checked>Hedge trimming</label>
+          <label class="svc-opt"><input type="checkbox">Mulch install</label>
+          <label class="svc-opt"><input type="checkbox">Core aeration</label>
+          <label class="svc-opt"><input type="checkbox">Something else</label>
+        </div>
+      </div>
+      <div class="field"><label class="label" for="desc">Tell us about the job</label><textarea class="textarea" id="desc" placeholder="Size of the yard, anything we should know…"></textarea></div>
+      <div class="field"><label class="label">Photos <span class="opt">(optional, helps us quote faster)</span></label><div class="upload"><i data-i="camera" class="i-lg" style="margin:0 auto 6px"></i>Add up to 5 photos</div></div>
+      <div class="field"><label class="label">When would you like it done?</label>
+        <div class="timing"><label><input type="radio" name="t" checked>As soon as possible</label><label><input type="radio" name="t">In the next few weeks</label><label><input type="radio" name="t">I’m flexible</label></div>
+      </div>
+      <hr>
+      <div class="field"><label class="label" for="nm">Your name</label><input class="input" id="nm" autocomplete="name" style="height:44px"></div>
+      <div class="grid-2 mt-16">
+        <div class="field" style="margin:0"><label class="label" for="em">Email</label><input class="input" id="em" type="email" autocomplete="email" style="height:44px"></div>
+        <div class="field" style="margin:0"><label class="label" for="ph">Phone</label><input class="input" id="ph" type="tel" autocomplete="tel" style="height:44px"></div>
+      </div>
+      <p class="help">An email or phone number is enough. We’ll only use it about this request.</p>
+      <div class="field mt-16"><label class="label" for="ad">Service address</label><input class="input" id="ad" autocomplete="street-address" style="height:44px" placeholder="Street address"></div>
+      <button class="btn btn-brand btn-xl btn-block mt-24" type="submit">Send request</button>
+    </div>
+  </form>
+
+  <article class="cl-card t-center" id="thanks" hidden style="padding:40px 24px">
+    <span style="width:60px;height:60px;border-radius:50%;background:var(--brand);color:#fff;display:inline-flex;align-items:center;justify-content:center"><i data-i="check" class="i-lg"></i></span>
+    <h1 style="font-size:22px" class="mt-16">Request sent</h1>
+    <p class="t-muted mt-8" style="max-width:38ch;margin-left:auto;margin-right:auto">Thanks! Oakline Lawn &amp; Landscape will be in touch within one business day. We’ve emailed you a copy of your request.</p>
+  </article>
+  <div class="cl-powered">Powered by <span class="logo"><span class="logo-mark" data-logo-mark></span>Shadetree</span></div>
+</main>
+<script src="../assets/icons.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

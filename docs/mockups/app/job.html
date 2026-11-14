@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>J-0391 Spring cleanup · Shadetree</title>
+  <link rel="stylesheet" href="../assets/shadetree.css">
+  <!-- Specs: JOB-01 Jobs, JOB-02 Schedule visits (windows, warnings), JOB-05 client notification toggle. -->
+  <style>
+    .visit-row { display: grid; grid-template-columns: 56px 1fr auto; gap: 14px; align-items: center; padding: 14px 18px; border-top: 1px solid var(--line-2); }
+    .visit-row:first-child { border-top: 0; }
+    .datebox { width: 56px; border: 1px solid var(--line); border-radius: var(--r); text-align: center; overflow: hidden; background: #fff; }
+    .datebox .m { font-size: 11px; font-weight: 700; color: #fff; background: var(--canopy); padding: 2px 0; }
+    .datebox .d { font-size: 20px; font-weight: 800; color: var(--ink); line-height: 1.3; }
+    .window-pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .window-pick label { border: 1px solid var(--line); border-radius: var(--r); padding: 10px; cursor: pointer; font-size: 13px; }
+    .window-pick input { accent-color: var(--canopy); margin-right: 6px; }
+    .window-pick label:has(input:checked) { border-color: var(--canopy); background: var(--canopy-50); box-shadow: inset 0 0 0 1px var(--canopy); }
+    .assignee { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--r); cursor: pointer; }
+    .assignee:has(input:checked) { border-color: var(--canopy); background: var(--canopy-50); }
+    .assignee input { accent-color: var(--canopy); }
+  </style>
+</head>
+<body data-app="staff" data-nav="jobs" data-crumbs="Jobs:jobs.html|J-0391">
+<main class="content">
+  <div class="page-head">
+    <div>
+      <div class="row gap-12"><h1>Spring cleanup</h1><span class="badge b-blue">Scheduled</span></div>
+      <p class="lede">J-0391 for <a href="client.html">Hannah Brooks</a> · from <a href="quote.html">Q-1041</a></p>
+    </div>
+    <div class="actions">
+      <button class="btn btn-secondary btn-icon" aria-label="More actions"><i data-i="more"></i></button>
+      <button class="btn btn-secondary" data-open="visit"><i data-i="plus"></i>Add visit</button>
+      <a class="btn btn-primary" href="invoice.html"><i data-i="invoice"></i>Complete &amp; invoice</a>
+    </div>
+  </div>
+
+  <div class="panel" style="padding:14px 18px">
+    <div class="flow-wrap">
+      <ol class="flow">
+        <li class="done"><span class="node"><i data-i="check"></i></span>Requested</li>
+        <li class="done"><span class="node"><i data-i="check"></i></span>Quoted</li>
+        <li class="done"><span class="node"><i data-i="check"></i></span>Approved</li>
+        <li class="done"><span class="node"><i data-i="check"></i></span>Scheduled</li>
+        <li class="current"><span class="node"></span>Done</li>
+        <li><span class="node"></span>Invoiced</li>
+        <li><span class="node"></span>Paid</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="split mt-16">
+    <div class="stack">
+      <section class="panel">
+        <div class="panel-head"><div><h2>Visits</h2><div class="sub">Hannah gets an email when a visit is booked or changed</div></div></div>
+        <div class="visit-row">
+          <div class="datebox"><div class="m">NOV</div><div class="d">17</div></div>
+          <div>
+            <div class="t-strong">Tuesday, arrive 8–10 AM</div>
+            <div class="t-sm t-muted">About 5 hours · Confirmation sent Nov 13</div>
+            <div class="row mt-4"><span class="avatars"><span class="avatar avatar-sm av-1">MR</span><span class="avatar avatar-sm av-3">LK</span></span><span class="t-xs t-muted">Marcus Reyes, Leo Kim</span></div>
+          </div>
+          <div class="row"><button class="btn btn-ghost btn-sm" data-open="visit">Reschedule</button><button class="btn btn-ghost btn-icon btn-sm" aria-label="More"><i data-i="more"></i></button></div>
+        </div>
+        <div class="visit-row">
+          <div class="datebox" style="opacity:.6"><div class="m" style="background:#94a3b8">NOV</div><div class="d">24</div></div>
+          <div>
+            <div class="t-strong">Tuesday, anytime</div>
+            <div class="t-sm t-muted">Mulch delivery and spread · 2 hours</div>
+            <div class="row mt-4"><span class="badge b-amber">Unassigned</span></div>
+          </div>
+          <div class="row"><button class="btn btn-ghost btn-sm" data-open="visit">Assign</button></div>
+        </div>
+      </section>
+
+      <section class="panel flush">
+        <div class="panel-head"><h2>Work to do</h2><span class="t-sm t-muted">Copied from Q-1041</span></div>
+        <table class="table table-compact">
+          <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Amount</th></tr></thead>
+          <tbody>
+            <tr><td class="primary">Spring cleanup</td><td class="num">1 visit</td><td class="num money">$385.00</td></tr>
+            <tr><td class="primary">Mulch install</td><td class="num">6 cu yd</td><td class="num money">$468.00</td></tr>
+            <tr><td class="primary">Bed edging <span class="t-muted" style="font-weight:400">front beds only</span></td><td class="num">90 lin ft</td><td class="num money">$202.50</td></tr>
+            <tr><td class="primary">Hedge trimming</td><td class="num">2.5 hour</td><td class="num money">$187.50</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+
+    <aside class="stack">
+      <section class="panel">
+        <div class="panel-head"><h2>Client &amp; property</h2></div>
+        <div class="panel-body stack-sm t-sm">
+          <div class="t-strong t-lg" style="font-size:14px">Hannah Brooks</div>
+          <div class="row gap-4"><i data-i="map-pin" class="i-sm t-muted"></i>12 Maple Street, Brookfield</div>
+          <div class="row gap-4"><i data-i="phone" class="i-sm t-muted"></i>(555) 301-7712</div>
+          <div class="banner banner-warn mt-8"><i data-i="lock"></i><div>Gate code 4417. Dog in back yard, text before entering.</div></div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2>Crew instructions</h2><button class="btn btn-ghost btn-sm"><i data-i="edit"></i></button></div>
+        <div class="panel-body t-sm" style="color:var(--text-2)">Park on the street, not the driveway. Leave bagged debris by the side gate for pickup. Don’t cut back the hydrangeas.</div>
+      </section>
+    </aside>
+  </div>
+</main>
+
+<div class="drawer" id="visit" role="dialog" aria-labelledby="visit-title">
+  <div class="drawer-head"><div><h2 id="visit-title" style="font-size:16px">Schedule visit</h2><div class="t-sm t-muted">J-0391 Spring cleanup, 12 Maple Street</div></div><button class="icon-btn" data-close aria-label="Close"><i data-i="x"></i></button></div>
+  <div class="drawer-body">
+    <div class="field"><label class="label">Date</label><input class="input" type="date" value="2026-11-17"></div>
+    <div class="field"><label class="label">Arrival</label>
+      <div class="window-pick">
+        <label><input type="radio" name="w">Exact time</label>
+        <label><input type="radio" name="w" checked>Window</label>
+        <label><input type="radio" name="w">Anytime</label>
+      </div>
+      <div class="grid-2 mt-8"><select class="select"><option>8:00 AM</option></select><select class="select"><option>10:00 AM</option></select></div>
+    </div>
+    <div class="field"><label class="label">Estimated duration</label><div class="input-group"><input class="input" value="5"><span class="addon">hours</span></div><p class="help">Based on the services on this job.</p></div>
+    <div class="field"><label class="label">Crew</label>
+      <div class="stack-sm">
+        <label class="assignee"><input type="checkbox" checked><span class="avatar avatar-sm av-1">MR</span><span class="grow">Marcus Reyes</span><span class="t-xs t-muted">2 visits that day</span></label>
+        <label class="assignee"><input type="checkbox" checked><span class="avatar avatar-sm av-3">LK</span><span class="grow">Leo Kim</span><span class="t-xs t-amber">Overlaps 9:30 visit</span></label>
+        <label class="assignee"><input type="checkbox"><span class="avatar avatar-sm av-2">PS</span><span class="grow">Priya Shah</span><span class="t-xs t-muted">Free</span></label>
+      </div>
+    </div>
+    <div class="banner banner-warn mt-16"><i data-i="alert"></i><div><strong>Leo is booked 9:30–11:00</strong> at 27 Willow Way. You can still schedule this visit.</div></div>
+    <hr>
+    <label class="row between"><span><span class="t-strong">Email Hannah a confirmation</span><br><span class="t-sm t-muted">Includes date, arrival window and your phone number</span></span><span class="switch"><input type="checkbox" checked><span></span></span></label>
+  </div>
+  <div class="drawer-foot"><button class="btn btn-secondary" data-close>Cancel</button><button class="btn btn-primary" data-close data-toast="Visit scheduled. Hannah will get a confirmation.">Schedule visit</button></div>
+</div>
+<script src="../assets/icons.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

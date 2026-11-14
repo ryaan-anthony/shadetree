@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Services & pricing · Shadetree</title>
+  <link rel="stylesheet" href="../assets/shadetree.css">
+  <!-- Specs: CAT-03 Service catalog, CAT-05 Industry presets, CAT-04 taxable flag. -->
+  <style>
+    .cat-row td { background: var(--slate-50); font-size: 12.5px; font-weight: 650; color: var(--text-2); padding: 8px 14px; }
+    .grip { color: #c0c8d4; cursor: grab; }
+  </style>
+</head>
+<body data-nofab data-app="staff" data-nav="settings" data-crumbs="Settings:settings.html|Services & pricing">
+<main class="content">
+  <div class="page-head"><div><h1>Settings</h1></div></div>
+  <div class="settings">
+    <nav class="settings-nav" data-settings-nav="services" aria-label="Settings"></nav>
+    <div class="stack">
+      <div class="row between wrap">
+        <div><h2 style="font-size:17px">Services &amp; pricing</h2><p class="t-sm t-muted">Pick these when building quotes and invoices. Changing a price never changes documents you’ve already sent.</p></div>
+        <div class="row"><button class="btn btn-secondary" data-open="preset"><i data-i="layers"></i>Add starter services</button><button class="btn btn-primary" data-open="item"><i data-i="plus"></i>Add service</button></div>
+      </div>
+
+      <section class="panel">
+        <div class="toolbar"><div class="input-icon" style="flex:1;max-width:320px"><i data-i="search"></i><input class="input" placeholder="Search services"></div><div class="seg ml-auto" data-tabs="a"><button class="is-active" data-tab="">Active <span class="t-muted" style="margin-left:4px">18</span></button><button data-tab="">Archived <span class="t-muted" style="margin-left:4px">3</span></button></div></div>
+        <table class="table">
+          <thead><tr><th style="width:28px"></th><th>Service</th><th class="hide-sm">Unit</th><th class="num">Price</th><th class="hide-sm">Tax</th><th class="hide-sm">On request form</th><th style="width:40px"></th></tr></thead>
+          <tbody>
+            <tr class="cat-row"><td colspan="7">Lawn care</td></tr>
+            <tr class="is-link" data-open="item"><td><i data-i="grip" class="grip"></i></td><td class="primary">Weekly mowing<span class="sub">Mow, trim, blow off hard surfaces</span></td><td class="hide-sm">Visit</td><td class="num money t-strong">$55.00</td><td class="hide-sm"><span class="badge b-slate plain">Taxable</span></td><td class="hide-sm"><span class="switch"><input type="checkbox" checked><span></span></span></td><td><button class="icon-btn" aria-label="More"><i data-i="more"></i></button></td></tr>
+            <tr class="is-link"><td><i data-i="grip" class="grip"></i></td><td class="primary">Core aeration<span class="sub">Up to 8,000 sq ft</span></td><td class="hide-sm">Each</td><td class="num money t-strong">$165.00</td><td class="hide-sm"><span class="badge b-slate plain">Taxable</span></td><td class="hide-sm"><span class="switch"><input type="checkbox" checked><span></span></span></td><td><button class="icon-btn" aria-label="More"><i data-i="more"></i></button></td></tr>
+            <tr class="is-link"><td><i data-i="grip" class="grip"></i></td><td class="primary">Overseeding<span class="sub">Premium tall fescue blend</span></td><td class="hide-sm">Sq ft</td><td class="num money t-strong">$0.09</td><td class="hide-sm"><span class="badge b-slate plain">Taxable</span></td><td class="hide-sm"><span class="switch"><input type="checkbox"><span></span></span></td><td><button class="icon-btn" aria-label="More"><i data-i="more"></i></button></td></tr>
+            <tr class="cat-row"><td colspan="7">Cleanups</td></tr>
+            <tr class="is-link"><td><i data-i="grip" class="grip"></i></td><td class="primary">Spring cleanup<span class="sub">Rake beds, cut back perennials, haul debris</span></td><td class="hide-sm">Visit</td><td class="num money t-strong">$385.00</td><td class="hide-sm"><span class="badge b-slate plain">Taxable</span></td><td class="hide-sm"><span class="switch"><input type="checkbox" checked><span></span></span></td><td><button class="icon-btn" aria-label="More"><i data-i="more"></i></button></td></tr>
+            <tr class="is-link"><td><i data-i="grip" class="grip"></i></td><td class="primary">Leaf removal<span class="sub">Price depends on lot size and tree cover</span></td><td class="hide-sm">Visit</td><td class="num t-muted">Price on quote</td><td class="hide-sm"><span class="badge b-slate plain">Taxable</span></td><td class="hide-sm"><span class="switch"><input type="checkbox" checked><span></span></span></td><td><button class="icon-btn" aria-label="More"><i data-i="more"></i></button></td></tr>
+            <tr class="cat-row"><td colspan="7">Fees</td></tr>
+            <tr class="is-link"><td><i data-i="grip" class="grip"></i></td><td class="primary">Disposal fee<span class="sub">Green waste haul-away</span></td><td class="hide-sm">Load</td><td class="num money t-strong">$45.00</td><td class="hide-sm"><span class="t-sm t-muted">Not taxed</span></td><td class="hide-sm"><span class="switch"><input type="checkbox"><span></span></span></td><td><button class="icon-btn" aria-label="More"><i data-i="more"></i></button></td></tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+  </div>
+</main>
+
+<div class="drawer" id="item" role="dialog" aria-labelledby="item-title">
+  <div class="drawer-head"><h2 id="item-title" style="font-size:16px">Edit service</h2><button class="icon-btn" data-close aria-label="Close"><i data-i="x"></i></button></div>
+  <div class="drawer-body">
+    <div class="field"><label class="label">Name</label><input class="input" value="Weekly mowing"></div>
+    <div class="field"><label class="label">Description <span class="opt">(clients see this)</span></label><textarea class="textarea" style="min-height:64px">Mow, trim, blow off hard surfaces</textarea></div>
+    <div class="grid-2 mt-16">
+      <div class="field" style="margin:0"><label class="label">Price</label><div class="input-group"><span class="addon">$</span><input class="input" value="55.00"></div><p class="help">Leave blank to price on each quote.</p></div>
+      <div class="field" style="margin:0"><label class="label">Per</label><select class="select"><option>Visit</option><option>Hour</option><option>Each</option><option>Sq ft</option><option>Lin ft</option><option>Custom…</option></select></div>
+    </div>
+    <div class="grid-2 mt-16">
+      <div class="field" style="margin:0"><label class="label">Category</label><select class="select"><option>Lawn care</option></select></div>
+      <div class="field" style="margin:0"><label class="label">Typical duration</label><div class="input-group"><input class="input" value="45"><span class="addon">min</span></div></div>
+    </div>
+    <hr>
+    <label class="row between"><span><span class="t-strong">Taxable</span><br><span class="t-sm t-muted">Applies your default sales tax</span></span><span class="switch"><input type="checkbox" checked><span></span></span></label>
+    <label class="row between mt-16"><span><span class="t-strong">Show on request form</span><br><span class="t-sm t-muted">Clients can pick it when asking for a quote</span></span><span class="switch"><input type="checkbox" checked><span></span></span></label>
+  </div>
+  <div class="drawer-foot"><button class="btn btn-ghost" style="margin-right:auto"><i data-i="archive"></i>Archive</button><button class="btn btn-secondary" data-close>Cancel</button><button class="btn btn-primary" data-close data-toast="Service saved">Save</button></div>
+</div>
+
+<div class="modal" id="preset" role="dialog" aria-labelledby="ps-title">
+  <div class="modal-head"><div><h2 id="ps-title">Starter services for lawn care</h2><p>Pick what you offer. You’ll set your own prices; we don’t guess them for you.</p></div><button class="icon-btn" data-close aria-label="Close"><i data-i="x"></i></button></div>
+  <div class="modal-body stack-sm">
+    <label class="check"><input type="checkbox" checked><span><span class="t-strong">Weekly mowing</span> <span class="t-muted">· already in your catalog</span></span></label>
+    <label class="check"><input type="checkbox" checked><span class="t-strong">Bi-weekly mowing</span></label>
+    <label class="check"><input type="checkbox" checked><span class="t-strong">Fall cleanup</span></label>
+    <label class="check"><input type="checkbox"><span class="t-strong">Dethatching</span></label>
+    <label class="check"><input type="checkbox" checked><span class="t-strong">Fertilizer application</span></label>
+    <label class="check"><input type="checkbox"><span class="t-strong">Snow plowing</span></label>
+    <label class="check"><input type="checkbox"><span class="t-strong">Trip fee</span></label>
+  </div>
+  <div class="modal-foot"><button class="btn btn-secondary" data-close>Cancel</button><button class="btn btn-primary" data-close data-toast="Added 3 services">Add 3 services</button></div>
+</div>
+<script src="../assets/icons.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

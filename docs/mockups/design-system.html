@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Design system · Shadetree mockups</title>
+  <link rel="stylesheet" href="assets/shadetree.css">
+  <!-- Spec: PLT-05 UI foundation. This page is the reference for tokens and components used across the mockups. -->
+  <style>
+    body { background: #fff; }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 40px 24px 80px; }
+    .sec { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 32px; padding: 36px 0; border-top: 1px solid var(--line); }
+    .sec h2 { font-size: 16px; }
+    .sec .why { font-size: 13.5px; color: var(--muted); margin-top: 6px; }
+    .sec > * { min-width: 0; }
+    .colors { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+    .sw { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; font-size: 12.5px; }
+    .sw .c { height: 64px; }
+    .sw .l { padding: 8px 10px; }
+    .sw code { color: var(--muted); font-size: 12px; }
+    .type-row { display: grid; grid-template-columns: 140px 1fr; gap: 16px; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--line-2); }
+    .demo { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    @media (max-width: 800px) { .sec { grid-template-columns: 1fr; gap: 12px; } }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <a class="logo" href="index.html"><span class="logo-mark" data-logo-mark></span><span>Shadetree</span></a>
+  <h1 class="mt-24" style="font-size:32px;letter-spacing:-0.03em">Design system</h1>
+  <p class="t-muted mt-8" style="max-width:62ch">Tokens and components behind every mockup. Calm, dense, trustworthy surfaces for staff; the business’s own brand for clients. Boldness is spent in one place: the progress rail that follows work from request to paid.</p>
+
+  <section class="sec mt-32">
+    <div><h2>Principles</h2></div>
+    <ul style="margin:0;padding-left:18px;color:var(--text-2);line-height:1.8">
+      <li><strong>One action color.</strong> Canopy green is for primary actions and progress. Status colors only mean status.</li>
+      <li><strong>Hairlines, not shadows.</strong> Panels are separated by 1px borders; shadows are reserved for things that float (menus, dialogs).</li>
+      <li><strong>Lists over cards.</strong> Related items live together in one panel, divided by rules, so owners can scan.</li>
+      <li><strong>Money is tabular.</strong> Amounts use tabular figures and right alignment so columns line up.</li>
+      <li><strong>Radius has hierarchy.</strong> 6px controls, 10px panels, 14px dialogs and client cards.</li>
+      <li><strong>Copy is plain.</strong> Sentence case, verbs on buttons, the button’s word repeats in the confirmation.</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <div><h2>Color</h2><p class="why">Navy ink and canopy green carry over from the original brand; green is darkened for AA contrast on white text.</p></div>
+    <div class="colors">
+      <div class="sw"><div class="c" style="background:#0f172a"></div><div class="l"><strong>Ink</strong><br><code>#0F172A</code></div></div>
+      <div class="sw"><div class="c" style="background:#047857"></div><div class="l"><strong>Canopy</strong> · actions<br><code>#047857</code></div></div>
+      <div class="sw"><div class="c" style="background:#34d399"></div><div class="l"><strong>Leaf</strong> · on dark<br><code>#34D399</code></div></div>
+      <div class="sw"><div class="c" style="background:#0b1221"></div><div class="l"><strong>Sidebar</strong><br><code>#0B1221</code></div></div>
+      <div class="sw"><div class="c" style="background:#f6f7f9"></div><div class="l"><strong>Background</strong><br><code>#F6F7F9</code></div></div>
+      <div class="sw"><div class="c" style="background:#e2e8f0"></div><div class="l"><strong>Line</strong><br><code>#E2E8F0</code></div></div>
+      <div class="sw"><div class="c" style="background:#64748b"></div><div class="l"><strong>Muted text</strong><br><code>#64748B</code></div></div>
+      <div class="sw"><div class="c" style="background:#1d4ed8"></div><div class="l"><strong>Info / sent</strong><br><code>#1D4ED8</code></div></div>
+      <div class="sw"><div class="c" style="background:#b45309"></div><div class="l"><strong>Warning</strong><br><code>#B45309</code></div></div>
+      <div class="sw"><div class="c" style="background:#b91c1c"></div><div class="l"><strong>Danger / overdue</strong><br><code>#B91C1C</code></div></div>
+      <div class="sw"><div class="c" style="background:#6d28d9"></div><div class="l"><strong>To invoice</strong><br><code>#6D28D9</code></div></div>
+      <div class="sw"><div class="c" style="background:#9a3412"></div><div class="l"><strong>Business brand</strong> · example<br><code>--brand</code></div></div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div><h2>Type</h2><p class="why">Public Sans, self-hosted. Sturdy, legible at small sizes, with true tabular figures.</p></div>
+    <div>
+      <div class="type-row"><span class="t-sm t-muted">Display 68/800</span><span style="font-size:48px;font-weight:800;letter-spacing:-0.045em;color:var(--ink)">Get paid.</span></div>
+      <div class="type-row"><span class="t-sm t-muted">Page title 22/700</span><span style="font-size:22px;font-weight:700;color:var(--ink);letter-spacing:-0.012em">Spring cleanup</span></div>
+      <div class="type-row"><span class="t-sm t-muted">Panel title 14.5/650</span><span style="font-size:14.5px;font-weight:650;color:var(--ink)">Needs attention</span></div>
+      <div class="type-row"><span class="t-sm t-muted">Body 14/400</span><span>Hannah will get an email with a link to review and approve online.</span></div>
+      <div class="type-row"><span class="t-sm t-muted">Small 12.5/400</span><span class="t-sm t-muted">Sent 9 days ago, viewed 3 times</span></div>
+      <div class="type-row"><span class="t-sm t-muted">Money</span><span class="t-strong num" style="font-size:22px">$1,189.74 <span class="t-muted" style="font-weight:400;font-size:14px">vs</span> $11,111.11</span></div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div><h2>Progress rail</h2><p class="why">The signature element. Used wherever work has a stage: documents, client pages, marketing.</p></div>
+    <div class="stack">
+      <div class="flow-wrap"><ol class="flow"><li class="done"><span class="node"><i data-i="check"></i></span>Requested</li><li class="done"><span class="node"><i data-i="check"></i></span>Quoted</li><li class="done"><span class="node"><i data-i="check"></i></span>Approved</li><li class="current"><span class="node"></span>Schedule</li><li><span class="node"></span>Done</li><li><span class="node"></span>Invoiced</li><li><span class="node"></span>Paid</li></ol></div>
+      <div class="flow-wrap" style="--brand:#9a3412;--brand-soft:#fdeee4;max-width:420px"><ol class="flow flow-brand"><li class="done"><span class="node"><i data-i="check"></i></span>Approved</li><li class="current"><span class="node"></span>Scheduled</li><li><span class="node"></span>Paid</li></ol></div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div><h2>Buttons</h2><p class="why">One primary per view. Verbs say exactly what happens.</p></div>
+    <div class="stack">
+      <div class="demo"><button class="btn btn-primary"><i data-i="send"></i>Send quote</button><button class="btn btn-secondary">Save draft</button><button class="btn btn-ghost"><i data-i="eye"></i>Preview</button><button class="btn btn-danger">Void invoice</button><button class="btn btn-dark">View as member</button></div>
+      <div class="demo"><button class="btn btn-primary btn-lg">Start free</button><button class="btn btn-secondary btn-sm">Schedule</button><button class="btn btn-secondary btn-icon" aria-label="More"><i data-i="more"></i></button><button class="btn btn-primary" disabled>Disabled</button></div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div><h2>Forms</h2></div>
+    <div class="grid-2">
+      <div class="field" style="margin:0"><label class="label">Business name</label><input class="input" value="Oakline Lawn & Landscape"><p class="help">Shown on quotes and invoices.</p></div>
+      <div class="field" style="margin:0"><label class="label">Amount</label><div class="input-group"><span class="addon">$</span><input class="input" value="760.00"></div></div>
+      <div class="field" style="margin:0"><label class="label">Email</label><input class="input is-error" value="hannah@"><p class="error-text"><i data-i="alert" class="i-sm"></i>Enter a full email address, like name@example.com.</p></div>
+      <div class="field" style="margin:0"><label class="label">Industry</label><select class="select"><option>Lawn care &amp; landscaping</option></select></div>
+      <label class="check"><input type="checkbox" checked><span>Attach PDF copy</span></label>
+      <label class="row gap-12"><span class="switch"><input type="checkbox" checked><span></span></span>Email the client a confirmation</label>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div><h2>Status</h2><p class="why">Dot + soft fill. Color always paired with a word.</p></div>
+    <div class="demo"><span class="badge b-slate">Draft</span><span class="badge b-blue">Sent</span><span class="badge b-amber">Changes requested</span><span class="badge b-green">Approved</span><span class="badge b-red">Overdue</span><span class="badge b-violet">Partially paid</span><span class="tag">Residential</span><span class="count">3</span><span class="kbd">⌘K</span><span class="avatars"><span class="avatar av-1">MR</span><span class="avatar av-3">LK</span><span class="avatar av-2">PS</span></span></div>
+  </section>
+
+  <section class="sec">
+    <div><h2>Messages</h2></div>
+    <div class="stack">
+      <div class="banner banner-info"><i data-i="info"></i><div><strong>Possible match:</strong> “Martin Alvarez” already exists. <a href="#">Use existing client</a></div></div>
+      <div class="banner banner-warn"><i data-i="alert"></i><div><strong>Leo is booked 9:30–11:00.</strong> You can still schedule this visit.</div></div>
+      <div class="banner banner-danger"><i data-i="alert"></i><div>That email and password don’t match. Check them and try again, or reset your password.</div></div>
+      <div class="banner banner-success"><i data-i="check-circle"></i><div><strong>clients-export.csv</strong> · 312 rows found</div></div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div><h2>Panels &amp; tables</h2></div>
+    <section class="panel">
+      <div class="panel-head"><div><h2>Line items</h2><div class="sub">Copied from Q-1041</div></div><button class="btn btn-ghost btn-sm">Edit</button></div>
+      <table class="table"><thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Amount</th></tr></thead><tbody>
+        <tr><td class="primary">Spring cleanup<span class="sub">Rake beds, haul debris</span></td><td class="num">1 visit</td><td class="num money">$385.00</td></tr>
+        <tr><td class="primary">Mulch install</td><td class="num">6 cu yd</td><td class="num money">$468.00</td></tr>
+      </tbody><tfoot><tr class="total"><td colspan="2" class="t-right">Total</td><td class="num money">$853.00</td></tr></tfoot></table>
+    </section>
+  </section>
+
+  <section class="sec">
+    <div><h2>Empty state</h2><p class="why">An empty screen is an invitation to act.</p></div>
+    <div class="panel"><div class="empty"><span class="empty-icon"><i data-i="quote" class="i-lg"></i></span><h3>No quotes yet</h3><p>Send your first quote and see it the way your client will, on their phone.</p><a class="btn btn-primary" href="app/quote-builder.html"><i data-i="plus"></i>New quote</a></div></div>
+  </section>
+</div>
+<script src="assets/icons.js"></script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quotes · Shadetree</title>
+  <link rel="stylesheet" href="../assets/shadetree.css">
+  <!-- Spec: QTE-06 Quote list, lifecycle & revisions. Status filters, search, totals for filtered set. -->
+</head>
+<body data-app="staff" data-nav="quotes" data-crumbs="Quotes">
+<main class="content">
+  <div class="page-head">
+    <div><h1>Quotes</h1><p class="lede">41 sent this month. $38,920.00 approved.</p></div>
+    <div class="actions"><button class="btn btn-secondary" data-toast="Export started. We’ll email you a link."><i data-i="download"></i>Export</button><a class="btn btn-primary" href="quote-builder.html"><i data-i="plus"></i>New quote</a></div>
+  </div>
+
+  <section class="panel">
+    <div class="tabs" data-tabs="status" style="padding:0 10px">
+      <button class="is-active" data-tab="">All <span class="n">186</span></button>
+      <button data-tab="">Awaiting response <span class="n">5</span></button>
+      <button data-tab="">Changes requested <span class="n">1</span></button>
+      <button data-tab="">Drafts <span class="n">3</span></button>
+      <button data-tab="">Approved <span class="n">124</span></button>
+      <button data-tab="">Declined <span class="n">19</span></button>
+      <button data-tab="">Expired <span class="n">34</span></button>
+    </div>
+    <div class="toolbar">
+      <div class="input-icon" style="flex:1;max-width:340px"><i data-i="search"></i><input class="input" placeholder="Search by client, title or number"></div>
+      <button class="chip"><i data-i="plus" class="i-sm"></i>Sent date</button>
+      <button class="chip is-on">Created by: Anyone <i data-i="chevron-down" class="i-sm"></i></button>
+      <span class="t-sm t-muted ml-auto hide-sm">186 quotes, <span class="money t-strong">$212,480.50</span></span>
+    </div>
+    <div class="table-wrap">
+    <table class="table table-cards">
+      <thead><tr><th>Quote</th><th>Client</th><th>Status</th><th class="hide-sm">Sent</th><th class="num">Total</th><th style="width:40px"></th></tr></thead>
+      <tbody>
+        <tr class="is-link" onclick="location.href='quote.html'"><td class="primary">Spring cleanup<span class="sub">Q-1041</span></td><td>Hannah Brooks<span class="sub">12 Maple Street</span></td><td><span class="badge b-green">Approved</span></td><td class="hide-sm t-muted">Nov 9</td><td class="num money t-strong">$1,189.74</td><td class="hide-sm"><i data-i="chevron-right" class="t-faint"></i></td></tr>
+        <tr class="is-link" onclick="location.href='quote-builder.html'"><td class="primary">Fall cleanup and mulch<span class="sub">Q-1038</span></td><td>Tom &amp; Alicia Nguyen<span class="sub">3 Orchard Ln</span></td><td><span class="badge b-amber">Changes requested</span></td><td class="hide-sm t-muted">Nov 6</td><td class="num money t-strong">$2,315.00</td><td class="hide-sm"><i data-i="chevron-right" class="t-faint"></i></td></tr>
+        <tr class="is-link" onclick="location.href='quote.html'"><td class="primary">Weekly mowing, Dec–Mar snow standby<span class="sub">Q-1043</span></td><td>Sunrise Learning Center<span class="sub">220 School St</span></td><td><span class="badge b-slate">Draft</span></td><td class="hide-sm t-faint">Not sent</td><td class="num money t-strong">$3,600.00</td><td class="hide-sm"><i data-i="chevron-right" class="t-faint"></i></td></tr>
+        <tr class="is-link" onclick="location.href='quote.html'"><td class="primary">Paver patio sealing<span class="sub">Q-1036</span></td><td>Kim Okafor<span class="sub">61 Ridge Rd</span></td><td><span class="badge b-green">Approved</span></td><td class="hide-sm t-muted">Nov 5</td><td class="num money t-strong">$1,450.00</td><td class="hide-sm"><i data-i="chevron-right" class="t-faint"></i></td></tr>
+        <tr class="is-link" onclick="location.href='quote.html'"><td class="primary">Hedge and shrub renovation<span class="sub">Q-1035</span></td><td>Martin Alvarez<span class="sub">9 Birch Rd</span></td><td><span class="badge b-blue">Sent</span> <span class="t-xs t-amber">Not opened</span></td><td class="hide-sm t-muted">Nov 9</td><td class="num money t-strong">$640.00</td><td class="hide-sm"><i data-i="chevron-right" class="t-faint"></i></td></tr>
+        <tr class="is-link" onclick="location.href='quote.html'"><td class="primary">Common area grounds, 2027 season<span class="sub">Q-1029</span></td><td>Lakeview HOA<span class="sub">Lakeview Dr common areas</span></td><td><span class="badge b-blue">Sent</span> <span class="t-xs t-muted">Viewed 3×</span></td><td class="hide-sm t-muted">Nov 4</td><td class="num money t-strong">$4,860.00</td><td class="hide-sm"><i data-i="chevron-right" class="t-faint"></i></td></tr>
+        <tr class="is-link" onclick="location.href='quote.html'"><td class="primary">Leaf removal and gutters<span class="sub">Q-1027</span></td><td>Greg Patel<span class="sub">45 Hemlock St</span></td><td><span class="badge b-green">Approved</span></td><td class="hide-sm t-muted">Nov 2</td><td class="num money t-strong">$800.00</td><td class="hide-sm"><i data-i="chevron-right" class="t-faint"></i></td></tr>
+        <tr class="is-link" onclick="location.href='quote.html'"><td class="primary">Stone wall repair<span class="sub">Q-1022</span></td><td>Diane Foster<span class="sub">8 Quarry Rd</span></td><td><span class="badge b-red">Declined</span> <span class="t-xs t-muted">“Went with a mason”</span></td><td class="hide-sm t-muted">Oct 28</td><td class="num money t-muted">$3,120.00</td><td class="hide-sm"><i data-i="chevron-right" class="t-faint"></i></td></tr>
+        <tr class="is-link" onclick="location.href='quote.html'"><td class="primary">Irrigation install, back yard<span class="sub">Q-1015</span></td><td>Westgate Property Mgmt<span class="sub">400 Commerce Dr</span></td><td><span class="badge b-slate">Expired</span></td><td class="hide-sm t-muted">Oct 2</td><td class="num money t-muted">$6,240.00</td><td class="hide-sm"><i data-i="chevron-right" class="t-faint"></i></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="panel-foot row between t-sm"><span class="t-muted">Showing 1–9 of 186</span><div class="row"><button class="btn btn-secondary btn-sm" disabled><i data-i="chevron-left"></i></button><button class="btn btn-secondary btn-sm"><i data-i="chevron-right"></i></button></div></div>
+  </section>
+</main>
+<script src="../assets/icons.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

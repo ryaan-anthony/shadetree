@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Technician: My day · Shadetree</title>
+  <link rel="stylesheet" href="../assets/shadetree.css">
+  <!-- Spec: JOB-04 Technician day view (today's visits, maps, tap-to-call, start/complete, notes & photos, prices hidden). -->
+  <style>
+    body { background: #e9edf2; }
+    .stage { display: flex; gap: 48px; justify-content: center; align-items: flex-start; flex-wrap: wrap; padding: 48px 24px; }
+    .caption { max-width: 300px; margin-top: 18px; font-size: 13px; color: var(--text-2); }
+    .caption strong { color: var(--ink); display: block; margin-bottom: 2px; }
+    .app-top { padding: 6px 18px 12px; }
+    .app-top h1 { font-size: 24px; letter-spacing: -0.025em; }
+    .scroll { flex: 1; overflow-y: auto; padding: 0 14px 12px; }
+    .v-card { display: block; border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: #fff; color: inherit; text-decoration: none !important; }
+    .v-card + .v-card { margin-top: 10px; }
+    .v-card.now { border-color: var(--canopy); box-shadow: 0 0 0 3px var(--canopy-100); }
+    .v-card.done { background: var(--slate-50); }
+    .v-card.done .t-strong { color: var(--muted); }
+    .v-time { font-size: 12.5px; font-weight: 700; color: var(--canopy); }
+    .tabbar { flex: none; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); background: #fff; padding: 6px 0 16px; }
+    .tabbar a { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; color: var(--muted); text-decoration: none; }
+    .tabbar a.is-active { color: var(--canopy); }
+    .tabbar .i { width: 22px; height: 22px; }
+    .big-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .big-actions a { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 0; border: 1px solid var(--line); border-radius: 12px; font-size: 12px; font-weight: 600; color: var(--ink); text-decoration: none; }
+    .big-actions .i { width: 20px; height: 20px; color: var(--canopy); }
+    .map { height: 120px; border-radius: 12px; background:
+      linear-gradient(90deg, transparent 48%, #fff 48%, #fff 52%, transparent 52%),
+      linear-gradient(0deg, transparent 58%, #fff 58%, #fff 62%, transparent 62%),
+      linear-gradient(35deg, transparent 70%, #fff 70%, #fff 73%, transparent 73%), #dfe9df; position: relative; }
+    .map .pin { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -100%); color: var(--red); }
+    .map .pin .i { width: 28px; height: 28px; fill: #fff; }
+    .complete-bar { flex: none; padding: 12px 14px 18px; border-top: 1px solid var(--line); background: #fff; }
+  </style>
+</head>
+<body>
+<div class="stage">
+  <div>
+    <div class="phone"><div class="phone-screen">
+      <div class="phone-notch"></div>
+      <div class="phone-status"><span>9:41</span><span>5G</span></div>
+      <div class="app-top">
+        <div class="row between"><span class="t-sm t-muted">Friday, Nov 13</span><span class="avatar avatar-sm av-1">MR</span></div>
+        <h1 class="mt-4">My day</h1>
+        <div class="t-sm t-muted">3 visits · first at 8:00</div>
+      </div>
+      <div class="scroll">
+        <a class="v-card done" href="#"><div class="row between"><span class="v-time" style="color:var(--muted)">8:00 · Done</span><i data-i="check-circle" class="t-green"></i></div><div class="t-strong mt-4">Weekly mowing</div><div class="t-sm t-muted">14 Alder Ct</div></a>
+        <a class="v-card now" href="#"><div class="row between"><span class="v-time">9–11 · In progress</span><span class="badge b-green">Started 9:22</span></div><div class="t-strong mt-4">Fall cleanup</div><div class="t-sm t-muted">Westgate Property Mgmt</div><div class="t-sm t-muted">400 Commerce Dr, Building A</div><div class="row mt-8"><span class="avatar avatar-sm av-3">LK</span><span class="t-xs t-muted">With Leo</span></div></a>
+        <a class="v-card" href="#"><div class="v-time">1:00 – 3:00 window</div><div class="t-strong mt-4">Irrigation winterize</div><div class="t-sm t-muted">5 Cedar Hollow</div></a>
+        <div class="t-xs t-muted mt-16" style="padding:0 4px">Monday, Nov 16</div>
+        <a class="v-card mt-8" href="#"><div class="v-time">8:00</div><div class="t-strong mt-4">Weekly mowing</div><div class="t-sm t-muted">14 Alder Ct</div></a>
+      </div>
+      <nav class="tabbar"><a class="is-active" href="#"><i data-i="sun"></i>My day</a><a href="#"><i data-i="calendar"></i>Upcoming</a><a href="#"><i data-i="bell"></i>Updates</a></nav>
+    </div></div>
+    <p class="caption"><strong>My day</strong>Technicians land here. Only their own visits, in order, with nothing else to get lost in.</p>
+  </div>
+
+  <div>
+    <div class="phone"><div class="phone-screen">
+      <div class="phone-notch"></div>
+      <div class="phone-status"><span>9:41</span><span>5G</span></div>
+      <div class="app-top" style="padding-bottom:8px"><a href="#" class="row gap-4 t-sm"><i data-i="chevron-left"></i>My day</a></div>
+      <div class="scroll stack">
+        <div>
+          <div class="v-time">9–11 · Started 9:22</div>
+          <h2 style="font-size:20px;letter-spacing:-0.02em" class="mt-4">Fall cleanup</h2>
+          <div class="t-sm t-muted">Westgate Property Mgmt</div>
+        </div>
+        <div class="map"><span class="pin"><i data-i="map-pin"></i></span></div>
+        <div class="t-sm"><span class="t-strong">400 Commerce Dr, Building A</span><br><span class="t-muted">Danbury, CT 06810</span></div>
+        <div class="big-actions"><a href="#"><i data-i="navigation"></i>Directions</a><a href="#"><i data-i="phone"></i>Call</a><a href="#"><i data-i="message"></i>Text</a></div>
+        <div class="banner banner-warn" style="font-size:13px"><i data-i="lock" class="i-sm"></i><div>Check in at the leasing office first. Dumpster is behind Building C.</div></div>
+        <div>
+          <div class="section-title">The work</div>
+          <ul class="list panel" style="font-size:13.5px">
+            <li style="padding:10px 12px"><span class="grow">Fall cleanup, beds and lawn</span><span class="t-muted">1</span></li>
+            <li style="padding:10px 12px"><span class="grow">Leaf removal</span><span class="t-muted">3 loads</span></li>
+            <li style="padding:10px 12px"><span class="grow">Disposal fee</span><span class="t-muted">3 loads</span></li>
+          </ul>
+        </div>
+        <div>
+          <div class="section-title">Notes &amp; photos</div>
+          <div class="row" style="gap:6px"><div class="ph" style="width:64px;height:64px"></div><div class="ph ph-2" style="width:64px;height:64px"></div><button class="btn btn-secondary" style="width:64px;height:64px;flex-direction:column;gap:2px;font-size:11px"><i data-i="camera"></i>Add</button></div>
+          <textarea class="textarea mt-8" style="min-height:60px" placeholder="Anything the office should know?">Front beds done. Back lot has more leaves than quoted, about 1 extra load.</textarea>
+        </div>
+      </div>
+      <div class="complete-bar"><button class="btn btn-primary btn-xl btn-block" onclick="mockToast('Visit completed. The office has been told.')"><i data-i="check-circle"></i>Complete visit</button></div>
+    </div></div>
+    <p class="caption"><strong>Visit</strong>Big tap targets for gloved hands. Prices are hidden unless the owner allows them. Photos upload with retry on weak signal.</p>
+  </div>
+</div>
+<script src="../assets/icons.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

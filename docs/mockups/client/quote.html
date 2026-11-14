@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Quote from Oakline Lawn & Landscape</title>
+  <link rel="stylesheet" href="../assets/shadetree.css">
+  <!-- Specs: PLT-12 client link, QTE-03 client quote page, QTE-05 approve / decline / request changes, CAT-02 branding. -->
+  <style>
+    body { --brand: #9a3412; --brand-ink: #fff; --brand-soft: #fdeee4; }
+    .from { display: flex; gap: 12px; align-items: flex-start; padding: 18px 24px; background: #fbfbfc; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .from p { color: var(--text-2); font-size: 14.5px; line-height: 1.6; }
+    .q-head { padding: 24px; }
+    .q-head h1 { font-size: 24px; letter-spacing: -0.025em; }
+    .q-total { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 18px; }
+    .q-total .money { font-size: 32px; font-weight: 800; color: var(--ink); letter-spacing: -0.025em; }
+    .photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .photos .ph { aspect-ratio: 4/3; }
+    details.terms summary { cursor: pointer; font-weight: 600; color: var(--ink); list-style: none; display: flex; justify-content: space-between; }
+    details.terms summary::-webkit-details-marker { display: none; }
+    .sheet { position: fixed; z-index: 90; left: 0; right: 0; bottom: 0; background: #fff; border-radius: 20px 20px 0 0; box-shadow: var(--sh-pop); display: none; max-width: 560px; margin: 0 auto; }
+    .sheet.is-open { display: block; animation: sheet-in .2s ease-out; }
+    @keyframes sheet-in { from { transform: translateY(24px); opacity: 0; } }
+    .sheet .grab { width: 40px; height: 4px; border-radius: 4px; background: #d6dbe2; margin: 10px auto 0; }
+    .sheet-body { padding: 18px 22px 24px; }
+    .sig-input { font-family: "Brush Script MT", "Segoe Script", cursive; font-size: 30px; height: 60px; border: 0; border-bottom: 2px solid var(--ink); border-radius: 0; padding: 0 4px; width: 100%; background: transparent; color: var(--ink); }
+    .sig-input:focus { outline: none; border-bottom-color: var(--brand); }
+    .success { text-align: center; padding: 36px 24px; }
+    .success .tick { width: 64px; height: 64px; border-radius: 50%; background: var(--brand); color: #fff; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+    .success .tick .i { width: 30px; height: 30px; stroke-width: 2.4; }
+    .actions-row { display: flex; gap: 10px; align-items: center; max-width: 720px; margin: 0 auto; }
+    .actions-row .tot { flex: 1; }
+    @media (min-width: 760px) { .cl-sticky { position: static; background: none; border: 0; padding: 0; backdrop-filter: none; } .cl-sticky .actions-row { padding: 20px 24px; border-top: 1px solid var(--line); } }
+  </style>
+</head>
+<body class="cl">
+<header class="cl-head">
+  <div class="cl-wrap">
+    <span class="cl-logo">OL</span>
+    <div class="grow"><div class="t-strong">Oakline Lawn &amp; Landscape</div><div class="t-xs t-muted">Brookfield, CT</div></div>
+    <a class="btn btn-secondary" href="tel:5553804410"><i data-i="phone"></i><span class="hide-sm">(555) 380-4410</span></a>
+  </div>
+</header>
+
+<main class="cl-wrap" style="padding-top:20px;padding-bottom:16px">
+  <article class="cl-card" id="quote">
+    <div class="q-head">
+      <div class="row between wrap gap-12">
+        <span class="t-sm t-muted">Quote Q-1041 for Hannah Brooks</span>
+        <span class="badge b-amber" id="status">Waiting for your approval</span>
+      </div>
+      <h1 class="mt-8">Spring cleanup</h1>
+      <div class="t-sm t-muted">12 Maple Street, Brookfield</div>
+      <div class="q-total"><span class="t-muted">Total</span><span class="money">$1,189.74</span></div>
+      <div class="t-sm t-muted t-right">Valid until December 9, 2026</div>
+    </div>
+    <div class="from">
+      <span class="avatar av-4">DW</span>
+      <div><div class="t-strong t-sm">Dana Whitaker</div><p class="mt-4">Hi Hannah, thanks for walking the yard with me on Tuesday. I’ve taken the side yard edging off as you asked. Happy to adjust anything else before we book it in.</p></div>
+    </div>
+    <div class="cl-pad">
+      <table class="line-items">
+        <thead><tr><th>Item</th><th class="num">Amount</th></tr></thead>
+        <tbody>
+          <tr><td><div class="t-strong">Spring cleanup</div><div class="desc">Rake beds, cut back perennials, haul debris · 1 visit</div></td><td class="num money">$385.00</td></tr>
+          <tr><td><div class="t-strong">Mulch install</div><div class="desc">Hardwood mulch, edged beds, 3 in depth · 6 cu yd × $78.00</div></td><td class="num money">$468.00</td></tr>
+          <tr><td><div class="t-strong">Bed edging</div><div class="desc">Natural spade edge, front beds · 90 lin ft × $2.25</div></td><td class="num money">$202.50</td></tr>
+          <tr><td><div class="t-strong">Hedge trimming</div><div class="desc">Front boxwoods and side privet · 2.5 hours × $75.00</div></td><td class="num money">$187.50</td></tr>
+        </tbody>
+      </table>
+      <div class="totals mt-16">
+        <div class="tr"><span class="t-muted">Subtotal</span><span class="money">$1,243.00</span></div>
+        <div class="tr"><span class="t-muted">Discount (10%)</span><span class="money">−$124.30</span></div>
+        <div class="tr"><span class="t-muted">CT sales tax (6.35%)</span><span class="money">$71.04</span></div>
+        <div class="tr grand"><span>Total</span><span class="money">$1,189.74</span></div>
+      </div>
+    </div>
+    <div class="cl-pad" style="border-top:1px solid var(--line)">
+      <div class="section-title">Photos from the site visit</div>
+      <div class="photos"><div class="ph"></div><div class="ph ph-2"></div><div class="ph ph-3"></div></div>
+    </div>
+    <div class="cl-pad" style="border-top:1px solid var(--line)">
+      <details class="terms"><summary>Terms <i data-i="chevron-down" class="t-muted"></i></summary><p class="t-sm mt-8" style="color:var(--text-2)">Work is scheduled after approval. Prices include disposal of green waste. Payment is due on completion. Weather delays are rescheduled at no cost.</p></details>
+      <a class="btn btn-ghost btn-sm mt-12" href="#" style="padding-left:0"><i data-i="download"></i>Download PDF</a>
+    </div>
+    <div class="cl-sticky" id="actions">
+      <div class="actions-row">
+        <div class="tot"><div class="t-xs t-muted">Total</div><div class="money t-strong" style="font-size:18px">$1,189.74</div></div>
+        <div style="position:relative">
+          <button class="btn btn-secondary btn-lg btn-icon" data-pop="more-actions" aria-label="More options"><i data-i="more"></i></button>
+          <div class="pop" id="more-actions" style="right:0;bottom:52px;top:auto">
+            <button class="menu-item" data-open="changes"><i data-i="message"></i>Ask for changes</button>
+            <button class="menu-item" data-open="decline"><i data-i="x"></i>Decline quote</button>
+          </div>
+        </div>
+        <button class="btn btn-brand btn-lg" data-open="approve" style="min-width:160px"><i data-i="check"></i>Approve quote</button>
+      </div>
+    </div>
+  </article>
+
+  <article class="cl-card success" id="done" hidden>
+    <span class="tick"><i data-i="check"></i></span>
+    <h1 style="font-size:22px">Thanks, Hannah. You’re all set.</h1>
+    <p class="t-muted mt-8" style="max-width:40ch;margin-left:auto;margin-right:auto">Oakline Lawn &amp; Landscape has your approval and will be in touch to schedule the work. We’ve emailed you a copy.</p>
+    <div class="flow-wrap mt-24" style="max-width:340px;margin-left:auto;margin-right:auto">
+      <ol class="flow flow-brand"><li class="done"><span class="node"><i data-i="check"></i></span>Approved</li><li class="current"><span class="node"></span>Scheduled</li><li><span class="node"></span>Paid</li></ol>
+    </div>
+    <div class="row mt-24" style="justify-content:center"><a class="btn btn-secondary" href="#"><i data-i="download"></i>Download approved PDF</a></div>
+  </article>
+
+  <div class="cl-powered">Sent with <span class="logo"><span class="logo-mark" data-logo-mark></span>Shadetree</span></div>
+</main>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="approve" role="dialog" aria-labelledby="ap-title">
+  <div class="grab"></div>
+  <div class="sheet-body">
+    <h2 id="ap-title" style="font-size:19px">Approve this quote</h2>
+    <p class="t-sm t-muted mt-4">Spring cleanup · <span class="money t-strong">$1,189.74</span></p>
+    <div class="field mt-24"><label class="label">Type your full name to sign</label><input class="sig-input" id="sig" placeholder="Your name" autocomplete="name"></div>
+    <label class="check mt-16"><input type="checkbox" id="agree" style="accent-color:var(--brand)"><span class="t-sm">I agree to the quote and its terms.</span></label>
+    <button class="btn btn-brand btn-xl btn-block mt-24" id="do-approve" disabled>Approve quote</button>
+    <p class="t-xs t-muted t-center mt-12">We record your name, the time and this exact version of the quote.</p>
+  </div>
+</div>
+<div class="sheet" id="changes" role="dialog" aria-labelledby="ch-title">
+  <div class="grab"></div>
+  <div class="sheet-body">
+    <h2 id="ch-title" style="font-size:19px">What would you like changed?</h2>
+    <p class="t-sm t-muted mt-4">Dana will update the quote and send you a new version.</p>
+    <textarea class="textarea mt-16" placeholder="For example: can you add mulch to the back beds?"></textarea>
+    <button class="btn btn-brand btn-lg btn-block mt-16" data-close data-toast="Sent to Oakline Lawn & Landscape">Send to Dana</button>
+  </div>
+</div>
+<div class="sheet" id="decline" role="dialog" aria-labelledby="de-title">
+  <div class="grab"></div>
+  <div class="sheet-body">
+    <h2 id="de-title" style="font-size:19px">Decline this quote?</h2>
+    <p class="t-sm t-muted mt-4">Letting Dana know why is optional, but it helps.</p>
+    <textarea class="textarea mt-16" placeholder="Reason (optional)"></textarea>
+    <div class="row mt-16"><button class="btn btn-secondary btn-lg grow" data-close>Keep quote</button><button class="btn btn-danger btn-lg grow" data-close data-toast="Quote declined">Decline</button></div>
+  </div>
+</div>
+<script src="../assets/icons.js"></script>
+<script src="../assets/app.js"></script>
+<script>
+  const sig = document.getElementById("sig"), agree = document.getElementById("agree"), btn = document.getElementById("do-approve");
+  const check = () => (btn.disabled = !(sig.value.trim().split(/\s+/).length >= 2 && agree.checked));
+  sig.oninput = check; agree.onchange = check;
+  btn.onclick = () => {
+    mockClose();
+    document.getElementById("quote").hidden = true;
+    document.getElementById("done").hidden = false;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+</script>
+</body>
+</html>

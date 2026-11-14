@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shadetree mockups</title>
+  <link rel="stylesheet" href="assets/shadetree.css">
+  <style>
+    body { background: var(--bg); }
+    .wrap { max-width: 1240px; margin: 0 auto; padding: 40px 24px 80px; }
+    .intro { display: grid; grid-template-columns: 1fr 360px; gap: 40px; align-items: end; padding-bottom: 32px; border-bottom: 1px solid var(--line); }
+    .intro h1 { font-size: 34px; letter-spacing: -0.03em; }
+    .intro p { color: var(--text-2); margin-top: 10px; max-width: 60ch; font-size: 15px; }
+    .group { margin-top: 44px; }
+    .group > h2 { font-size: 18px; }
+    .group > p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 18px; margin-top: 18px; }
+    .card { display: block; background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; color: inherit; text-decoration: none !important; transition: border-color .12s, box-shadow .12s; }
+    .card:hover { border-color: #cbd5e1; box-shadow: var(--sh-pop); }
+    .thumb { height: 180px; overflow: hidden; background: #eef1f5; border-bottom: 1px solid var(--line); position: relative; }
+    .thumb iframe { width: 1440px; height: 960px; border: 0; transform: scale(.19); transform-origin: 0 0; pointer-events: none; }
+    .thumb.mobile iframe { width: 390px; height: 844px; transform: scale(.42); left: calc(50% - 82px); position: absolute; top: 8px; border-radius: 16px; box-shadow: var(--sh-pop); }
+    .card .body { padding: 12px 14px 14px; }
+    .card .t { font-weight: 650; color: var(--ink); }
+    .card .d { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .card .specs { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 10px; }
+    .card .specs span { font-size: 11px; font-weight: 600; color: var(--text-2); background: var(--slate-100); padding: 2px 6px; border-radius: 4px; }
+    @media (max-width: 860px) { .intro { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header class="intro">
+    <div>
+      <a class="logo" href="#"><span class="logo-mark" data-logo-mark></span><span>Shadetree</span></a>
+      <h1 class="mt-24">Product mockups</h1>
+      <p>Clickable HTML mockups for milestones M1–M5, built directly from the specs in <code>docs/specs</code>. They show layout, content, states and flows. They are not production code: implementation choices belong to each spec’s developer (see PLT-01 and PLT-05).</p>
+    </div>
+    <div class="panel" style="padding:16px 18px">
+      <div class="t-strong">How to read these</div>
+      <ul class="t-sm" style="color:var(--text-2);padding-left:18px;margin:8px 0 0">
+        <li>The sample business is <strong>Oakline Lawn &amp; Landscape</strong>. Its brand color (rust) shows on client pages; Shadetree green is used everywhere staff work.</li>
+        <li>Buttons, menus, dialogs, ⌘K search and the quote builder totals work.</li>
+        <li>Resize to 360 px wide to see the mobile layouts.</li>
+      </ul>
+      <a class="btn btn-secondary btn-sm mt-12" href="design-system.html">Design system</a>
+    </div>
+  </header>
+
+  <section class="group"><h2>Marketing &amp; sign-up</h2><p>What a prospective owner sees before signing in.</p>
+    <div class="cards">
+      <a class="card" href="marketing/home.html"><div class="thumb"><iframe loading="lazy" src="marketing/home.html" tabindex="-1" title="Home"></iframe></div><div class="body"><div class="t">Home</div><div class="d">Core loop as the hero, real product UI, one call to action</div><div class="specs"><span>MKT-01</span><span>MKT-04</span></div></div></a>
+      <a class="card" href="marketing/pricing.html"><div class="thumb"><iframe loading="lazy" src="marketing/pricing.html" tabindex="-1" title="Pricing"></iframe></div><div class="body"><div class="t">Pricing</div><div class="d">Plans from plan data, honest FAQ about limits</div><div class="specs"><span>MKT-01</span><span>BIL-01</span></div></div></a>
+      <a class="card" href="marketing/sign-up.html"><div class="thumb"><iframe loading="lazy" src="marketing/sign-up.html" tabindex="-1" title="Sign up"></iframe></div><div class="body"><div class="t">Sign up</div><div class="d">Three fields and terms; lands in setup</div><div class="specs"><span>ACC-01</span><span>MKT-03</span></div></div></a>
+      <a class="card" href="marketing/sign-in.html"><div class="thumb"><iframe loading="lazy" src="marketing/sign-in.html" tabindex="-1" title="Sign in"></iframe></div><div class="body"><div class="t">Sign in</div><div class="d">Error state that doesn’t reveal accounts</div><div class="specs"><span>ACC-01</span></div></div></a>
+    </div>
+  </section>
+
+  <section class="group"><h2>Getting started</h2><p>From new account to first quote in under ten minutes.</p>
+    <div class="cards">
+      <a class="card" href="app/welcome.html"><div class="thumb"><iframe loading="lazy" src="app/welcome.html" tabindex="-1" title="Setup"></iframe></div><div class="body"><div class="t">Guided setup</div><div class="d">Business, starter services, brand, first quote. Every step skippable.</div><div class="specs"><span>ACC-02</span><span>ACC-05</span><span>CAT-05</span></div></div></a>
+    </div>
+  </section>
+
+  <section class="group"><h2>Staff app</h2><p>Owners and admins, desktop and mobile.</p>
+    <div class="cards">
+      <a class="card" href="app/dashboard.html"><div class="thumb"><iframe loading="lazy" src="app/dashboard.html" tabindex="-1" title="Home"></iframe></div><div class="body"><div class="t">Home</div><div class="d">What needs you today, grouped and ordered</div><div class="specs"><span>INS-01</span><span>BIL-02</span><span>NTF-02</span></div></div></a>
+      <a class="card" href="app/requests.html"><div class="thumb"><iframe loading="lazy" src="app/requests.html" tabindex="-1" title="Requests"></iframe></div><div class="body"><div class="t">Requests inbox</div><div class="d">Triage and turn into a quote in one click</div><div class="specs"><span>CLI-04</span></div></div></a>
+      <a class="card" href="app/quote-builder.html"><div class="thumb"><iframe loading="lazy" src="app/quote-builder.html" tabindex="-1" title="Quote builder"></iframe></div><div class="body"><div class="t">Quote builder + send</div><div class="d">Live totals, catalog picker, send by email or link</div><div class="specs"><span>QTE-01</span><span>QTE-04</span><span>CAT-04</span></div></div></a>
+      <a class="card" href="app/quote.html"><div class="thumb"><iframe loading="lazy" src="app/quote.html" tabindex="-1" title="Quote"></iframe></div><div class="body"><div class="t">Approved quote</div><div class="d">Progress rail, signature evidence, activity, revisions</div><div class="specs"><span>QTE-05</span><span>QTE-06</span></div></div></a>
+      <a class="card" href="app/quotes.html"><div class="thumb"><iframe loading="lazy" src="app/quotes.html" tabindex="-1" title="Quotes"></iframe></div><div class="body"><div class="t">Quotes</div><div class="d">Status tabs, search, totals</div><div class="specs"><span>QTE-06</span></div></div></a>
+      <a class="card" href="app/schedule.html"><div class="thumb"><iframe loading="lazy" src="app/schedule.html" tabindex="-1" title="Schedule"></iframe></div><div class="body"><div class="t">Schedule</div><div class="d">Week view by crew, arrival windows, off-hours, unscheduled jobs</div><div class="specs"><span>JOB-03</span><span>CAT-06</span></div></div></a>
+      <a class="card" href="app/job.html"><div class="thumb"><iframe loading="lazy" src="app/job.html" tabindex="-1" title="Job"></iframe></div><div class="body"><div class="t">Job + schedule visit</div><div class="d">Visits, crew instructions, overlap warnings</div><div class="specs"><span>JOB-01</span><span>JOB-02</span><span>JOB-05</span></div></div></a>
+      <a class="card" href="app/jobs.html"><div class="thumb"><iframe loading="lazy" src="app/jobs.html" tabindex="-1" title="Jobs"></iframe></div><div class="body"><div class="t">Jobs</div><div class="d">Needs scheduling shortcut</div><div class="specs"><span>JOB-01</span></div></div></a>
+      <a class="card" href="app/invoice.html"><div class="thumb"><iframe loading="lazy" src="app/invoice.html" tabindex="-1" title="Invoice"></iframe></div><div class="body"><div class="t">Invoice + record payment</div><div class="d">Balance, online and offline payments</div><div class="specs"><span>PAY-01</span><span>PAY-05</span></div></div></a>
+      <a class="card" href="app/invoices.html"><div class="thumb"><iframe loading="lazy" src="app/invoices.html" tabindex="-1" title="Invoices"></iframe></div><div class="body"><div class="t">Invoices</div><div class="d">Outstanding, overdue, paid this month</div><div class="specs"><span>PAY-01</span></div></div></a>
+      <a class="card" href="app/clients.html"><div class="thumb"><iframe loading="lazy" src="app/clients.html" tabindex="-1" title="Clients"></iframe></div><div class="body"><div class="t">Clients + import</div><div class="d">Search across name, phone, street; CSV column mapping</div><div class="specs"><span>CLI-02</span><span>CLI-06</span></div></div></a>
+      <a class="card" href="app/client.html"><div class="thumb"><iframe loading="lazy" src="app/client.html" tabindex="-1" title="Client"></iframe></div><div class="body"><div class="t">Client</div><div class="d">Properties, documents, timeline, erase data</div><div class="specs"><span>CLI-01</span><span>CLI-05</span><span>INS-02</span></div></div></a>
+    </div>
+  </section>
+
+  <section class="group"><h2>Settings</h2>
+    <div class="cards">
+      <a class="card" href="app/settings.html"><div class="thumb"><iframe loading="lazy" src="app/settings.html" tabindex="-1" title="Settings"></iframe></div><div class="body"><div class="t">Business profile &amp; branding</div><div class="d">Live preview and contrast check</div><div class="specs"><span>CAT-01</span><span>CAT-02</span></div></div></a>
+      <a class="card" href="app/services.html"><div class="thumb"><iframe loading="lazy" src="app/services.html" tabindex="-1" title="Services"></iframe></div><div class="body"><div class="t">Services &amp; pricing</div><div class="d">Catalog, editor, starter services</div><div class="specs"><span>CAT-03</span><span>CAT-05</span></div></div></a>
+      <a class="card" href="app/team.html"><div class="thumb"><iframe loading="lazy" src="app/team.html" tabindex="-1" title="Team"></iframe></div><div class="body"><div class="t">Team &amp; roles</div><div class="d">Invitations, built-in and custom roles</div><div class="specs"><span>ACC-03</span><span>ACC-04</span><span>ACC-07</span></div></div></a>
+      <a class="card" href="app/automations.html"><div class="thumb"><iframe loading="lazy" src="app/automations.html" tabindex="-1" title="Automations"></iframe></div><div class="body"><div class="t">Automations</div><div class="d">Recipes, rule builder, run log</div><div class="specs"><span>NTF-04</span></div></div></a>
+      <a class="card" href="app/plan.html"><div class="thumb"><iframe loading="lazy" src="app/plan.html" tabindex="-1" title="Plan"></iframe></div><div class="body"><div class="t">Plan &amp; billing</div><div class="d">Usage, plan comparison, failed payment</div><div class="specs"><span>BIL-01</span><span>BIL-03</span><span>BIL-05</span></div></div></a>
+    </div>
+  </section>
+
+  <section class="group"><h2>Technicians</h2>
+    <div class="cards">
+      <a class="card" href="tech/my-day.html"><div class="thumb"><iframe loading="lazy" src="tech/my-day.html" tabindex="-1" title="My day"></iframe></div><div class="body"><div class="t">My day + visit</div><div class="d">Phone-first, big targets, complete with photos</div><div class="specs"><span>JOB-04</span></div></div></a>
+    </div>
+  </section>
+
+  <section class="group"><h2>Client-facing</h2><p>Branded with the business’s logo and color. No account needed.</p>
+    <div class="cards">
+      <a class="card" href="client/quote.html"><div class="thumb mobile"><iframe loading="lazy" src="client/quote.html" tabindex="-1" title="Client quote"></iframe></div><div class="body"><div class="t">Quote + approve</div><div class="d">Typed signature sheet, changes, decline</div><div class="specs"><span>QTE-03</span><span>QTE-05</span><span>PLT-12</span></div></div></a>
+      <a class="card" href="client/invoice.html"><div class="thumb mobile"><iframe loading="lazy" src="client/invoice.html" tabindex="-1" title="Client invoice"></iframe></div><div class="body"><div class="t">Invoice + pay</div><div class="d">Wallet or card, balance after partial payment</div><div class="specs"><span>PAY-02</span><span>PAY-04</span></div></div></a>
+      <a class="card" href="client/request.html"><div class="thumb mobile"><iframe loading="lazy" src="client/request.html" tabindex="-1" title="Request form"></iframe></div><div class="body"><div class="t">Request form</div><div class="d">Services, photos, timing, contact</div><div class="specs"><span>CLI-03</span></div></div></a>
+      <a class="card" href="email/quote-sent.html"><div class="thumb"><iframe loading="lazy" src="email/quote-sent.html" tabindex="-1" title="Quote email"></iframe></div><div class="body"><div class="t">Quote email</div><div class="d">Business name as sender, replies go to the business</div><div class="specs"><span>NTF-01</span><span>QTE-04</span></div></div></a>
+    </div>
+  </section>
+
+  <section class="group"><h2>Operator console</h2><p>For the Shadetree team.</p>
+    <div class="cards">
+      <a class="card" href="operator/console.html"><div class="thumb"><iframe loading="lazy" src="operator/console.html" tabindex="-1" title="Operator"></iframe></div><div class="body"><div class="t">Business directory</div><div class="d">Account actions, view as member, support tickets, audit</div><div class="specs"><span>OPS-02</span><span>OPS-03</span><span>OPS-04</span><span>OPS-05</span></div></div></a>
+      <a class="card" href="app/dashboard.html#impersonate"><div class="thumb"><iframe loading="lazy" src="app/dashboard.html#impersonate" tabindex="-1" title="Impersonation"></iframe></div><div class="body"><div class="t">Viewing as a member</div><div class="d">The banner members’ screens show during support</div><div class="specs"><span>OPS-03</span></div></div></a>
+    </div>
+  </section>
+</div>
+<script src="assets/icons.js"></script>
+</body>
+</html>

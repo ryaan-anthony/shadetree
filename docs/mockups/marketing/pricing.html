@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pricing · Shadetree</title>
+  <meta name="description" content="Free for small service businesses. Paid plans from $19/month. Pay for quotes sent, not seats.">
+  <link rel="stylesheet" href="../assets/shadetree.css">
+  <!-- Specs: MKT-01 pricing page rendered from plan data (BIL-01), FAQ about limits, cancellation and export. Prices are placeholders (09-billing open question). -->
+  <style>
+    .p-head { padding: 72px 0 32px; text-align: center; }
+    .p-head .lede { margin: 16px auto 0; }
+    .plans { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 40px; align-items: stretch; }
+    .plan { border: 1px solid var(--line); border-radius: 16px; padding: 26px; display: flex; flex-direction: column; background: #fff; }
+    .plan.pop { border-color: var(--ink); box-shadow: 0 24px 48px -24px rgba(15,23,42,.35); position: relative; }
+    .plan.pop .flag { position: absolute; top: -12px; left: 26px; background: var(--ink); color: #fff; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
+    .plan h3 { font-size: 18px; }
+    .plan .who { color: var(--muted); font-size: 14px; margin-top: 4px; min-height: 42px; }
+    .plan .price { margin-top: 18px; display: flex; align-items: baseline; gap: 4px; }
+    .plan .price b { font-size: 44px; font-weight: 800; letter-spacing: -0.04em; color: var(--ink); }
+    .plan .price span { color: var(--muted); font-size: 14px; }
+    .plan .big { margin-top: 18px; padding: 12px 14px; border-radius: 10px; background: var(--slate-50); font-size: 14px; }
+    .plan .big b { color: var(--ink); font-size: 16px; }
+    .plan ul { list-style: none; padding: 0; margin: 18px 0 24px; font-size: 14.5px; color: var(--text-2); flex: 1; }
+    .plan li { display: flex; gap: 10px; padding: 5px 0; }
+    .plan li .i { color: var(--canopy); margin-top: 3px; }
+    .every { margin-top: 56px; padding: 28px; border-radius: 16px; background: var(--bg); border: 1px solid var(--line); display: grid; grid-template-columns: 220px 1fr; gap: 24px; }
+    .every ul { columns: 3; list-style: none; padding: 0; margin: 0; font-size: 14.5px; color: var(--text-2); }
+    .every li { display: flex; gap: 8px; padding: 4px 0; break-inside: avoid; }
+    .every li .i { color: var(--canopy); margin-top: 3px; }
+    .faq { max-width: 760px; margin: 0 auto; }
+    .faq details { border-bottom: 1px solid var(--line); padding: 18px 0; }
+    .faq summary { cursor: pointer; font-weight: 650; color: var(--ink); font-size: 16.5px; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+    .faq summary::-webkit-details-marker { display: none; }
+    .faq details[open] summary .i { transform: rotate(45deg); }
+    .faq summary .i { transition: transform .15s; color: var(--muted); }
+    .faq p { color: var(--text-2); margin-top: 10px; font-size: 15.5px; line-height: 1.6; }
+    @media (max-width: 1000px) { .plans { grid-template-columns: 1fr 1fr; } .every { grid-template-columns: 1fr; } .every ul { columns: 2; } }
+    @media (max-width: 600px) { .plans { grid-template-columns: 1fr; } .every ul { columns: 1; } }
+  </style>
+</head>
+<body class="mk">
+<header class="mk-nav">
+  <div class="mk-wrap">
+    <a class="logo" href="home.html"><span class="logo-mark" data-logo-mark></span><span>Shadetree</span></a>
+    <nav aria-label="Main"><a href="home.html#how">How it works</a><a href="home.html#features">Features</a><a href="pricing.html" class="is-active">Pricing</a><a href="#">About</a></nav>
+    <div class="mk-cta"><a class="btn btn-ghost" href="sign-in.html">Sign in</a><a class="btn btn-primary" href="sign-up.html">Start free</a></div>
+  </div>
+</header>
+<main class="mk-wrap">
+  <section class="p-head">
+    <h1 style="font-size:clamp(36px,5vw,56px)">Free until it’s paying for itself.</h1>
+    <p class="lede">Every plan has the full workflow, from request to payment. You pay for how many quotes you send each month, not for how many people are on your team.</p>
+    <div class="seg mt-24" data-tabs="period"><button class="is-active" data-tab="">Monthly</button><button data-tab="">Yearly, 2 months free</button></div>
+  </section>
+
+  <div class="plans">
+    <div class="plan">
+      <h3>Free</h3><p class="who">For trying it out on real jobs</p>
+      <div class="price"><b>$0</b><span>forever</span></div>
+      <div class="big"><b>5</b> quotes a month</div>
+      <ul><li><i data-i="check"></i>2 team members</li><li><i data-i="check"></i>Online card payments</li><li><i data-i="check"></i>Request form</li><li><i data-i="check"></i>Shows “Powered by Shadetree”</li></ul>
+      <a class="btn btn-secondary btn-lg btn-block" href="sign-up.html">Start free</a>
+    </div>
+    <div class="plan">
+      <h3>Starter</h3><p class="who">For owner-operators</p>
+      <div class="price"><b>$19</b><span>/ month</span></div>
+      <div class="big"><b>30</b> quotes a month</div>
+      <ul><li><i data-i="check"></i>3 team members</li><li><i data-i="check"></i>Your brand only</li><li><i data-i="check"></i>Everything in Free</li></ul>
+      <a class="btn btn-secondary btn-lg btn-block" href="sign-up.html">Start free</a>
+    </div>
+    <div class="plan pop">
+      <span class="flag">Most popular</span>
+      <h3>Pro</h3><p class="who">For crews who are busy every day</p>
+      <div class="price"><b>$49</b><span>/ month</span></div>
+      <div class="big"><b>150</b> quotes a month</div>
+      <ul><li><i data-i="check"></i>10 team members</li><li><i data-i="check"></i>Automatic follow-ups and reminders</li><li><i data-i="check"></i>Your own email wording</li><li><i data-i="check"></i>Custom roles</li></ul>
+      <a class="btn btn-primary btn-lg btn-block" href="sign-up.html">Try Pro free for 14 days</a>
+    </div>
+    <div class="plan">
+      <h3>Business</h3><p class="who">For multiple crews or locations</p>
+      <div class="price"><b>$99</b><span>/ month</span></div>
+      <div class="big"><b>Unlimited</b> quotes</div>
+      <ul><li><i data-i="check"></i>Unlimited team</li><li><i data-i="check"></i>Multiple locations</li><li><i data-i="check"></i>Priority support</li></ul>
+      <a class="btn btn-secondary btn-lg btn-block" href="sign-up.html">Start free</a>
+    </div>
+  </div>
+
+  <div class="every">
+    <div><h3>Included on every plan</h3><p class="t-sm t-muted mt-8">Even Free.</p></div>
+    <ul>
+      <li><i data-i="check"></i>Unlimited clients</li><li><i data-i="check"></i>Online approval with signature</li><li><i data-i="check"></i>Scheduling and calendar</li>
+      <li><i data-i="check"></i>Technician mobile view</li><li><i data-i="check"></i>Invoices and card payments</li><li><i data-i="check"></i>Branded PDFs</li>
+      <li><i data-i="check"></i>Industry starter services</li><li><i data-i="check"></i>Full data export</li><li><i data-i="check"></i>Email support</li>
+    </ul>
+  </div>
+
+  <section class="mk-section">
+    <h2 class="t-center">Questions, answered</h2>
+    <div class="faq mt-32">
+      <details open><summary>What counts as a quote?<i data-i="plus"></i></summary><p>A quote counts the first time you send it, by email or by copying its link. Drafts, revisions and resends don’t count again. Jobs and invoices never count.</p></details>
+      <details><summary>What happens when I reach my limit?<i data-i="plus"></i></summary><p>We’ll let you know when you’re close. At the limit you can keep drafting, and you can upgrade in a couple of clicks to send more. Quotes you’ve already sent keep working, and clients can still approve and pay.</p></details>
+      <details><summary>Do you charge per user?<i data-i="plus"></i></summary><p>No. Each plan includes a number of team members, and technicians who only see their own visits don’t cost extra seats.</p></details>
+      <details><summary>Are there fees on card payments?<i data-i="plus"></i></summary><p>Card payments go straight to your own account with our payment processor, at their standard rates. You’ll see the exact rate before you connect.</p></details>
+      <details><summary>Can I cancel any time?<i data-i="plus"></i></summary><p>Yes. Cancel from your settings and you’ll move to Free at the end of your billing period. Nothing is deleted.</p></details>
+      <details><summary>Can I take my data with me?<i data-i="plus"></i></summary><p>Any time, on any plan. Export your clients, quotes, jobs, invoices and payments as spreadsheets, or download everything, including PDFs and photos, in one file.</p></details>
+    </div>
+  </section>
+</main>
+<footer class="mk-foot">
+  <div class="mk-wrap">
+    <div class="mk-foot-grid">
+      <div><a class="logo logo-light" href="home.html"><span class="logo-mark" data-logo-mark></span><span>Shadetree</span></a><p class="mt-16" style="max-width:30ch">Quotes, scheduling and payments for small service businesses.</p></div>
+      <div><h4>Product</h4><ul><li><a href="home.html#how">How it works</a></li><li><a href="pricing.html">Pricing</a></li><li><a href="sign-in.html">Sign in</a></li></ul></div>
+      <div><h4>Company</h4><ul><li><a href="#">About</a></li><li><a href="#">Contact</a></li><li><a href="#">Security</a></li></ul></div>
+      <div><h4>Legal</h4><ul><li><a href="#">Terms</a></li><li><a href="#">Privacy</a></li><li><a href="#">Acceptable use</a></li></ul></div>
+    </div>
+    <div class="mk-foot-base"><span>© 2026 Shadetree</span><span>Prices in USD. Shown prices are placeholders until launch.</span></div>
+  </div>
+</footer>
+<script src="../assets/icons.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

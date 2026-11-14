@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create your account · Shadetree</title>
+  <link rel="stylesheet" href="../assets/shadetree.css">
+  <!-- Specs: ACC-01 Sign up (name, email, password, terms; unconfirmed users can set up), MKT-03 terms acceptance. -->
+  <style>
+    body { background: #fff; }
+    .auth { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
+    .auth-form { display: flex; flex-direction: column; padding: 28px 40px; }
+    .auth-form .inner { width: 100%; max-width: 380px; margin: auto; }
+    .auth-form h1 { font-size: 26px; letter-spacing: -0.025em; }
+    .auth-form .input { height: 42px; }
+    .auth-side { background: var(--ink); color: #cbd5e1; padding: 56px; display: flex; flex-direction: column; justify-content: center; position: relative; overflow: hidden; }
+    .auth-side h2 { color: #fff; font-size: 30px; letter-spacing: -0.03em; line-height: 1.15; max-width: 14em; }
+    .tick-list { list-style: none; padding: 0; margin: 28px 0 0; }
+    .tick-list li { display: flex; gap: 12px; padding: 8px 0; font-size: 15px; }
+    .tick-list .i { color: var(--leaf); margin-top: 3px; }
+    .auth-side .mini { margin-top: 40px; background: #fff; color: var(--text); border-radius: 14px; padding: 16px; max-width: 360px; box-shadow: 0 30px 60px -20px rgba(0,0,0,.5); }
+    .pw-meter { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 8px; }
+    .pw-meter span { height: 4px; border-radius: 4px; background: var(--line); }
+    .pw-meter span.on { background: var(--canopy); }
+    @media (max-width: 900px) { .auth { grid-template-columns: 1fr; } .auth-side { display: none; } .auth-form { padding: 20px; } }
+  </style>
+</head>
+<body>
+<div class="auth">
+  <div class="auth-form">
+    <a class="logo" href="home.html"><span class="logo-mark" data-logo-mark></span><span>Shadetree</span></a>
+    <div class="inner">
+      <h1>Create your account</h1>
+      <p class="t-muted mt-8">Free plan, no card needed. You’ll be sending quotes in minutes.</p>
+      <form class="mt-24" onsubmit="event.preventDefault();location.href='../app/welcome.html'">
+        <div class="field"><label class="label" for="n">Your name</label><input class="input" id="n" autocomplete="name" value="Dana Whitaker"></div>
+        <div class="field"><label class="label" for="e">Work email</label><input class="input" id="e" type="email" autocomplete="email" value="dana@oaklinelawn.com"></div>
+        <div class="field"><label class="label" for="p">Password</label><input class="input" id="p" type="password" autocomplete="new-password" value="spring-cleanup-2026">
+          <div class="pw-meter" aria-hidden="true"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+          <p class="help">Good. At least 10 characters; a short phrase works well.</p>
+        </div>
+        <label class="check mt-16 t-sm"><input type="checkbox" checked><span>I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</span></label>
+        <button class="btn btn-primary btn-lg btn-block mt-24" type="submit">Create account</button>
+      </form>
+      <p class="t-sm t-muted t-center mt-24">Already have an account? <a href="sign-in.html">Sign in</a></p>
+      <p class="t-xs t-muted t-center mt-8">Invited by your team? Use the link in your invitation email instead.</p>
+    </div>
+  </div>
+  <aside class="auth-side">
+    <h2>The quote is out before you’re back in the truck.</h2>
+    <ul class="tick-list">
+      <li><i data-i="check"></i>Starter services for your trade, ready to price</li>
+      <li><i data-i="check"></i>Clients approve from their phone, no account needed</li>
+      <li><i data-i="check"></i>Free plan with the full workflow. Export your data any time.</li>
+    </ul>
+    <div class="mini">
+      <div class="row gap-12"><span class="avatar av-4" style="background:var(--canopy)"><i data-i="check" class="i-sm"></i></span><div><div class="t-strong t-ink">Quote approved</div><div class="t-sm t-muted">Hannah Brooks signed Spring cleanup</div></div><span class="money t-strong t-ink ml-auto">$1,189.74</span></div>
+    </div>
+  </aside>
+</div>
+<script src="../assets/icons.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

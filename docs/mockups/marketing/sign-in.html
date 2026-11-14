@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · Shadetree</title>
+  <link rel="stylesheet" href="../assets/shadetree.css">
+  <!-- Spec: ACC-01 Sign in (remember me, reset, lockout messaging without revealing accounts). -->
+  <style>
+    body { background: var(--bg); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 16px; }
+    .card { width: 100%; max-width: 400px; margin-top: 32px; background: #fff; border: 1px solid var(--line); border-radius: var(--r-xl); box-shadow: var(--sh-2); padding: 32px; }
+    .card h1 { font-size: 22px; letter-spacing: -0.02em; }
+    .card .input { height: 42px; }
+  </style>
+</head>
+<body>
+  <a class="logo" href="home.html"><span class="logo-mark" data-logo-mark></span><span>Shadetree</span></a>
+  <div class="card">
+    <h1>Welcome back</h1>
+    <p class="t-muted mt-4">Sign in to your account.</p>
+    <div class="banner banner-danger mt-16" style="font-size:13px"><i data-i="alert"></i><div>That email and password don’t match. Check them and try again, or reset your password.</div></div>
+    <form class="mt-16" onsubmit="event.preventDefault();location.href='../app/dashboard.html'">
+      <div class="field"><label class="label" for="e">Email</label><input class="input" id="e" type="email" autocomplete="email" value="dana@oaklinelawn.com"></div>
+      <div class="field"><div class="row between"><label class="label" for="p">Password</label><a class="t-sm" href="#" style="margin-bottom:6px">Forgot password?</a></div><input class="input is-error" id="p" type="password" autocomplete="current-password"></div>
+      <label class="check mt-16 t-sm"><input type="checkbox" checked><span>Keep me signed in on this device</span></label>
+      <button class="btn btn-primary btn-lg btn-block mt-24">Sign in</button>
+    </form>
+  </div>
+  <p class="t-sm t-muted mt-24">New to Shadetree? <a href="sign-up.html">Create a free account</a></p>
+<script src="../assets/icons.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

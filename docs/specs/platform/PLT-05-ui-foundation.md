@@ -39,6 +39,9 @@ consistent screens quickly.
 - [ ] Existing pages are migrated to the new layouts with no visual regressions of note.
 - [ ] Components meet WCAG 2.1 AA contrast and are keyboard accessible.
 
+Visual reference: [`docs/mockups/design-system.html`](../../mockups/design-system.html) and the
+screens in [`docs/mockups`](../../mockups/README.md). Treat them as design direction, not code.
+
 ## Out of scope
 
 - Brand color application per business beyond the client layout hook (CAT-02).

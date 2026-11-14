@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Q-1041 Spring cleanup · Shadetree</title>
+  <link rel="stylesheet" href="../assets/shadetree.css">
+  <!-- Specs: QTE-06 lifecycle & revisions, QTE-05 approval evidence, JOB-01 convert to job, PAY-01 create invoice. -->
+  <style>
+    .doc-head { padding: 18px 20px; display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: start; }
+    .doc-head .total { text-align: right; }
+    .doc-head .total .money { font-size: 26px; font-weight: 800; color: var(--ink); letter-spacing: -0.02em; }
+    .rail { padding: 14px 20px; border-top: 1px solid var(--line); background: var(--slate-50); }
+    .approval { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; padding: 16px 20px; border-top: 1px solid var(--line); background: linear-gradient(0deg, #fff, #f6fdf9); }
+    .sig { font-family: "Brush Script MT", "Segoe Script", cursive; font-size: 26px; color: var(--ink); line-height: 1; }
+    .rev { display: flex; gap: 10px; align-items: center; padding: 10px 18px; border-top: 1px solid var(--line-2); font-size: 13.5px; }
+    .rev:first-child { border-top: 0; }
+    @media (max-width: 640px) { .doc-head { grid-template-columns: 1fr; } .doc-head .total { text-align: left; } .approval { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body data-app="staff" data-nav="quotes" data-crumbs="Quotes:quotes.html|Q-1041">
+<main class="content">
+  <div class="page-head">
+    <div>
+      <div class="row gap-12"><h1>Spring cleanup</h1><span class="badge b-green">Approved</span></div>
+      <p class="lede">Q-1041 for <a href="client.html">Hannah Brooks</a>, 12 Maple Street</p>
+    </div>
+    <div class="actions">
+      <div style="position:relative">
+        <button class="btn btn-secondary btn-icon" data-pop="q-more" aria-label="More actions"><i data-i="more"></i></button>
+        <div class="pop" id="q-more" style="right:0;top:40px">
+          <a class="menu-item" href="quote-builder.html"><i data-i="copy"></i>Duplicate</a>
+          <a class="menu-item" href="../client/quote.html" target="_blank"><i data-i="eye"></i>View as client</a>
+          <button class="menu-item" data-toast="PDF downloaded"><i data-i="download"></i>Download PDF</button>
+          <div class="menu-sep"></div>
+          <button class="menu-item"><i data-i="archive"></i>Archive</button>
+        </div>
+      </div>
+      <a class="btn btn-secondary" href="invoice.html"><i data-i="invoice"></i>Create invoice</a>
+      <a class="btn btn-primary" href="job.html"><i data-i="calendar"></i>Schedule job</a>
+    </div>
+  </div>
+
+  <div class="split-wide">
+    <div class="stack">
+      <section class="panel">
+        <div class="doc-head">
+          <div>
+            <div class="t-sm t-muted">Sent Nov 9 to hannah.brooks@email.com</div>
+            <div class="t-sm t-muted">Valid until Dec 9, 2026</div>
+          </div>
+          <div class="total"><div class="t-xs t-muted">Total</div><div class="money">$1,189.74</div></div>
+        </div>
+        <div class="rail flow-wrap">
+          <ol class="flow" aria-label="Progress">
+            <li class="done"><span class="node"><i data-i="check"></i></span>Requested</li>
+            <li class="done"><span class="node"><i data-i="check"></i></span>Quoted</li>
+            <li class="done"><span class="node"><i data-i="check"></i></span>Approved</li>
+            <li class="current"><span class="node"></span>Schedule</li>
+            <li><span class="node"></span>Done</li>
+            <li><span class="node"></span>Invoiced</li>
+            <li><span class="node"></span>Paid</li>
+          </ol>
+        </div>
+        <div class="approval">
+          <span class="avatar avatar-lg av-4" style="background:var(--canopy)"><i data-i="check" class="i-lg"></i></span>
+          <div>
+            <div class="t-strong">Approved by Hannah Brooks</div>
+            <div class="t-sm t-muted">Today at 9:14 AM from an iPhone. Accepted your terms. Revision 2.</div>
+          </div>
+          <div class="sig" aria-label="Typed signature">Hannah Brooks</div>
+        </div>
+      </section>
+
+      <section class="panel flush">
+        <div class="panel-head"><h2>Line items</h2><span class="badge b-slate plain"><i data-i="lock" class="i-sm"></i>Locked after approval</span></div>
+        <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Amount</th></tr></thead>
+          <tbody>
+            <tr><td class="primary">Spring cleanup<span class="sub">Rake beds, cut back perennials, haul debris</span></td><td class="num">1 visit</td><td class="num">$385.00</td><td class="num money">$385.00</td></tr>
+            <tr><td class="primary">Mulch install<span class="sub">Hardwood mulch, edged beds, 3 in depth</span></td><td class="num">6 cu yd</td><td class="num">$78.00</td><td class="num money">$468.00</td></tr>
+            <tr><td class="primary">Bed edging<span class="sub">Front beds only (side yard removed in revision 2)</span></td><td class="num">90 lin ft</td><td class="num">$2.25</td><td class="num money">$202.50</td></tr>
+            <tr><td class="primary">Hedge trimming<span class="sub">Front boxwoods and side privet</span></td><td class="num">2.5 hour</td><td class="num">$75.00</td><td class="num money">$187.50</td></tr>
+          </tbody>
+          <tfoot>
+            <tr><td colspan="3" class="t-right t-muted">Subtotal</td><td class="num money">$1,243.00</td></tr>
+            <tr><td colspan="3" class="t-right t-muted">Discount 10%</td><td class="num money">−$124.30</td></tr>
+            <tr><td colspan="3" class="t-right t-muted">CT sales tax 6.35%</td><td class="num money">$71.04</td></tr>
+            <tr class="total"><td colspan="3" class="t-right">Total</td><td class="num money">$1,189.74</td></tr>
+          </tfoot>
+        </table>
+        </div>
+      </section>
+    </div>
+
+    <aside class="stack">
+      <section class="panel">
+        <div class="panel-head"><h2>Activity</h2></div>
+        <div class="panel-body">
+          <ol class="timeline">
+            <li><span class="tl-dot green"><i data-i="check"></i></span><div><span class="t-strong">Approved</span> by Hannah Brooks</div><div class="tl-time">Today, 9:14 AM</div></li>
+            <li><span class="tl-dot"></span><div>Viewed revision 2</div><div class="tl-time">Today, 9:11 AM</div></li>
+            <li><span class="tl-dot blue"><i data-i="send"></i></span><div><span class="t-strong">Revision 2 sent</span> by Dana Whitaker</div><div class="tl-time">Yesterday, 4:40 PM</div></li>
+            <li><span class="tl-dot amber"><i data-i="message"></i></span><div><span class="t-strong">Changes requested</span></div><div class="tl-note">“Can you skip the side yard edging? We’re putting a fence there in the spring.”</div><div class="tl-time">Nov 11, 7:02 PM</div></li>
+            <li><span class="tl-dot"></span><div>Viewed 2 times</div><div class="tl-time">Nov 9–11</div></li>
+            <li><span class="tl-dot blue"><i data-i="send"></i></span><div><span class="t-strong">Sent</span> by email by Dana Whitaker</div><div class="tl-time">Nov 9, 10:20 AM</div></li>
+            <li><span class="tl-dot"></span><div>Created from <a href="requests.html">request R-208</a></div><div class="tl-time">Nov 9, 10:02 AM</div></li>
+          </ol>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2>Revisions</h2></div>
+        <div class="rev"><span class="badge b-green plain">Rev 2</span><span class="grow">Approved version</span><span class="money t-strong">$1,189.74</span></div>
+        <div class="rev"><span class="badge b-slate plain">Rev 1</span><span class="grow t-muted">Superseded Nov 12</span><span class="money t-muted">$1,297.42</span><a href="#" class="t-sm">View</a></div>
+      </section>
+    </aside>
+  </div>
+</main>
+<script src="../assets/icons.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Operator console · Shadetree</title>
+  <link rel="stylesheet" href="../assets/shadetree.css">
+  <!-- Specs: OPS-01 operator access & audit, OPS-02 business directory, OPS-03 impersonation, OPS-04 account actions, OPS-05 support tickets. -->
+  <style>
+    .op-top { height: 52px; background: #3b0764; background: linear-gradient(90deg, #1e1b4b, #0f172a); color: #c7d2fe; display: flex; align-items: center; gap: 24px; padding: 0 20px; }
+    .op-top .logo { color: #fff; font-size: 16px; }
+    .op-top .env { font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 4px; background: #4338ca; color: #fff; }
+    .op-top nav { display: flex; gap: 4px; }
+    .op-top nav a { color: #c7d2fe; padding: 6px 10px; border-radius: 6px; font-size: 13.5px; font-weight: 600; text-decoration: none; }
+    .op-top nav a.is-active, .op-top nav a:hover { background: rgba(255,255,255,.1); color: #fff; }
+    .op-top nav { overflow-x: auto; scrollbar-width: none; min-width: 0; }
+    .op > * , .detail { min-width: 0; }
+    .op { display: grid; grid-template-columns: 420px minmax(0, 1fr); min-height: calc(100vh - 52px); }
+    .dir { border-right: 1px solid var(--line); background: #fff; }
+    .biz { display: grid; grid-template-columns: 1fr auto; gap: 4px; padding: 12px 16px; border-bottom: 1px solid var(--line-2); cursor: pointer; }
+    .biz:hover { background: #fafbfc; }
+    .biz.is-active { background: #eef2ff; box-shadow: inset 3px 0 0 #4338ca; }
+    .detail { padding: 24px 28px; }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); }
+    .metrics > div { padding: 14px 18px; }
+    .metrics > div + div { border-left: 1px solid var(--line); }
+    .metrics .v { font-size: 20px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+    @media (max-width: 960px) { .op { grid-template-columns: 1fr; } .metrics { grid-template-columns: 1fr 1fr; } }
+  </style>
+</head>
+<body>
+<header class="op-top">
+  <a class="logo logo-light" href="#"><span class="logo-mark" data-logo-mark style="width:24px;height:24px"></span><span>Shadetree</span></a>
+  <span class="env">OPERATOR</span>
+  <nav><a class="is-active" href="#">Businesses</a><a href="#">Support <span class="count" style="background:#6366f1">4</span></a><a href="#">Plans</a><a href="#">Presets</a><a href="#">Feature flags</a><a href="#">Audit log</a></nav>
+  <span class="ml-auto row t-sm"><span class="avatar avatar-sm av-6">AT</span>Alex T.</span>
+</header>
+
+<div class="op">
+  <section class="dir">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--line)">
+      <div class="input-icon"><i data-i="search"></i><input class="input" placeholder="Business name or member email" value="oak"></div>
+      <div class="row wrap mt-8"><button class="chip is-on">All plans</button><button class="chip">Past due</button><button class="chip">Trial</button><button class="chip">Suspended</button></div>
+    </div>
+    <div class="biz is-active"><div><div class="t-strong">Oakline Lawn &amp; Landscape</div><div class="t-xs t-muted">dana@oaklinelawn.com · Brookfield, CT</div></div><div class="t-right"><span class="badge b-amber">Past due</span><div class="t-xs t-muted mt-4">Pro</div></div></div>
+    <div class="biz"><div><div class="t-strong">Oakridge Pest Solutions</div><div class="t-xs t-muted">mike@oakridgepest.com · Tulsa, OK</div></div><div class="t-right"><span class="badge b-green">Active</span><div class="t-xs t-muted mt-4">Starter</div></div></div>
+    <div class="biz"><div><div class="t-strong">Oak &amp; Ivy Cleaning</div><div class="t-xs t-muted">hello@oakandivy.co · Raleigh, NC</div></div><div class="t-right"><span class="badge b-blue">Trial</span><div class="t-xs t-muted mt-4">Pro trial, 9 days left</div></div></div>
+    <div class="biz"><div><div class="t-strong">Big Oak Handyman</div><div class="t-xs t-muted">big.oak.handyman@email.com</div></div><div class="t-right"><span class="badge b-slate">Free</span><div class="t-xs t-muted mt-4">Stalled at setup</div></div></div>
+  </section>
+
+  <section class="detail">
+    <div class="row between wrap gap-12">
+      <div class="row gap-12"><span class="biz-logo" style="width:44px;height:44px;font-size:16px;border-radius:10px">OL</span><div><h1 style="font-size:20px">Oakline Lawn &amp; Landscape</h1><div class="t-sm t-muted">Signed up Mar 2, 2025 · last active 4 minutes ago</div></div></div>
+      <div class="row">
+        <div style="position:relative"><button class="btn btn-secondary" data-pop="acts">Account actions<i data-i="chevron-down"></i></button>
+          <div class="pop" id="acts" style="right:0;top:40px;width:240px">
+            <button class="menu-item"><i data-i="star"></i>Comp a plan</button>
+            <button class="menu-item"><i data-i="clock"></i>Extend trial</button>
+            <button class="menu-item"><i data-i="tag"></i>Apply coupon</button>
+            <button class="menu-item"><i data-i="mail"></i>Send password reset</button>
+            <div class="menu-sep"></div>
+            <button class="menu-item" style="color:var(--amber)"><i data-i="pause"></i>Suspend business</button>
+            <button class="menu-item" style="color:var(--red)"><i data-i="trash"></i>Schedule deletion</button>
+          </div>
+        </div>
+        <button class="btn btn-dark" data-open="imp"><i data-i="eye"></i>View as member</button>
+      </div>
+    </div>
+
+    <section class="panel metrics mt-24">
+      <div><div class="t-sm t-muted">Plan</div><div class="v">Pro</div><div class="t-xs t-amber">Payment failed Nov 11</div></div>
+      <div><div class="t-sm t-muted">Quotes this period</div><div class="v">41 / 150</div><div class="t-xs t-muted">Resets Dec 1</div></div>
+      <div><div class="t-sm t-muted">Members</div><div class="v">4</div><div class="t-xs t-muted">1 pending invite</div></div>
+      <div><div class="t-sm t-muted">Payments account</div><div class="v" style="font-size:16px;margin-top:4px"><span class="badge b-green">Active</span></div><div class="t-xs t-muted">Connected May 2025</div></div>
+    </section>
+
+    <div class="tabs mt-24" data-tabs="op"><button class="is-active" data-tab="ov">Overview</button><button data-tab="tk">Support tickets <span class="n">1</span></button><button data-tab="au">Audit log</button></div>
+
+    <div data-group="op" data-panel="ov" class="grid-2 mt-16">
+      <section class="panel">
+        <div class="panel-head"><h2>Members</h2></div>
+        <ul class="list">
+          <li><span class="avatar av-4">DW</span><div class="grow"><div class="title">Dana Whitaker</div><div class="meta">Owner · dana@oaklinelawn.com</div></div><span class="t-xs t-muted">4 min ago</span></li>
+          <li><span class="avatar av-2">PS</span><div class="grow"><div class="title">Priya Shah</div><div class="meta">Admin</div></div><span class="t-xs t-muted">12 min ago</span></li>
+          <li><span class="avatar av-1">MR</span><div class="grow"><div class="title">Marcus Reyes</div><div class="meta">Technician</div></div><span class="t-xs t-muted">Today</span></li>
+          <li><span class="avatar av-3">LK</span><div class="grow"><div class="title">Leo Kim</div><div class="meta">Crew lead (custom)</div></div><span class="t-xs t-muted">Today</span></li>
+        </ul>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2>Activity, last 30 days</h2></div>
+        <div class="panel-body"><dl class="kv"><dt>Clients</dt><dd>248</dd><dt>Quotes sent</dt><dd>52</dd><dt>Jobs completed</dt><dd>61</dd><dt>Invoices paid</dt><dd>44</dd><dt>Setup checklist</dt><dd>Complete</dd></dl></div>
+        <div class="panel-foot"><div class="section-title" style="margin-bottom:6px">Internal notes</div><div class="t-sm" style="color:var(--text-2)">Beta customer since spring 2025. Asked about multi-location for a second yard in Danbury. <span class="t-muted">Alex, Oct 2</span></div></div>
+      </section>
+    </div>
+    <div data-group="op" data-panel="tk" hidden class="mt-16">
+      <section class="panel">
+        <div class="panel-head"><div><h2>Can’t change the tax on one invoice</h2><div class="sub">From Priya Shah · Billing · opened 2 h ago from Invoices › INV-2212</div></div><span class="badge b-blue">Open</span></div>
+        <div class="panel-body"><p style="color:var(--text-2)">Westgate is tax exempt for this building only. How do I take tax off just this invoice?</p></div>
+        <div class="panel-foot"><textarea class="textarea" placeholder="Reply to Priya (also sent by email)"></textarea><div class="row mt-8"><label class="check t-sm"><input type="checkbox">Internal note only</label><button class="btn btn-primary ml-auto" data-toast="Reply sent">Send reply</button></div></div>
+      </section>
+    </div>
+    <div data-group="op" data-panel="au" hidden class="mt-16">
+      <section class="panel"><table class="table"><thead><tr><th>When</th><th>Operator</th><th>Action</th><th>Reason</th></tr></thead><tbody>
+        <tr><td class="t-muted">Oct 2</td><td>Alex T.</td><td>Viewed as Dana Whitaker (read-only), 6 min</td><td>Ticket: PDF logo looks blurry</td></tr>
+        <tr><td class="t-muted">Sep 14</td><td>Alex T.</td><td>Extended Pro trial by 7 days</td><td>Beta feedback call</td></tr>
+      </tbody></table></section>
+    </div>
+  </section>
+</div>
+
+<div class="modal" id="imp" role="dialog" aria-labelledby="imp-title">
+  <div class="modal-head"><div><h2 id="imp-title">View Oakline as a member</h2><p>Read-only by default. Billing, passwords and payment settings are always blocked. This is recorded in the audit log.</p></div><button class="icon-btn" data-close aria-label="Close"><i data-i="x"></i></button></div>
+  <div class="modal-body">
+    <div class="field"><label class="label">Member</label><select class="select"><option>Dana Whitaker (Owner)</option><option>Priya Shah (Admin)</option></select></div>
+    <div class="field"><label class="label">Reason</label><input class="input" value="Ticket from Priya: tax on one invoice"></div>
+  </div>
+  <div class="modal-foot"><button class="btn btn-secondary" data-close>Cancel</button><a class="btn btn-dark" href="../app/dashboard.html#impersonate">Start read-only view</a></div>
+</div>
+<script src="../assets/icons.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

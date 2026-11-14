@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>New quote · Shadetree</title>
+  <link rel="stylesheet" href="../assets/shadetree.css">
+  <!-- Specs: QTE-01 Quote builder, QTE-04 Send quote, CAT-03 item picker, CAT-04 taxes, BIL-03 usage hint, PLT-08 totals. -->
+  <style>
+    .client-card { display: flex; gap: 12px; align-items: center; padding: 14px 18px; }
+    .prop { display: flex; gap: 10px; align-items: center; padding: 12px 18px; border-top: 1px solid var(--line-2); background: var(--slate-50); border-radius: 0 0 var(--r-lg) var(--r-lg); font-size: 13.5px; }
+    .title-input { border: 0; padding: 0; height: auto; font-size: 20px; font-weight: 700; letter-spacing: -0.015em; color: var(--ink); width: 100%; background: transparent; }
+    .title-input:focus { outline: none; box-shadow: none; }
+    .msg-input { border: 0; padding: 0; min-height: 44px; resize: none; width: 100%; color: var(--text-2); background: transparent; font-size: 14px; line-height: 1.5; }
+    .msg-input:focus { outline: none; }
+    .li { width: 100%; border-collapse: collapse; }
+    .li th { font-size: 12.5px; font-weight: 600; color: var(--muted); text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); background: var(--slate-50); }
+    .li th:first-child { padding-left: 18px; }
+    .li td { padding: 8px; border-bottom: 1px solid var(--line-2); vertical-align: top; }
+    .li td:first-child { padding-left: 10px; width: 24px; }
+    .li .grip { color: #c0c8d4; cursor: grab; padding-top: 9px; }
+    .li .name { font-weight: 600; color: var(--ink); border: 1px solid transparent; border-radius: var(--r-sm); padding: 6px 8px; width: 100%; background: transparent; }
+    .li .desc { border: 1px solid transparent; border-radius: var(--r-sm); padding: 2px 8px 6px; width: 100%; color: var(--muted); font-size: 13px; background: transparent; resize: none; min-height: 24px; }
+    .li .cell { border: 1px solid transparent; border-radius: var(--r-sm); height: 34px; padding: 0 8px; width: 100%; text-align: right; background: transparent; font-variant-numeric: tabular-nums; }
+    .li tr:hover .name, .li tr:hover .desc, .li tr:hover .cell { border-color: var(--line); background: #fff; }
+    .li .name:focus, .li .desc:focus, .li .cell:focus { outline: none; border-color: var(--canopy); box-shadow: var(--ring); background: #fff; }
+    .li .amt { text-align: right; padding-top: 15px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .li .unit { font-size: 12px; color: var(--muted); text-align: right; padding: 2px 8px 0; }
+    .li .rm { opacity: 0; transition: opacity .1s; margin-top: 4px; }
+    .li tr:hover .rm, .li .rm:focus { opacity: 1; }
+    .li .tax-pill { display: inline-flex; align-items: center; gap: 4px; margin: 2px 8px 0; font-size: 11.5px; color: var(--muted); }
+    .add-row { display: flex; gap: 8px; padding: 12px 18px; position: relative; }
+    .picker { left: 18px; top: 52px; width: min(460px, calc(100% - 36px)); padding: 0; }
+    .picker .p-search { padding: 10px; border-bottom: 1px solid var(--line); }
+    .picker .p-list { max-height: 320px; overflow: auto; padding: 6px; }
+    .picker .p-item { display: flex; gap: 12px; align-items: center; width: 100%; padding: 8px 10px; border: 0; background: none; border-radius: var(--r-sm); text-align: left; cursor: pointer; }
+    .picker .p-item:hover { background: var(--sunken); }
+    .picker .p-item .money { margin-left: auto; font-weight: 600; color: var(--ink); }
+    .sum { position: sticky; top: calc(var(--top-h) + 16px); }
+    .sum .tr { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13.5px; }
+    .sum .tr .money { color: var(--ink); }
+    .sum .grand { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 12px; font-size: 15px; font-weight: 700; color: var(--ink); align-items: baseline; }
+    .sum .grand .money { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+    .thumbs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .thumbs .ph { width: 76px; height: 60px; }
+    .thumbs .add { width: 76px; height: 60px; border: 1px dashed #cbd5e1; border-radius: var(--r); display: flex; align-items: center; justify-content: center; color: var(--muted); background: #fff; cursor: pointer; }
+    details.more { border-top: 1px solid var(--line); }
+    details.more summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 14px 18px; font-weight: 600; color: var(--ink); font-size: 13.5px; }
+    details.more summary::-webkit-details-marker { display: none; }
+    details.more summary .i { color: var(--muted); transition: transform .15s; }
+    details.more[open] summary .i:first-child { transform: rotate(90deg); }
+    details.more .d-body { padding: 0 18px 18px; }
+    .mobile-bar { display: none; }
+    @media (max-width: 1100px) { .sum { position: static; } }
+    @media (max-width: 720px) {
+      .li thead { display: none; }
+      .li tr { display: grid; grid-template-columns: 1fr 72px 100px 32px; grid-template-areas: "n n n r" "q q p p" "a a a a"; padding: 8px 10px; border-bottom: 1px solid var(--line-2); }
+      .li td { border: 0; padding: 2px; }
+      .li td:first-child { display: none; }
+      .li td.c-name { grid-area: n; } .li td.c-qty { grid-area: q; } .li td.c-price { grid-area: p; } .li td.c-amt { grid-area: a; padding-top: 0; } .li td.c-rm { grid-area: r; }
+      .li .rm { opacity: 1; }
+      .mobile-bar { display: flex; position: sticky; bottom: 0; z-index: 25; background: #fff; border-top: 1px solid var(--line); padding: 10px 12px; margin: 16px -12px -88px; gap: 10px; align-items: center; }
+      .page-head .actions .btn-primary { display: none; }
+      .prop { flex-wrap: wrap; }
+      .prop .select { width: 100% !important; }
+    }
+  </style>
+</head>
+<body data-app="staff" data-nav="quotes" data-crumbs="Quotes:quotes.html|New quote">
+<main class="content">
+  <div class="page-head">
+    <div>
+      <div class="row gap-12"><h1>New quote</h1><span class="badge b-slate">Draft</span></div>
+      <p class="lede">Q-1043 · <span class="t-muted">Draft saved 10 seconds ago</span></p>
+    </div>
+    <div class="actions">
+      <a class="btn btn-ghost" href="../client/quote.html" target="_blank"><i data-i="eye"></i>Preview as client</a>
+      <button class="btn btn-secondary" data-toast="Draft saved">Save draft</button>
+      <button class="btn btn-primary" data-open="send"><i data-i="send"></i>Send quote</button>
+    </div>
+  </div>
+
+  <div class="split">
+    <div class="stack">
+      <!-- Client & property -->
+      <section class="panel">
+        <div class="client-card">
+          <span class="avatar avatar-lg av-5">HB</span>
+          <div class="grow">
+            <div class="row"><a class="t-strong" href="client.html">Hannah Brooks</a><span class="tag">Residential</span></div>
+            <div class="t-sm t-muted row wrap" style="gap:4px 14px"><span class="row gap-4"><i data-i="mail" class="i-sm"></i>hannah.brooks@email.com</span><span class="row gap-4"><i data-i="phone" class="i-sm"></i>(555) 301-7712</span></div>
+          </div>
+          <button class="btn btn-ghost btn-sm">Change</button>
+        </div>
+        <div class="prop">
+          <i data-i="map-pin" class="t-muted"></i>
+          <div class="grow"><span class="t-strong">12 Maple Street</span>, Brookfield, CT 06804 <span class="t-muted">· Gate code 4417, dog in back yard</span></div>
+          <select class="select" style="width:auto;height:30px;font-size:13px"><option>12 Maple Street</option><option>Add another property…</option></select>
+        </div>
+      </section>
+
+      <!-- Quote body -->
+      <section class="panel">
+        <div class="panel-body" style="padding-bottom:10px">
+          <input class="title-input" value="Spring cleanup and bed refresh" aria-label="Quote title">
+          <textarea class="msg-input mt-8" aria-label="Message to client">Hi Hannah, thanks for walking the yard with me on Tuesday. Here’s everything we talked about. Happy to adjust anything before we book it in.</textarea>
+        </div>
+        <table class="li" id="li" aria-label="Line items">
+          <thead><tr><th colspan="2">Item</th><th style="width:84px;text-align:right">Qty</th><th style="width:120px;text-align:right">Unit price</th><th style="width:110px;text-align:right">Amount</th><th style="width:40px"></th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <div class="add-row">
+          <button class="btn btn-secondary" data-pop="picker"><i data-i="plus"></i>Add item</button>
+          <button class="btn btn-ghost" id="add-custom">Add custom item</button>
+          <button class="btn btn-ghost ml-auto hide-sm" id="add-discount"><i data-i="percent"></i>Discount</button>
+          <div class="pop picker" id="picker">
+            <div class="p-search"><div class="input-icon"><i data-i="search"></i><input class="input" placeholder="Search your services"></div></div>
+            <div class="p-list" id="p-list"></div>
+            <div style="padding:8px 10px;border-top:1px solid var(--line)" class="row between"><span class="t-xs t-muted">Prices come from your catalog. You can change them on this quote.</span><a class="t-sm" href="services.html">Edit catalog</a></div>
+          </div>
+        </div>
+
+        <details class="more" open>
+          <summary><i data-i="chevron-right"></i>Photos and attachments <span class="t-muted" style="font-weight:400">3 from your site visit</span></summary>
+          <div class="d-body">
+            <div class="thumbs"><div class="ph"></div><div class="ph ph-2"></div><div class="ph ph-3"></div><button class="add" aria-label="Add photo"><i data-i="plus"></i></button></div>
+            <p class="help">Clients see these on the quote. Up to 10 files, 10 MB each.</p>
+          </div>
+        </details>
+        <details class="more">
+          <summary><i data-i="chevron-right"></i>Terms <span class="t-muted" style="font-weight:400">Your default terms</span></summary>
+          <div class="d-body"><textarea class="textarea">Work is scheduled after approval. Prices include disposal of green waste. Payment is due on completion. Weather delays are rescheduled at no cost.</textarea><p class="help">Change the default in <a href="settings.html">Settings</a>.</p></div>
+        </details>
+        <details class="more">
+          <summary><i data-i="chevron-right"></i>Internal notes <span class="badge b-slate plain" style="height:20px">Only your team sees these</span></summary>
+          <div class="d-body"><textarea class="textarea" placeholder="Notes for your team, never shown to the client"></textarea></div>
+        </details>
+      </section>
+    </div>
+
+    <!-- Summary -->
+    <aside class="sum stack">
+      <section class="panel">
+        <div class="panel-body">
+          <div class="tr"><span class="t-muted">Subtotal</span><span class="money" id="s-sub"></span></div>
+          <div class="tr" id="s-disc-row"><span class="t-muted">Discount <button class="btn btn-ghost btn-sm" style="height:20px;padding:0 4px" id="disc-edit">10%</button></span><span class="money t-green" id="s-disc"></span></div>
+          <div class="tr"><span class="t-muted">Sales tax <select class="select" style="display:inline-block;width:auto;height:24px;font-size:12.5px;padding:0 26px 0 6px;margin-left:4px" id="tax"><option value="6.35">CT 6.35%</option><option value="0">No tax</option></select></span><span class="money" id="s-tax"></span></div>
+          <div class="tr grand"><span>Total</span><span class="money" id="s-total"></span></div>
+          <hr style="margin:14px 0">
+          <div class="field"><label class="label">Valid until</label><input class="input" type="date" value="2026-12-13"><p class="help">30 days from today. Clients can ask for an updated quote after that.</p></div>
+        </div>
+        <div class="panel-foot">
+          <button class="btn btn-primary btn-block" data-open="send"><i data-i="send"></i>Send quote</button>
+          <p class="t-xs t-muted t-center mt-8">Uses 1 of your 109 remaining quotes this month</p>
+        </div>
+      </section>
+      <section class="panel-quiet t-sm">
+        <div class="row-top"><i data-i="info" class="t-muted"></i><div class="t-muted">Hannah will get an email with a link to review and approve online, plus a PDF copy. She doesn’t need an account.</div></div>
+      </section>
+    </aside>
+  </div>
+
+  <div class="mobile-bar">
+    <div class="grow"><div class="t-xs t-muted">Total</div><div class="money t-strong t-lg" id="m-total"></div></div>
+    <button class="btn btn-primary btn-lg" data-open="send"><i data-i="send"></i>Send</button>
+  </div>
+</main>
+
+<!-- Send dialog (QTE-04) -->
+<div class="modal" id="send" role="dialog" aria-labelledby="send-title" style="width:min(600px,calc(100vw - 24px))">
+  <div class="modal-head"><div><h2 id="send-title">Send quote to Hannah</h2><p>Q-1043 · Spring cleanup and bed refresh · <span class="money t-strong" id="send-total"></span></p></div><button class="icon-btn" data-close aria-label="Close"><i data-i="x"></i></button></div>
+  <div class="modal-body">
+    <div class="seg" data-tabs="channel" style="margin-bottom:16px"><button class="is-active" data-tab="email"><i data-i="mail" class="i-sm" style="margin-right:6px"></i>Email</button><button data-tab="link"><i data-i="link" class="i-sm" style="margin-right:6px"></i>Copy link</button></div>
+    <div data-group="channel" data-panel="email">
+      <div class="grid-2"><div class="field" style="margin:0"><label class="label">To</label><input class="input" value="hannah.brooks@email.com"></div><div class="field" style="margin:0"><label class="label">Cc <span class="opt">(optional)</span></label><input class="input"></div></div>
+      <div class="field mt-16"><label class="label">Subject</label><input class="input" value="Your quote from Oakline Lawn & Landscape"></div>
+      <div class="field"><label class="label">Message</label><textarea class="textarea" rows="4">Hi Hannah,
+
+Here’s your quote for the spring cleanup. You can review and approve it online. Let me know if you have any questions.
+
+Dana</textarea></div>
+      <label class="check mt-12"><input type="checkbox" checked><span>Attach PDF copy</span></label>
+      <label class="check mt-8"><input type="checkbox"><span>Send me a copy</span></label>
+    </div>
+    <div data-group="channel" data-panel="link" hidden>
+      <p class="t-sm t-muted mb-8">Send this link from your own phone by text or WhatsApp. The quote is marked as sent when you copy it.</p>
+      <div class="input-group"><input class="input" readonly value="https://oakline.shadetree.app/q/7Hk2vQx9LmP4"><button class="btn btn-secondary" style="border-radius:0 6px 6px 0;margin-left:-1px" data-toast="Link copied. Quote marked as sent."><i data-i="copy"></i>Copy</button></div>
+    </div>
+  </div>
+  <div class="modal-foot"><span class="t-xs t-muted grow">Replies go to dana@oaklinelawn.com</span><button class="btn btn-secondary" data-close>Cancel</button><a class="btn btn-primary" href="quote.html"><i data-i="send"></i>Send quote</a></div>
+</div>
+
+<script src="../assets/icons.js"></script>
+<script src="../assets/app.js"></script>
+<script>
+  // Mock catalog and live totals — illustrates QTE-01 behaviour only.
+  const catalog = [
+    { cat: "Recently used", items: [["Spring cleanup", "Rake beds, cut back perennials, haul debris", 1, 385, "visit"], ["Mulch install", "Hardwood mulch, edged beds, 3 in depth", 1, 78, "cu yd"]] },
+    { cat: "Lawn care", items: [["Weekly mowing", "Mow, trim, blow off hard surfaces", 1, 55, "visit"], ["Core aeration", "Up to 8,000 sq ft", 1, 165, "each"], ["Overseeding", "Premium tall fescue blend", 1, 0.09, "sq ft"]] },
+    { cat: "Beds & shrubs", items: [["Hedge trimming", "Shape and clean up, debris removed", 1, 75, "hour"], ["Bed edging", "Natural spade edge", 1, 2.25, "lin ft"]] },
+    { cat: "Fees", items: [["Disposal fee", "Green waste haul-away", 1, 45, "load"]] }
+  ];
+  let rows = [
+    ["Spring cleanup", "Rake beds, cut back perennials, haul debris", 1, 385, "visit"],
+    ["Mulch install", "Hardwood mulch, edged beds, 3 in depth", 6, 78, "cu yd"],
+    ["Bed edging", "Natural spade edge along front and side beds", 140, 2.25, "lin ft"],
+    ["Hedge trimming", "Front boxwoods and side privet", 2.5, 75, "hour"]
+  ];
+  let discount = 10;
+  const fmt = (n) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  const tbody = document.querySelector("#li tbody");
+  function render() {
+    tbody.innerHTML = rows.map((r, i) => `
+      <tr>
+        <td><span class="grip"><i class="i i-sm" data-i="grip"></i></span></td>
+        <td class="c-name"><input class="name" value="${r[0]}" aria-label="Item name"><textarea class="desc" rows="1" aria-label="Description">${r[1]}</textarea></td>
+        <td class="c-qty"><input class="cell" data-i-row="${i}" data-k="2" value="${r[2]}" inputmode="decimal" aria-label="Quantity"><div class="unit">${r[4]}</div></td>
+        <td class="c-price"><input class="cell" data-i-row="${i}" data-k="3" value="${r[3].toFixed(2)}" inputmode="decimal" aria-label="Unit price"></td>
+        <td class="amt c-amt">${fmt(r[2] * r[3])}</td>
+        <td class="c-rm"><button class="icon-btn rm" data-rm="${i}" aria-label="Remove ${r[0]}"><i class="i i-sm" data-i="trash"></i></button></td>
+      </tr>`).join("");
+    renderIcons(tbody);
+    totals();
+  }
+  function totals() {
+    const sub = rows.reduce((s, r) => s + r[2] * r[3], 0);
+    const disc = Math.round(sub * discount) / 100;
+    const rate = parseFloat(document.getElementById("tax").value);
+    const tax = Math.round((sub - disc) * rate) / 100;
+    const total = sub - disc + tax;
+    document.getElementById("s-sub").textContent = fmt(sub);
+    document.getElementById("s-disc").textContent = "−" + fmt(disc);
+    document.getElementById("s-disc-row").hidden = !discount;
+    document.getElementById("s-tax").textContent = fmt(tax);
+    ["s-total", "m-total", "send-total"].forEach((id) => (document.getElementById(id).textContent = fmt(total)));
+    tbody.querySelectorAll("tr").forEach((tr, i) => (tr.querySelector(".amt").textContent = fmt(rows[i][2] * rows[i][3])));
+  }
+  tbody.addEventListener("input", (e) => {
+    const c = e.target.closest(".cell"); if (!c) return;
+    rows[+c.dataset.iRow][+c.dataset.k] = parseFloat(c.value) || 0;
+    totals();
+  });
+  tbody.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-rm]"); if (!b) return;
+    rows.splice(+b.dataset.rm, 1); render(); mockToast("Item removed");
+  });
+  document.getElementById("tax").addEventListener("change", totals);
+  document.getElementById("add-custom").addEventListener("click", () => { rows.push(["Custom item", "", 1, 0, "each"]); render(); tbody.querySelector("tr:last-child .name").select(); });
+  document.getElementById("disc-edit").addEventListener("click", () => { discount = discount === 10 ? 15 : discount === 15 ? 0 : 10; document.getElementById("disc-edit").textContent = discount + "%"; totals(); });
+  document.getElementById("add-discount").addEventListener("click", () => { discount = 10; document.getElementById("disc-edit").textContent = "10%"; totals(); });
+  document.getElementById("p-list").innerHTML = catalog.map((g) => `<div class="menu-label">${g.cat}</div>` + g.items.map((it) => `
+      <button class="p-item" data-add='${JSON.stringify(it)}'><span class="grow"><span class="t-strong">${it[0]}</span><br><span class="t-xs t-muted">${it[1]}</span></span><span class="money">${fmt(it[3])}<span class="t-xs t-muted" style="font-weight:400"> / ${it[4]}</span></span></button>`).join("")).join("");
+  document.getElementById("p-list").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-add]"); if (!b) return;
+    rows.push(JSON.parse(b.dataset.add)); render(); mockClose(); mockToast("Added " + JSON.parse(b.dataset.add)[0]);
+  });
+  render();
+</script>
+</body>
+</html>

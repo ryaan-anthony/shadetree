@@ -11,6 +11,7 @@ It replaces the original planning material in `.project/`, which is kept for ref
 | Requirements | [`plans/NN-<domain>.md`](plans/) | < 500 lines each | What each domain must do and why. Decisions and open questions live here. |
 | Specifications | [`specs/<domain>/<ID>-<slug>.md`](specs/) | 30–60 lines (max 100) | One incrementally deliverable feature with acceptance criteria |
 | Issues | GitHub Issues | short | One issue per spec: summary, acceptance criteria, link to spec |
+| Mockups | [`mockups/`](mockups/README.md) | HTML | Clickable screens for M1–M5 specs, plus the design system reference |
 
 ```
 Requirement (plans/)  ──▶  Spec (specs/)  ──▶  Issue (GitHub)  ──▶  1..n Pull requests

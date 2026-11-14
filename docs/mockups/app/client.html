@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hannah Brooks · Shadetree</title>
+  <link rel="stylesheet" href="../assets/shadetree.css">
+  <!-- Specs: CLI-01 client records & properties, CLI-05 client timeline & balance, INS-02 erase client. -->
+  <style>
+    .hero { display: flex; gap: 16px; align-items: center; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); }
+    .stats > div { padding: 12px 18px; }
+    .stats > div + div { border-left: 1px solid var(--line); }
+    .stats .v { font-weight: 700; color: var(--ink); font-size: 16px; font-variant-numeric: tabular-nums; }
+    .property { padding: 14px 18px; border-top: 1px solid var(--line-2); }
+    .property:first-child { border-top: 0; }
+    .doc-row { display: grid; grid-template-columns: 22px 1fr auto auto; gap: 12px; align-items: center; padding: 11px 18px; border-top: 1px solid var(--line-2); color: inherit; text-decoration: none !important; }
+    .doc-row:hover { background: #fafbfc; }
+    .doc-row .i { color: var(--muted); }
+  </style>
+</head>
+<body data-app="staff" data-nav="clients" data-crumbs="Clients:clients.html|Hannah Brooks">
+<main class="content">
+  <section class="panel">
+    <div class="panel-body row between wrap gap-16">
+      <div class="hero">
+        <span class="avatar avatar-xl av-5">HB</span>
+        <div>
+          <div class="row"><h1 style="font-size:22px">Hannah Brooks</h1><span class="tag">Residential</span><span class="tag">Spring &amp; fall</span></div>
+          <div class="row wrap t-sm t-muted mt-4" style="gap:4px 16px">
+            <a class="row gap-4" href="#"><i data-i="mail" class="i-sm"></i>hannah.brooks@email.com</a>
+            <a class="row gap-4" href="#"><i data-i="phone" class="i-sm"></i>(555) 301-7712</a>
+            <span>Client since April 2025</span>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div style="position:relative"><button class="btn btn-secondary btn-icon" data-pop="c-more" aria-label="More"><i data-i="more"></i></button><div class="pop" id="c-more" style="right:0;top:40px">
+          <button class="menu-item"><i data-i="edit"></i>Edit client</button>
+          <button class="menu-item"><i data-i="archive"></i>Archive</button>
+          <div class="menu-sep"></div>
+          <button class="menu-item" data-open="erase" style="color:var(--red)"><i data-i="trash" style="color:var(--red)"></i>Erase personal data</button>
+        </div></div>
+        <a class="btn btn-secondary" href="job.html"><i data-i="job"></i>New job</a>
+        <a class="btn btn-primary" href="quote-builder.html"><i data-i="quote"></i>New quote</a>
+      </div>
+    </div>
+    <div class="stats">
+      <div><div class="t-sm t-muted">Balance due</div><div class="v">$0.00</div></div>
+      <div><div class="t-sm t-muted">Paid to date</div><div class="v">$3,412.50</div></div>
+      <div><div class="t-sm t-muted">Next visit</div><div class="v">Tue, Nov 17</div></div>
+    </div>
+  </section>
+
+  <div class="split mt-16">
+    <div class="stack">
+      <section class="panel">
+        <div class="tabs" data-tabs="docs" style="padding:0 10px">
+          <button class="is-active" data-tab="all">Everything</button><button data-tab="">Quotes <span class="n">3</span></button><button data-tab="">Jobs <span class="n">4</span></button><button data-tab="">Invoices <span class="n">4</span></button><button data-tab="">Requests <span class="n">1</span></button>
+        </div>
+        <a class="doc-row" href="quote.html"><i data-i="quote"></i><span><span class="t-strong">Q-1041 Spring cleanup</span><br><span class="t-xs t-muted">12 Maple Street · Nov 9</span></span><span class="badge b-green">Approved</span><span class="money t-strong">$1,189.74</span></a>
+        <a class="doc-row" href="job.html"><i data-i="job"></i><span><span class="t-strong">J-0391 Spring cleanup</span><br><span class="t-xs t-muted">Visit Tue, Nov 17, 8–10 AM</span></span><span class="badge b-blue">Scheduled</span><span class="money t-strong">$1,189.74</span></a>
+        <a class="doc-row" href="invoice.html"><i data-i="invoice"></i><span><span class="t-strong">INV-2188 Fall cleanup</span><br><span class="t-xs t-muted">12 Maple Street · Oct 22</span></span><span class="badge b-green">Paid</span><span class="money t-strong">$940.00</span></a>
+        <a class="doc-row" href="invoice.html"><i data-i="invoice"></i><span><span class="t-strong">INV-2101 Lake house opening</span><br><span class="t-xs t-muted">Candlewood Lake cottage · May 30</span></span><span class="badge b-green">Paid</span><span class="money t-strong">$612.50</span></a>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Timeline</h2><button class="btn btn-ghost btn-sm"><i data-i="edit"></i>Add note</button></div>
+        <div class="panel-body">
+          <ol class="timeline">
+            <li><span class="tl-dot blue"><i data-i="calendar"></i></span><div><span class="t-strong">Visit scheduled</span> for Tue, Nov 17 with Marcus and Leo</div><div class="tl-time">Today, 9:40 AM · Dana Whitaker</div></li>
+            <li><span class="tl-dot green"><i data-i="check"></i></span><div><span class="t-strong">Approved Q-1041</span> Spring cleanup, $1,189.74</div><div class="tl-time">Today, 9:14 AM</div></li>
+            <li><span class="tl-dot"><i data-i="edit" style="color:var(--muted)"></i></span><div><span class="t-strong">Note</span> by Priya Shah</div><div class="tl-note">Prefers texts over calls. Away Dec 20 – Jan 5, don’t book anything then.</div><div class="tl-time">Nov 10</div></li>
+            <li><span class="tl-dot amber"><i data-i="message"></i></span><div><span class="t-strong">Asked for changes</span> on Q-1041</div><div class="tl-time">Nov 11</div></li>
+            <li><span class="tl-dot green"><i data-i="dollar"></i></span><div><span class="t-strong">Paid INV-2188</span> $940.00 by card</div><div class="tl-time">Oct 24</div></li>
+          </ol>
+        </div>
+      </section>
+    </div>
+
+    <aside class="stack">
+      <section class="panel">
+        <div class="panel-head"><h2>Properties</h2><button class="btn btn-ghost btn-sm"><i data-i="plus"></i>Add</button></div>
+        <div class="property">
+          <div class="row between"><span class="t-strong">12 Maple Street</span><span class="badge b-slate plain">Billing</span></div>
+          <div class="t-sm t-muted">Brookfield, CT 06804</div>
+          <div class="banner banner-warn mt-8" style="padding:8px 10px;font-size:13px"><i data-i="lock" class="i-sm"></i><div>Gate code 4417. Dog in back yard, text before entering.</div></div>
+        </div>
+        <div class="property">
+          <div class="t-strong">Candlewood Lake cottage</div>
+          <div class="t-sm t-muted">31 Shore Rd, New Fairfield, CT</div>
+          <div class="t-sm t-muted mt-4">Opening in May, closing in October</div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2>Details</h2></div>
+        <div class="panel-body">
+          <dl class="kv">
+            <dt>Prefers</dt><dd>Text messages</dd>
+            <dt>Tax</dt><dd>Standard (CT 6.35%)</dd>
+            <dt>Emails</dt><dd><span class="badge b-green">Delivering</span></dd>
+          </dl>
+        </div>
+      </section>
+    </aside>
+  </div>
+</main>
+
+<div class="modal" id="erase" role="dialog" aria-labelledby="er-title">
+  <div class="modal-head"><div><h2 id="er-title">Erase Hannah Brooks’s personal data?</h2><p>Use this when a client asks to be forgotten.</p></div><button class="icon-btn" data-close aria-label="Close"><i data-i="x"></i></button></div>
+  <div class="modal-body">
+    <ul class="t-sm" style="padding-left:18px;color:var(--text-2);margin:0 0 16px">
+      <li>Name, contact details, addresses, notes and property photos are removed.</li>
+      <li>Quotes and invoices stay for your records, with totals intact, labeled “Erased client”.</li>
+      <li>This can’t be undone.</li>
+    </ul>
+    <div class="field"><label class="label">Type <strong>Hannah Brooks</strong> to confirm</label><input class="input"></div>
+  </div>
+  <div class="modal-foot"><button class="btn btn-secondary" data-close>Cancel</button><button class="btn btn-danger" disabled>Erase personal data</button></div>
+</div>
+<script src="../assets/icons.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>
