@@ -7,11 +7,13 @@ class Admin::InvitationsController < Admin::BaseController
              with: -> { redirect_to admin_team_path, alert: "That's a lot of invitations. Try again in a little while." }
 
   def create
-    @invitation = Invitation.new(invitation_params.merge(invited_by: current_user))
-    unless current_membership.can_assign_role?(BusinessUser.new(business: current_business, role: "technician"), @invitation.role)
+    # The role is checked against the inviter's own rights before it's used (ACC-04).
+    role = params.dig(:invitation, :role).to_s.presence_in(BusinessUser::ROLES) || "technician"
+    unless current_membership.can_assign_role?(BusinessUser.new(business: current_business, role: "technician"), role)
       return redirect_to admin_team_path, alert: "Only owners can invite owners."
     end
 
+    @invitation = Invitation.new(invitation_params.merge(role:, invited_by: current_user))
     if @invitation.save
       @invitation.deliver!
       redirect_to admin_team_path, notice: "Invitation sent to #{@invitation.email}."
@@ -34,5 +36,5 @@ class Admin::InvitationsController < Admin::BaseController
 
   def set_invitation = @invitation = Invitation.find_by_param!(params[:id])
 
-  def invitation_params = params.require(:invitation).permit(:email, :role)
+  def invitation_params = params.require(:invitation).permit(:email)
 end
