@@ -1,0 +1,8 @@
+<div class="banner banner-warning mb-5 flex-wrap items-center" role="status" id="confirm-email-banner">
+  <%= icon "mail" %>
+  <p class="min-w-0 flex-1">
+    <span class="font-semibold">Confirm your email to start sending.</span>
+    We sent a link to <span class="font-medium"><%= current_user.email %></span>. Until then you can set everything up, but quotes and invoices won't go out.
+  </p>
+  <%= button_to "Resend link", resend_users_confirmation_path, class: button_classes(:secondary, :sm), form: { class: "shrink-0" } %>
+</div>

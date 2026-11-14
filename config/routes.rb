@@ -3,13 +3,16 @@ Rails.application.routes.draw do
              controllers: {
                sessions: "users/sessions",
                registrations: "users/registrations",
-               confirmations: "users/confirmations"
+               confirmations: "users/confirmations",
+               passwords: "users/passwords",
+               unlocks: "users/unlocks"
              }
 
   # Custom confirmation routes
   devise_scope :user do
     get "users/awaiting_confirmation", to: "users/confirmations#awaiting_confirmation", as: :awaiting_confirmation_users_confirmation
     post "users/confirmation/resend", to: "users/confirmations#resend", as: :resend_users_confirmation
+    post "users/sign_out_everywhere", to: "users/sessions#destroy_others", as: :sign_out_everywhere
   end
 
   # Admin routes
@@ -46,6 +49,8 @@ Rails.application.routes.draw do
   # Marketing pages
   get "pricing", to: "pricing#index"
   get "about", to: "about#index"
+  get "terms", to: "legal#terms"
+  get "privacy", to: "legal#privacy"
 
   # Contact page
   get "contact", to: "contact#index"

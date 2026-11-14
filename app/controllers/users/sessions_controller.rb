@@ -1,32 +1,19 @@
 class Users::SessionsController < Devise::SessionsController
   layout "marketing"
+  rate_limit to: 20, within: 10.minutes, only: :create, with: -> { redirect_to new_user_session_path, alert: "Too many sign-in attempts. Try again in a few minutes." }
+  prepend_before_action :authenticate_user!, only: :destroy_others
 
-  # GET /resource/sign_in
-  # def new
-  #   super
-  # end
-
-  # POST /resource/sign_in
-  # def create
-  #   super
-  # end
-
-  # DELETE /resource/sign_out
-  # def destroy
-  #   super
-  # end
+  # POST /users/sign_out_everywhere — ends every other session and remember-me cookie,
+  # keeping this one.
+  def destroy_others
+    current_user.sign_out_everywhere!
+    bypass_sign_in(current_user)
+    redirect_to edit_user_registration_path, notice: "Signed out of all other devices."
+  end
 
   protected
 
-  # Redirect confirmed users to admin dashboard after sign in
   def after_sign_in_path_for(resource)
-    if resource.confirmed?
-      admin_root_path
-    else
-      # Sign out the user and redirect to awaiting confirmation page
-      sign_out(resource)
-      flash[:alert] = "Please confirm your email address before signing in."
-      awaiting_confirmation_users_confirmation_path(email: resource.email)
-    end
+    stored_location_for(resource) || (resource.has_business? ? admin_root_path : new_admin_business_path)
   end
 end

@@ -43,6 +43,7 @@ clear states for unconfirmed accounts.
 
 ## Open questions
 
-- Confirm that unconfirmed users may sign in (recommended in 02-accounts open question 1).
-- Should sign-up capture the business name on the same screen to save a step? Trade-off with
-  users who are joining an existing business via invitation.
+- ~~Confirm that unconfirmed users may sign in?~~ Resolved: yes. They can set up but can't send
+  to clients until confirmed (`ConfirmedSender`).
+- ~~Should sign-up capture the business name on the same screen?~~ Resolved: no. Sign-up stays
+  identical for invitees (ACC-03), and business creation is the very next screen (ACC-02).

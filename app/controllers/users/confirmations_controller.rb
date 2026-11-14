@@ -1,40 +1,33 @@
 class Users::ConfirmationsController < Devise::ConfirmationsController
   layout "marketing"
+  rate_limit to: 5, within: 10.minutes, only: %i[create resend], with: -> { redirect_to new_user_confirmation_path, alert: "Too many requests. Try again in a few minutes." }
 
   # GET /users/awaiting_confirmation
   def awaiting_confirmation
-    @email = params[:email] || current_user&.email
+    @email = current_user&.email || params[:email]
   end
 
   # POST /users/confirmation/resend
+  # Signed in: resend to the current user. Signed out: the same answer whether or not the
+  # address has an account, so this can't be used to discover accounts.
   def resend
-    email = params[:email]
-
-    if email.blank?
-      flash[:alert] = "Please provide an email address."
-      redirect_to awaiting_confirmation_users_confirmation_path and return
-    end
-
-    user = User.find_by(email: email)
-
-    if user.nil?
-      flash[:alert] = "We couldn't find an account with that email address."
-      redirect_to awaiting_confirmation_users_confirmation_path(email: email)
-    elsif user.confirmed?
-      flash[:notice] = "Your email is already confirmed. Please sign in."
-      redirect_to new_user_session_path
+    if current_user
+      current_user.send_confirmation_instructions unless current_user.confirmed?
+      redirect_back_or_to admin_root_path, notice: "We've sent a new confirmation link to #{current_user.email}."
     else
-      user.send_confirmation_instructions
-      flash[:notice] = "Confirmation email has been resent to #{email}. Please check your inbox."
-      redirect_to awaiting_confirmation_users_confirmation_path(email: email)
+      email = params[:email].to_s.strip.downcase
+      user = User.find_by(email:) if email.present?
+      user.send_confirmation_instructions if user && !user.confirmed?
+      redirect_to awaiting_confirmation_users_confirmation_path(email: email.presence),
+                  notice: "If that address has an unconfirmed account, a new link is on its way."
     end
   end
 
   protected
 
-  def after_confirmation_path_for(resource_name, resource)
-    sign_in(resource)
-    flash[:notice] = "Your email has been confirmed! Welcome to Shadetree."
-    admin_root_path
+  def after_confirmation_path_for(_resource_name, resource)
+    sign_in(resource) unless user_signed_in?
+    flash[:notice] = "Your email is confirmed."
+    resource.has_business? ? admin_root_path : new_admin_business_path
   end
 end

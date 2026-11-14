@@ -45,6 +45,11 @@ See `docs/plans/00-vision.md` → Cross-cutting requirements.
   fixtures, screenshots or PRs.
 - **CI:** lint, security scans, unit/integration and system tests must be green.
 
+## Sending to clients
+
+Any action that emails or texts a client adds `before_action :require_confirmed_sender`, and
+background sends check `user.can_send_to_clients?`. Unconfirmed users can do everything else.
+
 ## Building UI
 
 - Use the kit before writing new markup: browse `/styleguide` in development. Classes live in

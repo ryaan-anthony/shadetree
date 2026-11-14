@@ -1,43 +1,39 @@
-<h2>Edit <%= resource_name.to_s.humanize %></h2>
-
-<%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { method: :put }) do |f| %>
-  <%= render "devise/shared/error_messages", resource: resource %>
-
-  <div class="field">
-    <%= f.label :email %><br />
-    <%= f.email_field :email, autofocus: true, autocomplete: "email" %>
+<% content_for :title, "Your account" %>
+<div class="mx-auto w-full max-w-2xl px-4 py-10">
+  <div class="mb-6 flex items-end justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight text-ink">Your account</h1>
+      <p class="mt-1 text-sm text-muted">Your sign-in details. Business settings live in each business.</p>
+    </div>
+    <%= link_to "Back to Shadetree", admin_root_path, class: button_classes(:secondary) %>
   </div>
 
-  <% if devise_mapping.confirmable? && resource.pending_reconfirmation? %>
-    <div>Currently waiting confirmation for: <%= resource.unconfirmed_email %></div>
+  <%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { method: :put, class: "space-y-4" }) do |f| %>
+    <%= render "devise/shared/error_messages", resource: resource %>
+    <%= card title: "Profile" do %>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <%= f.field :first_name, autocomplete: "given-name" %>
+        <%= f.field :last_name, autocomplete: "family-name", optional: true %>
+      </div>
+      <%= f.field :email, as: :email, autocomplete: "email",
+                  help: (resource.pending_reconfirmation? ? "Waiting for you to confirm #{resource.unconfirmed_email}." : "Changing it sends a confirmation link to the new address.") %>
+    <% end %>
+    <%= card title: "Password", subtitle: "Leave blank to keep your current password." do %>
+      <%= render "devise/shared/password_field", form: f, label: "New password" %>
+      <%= f.field :password_confirmation, as: :password, label: "Confirm new password", autocomplete: "new-password", optional: true %>
+    <% end %>
+    <%= card do %>
+      <%= f.field :current_password, as: :password, autocomplete: "current-password", required: true,
+                  help: "Needed to save any change here." %>
+      <div class="mt-5 flex justify-end"><%= f.submit_button "Save changes" %></div>
+    <% end %>
   <% end %>
 
-  <div class="field">
-    <%= f.label :password %> <i>(leave blank if you don't want to change it)</i><br />
-    <%= f.password_field :password, autocomplete: "new-password" %>
-    <% if @minimum_password_length %>
-      <br />
-      <em><%= @minimum_password_length %> characters minimum</em>
-    <% end %>
-  </div>
-
-  <div class="field">
-    <%= f.label :password_confirmation %><br />
-    <%= f.password_field :password_confirmation, autocomplete: "new-password" %>
-  </div>
-
-  <div class="field">
-    <%= f.label :current_password %> <i>(we need your current password to confirm your changes)</i><br />
-    <%= f.password_field :current_password, autocomplete: "current-password" %>
-  </div>
-
-  <div class="actions">
-    <%= f.submit "Update" %>
-  </div>
-<% end %>
-
-<h3>Cancel my account</h3>
-
-<div>Unhappy? <%= button_to "Cancel my account", registration_path(resource_name), data: { confirm: "Are you sure?", turbo_confirm: "Are you sure?" }, method: :delete %></div>
-
-<%= link_to "Back", :back %>
+  <%= card title: "Sessions", subtitle: "Lost a phone or used a shared computer?", class: "mt-4" do %>
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <p class="text-sm text-subtle">Sign out everywhere except this browser. Changing your password does this too.</p>
+      <%= button_to "Sign out of all other devices", sign_out_everywhere_path, class: button_classes(:secondary),
+                    form: { data: { turbo_confirm: "Sign out of every other device and browser?", turbo_confirm_button: "Sign out others" } } %>
+    </div>
+  <% end %>
+</div>
