@@ -12,10 +12,10 @@ two:
   role: owner
   active: true
 
-# User one as member of business two
+# User one as a technician in business two
 one_member_of_two:
   user: one
   business: two
-  role: member
+  role: technician
   active: true
 

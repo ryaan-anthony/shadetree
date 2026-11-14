@@ -9,7 +9,7 @@ schedule → work → invoice → paid, from a phone, with a free plan. See
 
 ## Stack
 
-Rails 8.1 on Ruby 3.4, server-rendered HTML with Hotwire (Turbo and Stimulus) and import maps,
+Rails 8.1 on Ruby 4.0, PostgreSQL, server-rendered HTML with Hotwire (Turbo and Stimulus) and import maps,
 Devise for authentication, Solid Queue, Solid Cache and Solid Cable, Minitest and Capybara for
 tests, and Kamal for deploys.
 
@@ -17,7 +17,7 @@ Decisions and their reasons are recorded as [architecture decision records](docs
 
 | Area | Decision |
 | --- | --- |
-| Database | PostgreSQL, managed in production; the switch from SQLite lands in PLT-07 ([0002](docs/adr/0002-postgresql.md)) |
+| Database | PostgreSQL, managed in production ([0002](docs/adr/0002-postgresql.md)) |
 | Tenancy | Row-level scoping by business in the application ([0003](docs/adr/0003-tenancy-row-level-scoping.md)) |
 | CSS | Tailwind compiled at build time, no CDN ([0004](docs/adr/0004-tailwind-compiled-css.md)) |
 | UI | Partials and helpers; Stimulus and Turbo for behavior ([0005](docs/adr/0005-ui-partials-and-stimulus.md)) |
@@ -33,8 +33,11 @@ Decisions and their reasons are recorded as [architecture decision records](docs
 
 **Prerequisites**
 
-- Ruby 3.4.5 (the version in [`.ruby-version`](.ruby-version)); use any version manager
-- SQLite 3
+- Ruby 4.0.9 (the version in [`.ruby-version`](.ruby-version)); use any version manager
+- PostgreSQL 16 or newer, running locally. `bin/setup` connects as your OS user by default;
+  set `DATABASE_URL`, or `PGHOST`/`PGUSER`/`PGPASSWORD`, to use something else. Docker works:
+  `docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres:17` with
+  `PGHOST=localhost PGUSER=postgres PGPASSWORD=postgres`.
 - Google Chrome, for system tests
 
 **Setup**

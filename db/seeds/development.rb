@@ -29,7 +29,7 @@ business = Business.find_or_create_by!(name: "Oakline Lawn & Landscape", owner: 
   b.onboarded_at = Time.current
 end
 
-{ admin => "admin", technician => "member" }.each do |user, role|
+{ admin => "admin", technician => "technician" }.each do |user, role|
   BusinessUser.find_or_create_by!(business: business, user: user) { |m| m.role = role }
 end
 
