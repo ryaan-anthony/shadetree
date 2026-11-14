@@ -4,101 +4,119 @@ on:
   pull_request:
   push:
     branches: [ main ]
+  schedule:
+    # Weekly run on main catches newly disclosed vulnerabilities in unchanged code.
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+# Runners are pinned to ubuntu-24.04 rather than ubuntu-latest: images change underneath us,
+# and ubuntu-26.04 has no prebuilt Ruby 3.4.5, which broke every job. Bump deliberately.
 jobs:
   plan:
-    runs-on: ubuntu-latest
+    name: Plan docs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+      - uses: actions/checkout@v6
+      - uses: ruby/setup-ruby@v1
         with:
           ruby-version: .ruby-version
-
-      - name: Validate planning docs (specs, dependencies, links)
+      - name: Validate specs, dependencies and links
         run: ruby script/plan/lint
 
-  scan_ruby:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: .ruby-version
-          bundler-cache: true
-
-      - name: Scan for common Rails security vulnerabilities using static analysis
-        run: bin/brakeman --no-pager
-
-  scan_js:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: .ruby-version
-          bundler-cache: true
-
-      - name: Scan for security vulnerabilities in JavaScript dependencies
-        run: bin/importmap audit
-
   lint:
-    runs-on: ubuntu-latest
+    name: Lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+      - uses: actions/checkout@v6
+      - uses: ruby/setup-ruby@v1
         with:
           ruby-version: .ruby-version
           bundler-cache: true
-
-      - name: Lint code for consistent style
+      - name: RuboCop
         run: bin/rubocop -f github
 
-  test:
-    runs-on: ubuntu-latest
-
-    # services:
-    #  redis:
-    #    image: redis
-    #    ports:
-    #      - 6379:6379
-    #    options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
+  security:
+    name: Security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
-      - name: Install packages
-        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y build-essential git libyaml-dev pkg-config google-chrome-stable
-
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+      - uses: actions/checkout@v6
+      - uses: ruby/setup-ruby@v1
         with:
           ruby-version: .ruby-version
           bundler-cache: true
+      - name: Static analysis (Brakeman)
+        run: bin/brakeman --no-pager
+      - name: Ruby dependency audit (bundler-audit)
+        run: bin/bundler-audit check --update
+      - name: JavaScript dependency audit (importmap)
+        run: bin/importmap audit
 
-      - name: Run tests
-        env:
-          RAILS_ENV: test
-          # REDIS_URL: redis://localhost:6379/0
-        run: bin/rails db:test:prepare test test:system
-
-      - name: Keep screenshots from failed system tests
-        uses: actions/upload-artifact@v4
-        if: failure()
+  test:
+    name: Tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      RAILS_ENV: test
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ruby/setup-ruby@v1
         with:
-          name: screenshots
-          path: ${{ github.workspace }}/tmp/screenshots
+          ruby-version: .ruby-version
+          bundler-cache: true
+      - name: Prepare database
+        run: bin/rails db:test:prepare
+      - name: Unit and integration tests
+        run: bin/rails test
+      - name: Coverage summary
+        if: always()
+        run: |
+          if [ -f coverage/.last_run.json ]; then
+            ruby -rjson -e '
+              r = JSON.parse(File.read("coverage/.last_run.json"))["result"]
+              puts "### Test coverage", "", "| Lines | Branches |", "| --- | --- |", "| #{r["line"]}% | #{r["branch"] || "n/a"}% |"
+            ' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage
+          path: coverage
           if-no-files-found: ignore
+          retention-days: 14
+
+  system:
+    name: System tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      RAILS_ENV: test
+      COVERAGE: "false"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+      - name: Prepare database
+        run: bin/rails db:test:prepare
+      - name: System tests (headless Chrome)
+        run: bin/rails test:system
+      - name: Keep screenshots from failed system tests
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: system-test-screenshots
+          path: tmp/screenshots
+          if-no-files-found: ignore
+          retention-days: 14

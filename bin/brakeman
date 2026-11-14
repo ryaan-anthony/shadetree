@@ -2,6 +2,7 @@
 require "rubygems"
 require "bundler/setup"
 
-ARGV.unshift("--ensure-latest")
+# --ensure-latest is intentionally omitted: it fails every build the day a new Brakeman ships.
+# Dependabot keeps Brakeman current instead (see .github/dependabot.yml).
 
 load Gem.bin_path("brakeman", "brakeman")
