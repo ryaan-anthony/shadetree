@@ -36,9 +36,6 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
 
   # Business Selector Tests
 
-
-
-
   # Business Creation Flow Tests
 
   test "user with existing business can create another business" do
@@ -139,10 +136,7 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
 
   # Business Listing Tests
 
-
-
   # Mobile Selector Tests
-
 
   # Edge Cases
 
@@ -169,12 +163,12 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     # Switch to second business
-    post switch_admin_business_path, params: { business_id: @business2.id }, as: :json
+    post switch_admin_business_path, params: { business: @business2.uid }, as: :json
     assert_response :success
 
     response_data = JSON.parse(response.body)
     assert_equal true, response_data["success"]
-    assert_equal @business2.id, response_data["business"]["id"]
+    assert_equal @business2.uid, response_data["business"]["id"]
     assert_equal @business2.name, response_data["business"]["name"]
 
     # Verify session was updated
@@ -189,7 +183,7 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
   test "switching to non-existent business returns error" do
     sign_in @user
 
-    post switch_admin_business_path, params: { business_id: 99999 }, as: :json
+    post switch_admin_business_path, params: { business: "no-such-uid" }, as: :json
     assert_response :not_found
 
     response_data = JSON.parse(response.body)
@@ -216,7 +210,7 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
     )
 
     # Try to switch to other user's business
-    post switch_admin_business_path, params: { business_id: other_business.id }, as: :json
+    post switch_admin_business_path, params: { business: other_business.uid }, as: :json
     assert_response :not_found
 
     response_data = JSON.parse(response.body)
@@ -230,7 +224,7 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
     sign_in @user
 
     # Switch to second business
-    post switch_admin_business_path, params: { business_id: @business2.id }, as: :json
+    post switch_admin_business_path, params: { business: @business2.uid }, as: :json
     assert_response :success
 
     # Visit different pages and verify business stays the same
@@ -261,7 +255,6 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_admin_business_path
   end
 
-
   # JavaScript Functionality Tests (behavior verification)
 
   # Business switcher (sidebar menu)
@@ -273,16 +266,17 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     [ @business1, @business2, @business3 ].each do |business|
-      assert_select "form[action='#{switch_admin_business_path}'] input[name='business_id'][value='#{business.id}']", count: 1
+      assert_select "form[action='#{switch_admin_business_path}'] input[name='business'][value='#{business.uid}']", count: 1
     end
   end
 
   test "business switcher marks the current business" do
     sign_in @user
+    post switch_admin_business_path, params: { business: @business2.uid }
     get admin_root_path
 
-    assert_select ".biz-switch", text: /#{current_name = @user.current_business.name}/
-    assert_select "button.menu-item[aria-current='true']", text: /#{current_name}/, count: 1
+    assert_select ".biz-switch", text: /#{@business2.name}/
+    assert_select "button.menu-item[aria-current='true']", text: /#{@business2.name}/, count: 1
   end
 
   test "business switcher offers to create a business" do
@@ -301,12 +295,12 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
     sign_in @user
     get admin_root_path
 
-    assert_select "input[name='business_id'][value='#{other_business.id}']", count: 0
+    assert_select "input[name='business'][value='#{other_business.uid}']", count: 0
   end
 
   test "switching from the menu redirects home with a notice" do
     sign_in @user
-    post switch_admin_business_path, params: { business_id: @business2.id }
+    post switch_admin_business_path, params: { business: @business2.uid }
 
     assert_redirected_to admin_root_path
     assert_equal "Switched to #{@business2.name}.", flash[:notice]
@@ -315,7 +309,7 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
 
   test "switching to a business you can't access redirects with an alert" do
     sign_in @user
-    post switch_admin_business_path, params: { business_id: 0 }
+    post switch_admin_business_path, params: { business: "no-such-uid" }
 
     assert_redirected_to admin_root_path
     assert_match "isn't available", flash[:alert]

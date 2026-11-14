@@ -36,3 +36,4 @@ approach, a hosting change. Small, local choices belong in the PR description.
 | [0011](0011-transactional-email-postmark.md) | Postmark for transactional email | Accepted |
 | [0012](0012-keep-devise.md) | Keep Devise for authentication | Accepted |
 | [0013](0013-money-time-and-numbering.md) | Exact money, per-rate tax, UTC times and per-business document numbers | Accepted |
+| [0014](0014-tenant-scoping-enforcement.md) | Tenant scoping enforced by default, opaque ids in URLs | Accepted |

@@ -111,7 +111,7 @@ class Admin::BusinessesControllerTest < ActionDispatch::IntegrationTest
 
   test "cannot edit without business" do
     get edit_admin_business_path
-    assert_redirected_to admin_root_path
+    assert_redirected_to new_admin_business_path
   end
 
   # UPDATE ACTION TESTS

@@ -42,6 +42,6 @@ and make cross-tenant leaks hard to write and easy to test.
 
 ## Open questions
 
-- Row-level scoping (recommended) vs. database-per-tenant — record in PLT-01's tenancy ADR.
-- Should the app refuse to boot/run queries without a tenant in certain contexts (strict mode)
-  in development and test?
+- ~~Row-level scoping vs. database-per-tenant?~~ Resolved: row-level (ADR 0003).
+- ~~Strict mode in development and test?~~ Resolved: strict everywhere. Business-owned queries
+  without a current business raise in every environment (ADR 0014).

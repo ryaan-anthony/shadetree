@@ -1,11 +1,9 @@
 class Admin::BaseController < ApplicationController
   before_action :authenticate_user!
   before_action :require_confirmed_account
+  include BusinessContext
   before_action :require_business_setup
   layout "app"
-
-  # Staff pages show times in the current business's zone (ADR 0013).
-  around_action :use_business_time_zone
 
   private
 
@@ -16,49 +14,8 @@ class Admin::BaseController < ApplicationController
     end
   end
 
+  # Staff pages need a current business; without one, send the user to create it.
   def require_business_setup
-    # Skip business check for business creation controller
-    return if controller_name == "businesses"
-
-    # If user has no business, show modal to create one on dashboard
-    # The dashboard will handle showing the creation modal
-    unless current_user.has_business?
-      # For non-dashboard routes, redirect to dashboard which will show modal
-      redirect_to admin_root_path unless controller_name == "dashboard"
-    end
+    redirect_to new_admin_business_path unless current_business
   end
-
-  def require_admin_access
-    # TODO: Implement proper admin authorization
-    # For now, we'll allow all authenticated users
-    # In production, you'd check for admin role or permissions
-    redirect_to root_path unless user_signed_in?
-  end
-
-  # Every staff page shows times in the current business's zone (ADR 0013).
-  def use_business_time_zone(&)
-    zone = current_user && current_business ? current_business.time_zone : Time.zone
-    Time.use_zone(zone, &)
-  end
-
-  def current_business
-    @current_business ||= begin
-      business = nil
-
-      # Try to get business from session
-      if session[:current_business_id]
-        business = current_user.businesses.find_by(id: session[:current_business_id])
-      end
-
-      # If session business not found or not set, get default business
-      unless business
-        business = current_user.current_business
-        # Set session to this business for consistency
-        session[:current_business_id] = business.id if business
-      end
-
-      business
-    end
-  end
-  helper_method :current_business
 end

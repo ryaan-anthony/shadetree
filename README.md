@@ -18,7 +18,7 @@ Decisions and their reasons are recorded as [architecture decision records](docs
 | Area | Decision |
 | --- | --- |
 | Database | PostgreSQL, managed in production ([0002](docs/adr/0002-postgresql.md)) |
-| Tenancy | Row-level scoping by business in the application ([0003](docs/adr/0003-tenancy-row-level-scoping.md)) |
+| Tenancy | Row-level scoping by business in the application, enforced by default ([0003](docs/adr/0003-tenancy-row-level-scoping.md), [0014](docs/adr/0014-tenant-scoping-enforcement.md)) |
 | CSS | Tailwind compiled at build time, no CDN ([0004](docs/adr/0004-tailwind-compiled-css.md)) |
 | UI | Partials and helpers; Stimulus and Turbo for behavior ([0005](docs/adr/0005-ui-partials-and-stimulus.md)) |
 | Tests | Minitest, fixtures, Capybara ([0006](docs/adr/0006-minitest.md)) |

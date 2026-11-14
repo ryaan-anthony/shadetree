@@ -14,7 +14,7 @@
         <div class="menu left-0 right-0 top-full mt-1" data-menu-target="menu" hidden>
           <p class="menu-label">Switch business</p>
           <% current_user.businesses.order(:name).each do |business| %>
-            <%= button_to switch_admin_business_path, params: { business_id: business.id }, class: "menu-item",
+            <%= button_to switch_admin_business_path, params: { business: business.uid }, class: "menu-item",
                           "aria-current": (business == current_business).to_s, form: { class: "contents" } do %>
               <span class="biz-logo size-6 rounded-md text-[0.65rem]" style="<%= business_mark_style(business) %>"><%= initials(business.name) %></span>
               <span class="flex-1 truncate"><%= business.name %></span>

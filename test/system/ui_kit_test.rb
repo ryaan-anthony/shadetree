@@ -48,7 +48,10 @@ class StaffShellTest < ApplicationSystemTestCase
     login_as @user, scope: :user
   end
 
-  teardown { Warden.test_reset! }
+  teardown do
+    Warden.test_reset!
+    page.current_window.resize_to(1400, 1400) # windows are reused across tests
+  end
 
   test "phone-sized screens get a navigation drawer" do
     page.current_window.resize_to(390, 844)
@@ -64,6 +67,7 @@ class StaffShellTest < ApplicationSystemTestCase
   end
 
   test "desktop shows the sidebar with the business switcher" do
+    page.current_window.resize_to(1400, 1400)
     visit admin_root_path
     assert_selector "#app-sidebar .biz-switch"
     find(".biz-switch").click
