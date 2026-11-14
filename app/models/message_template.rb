@@ -11,7 +11,7 @@ class MessageTemplate < ApplicationRecord
   validates :message_content, presence: true
 
   # Enums
-  enum event: {
+  enum :event, {
     booking: "booking",
     reminder: "reminder",
     cancellation: "cancellation",
@@ -19,7 +19,7 @@ class MessageTemplate < ApplicationRecord
     general: "general"
   }
 
-  enum message_type: {
+  enum :message_type, {
     email: "email",
     sms: "sms"
   }
