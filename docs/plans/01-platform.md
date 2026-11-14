@@ -121,14 +121,10 @@ other.
 
 ## Open questions
 
-1. **Database (G1):** SQLite + Litestream-style replication on one server vs. managed
-   PostgreSQL. Trade-off is cost and simplicity vs. operational headroom and tooling. Owned by
-   PLT-01. **(blocking for PLT-06/07)**
-2. **Hosting target:** single VPS with Kamal (current config) vs. a PaaS. Affects backups and
-   cost. Owned by PLT-09.
-3. **Test framework:** keep Minitest (current) or switch to RSpec (original docs)? Recommend
-   keep Minitest — it is what exists and is the Rails default.
-4. **File storage** for logos and job photos: local disk vs. object storage. Object storage
-   recommended before job photos (JOB-04).
-5. Do we want multi-database-per-tenant isolation (strong isolation, harder ops) or row-level
-   scoping (simple, needs guardrails)? Row-level recommended.
+Decided in [`docs/adr`](../adr/README.md): PostgreSQL (0002), row-level tenancy (0003),
+compiled Tailwind (0004), partials + Stimulus (0005), Minitest (0006), Solid Queue (0007), object
+storage (0008), Kamal on a VPS with managed PostgreSQL (0009), headless-Chrome PDFs (0010),
+Postmark (0011), Devise (0012).
+
+1. **Hosting provider** for the VPS and managed PostgreSQL (ADR 0009 sets the shape). Picked in
+   PLT-09; can staging share the production database server to stay under budget?
