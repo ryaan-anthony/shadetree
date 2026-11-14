@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Set up your business · Shadetree</title>
+  <link rel="stylesheet" href="../assets/shadetree.css">
+  <!-- Specs: ACC-02 create business, ACC-05 guided onboarding, CAT-05 industry presets, CAT-02 branding. -->
+  <style>
+    body { background: #fff; }
+    .ob { display: grid; grid-template-columns: 340px minmax(0, 1fr); min-height: 100vh; }
+    .ob-side { background: var(--ink); color: #94a3b8; padding: 28px; display: flex; flex-direction: column; }
+    .ob-steps { list-style: none; padding: 0; margin: 40px 0 0; }
+    .ob-steps li { display: grid; grid-template-columns: 28px 1fr; gap: 12px; padding: 10px 0; position: relative; cursor: pointer; }
+    .ob-steps li::after { content: ""; position: absolute; left: 13px; top: 40px; bottom: -8px; width: 2px; background: #1e293b; }
+    .ob-steps li:last-child::after { display: none; }
+    .ob-steps .n { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #334155; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #94a3b8; background: var(--ink); position: relative; z-index: 1; }
+    .ob-steps .t { color: #e2e8f0; font-weight: 600; font-size: 14px; }
+    .ob-steps .d { font-size: 12.5px; }
+    .ob-steps li.done .n { background: var(--leaf); border-color: var(--leaf); color: var(--ink); }
+    .ob-steps li.done::after { background: var(--leaf); }
+    .ob-steps li.current .n { border-color: var(--leaf); color: #fff; box-shadow: 0 0 0 4px rgba(52,211,153,.18); }
+    .ob-main { padding: 28px 48px 48px; display: flex; flex-direction: column; }
+    .ob-main .top { display: flex; justify-content: space-between; align-items: center; }
+    .ob-body { max-width: 620px; width: 100%; margin: 56px auto 0; }
+    .ob-body h1 { font-size: 28px; letter-spacing: -0.025em; }
+    .industries { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .ind { display: flex; flex-direction: column; gap: 8px; padding: 14px; border: 1px solid var(--line); border-radius: var(--r-lg); background: #fff; cursor: pointer; text-align: left; font-weight: 600; color: var(--ink); }
+    .ind .i { color: var(--muted); }
+    .ind:hover { border-color: #cbd5e1; }
+    .ind.is-on { border-color: var(--canopy); box-shadow: inset 0 0 0 1px var(--canopy); background: var(--canopy-50); }
+    .ind.is-on .i { color: var(--canopy); }
+    .svc { display: grid; grid-template-columns: 24px 1fr 130px; gap: 12px; align-items: center; padding: 12px 14px; border-top: 1px solid var(--line-2); }
+    .svc:first-child { border-top: 0; }
+    .ob-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--line); }
+    @media (max-width: 900px) { .ob { grid-template-columns: 1fr; } .ob-side { display: none; } .ob-main { padding: 20px; } .ob-body { margin-top: 24px; } .industries { grid-template-columns: 1fr 1fr; } }
+  </style>
+</head>
+<body>
+<div class="ob">
+  <aside class="ob-side">
+    <a class="logo logo-light" href="../marketing/home.html"><span class="logo-mark" data-logo-mark style="background:#1e293b"></span><span>Shadetree</span></a>
+    <ol class="ob-steps" id="steps">
+      <li class="current" data-step="1"><span class="n">1</span><span><span class="t">Your business</span><br><span class="d">Name and what you do</span></span></li>
+      <li data-step="2"><span class="n">2</span><span><span class="t">Your services</span><br><span class="d">Start from a list for your trade</span></span></li>
+      <li data-step="3"><span class="n">3</span><span><span class="t">Your brand</span><br><span class="d">Logo and color, optional</span></span></li>
+      <li data-step="4"><span class="n">4</span><span><span class="t">Send your first quote</span><br><span class="d">To a real client or yourself</span></span></li>
+    </ol>
+    <div style="margin-top:auto;font-size:13px">Most people finish in under 10 minutes. You can skip any step and come back later from your home screen.</div>
+  </aside>
+
+  <main class="ob-main">
+    <div class="top"><span class="t-sm t-muted" id="progress">Step 1 of 4</span><a class="btn btn-ghost" href="dashboard.html">Skip setup for now</a></div>
+
+    <section class="ob-body" data-pane="1">
+      <h1>Tell us about your business</h1>
+      <p class="t-muted mt-8">This shows on your quotes and invoices. You can change it any time.</p>
+      <div class="field mt-24"><label class="label">Business name</label><input class="input" style="height:42px;font-size:15px" value="Oakline Lawn & Landscape"></div>
+      <div class="field"><label class="label">What kind of work do you do?</label>
+        <div class="industries" id="ind">
+          <button class="ind is-on"><i data-i="sun" class="i-lg"></i>Lawn &amp; landscaping</button>
+          <button class="ind"><i data-i="home" class="i-lg"></i>House cleaning</button>
+          <button class="ind"><i data-i="settings" class="i-lg"></i>Handyman</button>
+          <button class="ind"><i data-i="shield" class="i-lg"></i>Pest control</button>
+          <button class="ind"><i data-i="palette" class="i-lg"></i>Painting</button>
+          <button class="ind"><i data-i="refresh" class="i-lg"></i>Pressure washing</button>
+        </div>
+        <p class="help">Something else? <a href="#">Choose another industry</a></p>
+      </div>
+    </section>
+
+    <section class="ob-body" data-pane="2" hidden>
+      <h1>What do you offer?</h1>
+      <p class="t-muted mt-8">Here are common lawn and landscaping services. Untick what you don’t do and add your prices. Leave a price blank to set it on each quote.</p>
+      <div class="panel mt-24">
+        <label class="svc"><input type="checkbox" checked style="accent-color:var(--canopy)"><span><span class="t-strong">Weekly mowing</span><br><span class="t-xs t-muted">Per visit</span></span><div class="input-group"><span class="addon">$</span><input class="input" value="55"></div></label>
+        <label class="svc"><input type="checkbox" checked style="accent-color:var(--canopy)"><span><span class="t-strong">Spring cleanup</span><br><span class="t-xs t-muted">Per visit</span></span><div class="input-group"><span class="addon">$</span><input class="input" placeholder="On quote"></div></label>
+        <label class="svc"><input type="checkbox" checked style="accent-color:var(--canopy)"><span><span class="t-strong">Fall cleanup</span><br><span class="t-xs t-muted">Per visit</span></span><div class="input-group"><span class="addon">$</span><input class="input" placeholder="On quote"></div></label>
+        <label class="svc"><input type="checkbox" checked style="accent-color:var(--canopy)"><span><span class="t-strong">Mulch install</span><br><span class="t-xs t-muted">Per cubic yard</span></span><div class="input-group"><span class="addon">$</span><input class="input" value="78"></div></label>
+        <label class="svc"><input type="checkbox" style="accent-color:var(--canopy)"><span><span class="t-strong">Snow plowing</span><br><span class="t-xs t-muted">Per visit</span></span><div class="input-group"><span class="addon">$</span><input class="input" placeholder="On quote"></div></label>
+        <label class="svc"><input type="checkbox" checked style="accent-color:var(--canopy)"><span><span class="t-strong">Hedge trimming</span><br><span class="t-xs t-muted">Per hour</span></span><div class="input-group"><span class="addon">$</span><input class="input" value="75"></div></label>
+      </div>
+      <button class="btn btn-ghost mt-8"><i data-i="plus"></i>Add another service</button>
+    </section>
+
+    <section class="ob-body" data-pane="3" hidden>
+      <h1>Make it look like you</h1>
+      <p class="t-muted mt-8">Clients see your logo and color on quotes, invoices and emails.</p>
+      <div class="row gap-16 mt-24"><span class="cl-logo" style="width:72px;height:72px;font-size:24px;border-radius:16px;background:#9a3412">OL</span><div><button class="btn btn-secondary"><i data-i="upload"></i>Upload logo</button><p class="help">No logo? We’ll use your initials.</p></div></div>
+      <div class="field mt-24"><label class="label">Brand color</label><div class="row wrap gap-12"><span class="dot" style="width:32px;height:32px;border-radius:8px;background:#9a3412;box-shadow:0 0 0 2px #fff,0 0 0 4px var(--ink)"></span><span class="dot" style="width:32px;height:32px;border-radius:8px;background:#166534"></span><span class="dot" style="width:32px;height:32px;border-radius:8px;background:#1d4ed8"></span><span class="dot" style="width:32px;height:32px;border-radius:8px;background:#0f766e"></span><span class="dot" style="width:32px;height:32px;border-radius:8px;background:#0f172a"></span></div></div>
+    </section>
+
+    <section class="ob-body" data-pane="4" hidden>
+      <h1>Send your first quote</h1>
+      <p class="t-muted mt-8">The fastest way to see how it works is to send one. Try it with a real client, or send one to yourself to see what your clients will get.</p>
+      <div class="grid-2 mt-24">
+        <a class="panel" href="quote-builder.html" style="padding:18px;text-decoration:none;color:inherit"><span class="ico" style="width:36px;height:36px;border-radius:9px;background:var(--canopy-50);color:var(--canopy);display:flex;align-items:center;justify-content:center"><i data-i="quote"></i></span><div class="t-strong mt-12">Quote a real client</div><p class="t-sm t-muted mt-4">Add their name and email, pick services, send.</p></a>
+        <a class="panel" href="../client/quote.html" style="padding:18px;text-decoration:none;color:inherit"><span class="ico" style="width:36px;height:36px;border-radius:9px;background:var(--slate-100);color:var(--muted);display:flex;align-items:center;justify-content:center"><i data-i="eye"></i></span><div class="t-strong mt-12">See a sample first</div><p class="t-sm t-muted mt-4">Preview a quote with your brand. Doesn’t count toward your plan.</p></a>
+      </div>
+    </section>
+
+    <div class="ob-body" style="margin-top:0">
+      <div class="ob-foot"><button class="btn btn-ghost" id="back" disabled><i data-i="arrow-left"></i>Back</button><div class="row"><button class="btn btn-ghost" id="skip">Skip this step</button><button class="btn btn-primary btn-lg" id="next">Continue</button></div></div>
+    </div>
+  </main>
+</div>
+<script src="../assets/icons.js"></script>
+<script src="../assets/app.js"></script>
+<script>
+  let step = 1;
+  function go(n) {
+    step = Math.max(1, Math.min(4, n));
+    document.querySelectorAll("[data-pane]").forEach((p) => (p.hidden = +p.dataset.pane !== step));
+    document.querySelectorAll("#steps li").forEach((li) => { const s = +li.dataset.step; li.className = s < step ? "done" : s === step ? "current" : ""; li.querySelector(".n").innerHTML = s < step ? "✓" : s; });
+    document.getElementById("progress").textContent = `Step ${step} of 4`;
+    document.getElementById("back").disabled = step === 1;
+    document.getElementById("next").textContent = step === 4 ? "Go to my home screen" : "Continue";
+    document.getElementById("skip").style.visibility = step === 4 ? "hidden" : "visible";
+  }
+  document.getElementById("next").onclick = () => (step === 4 ? (location.href = "dashboard.html") : go(step + 1));
+  document.getElementById("skip").onclick = () => go(step + 1);
+  document.getElementById("back").onclick = () => go(step - 1);
+  document.getElementById("steps").onclick = (e) => { const li = e.target.closest("li"); if (li) go(+li.dataset.step); };
+  document.getElementById("ind").onclick = (e) => { const b = e.target.closest(".ind"); if (!b) return; document.querySelectorAll(".ind").forEach((x) => x.classList.toggle("is-on", x === b)); };
+</script>
+</body>
+</html>

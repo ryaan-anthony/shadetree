@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Invoice from Oakline Lawn & Landscape</title>
+  <link rel="stylesheet" href="../assets/shadetree.css">
+  <!-- Specs: PAY-02 client invoice page, PAY-04 client pays online (provider-hosted card fields, wallets, receipt). -->
+  <style>
+    body { --brand: #9a3412; --brand-ink: #fff; --brand-soft: #fdeee4; }
+    .due { padding: 24px; text-align: center; }
+    .due .money { font-size: 40px; font-weight: 800; letter-spacing: -0.03em; color: var(--ink); display: block; margin: 4px 0; }
+    .pay-box { padding: 20px 24px 24px; border-top: 1px solid var(--line); }
+    .wallet { height: 48px; border-radius: 10px; background: #000; color: #fff; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600; font-size: 16px; border: 0; width: 100%; cursor: pointer; }
+    .or { display: flex; align-items: center; gap: 12px; color: var(--faint); font-size: 12.5px; margin: 16px 0; }
+    .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+    .card-field { border: 1px solid #d5dbe3; border-radius: var(--r); overflow: hidden; }
+    .card-field input { border: 0; height: 44px; padding: 0 12px; width: 100%; font-size: 15px; }
+    .card-field .two { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid #d5dbe3; }
+    .card-field .two input + input { border-left: 1px solid #d5dbe3; }
+    .secure { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; color: var(--muted); margin-top: 12px; }
+    .paid-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; border-top: 1px solid var(--line-2); }
+  </style>
+</head>
+<body class="cl">
+<header class="cl-head">
+  <div class="cl-wrap">
+    <span class="cl-logo">OL</span>
+    <div class="grow"><div class="t-strong">Oakline Lawn &amp; Landscape</div><div class="t-xs t-muted">Brookfield, CT</div></div>
+    <a class="btn btn-secondary" href="#"><i data-i="download"></i><span class="hide-sm">PDF</span></a>
+  </div>
+</header>
+<main class="cl-wrap" style="padding-top:20px">
+  <article class="cl-card">
+    <div class="due">
+      <div class="t-sm t-muted">Invoice INV-2210 for Lakeview HOA</div>
+      <span class="money">$760.00</span>
+      <div class="t-sm">due by <strong>November 20, 2026</strong></div>
+      <div class="t-xs t-muted mt-4">$1,000.00 of $1,760.00 already paid. Thank you!</div>
+    </div>
+    <div class="pay-box">
+      <button class="wallet" onclick="mockToast('Payment of $760.00 received. Receipt sent.')"><i data-i="smartphone"></i>Pay with wallet</button>
+      <div class="or">or pay by card</div>
+      <div class="card-field" aria-label="Card details (hosted by the payment provider)">
+        <input placeholder="Card number" inputmode="numeric">
+        <div class="two"><input placeholder="MM / YY"><input placeholder="CVC"></div>
+      </div>
+      <input class="input mt-8" style="height:44px" placeholder="ZIP code">
+      <button class="btn btn-brand btn-xl btn-block mt-16" onclick="mockToast('Payment of $760.00 received. Receipt sent.')">Pay $760.00</button>
+      <div class="secure"><i data-i="lock" class="i-sm"></i>Secure payment. Card details go straight to the payment processor, never to Oakline or Shadetree.</div>
+    </div>
+  </article>
+
+  <article class="cl-card">
+    <div class="cl-pad">
+      <div class="row between"><h2 style="font-size:16px">Weekly mowing, October</h2><span class="t-sm t-muted">Issued Oct 31</span></div>
+      <table class="line-items mt-16">
+        <tbody>
+          <tr><td><div class="t-strong">Common area mowing</div><div class="desc">Oct 3, 10, 17, 24 · 4 visits × $385.00</div></td><td class="num money">$1,540.00</td></tr>
+          <tr><td><div class="t-strong">Leaf blowing, walkways</div><div class="desc">Oct 24</div></td><td class="num money">$220.00</td></tr>
+        </tbody>
+      </table>
+      <div class="totals mt-12">
+        <div class="tr"><span class="t-muted">Tax</span><span>Exempt</span></div>
+        <div class="tr grand"><span>Total</span><span class="money">$1,760.00</span></div>
+      </div>
+      <div class="mt-16">
+        <div class="section-title">Payments</div>
+        <div class="paid-row"><span>Nov 4 · Card ending 4417</span><span class="money">−$1,000.00</span></div>
+        <div class="paid-row t-strong t-ink"><span>Balance due</span><span class="money">$760.00</span></div>
+      </div>
+    </div>
+  </article>
+  <p class="t-center t-sm t-muted mt-16">Questions? Call Oakline at <a href="tel:5553804410">(555) 380-4410</a> or reply to the invoice email.</p>
+  <div class="cl-powered">Sent with <span class="logo"><span class="logo-mark" data-logo-mark></span>Shadetree</span></div>
+</main>
+<script src="../assets/icons.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

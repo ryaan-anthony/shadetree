@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clients · Shadetree</title>
+  <link rel="stylesheet" href="../assets/shadetree.css">
+  <!-- Spec: CLI-02 Client list & search; CLI-06 import entry point. -->
+</head>
+<body data-app="staff" data-nav="clients" data-crumbs="Clients">
+<main class="content">
+  <div class="page-head">
+    <div><h1>Clients</h1><p class="lede">248 active clients</p></div>
+    <div class="actions"><button class="btn btn-secondary" data-open="import"><i data-i="upload"></i>Import</button><button class="btn btn-primary" data-open="new-client"><i data-i="plus"></i>Add client</button></div>
+  </div>
+
+  <section class="panel">
+    <div class="toolbar">
+      <div class="input-icon" style="flex:1;max-width:420px"><i data-i="search"></i><input class="input" placeholder="Name, email, phone or street" value="ma"></div>
+      <button class="chip is-on">Residential <i data-i="x" class="i-sm"></i></button>
+      <button class="chip"><i data-i="plus" class="i-sm"></i>Tag</button>
+      <div class="ml-auto row"><span class="t-sm t-muted hide-sm">Sort</span><select class="select" style="width:auto;height:32px"><option>Recent activity</option><option>Name</option><option>Recently added</option></select></div>
+    </div>
+    <table class="table table-cards">
+      <thead><tr><th>Name</th><th class="hide-sm">Contact</th><th class="hide-sm">Property</th><th class="hide-sm">Tags</th><th class="num">Balance</th><th class="hide-sm">Last activity</th></tr></thead>
+      <tbody>
+        <tr class="is-link" onclick="location.href='client.html'"><td class="primary"><div class="row gap-12"><span class="avatar av-5">HB</span><span>Hannah Brooks<span class="sub">2 properties</span></span></div></td><td class="hide-sm">hannah.brooks@email.com<span class="sub">(555) 301-7712</span></td><td class="hide-sm"><mark style="background:#fef3c7;padding:0 1px">Ma</mark>ple Street</td><td class="hide-sm"><span class="tag">Residential</span></td><td class="num money">$0.00</td><td class="hide-sm t-muted">Approved quote, today</td></tr>
+        <tr class="is-link" onclick="location.href='client.html'"><td class="primary"><div class="row gap-12"><span class="avatar av-6"><span>MA</span></span><span><mark style="background:#fef3c7;padding:0 1px">Ma</mark>rtin Alvarez<span class="sub">1 property</span></span></div></td><td class="hide-sm">m.alvarez@email.com<span class="sub">(555) 214-0099</span></td><td class="hide-sm">9 Birch Rd</td><td class="hide-sm"><span class="tag">Residential</span> <span class="tag">Weekly</span></td><td class="num money">$0.00</td><td class="hide-sm t-muted">Quote sent, Nov 9</td></tr>
+        <tr class="is-link" onclick="location.href='client.html'"><td class="primary"><div class="row gap-12"><span class="avatar av-3">MK</span><span><mark style="background:#fef3c7;padding:0 1px">Ma</mark>ya Kowalski<span class="sub">1 property</span></span></div></td><td class="hide-sm">maya.k@email.com<span class="sub">(555) 993-1208</span></td><td class="hide-sm">17 Lantern Hill</td><td class="hide-sm"><span class="tag">Residential</span></td><td class="num money t-strong">$185.00</td><td class="hide-sm t-muted">Invoice sent, Nov 3</td></tr>
+        <tr class="is-link" onclick="location.href='client.html'"><td class="primary"><div class="row gap-12"><span class="avatar av-2">JM</span><span>Jordan Mason<span class="sub">1 property</span></span></div></td><td class="hide-sm"><span class="t-faint">No email</span><span class="sub">(555) 610-3345</span></td><td class="hide-sm">4 <mark style="background:#fef3c7;padding:0 1px">Ma</mark>rsh View Rd</td><td class="hide-sm"><span class="tag">Residential</span></td><td class="num money">$0.00</td><td class="hide-sm t-muted">Visit completed, Oct 30</td></tr>
+      </tbody>
+    </table>
+    <div class="panel-foot t-sm t-muted">4 matches for “ma” in Residential</div>
+  </section>
+</main>
+
+<div class="modal" id="import" role="dialog" aria-labelledby="imp-title" style="width:min(640px,calc(100vw - 24px))">
+  <div class="modal-head"><div><h2 id="imp-title">Import clients</h2><p>Step 2 of 3 · Match your columns</p></div><button class="icon-btn" data-close aria-label="Close"><i data-i="x"></i></button></div>
+  <div class="modal-body">
+    <div class="banner banner-success mb-16"><i data-i="check-circle"></i><div><strong>clients-export.csv</strong> · 312 rows found</div></div>
+    <table class="table table-compact" style="border:1px solid var(--line);border-radius:var(--r-lg)">
+      <thead><tr><th>Column in your file</th><th>Example</th><th>Shadetree field</th></tr></thead>
+      <tbody>
+        <tr><td class="t-strong">Customer Name</td><td class="t-muted">Hannah Brooks</td><td><select class="select" style="height:30px"><option>Name</option></select></td></tr>
+        <tr><td class="t-strong">E-mail</td><td class="t-muted">hannah.brooks@…</td><td><select class="select" style="height:30px"><option>Email</option></select></td></tr>
+        <tr><td class="t-strong">Mobile</td><td class="t-muted">555-301-7712</td><td><select class="select" style="height:30px"><option>Phone</option></select></td></tr>
+        <tr><td class="t-strong">Service Address</td><td class="t-muted">12 Maple St, Brookfield…</td><td><select class="select" style="height:30px"><option>Property address</option></select></td></tr>
+        <tr><td class="t-strong">Notes</td><td class="t-muted">Gate code 4417</td><td><select class="select" style="height:30px"><option>Access notes</option></select></td></tr>
+        <tr><td class="t-strong">Last Job</td><td class="t-muted">2025-10-12</td><td><select class="select" style="height:30px"><option>Don’t import</option></select></td></tr>
+      </tbody>
+    </table>
+    <div class="banner banner-warn mt-16"><i data-i="alert"></i><div><strong>18 rows match existing clients</strong> by email or phone. <select class="select" style="display:inline-block;width:auto;height:26px;font-size:13px;margin-left:6px"><option>Skip them</option><option>Import anyway</option></select></div></div>
+  </div>
+  <div class="modal-foot"><button class="btn btn-secondary" data-close>Back</button><button class="btn btn-primary" data-close data-toast="Importing 294 clients. We’ll let you know when it’s done.">Preview import</button></div>
+</div>
+<script src="../assets/icons.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

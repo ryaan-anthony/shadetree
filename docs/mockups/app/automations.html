@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Automations · Shadetree</title>
+  <link rel="stylesheet" href="../assets/shadetree.css">
+  <!-- Spec: NTF-04 Workflow automations (recipes, trigger → delay → condition → action, run log, safeguards). Uses NTF-03 templates. -->
+  <style>
+    .recipe { display: grid; grid-template-columns: 36px 1fr auto auto; gap: 14px; align-items: center; padding: 14px 18px; border-top: 1px solid var(--line-2); }
+    .recipe:first-child { border-top: 0; }
+    .recipe .ico { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+    .recipe .steps { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+    .recipe .steps .i { width: 12px; height: 12px; color: var(--faint); }
+    .builder .step { position: relative; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--r-lg); background: #fff; }
+    .builder .step + .step { margin-top: 28px; }
+    .builder .step + .step::before { content: ""; position: absolute; left: 28px; top: -29px; height: 28px; width: 2px; background: var(--line); }
+    .builder .k { font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .builder .k .num { width: 20px; height: 20px; border-radius: 50%; background: var(--ink); color: #fff; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; }
+    .runlog td { font-size: 13px; }
+  </style>
+</head>
+<body data-nofab data-app="staff" data-nav="settings" data-crumbs="Settings:settings.html|Automations">
+<main class="content">
+  <div class="page-head"><div><h1>Settings</h1></div></div>
+  <div class="settings">
+    <nav class="settings-nav" data-settings-nav="automations" aria-label="Settings"></nav>
+    <div class="stack">
+      <div class="row between wrap">
+        <div><h2 style="font-size:17px">Automations</h2><p class="t-sm t-muted">Follow-ups that happen on their own. Every automation checks again before it acts, so nobody gets a reminder for something already done.</p></div>
+        <button class="btn btn-primary" data-open="rule"><i data-i="plus"></i>New automation</button>
+      </div>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Your automations</h2><span class="t-sm t-muted">4 of 10 active</span></div>
+        <div class="recipe">
+          <span class="ico" style="background:var(--blue-50);color:var(--blue)"><i data-i="quote"></i></span>
+          <div><div class="t-strong">Quote follow-up</div><div class="steps">Quote sent <i data-i="arrow-right"></i> wait 3 days <i data-i="arrow-right"></i> if not approved <i data-i="arrow-right"></i> email client “Friendly reminder”</div></div>
+          <span class="t-xs t-muted hide-sm">Ran 12 times this month</span>
+          <span class="switch"><input type="checkbox" checked aria-label="Quote follow-up on"><span></span></span>
+        </div>
+        <div class="recipe">
+          <span class="ico" style="background:var(--canopy-50);color:var(--canopy)"><i data-i="check"></i></span>
+          <div><div class="t-strong">Create job when quote is approved</div><div class="steps">Quote approved <i data-i="arrow-right"></i> create job <i data-i="arrow-right"></i> notify Admins</div></div>
+          <span class="t-xs t-muted hide-sm">Ran 28 times</span>
+          <span class="switch"><input type="checkbox" checked aria-label="Create job on"><span></span></span>
+        </div>
+        <div class="recipe">
+          <span class="ico" style="background:var(--violet-50);color:var(--violet)"><i data-i="invoice"></i></span>
+          <div><div class="t-strong">Invoice when job is done</div><div class="steps">Job completed <i data-i="arrow-right"></i> create invoice from job <i data-i="arrow-right"></i> send to client</div></div>
+          <span class="t-xs t-muted hide-sm">Ran 19 times</span>
+          <span class="switch"><input type="checkbox" checked aria-label="Invoice when done on"><span></span></span>
+        </div>
+        <div class="recipe">
+          <span class="ico" style="background:var(--red-50);color:var(--red)"><i data-i="alert"></i></span>
+          <div><div class="t-strong">Overdue invoice reminder</div><div class="steps">Invoice overdue <i data-i="arrow-right"></i> wait 2 days <i data-i="arrow-right"></i> if still unpaid <i data-i="arrow-right"></i> email client “Payment reminder”</div></div>
+          <span class="t-xs t-muted hide-sm">Ran 4 times</span>
+          <span class="switch"><input type="checkbox" checked aria-label="Overdue reminder on"><span></span></span>
+        </div>
+        <div class="recipe">
+          <span class="ico" style="background:var(--amber-50);color:var(--amber)"><i data-i="star"></i></span>
+          <div><div class="t-strong">Ask for a review</div><div class="steps">Payment received <i data-i="arrow-right"></i> wait 1 day <i data-i="arrow-right"></i> email client “How did we do?”</div></div>
+          <span class="t-xs t-muted hide-sm">Off</span>
+          <span class="switch"><input type="checkbox" aria-label="Review request on"><span></span></span>
+        </div>
+      </section>
+
+      <section class="panel flush">
+        <div class="panel-head"><div><h2>Recent runs</h2><div class="sub">Also shown on each quote, job and invoice</div></div></div>
+        <div class="table-wrap"><table class="table runlog">
+          <thead><tr><th>When</th><th>Automation</th><th>Record</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td class="t-muted nowrap">Today 9:14</td><td>Create job when quote is approved</td><td><a href="quote.html">Q-1041</a> → <a href="job.html">J-0391</a></td><td><span class="badge b-green">Done</span></td></tr>
+            <tr><td class="t-muted nowrap">Today 8:00</td><td>Quote follow-up</td><td><a href="quote.html">Q-1035</a> Martin Alvarez</td><td><span class="badge b-green">Email sent</span></td></tr>
+            <tr><td class="t-muted nowrap">Today 8:00</td><td>Quote follow-up</td><td><a href="quote.html">Q-1041</a> Hannah Brooks</td><td><span class="badge b-slate">Skipped</span> <span class="t-xs t-muted">Already approved</span></td></tr>
+            <tr><td class="t-muted nowrap">Yesterday</td><td>Overdue invoice reminder</td><td><a href="invoice.html">INV-2209</a> Westgate</td><td><span class="badge b-amber">Not sent</span> <span class="t-xs t-muted">Email bounced before</span></td></tr>
+          </tbody>
+        </table></div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<div class="drawer" id="rule" role="dialog" aria-labelledby="rule-title" style="width:min(560px,100vw)">
+  <div class="drawer-head"><div><h2 id="rule-title" style="font-size:16px">New automation</h2><div class="t-sm t-muted">When something happens, wait, check, then act.</div></div><button class="icon-btn" data-close aria-label="Close"><i data-i="x"></i></button></div>
+  <div class="drawer-body builder">
+    <div class="field"><label class="label">Name</label><input class="input" value="Remind about unviewed quotes"></div>
+    <div class="step mt-16"><div class="k"><span class="num">1</span>When</div><select class="select"><option>A quote is sent</option><option>A quote is approved</option><option>A job is completed</option><option>An invoice becomes overdue</option><option>A payment is received</option><option>A request comes in</option></select></div>
+    <div class="step"><div class="k"><span class="num">2</span>Wait</div><div class="input-group" style="max-width:220px"><input class="input" value="5"><select class="select" style="border-radius:0 6px 6px 0;margin-left:-1px"><option>days</option><option>hours</option></select></div></div>
+    <div class="step"><div class="k"><span class="num">3</span>Only if</div>
+      <div class="stack-sm">
+        <div class="row"><select class="select"><option>Quote is still not viewed</option><option>Quote is still not approved</option><option>Total is over</option><option>Client has tag</option></select><button class="icon-btn" aria-label="Remove condition"><i data-i="x"></i></button></div>
+        <button class="btn btn-ghost btn-sm" style="align-self:flex-start"><i data-i="plus"></i>Add condition</button>
+      </div>
+    </div>
+    <div class="step"><div class="k"><span class="num">4</span>Then</div>
+      <div class="stack-sm">
+        <div class="row"><select class="select"><option>Notify team members</option><option>Email the client a template</option><option>Create a job</option><option>Create and send an invoice</option><option>Tag the client</option></select></div>
+        <div class="row"><select class="select"><option>Whoever sent the quote</option><option>All Admins</option></select></div>
+      </div>
+    </div>
+    <div class="banner banner-neutral mt-16"><i data-i="shield"></i><div>Clients never get the same automated message twice for one quote or invoice, and automations can’t trigger each other.</div></div>
+  </div>
+  <div class="drawer-foot"><button class="btn btn-secondary" data-close>Cancel</button><button class="btn btn-primary" data-close data-toast="Automation turned on">Turn on</button></div>
+</div>
+<script src="../assets/icons.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+# 01 · Platform & engineering
+
+## Purpose
+
+Give every other domain a stable, secure, inexpensive foundation, and make the repository easy
+for several developers and coding agents to work in at the same time without stepping on each
+other.
+
+## Current state (Nov 2026)
+
+- Rails 8.1, Ruby 3.4.5, SQLite for all databases, Solid Queue/Cache/Cable, Propshaft, importmap,
+  Hotwire, Devise (with confirmable), Minitest + Capybara, Kamal deploy config with placeholder
+  hosts.
+- Tailwind is loaded from a CDN at runtime in every layout, with config inlined per layout.
+- 27 tables exist; most (locations, service prices/taxes/fees per location, staff roles,
+  notification triggers, service area restrictions, customer notification preferences) back no
+  shipped feature.
+- A basic CI workflow exists (brakeman, importmap audit, rubocop, tests). ~12 Dependabot PRs are
+  open and stale.
+- The original docs specify a different stack (PostgreSQL, Redis, Sidekiq, RSpec,
+  ViewComponent). Nothing records which is intended.
+- README is the Rails default; there is no setup guide, contribution guide, or agent guide.
+
+## Requirements
+
+### Engineering decisions
+- **R1** Significant technical decisions are recorded as short architecture decision records
+  (ADRs) in the repository, including the ones currently implicit: database, multi-tenancy
+  isolation approach, CSS/asset pipeline, UI component approach, test framework, background
+  processing, file storage, hosting.
+- **R2** The documented stack and the running stack agree. Original docs that contradict
+  decisions are marked superseded.
+
+### Developer experience
+- **R3** A new contributor can go from clone to a running app with seeded demo data with one
+  documented command.
+- **R4** Contribution rules are written down: branch naming, commit/PR conventions, how specs
+  and issues relate, definition of done, and an agent guide for coding agents.
+- **R5** Issue and PR templates enforce linking to a spec and listing acceptance criteria.
+- **R6** Dependency updates are grouped and low-noise; the current backlog is resolved.
+
+### Quality gates
+- **R7** Every PR runs lint, security scans (Ruby and JS dependencies, static analysis), and the
+  full test suite; failures block merge.
+- **R8** `main` is protected: PRs required, checks required, linear history.
+- **R9** Test suite stays fast enough to run on every PR (target < 5 min wall clock) and supports
+  parallel execution.
+
+### Architecture guardrails
+- **R10** Tenancy: all business-owned data is scoped to a business by default; accessing another
+  tenant's record is impossible through normal application code paths, and a shared test helper
+  makes cross-tenant denial easy to assert.
+- **R11** Conventions for money (exact, currency-aware), time (business time zone, stored in
+  UTC), and identifiers exposed in URLs (non-guessable for anything client-facing).
+- **R12** Client links: a single mechanism for secure, expiring, revocable links that let a
+  client view or act on one document without an account. Used by quotes, invoices, visits.
+- **R13** Feature flags: work can be merged dark and enabled per business or globally, so
+  multi-PR features don't need long-lived branches.
+- **R14** The schema contains only tables backed by shipped or in-progress specs. Speculative
+  tables are removed and re-added when their spec is built.
+
+### UI foundation
+- **R15** CSS is built at deploy time (no runtime CDN), with one shared design-token set
+  (colors, type, spacing) and three layouts: public/marketing, staff app (responsive, with
+  mobile navigation), and client-facing (brandable, minimal).
+- **R16** A small library of reusable UI building blocks (buttons, form fields, tables/lists,
+  cards, empty states, flash messages, modals) so features look consistent without
+  re-inventing markup.
+
+### Operations
+- **R17** Two environments: staging (auto-deploy from `main`) and production (manual promote).
+- **R18** Automated, tested backups with documented restore; restore drill before launch.
+- **R19** Error tracking, structured logs, uptime monitoring, and a health endpoint.
+- **R20** Secrets are managed outside the repo and rotated on a documented process.
+
+### Security
+- **R21** Strict content security policy (possible once the CDN is gone), secure headers,
+  rate limiting on authentication and public endpoints, bot protection on public forms.
+- **R22** Personal data inventory: we know where client PII lives and it never reaches logs.
+
+## Constraints
+
+- Cost: the platform must run all tenants on modest infrastructure at launch (target < $50/month
+  for staging + production before revenue).
+- Simplicity: prefer Rails defaults and the "Solid" stack unless an ADR argues otherwise.
+- No new runtime JavaScript frameworks; progressive enhancement only.
+
+## Decisions
+
+| # | Decision | Rationale |
+| --- | --- | --- |
+| D1 | Rails conventions and defaults are the starting point for every choice. | Minimizes decisions per feature; matches the "small team" constraint. |
+| D2 | Schema reset is allowed in M0. | No production data is believed to exist (open question G4). |
+| D3 | Feature flags are built in M1, not M5. | They are what makes parallel, incremental delivery safe. |
+| D4 | Stack choices (DB, test framework, components) are *not* made in this doc. | They are engineering decisions owned by `PLT-01` and its ADRs. |
+
+## Specifications
+
+| ID | Title | Milestone | Depends on |
+| --- | --- | --- | --- |
+| [PLT-01](../specs/platform/PLT-01-architecture-decisions.md) | Architecture decision records | M0 | — |
+| [PLT-02](../specs/platform/PLT-02-ci-quality-gates.md) | CI quality gates & branch protection | M0 | — |
+| [PLT-03](../specs/platform/PLT-03-contributor-experience.md) | Contributor & agent experience | M0 | — |
+| [PLT-04](../specs/platform/PLT-04-dependency-refresh.md) | Dependency refresh | M0 | PLT-02 |
+| [PLT-05](../specs/platform/PLT-05-ui-foundation.md) | UI foundation: build pipeline, layouts, components | M0 | PLT-01 |
+| [PLT-06](../specs/platform/PLT-06-tenancy-guardrails.md) | Tenancy guardrails | M0 | PLT-01, PLT-07 |
+| [PLT-07](../specs/platform/PLT-07-schema-reset.md) | Schema reset | M0 | PLT-01 |
+| [PLT-08](../specs/platform/PLT-08-money-time-conventions.md) | Money, time & identifier conventions | M0 | PLT-01 |
+| [PLT-09](../specs/platform/PLT-09-environments-deploy.md) | Environments, deploys & backups | M1 | PLT-01, PLT-02 |
+| [PLT-10](../specs/platform/PLT-10-observability.md) | Observability | M1 | PLT-09 |
+| [PLT-11](../specs/platform/PLT-11-feature-flags.md) | Feature flags | M1 | PLT-06 |
+| [PLT-12](../specs/platform/PLT-12-client-links.md) | Client links | M1 | PLT-06, PLT-08 |
+| [PLT-13](../specs/platform/PLT-13-security-baseline.md) | Security baseline | M5 | PLT-05, PLT-10 |
+
+## Backlog (M6, not yet specified)
+
+- Custom client-facing domains per business (`quotes.acmeplumbing.com`).
+- Public API and outbound webhooks for integrations (Zapier/Make).
+- Offline-capable technician view (PWA caching).
+- Multi-region / data residency.
+
+## Open questions
+
+1. **Database (G1):** SQLite + Litestream-style replication on one server vs. managed
+   PostgreSQL. Trade-off is cost and simplicity vs. operational headroom and tooling. Owned by
+   PLT-01. **(blocking for PLT-06/07)**
+2. **Hosting target:** single VPS with Kamal (current config) vs. a PaaS. Affects backups and
+   cost. Owned by PLT-09.
+3. **Test framework:** keep Minitest (current) or switch to RSpec (original docs)? Recommend
+   keep Minitest — it is what exists and is the Rails default.
+4. **File storage** for logos and job photos: local disk vs. object storage. Object storage
+   recommended before job photos (JOB-04).
+5. Do we want multi-database-per-tenant isolation (strong isolation, harder ops) or row-level
+   scoping (simple, needs guardrails)? Row-level recommended.

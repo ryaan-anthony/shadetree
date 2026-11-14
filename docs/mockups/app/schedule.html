@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Schedule · Shadetree</title>
+  <link rel="stylesheet" href="../assets/shadetree.css">
+  <!-- Specs: JOB-03 Staff calendar (week/day, member filter, unscheduled panel, off-hours shading), JOB-02 warnings, CAT-06 hours. -->
+  <style>
+    .cal-wrap { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 16px; align-items: start; }
+    .cal { overflow: hidden; }
+    .cal-head { display: grid; grid-template-columns: 56px repeat(6, 1fr); border-bottom: 1px solid var(--line); }
+    .cal-head div { padding: 10px 8px; font-size: 12.5px; color: var(--muted); font-weight: 600; border-left: 1px solid var(--line-2); }
+    .cal-head div:first-child { border-left: 0; }
+    .cal-head b { display: block; font-size: 18px; color: var(--ink); font-weight: 700; }
+    .cal-head .today b { color: #fff; background: var(--canopy); border-radius: 8px; width: 32px; text-align: center; }
+    .cal-body { display: grid; grid-template-columns: 56px repeat(6, 1fr); position: relative; height: 660px; overflow-y: auto; padding-top: 10px; }
+    .hours div { height: 56px; font-size: 11.5px; color: var(--faint); text-align: right; padding: 0 8px; transform: translateY(-7px); font-variant-numeric: tabular-nums; }
+    .day { position: relative; border-left: 1px solid var(--line-2); background-image: linear-gradient(var(--line-2) 1px, transparent 1px); background-size: 100% 56px; }
+    .off { position: absolute; left: 0; right: 0; background: repeating-linear-gradient(-45deg, #f6f7f9, #f6f7f9 6px, #eff1f4 6px, #eff1f4 12px); }
+    .anyday { padding: 6px 4px; border-left: 1px solid var(--line-2); min-height: 34px; }
+    .any-row { display: grid; grid-template-columns: 56px repeat(6, 1fr); border-bottom: 1px solid var(--line); background: var(--slate-50); }
+    .any-row > div:first-child { font-size: 11px; color: var(--muted); padding: 10px 6px; text-align: right; }
+    .ev { position: absolute; left: 4px; right: 4px; border-radius: 6px; padding: 5px 7px; font-size: 12px; line-height: 1.3; overflow: hidden; cursor: grab; border-left: 3px solid; box-shadow: var(--sh-1); }
+    .ev .t { font-weight: 700; color: var(--ink); }
+    .ev .s { color: var(--text-2); font-size: 11.5px; }
+    .ev.window { background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,.0), rgba(255,255,255,.0) 6px, rgba(255,255,255,.55) 6px, rgba(255,255,255,.55) 12px); }
+    .ev.done { opacity: .55; }
+    .ev:hover { box-shadow: var(--sh-pop); z-index: 3; }
+    .chipev { display: block; font-size: 11.5px; padding: 4px 6px; border-radius: 5px; margin-bottom: 4px; border-left: 3px solid; font-weight: 600; color: var(--ink); }
+    .now { position: absolute; left: 0; right: 0; height: 2px; background: #e11d48; z-index: 4; }
+    .now::before { content: ""; position: absolute; left: -5px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: #e11d48; }
+    .unsched .item { padding: 12px 14px; border-top: 1px solid var(--line-2); cursor: grab; }
+    .unsched .item:hover { background: #fafbfc; }
+    .member { display: flex; align-items: center; gap: 8px; padding: 6px 14px; font-size: 13px; }
+    .member input { accent-color: var(--canopy); }
+    .agenda { display: none; }
+    @media (max-width: 1100px) { .cal-wrap { grid-template-columns: 1fr; } .side-col { order: 2; } }
+    @media (max-width: 720px) {
+      .cal { display: none; }
+      .agenda { display: block; }
+    }
+    .ag-day { padding: 10px 14px; font-size: 12.5px; font-weight: 700; color: var(--muted); background: var(--slate-50); border-bottom: 1px solid var(--line); border-top: 1px solid var(--line); }
+    .ag-item { display: grid; grid-template-columns: 56px 1fr; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line-2); border-left: 3px solid; }
+  </style>
+</head>
+<body data-app="staff" data-nav="schedule" data-crumbs="Schedule">
+<main class="content" style="max-width:none">
+  <div class="page-head">
+    <div class="row gap-12 wrap">
+      <h1>November 16 – 21</h1>
+      <div class="btn-group"><button class="btn btn-secondary btn-icon" aria-label="Previous week"><i data-i="chevron-left"></i></button><button class="btn btn-secondary btn-icon" aria-label="Next week"><i data-i="chevron-right"></i></button></div>
+      <button class="btn btn-secondary">This week</button>
+    </div>
+    <div class="actions">
+      <div class="seg" data-tabs="view"><button data-tab="">Day</button><button class="is-active" data-tab="">Week</button></div>
+      <a class="btn btn-primary" href="job.html"><i data-i="plus"></i>New job</a>
+    </div>
+  </div>
+
+  <div class="cal-wrap">
+    <aside class="stack side-col">
+      <section class="panel unsched">
+        <div class="panel-head"><div><h2>Needs scheduling</h2><div class="sub">Drag onto the calendar</div></div><span class="count" style="background:var(--amber)">2</span></div>
+        <div class="item" style="border-top:0"><div class="row between"><span class="t-strong">Spring cleanup</span><span class="t-xs t-muted">5 h</span></div><div class="t-sm t-muted">Hannah Brooks, 12 Maple St</div><div class="t-xs t-green mt-4">Approved today</div></div>
+        <div class="item"><div class="row between"><span class="t-strong">Paver patio sealing</span><span class="t-xs t-muted">3 h</span></div><div class="t-sm t-muted">Kim Okafor, 61 Ridge Rd</div><div class="t-xs t-muted mt-4">Approved Tuesday</div></div>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2>Crew</h2><button class="btn btn-ghost btn-sm">All</button></div>
+        <div style="padding:8px 0">
+          <label class="member"><input type="checkbox" checked><span class="dot" style="background:#0e7490"></span><span class="grow">Marcus Reyes</span><span class="t-xs t-muted">31 h</span></label>
+          <label class="member"><input type="checkbox" checked><span class="dot" style="background:#c2410c"></span><span class="grow">Leo Kim</span><span class="t-xs t-muted">27 h</span></label>
+          <label class="member"><input type="checkbox" checked><span class="dot" style="background:#7c3aed"></span><span class="grow">Priya Shah</span><span class="t-xs t-muted">9 h</span></label>
+          <label class="member"><input type="checkbox" checked><span class="dot" style="background:#94a3b8"></span><span class="grow">Unassigned</span><span class="t-xs t-muted">2</span></label>
+        </div>
+      </section>
+    </aside>
+
+    <section class="panel cal">
+      <div class="cal-head" id="cal-head"></div>
+      <div class="any-row" id="any-row"></div>
+      <div class="cal-body" id="cal-body"></div>
+    </section>
+
+    <section class="panel agenda" id="agenda"></section>
+  </div>
+</main>
+<script src="../assets/icons.js"></script>
+<script src="../assets/app.js"></script>
+<script>
+  const START = 7, END = 18, H = 56;
+  const days = [["Mon", 16], ["Tue", 17], ["Wed", 18], ["Thu", 19], ["Fri", 20], ["Sat", 21]];
+  const today = 4; // Fri 13 is "today" in the dashboard; this view shows next week — highlight none except via class for demo
+  const hours = { 0: [7, 17], 1: [7, 17], 2: [7, 17], 3: [7, 17], 4: [7, 17], 5: [8, 12] };
+  const M = { MR: ["#0e7490", "#ecfeff"], LK: ["#c2410c", "#fff7ed"], PS: ["#7c3aed", "#f5f3ff"], UN: ["#94a3b8", "#f8fafc"] };
+  const ev = [
+    [0, 8, 1, "Weekly mowing", "14 Alder Ct", "MR"], [0, 9.5, 2.5, "Fall cleanup", "Westgate, Bldg A · Marcus, Leo", "LK", 1],
+    [0, 13, 2, "Irrigation winterize", "5 Cedar Hollow", "PS", 1],
+    [1, 8, 5, "Spring cleanup", "12 Maple St · 8–10 arrival", "MR", 1], [1, 9.5, 1.5, "Hedge trimming", "27 Willow Way", "LK"], [1, 13.5, 2, "Aeration", "9 Birch Rd", "LK"],
+    [2, 8, 1, "Weekly mowing", "14 Alder Ct", "MR"], [2, 9.5, 3, "Leaf removal", "45 Hemlock St", "LK"], [2, 10, 4, "Lakeview common areas", "Lakeview Dr", "MR", 1],
+    [3, 8, 6, "Paver install", "61 Ridge Rd", "LK"], [3, 8, 2, "Gutter clean-out", "88 Juniper Ln", "PS"], [3, 14, 1.5, "Estimate visit", "220 School St", "UN"],
+    [4, 8, 1, "Weekly mowing", "14 Alder Ct", "MR"], [4, 10, 3, "Shrub planting", "3 Orchard Ln", "MR", 1], [4, 11, 2, "Snow stakes install", "Sunrise Learning", "PS"],
+    [5, 8.5, 2.5, "Leaf pickup", "Lakeview HOA", "LK"]
+  ];
+  const any = [[2, "Mulch delivery · Maple St", "UN"], [4, "Dump run", "MR"]];
+  const head = document.getElementById("cal-head");
+  head.innerHTML = "<div></div>" + days.map(([d, n], i) => `<div class="${""}">${d}<b>${n}</b></div>`).join("");
+  document.getElementById("any-row").innerHTML = "<div>All day</div>" + days.map((_, i) => `<div class="anyday">${any.filter((a) => a[0] === i).map((a) => `<span class="chipev" style="border-color:${M[a[2]][0]};background:${M[a[2]][1]}">${a[1]}</span>`).join("")}</div>`).join("");
+  const body = document.getElementById("cal-body");
+  let html = `<div class="hours">${Array.from({ length: END - START }, (_, i) => { const h = START + i; return `<div>${h > 12 ? h - 12 : h} ${h >= 12 ? "PM" : "AM"}</div>`; }).join("")}</div>`;
+  days.forEach((_, di) => {
+    const [o, c] = hours[di];
+    let col = `<div class="day" style="height:${(END - START) * H}px">`;
+    if (o > START) col += `<div class="off" style="top:0;height:${(o - START) * H}px"></div>`;
+    if (c < END) col += `<div class="off" style="top:${(c - START) * H}px;bottom:0"></div>`;
+    const list = ev.filter((e) => e[0] === di);
+    list.forEach((e, idx) => {
+      const overlaps = list.filter((x) => x !== e && x[1] < e[1] + e[2] && e[1] < x[1] + x[2]);
+      const lane = overlaps.length ? list.filter((x) => (x[1] < e[1] + e[2] && e[1] < x[1] + x[2])).indexOf(e) : 0;
+      const lanes = overlaps.length + 1;
+      const w = 100 / lanes;
+      const [fg, bg] = M[e[5]];
+      col += `<a class="ev ${e[6] ? "window" : ""}" href="job.html" style="top:${(e[1] - START) * H + 2}px;height:${e[2] * H - 4}px;left:calc(${lane * w}% + 3px);width:calc(${w}% - 6px);right:auto;border-color:${fg};background-color:${bg};text-decoration:none">
+        <div class="t">${e[3]}</div><div class="s">${e[4]}</div></a>`;
+    });
+    body.innerHTML += "";
+    html += col + "</div>";
+  });
+  body.innerHTML = html;
+  body.scrollTop = 0;
+  // Mobile agenda (same data)
+  const fmtH = (h) => { const hh = Math.floor(h), mm = Math.round((h - hh) * 60); return `${hh > 12 ? hh - 12 : hh}${mm ? ":" + String(mm).padStart(2, "0") : ""}`; };
+  document.getElementById("agenda").innerHTML = days.map(([d, n], di) => `<div class="ag-day">${d} Nov ${n}</div>` + ev.filter((e) => e[0] === di).map((e) => `<a class="ag-item" href="job.html" style="border-left-color:${M[e[5]][0]};text-decoration:none;color:inherit"><div class="t-strong t-sm">${fmtH(e[1])}</div><div><div class="t-strong">${e[3]}</div><div class="t-sm t-muted">${e[4]}</div></div></a>`).join("")).join("");
+</script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>INV-2210 · Shadetree</title>
+  <link rel="stylesheet" href="../assets/shadetree.css">
+  <!-- Specs: PAY-01 invoice, PAY-02 send & client link, PAY-04 online payment record, PAY-05 recorded payments & balances. -->
+  <style>
+    .bal { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); }
+    .bal > div { padding: 14px 20px; }
+    .bal > div + div { border-left: 1px solid var(--line); }
+    .bal .v { font-size: 18px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+    .pay { display: flex; gap: 12px; align-items: center; padding: 12px 18px; border-top: 1px solid var(--line-2); }
+    .pay:first-child { border-top: 0; }
+    .pay .ico { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex: none; }
+    @media (max-width: 720px) { .bal { grid-template-columns: 1fr 1fr; } .bal > div:nth-child(3) { border-left: 0; } .bal > div:nth-child(n+3) { border-top: 1px solid var(--line); } }
+  </style>
+</head>
+<body data-app="staff" data-nav="invoices" data-crumbs="Invoices:invoices.html|INV-2210">
+<main class="content">
+  <div class="page-head">
+    <div>
+      <div class="row gap-12"><h1>INV-2210</h1><span class="badge b-violet">Partially paid</span></div>
+      <p class="lede"><a href="client.html">Lakeview HOA</a> · Weekly mowing, October · Due Nov 20</p>
+    </div>
+    <div class="actions">
+      <div style="position:relative">
+        <button class="btn btn-secondary btn-icon" data-pop="i-more" aria-label="More actions"><i data-i="more"></i></button>
+        <div class="pop" id="i-more" style="right:0;top:40px">
+          <a class="menu-item" href="../client/invoice.html" target="_blank"><i data-i="eye"></i>View as client</a>
+          <button class="menu-item" data-toast="Link copied"><i data-i="link"></i>Copy client link</button>
+          <button class="menu-item" data-toast="PDF downloaded"><i data-i="download"></i>Download PDF</button>
+          <div class="menu-sep"></div>
+          <button class="menu-item" style="color:var(--red)"><i data-i="x" style="color:var(--red)"></i>Void invoice</button>
+        </div>
+      </div>
+      <button class="btn btn-secondary" data-toast="Reminder sent to Lakeview HOA"><i data-i="send"></i>Send reminder</button>
+      <button class="btn btn-primary" data-open="record"><i data-i="plus"></i>Record payment</button>
+    </div>
+  </div>
+
+  <div class="split-wide">
+    <div class="stack">
+      <section class="panel">
+        <div class="panel-body row between wrap">
+          <div class="row gap-12"><span class="avatar avatar-lg av-1">LH</span><div><div class="t-strong">Lakeview HOA</div><div class="t-sm t-muted">Attn: Board treasurer · treasurer@lakeviewhoa.org</div></div></div>
+          <div class="t-sm t-muted t-right">Issued Oct 31, 2026<br>Net 20</div>
+        </div>
+        <div class="bal">
+          <div><div class="t-sm t-muted">Total</div><div class="v">$1,760.00</div></div>
+          <div><div class="t-sm t-muted">Paid</div><div class="v t-green">$1,000.00</div></div>
+          <div><div class="t-sm t-muted">Balance due</div><div class="v">$760.00</div></div>
+          <div><div class="t-sm t-muted">Due in</div><div class="v">7 days</div></div>
+        </div>
+      </section>
+
+      <section class="panel flush">
+        <div class="panel-head"><h2>Line items</h2><span class="t-sm t-muted">From <a href="job.html">J-0352</a>, 4 visits</span></div>
+        <table class="table">
+          <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Amount</th></tr></thead>
+          <tbody>
+            <tr><td class="primary">Common area mowing<span class="sub">Oct 3, 10, 17, 24</span></td><td class="num">4 visit</td><td class="num">$385.00</td><td class="num money">$1,540.00</td></tr>
+            <tr><td class="primary">Leaf blowing, walkways<span class="sub">Oct 24</span></td><td class="num">1 visit</td><td class="num">$220.00</td><td class="num money">$220.00</td></tr>
+          </tbody>
+          <tfoot><tr class="total"><td colspan="3" class="t-right">Total <span class="t-muted" style="font-weight:400">(tax exempt)</span></td><td class="num money">$1,760.00</td></tr></tfoot>
+        </table>
+      </section>
+    </div>
+
+    <aside class="stack">
+      <section class="panel">
+        <div class="panel-head"><h2>Payments</h2><button class="btn btn-ghost btn-sm" data-open="record"><i data-i="plus"></i>Record</button></div>
+        <div class="pay"><span class="ico" style="background:var(--canopy-50);color:var(--canopy)"><i data-i="card"></i></span><div class="grow"><div class="t-strong">$1,000.00 by card</div><div class="t-xs t-muted">Nov 4 · Visa ending 4417 · paid online</div></div><span class="badge b-green plain">Settled</span></div>
+        <div class="panel-foot t-sm"><div class="row"><span class="dot" style="background:var(--canopy)"></span><span>Online payments are on. Clients can pay by card or wallet.</span></div></div>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2>Activity</h2></div>
+        <div class="panel-body">
+          <ol class="timeline">
+            <li><span class="tl-dot green"><i data-i="dollar"></i></span><div><span class="t-strong">Paid $1,000.00</span> online</div><div class="tl-time">Nov 4, 8:22 PM</div></li>
+            <li><span class="tl-dot"></span><div>Viewed by client</div><div class="tl-time">Nov 1</div></li>
+            <li><span class="tl-dot blue"><i data-i="send"></i></span><div><span class="t-strong">Sent</span> to treasurer@lakeviewhoa.org</div><div class="tl-time">Oct 31 by Priya Shah</div></li>
+          </ol>
+        </div>
+      </section>
+    </aside>
+  </div>
+</main>
+
+<div class="modal" id="record" role="dialog" aria-labelledby="rec-title">
+  <div class="modal-head"><div><h2 id="rec-title">Record a payment</h2><p>For cash, checks and bank transfers. Card payments made online are recorded automatically.</p></div><button class="icon-btn" data-close aria-label="Close"><i data-i="x"></i></button></div>
+  <div class="modal-body">
+    <div class="grid-2">
+      <div class="field" style="margin:0"><label class="label">Amount</label><div class="input-group"><span class="addon">$</span><input class="input" value="760.00" inputmode="decimal"></div><p class="help">Balance due: $760.00</p></div>
+      <div class="field" style="margin:0"><label class="label">Date received</label><input class="input" type="date" value="2026-11-13"></div>
+    </div>
+    <div class="field mt-16"><label class="label">Method</label>
+      <div class="seg" data-tabs="m"><button class="is-active" data-tab="">Check</button><button data-tab="">Cash</button><button data-tab="">Bank transfer</button><button data-tab="">Other</button></div>
+    </div>
+    <div class="field"><label class="label">Check number <span class="opt">(optional)</span></label><input class="input" value="2054"></div>
+    <div class="field"><label class="label">Note <span class="opt">(optional)</span></label><input class="input" placeholder="Visible to your team only"></div>
+    <label class="check mt-12"><input type="checkbox" checked><span>Email a receipt to treasurer@lakeviewhoa.org</span></label>
+  </div>
+  <div class="modal-foot"><button class="btn btn-secondary" data-close>Cancel</button><button class="btn btn-primary" data-close data-toast="Payment recorded. INV-2210 is paid.">Record $760.00</button></div>
+</div>
+<script src="../assets/icons.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

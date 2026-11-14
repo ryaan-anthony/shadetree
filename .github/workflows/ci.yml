@@ -6,6 +6,20 @@ on:
     branches: [ main ]
 
 jobs:
+  plan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+
+      - name: Validate planning docs (specs, dependencies, links)
+        run: ruby script/plan/lint
+
   scan_ruby:
     runs-on: ubuntu-latest
 

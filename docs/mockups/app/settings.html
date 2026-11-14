@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Business settings · Shadetree</title>
+  <link rel="stylesheet" href="../assets/shadetree.css">
+  <!-- Specs: CAT-01 Business profile, CAT-02 Branding (logo, color, live preview, contrast check, "Powered by" entitlement). -->
+  <style>
+    .swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+    .sw { width: 30px; height: 30px; border-radius: 8px; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line); cursor: pointer; }
+    .sw.is-on { box-shadow: 0 0 0 2px var(--ink); }
+    .logo-drop { display: flex; gap: 16px; align-items: center; }
+    .logo-drop .cl-logo { width: 64px; height: 64px; font-size: 22px; border-radius: 14px; }
+    .brand-split { grid-template-columns: minmax(0, 1fr) 320px; }
+    @media (max-width: 1100px) { .brand-split { grid-template-columns: 1fr; } }
+    .preview { border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; background: #f4f5f7; }
+    .preview .pv-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: #fff; border-bottom: 1px solid var(--line); }
+    .preview .pv-body { padding: 14px; }
+    .preview .pv-card { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  </style>
+</head>
+<body data-nofab data-app="staff" data-nav="settings" data-crumbs="Settings">
+<main class="content">
+  <div class="page-head"><div><h1>Settings</h1></div></div>
+  <div class="settings">
+    <nav class="settings-nav" data-settings-nav="profile" aria-label="Settings"></nav>
+    <div>
+      <section class="panel">
+        <div class="panel-head"><div><h2>Business profile</h2><div class="sub">Shown on your quotes, invoices and emails</div></div></div>
+        <div class="panel-body">
+          <div class="fieldset-row">
+            <div><h3>Business</h3><p class="help">How clients will see you.</p></div>
+            <div>
+              <div class="field"><label class="label">Business name</label><input class="input" value="Oakline Lawn & Landscape"></div>
+              <div class="grid-2 mt-16">
+                <div class="field" style="margin:0"><label class="label">Industry</label><select class="select"><option>Lawn care &amp; landscaping</option></select></div>
+                <div class="field" style="margin:0"><label class="label">Website <span class="opt">(optional)</span></label><input class="input" value="oaklinelawn.com"></div>
+              </div>
+              <div class="field mt-16"><label class="label">Short description <span class="opt">(optional)</span></label><textarea class="textarea" style="min-height:64px">Family-run lawn care and landscaping serving Brookfield, New Fairfield and Danbury since 2014.</textarea></div>
+            </div>
+          </div>
+          <div class="fieldset-row">
+            <div><h3>Contact</h3><p class="help">Replies to client emails go to this address.</p></div>
+            <div class="grid-2">
+              <div class="field" style="margin:0"><label class="label">Email</label><input class="input" value="dana@oaklinelawn.com"></div>
+              <div class="field" style="margin:0"><label class="label">Phone</label><input class="input" value="(555) 380-4410"></div>
+            </div>
+          </div>
+          <div class="fieldset-row">
+            <div><h3>Address</h3></div>
+            <div>
+              <div class="field"><label class="label">Street</label><input class="input" value="210 Federal Road"></div>
+              <div class="grid-3 mt-16">
+                <div class="field" style="margin:0"><label class="label">City</label><input class="input" value="Brookfield"></div>
+                <div class="field" style="margin:0"><label class="label">State</label><select class="select"><option>Connecticut</option></select></div>
+                <div class="field" style="margin:0"><label class="label">ZIP</label><input class="input" value="06804"></div>
+              </div>
+            </div>
+          </div>
+          <div class="fieldset-row">
+            <div><h3>Region</h3><p class="help">Times on your calendar, emails and documents use this time zone.</p></div>
+            <div class="grid-2">
+              <div class="field" style="margin:0"><label class="label">Time zone</label><select class="select"><option>Eastern Time (New York)</option></select></div>
+              <div class="field" style="margin:0"><label class="label">Currency</label><select class="select"><option>US dollar (USD)</option></select></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="branding">
+        <div class="panel-head"><div><h2>Branding</h2><div class="sub">Clients see your brand, not ours</div></div></div>
+        <div class="panel-body">
+          <div class="split brand-split">
+            <div>
+              <div class="field">
+                <label class="label">Logo</label>
+                <div class="logo-drop">
+                  <span class="cl-logo" id="pv-logo-big" style="background:#9a3412">OL</span>
+                  <div><div class="row"><button class="btn btn-secondary btn-sm"><i data-i="upload"></i>Upload logo</button><button class="btn btn-ghost btn-sm">Remove</button></div><p class="help">PNG, JPG or SVG, up to 2 MB. Square logos look best. Without a logo we show your initials.</p></div>
+                </div>
+              </div>
+              <div class="field">
+                <label class="label">Brand color</label>
+                <div class="swatches" id="swatches">
+                  <button class="sw is-on" style="background:#9a3412" data-c="#9a3412" aria-label="Rust"></button>
+                  <button class="sw" style="background:#166534" data-c="#166534" aria-label="Forest"></button>
+                  <button class="sw" style="background:#1d4ed8" data-c="#1d4ed8" aria-label="Blue"></button>
+                  <button class="sw" style="background:#0f766e" data-c="#0f766e" aria-label="Teal"></button>
+                  <button class="sw" style="background:#7c3aed" data-c="#7c3aed" aria-label="Violet"></button>
+                  <button class="sw" style="background:#0f172a" data-c="#0f172a" aria-label="Charcoal"></button>
+                  <button class="sw" style="background:#facc15" data-c="#facc15" aria-label="Yellow"></button>
+                </div>
+                <div class="input-group mt-8" style="max-width:200px"><span class="addon">#</span><input class="input" id="hex" value="9A3412"></div>
+                <div class="banner banner-warn mt-8" id="contrast" hidden><i data-i="alert"></i><div>White text is hard to read on this color, so buttons will use dark text instead.</div></div>
+              </div>
+              <hr>
+              <label class="row between gap-16">
+                <span><span class="t-strong">Show “Powered by Shadetree”</span><br><span class="t-sm t-muted">On your client pages and emails. Included on Free; optional on paid plans.</span></span>
+                <span class="switch"><input type="checkbox"><span></span></span>
+              </label>
+            </div>
+            <div>
+              <div class="label">Preview</div>
+              <div class="preview" aria-label="Client page preview">
+                <div class="pv-head"><span class="cl-logo" id="pv-logo" style="width:30px;height:30px;font-size:12px;border-radius:8px;background:#9a3412">OL</span><span class="t-strong t-sm">Oakline Lawn &amp; Landscape</span></div>
+                <div class="pv-body">
+                  <div class="pv-card">
+                    <div class="t-xs t-muted">Quote Q-1041</div>
+                    <div class="t-strong">Spring cleanup</div>
+                    <div class="row between mt-8"><span class="t-sm t-muted">Total</span><span class="money t-strong">$1,189.74</span></div>
+                    <button class="btn btn-block mt-12" id="pv-btn" style="background:#9a3412;color:#fff">Approve quote</button>
+                  </div>
+                </div>
+              </div>
+              <a class="t-sm mt-8" style="display:inline-block" href="../client/quote.html" target="_blank">Open full preview</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="save-bar"><span class="t-sm t-muted">Changes apply to new quotes and invoices. Sent documents don’t change.</span><button class="btn btn-secondary">Discard</button><button class="btn btn-primary" data-toast="Settings saved">Save changes</button></div>
+    </div>
+  </div>
+</main>
+<script src="../assets/icons.js"></script>
+<script src="../assets/app.js"></script>
+<script>
+  function lum(hex) { const c = hex.replace("#", "").match(/../g).map((x) => { x = parseInt(x, 16) / 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); }); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; }
+  function apply(c) {
+    const ratio = 1.05 / (lum(c) + 0.05);
+    const ink = ratio >= 4.5 ? "#fff" : "#0f172a";
+    ["pv-logo", "pv-logo-big"].forEach((id) => { const e = document.getElementById(id); e.style.background = c; e.style.color = ink; });
+    const b = document.getElementById("pv-btn"); b.style.background = c; b.style.color = ink;
+    document.getElementById("contrast").hidden = ratio >= 4.5;
+    document.getElementById("hex").value = c.replace("#", "").toUpperCase();
+    document.querySelectorAll(".sw").forEach((s) => s.classList.toggle("is-on", s.dataset.c === c));
+  }
+  document.getElementById("swatches").addEventListener("click", (e) => { const s = e.target.closest(".sw"); if (s) apply(s.dataset.c); });
+  document.getElementById("hex").addEventListener("input", (e) => { const v = e.target.value.trim(); if (/^[0-9a-f]{6}$/i.test(v)) apply("#" + v.toLowerCase()); });
+</script>
+</body>
+</html>

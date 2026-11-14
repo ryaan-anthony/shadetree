@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Home · Oakline Lawn & Landscape · Shadetree</title>
+  <link rel="stylesheet" href="../assets/shadetree.css">
+  <!-- Spec: INS-01 Action dashboard. Also shows plan usage (BIL-02) and NTF-02 notifications in the shell. -->
+  <style>
+    .summary { display: grid; grid-template-columns: repeat(3, 1fr); }
+    .summary > div { padding: 16px 20px; }
+    .summary > div + div { border-left: 1px solid var(--line); }
+    .summary .k { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+    .summary .v { font-size: 24px; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; margin-top: 4px; font-variant-numeric: tabular-nums; }
+    .summary .d { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+    .grp { border-top: 1px solid var(--line); }
+    .grp:first-child { border-top: 0; }
+    .grp-head { display: flex; align-items: center; gap: 10px; padding: 12px 18px 8px; }
+    .grp-head h3 { font-size: 13.5px; font-weight: 650; }
+    .grp-head .n { font-size: 12px; font-weight: 700; color: var(--muted); background: var(--slate-100); border-radius: 9px; padding: 1px 8px; }
+    .grp-head a { margin-left: auto; font-size: 12.5px; font-weight: 600; }
+    .grp .list > li { padding: 9px 18px; border-top: 0; }
+    .grp .list > li:hover { background: #fafbfc; }
+    .grp .list .meta { min-width: 0; }
+    .ico { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex: none; }
+    .visit { display: grid; grid-template-columns: 78px 1fr; gap: 12px; padding: 12px 18px; border-top: 1px solid var(--line-2); }
+    .visit:first-of-type { border-top: 0; }
+    .visit .time { font-size: 12.5px; font-weight: 650; color: var(--ink); font-variant-numeric: tabular-nums; }
+    .visit .time span { display: block; font-weight: 500; color: var(--muted); }
+    .visit.done .title { color: var(--muted); text-decoration: line-through; text-decoration-color: #cbd5e1; }
+    @media (max-width: 720px) {
+      .summary { grid-template-columns: 1fr; }
+      .summary > div + div { border-left: 0; border-top: 1px solid var(--line); }
+    }
+  </style>
+</head>
+<body data-app="staff" data-nav="home" data-crumbs="Home">
+<main class="content">
+  <div class="page-head">
+    <div>
+      <h1>Good morning, Dana</h1>
+      <p class="lede">Friday, November 13. Here’s what needs you today.</p>
+    </div>
+    <div class="actions">
+      <a class="btn btn-secondary" href="schedule.html"><i data-i="calendar"></i>Today’s schedule</a>
+      <a class="btn btn-primary" href="quote-builder.html"><i data-i="plus"></i>New quote</a>
+    </div>
+  </div>
+
+  <section class="panel summary" aria-label="This month">
+    <div>
+      <div class="k">Quotes sent in November</div>
+      <div class="v">41</div>
+      <div class="meter mt-8" style="max-width:220px"><span style="width:27%"></span></div>
+      <div class="d">41 of 150 on Pro. Resets Dec 1.</div>
+    </div>
+    <div>
+      <div class="k">Approval rate</div>
+      <div class="v">68%</div>
+      <div class="d">28 of 41 approved, 5 still waiting</div>
+    </div>
+    <div>
+      <div class="k">Payments received</div>
+      <div class="v money">$18,420.00</div>
+      <div class="d">$6,115.00 outstanding, $2,980.00 overdue</div>
+    </div>
+  </section>
+
+  <div class="split mt-16">
+    <section class="panel" aria-labelledby="attn">
+      <div class="panel-head">
+        <div><h2 id="attn">Needs attention</h2><div class="sub">Oldest first within each group</div></div>
+        <div class="seg" data-tabs="scope"><button class="is-active" data-tab="">Everyone</button><button data-tab="">Mine</button></div>
+      </div>
+
+      <div class="grp">
+        <div class="grp-head"><span class="dot" style="background:var(--blue)"></span><h3>New requests</h3><span class="n">3</span><a href="requests.html">Open inbox</a></div>
+        <ul class="list">
+          <li class="is-link" onclick="location.href='requests.html'"><span class="avatar av-5">RD</span><div class="grow meta"><div class="title">Rosa Delgado</div><div class="meta truncate">Weekly mowing, hedge trimming. 88 Juniper Ln</div></div><span class="t-xs t-muted nowrap">42 min</span></li>
+          <li class="is-link" onclick="location.href='requests.html'"><span class="avatar av-6">GP</span><div class="grow meta"><div class="title">Greg Patel</div><div class="meta truncate">Leaf removal and gutter clean-out, 2 photos</div></div><span class="t-xs t-muted nowrap">3 h</span></li>
+          <li class="is-link" onclick="location.href='requests.html'"><span class="avatar av-1">SL</span><div class="grow meta"><div class="title">Sunrise Learning Center</div><div class="meta truncate">Phone request: monthly grounds maintenance</div></div><span class="t-xs t-muted nowrap">Yesterday</span></li>
+        </ul>
+      </div>
+
+      <div class="grp">
+        <div class="grp-head"><span class="dot" style="background:var(--amber)"></span><h3>Changes requested</h3><span class="n">1</span></div>
+        <ul class="list">
+          <li class="is-link" onclick="location.href='quote-builder.html'"><span class="ico" style="background:var(--amber-50);color:var(--amber)"><i data-i="message"></i></span><div class="grow meta"><div class="title">Q-1038 · Tom &amp; Alicia Nguyen</div><div class="meta truncate">“Can you skip the side yard edging and add mulch to the front beds?”</div></div><a class="btn btn-secondary btn-sm" href="quote-builder.html">Revise</a></li>
+        </ul>
+      </div>
+
+      <div class="grp">
+        <div class="grp-head"><span class="dot" style="background:#94a3b8"></span><h3>Waiting on client</h3><span class="n">5</span><a href="quotes.html">All quotes</a></div>
+        <ul class="list">
+          <li class="is-link" onclick="location.href='quote.html'"><span class="ico" style="background:var(--slate-100);color:var(--muted)"><i data-i="quote"></i></span><div class="grow meta"><div class="title">Q-1029 · Lakeview HOA</div><div class="meta">Sent 9 days ago, viewed 3 times</div></div><span class="money t-strong">$4,860.00</span></li>
+          <li class="is-link" onclick="location.href='quote.html'"><span class="ico" style="background:var(--slate-100);color:var(--muted)"><i data-i="quote"></i></span><div class="grow meta"><div class="title">Q-1035 · Martin Alvarez</div><div class="meta">Sent 4 days ago, <span class="t-amber">not opened yet</span></div></div><span class="money t-strong">$640.00</span></li>
+        </ul>
+      </div>
+
+      <div class="grp">
+        <div class="grp-head"><span class="dot" style="background:var(--canopy)"></span><h3>Approved, not scheduled</h3><span class="n">2</span></div>
+        <ul class="list">
+          <li class="is-link"><span class="ico" style="background:var(--canopy-50);color:var(--canopy)"><i data-i="check"></i></span><div class="grow meta"><div class="title">Spring cleanup · Hannah Brooks</div><div class="meta">Approved 8 min ago, J-0391</div></div><a class="btn btn-secondary btn-sm" href="schedule.html">Schedule</a></li>
+          <li class="is-link"><span class="ico" style="background:var(--canopy-50);color:var(--canopy)"><i data-i="check"></i></span><div class="grow meta"><div class="title">Paver patio sealing · Kim Okafor</div><div class="meta">Approved Tuesday, J-0386</div></div><a class="btn btn-secondary btn-sm" href="schedule.html">Schedule</a></li>
+        </ul>
+      </div>
+
+      <div class="grp">
+        <div class="grp-head"><span class="dot" style="background:var(--violet)"></span><h3>Ready to invoice</h3><span class="n">2</span></div>
+        <ul class="list">
+          <li class="is-link"><span class="ico" style="background:var(--violet-50);color:var(--violet)"><i data-i="invoice"></i></span><div class="grow meta"><div class="title">J-0379 · Westgate Property Mgmt</div><div class="meta">Completed yesterday by Marcus Reyes</div></div><a class="btn btn-secondary btn-sm" href="invoice.html">Invoice</a></li>
+          <li class="is-link"><span class="ico" style="background:var(--violet-50);color:var(--violet)"><i data-i="invoice"></i></span><div class="grow meta"><div class="title">J-0381 · Diane Foster</div><div class="meta">Completed Wednesday by Leo Kim</div></div><a class="btn btn-secondary btn-sm" href="invoice.html">Invoice</a></li>
+        </ul>
+      </div>
+
+      <div class="grp">
+        <div class="grp-head"><span class="dot" style="background:var(--red)"></span><h3>Overdue invoices</h3><span class="n">2</span><a href="invoices.html">All invoices</a></div>
+        <ul class="list">
+          <li class="is-link" onclick="location.href='invoice.html'"><span class="ico" style="background:var(--red-50);color:var(--red)"><i data-i="alert"></i></span><div class="grow meta"><div class="title">INV-2209 · Westgate Property Mgmt</div><div class="meta t-red">12 days overdue</div></div><span class="money t-strong">$2,180.00</span></li>
+          <li class="is-link" onclick="location.href='invoice.html'"><span class="ico" style="background:var(--red-50);color:var(--red)"><i data-i="alert"></i></span><div class="grow meta"><div class="title">INV-2196 · Greg Patel</div><div class="meta t-red">3 days overdue</div></div><span class="money t-strong">$800.00</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <aside class="stack">
+      <section class="panel">
+        <div class="panel-head"><div><h2>Today</h2><div class="sub">6 visits, 3 crew members</div></div><a class="btn btn-ghost btn-sm" href="schedule.html">Calendar</a></div>
+        <div class="visit done"><div class="time">8:00<span>Done</span></div><div><div class="title t-strong">Weekly mowing</div><div class="t-sm t-muted">14 Alder Ct</div><div class="row mt-4"><span class="avatar avatar-sm av-1">MR</span><span class="t-xs t-muted">Marcus</span></div></div></div>
+        <div class="visit"><div class="time">9–11<span>In progress</span></div><div><div class="title t-strong">Fall cleanup</div><div class="t-sm t-muted">Westgate, 400 Commerce Dr</div><div class="row mt-4"><span class="avatars"><span class="avatar avatar-sm av-1">MR</span><span class="avatar avatar-sm av-3">LK</span></span><span class="t-xs t-muted">Marcus, Leo</span></div></div></div>
+        <div class="visit"><div class="time">11:30<span>1 h</span></div><div><div class="title t-strong">Hedge trimming</div><div class="t-sm t-muted">27 Willow Way</div><div class="row mt-4"><span class="avatar avatar-sm av-3">LK</span><span class="t-xs t-muted">Leo</span></div></div></div>
+        <div class="visit"><div class="time">1–3<span>Window</span></div><div><div class="title t-strong">Irrigation winterize</div><div class="t-sm t-muted">5 Cedar Hollow</div><div class="row mt-4"><span class="avatar avatar-sm av-2">PS</span><span class="t-xs t-muted">Priya</span></div></div></div>
+        <div class="visit"><div class="time">Anytime</div><div><div class="title t-strong">Leaf pickup</div><div class="t-sm t-muted">Lakeview HOA common area</div><div class="row mt-4"><span class="badge b-amber">Unassigned</span></div></div></div>
+      </section>
+
+      <section class="panel-quiet">
+        <div class="row-top">
+          <span class="ico" style="background:#fff;border:1px solid var(--line);color:var(--canopy)"><i data-i="link"></i></span>
+          <div>
+            <div class="t-strong">Share your request form</div>
+            <p class="t-sm t-muted mt-4">Put it on your Google profile and Facebook page so new clients can ask for a quote any time.</p>
+            <div class="row mt-8"><button class="btn btn-secondary btn-sm" data-toast="Link copied"><i data-i="copy"></i>Copy link</button><a class="btn btn-ghost btn-sm" href="../client/request.html">Preview</a></div>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </div>
+</main>
+<script src="../assets/icons.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

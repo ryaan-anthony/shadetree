@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Team & roles · Shadetree</title>
+  <link rel="stylesheet" href="../assets/shadetree.css">
+  <!-- Specs: ACC-03 invitations & membership, ACC-04 roles & permissions, ACC-07 custom roles, BIL-03 member limit. -->
+  <style>
+    .perm th, .perm td { text-align: center; }
+    .perm th:first-child, .perm td:first-child { text-align: left; }
+    .perm .yes { color: var(--canopy); display: inline-flex; }
+    .perm .no { color: #cbd5e1; }
+    .perm .grp td { background: var(--slate-50); font-weight: 650; font-size: 12.5px; color: var(--text-2); text-align: left; }
+  </style>
+</head>
+<body data-nofab data-app="staff" data-nav="settings" data-crumbs="Settings:settings.html|Team & roles">
+<main class="content">
+  <div class="page-head"><div><h1>Settings</h1></div></div>
+  <div class="settings">
+    <nav class="settings-nav" data-settings-nav="team" aria-label="Settings"></nav>
+    <div class="stack">
+      <div class="row between wrap">
+        <div><h2 style="font-size:17px">Team &amp; roles</h2><p class="t-sm t-muted">4 of 10 members on the Pro plan</p></div>
+        <button class="btn btn-primary" data-open="invite"><i data-i="user-plus"></i>Invite member</button>
+      </div>
+      <div class="tabs" data-tabs="team"><button class="is-active" data-tab="members">Members</button><button data-tab="roles">Roles</button></div>
+
+      <div data-group="team" data-panel="members" class="stack">
+        <section class="panel">
+          <table class="table table-cards">
+            <thead><tr><th>Name</th><th>Role</th><th class="hide-sm">Last active</th><th style="width:40px"></th></tr></thead>
+            <tbody>
+              <tr><td class="primary"><div class="row gap-12"><span class="avatar av-4">DW</span><span>Dana Whitaker <span class="t-muted" style="font-weight:400">(you)</span><span class="sub">dana@oaklinelawn.com</span></span></div></td><td><span class="badge b-dark plain">Owner</span></td><td class="hide-sm t-muted">Now</td><td></td></tr>
+              <tr><td class="primary"><div class="row gap-12"><span class="avatar av-2">PS</span><span>Priya Shah<span class="sub">priya@oaklinelawn.com</span></span></div></td><td><select class="select" style="width:auto;height:30px"><option>Admin</option></select></td><td class="hide-sm t-muted">12 min ago</td><td><button class="icon-btn" aria-label="More"><i data-i="more"></i></button></td></tr>
+              <tr><td class="primary"><div class="row gap-12"><span class="avatar av-1">MR</span><span>Marcus Reyes<span class="sub">(555) 710-2231</span></span></div></td><td><select class="select" style="width:auto;height:30px"><option>Technician</option></select></td><td class="hide-sm t-muted">On a visit</td><td><button class="icon-btn" aria-label="More"><i data-i="more"></i></button></td></tr>
+              <tr><td class="primary"><div class="row gap-12"><span class="avatar av-3">LK</span><span>Leo Kim<span class="sub">leo.kim@email.com</span></span></div></td><td><select class="select" style="width:auto;height:30px"><option>Crew lead</option></select></td><td class="hide-sm t-muted">Today</td><td><button class="icon-btn" aria-label="More"><i data-i="more"></i></button></td></tr>
+            </tbody>
+          </table>
+        </section>
+        <section class="panel">
+          <div class="panel-head"><h2>Pending invitations</h2></div>
+          <ul class="list">
+            <li><span class="avatar" style="background:var(--slate-100);color:var(--muted)"><i data-i="mail" class="i-sm"></i></span><div class="grow"><div class="title">sam.ortiz@email.com</div><div class="meta">Technician · invited by Priya Shah · expires in 5 days</div></div><button class="btn btn-ghost btn-sm" data-toast="Invitation resent">Resend</button><button class="btn btn-ghost btn-sm" data-toast="Link copied">Copy link</button><button class="btn btn-ghost btn-sm" style="color:var(--red)">Revoke</button></li>
+          </ul>
+        </section>
+      </div>
+
+      <div data-group="team" data-panel="roles" hidden class="stack">
+        <section class="panel flush">
+          <div class="panel-head"><div><h2>Roles</h2><div class="sub">Built-in roles can’t be edited. Duplicate one to make your own.</div></div><button class="btn btn-secondary btn-sm"><i data-i="plus"></i>New role</button></div>
+          <div class="table-wrap">
+          <table class="table perm">
+            <thead><tr><th>Permission</th><th>Owner</th><th>Admin</th><th>Technician</th><th>Crew lead <span class="badge b-violet plain" style="height:18px;margin-left:4px">Custom</span></th></tr></thead>
+            <tbody>
+              <tr class="grp"><td colspan="5">Clients &amp; quotes</td></tr>
+              <tr><td>View all clients</td><td><span class="yes"><i data-i="check"></i></span></td><td><span class="yes"><i data-i="check"></i></span></td><td class="no">—</td><td><span class="yes"><i data-i="check"></i></span></td></tr>
+              <tr><td>Create and send quotes</td><td><span class="yes"><i data-i="check"></i></span></td><td><span class="yes"><i data-i="check"></i></span></td><td class="no">—</td><td><span class="yes"><i data-i="check"></i></span></td></tr>
+              <tr class="grp"><td colspan="5">Schedule &amp; work</td></tr>
+              <tr><td>Schedule and assign visits</td><td><span class="yes"><i data-i="check"></i></span></td><td><span class="yes"><i data-i="check"></i></span></td><td class="no">—</td><td><span class="yes"><i data-i="check"></i></span></td></tr>
+              <tr><td>Complete own visits, add notes and photos</td><td><span class="yes"><i data-i="check"></i></span></td><td><span class="yes"><i data-i="check"></i></span></td><td><span class="yes"><i data-i="check"></i></span></td><td><span class="yes"><i data-i="check"></i></span></td></tr>
+              <tr><td>See prices on visits</td><td><span class="yes"><i data-i="check"></i></span></td><td><span class="yes"><i data-i="check"></i></span></td><td class="no">—</td><td><span class="yes"><i data-i="check"></i></span></td></tr>
+              <tr class="grp"><td colspan="5">Money</td></tr>
+              <tr><td>Invoices and payments</td><td><span class="yes"><i data-i="check"></i></span></td><td><span class="yes"><i data-i="check"></i></span></td><td class="no">—</td><td class="no">—</td></tr>
+              <tr><td>Plan, billing and payment account <span class="t-xs t-muted">· Owner only</span></td><td><span class="yes"><i data-i="check"></i></span></td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+              <tr class="grp"><td colspan="5">Business</td></tr>
+              <tr><td>Settings, services and taxes</td><td><span class="yes"><i data-i="check"></i></span></td><td><span class="yes"><i data-i="check"></i></span></td><td class="no">—</td><td class="no">—</td></tr>
+              <tr><td>Manage team</td><td><span class="yes"><i data-i="check"></i></span></td><td><span class="yes"><i data-i="check"></i></span></td><td class="no">—</td><td class="no">—</td></tr>
+            </tbody>
+          </table>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="modal" id="invite" role="dialog" aria-labelledby="inv-title">
+  <div class="modal-head"><div><h2 id="inv-title">Invite a team member</h2><p>They’ll get an email to join Oakline Lawn &amp; Landscape.</p></div><button class="icon-btn" data-close aria-label="Close"><i data-i="x"></i></button></div>
+  <div class="modal-body">
+    <div class="field"><label class="label">Email</label><input class="input" type="email" placeholder="name@example.com"></div>
+    <div class="field"><label class="label">Role</label>
+      <div class="stack-sm">
+        <label class="check" style="padding:10px 12px;border:1px solid var(--line);border-radius:var(--r)"><input type="radio" name="r"><span><span class="t-strong">Admin</span><br><span class="t-sm t-muted">Runs the office: clients, quotes, scheduling, invoices. No billing.</span></span></label>
+        <label class="check" style="padding:10px 12px;border:1px solid var(--canopy);background:var(--canopy-50);border-radius:var(--r)"><input type="radio" name="r" checked><span><span class="t-strong">Technician</span><br><span class="t-sm t-muted">Sees only their own visits, with the address and client contact they need.</span></span></label>
+        <label class="check" style="padding:10px 12px;border:1px solid var(--line);border-radius:var(--r)"><input type="radio" name="r"><span><span class="t-strong">Crew lead</span> <span class="badge b-violet plain" style="height:18px">Custom</span><br><span class="t-sm t-muted">Technician plus quoting and scheduling.</span></span></label>
+      </div>
+    </div>
+  </div>
+  <div class="modal-foot"><button class="btn btn-secondary" data-close>Cancel</button><button class="btn btn-primary" data-close data-toast="Invitation sent">Send invitation</button></div>
+</div>
+<script src="../assets/icons.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

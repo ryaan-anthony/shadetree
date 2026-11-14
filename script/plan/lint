@@ -1,0 +1,80 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Validates the planning docs in docs/:
+#   - spec front matter is complete and IDs are unique
+#   - dependencies exist, are acyclic, and never point to a later milestone
+#   - size limits: specs <= 100 lines (warn > 60), plans <= 500 lines
+#   - each plan's "Specifications" table agrees with spec front matter
+#   - relative markdown links resolve
+#
+# Usage: script/plan/lint            (exit 1 on errors)
+#        script/plan/lint --graph    (also print specs in dependency order per milestone)
+
+require_relative "lib/specs"
+
+errors = []
+warnings = []
+specs = Plan::Specs.load
+by_id = specs.to_h { |s| [ s.id, s ] }
+
+dupes = specs.group_by(&:id).select { |_, v| v.size > 1 }.keys
+errors << "duplicate spec ids: #{dupes.join(', ')}" if dupes.any?
+
+specs.each do |s|
+  %w[id title domain milestone].each do |key|
+    errors << "#{s.path}: missing #{key}" if s.meta[key].to_s.empty?
+  end
+  errors << "#{s.path}: file name must start with #{s.id}" unless File.basename(s.path).start_with?(s.id)
+  errors << "#{s.path}: unknown milestone #{s.milestone}" unless Plan::MILESTONES.key?(s.milestone)
+  errors << "#{s.path}: #{s.lines} lines (max 100)" if s.lines > 100
+  warnings << "#{s.path}: #{s.lines} lines (target 30-60)" if s.lines > 60 || s.lines < 30
+  errors << "#{s.path}: no acceptance criteria" if s.acceptance_criteria.empty?
+  s.depends_on.each do |dep|
+    target = by_id[dep]
+    if target.nil?
+      errors << "#{s.id}: depends on unknown spec #{dep}"
+    elsif Plan.milestone_index(target.milestone) > Plan.milestone_index(s.milestone)
+      errors << "#{s.id} (#{s.milestone}) depends on #{dep} in later milestone #{target.milestone}"
+    end
+  end
+end
+
+begin
+  order = Plan::Specs.topological(specs)
+rescue Plan::CycleError => e
+  errors << e.message
+end
+
+Dir["docs/plans/*.md"].each do |plan|
+  body = File.read(plan)
+  n = body.lines.count
+  errors << "#{plan}: #{n} lines (max 500)" if n > 500
+  body.scan(/^\| \[([A-Z]{3}-\d{2})\]\([^)]*\) \| [^|]+ \| (M\d) \| ([^|]+) \|/).each do |id, ms, deps|
+    s = by_id[id]
+    next errors << "#{plan}: table lists unknown spec #{id}" unless s
+    errors << "#{plan}: #{id} milestone #{ms} != spec #{s.milestone}" if ms != s.milestone
+    listed = deps.strip == "—" ? [] : deps.split(",").map(&:strip)
+    errors << "#{plan}: #{id} depends_on #{listed} != spec #{s.depends_on}" if listed.sort != s.depends_on.sort
+  end
+end
+
+Dir["docs/**/*.md", "*.md", ".github/**/*.md"].reject { |f| f.end_with?("_template.md") }.each do |file|
+  File.read(file).scan(/\]\(([^)#\s]+)(?:#[^)]*)?\)/).flatten.each do |link|
+    next if link.start_with?("http", "mailto:")
+    path = File.expand_path(link, File.dirname(file))
+    errors << "#{file}: broken link #{link}" unless File.exist?(path)
+  end
+end
+
+if ARGV.include?("--graph") && order
+  order.group_by(&:milestone).sort_by { |m, _| Plan.milestone_index(m) }.each do |m, list|
+    puts "#{m} #{Plan::MILESTONES[m]}"
+    list.each { |s| puts "  #{s.id.ljust(7)} #{s.title}#{s.depends_on.any? ? "  <- #{s.depends_on.join(', ')}" : ''}" }
+  end
+end
+
+warnings.each { |w| warn "warning: #{w}" }
+errors.each { |e| warn "error: #{e}" }
+puts "#{specs.size} specs checked, #{errors.size} errors, #{warnings.size} warnings"
+exit(errors.empty? ? 0 : 1)

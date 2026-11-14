@@ -1,3 +1,5 @@
+> **Superseded (Nov 2026).** The current plan lives in [`docs/`](../docs/README.md). This folder is kept for reference only.
+
 # Core Requirements - Shadetree Platform
 
 ## Overview

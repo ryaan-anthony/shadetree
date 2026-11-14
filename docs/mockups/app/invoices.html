@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Invoices · Shadetree</title>
+  <link rel="stylesheet" href="../assets/shadetree.css">
+  <!-- Spec: PAY-01 Invoice list with status/overdue filters and outstanding totals; PAY-03 connection prompt. -->
+  <style>
+    .money-strip { display: grid; grid-template-columns: repeat(3, 1fr); }
+    .money-strip > div { padding: 14px 18px; }
+    .money-strip > div + div { border-left: 1px solid var(--line); }
+    .money-strip .v { font-size: 20px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+    @media (max-width: 720px) { .money-strip { grid-template-columns: 1fr; } .money-strip > div + div { border-left: 0; border-top: 1px solid var(--line); } }
+  </style>
+</head>
+<body data-app="staff" data-nav="invoices" data-crumbs="Invoices">
+<main class="content">
+  <div class="page-head">
+    <div><h1>Invoices</h1></div>
+    <div class="actions"><button class="btn btn-secondary"><i data-i="download"></i>Export</button><a class="btn btn-primary" href="invoice.html"><i data-i="plus"></i>New invoice</a></div>
+  </div>
+
+  <section class="panel money-strip">
+    <div><div class="t-sm t-muted">Outstanding</div><div class="v">$6,115.00</div><div class="t-xs t-muted">7 invoices</div></div>
+    <div><div class="t-sm t-muted">Overdue</div><div class="v t-red">$2,980.00</div><div class="t-xs t-muted">2 invoices, oldest 12 days</div></div>
+    <div><div class="t-sm t-muted">Paid in November</div><div class="v">$18,420.00</div><div class="t-xs t-muted">72% paid online</div></div>
+  </section>
+
+  <section class="panel mt-16">
+    <div class="tabs" style="padding:0 10px" data-tabs="s">
+      <button class="is-active" data-tab="">All</button><button data-tab="">Unpaid <span class="n">7</span></button><button data-tab="">Overdue <span class="n">2</span></button><button data-tab="">Drafts <span class="n">1</span></button><button data-tab="">Paid</button><button data-tab="">Void</button>
+    </div>
+    <div class="toolbar"><div class="input-icon" style="flex:1;max-width:340px"><i data-i="search"></i><input class="input" placeholder="Search by client or number"></div></div>
+    <table class="table table-cards">
+      <thead><tr><th>Invoice</th><th>Client</th><th>Status</th><th class="hide-sm">Due</th><th class="num">Total</th><th class="num">Balance</th></tr></thead>
+      <tbody>
+        <tr class="is-link" onclick="location.href='invoice.html'"><td class="primary">INV-2209<span class="sub">Fall cleanup, Building B</span></td><td>Westgate Property Mgmt</td><td><span class="badge b-red">Overdue</span></td><td class="hide-sm t-red">Nov 1</td><td class="num money">$2,180.00</td><td class="num money t-strong">$2,180.00</td></tr>
+        <tr class="is-link" onclick="location.href='invoice.html'"><td class="primary">INV-2210<span class="sub">Weekly mowing, October</span></td><td>Lakeview HOA</td><td><span class="badge b-violet">Partially paid</span></td><td class="hide-sm t-muted">Nov 20</td><td class="num money">$1,760.00</td><td class="num money t-strong">$760.00</td></tr>
+        <tr class="is-link" onclick="location.href='invoice.html'"><td class="primary">INV-2211<span class="sub">Hedge trimming</span></td><td>Diane Foster</td><td><span class="badge b-blue">Sent</span> <span class="t-xs t-muted">Viewed</span></td><td class="hide-sm t-muted">Nov 27</td><td class="num money">$412.50</td><td class="num money t-strong">$412.50</td></tr>
+        <tr class="is-link" onclick="location.href='invoice.html'"><td class="primary">INV-2212<span class="sub">Fall cleanup, Building A</span></td><td>Westgate Property Mgmt</td><td><span class="badge b-slate">Draft</span></td><td class="hide-sm t-faint">Net 30</td><td class="num money">$2,450.00</td><td class="num money t-muted">—</td></tr>
+        <tr class="is-link" onclick="location.href='invoice.html'"><td class="primary">INV-2207<span class="sub">Gutter clean-out</span></td><td>Rosa Delgado</td><td><span class="badge b-green">Paid</span> <span class="t-xs t-muted">Card</span></td><td class="hide-sm t-muted">Nov 10</td><td class="num money">$295.00</td><td class="num money t-muted">$0.00</td></tr>
+        <tr class="is-link" onclick="location.href='invoice.html'"><td class="primary">INV-2205<span class="sub">Aeration and overseed</span></td><td>Martin Alvarez</td><td><span class="badge b-green">Paid</span> <span class="t-xs t-muted">Check #1182</span></td><td class="hide-sm t-muted">Nov 6</td><td class="num money">$540.00</td><td class="num money t-muted">$0.00</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+<script src="../assets/icons.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>
