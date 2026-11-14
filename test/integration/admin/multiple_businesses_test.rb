@@ -65,7 +65,7 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to admin_root_path
     follow_redirect!
-    assert_match /Business created successfully/, flash[:notice]
+    assert_equal "Third Business is ready.", flash[:notice]
   end
 
   test "new business form shows cancel button when user has existing businesses" do
@@ -152,7 +152,7 @@ class Admin::MultipleBusinessesTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :unprocessable_content
-    assert_select ".text-red-800", /error/
+    assert_select ".error-text", /can't be blank/
   end
 
   test "switching between businesses updates session and current_business" do

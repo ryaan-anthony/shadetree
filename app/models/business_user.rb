@@ -16,6 +16,10 @@ class BusinessUser < ApplicationRecord
   validates :role, presence: true, inclusion: { in: ROLES }
   validates :active, inclusion: { in: [ true, false ] }
 
+  # A business always keeps at least one active Owner (ACC-02).
+  validate :keeps_an_active_owner, on: :update
+  before_destroy :ensure_not_last_owner
+
   # Scopes
   scope :active, -> { where(active: true) }
   scope :owners, -> { where(role: "owner") }
@@ -35,5 +39,30 @@ class BusinessUser < ApplicationRecord
   # Check if user can manage this business
   def can_manage?
     owner? || admin?
+  end
+
+  def last_active_owner?
+    owner? && active? && business.business_users.active.owners.where.not(id:).none?
+  end
+
+  private
+
+  LAST_OWNER_MESSAGE = "is the last owner. Make someone else an owner first".freeze
+
+  def keeps_an_active_owner
+    was_active_owner = role_was == "owner" && active_was
+    still_active_owner = owner? && active?
+    return unless was_active_owner && !still_active_owner
+    return if business.business_users.active.owners.where.not(id:).exists?
+
+    errors.add(:base, "#{user.full_name} #{LAST_OWNER_MESSAGE}")
+  end
+
+  def ensure_not_last_owner
+    return if destroyed_by_association # the business itself is being deleted
+    return unless last_active_owner?
+
+    errors.add(:base, "#{user.full_name} #{LAST_OWNER_MESSAGE}")
+    throw :abort
   end
 end

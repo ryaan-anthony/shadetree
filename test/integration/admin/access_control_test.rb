@@ -110,7 +110,7 @@ class Admin::AccessControlTest < ActionDispatch::IntegrationTest
     sign_in user_without_business
     get new_admin_business_path
     assert_response :success
-    assert_match /Welcome to.*Shadetree|Let's set up your business/i, response.body
+    assert_select "h1", "Set up your business"
   end
 
   # Multiple Admin Routes Tests

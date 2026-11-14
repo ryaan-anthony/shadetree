@@ -24,12 +24,14 @@ class Business < ApplicationRecord
   has_many :users, through: :business_users
 
   # Callbacks
-  before_validation(on: :create) { self.uid ||= SecureRandom.base58(BusinessOwned::UID_LENGTH) }
+  before_validation { self.uid ||= SecureRandom.base58(BusinessOwned::UID_LENGTH) if new_record? }
   before_save :set_default_brand_color
   after_create :add_owner_to_business_users
 
   # Validations
-  validates :name, presence: true
+  validates :name, presence: true, length: { maximum: 120 }
+  # Required when an owner sets a business up (ACC-02); records created elsewhere may skip it.
+  validates :industry, presence: { message: "helps us set things up. Pick the closest one" }, on: :setup
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
   validates :owner_id, presence: true
   validates :brand_color, format: { with: /\A#[0-9A-Fa-f]{6}\z/ }, allow_blank: true

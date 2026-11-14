@@ -30,7 +30,7 @@ class Admin::TenancyTest < ActionDispatch::IntegrationTest
   end
 
   test "creating a business makes it current" do
-    post admin_business_path, params: { business: { name: "Fresh Start" } }
+    post admin_business_path, params: { business: { name: "Fresh Start", industry: "other" } }
     assert_equal Business.find_by!(name: "Fresh Start").id, session[:current_business_id]
   end
 

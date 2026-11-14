@@ -16,8 +16,12 @@ module BusinessContext
 
     Current.user = current_user
     memberships = current_user.business_users.active.includes(:business)
-    membership = memberships.find_by(business_id: session[:current_business_id]) if session[:current_business_id]
+    # This session's choice, then the user's last choice on any device, then their newest
+    # membership. Every candidate must be an active membership.
+    membership = [ session[:current_business_id], current_user.last_business_id ].compact.uniq
+                   .lazy.filter_map { |id| memberships.find_by(business_id: id) }.first
     membership ||= memberships.order(created_at: :desc).first
+    note_lost_access(membership) if session[:current_business_id] && session[:current_business_id] != membership&.business_id
 
     session[:current_business_id] = membership&.business_id
     Current.membership = membership
@@ -26,7 +30,18 @@ module BusinessContext
 
   def switch_business_to(business)
     session[:current_business_id] = business.id
+    current_user.update_column(:last_business_id, business.id)
     set_current_business
+  end
+
+  # The business this session was using is gone (membership removed or deactivated).
+  def note_lost_access(fallback)
+    flash.now[:alert] = if fallback
+      "You no longer have access to the business you were using, so you're now in #{fallback.business.name}."
+    else
+      "You no longer have access to the business you were using."
+    end
+    flash[:alert] = flash.now[:alert] unless request.get? && fallback
   end
 
   def current_business = Current.business

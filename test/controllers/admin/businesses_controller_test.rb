@@ -24,7 +24,7 @@ class Admin::BusinessesControllerTest < ActionDispatch::IntegrationTest
   test "should display business creation form" do
     get new_admin_business_path
     assert_response :success
-    assert_match /Welcome to.*Shadetree|Let's set up your business/i, response.body
+    assert_select "h1", /Set up your business|Create another business/
   end
 
   test "unauthenticated user cannot access new business form" do
@@ -50,22 +50,15 @@ class Admin::BusinessesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "landscaping", business.industry
     assert_equal @user.id, business.owner_id
     assert_redirected_to admin_root_path
-    assert_match /created successfully/i, flash[:notice]
+    assert_equal "Test Business is ready.", flash[:notice]
   end
 
-  test "should create business with only name" do
-    assert_difference("Business.count") do
-      post admin_business_path, params: {
-        business: {
-          name: "Minimal Business"
-        }
-      }
+  test "should require an industry at setup (ACC-02)" do
+    assert_no_difference("Business.count") do
+      post admin_business_path, params: { business: { name: "Minimal Business" } }
     end
-
-    business = Business.last
-    assert_equal "Minimal Business", business.name
-    assert_nil business.industry
-    assert_redirected_to admin_root_path
+    assert_response :unprocessable_content
+    assert_select "#business_industry[aria-invalid='true']"
   end
 
   test "should reject business without name" do
@@ -79,8 +72,7 @@ class Admin::BusinessesControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :unprocessable_content
-    # Error is displayed in the HTML form with new styling
-    assert_select ".text-red-800, .text-red-700", minimum: 1
+    assert_select "#business_name[aria-invalid='true']"
   end
 
   test "should reject invalid industry" do
