@@ -14,7 +14,7 @@ class UiKitTest < ApplicationSystemTestCase
 
   test "data-turbo-confirm uses the kit's confirm dialog" do
     visit styleguide_path
-    click_on "Delete client"
+    click_link "Delete client"
     within "dialog#confirm-dialog[open]" do
       assert_text "Delete Maria Lopez?"
       assert_button "Delete client"
@@ -59,7 +59,7 @@ class StaffShellTest < ApplicationSystemTestCase
     assert_selector "#app-sidebar[data-open='true']"
     assert_link "Settings"
 
-    find("#app-sidebar").send_keys(:escape)
+    page.send_keys(:escape)
     assert_no_selector "#app-sidebar[data-open='true']"
   end
 
