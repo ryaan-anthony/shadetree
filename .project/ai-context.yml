@@ -1,3 +1,5 @@
+# SUPERSEDED (Nov 2026): the stack and conventions described here (PostgreSQL via Docker,
+# Redis, Sidekiq, RSpec, ViewComponent) are replaced by docs/adr and AGENTS.md.
 agent_name: "Software Architect Assistant"
 description: >
   A software development AI assistant that helps break down product initiatives

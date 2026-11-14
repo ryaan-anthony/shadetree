@@ -1,50 +1,59 @@
-# Agent & contributor guide
+# Agent guide
 
-Shadetree is a low-cost quoting, scheduling and invoicing platform for small service
-businesses (Rails, server-rendered, Hotwire). This file tells coding agents and new contributors
-how work is organized. A fuller contributing guide arrives with spec PLT-03.
+Shadetree is a low-cost quoting, scheduling and invoicing platform for small service businesses
+(Rails 8.1, server-rendered, Hotwire). This is the short version of
+[`CONTRIBUTING.md`](CONTRIBUTING.md) for coding agents. Read both before your first PR.
 
 ## Where things are
 
-- `docs/plans/` — requirements per domain (the *why* and *what*). Start with `00-vision.md`.
-- `docs/specs/<domain>/` — one spec per deliverable feature, with acceptance criteria.
-- GitHub Issues — one issue per spec (`[ID] Title`), labeled `area:<domain>`, grouped into
-  milestones M0–M5, with "blocked by" links between issues.
-- `.project/` — the original 2025 plan. **Superseded**; reference only.
+- `docs/plans/`: requirements per domain (the why and what). Start with `00-vision.md`.
+- `docs/specs/<domain>/`: one spec per deliverable feature, with acceptance criteria.
+- `docs/mockups/`: clickable HTML screens per spec. This is design direction, not code to copy.
+- `docs/adr/`: architecture decision records. Follow them; propose a new ADR to change one.
+- GitHub Issues: one per spec (`[ID] Title`), with labels, milestones and "blocked by" links.
+- `.project/`: the original 2025 plan. **Superseded**; ignore it unless asked.
 
-## How to pick up work
+## Workflow
 
-1. Pick an open issue whose blockers are all closed. Read its spec and the domain plan.
-2. Resolve any **(blocking)** open question in the issue thread before writing code.
-3. Make the implementation decisions yourself. Specs deliberately contain no implementation
-   details. Record significant or hard-to-reverse decisions as an ADR (see PLT-01).
-4. Open one or more small PRs. Each PR links the issue (`Part of #N` or `Closes #N` on the
-   last one) and ticks the acceptance criteria it satisfies.
-5. Large features merge dark behind a feature flag (once PLT-11 lands) instead of living on a
-   long branch.
+1. Work on one issue whose blockers are closed. Read its spec and plan first.
+2. Resolve **(blocking)** open questions in the issue before coding. Don't guess.
+3. You make the implementation decisions; specs contain none. Record significant or
+   hard-to-reverse decisions as an ADR.
+4. Branch `<spec-id>-<slug>` (for example `qte-01-quote-builder`) from `main`.
+5. Keep PRs small (under ~400 changed lines). Link the issue with `Part of #N` or `Closes #N`,
+   and tick the acceptance criteria you satisfy.
+6. Update the spec in the same PR if scope changes or a question gets answered, then run
+   `script/plan/lint`.
 
-## Non-negotiables (see `docs/plans/00-vision.md` → Cross-cutting requirements)
+## Non-negotiables
 
-- Tenancy: business data is never visible across businesses. Every feature has a test proving
-  cross-tenant access is denied.
-- Roles: Owner, Admin, Technician. Authorization is enforced server-side and tested.
-- Clients (a business's customers) never have accounts; they act through secure client links.
-- Money is exact; times are stored in UTC and shown in the business's time zone.
-- No secrets, client personal data, or production data in code, logs, fixtures or PRs.
-- Every page works at 360 px wide.
-- CI (lint, security scans, tests) must be green.
+See `docs/plans/00-vision.md` → Cross-cutting requirements.
+
+- **Tenancy:** a business's data is never visible to another business. Every data feature has a
+  test proving cross-tenant access is denied.
+- **Roles:** Owner, Admin and Technician, enforced server-side and tested.
+- **Clients** (a business's customers) never have accounts; they act through secure client links.
+- **Money and time:** money is exact (never floats); times are stored in UTC and shown in the
+  business's time zone.
+- **Mobile:** every page works at 360 px wide.
+- **Secrets and data:** no secrets, client personal data or production data in code, logs,
+  fixtures, screenshots or PRs.
+- **CI:** lint, security scans, unit/integration and system tests must be green.
 
 ## Commands
 
-- `bin/setup` — install and prepare the app
-- `bin/dev` — run the app locally
-- `bin/rails test` and `bin/rails test:system` — tests
-- `bin/rubocop` — lint; `bin/brakeman` — security scan
-- `script/plan/lint` — validate docs/specs (front matter, dependencies, sizes, links)
-- `script/plan/sync_issues --dry-run` — preview GitHub issue changes after editing specs
+| Task | Command |
+| --- | --- |
+| Set up (idempotent) | `bin/setup --skip-server` |
+| Run the app | `bin/dev`; sign in as `owner@example.com` / `shadetree-demo-1` |
+| Tests | `bin/rails test`, `bin/rails test:system` |
+| Lint | `bin/rubocop` (`-a` to auto-fix) |
+| Security | `bin/brakeman`, `bin/bundler-audit`, `bin/importmap audit` |
+| Plan docs | `script/plan/lint`; `script/plan/sync_issues --dry-run` after editing specs |
+
+Add demo data for new records to `db/seeds/development.rb`.
 
 ## Changing the plan
 
-Edit the spec (or plan) in a PR, run `script/plan/lint`, and after merge run
-`script/plan/sync_issues` so issues reflect the change. Don't edit generated issue bodies by
-hand; discussion belongs in issue comments.
+Edit specs or plans in a PR. After merge, `script/plan/sync_issues` updates the issues. Don't
+edit generated issue bodies by hand; discussion belongs in issue comments.
