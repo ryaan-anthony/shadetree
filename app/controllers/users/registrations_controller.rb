@@ -1,52 +1,34 @@
 class Users::RegistrationsController < Devise::RegistrationsController
   layout "marketing"
-
-  # GET /resource/sign_up
-  # def new
-  #   super
-  # end
-
-  # POST /resource
-  # def create
-  #   super
-  # end
+  before_action :configure_sign_up_params, only: :create
+  before_action :configure_account_update_params, only: :update
+  rate_limit to: 10, within: 10.minutes, only: :create, with: -> { redirect_to new_user_registration_path, alert: "Too many attempts. Try again in a few minutes." }
 
   protected
 
-  # Override after_sign_up_path_for to redirect to awaiting confirmation
-  def after_sign_up_path_for(resource)
-    awaiting_confirmation_users_confirmation_path(email: resource.email)
+  def build_resource(hash = {})
+    super
+    resource.new_record_from_sign_up = true if action_name == "create"
   end
 
-  # Override after_inactive_sign_up_path_for to redirect to awaiting confirmation
+  # Unconfirmed users are signed in straight away and go on to set up their business.
+  def after_sign_up_path_for(_resource)
+    new_admin_business_path
+  end
+
   def after_inactive_sign_up_path_for(resource)
     awaiting_confirmation_users_confirmation_path(email: resource.email)
   end
-  # cancel oauth signing in/up in the middle of the process,
-  # removing all OAuth session data.
-  # def cancel
-  #   super
-  # end
 
-  protected
-
-  # If you have extra params to permit, append them to the sanitizer.
-  def configure_sign_up_params
-    devise_parameter_sanitizer.permit(:sign_up, keys: [ :first_name, :last_name ])
+  def after_update_path_for(_resource)
+    edit_user_registration_path
   end
 
-  # If you have extra params to permit, append them to the sanitizer.
-  # def configure_account_update_params
-  #   devise_parameter_sanitizer.permit(:account_update, keys: [:attribute])
-  # end
+  def configure_sign_up_params
+    devise_parameter_sanitizer.permit(:sign_up, keys: [ :first_name, :last_name, :terms_of_service ])
+  end
 
-  # The path used after sign up.
-  # def after_sign_up_path_for(resource)
-  #   super(resource)
-  # end
-
-  # The path used after sign up for inactive accounts.
-  # def after_inactive_sign_up_path_for(resource)
-  #   super(resource)
-  # end
+  def configure_account_update_params
+    devise_parameter_sanitizer.permit(:account_update, keys: [ :first_name, :last_name ])
+  end
 end

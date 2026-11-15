@@ -1,25 +1,14 @@
-<h2>Change your password</h2>
-
-<%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :put }) do |f| %>
-  <%= render "devise/shared/error_messages", resource: resource %>
-  <%= f.hidden_field :reset_password_token %>
-
-  <div class="field">
-    <%= f.label :password, "New password" %><br />
-    <% if @minimum_password_length %>
-      <em>(<%= @minimum_password_length %> characters minimum)</em><br />
+<%= render layout: "devise/shared/card", locals: { title: "Choose a new password" } do %>
+  <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :put }) do |f| %>
+    <%= render "devise/shared/error_messages", resource: resource %>
+    <%= f.hidden_field :reset_password_token %>
+    <% if resource.errors[:reset_password_token].any? %>
+      <div class="banner banner-danger mb-5" role="alert"><%= icon "alert-circle" %>
+        <p>This reset link has expired or was already used. <%= link_to "Request a new one", new_password_path(resource_name), class: "font-semibold underline" %>.</p>
+      </div>
     <% end %>
-    <%= f.password_field :password, autofocus: true, autocomplete: "new-password" %>
-  </div>
-
-  <div class="field">
-    <%= f.label :password_confirmation, "Confirm new password" %><br />
-    <%= f.password_field :password_confirmation, autocomplete: "new-password" %>
-  </div>
-
-  <div class="actions">
-    <%= f.submit "Change my password" %>
-  </div>
+    <%= render "devise/shared/password_field", form: f, label: "New password" %>
+    <%= f.field :password_confirmation, as: :password, label: "Confirm new password", autocomplete: "new-password" %>
+    <%= f.submit_button "Save password and sign in", class: "mt-5 w-full btn-lg" %>
+  <% end %>
 <% end %>
-
-<%= render "devise/shared/links" %>

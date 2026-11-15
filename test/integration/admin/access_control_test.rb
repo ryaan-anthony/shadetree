@@ -54,16 +54,17 @@ class Admin::AccessControlTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "unconfirmed users cannot access admin dashboard" do
-    # Unconfirmed users can't even sign in, so they get redirected to sign in page
+  test "signed-out visitors are sent to sign in" do
     get admin_root_path
     assert_redirected_to new_user_session_path
   end
 
-  test "unconfirmed users see confirmation reminder" do
-    # Try to access admin without signing in (unconfirmed can't sign in)
+  test "unconfirmed users can use the admin area with a confirmation banner (ACC-01)" do
+    Business.create!(name: "Unconfirmed Biz", owner: @unconfirmed_user)
+    sign_in @unconfirmed_user
     get admin_root_path
-    assert_redirected_to new_user_session_path
+    assert_response :success
+    assert_select "#confirm-email-banner"
   end
 
   test "recently confirmed user can access admin immediately" do
@@ -158,17 +159,5 @@ class Admin::AccessControlTest < ActionDispatch::IntegrationTest
     # Devise may keep session briefly or show dashboard - both are acceptable
     # The important thing is the user record is deleted
     assert User.find_by(id: user_id).nil?
-  end
-
-  test "user with revoked confirmation cannot access admin" do
-    sign_in @confirmed_user
-
-    # Simulate confirmation revocation
-    @confirmed_user.update(confirmed_at: nil)
-
-    # The user is technically still signed in from the session, but Devise will block them
-    # They'll be redirected to sign in when they try to access protected routes
-    get admin_root_path
-    assert_response :redirect  # Could be to sign_in or root depending on middleware execution order
   end
 end

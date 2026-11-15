@@ -45,10 +45,10 @@
   <div class="side-foot">
     <div class="flex items-center gap-2.5 px-1 text-[0.8125rem] text-slate-200">
       <%= avatar current_user.full_name.presence || current_user.email %>
-      <div class="min-w-0 flex-1">
+      <%= link_to edit_user_registration_path, class: "min-w-0 flex-1 rounded-md hover:text-white", title: "Your account" do %>
         <p class="truncate font-medium"><%= current_user.full_name.presence || current_user.email %></p>
         <p class="truncate text-xs text-side-text"><%= current_user.email %></p>
-      </div>
+      <% end %>
       <%= button_to destroy_user_session_path, method: :delete, class: "btn btn-ghost btn-sm btn-icon text-side-text hover:bg-side-2 hover:text-white", form: { class: "contents" }, "aria-label": "Sign out", title: "Sign out" do %>
         <%= icon "log-out" %>
       <% end %>

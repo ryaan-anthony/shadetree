@@ -1,5 +1,4 @@
-<p>Welcome <%= @email %>!</p>
-
-<p>You can confirm your account email through the link below:</p>
-
-<p><%= link_to 'Confirm my account', confirmation_url(@resource, confirmation_token: @token) %></p>
+<p style="margin:0 0 12px;font-size:18px;font-weight:700;color:#0f172a;">Confirm your email</p>
+<p style="margin:0;">Hi <%= @resource.first_name.presence || "there" %>, confirm <strong><%= @email %></strong> so you can start sending quotes and invoices.</p>
+<%= render "shared/mailer/button", label: "Confirm email", url: confirmation_url(@resource, confirmation_token: @token) %>
+<p style="margin:0;font-size:13px;color:#64748b;">This link works for 3 days.</p>

@@ -21,6 +21,7 @@
         </header>
 
         <main id="main" class="content">
+          <%= render "layouts/app/confirm_email_banner" if current_user && !current_user.confirmed? %>
           <%= yield %>
         </main>
       </div>
