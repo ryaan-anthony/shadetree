@@ -15,11 +15,34 @@ Rails.application.routes.draw do
     post "users/sign_out_everywhere", to: "users/sessions#destroy_others", as: :sign_out_everywhere
   end
 
+  # Team invitations (ACC-03)
+  resources :invitations, only: :show, param: :token do
+    member do
+      post :accept
+      post :sign_up
+    end
+  end
+
   # Admin routes
   namespace :admin do
     # Business management (with tabs for profile, hours, branding)
     resource :business, only: [ :new, :create, :edit, :update ] do
       post :switch, on: :collection
+    end
+
+    # Team (ACC-03)
+    resource :team, only: :show, controller: "team"
+    resources :invitations, only: :create do
+      member do
+        post :resend
+        patch :revoke
+      end
+    end
+    resources :members, only: :update do
+      member do
+        patch :deactivate
+        patch :reactivate
+      end
     end
 
     # Dashboard

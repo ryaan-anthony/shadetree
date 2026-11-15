@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_14_000600) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_14_000700) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -21,8 +21,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_000600) do
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "last_active_at"
+    t.datetime "deactivated_at"
+    t.string "uid", null: false
     t.index ["business_id", "active"], name: "index_business_users_on_business_id_and_active"
     t.index ["business_id"], name: "index_business_users_on_business_id"
+    t.index ["uid"], name: "index_business_users_on_uid", unique: true
     t.index ["user_id", "active"], name: "index_business_users_on_user_id_and_active"
     t.index ["user_id", "business_id"], name: "index_business_users_on_user_id_and_business_id", unique: true
     t.index ["user_id"], name: "index_business_users_on_user_id"
@@ -62,6 +66,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_000600) do
     t.index ["business_id", "kind"], name: "index_document_sequences_on_business_id_and_kind", unique: true
   end
 
+  create_table "invitations", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.string "email", null: false
+    t.string "role", null: false
+    t.string "secret", null: false
+    t.string "token_digest", null: false
+    t.bigint "invited_by_id"
+    t.bigint "accepted_by_id"
+    t.datetime "expires_at", null: false
+    t.datetime "last_sent_at"
+    t.datetime "accepted_at"
+    t.datetime "revoked_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "business_id, lower((email)::text)", name: "index_invitations_one_pending_per_email", unique: true, where: "((accepted_at IS NULL) AND (revoked_at IS NULL))"
+    t.index ["accepted_by_id"], name: "index_invitations_on_accepted_by_id"
+    t.index ["business_id"], name: "index_invitations_on_business_id"
+    t.index ["invited_by_id"], name: "index_invitations_on_invited_by_id"
+    t.index ["token_digest"], name: "index_invitations_on_token_digest", unique: true
+    t.index ["uid"], name: "index_invitations_on_uid", unique: true
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -93,5 +120,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_000600) do
   add_foreign_key "business_users", "users"
   add_foreign_key "businesses", "users", column: "owner_id"
   add_foreign_key "document_sequences", "businesses"
+  add_foreign_key "invitations", "businesses", on_delete: :cascade
+  add_foreign_key "invitations", "users", column: "accepted_by_id", on_delete: :nullify
+  add_foreign_key "invitations", "users", column: "invited_by_id", on_delete: :nullify
   add_foreign_key "users", "businesses", column: "last_business_id", on_delete: :nullify
 end

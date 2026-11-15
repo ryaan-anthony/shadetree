@@ -20,7 +20,7 @@ class BusinessUserTest < ActiveSupport::TestCase
 
   test "the database also enforces one membership per business" do
     assert_raises(ActiveRecord::RecordNotUnique) do
-      BusinessUser.insert!({ user_id: users(:one).id, business_id: businesses(:one).id, role: "admin" })
+      BusinessUser.insert!({ user_id: users(:one).id, business_id: businesses(:one).id, role: "admin", uid: "dupeMember01" })
     end
   end
 

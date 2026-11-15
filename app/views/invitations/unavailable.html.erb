@@ -1,0 +1,11 @@
+<%= render layout: "devise/shared/card", locals: { title: "This invitation isn't valid" } do %>
+  <p class="text-sm text-subtle">
+    <% if @invitation&.status == :expired %>
+      It expired. Ask the person who invited you to resend it.
+    <% elsif @invitation&.status == :accepted %>
+      It has already been used. <%= link_to "Sign in", new_user_session_path, class: "font-semibold text-canopy underline" %> to continue.
+    <% else %>
+      It may have been revoked, or the link wasn't copied completely. Ask the person who invited you for a new one.
+    <% end %>
+  </p>
+<% end %>

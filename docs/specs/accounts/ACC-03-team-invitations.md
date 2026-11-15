@@ -45,5 +45,5 @@ leave — without losing the history of what those people did.
 
 ## Open questions
 
-- Should invitations also be shareable as a link (for technicians who don't check email)?
-  Recommend yes, same expiry, revocable.
+- ~~Should invitations also be shareable as a link?~~ Resolved: yes. "Copy link" on the team
+  page, with the same expiry and revocation as the email.

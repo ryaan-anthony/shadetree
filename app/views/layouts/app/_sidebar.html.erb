@@ -35,8 +35,13 @@
   <nav class="side-nav" aria-label="Primary">
     <% if current_business %>
       <%= side_link "Home", admin_root_path, icon: "home", active: controller_name == "dashboard" %>
-      <% if can?(:business_settings) %>
+      <% if can?(:business_settings) || can?(:manage_team) %>
         <p class="side-group">Business</p>
+      <% end %>
+      <% if can?(:manage_team) %>
+        <%= side_link "Team", admin_team_path, icon: "users", active: controller_name.in?(%w[team invitations members]) %>
+      <% end %>
+      <% if can?(:business_settings) %>
         <%= side_link "Settings", edit_admin_business_path, icon: "settings", active: controller_name == "businesses" && action_name.in?(%w[edit update]) %>
       <% end %>
     <% else %>

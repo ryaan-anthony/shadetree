@@ -1,0 +1,5 @@
+<%= @inviter.full_name %> invited you to <%= @business.name %> on Shadetree as <%= @invitation.role == "admin" ? "an" : "a" %> <%= @invitation.role.humanize.downcase %>.
+
+Accept: <%= @url %>
+
+This invitation expires on <%= l(@invitation.expires_at.to_date, format: :long) %>.

@@ -5,12 +5,14 @@ one:
   business: one
   role: owner
   active: true
+  uid: memberOne001
 
 two:
   user: two
   business: two
   role: owner
   active: true
+  uid: memberTwo002
 
 # User one as a technician in business two
 one_member_of_two:
@@ -18,4 +20,5 @@ one_member_of_two:
   business: two
   role: technician
   active: true
+  uid: memberOfTwo3
 

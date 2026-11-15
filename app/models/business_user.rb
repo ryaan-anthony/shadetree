@@ -8,6 +8,10 @@ class BusinessUser < ApplicationRecord
   belongs_to :user
   belongs_to :business
 
+  before_validation { self.uid ||= SecureRandom.base58(BusinessOwned::UID_LENGTH) if new_record? }
+
+  def to_param = uid
+
   # Validations
   validates :user_id, presence: true, uniqueness: { scope: :business_id }
   validates :business_id, presence: true
@@ -26,6 +30,7 @@ class BusinessUser < ApplicationRecord
 
   # Scopes
   scope :active, -> { where(active: true) }
+  scope :deactivated, -> { where(active: false) }
   scope :owners, -> { where(role: "owner") }
   scope :admins, -> { where(role: "admin") }
   scope :technicians, -> { where(role: "technician") }
@@ -39,6 +44,11 @@ class BusinessUser < ApplicationRecord
   def admin?
     role == "admin"
   end
+
+  # Ends access to this business immediately (BusinessContext checks every request). The user
+  # and their name on past records stay; reactivate! restores the same role.
+  def deactivate! = update!(active: false, deactivated_at: Time.current)
+  def reactivate! = update!(active: true, deactivated_at: nil)
 
   # Named permissions (ACC-04). Inactive memberships grant nothing.
   def can?(permission) = active? && Permissions.granted?(role, permission)
