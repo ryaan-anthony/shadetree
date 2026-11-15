@@ -1,41 +1,85 @@
-<% tab = params[:tab].presence_in(%w[hours branding]) || "profile" %>
-<%= page_header "Settings", lede: "Your business details, hours and branding." %>
+<% tab = (@tab || params[:tab]).presence_in(Admin::BusinessesController::SETTINGS_TABS) || "business" %>
+<% country = @business.country_entry || Country.find("US") %>
+<%= page_header "Settings", lede: "How #{@business.name_was.presence || @business.name} appears to clients, and the defaults new quotes and invoices start from." %>
 
 <nav class="tabs mb-5" aria-label="Settings">
-  <%= link_to "Profile", edit_admin_business_path, class: "tab", "aria-current": ("page" if tab == "profile") %>
-  <%= link_to "Hours", edit_admin_business_path(tab: "hours"), class: "tab", "aria-current": ("page" if tab == "hours") %>
+  <%= link_to "Business", edit_admin_business_path, class: "tab", "aria-current": ("page" if tab == "business") %>
+  <%= link_to "Documents", edit_admin_business_path(tab: "documents"), class: "tab", "aria-current": ("page" if tab == "documents") %>
   <%= link_to "Branding", edit_admin_business_path(tab: "branding"), class: "tab", "aria-current": ("page" if tab == "branding") %>
 </nav>
 
-<% case tab %>
-<% when "hours" %>
-  <div class="card overflow-hidden"><%= render "hours_tab" %></div>
-<% when "branding" %>
+<% if tab == "branding" %>
   <div class="card overflow-hidden"><%= render "branding_tab" %></div>
 <% else %>
-  <%= form_with model: @business, url: admin_business_path, method: :patch, class: "max-w-3xl space-y-4" do |f| %>
+  <%= form_with model: @business, url: admin_business_path(tab:), method: :patch, class: "max-w-3xl space-y-4" do |f| %>
     <% if @business.errors.any? %>
       <div class="banner banner-danger" role="alert">
         <%= icon "alert-circle" %>
-        <p><%= pluralize(@business.errors.count, "problem") %> to fix before saving. Each one is marked below.</p>
+        <p><%= @business.errors.count == 1 ? "One thing" : "#{@business.errors.count} things" %> to fix before saving. Each one is marked below.</p>
       </div>
     <% end %>
 
-    <%= card title: "Business profile", subtitle: "How your business appears to clients." do %>
-      <%= f.field :name, label: "Business name", placeholder: "Oakline Lawn & Landscape" %>
-      <%= f.field :industry, as: :select, optional: true, include_blank: "Choose an industry",
-                  choices: Business::INDUSTRIES.map { |key, name| [ name, key ] } %>
-      <%= f.field :description, as: :textarea, optional: true, rows: 4,
-                  help: "A sentence or two about what you do. Shown on your public pages." %>
-    <% end %>
-
-    <%= card title: "Contact details", subtitle: "Shown on quotes and invoices." do %>
-      <div class="grid gap-4 sm:grid-cols-2">
-        <%= f.field :email, as: :email, label: "Business email", optional: true, placeholder: "office@example.com" %>
-        <%= f.field :phone, as: :phone, label: "Phone", optional: true, placeholder: "(555) 123-4567" %>
+    <% if tab == "documents" %>
+      <div class="banner banner-info"><%= icon "info" %>
+        <p>These are starting points for <span class="font-semibold">new</span> quotes and invoices. Documents you've already created or sent keep what they had.</p>
       </div>
-      <%= f.field :website, as: :url, optional: true, placeholder: "https://example.com" %>
-      <%= f.field :address, as: :textarea, label: "Address", optional: true, rows: 3 %>
+
+      <%= card title: "Quotes" do %>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <%= f.field :quote_expiry_days, as: :number, label: "Valid for (days)", min: 1, max: 365,
+                      help: "After this, the client can't approve without asking you." %>
+          <%= f.field :quote_number_prefix, label: "Number prefix", maxlength: 8, help: "Quotes are numbered #{@business.quote_number_prefix.presence || "Q"}-0001, -0002…" %>
+        </div>
+        <%= f.field :quote_terms, as: :textarea, label: "Terms", optional: true, rows: 5,
+                    placeholder: "e.g. Prices include materials and disposal. 50% deposit to schedule.",
+                    help: "Shown at the bottom of every new quote. You can edit it on each quote." %>
+      <% end %>
+
+      <%= card title: "Invoices" do %>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <%= f.field :invoice_due_days, as: :number, label: "Payment due (days after sending)", min: 0, max: 365,
+                      help: "0 means due on receipt." %>
+          <%= f.field :invoice_number_prefix, label: "Number prefix", maxlength: 8, help: "Invoices are numbered #{@business.invoice_number_prefix.presence || "INV"}-0001…" %>
+        </div>
+        <%= f.field :invoice_terms, as: :textarea, label: "Terms", optional: true, rows: 5,
+                    placeholder: "e.g. Thank you for your business. Late payments may incur a fee." %>
+      <% end %>
+    <% else %>
+      <%= card title: "Business profile", subtitle: "Shown on quotes, invoices and emails." do %>
+        <%= f.field :name, label: "Business name", placeholder: "Oakline Lawn & Landscape" %>
+        <%= f.field :industry, as: :select, optional: true, include_blank: "Choose an industry", choices: Industry.options %>
+        <%= f.field :description, as: :textarea, optional: true, rows: 3,
+                    help: "A sentence or two about what you do. Shown on your public pages." %>
+      <% end %>
+
+      <%= card title: "Contact details" do %>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <%= f.field :email, as: :email, label: "Business email", optional: true, placeholder: "office@example.com", autocomplete: "email" %>
+          <%= f.field :phone, as: :phone, label: "Phone", optional: true, placeholder: "(555) 123-4567", autocomplete: "tel" %>
+        </div>
+        <%# A text input (not type=url) so "example.com" reaches the server, which adds https://. %>
+        <%= f.field :website, optional: true, placeholder: "example.com", inputmode: "url", autocomplete: "url", spellcheck: false %>
+      <% end %>
+
+      <%= card title: "Address", subtitle: "Where clients and documents can reach you." do %>
+        <%= f.field :address_line1, label: "Street address", optional: true, autocomplete: "address-line1" %>
+        <%= f.field :address_line2, label: "Unit, suite or floor", optional: true, autocomplete: "address-line2" %>
+        <div class="grid gap-4 sm:grid-cols-3">
+          <%= f.field :city, optional: true, autocomplete: "address-level2" %>
+          <%= f.field :region, label: country.region_label, optional: true, autocomplete: "address-level1" %>
+          <%= f.field :postal_code, label: country.postal_label, optional: true, autocomplete: "postal-code" %>
+        </div>
+        <%= f.field :country, as: :select, choices: Country.options, autocomplete: "country" %>
+      <% end %>
+
+      <%= card title: "Time zone and currency", subtitle: "Used for scheduling, due dates and every price." do %>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <%= f.field :timezone, as: :select, label: "Time zone", include_blank: "Choose a time zone",
+                      choices: grouped_options_for_select(time_zone_options(@business.timezone), time_zone_identifier(@business.timezone)) %>
+          <%= f.field :currency, as: :select, choices: currency_options,
+                      help: "Set once you start invoicing; changing it later doesn't convert old documents." %>
+        </div>
+      <% end %>
     <% end %>
 
     <div class="flex items-center justify-end gap-2">

@@ -6,7 +6,7 @@
 #
 # @attr [String] name Business name (required)
 # @attr [String] industry Business industry type
-# @attr [Text] address Business physical address
+# @attr [String] address_line1/address_line2/city/region/postal_code/country Structured address
 # @attr [Text] description Business description
 # @attr [String] timezone Business timezone
 # @attr [String] email Primary business email (required)
@@ -37,36 +37,49 @@ class Business < ApplicationRecord
   validates :brand_color, format: { with: /\A#[0-9A-Fa-f]{6}\z/ }, allow_blank: true
   validates :currency, inclusion: { in: Money::CURRENCIES.keys }, allow_blank: true
   validate :timezone_must_be_known
-  validates :industry, inclusion: {
-    in: %w[landscaping maintenance cleaning hvac plumbing electrical roofing painting pool pest other]
-  }, allow_blank: true
+  validates :industry, inclusion: { in: ->(_) { Industry.keys }, message: "isn't one we know" }, allow_blank: true
+  validates :country, inclusion: { in: ->(_) { Country.codes }, message: "isn't supported yet" }
+  validates :website, format: { with: %r{\Ahttps?://\S+\.\S+\z}i, message: "should start with https://" }, allow_blank: true
+  validates :address_line1, :address_line2, :city, :region, :postal_code, length: { maximum: 255 }
+  validates :quote_expiry_days, numericality: { only_integer: true, in: 1..365 }
+  validates :invoice_due_days, numericality: { only_integer: true, in: 0..365 }
+  validates :quote_number_prefix, :invoice_number_prefix,
+            format: { with: /\A[A-Z0-9][A-Z0-9-]{0,7}\z/, message: "use up to 8 capital letters, digits or dashes" }
+  validates :quote_terms, :invoice_terms, length: { maximum: 5_000 }
+  before_validation :default_currency_from_country, if: :new_record?
+  normalizes :quote_number_prefix, :invoice_number_prefix, with: ->(prefix) { prefix.to_s.strip.upcase }
+  # Adds https:// only when no scheme was typed, so "ftp://…" still fails the format check.
+  normalizes :website, with: ->(url) { url.strip.then { _1.blank? || _1.match?(%r{\A[a-z][a-z0-9+.-]*://}i) ? _1 : "https://#{_1}" } }
+  # Store IANA identifiers ("America/New_York"), which is what the settings select offers.
+  normalizes :timezone, with: ->(zone) { ActiveSupport::TimeZone[zone.to_s.strip]&.tzinfo&.identifier || zone.to_s.strip.presence }
 
   # Scopes
   scope :active, -> { where(active: true) }
   scope :by_industry, ->(industry) { where(industry: industry) }
 
-  # Industry display names
-  INDUSTRIES = {
-    "landscaping" => "Landscaping & Lawn Care",
-    "maintenance" => "Home Maintenance & Repair",
-    "cleaning" => "Cleaning Services",
-    "hvac" => "HVAC Services",
-    "plumbing" => "Plumbing Services",
-    "electrical" => "Electrical Services",
-    "roofing" => "Roofing Services",
-    "painting" => "Painting Services",
-    "pool" => "Pool & Spa Services",
-    "pest" => "Pest Control",
-    "other" => "Other Service Business"
-  }.freeze
 
   # Instance methods
 
   # Opaque id for URLs and forms (ADR 0014).
   def to_param = uid
 
-  def industry_name
-    INDUSTRIES[industry] || industry
+  def industry_name = Industry.name_for(industry) || industry
+
+  def country_entry = Country.find(country)
+
+  # Address lines as they appear on documents, skipping blanks.
+  def address_lines
+    city_line = [ city, [ region, postal_code ].compact_blank.join(" ") ].compact_blank.join(", ")
+    [ address_line1, address_line2, city_line, (country_entry&.name if country != "US") ].compact_blank
+  end
+
+  # What a quote or invoice copies when it's created, so later profile changes never alter it
+  # (CAT-01). QTE-01 and INV-01 store this on the document.
+  def document_snapshot
+    {
+      "name" => name, "email" => email, "phone" => phone, "website" => website,
+      "address_lines" => address_lines, "currency" => currency_code
+    }
   end
 
   # Money, time and numbering conventions (ADR 0013).
@@ -109,6 +122,10 @@ class Business < ApplicationRecord
   end
 
   private
+
+  def default_currency_from_country
+    self.currency = Country.currency_for(country) if currency.blank? || (currency == "USD" && country != "US" && !currency_changed?)
+  end
 
   def timezone_must_be_known
     return if timezone.blank? || ActiveSupport::TimeZone[timezone.to_s]

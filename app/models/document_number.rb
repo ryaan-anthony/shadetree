@@ -13,11 +13,19 @@ module DocumentNumber
   class UnknownKind < ArgumentError; end
 
   def self.next!(business, kind)
-    format(kind, next_value!(business, kind))
+    format(kind, next_value!(business, kind), prefix: business_prefix(business, kind))
   end
 
-  def self.format(kind, value)
-    "#{prefix(kind)}-#{value.to_s.rjust(MIN_DIGITS, "0")}"
+  def self.format(kind, value, prefix: prefix(kind))
+    "#{prefix}-#{value.to_s.rjust(MIN_DIGITS, "0")}"
+  end
+
+  # Businesses can choose their quote and invoice prefixes (CAT-01).
+  def self.business_prefix(business, kind)
+    case kind.to_sym
+    when :quote then business.quote_number_prefix.presence
+    when :invoice then business.invoice_number_prefix.presence
+    end || prefix(kind)
   end
 
   def self.prefix(kind)

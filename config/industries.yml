@@ -1,0 +1,24 @@
+# Industries offered at business setup and in settings (CAT-01). CAT-05 adds each industry's
+# starter services here. Keys are stored on businesses: never rename one, add a new key instead.
+landscaping:
+  name: Landscaping & lawn care
+cleaning:
+  name: Cleaning
+maintenance:
+  name: Home maintenance & handyman
+hvac:
+  name: HVAC
+plumbing:
+  name: Plumbing
+electrical:
+  name: Electrical
+roofing:
+  name: Roofing
+painting:
+  name: Painting
+pool:
+  name: Pool & spa
+pest:
+  name: Pest control
+other:
+  name: Something else

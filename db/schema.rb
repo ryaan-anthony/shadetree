@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_14_000900) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_14_001000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -37,7 +37,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_000900) do
     t.string "name", null: false
     t.string "industry"
     t.text "description"
-    t.text "address"
     t.string "email"
     t.string "phone"
     t.string "website"
@@ -51,6 +50,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_000900) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "uid", null: false
+    t.string "address_line1"
+    t.string "address_line2"
+    t.string "city"
+    t.string "region"
+    t.string "postal_code"
+    t.string "country", default: "US", null: false
+    t.integer "quote_expiry_days", default: 30, null: false
+    t.text "quote_terms"
+    t.integer "invoice_due_days", default: 14, null: false
+    t.text "invoice_terms"
+    t.string "quote_number_prefix", default: "Q", null: false
+    t.string "invoice_number_prefix", default: "INV", null: false
     t.index ["active"], name: "index_businesses_on_active"
     t.index ["industry"], name: "index_businesses_on_industry"
     t.index ["owner_id"], name: "index_businesses_on_owner_id"

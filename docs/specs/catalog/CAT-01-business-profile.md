@@ -44,6 +44,7 @@ current multi-tab setup screen with one clear settings area.
 
 ## Open questions
 
-- Should documents snapshot business details at creation or always show current details?
-  Recommend snapshot at send time (sent documents never change).
-- Is "country" needed at launch if we're US-first? Recommend yes — cheap now, painful later.
+- ~~Snapshot or current details?~~ Resolved: documents copy `Business#document_snapshot`, and a
+  sent document never changes (QTE-01 and INV-01 store it).
+- ~~Is "country" needed at launch?~~ Resolved: yes, with ten supported countries, each setting
+  the default currency and address wording.

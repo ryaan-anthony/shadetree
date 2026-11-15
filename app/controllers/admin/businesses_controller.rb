@@ -10,8 +10,9 @@ class Admin::BusinessesController < Admin::BaseController
   end
 
   def create
-    @business = current_user.owned_businesses.build(params.require(:business).permit(:name, :industry))
+    @business = current_user.owned_businesses.build(params.require(:business).permit(:name, :industry, :timezone))
     @business.owner = current_user
+    @business.timezone = nil unless ActiveSupport::TimeZone[@business.timezone.to_s] # browser guess only
 
     if @business.save(context: :setup)
       switch_business_to(@business)
@@ -27,26 +28,16 @@ class Admin::BusinessesController < Admin::BaseController
 
   def update
     @business = current_business
+    @tab = params[:tab].presence_in(SETTINGS_TABS) || "business"
+    attributes = @tab == "branding" ? branding_params : settings_params
 
-    # Determine which params to use based on tab
-    update_params = case params[:tab]
-    when "hours"
-      hours_params
-    when "branding"
-      branding_params
-    else
-      business_params
-    end
-
-    if @business.update(update_params)
-      redirect_to edit_admin_business_path(tab: params[:tab]), notice: "#{params[:tab]&.capitalize || 'Business'} updated successfully."
+    if @business.update(attributes)
+      redirect_to edit_admin_business_path(tab: (@tab unless @tab == "business")), notice: "Settings saved."
     else
       render :edit, status: :unprocessable_content
     end
   end
 
-  # Switch the current business. Only active memberships count; anything else is "not found"
-  # (ADR 0014). Businesses are identified by their opaque uid, never the sequential id.
   def switch
     membership = current_user.business_users.active.joins(:business).find_by(businesses: { uid: params[:business].to_s })
 
@@ -66,24 +57,15 @@ class Admin::BusinessesController < Admin::BaseController
 
   private
 
-  def business_params
-    params.require(:business).permit(:name, :industry, :email, :phone, :address, :description, :website)
-  end
+  SETTINGS_TABS = %w[business documents branding].freeze
 
-  def hours_params
-    permitted = params.permit(
-      :timezone,
-      :monday_enabled, :monday_start, :monday_end,
-      :tuesday_enabled, :tuesday_start, :tuesday_end,
-      :wednesday_enabled, :wednesday_start, :wednesday_end,
-      :thursday_enabled, :thursday_start, :thursday_end,
-      :friday_enabled, :friday_start, :friday_end,
-      :saturday_enabled, :saturday_start, :saturday_end,
-      :sunday_enabled, :sunday_start, :sunday_end
+  # Business and Documents tabs share one form model; each only sends its own fields.
+  def settings_params
+    params.require(:business).permit(
+      :name, :industry, :description, :email, :phone, :website,
+      :address_line1, :address_line2, :city, :region, :postal_code, :country, :timezone, :currency,
+      :quote_expiry_days, :quote_terms, :invoice_due_days, :invoice_terms, :quote_number_prefix, :invoice_number_prefix
     )
-
-    # Only return timezone for now
-    { timezone: permitted[:timezone] }
   end
 
   def branding_params
