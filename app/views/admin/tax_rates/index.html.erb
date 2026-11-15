@@ -40,9 +40,11 @@
       <ul class="list">
         <% @archived.each do |rate| %>
           <li id="tax-rate-<%= rate.uid %>">
-            <span class="flex-1 text-muted"><%= rate.name %></span>
+            <span class="flex-1 text-muted"><%= rate.name %>
+              <% if rate.applies_by_default %><span class="text-sm2"> · was a default</span><% end %></span>
             <span class="money text-muted"><%= rate.percent_label %></span>
-            <%= button_to "Restore", restore_admin_tax_rate_path(rate), method: :patch, class: button_classes(:secondary, :sm) %>
+            <%= button_to "Restore", restore_admin_tax_rate_path(rate), method: :patch, class: button_classes(:secondary, :sm),
+                          "aria-label": "Restore #{rate.label}" %>
           </li>
         <% end %>
       </ul>

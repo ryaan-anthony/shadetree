@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_14_001200) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_15_000100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -235,6 +235,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_001200) do
     t.index ["uid"], name: "index_properties_on_uid", unique: true
   end
 
+  create_table "tax_rates", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.string "name", null: false
+    t.decimal "percent", precision: 7, scale: 4, null: false
+    t.boolean "applies_by_default", default: true, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "archived_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "business_id, lower((name)::text)", name: "index_tax_rates_unique_active_name", unique: true, where: "(archived_at IS NULL)"
+    t.index ["business_id"], name: "index_tax_rates_on_business_id"
+    t.index ["uid"], name: "index_tax_rates_on_uid", unique: true
+    t.check_constraint "percent > 0::numeric AND percent <= 100::numeric", name: "tax_rates_percent_range"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -282,5 +298,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_001200) do
   add_foreign_key "invitations", "users", column: "invited_by_id", on_delete: :nullify
   add_foreign_key "properties", "businesses", on_delete: :cascade
   add_foreign_key "properties", "clients", on_delete: :cascade
+  add_foreign_key "tax_rates", "businesses", on_delete: :cascade
   add_foreign_key "users", "businesses", column: "last_business_id", on_delete: :nullify
 end

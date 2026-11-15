@@ -11,6 +11,8 @@ class CreateTaxRates < ActiveRecord::Migration[8.1]
       t.integer :position, null: false, default: 0
       t.datetime :archived_at
       t.timestamps
+      # Pricing::TaxRate refuses anything else, so a bad row would block every new document.
+      t.check_constraint "percent > 0 AND percent <= 100", name: "tax_rates_percent_range"
     end
     add_index :tax_rates, :uid, unique: true
     add_index :tax_rates, "business_id, lower(name)", unique: true, where: "archived_at IS NULL",

@@ -17,6 +17,11 @@ class TaxRate < ApplicationRecord
   validate :name_unique_among_active, if: -> { archived_at.nil? && (new_record? || will_save_change_to_name? || will_save_change_to_archived_at?) }
   validate :within_active_limit, if: -> { archived_at.nil? && (new_record? || will_save_change_to_archived_at?) }
 
+  # The name and limit checks read other rows, so saves of an active rate take a lock on the
+  # business row first (validation runs inside the save transaction): two submits at once
+  # can't both pass. The unique index is the backstop for anything that still collides.
+  before_validation :lock_business, if: -> { archived_at.nil? && business_id }
+
   scope :active, -> { where(archived_at: nil) }
   scope :archived, -> { where.not(archived_at: nil) }
   scope :ordered, -> { order(:position, :id) }
@@ -47,6 +52,15 @@ class TaxRate < ApplicationRecord
   def label = "#{name} #{percent_label}"
 
   private
+
+  def lock_business = Business.where(id: business_id).lock.pluck(:id)
+
+  def create_or_update(...)
+    super
+  rescue ActiveRecord::RecordNotUnique
+    errors.add(:name, "is already used by another tax rate")
+    false
+  end
 
   def percent_has_at_most_four_decimals
     # The column keeps 4 decimals and would silently round more, so reject them as typed.

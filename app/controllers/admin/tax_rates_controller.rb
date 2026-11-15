@@ -38,7 +38,8 @@ class Admin::TaxRatesController < Admin::BaseController
 
   def restore
     if @rate.update(archived_at: nil)
-      redirect_to admin_tax_rates_path, notice: "#{@rate.label} restored."
+      default = @rate.applies_by_default ? " New quotes and invoices will apply it again." : ""
+      redirect_to admin_tax_rates_path, notice: "#{@rate.label} restored.#{default}"
     else
       redirect_to admin_tax_rates_path, alert: @rate.errors.full_messages.to_sentence
     end

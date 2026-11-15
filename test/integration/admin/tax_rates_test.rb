@@ -42,6 +42,7 @@ class Admin::TaxRatesTest < ActionDispatch::IntegrationTest
     follow_redirect!
     assert_select "#tax-rate-#{state.uid} form[action=?]", restore_admin_tax_rate_path(state)
 
+    assert_select "button[aria-label='Restore State 7%']"
     patch restore_admin_tax_rate_path(state)
     assert_not state.reload.archived?
   end
@@ -65,9 +66,10 @@ class Admin::TaxRatesTest < ActionDispatch::IntegrationTest
 
   test "another business's rates are not reachable" do
     theirs = rate("Theirs", "5", business: businesses(:two))
-    get edit_admin_tax_rate_path(theirs)
-    assert_response :not_found
-    patch archive_admin_tax_rate_path(theirs)
-    assert_response :not_found
+    assert_not_found_across_businesses { get edit_admin_tax_rate_path(theirs) }
+    assert_not_found_across_businesses { patch admin_tax_rate_path(theirs), params: { tax_rate: { percent: "1" } } }
+    assert_not_found_across_businesses { patch archive_admin_tax_rate_path(theirs) }
+    assert_not_found_across_businesses { patch restore_admin_tax_rate_path(theirs) }
+    assert_equal BigDecimal("5"), theirs.reload.percent
   end
 end

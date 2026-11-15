@@ -32,6 +32,22 @@ class TaxRateTest < ActiveSupport::TestCase
     as_business(businesses(:two)) { assert TaxRate.create!(name: "State", percent: 5) }
   end
 
+  test "the database refuses an out-of-range percent" do
+    state = rate
+    assert_raises(ActiveRecord::StatementInvalid) { state.update_column(:percent, 150) }
+  end
+
+  test "a duplicate that slips past validation is reported on the name" do
+    rate("State")
+    as_business(@business) do
+      clash = TaxRate.new(name: "State", percent: 5)
+      clash.define_singleton_method(:name_unique_among_active) { nil }
+      assert_not clash.save
+      assert_includes clash.errors[:name], "is already used by another tax rate"
+      assert_raises(ActiveRecord::RecordNotSaved) { clash.save! }
+    end
+  end
+
   test "at most ten active rates" do
     10.times { rate("Rate #{_1}", 1) }
     as_business(@business) do
