@@ -1,10 +1,12 @@
 <% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
 <% totals = @quote.totals %>
 <% lines = @quote.current_line_items %>
+<%# The controller wraps the header too, so its save status and Preview are in scope. %>
+<div data-controller="quote-builder" data-quote-builder-property-url-value="<%= property_options_admin_quotes_path %>">
 <%= page_header "Quote #{@quote.number}", lede: "Draft for #{@quote.client.display_name}. Changes save as you go." do %>
   <span class="save-status" id="save_status" role="status" data-quote-builder-target="status">Saved</span>
   <%= link_to preview_admin_quote_path(@quote), class: button_classes(:secondary), target: "_blank", rel: "noopener",
-              data: { action: "quote-builder#saveNow" } do %><%= icon "eye" %> Preview as client<% end %>
+              data: { action: "quote-builder#preview" } do %><%= icon "eye" %> Preview as client<% end %>
   <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
     <button type="button" class="<%= button_classes(:ghost, :icon) %>" data-menu-target="button" data-action="menu#toggle"
             aria-haspopup="true" aria-expanded="false" aria-label="More actions"><%= icon "more-horizontal" %></button>
@@ -21,8 +23,8 @@
 
 <%= form_with model: @quote, url: admin_quote_path(@quote), method: :patch, id: "quote-builder", multipart: true,
               class: "grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]",
-              data: { controller: "quote-builder", quote_builder_property_url_value: property_options_admin_quotes_path,
-                      action: "catalog-picker:pick->quote-builder#addFromCatalog client-picker:change->quote-builder#clientChanged input->quote-builder#changed change->quote-builder#changed" } do |f| %>
+              data: { quote_builder_target: "form",
+                      action: "submit->quote-builder#submit catalog-picker:pick->quote-builder#addFromCatalog client-picker:change->quote-builder#clientChanged input->quote-builder#changed change->quote-builder#changed" } do |f| %>
   <%= f.hidden_field :lock_version, id: "quote_lock_version" %>
   <input type="hidden" name="quote[lines_present]" value="1">
 
@@ -69,6 +71,7 @@
                     help: "Only your team sees these. Never shown to the client." %>
       </div>
     <% end %>
+</div>
 
     <%= card title: "Attachments", subtitle: "Photos or PDFs the client can see with the quote. Up to #{Quote::MAX_ATTACHMENTS}, #{Quote::ATTACHMENT_MAX_BYTES / 1.megabyte} MB each." do %>
       <% if @quote.attachments.attached? %>

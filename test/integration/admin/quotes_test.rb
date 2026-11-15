@@ -60,11 +60,16 @@ class Admin::QuotesTest < ActionDispatch::IntegrationTest
     quote = draft
     get edit_admin_quote_path(quote)
     assert_select "h1", /Quote #{quote.number}/
-    assert_select "form#quote-builder[data-controller=quote-builder]"
+    # The controller wraps the header, so the save status and Preview are in its scope.
+    assert_select "[data-controller=quote-builder]" do
+      assert_select "[data-quote-builder-target=status]"
+      assert_select "a[data-action='quote-builder#preview']"
+      assert_select "form#quote-builder[data-quote-builder-target=form]"
+    end
     assert_select "meta[name=turbo-cache-control][content=no-cache]"
     assert_select "#quote_terms", "Due on completion."
     assert_select "#quote_expires_on[value=?]", (Date.current + 30).iso8601
-    assert_select "select#quote_property option[selected]", /Elm St/
+    assert_select "select#quote_property_select option[selected]", /Elm St/
     assert_select "template[data-quote-builder-target=template] input[name='quote[lines][NEW_INDEX][name]']"
     assert_select "#quote_totals", /Total.*\$0\.00/m
   end
@@ -123,6 +128,39 @@ class Admin::QuotesTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_content
     assert_select "turbo-stream[target=builder_errors] template", /Mowing: Unit price is not a valid amount/
     assert_empty fresh(quote) { _1.line_items.to_a }
+  end
+
+  test "a failed save keeps nothing from the request: not the lines, not a good file sent with a bad one" do
+    quote = draft
+    upload = [ fixture_file_upload("logo.png", "image/png"), Rack::Test::UploadedFile.new(StringIO.new("not an image"), "image/gif", original_filename: "bad.gif") ]
+    patch admin_quote_path(quote), params: builder_params(quote, attachments: upload, lines: [ { key: "k1", name: "Mowing", quantity: "1", unit_price: "10" } ])
+    assert_response :unprocessable_content
+    assert_select "#builder_errors", /bad\.gif must be a photo/
+    fresh(quote) do |q|
+      assert_not q.attachments.attached?
+      assert_empty q.line_items.to_a
+    end
+  end
+
+  test "what couldn't be read stays in the form to correct, and an impossible discount is an error, not a crash" do
+    quote = draft
+    patch admin_quote_path(quote), params: builder_params(quote, discount_kind: "percent", discount_value: "150",
+                                                         lines: [ { key: "k1", name: "Mowing", quantity: "two", unit_price: "1x", discount_kind: "percent", discount_value: "120" } ])
+    assert_response :unprocessable_content
+    assert_select "#line-qty-k1[value=two][aria-invalid=true]"
+    assert_select "#line-price-k1[value='1x']"
+    assert_select "input[name='quote[discount_value]'][value='150']"
+    assert_select "#builder_errors", /Discount percent must be less than or equal to 100/
+  end
+
+  test "after a client change, a property picked from the new client's list is kept" do
+    quote = draft
+    sam = as_business(@business) do
+      client("Sam Okafor").tap { _1.properties.create!(address_line1: "77 Lake Rd") }
+    end
+    lake = as_business(@business) { sam.properties.find_by!(address_line1: "77 Lake Rd") }
+    patch admin_quote_path(quote), params: builder_params(quote, property: lake.uid).deep_merge(quote: { client: sam.uid }), as: :turbo_stream
+    assert_equal lake, fresh(quote, &:property)
   end
 
   test "changing the client resets the property and the taxes when exemption differs" do

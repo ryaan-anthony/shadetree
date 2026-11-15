@@ -29,12 +29,19 @@ class QuoteLineItem < ApplicationRecord
   # Fills this line from one row of the builder form.
   def assign_row(row, position:)
     self.position = position
-    self.catalog_item_id = CatalogItem.find_by(uid: row["catalog_item"])&.id if row.key?("catalog_item")
+    self.catalog_item_id = catalog_item_id_for(row["catalog_item"].to_s) if row.key?("catalog_item")
     %w[name description unit].each { public_send("#{_1}=", row[_1]) if row.key?(_1) }
     self.quantity = row["quantity"].to_s.strip.presence || "0" if row.key?("quantity")
     self.unit_price = row["unit_price"].to_s.strip.presence || "0" if row.key?("unit_price")
     self.taxable = ActiveModel::Type::Boolean.new.cast(row["taxable"]) if row.key?("taxable")
     set_discount(row["discount_kind"], row["discount_value"]) if row.key?("discount_kind")
+  end
+
+  # The quantity box: what was typed when it couldn't be read, else the number without zeros.
+  def quantity_for_form
+    return quantity_before_type_cast.to_s if errors[:quantity].any?
+
+    quantity.to_d.round(4).to_s("F").sub(/\.?0+\z/, "")
   end
 
   def to_pricing(rates)
@@ -43,4 +50,15 @@ class QuoteLineItem < ApplicationRecord
   end
 
   def line_amount_cents = ((unit_price_cents || 0) * (quantity || 0)).round
+
+  private
+
+  # Custom lines send a blank uid and unchanged catalog lines their loaded item's uid: neither
+  # needs a query (autosave sends every line).
+  def catalog_item_id_for(uid)
+    return if uid.empty?
+    return catalog_item_id if association(:catalog_item).loaded? && catalog_item&.uid == uid
+
+    CatalogItem.find_by(uid:)&.id
+  end
 end

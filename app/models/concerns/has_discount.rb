@@ -19,8 +19,14 @@ module HasDiscount
     super(kind.presence_in(KINDS))
   end
 
-  # What the form's value box shows: the percent ("10") or the amount ("25.00").
-  def discount_value = discount_kind == "percent" ? discount_percent&.to_d&.round(4)&.to_s("F")&.sub(/\.?0+\z/, "") : discount_amount&.to_s
+  # What the form's value box shows: the percent ("10") or the amount ("25.00"), or what was
+  # typed when it couldn't be read, so a re-rendered form keeps the text to correct.
+  def discount_value
+    return discount_amount_before_type_cast unless discount_kind == "percent"
+    return discount_percent_before_type_cast.to_s if discount_percent.nil?
+
+    discount_percent.to_d.round(4).to_s("F").sub(/\.?0+\z/, "")
+  end
 
   # The form's kind select and value box together (an explicit pair, so the order the
   # attributes arrive in doesn't matter). A blank value or no kind clears the discount.
@@ -34,7 +40,8 @@ module HasDiscount
 
   def pricing_discount
     case discount_kind
-    when "percent" then Pricing::Discount.percent(discount_percent) if discount_percent&.positive?
+    # Out-of-range values are left to validation, so the form shows the error instead of a 500.
+    when "percent" then Pricing::Discount.percent(discount_percent) if discount_percent&.positive? && discount_percent <= 100
     when "amount" then Pricing::Discount.amount(discount_amount) if discount_amount&.positive?
     end
   end

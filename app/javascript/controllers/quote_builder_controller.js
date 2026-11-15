@@ -10,14 +10,15 @@ import { Turbo } from "@hotwired/turbo-rails"
 // behind this one isn't refused as stale). A save from a stale tab gets a conflict banner
 // instead of overwriting newer work.
 //
-// Saves are sent URL-encoded (far smaller than multipart), and use keepalive only within the
-// browser's 64 KiB keepalive limit; while there are unsaved changes, leaving the page asks
-// first. Uploading a file submits the whole form as a normal request and pauses autosave.
+// Saves are sent URL-encoded (far smaller than multipart), with keepalive whenever they fit
+// the browser's 64 KiB keepalive limit; while there are unsaved changes, leaving the page asks
+// first. "Save draft" and "Preview as client" go through the same one-at-a-time queue.
+// Uploading a file submits the whole form as a normal request and pauses autosave.
 // Browsers refuse keepalive bodies over 64 KiB; leave room for headers.
 const KEEPALIVE_LIMIT = 60 * 1024
 
 export default class extends Controller {
-  static targets = ["line", "lines", "template", "empty", "status", "property"]
+  static targets = ["form", "line", "lines", "template", "empty", "status", "property"]
   static values = { propertyUrl: String, delay: { type: Number, default: 700 } }
 
   connect() {
@@ -36,7 +37,6 @@ export default class extends Controller {
       event.returnValue = ""
     }
     window.addEventListener("beforeunload", this.onBeforeUnload)
-    this.element.addEventListener("submit", () => this.renumber())
   }
 
   disconnect() {
@@ -64,8 +64,23 @@ export default class extends Controller {
     this.timer = setTimeout(() => this.save(), this.delayValue)
   }
 
-  saveNow() {
+  // "Save draft" goes through the same queue as autosave, so it can't race one in flight.
+  submit(event) {
+    event.preventDefault()
+    this.save()
+  }
+
+  // Preview as client: save first, so the preview shows the latest. The tab opens at once
+  // (popup blockers allow that only during the click) and is pointed at the preview after.
+  async preview(event) {
+    event.preventDefault()
+    const href = event.currentTarget.href // currentTarget is gone after the await
+    const tab = window.open("about:blank", "_blank")
+    if (tab) tab.opener = null
     if (this.dirty) this.save()
+    await this.saving
+    if (tab) tab.location = href
+    else window.location = href
   }
 
   addFromCatalog(event) {
@@ -149,41 +164,44 @@ export default class extends Controller {
     this.setStatus("Uploading…")
     this.renumber()
     const submit = () => {
-      this.element.dataset.turbo = "false" // a full-page request, so the redirect shows the file
-      this.element.submit()
+      this.formTarget.dataset.turbo = "false" // a full-page request, so the redirect shows the file
+      this.formTarget.submit()
     }
     this.saving ? this.saving.then(submit) : submit()
   }
 
-  async save({ keepalive = false } = {}) {
+  async save() {
     clearTimeout(this.timer)
     if (this.uploading) return
     if (this.saving) {
       this.again = true
-      this.againKeepalive ||= keepalive
       return this.saving
     }
     this.renumber()
-    const form = new FormData(this.element)
+    const formElement = this.formTarget
+    const form = new FormData(formElement)
     form.delete("quote[attachments][]")
     form.delete("_method")
     const body = new URLSearchParams(form)
     const fits = new Blob([body.toString()]).size < KEEPALIVE_LIMIT
     this.dirty = false
     this.setStatus("Saving…")
-    this.saving = fetch(this.element.action, {
+    // keepalive whenever it fits, so a save in flight survives the page being closed or killed.
+    this.saving = fetch(formElement.action, {
       method: "PATCH",
       body,
-      keepalive: keepalive && fits,
+      keepalive: fits,
       credentials: "same-origin",
       headers: { Accept: "text/vnd.turbo-stream.html", "X-CSRF-Token": document.querySelector("meta[name=csrf-token]")?.content }
     }).then(async (response) => {
       // Apply the new lock_version now: the stream renders on the next frame, after a queued
       // save would already have read the old one.
       const lockVersion = response.headers.get("X-Lock-Version")
-      const lockField = this.element.querySelector("#quote_lock_version")
+      const lockField = formElement.querySelector("#quote_lock_version")
       if (lockVersion && lockField) lockField.value = lockVersion
       const stream = await response.text()
+      // The builder may have been left meanwhile (another quote has the same target ids).
+      if (!formElement.isConnected) return
       if (stream) Turbo.renderStreamMessage(stream)
       if (response.ok) this.setStatus(this.dirty ? "Unsaved changes" : "Saved")
       else if (response.status === 409) this.setStatus("Not saved")
@@ -196,17 +214,16 @@ export default class extends Controller {
     }).finally(() => {
       this.saving = null
       if (this.again) {
-        const keepalive = this.againKeepalive
-        this.again = this.againKeepalive = false
-        this.save({ keepalive })
+        this.again = false
+        this.save()
       }
     })
     return this.saving
   }
 
-  // Leaving or hiding the page: save what's pending, with keepalive so it completes.
+  // Leaving or hiding the page: save what's pending now (with keepalive, like every save).
   flush() {
-    if (this.dirty) this.save({ keepalive: true })
+    if (this.dirty) this.save()
   }
 
   setStatus(text) {
