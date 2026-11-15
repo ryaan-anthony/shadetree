@@ -67,6 +67,11 @@ class Users::AccountTest < ActionDispatch::IntegrationTest
     assert_match new_user_session_path, other.response.location
   end
 
+  test "sign out everywhere needs a signed-in user" do
+    post sign_out_everywhere_path
+    assert_redirected_to new_user_session_path
+  end
+
   test "changing the profile needs the current password" do
     sign_in users(:one)
     put user_registration_path, params: { user: { first_name: "Johnny", current_password: "nope" } }

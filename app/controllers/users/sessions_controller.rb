@@ -1,7 +1,8 @@
 class Users::SessionsController < Devise::SessionsController
   layout "marketing"
   rate_limit to: 20, within: 10.minutes, only: :create, with: -> { redirect_to new_user_session_path, alert: "Too many sign-in attempts. Try again in a few minutes." }
-  prepend_before_action :authenticate_user!, only: :destroy_others
+  # Devise skips authenticate_user! inside its own controllers unless forced.
+  prepend_before_action -> { authenticate_user!(force: true) }, only: :destroy_others
 
   # POST /users/sign_out_everywhere — ends every other session and remember-me cookie,
   # keeping this one.
