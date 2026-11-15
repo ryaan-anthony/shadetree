@@ -516,7 +516,7 @@
     .quote-doc-lines td, .quote-doc-lines .num { padding: 0; border: 0; }
     .quote-doc-lines td:first-child { grid-column: 1 / -1; }
     .quote-doc-lines td:nth-child(2), .quote-doc-lines td:nth-child(3) { font-size: 0.8125rem; color: var(--color-muted); }
-    .quote-doc-lines td:nth-child(3)::before { content: "× "; }
+    .quote-doc-lines td:nth-child(3)::before { content: "× " / ""; }
     .quote-doc-lines td:nth-child(4) { font-weight: 600; }
   }
 

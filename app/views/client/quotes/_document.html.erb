@@ -19,22 +19,23 @@
   <p class="quote-doc-message"><%= quote.message %></p>
 <% end %>
 
-<table class="quote-doc-lines">
-  <thead>
-    <tr><th scope="col">Item</th><th scope="col" class="num">Qty</th><th scope="col" class="num">Price</th><th scope="col" class="num">Amount</th></tr>
+<%# Explicit roles: the phone layout turns rows into grids, which drops table semantics in Safari. %>
+<table class="quote-doc-lines" role="table">
+  <thead role="rowgroup">
+    <tr role="row"><th scope="col" role="columnheader">Item</th><th scope="col" role="columnheader" class="num">Qty</th><th scope="col" role="columnheader" class="num">Price</th><th scope="col" role="columnheader" class="num">Amount</th></tr>
   </thead>
-  <tbody>
+  <tbody role="rowgroup">
     <% quote.current_line_items.each_with_index do |line, index| %>
       <% result = totals.lines[index] %>
-      <tr>
-        <td>
+      <tr role="row">
+        <td role="cell">
           <p class="quote-doc-line-name"><%= line.name.presence || "Item" %></p>
           <% if line.description %><p class="quote-doc-line-description"><%= line.description %></p><% end %>
           <% if result.discount.positive? %><p class="quote-doc-line-discount">Includes <%= money(result.discount) %> off<%= " (#{line.discount_value}%)" if line.discount_kind == "percent" %></p><% end %>
         </td>
-        <td class="num"><%= line.quantity.to_d.round(4).to_s("F").sub(/\.?0+\z/, "") %><% if line.unit %> <span class="quote-doc-unit"><%= line.unit %></span><% end %></td>
-        <td class="num"><%= money(line.unit_price || Money.zero(quote.currency)) %></td>
-        <td class="num"><%= money(result.subtotal) %></td>
+        <td role="cell" class="num"><%= line.quantity.to_d.round(4).to_s("F").sub(/\.?0+\z/, "") %><% if line.unit %> <span class="quote-doc-unit"><%= line.unit %></span><% end %></td>
+        <td role="cell" class="num"><%= money(line.unit_price || Money.zero(quote.currency)) %></td>
+        <td role="cell" class="num"><%= money(result.subtotal) %></td>
       </tr>
     <% end %>
   </tbody>

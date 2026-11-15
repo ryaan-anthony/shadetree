@@ -44,6 +44,15 @@ account, no clutter, instant load.
       (uncompressed dev assets). Re-check on staging once PLT-09 is up.*
 - [x] Tests cover states, preview mode, expiry and link isolation.
 
+## Decisions
+
+- A quote's client link expires 30 days after the quote does (end of its last day in the
+  business's time zone), and never sooner than the default 90 days (PLT-12).
+- Photos and files on the page are served through the link and redirect to five-minute storage
+  URLs, so revoking the link cuts them off too.
+- An update request is recorded once per quote; the business answers it with a revision
+  (QTE-06).
+
 ## Out of scope
 
 - Approve/decline actions (QTE-05). Sending (QTE-04).
