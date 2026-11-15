@@ -1,0 +1,55 @@
+<%= render "admin/businesses/settings_header", current: "taxes" %>
+
+<div class="max-w-3xl space-y-4">
+  <%= card title: "Tax rates", subtitle: "Rates marked default apply to taxable items on new quotes and invoices.", flush: true,
+           actions: link_to(new_admin_tax_rate_path, class: button_classes(:secondary, :sm)) { icon("plus") + " Add rate" } do %>
+    <% if @rates.empty? %>
+      <%= empty_state title: "No tax rates", text: "Quotes and invoices show no tax. If you charge sales tax, add your rate here; add a second one if you collect two (state and county, GST and PST).", icon: "percent" do %>
+        <%= link_to new_admin_tax_rate_path, class: button_classes do %><%= icon "plus" %> Add a tax rate<% end %>
+      <% end %>
+    <% else %>
+      <ul class="list">
+        <% @rates.each do |rate| %>
+          <li id="tax-rate-<%= rate.uid %>">
+            <div class="min-w-0 flex-1">
+              <p class="font-semibold text-ink">
+                <%= link_to rate.name, edit_admin_tax_rate_path(rate), class: "hover:underline" %>
+                <% if rate.applies_by_default %><%= badge "Default", tone: :info, dot: false %><% end %>
+              </p>
+            </div>
+            <span class="money font-semibold text-ink"><%= rate.percent_label %></span>
+            <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
+              <button type="button" class="<%= button_classes(:ghost, :sm, :icon) %>" data-menu-target="button" data-action="menu#toggle"
+                      aria-haspopup="true" aria-expanded="false" aria-label="More actions for <%= rate.name %>"><%= icon "more-horizontal" %></button>
+              <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
+                <%= link_to edit_admin_tax_rate_path(rate), class: "menu-item" do %><%= icon "edit-2" %> Edit<% end %>
+                <%= button_to archive_admin_tax_rate_path(rate), method: :patch, class: "menu-item", form: { class: "contents" } do %><%= icon "archive" %> Archive<% end %>
+              </div>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+      <% if @rates.none?(&:applies_by_default) %>
+        <div class="border-t border-line px-5 py-3 text-sm2 text-muted">No rate is a default, so new documents start without tax. You can still add one on each document.</div>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <% if @archived.any? %>
+    <%= card title: "Archived", subtitle: "Kept on the documents that used them.", flush: true do %>
+      <ul class="list">
+        <% @archived.each do |rate| %>
+          <li id="tax-rate-<%= rate.uid %>">
+            <span class="flex-1 text-muted"><%= rate.name %>
+              <% if rate.applies_by_default %><span class="text-sm2"> · was a default</span><% end %></span>
+            <span class="money text-muted"><%= rate.percent_label %></span>
+            <%= button_to "Restore", restore_admin_tax_rate_path(rate), method: :patch, class: button_classes(:secondary, :sm),
+                          "aria-label": "Restore #{rate.label}" %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  <% end %>
+
+  <p class="text-sm2 text-muted">Clients marked tax exempt start their quotes and invoices with no tax.</p>
+</div>

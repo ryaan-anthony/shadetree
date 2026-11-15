@@ -33,5 +33,11 @@ end
   BusinessUser.find_or_create_by!(business: business, user: user) { |m| m.role = role }
 end
 
+Tenancy.with_business(business) do
+  # Tax rates (CAT-04): state and county, applied to new documents.
+  TaxRate.find_or_create_by!(name: "State sales tax") { _1.percent = "6.25" }
+  TaxRate.find_or_create_by!(name: "County") { _1.percent = "1" }
+end
+
 puts "Demo data ready. Sign in as owner@example.com, admin@example.com or tech@example.com " \
      "with password #{demo_password}."

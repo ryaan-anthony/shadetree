@@ -1,0 +1,31 @@
+<%= form_with model: @rate, url: (@rate.persisted? ? admin_tax_rate_path(@rate) : admin_tax_rates_path), class: "max-w-xl space-y-4" do |f| %>
+  <% if @rate.errors[:base].any? %>
+    <div class="banner banner-danger" role="alert"><%= icon "alert-circle" %><p><%= @rate.errors[:base].to_sentence %></p></div>
+  <% end %>
+  <%= card do %>
+    <div class="grid gap-4 sm:grid-cols-[1fr_9rem]">
+      <%= f.field :name, autofocus: @rate.new_record?, placeholder: "State sales tax", maxlength: 40,
+                  help: "Shown on quotes and invoices next to the amount." %>
+      <div class="field">
+        <%= f.label :percent, "Rate", class: "label" %>
+        <div class="relative">
+          <%= f.text_field :percent, value: (@rate.errors[:percent].any? || @rate.percent.nil? ? @rate.percent_before_type_cast : @rate.percent_label.delete("%")), inputmode: "decimal",
+                           class: "input pr-8 text-right", placeholder: "8.25", "aria-invalid": (@rate.errors[:percent].any? || nil),
+                           "aria-describedby": ("tax_rate_percent_error" if @rate.errors[:percent].any?) %>
+          <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted">%</span>
+        </div>
+        <% if @rate.errors[:percent].any? %><p class="error-text" id="tax_rate_percent_error"><%= icon "alert-circle" %>Rate <%= @rate.errors[:percent].to_sentence %></p><% end %>
+      </div>
+    </div>
+    <div class="mt-4">
+      <%= f.check :applies_by_default, label: "Apply to new quotes and invoices", hint: "Taxable items on new documents get this rate. You can change the rates on any single document." %>
+    </div>
+  <% end %>
+  <% if @rate.persisted? %>
+    <p class="text-sm2 text-muted">Changing the rate affects new documents only. Quotes and invoices already created keep the rate they had.</p>
+  <% end %>
+  <div class="flex items-center justify-end gap-2">
+    <%= link_to "Cancel", admin_tax_rates_path, class: button_classes(:ghost) %>
+    <%= f.submit_button @rate.persisted? ? "Save rate" : "Add rate" %>
+  </div>
+<% end %>

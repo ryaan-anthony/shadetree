@@ -24,16 +24,18 @@ rates and a default, so taxable line items are taxed correctly and documents sho
 
 ## Acceptance criteria
 
-- [ ] Owners/Admins can create, edit, archive named tax rates (name, percentage) and mark one or
+- [x] Owners/Admins can create, edit, archive named tax rates (name, percentage) and mark one or
       more as the default set applied to taxable items.
-- [ ] A business can have no tax rates; documents then show no tax lines.
-- [ ] Each catalog item and document line item has a taxable flag; documents can override the
-      applied rate set per document (e.g. tax-exempt client).
-- [ ] Clients can be marked tax-exempt (consumed by CLI-01/QTE-01), which defaults new documents
+- [x] A business can have no tax rates; documents then show no tax lines.
+- [x] Each catalog item has a taxable flag. (The document line item's flag and the per-document
+      override of the applied rate set, e.g. for a tax-exempt client, are document features:
+      QTE-01 and INV-01.)
+- [x] Clients can be marked tax-exempt (consumed by CLI-01/QTE-01), which defaults new documents
       to no tax.
-- [ ] Tax amounts follow the PLT-08 rounding convention and display per rate on documents.
-- [ ] Editing or archiving a rate does not alter existing documents.
-- [ ] Tests cover multiple rates, exempt clients, zero-rate businesses and role access.
+- [x] Tax amounts follow the PLT-08 rounding convention, one amount per rate. (Showing them on
+      documents is QTE-01/QTE-02 and INV-01.)
+- [x] Editing or archiving a rate does not alter existing documents.
+- [x] Tests cover multiple rates, exempt clients, zero-rate businesses and role access.
 
 ## Out of scope
 
@@ -42,5 +44,5 @@ rates and a default, so taxable line items are taxed correctly and documents sho
 
 ## Open questions
 
-- Is tax-inclusive pricing needed at launch (common outside the US)? Recommend support in the
-  math (PLT-08) but expose the setting later.
+- ~~Is tax-inclusive pricing needed at launch (common outside the US)?~~ Resolved: the math
+  supports it (PLT-08, `prices_include_tax:`); the business setting is exposed later.
