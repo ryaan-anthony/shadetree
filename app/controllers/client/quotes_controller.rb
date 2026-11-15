@@ -1,6 +1,7 @@
 # What a client can do with a quote through its link (QTE-03; approve/decline come in QTE-05).
 class Client::QuotesController < ApplicationController
   include ClientLinkAccess
+  include SendsPdf
 
   before_action :require_quote
 
@@ -16,6 +17,9 @@ class Client::QuotesController < ApplicationController
       redirect_to client_link_path(@client_link.token), notice: "You've already asked. #{@business.name} will send an updated quote."
     end
   end
+
+  # QTE-02: the quote as a PDF, to print, forward or file.
+  def pdf = send_pdf(@document, back: client_link_path(@client_link.token))
 
   private
 
