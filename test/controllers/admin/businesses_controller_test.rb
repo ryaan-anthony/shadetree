@@ -128,7 +128,7 @@ class Admin::BusinessesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "updated@example.com", business.email
     assert_equal "maintenance", business.industry
     assert_redirected_to edit_admin_business_path
-    assert_match /updated successfully/i, flash[:notice]
+    assert_equal "Settings saved.", flash[:notice]
   end
 
   test "should reject update with blank name" do

@@ -8,12 +8,13 @@
     </p>
   </div>
 
-  <%= form_with model: @business, url: admin_business_path, method: :post do |f| %>
+  <%= form_with model: @business, url: admin_business_path, method: :post, data: { controller: "browser-timezone" } do |f| %>
+    <%= f.hidden_field :timezone, data: { browser_timezone_target: "field" } %>
     <%= card do %>
       <%= f.field :name, label: "Business name", autofocus: true, required: true,
                   placeholder: "Oakline Lawn & Landscape", help: "Clients see this on quotes and invoices." %>
       <%= f.field :industry, as: :select, label: "What kind of work do you do?", required: true,
-                  include_blank: "Choose one", choices: Business::INDUSTRIES.map { |key, name| [ name, key ] },
+                  include_blank: "Choose one", choices: Industry.options,
                   help: "Used to suggest services and wording. You can change it later." %>
       <div class="mt-6 flex flex-wrap items-center justify-end gap-2">
         <% unless first %><%= link_to "Cancel", admin_root_path, class: button_classes(:ghost) %><% end %>
