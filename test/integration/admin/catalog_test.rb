@@ -123,7 +123,7 @@ class Admin::CatalogTest < ActionDispatch::IntegrationTest
 
     get search_admin_catalog_items_path(format: :json, q: "mow")
     assert_equal [ { "uid" => mow.uid, "name" => "Weekly mow", "description" => "Front and back", "unit" => "each",
-                     "taxable" => true, "category" => nil, "price" => "$45.00", "unit_price_cents" => 4500 } ],
+                     "taxable" => true, "category" => nil, "price" => "$45.00", "unit_price" => "45.00", "unit_price_cents" => 4500 } ],
                  response.parsed_body["items"]
 
     get search_admin_catalog_items_path(format: :json, uids: [ trim.uid, gone.uid, mow.uid ].join(","))

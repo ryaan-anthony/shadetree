@@ -52,10 +52,22 @@
       <% end %>
     <% end %>
 
-    <%# Filled in by later specs: requests (CLI-04), quotes (QTE-01), jobs (JOB-01), invoices (INV-01). %>
-    <%= card title: "Work", flush: true do %>
+    <%# Filled in by later specs: requests (CLI-04), jobs (JOB-01), invoices (INV-01). %>
+    <% quotes = @client.quotes.order(created_at: :desc).limit(5) %>
+    <%= card title: "Work", flush: true,
+             actions: (link_to(new_admin_quote_path(client: @client.uid), class: button_classes(:secondary, :sm)) { icon("plus") + " New quote" } unless @client.archived?) do %>
       <ul class="list">
-        <% [ [ "Requests", "message-square" ], [ "Quotes", "quote" ], [ "Jobs", "job" ], [ "Invoices", "invoice" ] ].each do |name, icon_name| %>
+        <li><%= icon "message-square", class: "size-4 text-faint" %><span class="flex-1 font-medium text-ink">Requests</span><span class="text-sm2 text-muted">None yet</span></li>
+        <% if quotes.any? %>
+          <% quotes.each do |quote| %>
+            <li><%= icon "quote", class: "size-4 text-faint" %>
+              <%= link_to "#{quote.number}#{" · #{quote.title}" if quote.title}", edit_admin_quote_path(quote), class: "min-w-0 flex-1 truncate font-medium text-ink hover:underline" %>
+              <%= badge quote.status.humanize %><span class="money text-sm2 text-subtle"><%= money(quote.total) %></span></li>
+          <% end %>
+        <% else %>
+          <li><%= icon "quote", class: "size-4 text-faint" %><span class="flex-1 font-medium text-ink">Quotes</span><span class="text-sm2 text-muted">None yet</span></li>
+        <% end %>
+        <% [ [ "Jobs", "job" ], [ "Invoices", "invoice" ] ].each do |name, icon_name| %>
           <li><%= icon icon_name, class: "size-4 text-faint" %><span class="flex-1 font-medium text-ink"><%= name %></span><span class="text-sm2 text-muted">None yet</span></li>
         <% end %>
       </ul>

@@ -7,6 +7,9 @@ class LogoUpload
   MAX_BYTES = 5.megabytes
   MAX_SIDE = 4_000
   MIN_SIDE = 16
+
+  # Photos attached to quotes (QTE-01) go through the same cleaning with roomier limits.
+  def self.clean_photo(input, max_bytes:, max_side: 8_000) = prepare(input, max_bytes:, max_side:, min_side: 1)
   FORMATS = {
     "pngload_buffer" => [ "image/png", ".png", {} ],
     "jpegload_buffer" => [ "image/jpeg", ".jpg", { Q: 92 } ],
@@ -20,19 +23,19 @@ class LogoUpload
   Result = Data.define(:attachable, :error)
   NOTHING = Result.new(attachable: nil, error: nil)
 
-  def self.prepare(input)
+  def self.prepare(input, max_bytes: MAX_BYTES, max_side: MAX_SIDE, min_side: MIN_SIDE)
     return NOTHING if input.blank?
 
     io, filename = source(input)
     return failure("must be an uploaded image file") unless io
-    return failure("must be smaller than #{MAX_BYTES / 1.megabyte} MB") if io.size > MAX_BYTES
+    return failure("must be smaller than #{max_bytes / 1.megabyte} MB") if io.size > max_bytes
 
     data = io.read.tap { io.rewind if io.respond_to?(:rewind) }
     image = Vips::Image.new_from_buffer(data, "", access: :sequential)
     content_type, extension, options = FORMATS[image.get("vips-loader")]
     return failure("must be a PNG, JPEG or WebP image") unless content_type
-    return failure("must be at most #{MAX_SIDE} × #{MAX_SIDE} pixels") if image.width > MAX_SIDE || image.height > MAX_SIDE
-    return failure("must be at least #{MIN_SIDE} pixels on each side") if image.width < MIN_SIDE || image.height < MIN_SIDE
+    return failure("must be at most #{max_side} × #{max_side} pixels") if image.width > max_side || image.height > max_side
+    return failure("must be at least #{min_side} pixels on each side") if image.width < min_side || image.height < min_side
 
     clean = without_metadata(image).write_to_buffer(extension, strip: true, **options)
     name = "#{File.basename(filename.to_s, ".*").presence || "logo"}#{extension}"

@@ -69,6 +69,13 @@ Rails.application.routes.draw do
       end
     end
 
+    # Quotes (QTE-01)
+    resources :quotes do
+      get :preview, on: :member
+      get :property_options, on: :collection
+      resources :attachments, only: :destroy, controller: "quote_attachments"
+    end
+
     # Tax rates (CAT-04)
     resources :tax_rates, except: %i[show destroy] do
       member do
