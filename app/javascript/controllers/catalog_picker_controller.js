@@ -11,6 +11,8 @@ export default class extends Controller {
     this.items = []
     this.active = -1
     this.request = 0
+    // Typed before this controller loaded (slow phone, cold cache): search now.
+    if (document.activeElement === this.inputTarget && this.inputTarget.value.trim() !== "") this.search()
   }
 
   disconnect() {
