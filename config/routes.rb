@@ -23,6 +23,10 @@ Rails.application.routes.draw do
     end
   end
 
+  # Client links (PLT-12): the only way clients reach documents.
+  get "c/:token", to: "client_links#show", as: :client_link
+  post "c/:token/fresh", to: "client_links#request_fresh", as: :request_fresh_client_link
+
   # Admin routes
   namespace :admin do
     # Business management (with tabs for profile, hours, branding)
@@ -42,6 +46,15 @@ Rails.application.routes.draw do
       member do
         patch :deactivate
         patch :reactivate
+      end
+    end
+
+    # Client links (PLT-12)
+    resources :client_links, only: [] do
+      member do
+        get :preview
+        patch :revoke
+        post :reissue
       end
     end
 

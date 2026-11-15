@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_14_000700) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_14_000800) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -55,6 +55,43 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_000700) do
     t.index ["industry"], name: "index_businesses_on_industry"
     t.index ["owner_id"], name: "index_businesses_on_owner_id"
     t.index ["uid"], name: "index_businesses_on_uid", unique: true
+  end
+
+  create_table "client_link_events", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "client_link_id", null: false
+    t.string "kind", null: false
+    t.string "device"
+    t.datetime "occurred_at", null: false
+    t.index ["business_id"], name: "index_client_link_events_on_business_id"
+    t.index ["client_link_id", "kind"], name: "index_client_link_events_once", unique: true, where: "((kind)::text <> ALL ((ARRAY['view'::character varying, 'fresh_link_requested'::character varying])::text[]))"
+    t.index ["client_link_id"], name: "index_client_link_events_on_client_link_id"
+  end
+
+  create_table "client_links", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.string "linkable_type", null: false
+    t.bigint "linkable_id", null: false
+    t.string "secret", null: false
+    t.string "token_digest", null: false
+    t.string "actions", default: [], null: false, array: true
+    t.datetime "expires_at"
+    t.datetime "revoked_at"
+    t.bigint "revoked_by_id"
+    t.bigint "created_by_id"
+    t.datetime "first_viewed_at"
+    t.datetime "last_viewed_at"
+    t.integer "views_count", default: 0, null: false
+    t.datetime "fresh_link_requested_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id"], name: "index_client_links_on_business_id"
+    t.index ["created_by_id"], name: "index_client_links_on_created_by_id"
+    t.index ["linkable_type", "linkable_id"], name: "index_client_links_on_linkable"
+    t.index ["revoked_by_id"], name: "index_client_links_on_revoked_by_id"
+    t.index ["token_digest"], name: "index_client_links_on_token_digest", unique: true
+    t.index ["uid"], name: "index_client_links_on_uid", unique: true
   end
 
   create_table "document_sequences", force: :cascade do |t|
@@ -119,6 +156,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_000700) do
   add_foreign_key "business_users", "businesses"
   add_foreign_key "business_users", "users"
   add_foreign_key "businesses", "users", column: "owner_id"
+  add_foreign_key "client_link_events", "businesses", on_delete: :cascade
+  add_foreign_key "client_link_events", "client_links", on_delete: :cascade
+  add_foreign_key "client_links", "businesses", on_delete: :cascade
+  add_foreign_key "client_links", "users", column: "created_by_id", on_delete: :nullify
+  add_foreign_key "client_links", "users", column: "revoked_by_id", on_delete: :nullify
   add_foreign_key "document_sequences", "businesses"
   add_foreign_key "invitations", "businesses", on_delete: :cascade
   add_foreign_key "invitations", "users", column: "accepted_by_id", on_delete: :nullify

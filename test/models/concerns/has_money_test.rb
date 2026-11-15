@@ -4,7 +4,6 @@ class HasMoneyTest < ActiveSupport::TestCase
   class PricedThing < ApplicationRecord
     self.table_name = "priced_things"
     include HasMoney
-    include HasPublicToken
     belongs_to :business
     money :price
     money :deposit, currency: -> { "GBP" }
@@ -15,7 +14,6 @@ class HasMoneyTest < ActiveSupport::TestCase
       t.references :business
       t.integer :price_cents
       t.integer :deposit_cents
-      t.string :public_token
     end
     PricedThing.reset_column_information
     @business = businesses(:one)
@@ -46,14 +44,5 @@ class HasMoneyTest < ActiveSupport::TestCase
 
   test "money in another currency is refused" do
     assert_raises(Money::CurrencyMismatch) { PricedThing.new(business: @business, price: Money.new(1, "USD")) }
-  end
-
-  test "public tokens are long, random and looked up safely" do
-    thing = PricedThing.create!(business: @business)
-    assert_equal HasPublicToken::LENGTH, thing.public_token.length
-    assert_not_equal thing.public_token, PricedThing.create!(business: @business).public_token
-    assert_equal thing, PricedThing.find_by_public_token!(thing.public_token)
-    assert_raises(ActiveRecord::RecordNotFound) { PricedThing.find_by_public_token!(thing.id.to_s) }
-    assert_raises(ActiveRecord::RecordNotFound) { PricedThing.find_by_public_token!(nil) }
   end
 end

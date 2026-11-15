@@ -1,5 +1,5 @@
 # Per-request (and per-job) context. Reset automatically between requests and jobs.
-# Set by BusinessContext for staff requests, ClientLinkContext for client links and
+# Set by BusinessContext for staff requests, ClientLinkAccess for client links and
 # ApplicationJob for background work. See docs/adr/0014-tenant-scoping-enforcement.md.
 class Current < ActiveSupport::CurrentAttributes
   attribute :user, :business, :membership

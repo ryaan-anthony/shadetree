@@ -35,10 +35,12 @@ See `docs/plans/00-vision.md` → Cross-cutting requirements.
   `assert_not_found_across_businesses`. `Tenancy.across_businesses(reason:)` is the only bypass
   and needs a reviewer's eye ([ADR 0014](docs/adr/0014-tenant-scoping-enforcement.md)).
 - **Roles:** Owner, Admin and Technician, enforced server-side and tested.
-- **Clients** (a business's customers) never have accounts; they act through secure client links.
+- **Clients** (a business's customers) never have accounts; they act through secure client links:
+  `ClientLink.issue!(document, actions:)`, controllers `include ClientLinkAccess`, one-time
+  actions go through `client_link_action!` ([ADR 0016](docs/adr/0016-client-links.md)).
 - **Money and time:** money is exact (never floats); times are stored in UTC and shown in the
   business's time zone. Use `Money`, `money :price` (`HasMoney`), `Pricing::DocumentTotals`,
-  `business.today`, `business.local_time`, `local_time`/`money` helpers, `HasPublicToken` and
+  `business.today`, `business.local_time`, `local_time`/`money` helpers, `ClientLink` (client-facing URLs, ADR 0016) and
   `business.next_document_number` ([ADR 0013](docs/adr/0013-money-time-and-numbering.md)).
 - **Mobile:** every page works at 360 px wide.
 - **Secrets and data:** no secrets, client personal data or production data in code, logs,

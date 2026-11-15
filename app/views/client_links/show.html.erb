@@ -1,0 +1,7 @@
+<% if @preview %>
+  <div class="banner banner-info mb-4" role="status">
+    <%= icon "eye" %>
+    <p class="flex-1"><span class="font-semibold">Preview.</span> This is what your client sees. Previews aren't counted as views.</p>
+  </div>
+<% end %>
+<%= render @client_link.document_partial, document: @document, client_link: @client_link, preview: @preview %>
