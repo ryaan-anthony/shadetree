@@ -1,4 +1,5 @@
-# Set flag state in tests (PLT-11). Overrides are per thread and cleared after every test.
+# Set flag state in tests (PLT-11). Overrides are process-wide, so system tests' app server sees
+# them too, and they're cleared after every test. The flag must still be declared.
 #
 #   with_feature(:new_quote_editor) { get new_admin_quote_path }
 #   with_feature(:new_quote_editor, enabled: false) { … }

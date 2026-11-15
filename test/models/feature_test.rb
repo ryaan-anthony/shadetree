@@ -72,6 +72,38 @@ class FeatureTest < ActiveSupport::TestCase
     as_business(@one) { assert_not Feature.enabled?(:beta_editor) }
   end
 
+  test "business-specific overrides use the business being asked about" do
+    enable_feature(:beta_editor, only: @two)
+    as_business(@one) { assert Feature.enabled?(:beta_editor, business: @two) }
+    as_business(@two) { assert_not Feature.enabled?(:beta_editor, business: @one) }
+  end
+
+  test "overrides can't hide a typo in the flag name" do
+    assert_raises(Feature::UnknownFlag) { with_feature(:bta_editor) { Feature.enabled?(:bta_editor) } }
+  end
+
+  test "overrides are visible to other threads, like the system-test server" do
+    enable_feature(:beta_editor)
+    assert Thread.new { Feature.enabled?(:beta_editor, business: @one) }.value
+  end
+
+  test "a business can't be carved out of an everyone or percentage rollout" do
+    Feature.enable!(:beta_editor)
+    assert_raises(Feature::UnsupportedChange) { Feature.disable_for!(:beta_editor, @one) }
+    Feature.enable_percentage!(:beta_editor, 50)
+    error = assert_raises(Feature::UnsupportedChange) { Feature.disable_for!(:beta_editor, @one) }
+    assert_match "flags:disable", error.message
+  end
+
+  test "enable_for! keeps everyone-on, and replaces a percentage with a list" do
+    Feature.enable!(:beta_editor)
+    Feature.enable_for!(:beta_editor, @one)
+    assert_equal "on", FeatureFlag.find_by!(name: "beta_editor").state
+    Feature.enable_percentage!(:beta_editor, 10)
+    Feature.enable_for!(:beta_editor, @one)
+    assert_equal "businesses", FeatureFlag.find_by!(name: "beta_editor").state
+  end
+
   test "invalid percentages are rejected" do
     assert_raises(ActiveRecord::RecordInvalid) { Feature.enable_percentage!(:beta_editor, 150) }
   end

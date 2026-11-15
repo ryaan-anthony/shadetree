@@ -42,6 +42,8 @@ namespace :flags do
   task :disable_for, [ :name, :business ] => :environment do |_, args|
     Feature.disable_for!(args.fetch(:name), find_business.call(args.fetch(:business)), by: by.call)
     puts "#{args[:name]}: off for #{args[:business]}"
+  rescue Feature::UnsupportedChange => error
+    abort error.message
   end
 
   desc "Turn a flag on for a percentage of businesses"
