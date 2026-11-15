@@ -1,18 +1,18 @@
 class Admin::BusinessesController < Admin::BaseController
   skip_before_action :require_business_setup, only: [ :new, :create ]
 
+  # First business after sign-up, or another one from the switcher. Only name and industry.
   def new
-    # Allow creating additional businesses
     @business = current_user.owned_businesses.build
   end
 
   def create
-    @business = current_user.owned_businesses.build(business_params)
+    @business = current_user.owned_businesses.build(params.require(:business).permit(:name, :industry))
     @business.owner = current_user
 
-    if @business.save
+    if @business.save(context: :setup)
       switch_business_to(@business)
-      redirect_to admin_root_path, notice: "Business created successfully!"
+      redirect_to admin_root_path, notice: "#{@business.name} is ready."
     else
       render :new, status: :unprocessable_content
     end

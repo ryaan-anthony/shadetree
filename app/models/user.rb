@@ -23,9 +23,11 @@ class User < ApplicationRecord
   before_create { self.terms_accepted_at ||= Time.current if terms_of_service }
 
   # Relationships
+  # Owned businesses go first, so deleting an account removes its own businesses before its other
+  # memberships; a membership that is the last Owner of someone else's business blocks deletion.
+  has_many :owned_businesses, class_name: "Business", foreign_key: "owner_id", dependent: :destroy
   has_many :business_users, dependent: :destroy
   has_many :businesses, through: :business_users
-  has_many :owned_businesses, class_name: "Business", foreign_key: "owner_id", dependent: :destroy
 
   # Validations
   validates :email, presence: true, uniqueness: true

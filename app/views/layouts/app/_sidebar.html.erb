@@ -4,7 +4,7 @@
       <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
         <button type="button" class="biz-switch" data-menu-target="button" data-action="menu#toggle"
                 aria-haspopup="true" aria-expanded="false">
-          <span class="biz-logo" style="<%= business_mark_style(current_business) %>"><%= initials(current_business.name) %></span>
+          <%= business_mark(current_business) %>
           <span class="min-w-0 flex-1">
             <span class="block truncate text-[0.84rem] font-semibold leading-tight"><%= current_business.name %></span>
             <span class="block text-xs text-side-text"><%= current_role_label %></span>
@@ -16,7 +16,7 @@
           <% current_user.businesses.order(:name).each do |business| %>
             <%= button_to switch_admin_business_path, params: { business: business.uid }, class: "menu-item",
                           "aria-current": (business == current_business).to_s, form: { class: "contents" } do %>
-              <span class="biz-logo size-6 rounded-md text-[0.65rem]" style="<%= business_mark_style(business) %>"><%= initials(business.name) %></span>
+              <%= business_mark(business, class: "size-6 rounded-md text-[0.65rem]") %>
               <span class="flex-1 truncate"><%= business.name %></span>
               <% if business == current_business %><%= icon "check", class: "size-4 text-canopy" %><% end %>
             <% end %>

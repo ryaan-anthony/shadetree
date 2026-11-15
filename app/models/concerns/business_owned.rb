@@ -31,8 +31,8 @@ module BusinessOwned
     end
 
     before_validation { self.business ||= Current.business }
-    before_validation(on: :create) { self.uid ||= SecureRandom.base58(UID_LENGTH) }
-    validate :business_matches_current, on: :create
+    before_validation { self.uid ||= SecureRandom.base58(UID_LENGTH) if new_record? && has_attribute?(:uid) }
+    validate :business_matches_current, if: :new_record? # every context, including custom ones
     attr_readonly :business_id
   end
 

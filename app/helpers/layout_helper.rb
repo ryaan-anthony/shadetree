@@ -25,6 +25,16 @@ module LayoutHelper
     role ? role.humanize : ""
   end
 
+  # The business's logo, or its initials on its brand colour.
+  def business_mark(business, class: nil)
+    classes = [ "biz-logo overflow-hidden", binding.local_variable_get(:class) ].compact.join(" ")
+    if business.logo_url.present?
+      tag.span(image_tag(business.logo_url, alt: "", class: "size-full object-cover"), class: "#{classes} bg-white")
+    else
+      tag.span(initials(business.name), class: classes, style: business_mark_style(business))
+    end
+  end
+
   # The square business mark in the switcher uses the business's brand colour.
   def business_mark_style(business)
     color = brand_color(business)
