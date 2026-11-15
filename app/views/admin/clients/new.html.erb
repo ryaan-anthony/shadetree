@@ -1,0 +1,6 @@
+<% if inline? %>
+  <%= turbo_frame_tag "new_client" do %><%= render "form", inline: true %><% end %>
+<% else %>
+  <%= page_header "Add client" %>
+  <%= render "form" %>
+<% end %>

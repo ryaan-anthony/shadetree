@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_14_001100) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_14_001200) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -102,6 +102,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_001100) do
     t.index ["uid"], name: "index_catalog_items_on_uid", unique: true
   end
 
+  create_table "client_contact_methods", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "client_id", null: false
+    t.string "kind", null: false
+    t.string "value", null: false
+    t.string "normalized", null: false
+    t.string "label"
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "kind", "normalized"], name: "idx_on_business_id_kind_normalized_9d4b32aefd"
+    t.index ["business_id"], name: "index_client_contact_methods_on_business_id"
+    t.index ["client_id"], name: "index_client_contact_methods_on_client_id"
+  end
+
   create_table "client_link_events", force: :cascade do |t|
     t.bigint "business_id", null: false
     t.bigint "client_link_id", null: false
@@ -137,6 +152,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_001100) do
     t.index ["revoked_by_id"], name: "index_client_links_on_revoked_by_id"
     t.index ["token_digest"], name: "index_client_links_on_token_digest", unique: true
     t.index ["uid"], name: "index_client_links_on_uid", unique: true
+  end
+
+  create_table "clients", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.string "display_name", null: false
+    t.string "company_name"
+    t.text "notes"
+    t.string "tags", default: [], null: false, array: true
+    t.boolean "tax_exempt", default: false, null: false
+    t.datetime "archived_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id"], name: "index_clients_on_business_id"
+    t.index ["tags"], name: "index_clients_on_tags", using: :gin
+    t.index ["uid"], name: "index_clients_on_uid", unique: true
   end
 
   create_table "document_sequences", force: :cascade do |t|
@@ -182,6 +213,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_001100) do
     t.index ["uid"], name: "index_invitations_on_uid", unique: true
   end
 
+  create_table "properties", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "client_id", null: false
+    t.string "uid", null: false
+    t.string "label"
+    t.string "address_line1", null: false
+    t.string "address_line2"
+    t.string "city"
+    t.string "region"
+    t.string "postal_code"
+    t.string "country", default: "US", null: false
+    t.text "access_notes"
+    t.boolean "billing", default: false, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id"], name: "index_properties_on_business_id"
+    t.index ["client_id"], name: "index_properties_on_client_id"
+    t.index ["client_id"], name: "index_properties_one_billing_per_client", unique: true, where: "billing"
+    t.index ["uid"], name: "index_properties_on_uid", unique: true
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -215,14 +268,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_001100) do
   add_foreign_key "catalog_categories", "businesses", on_delete: :cascade
   add_foreign_key "catalog_items", "businesses", on_delete: :cascade
   add_foreign_key "catalog_items", "catalog_categories", column: "category_id", on_delete: :nullify
+  add_foreign_key "client_contact_methods", "businesses", on_delete: :cascade
+  add_foreign_key "client_contact_methods", "clients", on_delete: :cascade
   add_foreign_key "client_link_events", "businesses", on_delete: :cascade
   add_foreign_key "client_link_events", "client_links", on_delete: :cascade
   add_foreign_key "client_links", "businesses", on_delete: :cascade
   add_foreign_key "client_links", "users", column: "created_by_id", on_delete: :nullify
   add_foreign_key "client_links", "users", column: "revoked_by_id", on_delete: :nullify
+  add_foreign_key "clients", "businesses", on_delete: :cascade
   add_foreign_key "document_sequences", "businesses"
   add_foreign_key "invitations", "businesses", on_delete: :cascade
   add_foreign_key "invitations", "users", column: "accepted_by_id", on_delete: :nullify
   add_foreign_key "invitations", "users", column: "invited_by_id", on_delete: :nullify
+  add_foreign_key "properties", "businesses", on_delete: :cascade
+  add_foreign_key "properties", "clients", on_delete: :cascade
   add_foreign_key "users", "businesses", column: "last_business_id", on_delete: :nullify
 end

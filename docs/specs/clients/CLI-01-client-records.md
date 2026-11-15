@@ -46,5 +46,7 @@ properties — without turning it into a CRM.
 
 ## Open questions
 
-- Multiple named contacts per client (B2B)? Recommended: primary contact + notes for now.
-- Should properties support per-property contacts (e.g. tenant phone)? Recommend backlog.
+- ~~Multiple named contacts per client (B2B)?~~ Resolved: not now. A client has any number of
+  labeled emails and phones ("Office", "Site manager") plus notes; named contacts are backlog.
+- ~~Should properties support per-property contacts (e.g. tenant phone)?~~ Resolved: backlog.
+  Access notes cover "call the tenant at …" for now.

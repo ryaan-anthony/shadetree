@@ -1,0 +1,94 @@
+<%= page_header @client.display_name, lede: @client.company_name do %>
+  <%= link_to edit_admin_client_path(@client), class: button_classes(:secondary) do %><%= icon "edit-2" %> Edit<% end %>
+  <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
+    <button type="button" class="<%= button_classes(:ghost, :icon) %>" data-menu-target="button" data-action="menu#toggle"
+            aria-haspopup="true" aria-expanded="false" aria-label="More actions"><%= icon "more-horizontal" %></button>
+    <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
+      <% if @client.archived? %>
+        <%= button_to restore_admin_client_path(@client), method: :patch, class: "menu-item", form: { class: "contents" } do %><%= icon "archive" %> Restore<% end %>
+      <% else %>
+        <%= button_to archive_admin_client_path(@client), method: :patch, class: "menu-item", form: { class: "contents" } do %><%= icon "archive" %> Archive<% end %>
+      <% end %>
+      <% if @client.deletable? %>
+        <div class="menu-sep"></div>
+        <%= button_to admin_client_path(@client), method: :delete, class: "menu-item text-danger",
+                      form: { class: "contents", data: { turbo_confirm: "Delete #{@client.display_name} and their properties? This can't be undone.", turbo_confirm_button: "Delete client" } } do %>
+          <%= icon "trash" %> Delete
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<% if @client.archived? %>
+  <div class="banner banner-warning mb-4" role="status"><%= icon "archive" %>
+    <p>Archived on <%= local_date(@client.archived_at.to_date) %>. Hidden from pickers; history is kept.</p>
+  </div>
+<% end %>
+
+<div class="grid gap-4 lg:grid-cols-[1fr_20rem]">
+  <div class="space-y-4">
+    <%= card title: "Properties", subtitle: (pluralize(@client.properties.size, "property", plural: "properties") if @client.properties.any?), flush: true do %>
+      <% if @client.properties.empty? %>
+        <%= empty_state title: "No properties yet", text: "Add the address where the work happens.", icon: "home" do %>
+          <%= link_to "Add a property", edit_admin_client_path(@client), class: button_classes(:secondary, :sm) %>
+        <% end %>
+      <% else %>
+        <ul class="list">
+          <% @client.properties.each do |property| %>
+            <li id="property-<%= property.uid %>" class="items-start">
+              <%= icon "home", class: "mt-0.5 size-4 shrink-0 text-faint" %>
+              <div class="min-w-0 flex-1">
+                <p class="font-semibold text-ink"><%= property.label || property.address_line1 %>
+                  <% if property.billing %><%= badge "Billing", tone: :info, dot: false %><% end %></p>
+                <address class="text-sm2 not-italic text-muted"><%= safe_join(property.label ? property.address_lines : property.address_lines.drop(1), tag.br) %></address>
+                <% if property.access_notes.present? %>
+                  <p class="mt-1.5 rounded-md bg-sunken px-2.5 py-1.5 text-sm2 text-subtle"><span class="font-medium">Access:</span> <%= property.access_notes %></p>
+                <% end %>
+              </div>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    <% end %>
+
+    <%# Filled in by later specs: requests (CLI-04), quotes (QTE-01), jobs (JOB-01), invoices (INV-01). %>
+    <%= card title: "Work", flush: true do %>
+      <ul class="list">
+        <% [ [ "Requests", "message-square" ], [ "Quotes", "quote" ], [ "Jobs", "job" ], [ "Invoices", "invoice" ] ].each do |name, icon_name| %>
+          <li><%= icon icon_name, class: "size-4 text-faint" %><span class="flex-1 font-medium text-ink"><%= name %></span><span class="text-sm2 text-muted">None yet</span></li>
+        <% end %>
+      </ul>
+    <% end %>
+  </div>
+
+  <div class="space-y-4">
+    <%= card title: "Contact" do %>
+      <ul class="space-y-2.5">
+        <% @client.contact_methods.each do |method| %>
+          <li class="flex items-center gap-2.5">
+            <%= icon(method.email? ? "mail" : "phone", class: "size-4 shrink-0 text-faint") %>
+            <%= link_to method.value, method.href, class: "min-w-0 truncate font-medium text-ink hover:underline" %>
+            <% if method.label %><span class="text-sm2 text-muted"><%= method.label %></span><% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+
+    <%= card title: "Balance" do %>
+      <p class="text-sm text-muted">Nothing owed.</p>
+    <% end %>
+
+    <% if @client.tags.any? || @client.tax_exempt || @client.notes.present? %>
+      <%= card title: "Details" do %>
+        <% if @client.tags.any? || @client.tax_exempt %>
+          <div class="flex flex-wrap gap-1.5">
+            <% @client.tags.each do |tag| %><%= badge tag, dot: false %><% end %>
+            <% if @client.tax_exempt %><%= badge "Tax exempt", tone: :warning, dot: false %><% end %>
+          </div>
+        <% end %>
+        <% if @client.notes.present? %><p class="mt-3 whitespace-pre-line text-sm text-subtle"><%= @client.notes %></p><% end %>
+      <% end %>
+    <% end %>
+  </div>
+</div>
