@@ -231,6 +231,16 @@
       <% end %>
     </section>
 
+    <section id="pickers" aria-labelledby="pickers-h">
+      <h2 id="pickers-h" class="mb-3 text-base font-bold text-ink">Client picker</h2>
+      <p class="mb-3 text-sm text-muted">Searches the signed-in business's clients (CLI-02). "New client" opens the page's quick-create modal, rendered once outside any form.</p>
+      <form id="picker-demo" class="card card-body max-w-md space-y-3" onsubmit="event.preventDefault(); this.dataset.submitted = 'yes'">
+        <%= render "admin/clients/picker", name: "demo[client]" %>
+        <button type="submit" class="<%= button_classes(:secondary, :sm) %>">Submit</button>
+      </form>
+      <%= render "admin/clients/quick_create", button: false %>
+    </section>
+
     <section id="layouts" aria-labelledby="layouts-h">
       <h2 id="layouts-h" class="mb-3 text-base font-bold text-ink">Layouts</h2>
       <%= card do %>

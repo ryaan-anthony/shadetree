@@ -31,10 +31,11 @@ class Client < ApplicationRecord
   before_validation :move_billing_to_newly_chosen_property
   before_save :clear_other_billing_properties
 
-  before_save { self.last_activity_at = Time.current if new_record? || changed? || last_activity_at.nil? }
-  # Contact methods and properties save after the client, so the digest is rebuilt once
-  # everything is committed (children refresh it too when they change on their own).
-  after_commit :refresh_search_text!, on: %i[create update]
+  # Editing the client, its contacts or properties counts as activity; archiving doesn't.
+  before_save { self.last_activity_at = Time.current if new_record? || last_activity_at.nil? || edited? }
+  # The search digest is rebuilt once per transaction, after commit, however many of the
+  # client's rows changed (contact methods and properties queue it too).
+  after_save :queue_search_refresh
 
   SORTS = { "name" => "Name", "recent" => "Recently added", "activity" => "Recent activity" }.freeze
   MAX_SEARCH_TERMS = 8
@@ -52,14 +53,47 @@ class Client < ApplicationRecord
   scope :tagged, ->(tag) { tag.present? ? where("clients.tags @> ARRAY[?]::varchar[]", tag.to_s.downcase) : all }
 
   # Clients matching every word of `query` anywhere in their name, company, email, phone or
-  # address (CLI-02). Phone-like words ("(555)", "010-01") match on digits, so formatting
-  # doesn't matter. Uses the trigram index on search_text.
+  # address (CLI-02). A number-like word ("(555)", "010-01", "+1 555…") also matches its
+  # digits, and a phone typed with the North American 1 matches without it, so phone
+  # formatting doesn't matter while "12-14" or "28801-1234" still match addresses as typed.
+  # Uses the trigram index on search_text.
   def self.search(query)
-    query.to_s.downcase.split.first(MAX_SEARCH_TERMS).reduce(all) do |scope, term|
-      digits = term.gsub(/\D/, "")
-      term = digits if term.match?(/\A[\d()+.\-]+\z/) && digits.length >= 3
-      scope.where("clients.search_text LIKE ?", "%#{sanitize_sql_like(term)}%")
+    search_terms(query).reduce(all) do |scope, term|
+      variants = search_variants(term)
+      scope.where(variants.map { "clients.search_text LIKE ?" }.join(" OR "), *variants.map { "%#{sanitize_sql_like(_1)}%" })
     end
+  end
+
+  # Words to match. A phone number written with spaces ("+1 (555) 010 0100") is one word.
+  def self.search_terms(query)
+    query.to_s.downcase
+         .gsub(/[+(]?\d[\d()\-. ]*\d\)?/) { |number| number.count("0-9") >= 7 ? number.delete(" ") : number }
+         .split.first(MAX_SEARCH_TERMS)
+  end
+
+  def self.search_variants(term)
+    variants = [ term ]
+    if term.match?(/\A[\d()+.\-]+\z/)
+      digits = term.gsub(/\D/, "")
+      variants << digits if digits.length >= 3
+      variants << ClientContactMethod.normalize("phone", digits) if digits.length == 11
+    end
+    variants.compact.uniq
+  end
+
+  # Rebuilds search_text for the given clients in one statement, from what's committed, so
+  # concurrent edits can't leave a stale digest. The migration's backfill uses the same SQL.
+  def self.refresh_search_text(ids)
+    ids = Array(ids).compact
+    return if ids.empty?
+
+    unscoped.where(id: ids).update_all(<<~SQL.squish)
+      search_text = lower(concat_ws(' ', clients.display_name, clients.company_name,
+        (SELECT string_agg(concat_ws(' ', m.value, CASE WHEN m.kind = 'phone' THEN m.normalized END), ' ')
+           FROM client_contact_methods m WHERE m.client_id = clients.id),
+        (SELECT string_agg(concat_ws(' ', p.label, p.address_line1, p.address_line2, p.city, p.region, p.postal_code), ' ')
+           FROM properties p WHERE p.client_id = clients.id)))
+    SQL
   end
 
   # Tags in use, for the filter.
@@ -92,18 +126,16 @@ class Client < ApplicationRecord
   # Called by later specs (quotes, jobs, invoices) when something happens for this client.
   def touch_activity!(at = Time.current) = update_column(:last_activity_at, at)
 
-  # Rebuilds the search digest from the database (CLI-02).
-  def refresh_search_text!
-    return if destroyed? || !self.class.unscoped.exists?(id)
+  # Rebuilds the search digest once the current transaction commits (at once if none is
+  # open); repeated calls in one transaction rebuild it once.
+  def queue_search_refresh
+    return if @search_refresh_queued || id.nil?
 
-    update_column(:search_text, build_search_text)
-  end
-
-  def build_search_text
-    methods = ClientContactMethod.unscoped.where(client_id: id).pluck(:kind, :value, :normalized)
-    places = Property.unscoped.where(client_id: id).pluck(:label, :address_line1, :address_line2, :city, :region, :postal_code)
-    [ display_name, company_name, *methods.flat_map { |kind, value, normalized| [ value, (normalized if kind == "phone") ] }, *places.flatten ]
-      .compact_blank.join(" ").squish.downcase
+    @search_refresh_queued = true
+    ActiveRecord.after_all_transactions_commit do
+      @search_refresh_queued = false
+      self.class.refresh_search_text(id)
+    end
   end
 
   def documents? = DOCUMENT_ASSOCIATIONS.any? { public_send(_1).exists? }
@@ -130,6 +162,8 @@ class Client < ApplicationRecord
   private
 
   def kept(collection) = collection.reject(&:marked_for_destruction?)
+
+  def edited? = (changed - %w[archived_at updated_at last_activity_at search_text]).any? || nested_records_changed_for_autosave?
 
   # The form always offers an empty property; it's skipped only if nothing was entered in it.
   # A label, access notes or the billing box count, so a half-filled row reaches validation.

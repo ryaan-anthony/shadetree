@@ -34,6 +34,38 @@ class ClientSearchTest < ActiveSupport::TestCase
     assert_equal [ "Maria Lopez" ], search("010-0100")
     assert_equal [ "Sam Okafor" ], search("(555) 010.02")
     assert_equal [ "Maria Lopez", "Sam Okafor" ], search("555-010")
+    assert_equal [ "Maria Lopez" ], search("+15550100100")
+    assert_equal [ "Maria Lopez" ], search("1-555-010-0100")
+    assert_equal [ "Maria Lopez" ], search("+1 (555) 010 0100")
+    assert_equal [ "Sam Okafor" ], search("555 010 0299")
+  end
+
+  test "hyphenated numbers in addresses match as typed" do
+    client("Range House", address: "12-14 Elm Street")
+    as_business(@business) { Client.find_by!(display_name: "Range House").properties.first.update!(postal_code: "28801-1234") }
+    assert_equal [ "Range House" ], search("12-14")
+    assert_equal [ "Range House" ], search("28801-1234")
+    assert_equal [ "Range House" ], search("12-14 elm")
+  end
+
+  test "one transaction rebuilds the digest once" do
+    queries = []
+    callback = ->(*, payload) { queries << payload[:sql] if payload[:sql].include?("search_text = lower") }
+    ActiveSupport::Notifications.subscribed(callback, "sql.active_record") do
+      client("Maria Lopez", email: "maria@example.com", address: "12 Elm Street")
+    end
+    assert_equal 1, queries.size
+  end
+
+  test "editing contacts or properties counts as activity; archiving doesn't" do
+    maria = travel_to(2.days.ago) { client("Maria Lopez", address: "12 Elm Street") }
+    as_business(@business) do
+      before = maria.reload.last_activity_at
+      maria.archive!
+      assert_equal before, maria.reload.last_activity_at
+      maria.update!(properties_attributes: [ { id: maria.properties.first.id, address_line1: "14 Elm Street" } ])
+      assert_operator maria.reload.last_activity_at, :>, before
+    end
   end
 
   test "every word must match, and wildcards are literal" do

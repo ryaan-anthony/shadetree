@@ -4,7 +4,8 @@
     then closes. Render it outside any <form>: it holds a form of its own. Client pickers
     (admin/clients/_picker) open it with a "client-picker:new" event, so a page with pickers
     renders this once with button: false. %>
-<div class="contents" data-controller="modal" data-action="client-picked:picked->modal#close client-picker:new@window->modal#open">
+<div class="contents" data-controller="modal quick-create"
+     data-action="client-picked:picked->quick-create#picked client-picked:picked->modal#close client-picker:new@window->quick-create#requested">
   <% if button %>
     <button type="button" class="<%= button_classes(:secondary, :sm) %>" data-action="modal#open"><%= icon "plus" %> <%= label %></button>
   <% end %>

@@ -1,0 +1,95 @@
+<%# The client list results (CLI-02): rendered on the page and as #search's frame response. %>
+<%= turbo_frame_tag "client_results" do %>
+  <%# Active/Archived is a radio pair belonging to the filter form, re-rendered with each result. %>
+  <fieldset class="tabs mb-4" data-controller="submit-form">
+    <legend class="sr-only">Show</legend>
+    <% [ [ "Active", "0", !@showing_archived ], [ "Archived", "1", @showing_archived ] ].each do |label, value, current| %>
+      <label class="tab tab-radio">
+        <input type="radio" name="archived" value="<%= value %>" form="client-filters" class="sr-only" <%= "checked" if current %>
+               data-action="submit-form#submit"><%= label %>
+      </label>
+    <% end %>
+  </fieldset>
+
+  <% if @clients.empty? %>
+    <div class="card">
+      <% if !@any_clients %>
+        <%= empty_state title: "Add your first client", text: "A name and a phone number is enough to start. Quotes, jobs and invoices all begin with a client.", icon: "users" do %>
+          <%= link_to new_admin_client_path, class: button_classes, data: { turbo_frame: "_top" } do %><%= icon "plus" %> Add client<% end %>
+        <% end %>
+      <% elsif @query.present? || @tag %>
+        <%= empty_state title: "No clients match", text: "Check the spelling, try part of a phone number or street, or clear the filters.", icon: "search" do %>
+          <%= link_to "Clear search", admin_clients_path(archived: (1 if @showing_archived)), class: button_classes(:secondary), data: { turbo_frame: "_top" } %>
+          <% unless @showing_archived %>
+            <%= link_to new_admin_client_path, class: button_classes, data: { turbo_frame: "_top" } do %><%= icon "plus" %> Add client<% end %>
+          <% end %>
+        <% end %>
+      <% elsif @showing_archived %>
+        <%= empty_state title: "No archived clients", text: "Archived clients are hidden from pickers. Their history is kept.", icon: "archive" %>
+      <% else %>
+        <%= empty_state title: "All your clients are archived", text: "Restore one from the Archived tab, or add a new client.", icon: "users" do %>
+          <%= link_to new_admin_client_path, class: button_classes, data: { turbo_frame: "_top" } do %><%= icon "plus" %> Add client<% end %>
+        <% end %>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="sr-only" role="status"><%= pluralize(@total_count, "client") %><%= " matching #{@query}" if @query.present? %></p>
+
+    <%# Phones and small tablets: a list with tap-to-open rows. %>
+    <%= card flush: true, class: "md:hidden" do %>
+      <ul class="list">
+        <% @clients.each do |client| %>
+          <li id="client-<%= client.uid %>-row" class="p-0">
+            <%= link_to admin_client_path(client), class: "flex min-w-0 flex-1 items-center gap-3 px-4 py-3", data: { turbo_frame: "_top" } do %>
+              <%= avatar client.display_name %>
+              <span class="min-w-0 flex-1">
+                <span class="block truncate font-semibold text-ink"><%= client.display_name %></span>
+                <span class="block truncate text-sm2 text-muted"><%= client.primary_contact&.value || "No contact details" %></span>
+                <% if client.primary_property %><span class="block truncate text-sm2 text-muted"><%= client.primary_property.one_line %></span><% end %>
+              </span>
+              <%= icon "chevron-right", class: "size-4 shrink-0 text-faint" %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+
+    <%# Desktop: a table. %>
+    <div class="card table-wrap hidden md:block">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col">Client</th>
+            <th scope="col">Contact</th>
+            <th scope="col">Property</th>
+            <th scope="col">Tags</th>
+            <th scope="col" class="text-right">Last activity</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @clients.each do |client| %>
+            <tr id="client-<%= client.uid %>">
+              <td>
+                <%= link_to client.display_name, admin_client_path(client), class: "primary hover:underline", data: { turbo_frame: "_top" } %>
+                <% if client.company_name %><span class="sub"><%= client.company_name %></span><% end %>
+              </td>
+              <td class="text-sm2"><% if (contact = client.primary_contact) %><%= link_to contact.value, contact.href, class: "text-subtle hover:underline" %><% else %><span class="text-muted">None</span><% end %></td>
+              <td class="max-w-64 truncate text-sm2 text-subtle"><%= client.primary_property&.one_line %></td>
+              <td><span class="flex flex-wrap gap-1"><% client.tags.first(3).each do |tag| %><%= badge tag, dot: false %><% end %><% if client.tags.size > 3 %><span class="text-sm2 text-muted">+<%= client.tags.size - 3 %></span><% end %></span></td>
+              <td class="whitespace-nowrap text-right text-sm2 text-muted"><%= local_time_ago(client.last_activity_at) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <%# Pages are buttons of the filter form, so the current search and filters carry over. %>
+    <nav class="pagination mt-4" aria-label="Pagination">
+      <p>Showing <span class="tabular font-semibold text-ink"><%= ((@page - 1) * Admin::ClientsController::PER_PAGE) + 1 %>–<%= [ @page * Admin::ClientsController::PER_PAGE, @total_count ].min %></span> of <span class="tabular"><%= @total_count %></span></p>
+      <div class="pagination-links">
+        <button type="submit" form="client-filters" name="page" value="<%= @page - 1 %>" class="<%= button_classes(:secondary, :sm) %>" <%= "disabled" if @page <= 1 %>><%= icon "chevron-left" %> Previous</button>
+        <button type="submit" form="client-filters" name="page" value="<%= @page + 1 %>" class="<%= button_classes(:secondary, :sm) %>" <%= "disabled" if @page >= @total_pages %>>Next <%= icon "chevron-right" %></button>
+      </div>
+    </nav>
+  <% end %>
+<% end %>

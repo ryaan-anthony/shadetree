@@ -8,26 +8,26 @@ class Admin::ClientsController < Admin::BaseController
   before_action :set_client, only: %i[show edit update archive restore destroy picked]
   layout -> { inline? ? false : "app" }
 
-  # Search (?q=), tag filter (?tag=), archived (?archived=1), sort (?sort=) and page. A search
-  # from the box swaps only the results frame, so typing never reloads the page.
+  # The list, unfiltered (or with ?tag=/?sort=/?archived=1 from links). Searching happens in
+  # #search, so names, phones and addresses never appear in URLs.
   def index
-    @query = params[:q].to_s.strip.first(100)
-    @tag = params[:tag].to_s.presence
-    @sort = params[:sort].presence_in(Client::SORTS.keys) || "name"
-    @showing_archived = params[:archived] == "1"
-
-    scope = (@showing_archived ? Client.archived : Client.active).search(@query).tagged(@tag)
-    @total_count = scope.count
-    @page = params[:page].to_i.clamp(1, [ (@total_count.to_f / PER_PAGE).ceil, 1 ].max)
-    @clients = scope.sorted(@sort).includes(:contact_methods, :properties).offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
-    @any_clients = @total_count.positive? || Client.exists?
+    load_list
     @tag_options = Client.tag_options
   end
 
-  # The client picker's search (quotes, jobs, invoices): active clients only.
+  # POST, so search terms stay out of URLs, browser history and access logs (like #matches).
+  # HTML answers the list's results frame; JSON answers the client picker (active only).
   def search
-    clients = Client.active.search(params[:q].to_s.first(100)).alphabetical.includes(:contact_methods, :properties).limit(PICKER_LIMIT)
-    render json: { clients: clients.map(&:as_picker_json) }
+    respond_to do |format|
+      format.html do
+        load_list
+        render partial: "results", layout: false
+      end
+      format.json do
+        clients = Client.active.search(search_query).alphabetical.includes(:contact_methods, :properties).limit(PICKER_LIMIT)
+        render json: { clients: clients.map(&:as_picker_json) }
+      end
+    end
   end
 
   def show; end
@@ -98,6 +98,22 @@ class Admin::ClientsController < Admin::BaseController
   end
 
   private
+
+  def search_query = params[:q].to_s.strip.first(100)
+
+  def load_list
+    @query = search_query
+    @tag = params[:tag].to_s.presence
+    @sort = params[:sort].presence_in(Client::SORTS.keys) || "name"
+    @showing_archived = params[:archived] == "1"
+
+    scope = (@showing_archived ? Client.archived : Client.active).search(@query).tagged(@tag)
+    @total_count = scope.count
+    @total_pages = [ (@total_count.to_f / PER_PAGE).ceil, 1 ].max
+    @page = params[:page].to_i.clamp(1, @total_pages)
+    @clients = scope.sorted(@sort).includes(:contact_methods, :properties).offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
+    @any_clients = @total_count.positive? || Client.exists?
+  end
 
   def inline? = params[:inline].present?
   helper_method :inline?

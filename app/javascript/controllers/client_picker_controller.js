@@ -1,21 +1,37 @@
 import { Controller } from "@hotwired/stimulus"
 
 // Choose a client by searching (CLI-02), or add one: "New client" asks the page's quick-create
-// modal to open (client-picker:new) and takes the client it reports (client-picked:picked).
-// Both travel via window because the modal lives outside the form. The uid goes in a hidden
-// field.
+// modal to open (a cancelable "client-picker:new" carrying this picker's id) and takes the
+// client the modal reports for that id ("quick-create:picked"). Both travel via window
+// because the modal lives outside the form. The uid goes in a hidden field; when the picker
+// is required, the host form won't submit without one. Searches are POSTs, so names and
+// phones stay out of URLs.
 export default class extends Controller {
   static targets = ["value", "input", "list", "status", "chosen", "chosenName", "chosenDetail", "searchBox"]
-  static values = { url: String }
+  static values = { url: String, required: Boolean }
 
   connect() {
     this.clients = []
     this.active = -1
     this.request = 0
+    this.id = `client-picker-${Math.random().toString(36).slice(2)}`
+    this.form = this.element.closest("form")
+    this.guard = (event) => this.checkChosen(event)
+    this.form?.addEventListener("submit", this.guard, true)
   }
 
   disconnect() {
     this.cancel()
+    this.form?.removeEventListener("submit", this.guard, true)
+  }
+
+  // A hidden field can't be `required`, so block the host form's submit here instead.
+  checkChosen(event) {
+    if (!this.requiredValue || this.valueTarget.value) return
+    event.preventDefault()
+    event.stopImmediatePropagation()
+    this.inputTarget.setCustomValidity("Choose a client, or add a new one.")
+    this.inputTarget.reportValidity()
   }
 
   search() {
@@ -27,10 +43,15 @@ export default class extends Controller {
 
   async fetch(query) {
     const request = ++this.request
-    const url = new URL(this.urlValue, window.location.origin)
-    url.searchParams.set("q", query)
+    const body = new FormData()
+    body.append("q", query)
     try {
-      const response = await fetch(url, { headers: { Accept: "application/json" } })
+      const response = await fetch(this.urlValue, {
+        method: "POST",
+        body,
+        headers: { Accept: "application/json", "X-CSRF-Token": document.querySelector("meta[name=csrf-token]")?.content },
+        credentials: "same-origin"
+      })
       if (!response.ok) throw new Error(response.statusText)
       const { clients } = await response.json()
       if (request === this.request) this.render(clients)
@@ -71,6 +92,8 @@ export default class extends Controller {
   }
 
   keydown(event) {
+    // Enter in the search box never submits the host form.
+    if (event.key === "Enter" && event.target === this.inputTarget) event.preventDefault()
     if (this.listTarget.hidden) return
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault()
@@ -104,24 +127,18 @@ export default class extends Controller {
 
   requestNew() {
     this.close()
-    this.awaitingNew = true
-    this.dispatch("new")
+    const request = this.dispatch("new", { detail: { requester: this.id }, cancelable: true })
+    if (!request.defaultPrevented) this.statusTarget.textContent = "Adding a client isn't available on this page."
   }
 
-  // Another picker on the page opened the modal, so its result isn't ours.
-  otherRequested(event) {
-    if (!this.element.contains(event.target)) this.awaitingNew = false
-  }
-
-  // From the quick-create modal, only if this picker asked for it.
+  // From the page's quick-create modal: only the client it added for this picker.
   created(event) {
-    if (!this.awaitingNew) return
-    this.awaitingNew = false
-    this.select(event.detail)
+    if (event.detail?.requester === this.id) this.select(event.detail.client)
   }
 
   select(client) {
     this.valueTarget.value = client.uid
+    this.inputTarget.setCustomValidity("")
     this.chosenNameTarget.textContent = client.company ? `${client.name} · ${client.company}` : client.name
     this.chosenDetailTarget.textContent = [client.contact, client.property].filter(Boolean).join(" · ")
     this.chosenTarget.hidden = false
