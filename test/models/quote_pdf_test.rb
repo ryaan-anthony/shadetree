@@ -69,6 +69,36 @@ class QuotePdfTest < ActiveSupport::TestCase
     end
   end
 
+  test "two first downloads at once keep one file and delete the other" do
+    as_business(@business) { @quote.update_column(:status, "sent") }
+    with_fake_pdf_renderer do
+      one, two = as_business(@business) { [ Quote.find(@quote.id), Quote.find(@quote.id) ] }
+      first = as_business(@business) { one.current_pdf }
+      assert_enqueued_with(job: ActiveStorage::PurgeJob) do
+        assert_equal first, as_business(@business) { two.current_pdf }, "the second keeps the stored file"
+      end
+      assert_equal first.id, as_business(@business) { @quote.reload.pdf_blob_id }
+    end
+  end
+
+  test "a stylesheet change alone doesn't make a new file" do
+    as_business(@business) { @quote.update_column(:status, "sent") }
+    with_fake_pdf_renderer do |calls|
+      as_business(@business) { @quote.current_pdf }
+      css = PdfDocument.method(:stylesheet)
+      PdfDocument.define_singleton_method(:stylesheet) { css.call + ".new-rule{color:red}" }
+      as_business(@business) { Quote.find(@quote.id).current_pdf }
+      assert_equal 1, calls.size
+    ensure
+      PdfDocument.define_singleton_method(:stylesheet, css)
+    end
+  end
+
+  test "sending or answering a quote makes its PDF in the background" do
+    assert_enqueued_with(job: QuotePdfJob, args: [ @business.id, @quote.id ]) { as_business(@business) { @quote.update!(status: "sent") } }
+    assert_no_enqueued_jobs(only: QuotePdfJob) { as_business(@business) { @quote.update!(title: "Renamed") } }
+  end
+
   test "the background job makes the PDF ahead of the first download" do
     as_business(@business) { @quote.update_column(:status, "sent") }
     with_fake_pdf_renderer do |calls|

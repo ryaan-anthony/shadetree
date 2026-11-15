@@ -40,14 +40,17 @@ The approach should be reusable for invoices (PAY-02).
 ## Decisions
 
 - **Rendering:** `PdfRenderer` prints self-contained HTML (`PdfDocument`: the `pdf` layout with
-  the stylesheet, font and logo inlined) in headless Chrome via Ferrum. All network requests
-  are refused, and one render runs at a time per process. Business countries that use US Letter
-  get Letter; everyone else gets A4.
+  the stylesheet, font and logo inlined) in headless Chrome via Ferrum. Chrome has no network
+  (a dead proxy plus request interception) and scripts are off. One render runs at a time per
+  process, and a render waits at most 10 s for its turn. Business countries that use US Letter
+  get Letter; everyone else gets A4. The image includes Noto CJK fonts for names in Chinese,
+  Japanese and Korean.
 - **Inline or background:** a render takes about 2 s (mostly Chrome starting), which is over the
   2 s p95 budget for inline. So sent quotes keep their PDF (`HasPdf`: a blob plus a digest of
-  the HTML), and `QuotePdfJob` makes it ahead of the first download. Sending (QTE-04) enqueues
-  the job. A stored PDF is served in under 0.1 s. Drafts are rendered inline for staff only.
-- **Stability:** the stored file is reused while the document's HTML is unchanged. A change
+  the HTML), and `QuotePdfJob` makes it ahead of the first download. The job is enqueued
+  whenever a quote's status changes to one the client sees: sent, approved, and so on. A stored PDF is served in under 0.1 s. Drafts are rendered inline for staff only.
+- **Stability:** the stored file is reused while the document's HTML is unchanged. The inlined
+  stylesheet isn't part of the key, so a deploy doesn't re-render every sent quote. A change
   that shows on the PDF (approval, say) makes a new file and purges the old one.
 - **QR code:** yes. Sent quotes with an active link carry a QR code to the client page.
 - **Reuse for invoices (PAY-02):** include `HasPdf`, add `pdf_blob_id`/`pdf_digest`, write a

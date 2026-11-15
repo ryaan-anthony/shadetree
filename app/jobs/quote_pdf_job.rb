@@ -1,5 +1,6 @@
-# Makes and stores a sent quote's PDF ahead of the first download (QTE-02, ADR 0010).
-# Sending (QTE-04) enqueues it; a download before it has run renders inline instead.
+# Makes and stores a quote's PDF ahead of the first download (QTE-02, ADR 0010): enqueued
+# whenever a quote's status changes to one the client sees (sent, approved, …). A download
+# before it has run renders inline instead.
 class QuotePdfJob < ApplicationJob
   retry_on PdfRenderer::Error, wait: :polynomially_longer, attempts: 3
 

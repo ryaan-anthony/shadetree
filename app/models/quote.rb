@@ -72,6 +72,9 @@ class Quote < ApplicationRecord
   def pdf_paper = PdfRenderer.paper_for(business.country)
   def store_pdf? = client_visible?
 
+  # Make the PDF when a quote is sent or answered, ahead of the first download.
+  after_commit -> { QuotePdfJob.perform_later(business_id, id) }, on: :update, if: -> { saved_change_to_status? && client_visible? }
+
   def pdf_footer
     %(<div style="width:100%;margin:0 0.55in;display:flex;justify-content:space-between;font:7.5pt sans-serif;color:#64748b">) +
       %(<span>#{ERB::Util.h(business.name)}, quote #{ERB::Util.h(number)}</span>) +
