@@ -1,0 +1,6 @@
+<%= turbo_frame_tag "new_client" do %>
+  <div class="banner banner-warning" role="alert"><%= icon "archive" %>
+    <p><%= @client.display_name %> is archived, so they can't be picked.
+      <%= link_to "Open their page", admin_client_path(@client), data: { turbo_frame: "_top" }, class: "font-semibold underline" %> to restore them first.</p>
+  </div>
+<% end %>

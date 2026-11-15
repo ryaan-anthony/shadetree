@@ -1,0 +1,23 @@
+<%# locals: (matches:, inline:) -%>
+<%# Existing clients sharing an email or phone (R4). %>
+<% if matches.any? %>
+  <div class="banner banner-info" role="status"><%= icon "info" %>
+    <div class="min-w-0 flex-1">
+      <p class="font-medium"><%= matches.size == 1 ? "A client already has this email or phone." : "Some clients already have this email or phone." %></p>
+      <ul class="mt-2 space-y-1.5">
+        <% matches.each do |client| %>
+          <li class="flex flex-wrap items-center justify-between gap-2">
+            <span class="min-w-0"><span class="font-semibold"><%= client.display_name %></span>
+              <span class="text-sm2 text-muted"><%= [ client.primary_contact&.value, client.primary_property&.one_line ].compact.join(", ") %></span></span>
+            <% if inline %>
+              <%= link_to "Use this client", picked_admin_client_path(client, inline: 1), class: button_classes(:secondary, :sm), data: { turbo_frame: "new_client" } %>
+            <% else %>
+              <%= link_to "Open", admin_client_path(client), class: button_classes(:secondary, :sm), data: { turbo_frame: "_top" } %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+      <p class="mt-2 text-sm2 text-muted">Not the same person? Carry on and save a new client.</p>
+    </div>
+  </div>
+<% end %>

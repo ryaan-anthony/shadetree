@@ -35,6 +35,9 @@
   <nav class="side-nav" aria-label="Primary">
     <% if current_business %>
       <%= side_link "Home", admin_root_path, icon: "home", active: controller_name == "dashboard" %>
+      <% if can?(:office) %>
+        <%= side_link "Clients", admin_clients_path, icon: "users", active: controller_name == "clients" %>
+      <% end %>
       <% if can?(:business_settings) || can?(:manage_team) %>
         <p class="side-group">Business</p>
       <% end %>

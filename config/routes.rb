@@ -29,6 +29,16 @@ Rails.application.routes.draw do
 
   # Admin routes
   namespace :admin do
+    # Clients (CLI-01)
+    resources :clients do
+      member do
+        patch :archive
+        patch :restore
+        get :picked
+      end
+      post :matches, on: :collection # POST keeps emails and phones out of URLs and access logs
+    end
+
     # Business management (with tabs for profile, hours, branding)
     resource :business, only: [ :new, :create, :edit, :update ] do
       post :switch, on: :collection

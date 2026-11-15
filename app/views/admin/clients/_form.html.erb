@@ -1,0 +1,77 @@
+<%# locals: (inline: false) -%>
+<%# The client form, full page or inline (R3: from a picker, in a modal). %>
+<% url = @client.persisted? ? admin_client_path(@client) : admin_clients_path(inline: (1 if inline)) %>
+<%= form_with model: @client, url:, class: (inline ? "space-y-4" : "max-w-3xl space-y-4"),
+              data: { controller: "client-matches", action: "nested-fields:removed->client-matches#check", client_matches_url_value: matches_admin_clients_path(inline: (1 if inline), except: @client.uid) } do |f| %>
+  <% if @client.errors.any? %>
+    <div class="banner banner-danger" role="alert"><%= icon "alert-circle" %>
+      <div>
+        <p><%= @client.errors.count == 1 ? "One thing" : "#{@client.errors.count} things" %> to fix before saving.</p>
+        <% if @client.errors[:base].any? %><ul class="mt-1 list-disc pl-5"><% @client.errors[:base].each do |message| %><li><%= message %></li><% end %></ul><% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <%= tag.div(class: (inline ? "space-y-4" : "card"))  do %>
+    <%= tag.div(class: ("card-body space-y-4" unless inline)) do %>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <%= f.field :display_name, autofocus: @client.new_record?, placeholder: "Maria Lopez", help: ("A person or a business." unless inline) %>
+        <%= f.field :company_name, optional: true %>
+      </div>
+
+      <div class="space-y-3" data-controller="nested-fields">
+        <% unless inline %><h3 class="text-sm font-semibold text-ink">How to reach them</h3><% end %>
+        <%= f.fields_for :contact_methods do |cf| %><%= render "contact_method_fields", f: cf, inline: %><% end %>
+        <% unless inline %>
+          <% %w[email phone].each do |kind| %>
+            <template data-nested-fields-target="template" data-kind="<%= kind %>">
+              <%= f.fields_for :contact_methods, ClientContactMethod.new(kind:), child_index: "NEW_RECORD" do |cf| %><%= render "contact_method_fields", f: cf, inline: %><% end %>
+            </template>
+          <% end %>
+          <div class="flex gap-2" data-nested-fields-target="anchor">
+            <button type="button" class="<%= button_classes(:ghost, :sm) %>" data-action="nested-fields#add" data-nested-fields-kind-param="email"><%= icon "plus" %> Add email</button>
+            <button type="button" class="<%= button_classes(:ghost, :sm) %>" data-action="nested-fields#add" data-nested-fields-kind-param="phone"><%= icon "plus" %> Add phone</button>
+          </div>
+        <% end %>
+        <div id="client_matches" data-client-matches-target="results"></div>
+      </div>
+    <% end %>
+  <% end %>
+
+  <%= tag.div(class: (inline ? "space-y-3" : "card"), data: { controller: "nested-fields exclusive" }) do %>
+    <% unless inline %>
+      <header class="card-head"><div><h2 class="card-title">Properties</h2><p class="card-subtitle">Where the work happens. Add as many as they have.</p></div></header>
+    <% end %>
+    <%= tag.div(class: ("card-body space-y-4" unless inline)) do %>
+      <% if inline %><p class="text-sm font-semibold text-ink">Service address <span class="label-optional">(optional)</span></p><% end %>
+      <%= f.fields_for :properties do |pf| %><%= render "property_fields", f: pf, inline: %><% end %>
+      <% unless inline %>
+        <template data-nested-fields-target="template" data-kind="property">
+          <%= f.fields_for :properties, Property.new(country: @client.properties.first&.country || "US"), child_index: "NEW_RECORD" do |pf| %><%= render "property_fields", f: pf, inline: %><% end %>
+        </template>
+        <div data-nested-fields-target="anchor">
+          <button type="button" class="<%= button_classes(:ghost, :sm) %>" data-action="nested-fields#add" data-nested-fields-kind-param="property"><%= icon "plus" %> Add property</button>
+        </div>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <% unless inline %>
+    <%= card title: "Details" do %>
+      <div class="space-y-4">
+        <%= f.field :tag_list, optional: true, placeholder: "commercial, weekly", help: "Separate tags with commas." %>
+        <%= f.field :notes, as: :textarea, optional: true, rows: 3, help: "Only your team sees notes." %>
+        <%= f.check :tax_exempt, label: "Tax exempt", hint: "No tax is added to their quotes and invoices." %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <div class="flex items-center justify-end gap-2">
+    <% if inline %>
+      <button type="button" class="<%= button_classes(:ghost) %>" data-action="modal#close">Cancel</button>
+    <% else %>
+      <%= link_to "Cancel", (@client.persisted? ? admin_client_path(@client) : admin_clients_path), class: button_classes(:ghost) %>
+    <% end %>
+    <%= f.submit_button @client.persisted? ? "Save client" : "Add client" %>
+  </div>
+<% end %>

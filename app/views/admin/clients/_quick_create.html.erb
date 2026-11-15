@@ -1,0 +1,12 @@
+<%# locals: (label: "New client") -%>
+<%# "New client" without leaving the page (R3). Put it beside any client picker; when a client
+    is added (or an existing match chosen) it dispatches "client-picked:picked" with
+    Client#as_picker_json in event.detail, then closes. %>
+<div class="contents" data-controller="modal" data-action="client-picked:picked->modal#close">
+  <button type="button" class="<%= button_classes(:secondary, :sm) %>" data-action="modal#open"><%= icon "plus" %> <%= label %></button>
+  <%= modal id: "quick-client-#{SecureRandom.hex(3)}", title: "New client", description: "Just a name and a way to reach them. Add the rest later." do %>
+    <%= turbo_frame_tag "new_client", src: new_admin_client_path(inline: 1), loading: :lazy do %>
+      <p class="text-sm text-muted">Loading…</p>
+    <% end %>
+  <% end %>
+</div>

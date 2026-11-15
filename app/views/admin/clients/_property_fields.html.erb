@@ -1,0 +1,28 @@
+<%# locals: (f:, inline: false) -%>
+<%# One property (service address). %>
+<% property = f.object %>
+<fieldset class="nested-row space-y-3 border-t border-line pt-4 first:border-t-0 first:pt-0" data-nested-fields-target="row" <%= "hidden" if property.marked_for_destruction? %>>
+  <legend class="sr-only">Property</legend>
+  <%= f.hidden_field :id if property.persisted? %>
+  <%= f.hidden_field :_destroy, value: property.marked_for_destruction? ? "1" : "0", data: { nested_fields_target: "destroy" } %>
+  <% unless inline %>
+    <div class="flex items-end gap-2">
+      <div class="min-w-0 flex-1"><%= f.field :label, optional: true, placeholder: "Rental #2", maxlength: 60 %></div>
+      <button type="button" class="<%= button_classes(:ghost, :sm) %> mb-0.5" data-action="nested-fields#remove"><%= icon "trash" %> Remove</button>
+    </div>
+  <% end %>
+  <%= f.field :address_line1, required: false, autocomplete: "off", placeholder: "123 Main St" %>
+  <% unless inline %><%= f.field :address_line2, optional: true %><% end %>
+  <div class="grid gap-3 sm:grid-cols-[2fr_1fr_1fr_5rem]">
+    <%= f.field :city, optional: true %>
+    <%= f.field :region, optional: true %>
+    <%= f.field :postal_code, optional: true %>
+    <%= f.field :country, maxlength: 2, class: "uppercase", required: false %>
+  </div>
+  <% unless inline %>
+    <%= f.field :access_notes, as: :textarea, optional: true, rows: 2, placeholder: "Gate code 1234. Dog in the back yard.",
+                help: "Technicians see these with the visit." %>
+    <%= f.check :billing, label: "Billing address", hint: "Invoices go to this address.",
+                data: { action: "exclusive#pick", exclusive_target: "box" } %>
+  <% end %>
+</fieldset>

@@ -1,0 +1,22 @@
+<%# locals: (f:, inline: false) -%>
+<%# One email or phone row. %>
+<% method = f.object %>
+<div class="nested-row flex items-start gap-2" data-nested-fields-target="row" <%= "hidden" if method.marked_for_destruction? %>>
+  <%= f.hidden_field :id if method.persisted? %>
+  <%= f.hidden_field :kind %>
+  <%= f.hidden_field :_destroy, value: method.marked_for_destruction? ? "1" : "0", data: { nested_fields_target: "destroy" } %>
+  <div class="min-w-0 flex-1">
+    <%= f.field :value, as: (method.email? ? :email : :phone), optional: true,
+                label: method.email? ? "Email" : "Phone",
+                autocomplete: (method.email? ? "off" : "off"),
+                placeholder: method.email? ? "name@example.com" : "(555) 010-0100",
+                data: { client_matches_target: method.kind, action: "input->client-matches#check" } %>
+  </div>
+  <% unless inline %>
+    <div class="w-32 shrink-0">
+      <%= f.field :label, optional: true, label: "Label", placeholder: method.email? ? "Work" : "Mobile", maxlength: 30 %>
+    </div>
+    <button type="button" class="<%= button_classes(:ghost, :sm, :icon) %> mt-7" data-action="nested-fields#remove"
+            aria-label="Remove this <%= method.email? ? "email" : "phone number" %>"><%= icon "x" %></button>
+  <% end %>
+</div>

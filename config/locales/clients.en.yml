@@ -1,0 +1,20 @@
+en:
+  activerecord:
+    attributes:
+      client:
+        display_name: "Name"
+        company_name: "Company"
+        tag_list: "Tags"
+        tax_exempt: "Tax exempt"
+      client_contact_method:
+        value: "This"
+        label: "Label"
+      property:
+        label: "Label"
+        address_line1: "Street address"
+        address_line2: "Apartment, suite or unit"
+        city: "City"
+        region: "State or region"
+        postal_code: "Postal code"
+        country: "Country"
+        access_notes: "Access notes"
