@@ -44,6 +44,8 @@ Tenancy.with_business(business) do
     "Fertilizer application" => "65", "Aeration" => "120" }.each do |name, price|
     item = CatalogItem.find_by(name:)
     item.update!(unit_price: price) if item && item.unit_price.nil?
+  end
+
   # Clients (CLI-01, CLI-02).
   [
     [ "Maria Lopez", "Lopez Rentals", "(555) 380-1200", "maria@lopez.example.com", "12 Elm St", %w[commercial weekly] ],
