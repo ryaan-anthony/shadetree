@@ -23,19 +23,19 @@ surface one consistent way to apply that branding.
 
 ## Acceptance criteria
 
-- [ ] Owners/Admins can upload, replace and remove a logo (allowed image types, size limit,
+- [x] Owners/Admins can upload, replace and remove a logo (allowed image types, size limit,
       automatically resized for web, email and PDF use).
-- [ ] Owners/Admins pick a brand color from presets or a custom value; the app derives a
+- [x] Owners/Admins pick a brand color from presets or a custom value; the app derives a
       readable text color and warns if contrast is insufficient.
-- [ ] A live preview shows a sample client-facing page header and primary button as settings
+- [x] A live preview shows a sample client-facing page header and primary button as settings
       change.
-- [ ] Without a logo, a tasteful name-based wordmark is used.
-- [ ] A single branding source is consumed by the client layout (PLT-05), and is ready for PDFs
+- [x] Without a logo, a tasteful name-based wordmark is used.
+- [x] A single branding source is consumed by the client layout (PLT-05), and is ready for PDFs
       (QTE-02) and emails (NTF-01).
-- [ ] A "Powered by Shadetree" mark appears on client-facing pages; its visibility is controlled
+- [x] A "Powered by Shadetree" mark appears on client-facing pages; its visibility is controlled
       by an entitlement (wired to plans in BIL-01; visible to all until then).
-- [ ] The existing branding tab and logo-URL field are replaced by the upload.
-- [ ] Tests cover upload validation, contrast fallback and role access.
+- [x] The existing branding tab and logo-URL field are replaced by the upload.
+- [x] Tests cover upload validation, contrast fallback and role access.
 
 ## Out of scope
 
@@ -43,5 +43,8 @@ surface one consistent way to apply that branding.
 
 ## Open questions
 
-- Storage location for uploads depends on the PLT-01 file-storage ADR.
-- Should we offer a few accent presets per industry? Nice-to-have.
+- ~~Storage location for uploads depends on the PLT-01 file-storage ADR.~~ Resolved: Active
+  Storage per ADR 0008 (local disk in development and test; the S3-compatible bucket is
+  configured with the environments in PLT-09).
+- ~~Should we offer a few accent presets per industry?~~ Resolved: one set of eight presets
+  that all pass the contrast checks; per-industry accents are backlog.

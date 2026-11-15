@@ -1,5 +1,6 @@
 <%# Client-facing pages (quotes, invoices, booking): the business's brand, no staff chrome.
-    Controllers set @business; brand colour and logo come from it (CAT-02 adds the settings UI). %>
+    Controllers set @business; everything brand-related comes from Branding (CAT-02). %>
+<% branding = Branding.new(@business) %>
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -7,18 +8,16 @@
     <%= render "layouts/head" %>
     <meta name="robots" content="noindex">
   </head>
-  <body class="client" style="<%= client_brand_style(@business) %>">
+  <body class="client" style="<%= branding.css_variables %>">
     <header class="client-head">
       <div class="client-wrap flex h-[4.25rem] items-center gap-3">
-        <span class="client-logo">
-          <% if @business&.logo_url.present? %>
-            <%= image_tag @business.logo_url, alt: "", class: "size-full object-cover" %>
-          <% else %>
-            <%= @business&.name.to_s.split.map(&:first).first(2).join.upcase %>
-          <% end %>
-        </span>
+        <% if branding.logo? %>
+          <%= image_tag branding.logo(:web), alt: branding.name, class: "client-logo-image" %>
+        <% else %>
+          <span class="client-logo" aria-hidden="true"><%= branding.initials %></span>
+        <% end %>
         <div class="min-w-0">
-          <p class="truncate font-bold text-ink"><%= @business&.name %></p>
+          <p class="truncate font-bold text-ink <%= "sr-only" if branding.logo? %>"><%= branding.name %></p>
           <% if @business&.phone.present? %>
             <p class="text-sm2 text-muted"><%= link_to @business.phone, "tel:#{@business.phone}", class: "hover:text-ink" %></p>
           <% end %>
@@ -28,12 +27,14 @@
     <main id="main" class="client-wrap py-6">
       <%= yield %>
     </main>
-    <footer class="client-powered">
-      <%= link_to root_url, class: "logo text-[0.8125rem] text-muted", target: "_blank", rel: "noopener" do %>
-        <span class="logo-mark size-4 rounded-sm [&_svg]:size-3"><%= logo_mark %></span>
-        <span>Powered by Shadetree</span>
-      <% end %>
-    </footer>
+    <% if branding.show_powered_by? %>
+      <footer class="client-powered">
+        <%= link_to root_url, class: "logo text-[0.8125rem] text-muted", target: "_blank", rel: "noopener" do %>
+          <span class="logo-mark size-4 rounded-sm [&_svg]:size-3"><%= logo_mark %></span>
+          <span>Powered by Shadetree</span>
+        <% end %>
+      </footer>
+    <% end %>
     <%= flash_toasts %>
     <%= render "components/confirm_dialog" %>
   </body>

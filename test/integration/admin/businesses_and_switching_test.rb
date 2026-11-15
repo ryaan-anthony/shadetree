@@ -43,11 +43,11 @@ class Admin::BusinessesAndSwitchingTest < ActionDispatch::IntegrationTest
   end
 
   test "the logo replaces initials once set" do
-    businesses(:one).update!(logo_url: "https://example.com/logo.png")
+    businesses(:one).update!(logo: { io: file_fixture("logo.png").open, filename: "logo.png" })
     sign_in @user
     post switch_admin_business_path, params: { business: businesses(:one).uid }
     get admin_root_path
-    assert_select ".biz-switch .biz-logo img[src='https://example.com/logo.png']"
+    assert_select ".biz-switch .biz-logo img[src*='logo.png']"
   end
 
   test "the choice persists across sessions and devices" do

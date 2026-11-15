@@ -16,7 +16,7 @@ class Admin::DashboardController < Admin::BaseController
       { title: "Add your services", text: "Start from common services for your industry and set your prices.",
         done: CatalogItem.exists?, action: "Add services", path: admin_catalog_presets_path },
       { title: "Upload your logo", text: "Your logo and colour brand every page your clients see.",
-        done: business.logo_url.present?, action: "Add logo", path: edit_admin_business_path(tab: "branding") }
+        done: business.logo.attached?, action: "Add logo", path: edit_admin_business_path(tab: "branding") }
     ]
   end
 end

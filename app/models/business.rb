@@ -13,8 +13,7 @@
 # @attr [String] phone Primary business phone
 # @attr [String] website Business website URL
 # @attr [String] currency Business currency (default: 'USD')
-# @attr [String] brand_color Primary brand color (default: '#059669')
-# @attr [String] logo_url Business logo URL
+# @attr [String] brand_color Primary brand color (default: Branding::DEFAULT_COLOR)
 # @attr [Boolean] active Business status (default: true)
 # @attr [Integer] owner_id Business owner (foreign key to users)
 class Business < ApplicationRecord
@@ -34,7 +33,18 @@ class Business < ApplicationRecord
   validates :industry, presence: { message: "helps us set things up. Pick the closest one" }, on: :setup
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
   validates :owner_id, presence: true
-  validates :brand_color, format: { with: /\A#[0-9A-Fa-f]{6}\z/ }, allow_blank: true
+  validates :brand_color, format: { with: /\A#[0-9A-Fa-f]{6}\z/, message: "should be a color like #047857" }, allow_blank: true
+  normalizes :brand_color, with: ->(color) { color.to_s.strip.downcase.sub(/\A(?=\h{6}\z)/, "#").presence }
+
+  # CAT-02: the uploaded logo. Branding::LOGO_SIZES are the sizes pages, emails and PDFs use.
+  LOGO_TYPES = %w[image/png image/jpeg image/webp].freeze
+  LOGO_MAX_BYTES = 5.megabytes
+  has_one_attached :logo do |attachable|
+    Branding::LOGO_SIZES.each { |name, transform| attachable.variant name, **transform, saver: { strip: true } }
+  end
+  validate :logo_is_a_small_image
+  attr_accessor :remove_logo
+  before_save { logo.purge_later if ActiveModel::Type::Boolean.new.cast(remove_logo) && attachment_changes["logo"].nil? && logo.attached? }
   validates :currency, inclusion: { in: Money::CURRENCIES.keys }, allow_blank: true
   validate :timezone_must_be_known
   validates :industry, inclusion: { in: ->(_) { Industry.keys }, message: "isn't one we know" }, allow_blank: true
@@ -120,6 +130,9 @@ class Business < ApplicationRecord
     business_users.where(user: user).destroy_all
   end
 
+  # Logo, brand color and what's derived from them (CAT-02).
+  def branding = Branding.new(self)
+
   def user_role(user)
     business_users.find_by(user: user)&.role
   end
@@ -136,8 +149,16 @@ class Business < ApplicationRecord
     errors.add(:timezone, "is not a time zone we recognise")
   end
 
+  def logo_is_a_small_image
+    return unless attachment_changes["logo"] && logo.attached?
+
+    blob = logo.blob
+    errors.add(:logo, "must be a PNG, JPEG or WebP image") unless blob.content_type.in?(LOGO_TYPES)
+    errors.add(:logo, "must be smaller than #{LOGO_MAX_BYTES / 1.megabyte} MB") if blob.byte_size > LOGO_MAX_BYTES
+  end
+
   def set_default_brand_color
-    self.brand_color = "#059669" if brand_color.blank?
+    self.brand_color = Branding::DEFAULT_COLOR if brand_color.blank?
   end
 
   def add_owner_to_business_users

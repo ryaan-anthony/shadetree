@@ -26,7 +26,7 @@ class BusinessTest < ActiveSupport::TestCase
   test "defaults the brand color" do
     business = Business.create!(name: "Fernhill Cleaning", owner: users(:two), brand_color: "")
 
-    assert_equal "#059669", business.brand_color
+    assert_equal Branding::DEFAULT_COLOR, business.brand_color
   end
 
   test "new members default to technician" do

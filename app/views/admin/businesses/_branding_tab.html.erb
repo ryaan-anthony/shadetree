@@ -1,132 +1,100 @@
-<div class="p-8 max-w-3xl" data-controller="brand-preview">
-
-  <!-- Section Header -->
-  <div class="mb-8">
-    <h2 class="text-lg font-semibold text-gray-900">Branding</h2>
-    <p class="mt-1 text-sm text-gray-500">Customize your business look and feel</p>
-  </div>
-
-  <%= form_with(model: @business, url: admin_business_path(tab: 'branding'), method: :patch, local: true, class: "space-y-8") do |form| %>
-
-    <!-- Error Messages -->
+<%# Logo and brand color, with a live preview of a client page (CAT-02). %>
+<% branding = @business.branding %>
+<%= form_with model: @business, url: admin_business_path(tab: "branding"), method: :patch,
+              class: "grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]",
+              data: { controller: "brand-preview", brand_preview_max_bytes_value: Business::LOGO_MAX_BYTES,
+                      brand_preview_types_value: Business::LOGO_TYPES.join(","),
+                      brand_preview_min_text_value: Branding::MIN_TEXT_CONTRAST, brand_preview_min_page_value: Branding::MIN_PAGE_CONTRAST } do |f| %>
+  <div class="min-w-0 space-y-4">
     <% if @business.errors.any? %>
-      <div class="rounded-lg bg-red-50 border border-red-200 p-4">
-        <div class="flex">
-          <div class="shrink-0">
-            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-            </svg>
+      <div class="banner banner-danger" role="alert"><%= icon "alert-circle" %>
+        <p><%= @business.errors.count == 1 ? "One thing" : "#{@business.errors.count} things" %> to fix before saving. Each one is marked below.</p>
+      </div>
+    <% end %>
+
+    <%= card title: "Logo", subtitle: "Shown on your quotes, invoices, emails and client pages." do %>
+      <div class="flex flex-wrap items-center gap-4">
+        <div class="flex h-20 w-48 items-center justify-center rounded-lg border border-dashed border-line bg-sunken p-2">
+          <% if branding.logo? %>
+            <%= image_tag branding.logo(:web), alt: "Your current logo", class: "max-h-full max-w-full object-contain", data: { brand_preview_target: "currentLogo" } %>
+          <% else %>
+            <span class="text-sm2 text-muted" data-brand-preview-target="currentLogo">No logo yet</span>
+          <% end %>
+        </div>
+        <div class="min-w-0 flex-1 space-y-2">
+          <div class="field">
+            <%= f.label :logo, branding.logo? ? "Replace logo" : "Upload a logo", class: "label" %>
+            <%= f.file_field :logo, accept: Business::LOGO_TYPES.join(","), class: "input py-1.5",
+                             "aria-invalid": (@business.errors[:logo].any? || nil), "aria-describedby": "logo-help",
+                             data: { brand_preview_target: "logoInput", action: "brand-preview#logoChosen" } %>
+            <p class="help" id="logo-help">PNG, JPEG or WebP, up to <%= Business::LOGO_MAX_BYTES / 1.megabyte %> MB. A wide logo on a transparent background works best.</p>
+            <% @business.errors[:logo].each do |message| %>
+              <p class="error-text"><%= icon "alert-circle" %>Logo <%= message %></p>
+            <% end %>
+            <p class="error-text" data-brand-preview-target="logoError" hidden></p>
           </div>
-          <div class="ml-3">
-            <h3 class="text-sm font-medium text-red-800">
-              There <%= @business.errors.count == 1 ? 'was' : 'were' %> <%= pluralize(@business.errors.count, "error") %> with your submission
-            </h3>
-            <div class="mt-2 text-sm text-red-700">
-              <ul class="list-disc pl-5 space-y-1">
-                <% @business.errors.full_messages.each do |message| %>
-                  <li><%= message %></li>
-                <% end %>
-              </ul>
-            </div>
-          </div>
+          <% if branding.logo? %>
+            <%= f.check :remove_logo, label: "Remove logo", hint: "Your name and initials are used instead.",
+                        data: { action: "brand-preview#render", brand_preview_target: "removeLogo" } %>
+          <% end %>
         </div>
       </div>
     <% end %>
 
-    <!-- Form Fields -->
-    <div class="space-y-6">
-
-      <!-- Brand Color -->
-      <div>
-        <%= form.label :brand_color, "Brand Color", class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <div class="flex items-center gap-4">
-          <%= form.color_field :brand_color,
-                               value: @business.brand_color || '#059669',
-                               class: "h-12 w-24 border border-gray-300 rounded-lg cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-emerald-500 transition-all",
-                               id: "color-picker" %>
-          <div class="flex-1">
-            <p class="text-sm text-gray-900">
-              <span id="color-display" class="font-mono font-medium"><%= @business.brand_color || '#059669' %></span>
-            </p>
-            <p class="text-xs text-gray-500 mt-0.5">Used in your customer-facing materials</p>
-          </div>
-        </div>
-
-        <!-- Color Presets -->
-        <div class="mt-3">
-          <p class="text-xs font-medium text-gray-700 mb-2">Quick presets:</p>
-          <div class="flex gap-2">
-            <button type="button" onclick="setColor('#059669')" class="w-8 h-8 rounded-md border border-gray-300 hover:border-gray-400 transition-all" style="background-color: #059669;" title="Emerald"></button>
-            <button type="button" onclick="setColor('#0EA5E9')" class="w-8 h-8 rounded-md border border-gray-300 hover:border-gray-400 transition-all" style="background-color: #0EA5E9;" title="Blue"></button>
-            <button type="button" onclick="setColor('#8B5CF6')" class="w-8 h-8 rounded-md border border-gray-300 hover:border-gray-400 transition-all" style="background-color: #8B5CF6;" title="Purple"></button>
-            <button type="button" onclick="setColor('#F59E0B')" class="w-8 h-8 rounded-md border border-gray-300 hover:border-gray-400 transition-all" style="background-color: #F59E0B;" title="Amber"></button>
-            <button type="button" onclick="setColor('#EF4444')" class="w-8 h-8 rounded-md border border-gray-300 hover:border-gray-400 transition-all" style="background-color: #EF4444;" title="Red"></button>
-            <button type="button" onclick="setColor('#06B6D4')" class="w-8 h-8 rounded-md border border-gray-300 hover:border-gray-400 transition-all" style="background-color: #06B6D4;" title="Cyan"></button>
-            <button type="button" onclick="setColor('#10B981')" class="w-8 h-8 rounded-md border border-gray-300 hover:border-gray-400 transition-all" style="background-color: #10B981;" title="Green"></button>
-            <button type="button" onclick="setColor('#EC4899')" class="w-8 h-8 rounded-md border border-gray-300 hover:border-gray-400 transition-all" style="background-color: #EC4899;" title="Pink"></button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Divider -->
-      <div class="border-t border-gray-200"></div>
-
-      <!-- Logo URL -->
-      <div>
-        <!-- Logo URL -->
-        <div>
-          <%= form.label :logo_url, "Business Logo", class: "block text-sm font-medium text-gray-700 mb-2" %>
-
-          <% if @business.logo_url.present? %>
-            <div class="mb-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-              <p class="text-xs font-medium text-gray-700 mb-2">Current logo:</p>
-              <img src="<%= @business.logo_url %>" alt="Business Logo" class="h-16 w-auto rounded-sm">
-            </div>
+    <%= card title: "Brand color", subtitle: "Used for buttons, links and accents on everything clients see." do %>
+      <fieldset>
+        <legend class="label">Presets</legend>
+        <div class="flex flex-wrap gap-2">
+          <% Branding::PRESETS.each do |name, hex| %>
+            <button type="button" class="size-9 rounded-full border-2 border-white shadow-[0_0_0_1px_var(--color-line)] outline-offset-2 aria-pressed:shadow-[0_0_0_2px_var(--color-ink)]"
+                    style="background: <%= hex %>" title="<%= name %>" aria-label="<%= name %> (<%= hex %>)" aria-pressed="<%= branding.color == hex %>"
+                    data-brand-preview-target="swatch" data-color="<%= hex %>" data-action="brand-preview#pick"></button>
           <% end %>
-
-          <%= form.text_field :logo_url,
-                              class: "block w-full px-4 py-3 border border-gray-300 rounded-lg text-sm placeholder-gray-400 text-gray-900 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all",
-                              placeholder: "https://example.com/logo.png" %>
-          <p class="mt-1.5 text-xs text-gray-500">Enter the URL of your logo image (recommended: 400x400px)</p>
         </div>
-
-        <!-- Divider -->
-        <div class="border-t border-gray-200"></div>
-
-        <!-- Preview -->
-        <div>
-          <h3 class="text-sm font-medium text-gray-900 mb-3">Preview</h3>
-          <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
-            <div class="bg-white rounded-lg p-6 border-2 shadow-xs" id="brand-preview" style="border-color: <%= @business.brand_color || '#059669' %>;">
-              <div class="text-center space-y-3">
-                <% if @business.logo_url.present? %>
-                  <img src="<%= @business.logo_url %>" alt="Logo" class="h-12 w-auto mx-auto" id="preview-logo">
-                <% else %>
-                  <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg" id="preview-icon" style="background-color: <%= @business.brand_color || '#059669' %>;">
-                    <svg class="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd" />
-                    </svg>
-                  </div>
-                <% end %>
-                <h3 class="text-base font-semibold text-gray-900"><%= @business.name %></h3>
-                <button type="button" id="preview-button" class="px-4 py-2 rounded-md text-white text-sm font-medium transition-all" style="background-color: <%= @business.brand_color || '#059669' %>;">
-                  Get a Quote
-                </button>
-              </div>
-            </div>
-            <p class="text-xs text-gray-500 mt-2 text-center">How your brand appears to customers</p>
-          </div>
+      </fieldset>
+      <div class="mt-4 flex items-end gap-3">
+        <div class="field">
+          <label class="label" for="brand_picker">Custom</label>
+          <input type="color" id="brand_picker" value="<%= branding.color %>" class="h-10 w-14 cursor-pointer rounded-md border border-line bg-white p-1"
+                 data-brand-preview-target="picker" data-action="input->brand-preview#picked">
+        </div>
+        <div class="w-36">
+          <%= f.field :brand_color, label: "Hex", maxlength: 7, spellcheck: false, autocomplete: "off", class: "font-mono",
+                      value: @business.brand_color.presence || branding.color, data: { brand_preview_target: "hex", action: "input->brand-preview#typed" } %>
         </div>
       </div>
+      <ul class="mt-3 space-y-1.5" data-brand-preview-target="warnings" aria-live="polite">
+        <% branding.contrast_warnings.each do |warning| %>
+          <li class="flex items-start gap-2 text-sm2 text-warning"><%= icon "alert-triangle", class: "mt-0.5 size-4 shrink-0" %><%= warning %></li>
+        <% end %>
+      </ul>
+    <% end %>
 
-      <!-- Form Actions -->
-      <div class="flex items-center justify-end gap-3 pt-6 border-t border-gray-200">
-        <%= link_to "Cancel", edit_admin_business_path, class: "px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors" %>
-        <button type="submit" class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow-xs transition-all focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-          Save Branding
-        </button>
-      </div>
-  <% end %>
+    <div class="flex items-center justify-end gap-2">
+      <%= link_to "Cancel", edit_admin_business_path(tab: "branding"), class: button_classes(:ghost) %>
+      <%= f.submit_button "Save branding" %>
+    </div>
   </div>
 
-</div>
+  <aside class="lg:sticky lg:top-6 lg:self-start" aria-label="Preview">
+    <p class="label">Preview</p>
+    <div class="overflow-hidden rounded-xl border border-line bg-[#f4f5f7] shadow-sm" data-brand-preview-target="preview" style="<%= branding.css_variables %>">
+      <div class="flex h-14 items-center gap-2.5 border-b border-line bg-white px-4">
+        <img alt="" class="client-logo-image h-8" data-brand-preview-target="previewLogo" <% if branding.logo? %>src="<%= url_for(branding.logo(:web)) %>"<% else %>hidden<% end %>>
+        <span class="client-logo size-8 text-[0.8125rem]" data-brand-preview-target="previewMark" <%= "hidden" if branding.logo? %>><%= branding.initials %></span>
+        <span class="truncate text-sm font-bold text-ink" data-brand-preview-target="previewName" <%= "hidden" if branding.logo? %>><%= branding.name %></span>
+      </div>
+      <div class="space-y-3 p-4">
+        <div class="rounded-lg border border-line bg-white p-4">
+          <p class="text-xs text-muted">Quote Q-0042</p>
+          <p class="mt-0.5 font-semibold text-ink">Spring cleanup</p>
+          <p class="mt-2 text-sm2 text-subtle">Total <span class="money font-semibold text-ink">$240.00</span></p>
+          <button type="button" tabindex="-1" class="mt-3 w-full rounded-md px-3 py-2 text-sm font-semibold" style="background: var(--color-brand); color: var(--color-brand-ink)">Approve quote</button>
+          <p class="mt-2 text-center text-sm2"><span class="font-medium underline" style="color: var(--color-brand)">Ask a question</span></p>
+        </div>
+        <% if branding.show_powered_by? %><p class="text-center text-[0.6875rem] text-muted">Powered by Shadetree</p><% end %>
+      </div>
+    </div>
+    <p class="help mt-2">How clients see your quotes and invoices.</p>
+  </aside>
+<% end %>
