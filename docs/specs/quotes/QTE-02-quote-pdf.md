@@ -43,7 +43,7 @@ The approach should be reusable for invoices (PAY-02).
   the stylesheet, font and logo inlined) in headless Chrome via Ferrum. Chrome has no network
   (a dead proxy plus request interception) and scripts are off. One render runs at a time per
   process, and a render waits at most 10 s for its turn. Business countries that use US Letter
-  get Letter; everyone else gets A4. The image includes Noto CJK fonts for names in Chinese,
+  get Letter; everyone else gets A4. The image includes Noto CJK fonts (about 50 MB) for names in Chinese,
   Japanese and Korean.
 - **Inline or background:** a render takes about 2 s (mostly Chrome starting), which is over the
   2 s p95 budget for inline. So sent quotes keep their PDF (`HasPdf`: a blob plus a digest of
