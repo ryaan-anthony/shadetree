@@ -6,6 +6,11 @@ export default class extends Controller {
   static targets = ["frame", "email", "phone"]
   static values = { url: String }
 
+  // Values already in the form (typed before this connected, or re-rendered after an error).
+  connect() {
+    this.load()
+  }
+
   check() {
     clearTimeout(this.timer)
     this.timer = setTimeout(() => this.load(), 300)
