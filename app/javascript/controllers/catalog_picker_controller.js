@@ -10,12 +10,18 @@ export default class extends Controller {
   connect() {
     this.items = []
     this.active = -1
+    this.request = 0
+  }
+
+  disconnect() {
+    this.cancelPending()
   }
 
   open() {
     if (this.inputTarget.value.trim() !== "") return this.search()
     const uids = this.recent()
     if (uids.length) this.fetch({ uids: uids.join(",") }, "Recently used")
+    else this.close({ clear: true })
   }
 
   search() {
@@ -25,17 +31,19 @@ export default class extends Controller {
     this.timer = setTimeout(() => this.fetch({ q: query }), 150)
   }
 
+  // Each request gets a number; closing the list or a newer request makes older ones stale,
+  // so a slow response can't reopen a dismissed list or overwrite newer results.
   async fetch(params, heading = null) {
-    const query = this.inputTarget.value.trim()
+    const request = ++this.request
     const url = new URL(this.urlValue, window.location.origin)
     Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value))
     try {
       const response = await fetch(url, { headers: { Accept: "application/json" } })
       if (!response.ok) throw new Error(response.statusText)
       const { items } = await response.json()
-      if (this.inputTarget.value.trim() === query) this.render(items, heading)
+      if (request === this.request) this.render(items, heading)
     } catch {
-      this.render([], null, "Couldn't search the catalog. Check your connection and try again.")
+      if (request === this.request) this.render([], null, "Couldn't search the catalog. Check your connection and try again.")
     }
   }
 
@@ -58,8 +66,14 @@ export default class extends Controller {
       option.dataset.index = index
       option.addEventListener("mousedown", (event) => { event.preventDefault(); this.pick(index) })
       const name = document.createElement("span")
-      name.className = "truncate"
+      name.className = "min-w-0 truncate"
       name.textContent = item.name
+      if (item.category) {
+        const category = document.createElement("span")
+        category.className = "ml-1.5 text-muted"
+        category.textContent = item.category
+        name.append(category)
+      }
       const price = document.createElement("span")
       price.className = "money text-muted"
       price.textContent = item.price ? `${item.price} / ${item.unit}` : "Price on quote"
@@ -97,7 +111,10 @@ export default class extends Controller {
     this.listTarget.querySelectorAll("[role=option]").forEach((option) => {
       const on = Number(option.dataset.index) === index
       option.setAttribute("aria-selected", String(on))
-      if (on) this.inputTarget.setAttribute("aria-activedescendant", option.id)
+      if (on) {
+        this.inputTarget.setAttribute("aria-activedescendant", option.id)
+        option.scrollIntoView({ block: "nearest" })
+      }
     })
   }
 
@@ -114,7 +131,18 @@ export default class extends Controller {
     if (!this.element.contains(event.relatedTarget)) this.close()
   }
 
-  close() {
+  cancelPending() {
+    clearTimeout(this.timer)
+    this.request++
+  }
+
+  close({ clear = false } = {}) {
+    this.cancelPending()
+    if (clear) {
+      this.items = []
+      this.active = -1
+      this.listTarget.replaceChildren()
+    }
     this.listTarget.hidden = true
     this.inputTarget.setAttribute("aria-expanded", "false")
     this.inputTarget.removeAttribute("aria-activedescendant")

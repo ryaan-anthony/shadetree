@@ -25,7 +25,7 @@ class CatalogItemTest < ActiveSupport::TestCase
       assert item.errors.of_kind?(:name, :blank)
       assert item.errors.of_kind?(:custom_unit, :blank)
       assert item.errors.of_kind?(:duration_minutes, :in)
-      assert item.errors.of_kind?(:unit_price_cents, :greater_than_or_equal_to)
+      assert_includes item.errors[:unit_price], "can't be negative"
       assert_not CatalogItem.new(name: "x", unit: "gallon").valid?
     end
   end

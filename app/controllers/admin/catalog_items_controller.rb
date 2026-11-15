@@ -5,7 +5,7 @@ class Admin::CatalogItemsController < Admin::BaseController
   SEARCH_LIMIT = 50
   RECENT_LIMIT = 5
 
-  before_action :set_item, only: %i[edit update duplicate archive restore move]
+  before_action :set_item, only: %i[edit update archive restore move]
 
   def index
     @query = params[:q].to_s.strip
@@ -16,8 +16,14 @@ class Admin::CatalogItemsController < Admin::BaseController
     @archived_count = CatalogItem.archived.count
   end
 
+  # ?duplicate_of=<uid> starts from an unsaved copy of that item; ?category=<uid> preselects one.
   def new
-    @item = CatalogItem.new(category_id: CatalogCategory.find_by(uid: params[:category])&.id)
+    @item =
+      if params[:duplicate_of].present?
+        CatalogItem.find_by_param!(params[:duplicate_of]).duplicate
+      else
+        CatalogItem.new(category_id: CatalogCategory.find_by(uid: params[:category])&.id)
+      end
   end
 
   def create
@@ -40,11 +46,6 @@ class Admin::CatalogItemsController < Admin::BaseController
     else
       render :edit, status: :unprocessable_content
     end
-  end
-
-  def duplicate
-    @item = @item.duplicate
-    render :new
   end
 
   def archive

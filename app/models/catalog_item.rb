@@ -16,7 +16,8 @@ class CatalogItem < ApplicationRecord
   validates :description, length: { maximum: 2_000 }
   validates :unit, inclusion: { in: UNITS.keys }
   validates :custom_unit, presence: true, length: { maximum: 20 }, if: -> { unit == "custom" }
-  validates :unit_price_cents, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  # On unit_price, the field the form shows, so a negative price is marked where it was typed.
+  validate { errors.add(:unit_price, "can't be negative") if unit_price_cents&.negative? }
   validates :duration_minutes, numericality: { only_integer: true, in: 1..(24 * 60) }, allow_nil: true
 
   scope :active, -> { where(archived_at: nil) }

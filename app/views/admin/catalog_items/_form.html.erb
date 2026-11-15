@@ -25,7 +25,7 @@
       <div class="field">
         <%= f.label :category_id, "Category", class: "label" %>
         <%= f.select :category_id, CatalogCategory.all.map { [ _1.name, _1.uid ] }, { include_blank: "No category", selected: @item.category&.uid }, class: "select" %>
-        <%= text_field_tag "catalog_item[new_category_name]", nil, class: "input mt-2", placeholder: "Or type a new category", "aria-label": "New category" %>
+        <%= text_field_tag "catalog_item[new_category_name]", params.dig(:catalog_item, :new_category_name), class: "input mt-2", placeholder: "Or type a new category", "aria-label": "New category" %>
       </div>
       <%= f.field :duration_minutes, as: :number, label: "Typical duration (minutes)", optional: true, min: 1, max: 1440,
                   help: "Helps when scheduling the visit." %>

@@ -65,6 +65,15 @@ class Admin::CatalogTest < ActionDispatch::IntegrationTest
     assert_select "input[name='catalog_item[unit_price]'][value=lots]"
   end
 
+  test "a negative price and a new category survive a failed save" do
+    as_member(@owner)
+    post admin_catalog_items_path, params: { catalog_item: { name: "", unit_price: "-5", new_category_name: "Lawn care" } }
+    assert_response :unprocessable_content
+    assert_select "input#catalog_item_unit_price[aria-invalid=true]"
+    assert_select ".error-text", /can't be negative/
+    assert_select "input[name='catalog_item[new_category_name]'][value='Lawn care']"
+  end
+
   test "editing, duplicating, archiving and restoring" do
     item = create_item("Weekly mow")
     as_member(@owner)
@@ -72,7 +81,9 @@ class Admin::CatalogTest < ActionDispatch::IntegrationTest
     patch admin_catalog_item_path(item), params: { catalog_item: { unit_price: "50" } }
     assert_equal 5000, item.reload.unit_price_cents
 
-    post duplicate_admin_catalog_item_path(item)
+    get admin_catalog_items_path
+    assert_select "a[href=?]", new_admin_catalog_item_path(duplicate_of: item.uid), /Duplicate/
+    get new_admin_catalog_item_path(duplicate_of: item.uid)
     assert_select "input[name='catalog_item[name]'][value='Weekly mow (copy)']"
 
     patch archive_admin_catalog_item_path(item)

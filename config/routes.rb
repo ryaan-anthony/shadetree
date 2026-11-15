@@ -61,7 +61,6 @@ Rails.application.routes.draw do
     # Service catalog (CAT-03)
     resources :catalog_items, path: "catalog", except: %i[show destroy] do
       member do
-        post :duplicate
         patch :archive
         patch :restore
         patch :move

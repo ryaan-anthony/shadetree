@@ -66,7 +66,7 @@
                     <button type="button" class="<%= button_classes(:ghost, :sm, :icon) %>" data-menu-target="button" data-action="menu#toggle" aria-haspopup="true" aria-expanded="false" aria-label="More actions for <%= item.name %>"><%= icon "more-horizontal" %></button>
                     <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
                       <%= link_to edit_admin_catalog_item_path(item), class: "menu-item" do %><%= icon "edit-2" %> Edit<% end %>
-                      <%= button_to duplicate_admin_catalog_item_path(item), class: "menu-item", form: { class: "contents" } do %><%= icon "copy" %> Duplicate<% end %>
+                      <%= link_to new_admin_catalog_item_path(duplicate_of: item.uid), class: "menu-item" do %><%= icon "copy" %> Duplicate<% end %>
                       <div class="menu-sep"></div>
                       <%= button_to archive_admin_catalog_item_path(item), method: :patch, class: "menu-item", form: { class: "contents" } do %><%= icon "archive" %> Archive<% end %>
                     </div>
