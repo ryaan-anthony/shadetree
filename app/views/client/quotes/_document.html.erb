@@ -1,0 +1,50 @@
+<%# locals: (quote:, totals: quote.totals, pdf: false) -%>
+<%# The quote as a document: header, lines, totals, terms. Shared by the client page (QTE-03)
+    and the PDF (QTE-02, ADR 0010), so the two never drift. Never shows internal notes. %>
+<% business = quote.business %>
+<header class="quote-doc-head">
+  <div class="min-w-0">
+    <p class="quote-doc-kicker">Quote <%= quote.number %></p>
+    <h1 class="quote-doc-title"><%= quote.title || "Quote for #{quote.client.display_name}" %></h1>
+  </div>
+  <dl class="quote-doc-meta">
+    <div><dt>Prepared for</dt><dd><%= quote.client.display_name %><% if quote.client.company_name %><br><%= quote.client.company_name %><% end %></dd></div>
+    <% if quote.property %><div><dt>Property</dt><dd><%= safe_join(quote.property.address_lines, tag.br) %></dd></div><% end %>
+    <div><dt>Date</dt><dd><%= local_date(quote.created_at.in_time_zone(business.time_zone).to_date) %></dd></div>
+    <% if quote.expires_on %><div><dt>Valid until</dt><dd><%= local_date(quote.expires_on) %></dd></div><% end %>
+  </dl>
+</header>
+
+<% if quote.message %>
+  <p class="quote-doc-message"><%= quote.message %></p>
+<% end %>
+
+<table class="quote-doc-lines">
+  <thead>
+    <tr><th scope="col">Item</th><th scope="col" class="num">Qty</th><th scope="col" class="num">Price</th><th scope="col" class="num">Amount</th></tr>
+  </thead>
+  <tbody>
+    <% quote.current_line_items.each_with_index do |line, index| %>
+      <% result = totals.lines[index] %>
+      <tr>
+        <td>
+          <p class="quote-doc-line-name"><%= line.name.presence || "Item" %></p>
+          <% if line.description %><p class="quote-doc-line-description"><%= line.description %></p><% end %>
+          <% if result.discount.positive? %><p class="quote-doc-line-discount">Includes <%= money(result.discount) %> off<%= " (#{line.discount_value}%)" if line.discount_kind == "percent" %></p><% end %>
+        </td>
+        <td class="num"><%= line.quantity.to_d.round(4).to_s("F").sub(/\.?0+\z/, "") %><% if line.unit %> <span class="quote-doc-unit"><%= line.unit %></span><% end %></td>
+        <td class="num"><%= money(line.unit_price || Money.zero(quote.currency)) %></td>
+        <td class="num"><%= money(result.subtotal) %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<div class="quote-doc-totals"><%= render "admin/quotes/totals", quote:, totals: %></div>
+
+<% if quote.terms %>
+  <section class="quote-doc-terms">
+    <h2>Terms</h2>
+    <p><%= quote.terms %></p>
+  </section>
+<% end %>

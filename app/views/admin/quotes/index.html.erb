@@ -16,7 +16,7 @@
           <tr id="quote-<%= quote.uid %>">
             <td><%= link_to quote.number, edit_admin_quote_path(quote), class: "primary hover:underline" %><% if quote.title %><span class="sub"><%= quote.title %></span><% end %></td>
             <td><%= quote.client.display_name %></td>
-            <td><%= badge quote.status.humanize %></td>
+            <td><%= badge quote.status.humanize %><% if quote.update_requested_at %> <%= badge "Update requested", tone: :warning %><% end %></td>
             <td class="money text-right"><%= money(quote.total) %></td>
             <td class="whitespace-nowrap text-right text-sm2 text-muted"><%= local_time_ago(quote.updated_at) %></td>
           </tr>

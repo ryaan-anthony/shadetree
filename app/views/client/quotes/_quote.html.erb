@@ -1,0 +1,71 @@
+<%# locals: (document:, client_link: nil, preview: false) -%>
+<%# The client's quote page (QTE-03), rendered from a client link (PLT-12) or as the staff
+    preview. Status first, then the document, attachments, and the action area that approval
+    (QTE-05) fills. %>
+<% quote = document %>
+<% state = quote.client_state %>
+<% totals = quote.totals %>
+
+<% if state == :approved %>
+  <div class="banner banner-success mb-4" role="status"><%= icon "check-circle" %><p>You approved this quote. <%= @business.name %> will be in touch to schedule the work.</p></div>
+<% elsif state == :declined %>
+  <div class="banner banner-info mb-4" role="status"><%= icon "info" %><p>You declined this quote. Questions? Contact <%= @business.name %> below.</p></div>
+<% elsif state == :changes_requested %>
+  <div class="banner banner-info mb-4" role="status"><%= icon "message-square" %><p>You asked for changes. <%= @business.name %> will send an updated quote.</p></div>
+<% elsif state == :expired %>
+  <div class="banner banner-warning mb-4" role="status"><%= icon "clock" %>
+    <div class="flex-1">
+      <p>This quote expired on <%= local_date(quote.expires_on) %>, so it can't be approved as is.</p>
+      <% if quote.update_requested_at %>
+        <p class="mt-1 font-medium">You asked for an updated quote. <%= @business.name %> has been told.</p>
+      <% elsif client_link %>
+        <%= button_to "Ask for an updated quote", request_quote_update_path(client_link.token), class: "#{button_classes(:secondary, :sm)} mt-2" %>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<article class="client-card quote-doc p-5 sm:p-8">
+  <%= render "client/quotes/document", quote:, totals: %>
+</article>
+
+<% photos, files = quote.attachments.select { _1.blob.persisted? }.partition(&:image?) %>
+<% if photos.any? || files.any? %>
+  <section class="client-card mt-4 p-5 sm:p-6" aria-labelledby="attachments-h">
+    <h2 id="attachments-h" class="text-sm font-semibold text-ink">Photos and files</h2>
+    <% if photos.any? %>
+      <ul class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <% photos.each do |photo| %>
+          <li><%= link_to rails_blob_path(photo, disposition: "inline"), target: "_blank", rel: "noopener" do %>
+            <%= image_tag photo.variant(resize_to_limit: [ 640, 640 ]), alt: photo.filename.base.tr("_-", "  "), loading: "lazy", decoding: "async",
+                          class: "aspect-[4/3] w-full rounded-lg border border-line object-cover" %>
+          <% end %></li>
+        <% end %>
+      </ul>
+    <% end %>
+    <% if files.any? %>
+      <ul class="mt-3 space-y-1.5">
+        <% files.each do |file| %>
+          <li><%= link_to rails_blob_path(file, disposition: "inline"), class: "flex items-center gap-2 text-sm font-medium text-ink hover:underline", target: "_blank", rel: "noopener" do %>
+            <%= icon "file-text", class: "size-4 text-faint" %><%= file.filename %><% end %></li>
+        <% end %>
+      </ul>
+    <% end %>
+  </section>
+<% end %>
+
+<%# The action area. Approve / decline / request changes arrive with QTE-05. %>
+<section class="client-card mt-4 p-5 text-center sm:p-6" id="quote-actions" aria-labelledby="actions-h">
+  <h2 id="actions-h" class="text-base font-semibold text-ink">
+    <% if state == :awaiting %>Total <span class="money"><%= money(totals.total) %></span>
+    <% elsif state == :approved %>Approved
+    <% elsif state == :expired %>This quote has expired
+    <% else %>Questions about this quote?
+    <% end %>
+  </h2>
+  <% if state == :awaiting && quote.expires_on %>
+    <p class="mt-1 text-sm2 text-muted">Valid until <%= local_date(quote.expires_on) %></p>
+  <% end %>
+  <%= yield :quote_actions if content_for?(:quote_actions) %>
+  <%= render "client_links/business_contact" %>
+</section>

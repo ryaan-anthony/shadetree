@@ -68,10 +68,13 @@ class Admin::QuotesController < Admin::BaseController
     redirect_to admin_quotes_path, notice: "Draft #{@quote.number} deleted."
   end
 
-  # How the client will see it (QTE-03 replaces this with the real client page).
+  # The client page (QTE-03) exactly as the client will see it, with a preview banner. Not a
+  # client view, and works for drafts.
   def preview
     @business = current_business
-    render layout: "client"
+    @document = @quote
+    @preview = true
+    render "client_links/show", layout: "client"
   end
 
   # The property choices for a client, for the builder's property select.
