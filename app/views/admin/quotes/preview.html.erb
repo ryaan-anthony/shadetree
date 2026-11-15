@@ -1,0 +1,28 @@
+<%# A preview of what the client will see (QTE-03 builds the real client page from this). %>
+<% totals = @quote.totals %>
+<div class="banner banner-info mb-4" role="status"><%= icon "eye" %><p>Preview. This is how your client will see quote <%= @quote.number %> once it's sent.</p></div>
+<article class="client-card">
+  <header class="flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <p class="text-sm2 text-muted">Quote <%= @quote.number %></p>
+      <h1 class="text-xl font-bold text-ink"><%= @quote.title || "Quote for #{@quote.client.display_name}" %></h1>
+      <p class="mt-1 text-sm text-subtle">For <%= @quote.client.display_name %><%= ", #{@quote.property.one_line}" if @quote.property %></p>
+    </div>
+    <% if @quote.expires_on %><p class="text-sm2 text-muted">Valid until <%= local_date(@quote.expires_on) %></p><% end %>
+  </header>
+  <% if @quote.message %><p class="mt-4 whitespace-pre-line text-sm text-subtle"><%= @quote.message %></p><% end %>
+  <ul class="mt-5 divide-y divide-line border-y border-line">
+    <% @quote.current_line_items.each_with_index do |line, index| %>
+      <li class="flex items-start justify-between gap-3 py-3">
+        <div class="min-w-0">
+          <p class="font-semibold text-ink"><%= line.name.presence || "Item" %></p>
+          <% if line.description %><p class="whitespace-pre-line text-sm2 text-muted"><%= line.description %></p><% end %>
+          <p class="text-sm2 text-muted tabular"><%= line.quantity.to_d.round(4).to_s("F").sub(/\.?0+\z/, "") %> <%= line.unit %> × <%= money(line.unit_price) %></p>
+        </div>
+        <p class="money font-semibold text-ink"><%= money(totals.lines[index].subtotal) %></p>
+      </li>
+    <% end %>
+  </ul>
+  <div class="mt-4 ml-auto max-w-xs"><%= render "totals", quote: @quote, totals: %></div>
+  <% if @quote.terms %><section class="mt-6"><h2 class="text-sm font-semibold text-ink">Terms</h2><p class="mt-1 whitespace-pre-line text-sm2 text-muted"><%= @quote.terms %></p></section><% end %>
+</article>

@@ -1,0 +1,27 @@
+<%= page_header "Quotes", lede: "Drafts you're working on. Sending, statuses and filters are on the way." do %>
+  <%= link_to new_admin_quote_path, class: button_classes do %><%= icon "plus" %> New quote<% end %>
+<% end %>
+<% if @quotes.empty? %>
+  <div class="card">
+    <%= empty_state title: "No quotes yet", text: "Pick a client, add items from your catalog and send a professional quote in a couple of minutes.", icon: "quote" do %>
+      <%= link_to new_admin_quote_path, class: button_classes do %><%= icon "plus" %> New quote<% end %>
+    <% end %>
+  </div>
+<% else %>
+  <div class="card table-wrap">
+    <table class="data-table">
+      <thead><tr><th scope="col">Quote</th><th scope="col">Client</th><th scope="col">Status</th><th scope="col" class="text-right">Total</th><th scope="col" class="text-right">Updated</th></tr></thead>
+      <tbody>
+        <% @quotes.each do |quote| %>
+          <tr id="quote-<%= quote.uid %>">
+            <td><%= link_to quote.number, edit_admin_quote_path(quote), class: "primary hover:underline" %><% if quote.title %><span class="sub"><%= quote.title %></span><% end %></td>
+            <td><%= quote.client.display_name %></td>
+            <td><%= badge quote.status.humanize %></td>
+            <td class="money text-right"><%= money(quote.total) %></td>
+            <td class="whitespace-nowrap text-right text-sm2 text-muted"><%= local_time_ago(quote.updated_at) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>

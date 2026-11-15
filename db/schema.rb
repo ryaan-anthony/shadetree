@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_15_000500) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_15_000600) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -278,6 +278,70 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_000500) do
     t.index ["uid"], name: "index_properties_on_uid", unique: true
   end
 
+  create_table "quote_line_items", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "quote_id", null: false
+    t.bigint "catalog_item_id"
+    t.string "key", null: false
+    t.integer "position", default: 0, null: false
+    t.string "name", default: "", null: false
+    t.text "description"
+    t.decimal "quantity", precision: 12, scale: 4, default: "1.0", null: false
+    t.string "unit"
+    t.bigint "unit_price_cents", default: 0, null: false
+    t.boolean "taxable", default: true, null: false
+    t.string "discount_kind"
+    t.decimal "discount_percent", precision: 7, scale: 4
+    t.bigint "discount_amount_cents"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id"], name: "index_quote_line_items_on_business_id"
+    t.index ["catalog_item_id"], name: "index_quote_line_items_on_catalog_item_id"
+    t.index ["quote_id", "key"], name: "index_quote_line_items_on_quote_id_and_key", unique: true
+    t.index ["quote_id", "position"], name: "index_quote_line_items_on_quote_id_and_position"
+    t.index ["quote_id"], name: "index_quote_line_items_on_quote_id"
+    t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying, 'amount'::character varying]::text[]))", name: "quote_lines_discount_kind"
+    t.check_constraint "quantity >= 0::numeric", name: "quote_lines_quantity_nonnegative"
+  end
+
+  create_table "quotes", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.string "number", null: false
+    t.bigint "client_id", null: false
+    t.bigint "property_id"
+    t.bigint "created_by_id"
+    t.string "status", default: "draft", null: false
+    t.string "currency", null: false
+    t.string "title"
+    t.text "message"
+    t.text "internal_notes"
+    t.text "terms"
+    t.date "expires_on"
+    t.jsonb "tax_rates", default: [], null: false
+    t.boolean "prices_include_tax", default: false, null: false
+    t.string "discount_kind"
+    t.decimal "discount_percent", precision: 7, scale: 4
+    t.bigint "discount_amount_cents"
+    t.bigint "subtotal_cents", default: 0, null: false
+    t.bigint "discount_total_cents", default: 0, null: false
+    t.bigint "tax_cents", default: 0, null: false
+    t.bigint "total_cents", default: 0, null: false
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "number"], name: "index_quotes_on_business_id_and_number", unique: true
+    t.index ["business_id", "status", "created_at"], name: "index_quotes_on_business_id_and_status_and_created_at"
+    t.index ["business_id"], name: "index_quotes_on_business_id"
+    t.index ["client_id"], name: "index_quotes_on_client_id"
+    t.index ["created_by_id"], name: "index_quotes_on_created_by_id"
+    t.index ["property_id"], name: "index_quotes_on_property_id"
+    t.index ["uid"], name: "index_quotes_on_uid", unique: true
+    t.check_constraint "discount_amount_cents IS NULL OR discount_amount_cents >= 0", name: "quotes_discount_amount_nonnegative"
+    t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying, 'amount'::character varying]::text[]))", name: "quotes_discount_kind"
+    t.check_constraint "discount_percent IS NULL OR discount_percent >= 0::numeric AND discount_percent <= 100::numeric", name: "quotes_discount_percent_range"
+  end
+
   create_table "tax_rates", force: :cascade do |t|
     t.bigint "business_id", null: false
     t.string "uid", null: false
@@ -343,6 +407,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_000500) do
   add_foreign_key "invitations", "users", column: "invited_by_id", on_delete: :nullify
   add_foreign_key "properties", "businesses", on_delete: :cascade
   add_foreign_key "properties", "clients", on_delete: :cascade
+  add_foreign_key "quote_line_items", "businesses", on_delete: :cascade
+  add_foreign_key "quote_line_items", "catalog_items", on_delete: :nullify
+  add_foreign_key "quote_line_items", "quotes", on_delete: :cascade
+  add_foreign_key "quotes", "businesses", on_delete: :cascade
+  add_foreign_key "quotes", "clients"
+  add_foreign_key "quotes", "properties", on_delete: :nullify
+  add_foreign_key "quotes", "users", column: "created_by_id", on_delete: :nullify
   add_foreign_key "tax_rates", "businesses", on_delete: :cascade
   add_foreign_key "users", "businesses", column: "last_business_id", on_delete: :nullify
 end

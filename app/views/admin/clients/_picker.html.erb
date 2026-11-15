@@ -6,7 +6,7 @@
     quick-create modal: render admin/clients/quick_create (button: false) once on the page,
     outside any form. %>
 <% picker_id = "client-picker-#{SecureRandom.hex(3)}" %>
-<div class="field" data-controller="client-picker"
+<div class="field min-w-0" data-controller="client-picker"
      data-client-picker-url-value="<%= search_admin_clients_path(format: :json) %>" data-client-picker-required-value="<%= required %>"
      data-action="quick-create:picked@window->client-picker#created keydown->client-picker#keydown focusout->client-picker#blur">
   <div class="flex items-end justify-between gap-2">

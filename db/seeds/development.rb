@@ -63,5 +63,21 @@ Tenancy.with_business(business) do
   end
 end
 
+Tenancy.with_business(business) do
+  # A draft quote (QTE-01) for the first demo client, from catalog items.
+  maria = Client.find_by(display_name: "Maria Lopez")
+  if maria && !Quote.exists?(client: maria)
+    quote = Quote.start(client: maria, created_by: owner)
+    rows = CatalogItem.where(name: [ "Spring cleanup", "Mulch installation" ]).map.with_index do |item, i|
+      { "key" => "seed-#{i}", "catalog_item" => item.uid, "name" => item.name, "description" => item.description,
+        "quantity" => i.zero? ? "1" : "4", "unit" => item.unit_label, "unit_price" => item.unit_price&.to_s || "0", "taxable" => "1" }
+    end
+    quote.title = "Spring cleanup"
+    quote.message = "Thanks for walking the yard with me. Here's what we talked about."
+    quote.sync_line_items(rows)
+    quote.save!
+  end
+end
+
 puts "Demo data ready. Sign in as owner@example.com, admin@example.com or tech@example.com " \
      "with password #{demo_password}."

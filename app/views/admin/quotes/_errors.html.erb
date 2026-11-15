@@ -1,0 +1,8 @@
+<%# locals: (quote:) -%>
+<% messages = quote.errors.full_messages + quote.current_line_items.flat_map { |line| line.errors.full_messages.map { "#{line.name.presence || "A line"}: #{_1}" } } %>
+<% if messages.any? %>
+  <div class="banner banner-danger" role="alert"><%= icon "alert-circle" %>
+    <div><p>Not saved yet. Fix <%= messages.size == 1 ? "this" : "these" %> and it'll save:</p>
+      <ul class="mt-1 list-disc pl-5"><% messages.uniq.each do |message| %><li><%= message %></li><% end %></ul></div>
+  </div>
+<% end %>
