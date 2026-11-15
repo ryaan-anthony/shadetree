@@ -74,4 +74,14 @@ class Users::AccountTest < ActionDispatch::IntegrationTest
     put user_registration_path, params: { user: { first_name: "Johnny", current_password: "password123" } }
     assert_equal "Johnny", users(:one).reload.first_name
   end
+
+  test "a bad confirmation link explains itself" do
+    get user_confirmation_path(confirmation_token: "nope")
+    assert_select ".banner-danger", /confirmation link didn't work/
+  end
+
+  test "a bad unlock link explains itself" do
+    get user_unlock_path(unlock_token: "nope")
+    assert_select ".banner-danger", /unlock link didn't work/
+  end
 end

@@ -19,7 +19,7 @@ class User < ApplicationRecord
 
   # Sign-up form checkbox; stored as terms_accepted_at.
   attribute :terms_of_service, :boolean
-  validates :terms_of_service, acceptance: { message: "must be accepted to create an account" }, on: :create, if: :new_record_from_sign_up?
+  validates :terms_of_service, acceptance: { message: "must be accepted to create an account", allow_nil: false }, on: :create, if: :new_record_from_sign_up?
   before_create { self.terms_accepted_at ||= Time.current if terms_of_service }
 
   # Relationships

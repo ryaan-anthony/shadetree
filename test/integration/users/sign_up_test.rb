@@ -37,6 +37,20 @@ class Users::SignUpTest < ActionDispatch::IntegrationTest
     assert_select ".error-text", /must be accepted/
   end
 
+  test "terms can't be skipped by leaving the field out" do
+    assert_no_difference("User.count") do
+      post user_registration_path, params: { user: { first_name: "Ana", email: "ana@example.com", password: "long enough phrase" } }
+    end
+    assert_response :unprocessable_entity
+  end
+
+  test "Devise emails use the branded layout" do
+    sign_up
+    mail = ActionMailer::Base.deliveries.last
+    assert_match "Confirm your email", mail.body.to_s
+    assert_match "activity on your Shadetree account", mail.body.to_s
+  end
+
   test "name is required and passwords need 10 characters" do
     assert_no_difference("User.count") { sign_up(first_name: "", password: "short") }
     assert_select "#user_first_name[aria-invalid='true']"

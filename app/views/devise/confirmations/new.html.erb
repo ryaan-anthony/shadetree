@@ -3,6 +3,7 @@
       lede: "We'll email a new link to confirm your address.",
       footer: render("devise/shared/links") } do %>
   <%= form_for(resource, as: resource_name, url: confirmation_path(resource_name), html: { method: :post }) do |f| %>
+    <%= render "devise/shared/token_error", resource: resource, field: :confirmation_token, what: "confirmation" %>
     <%= f.field :email, as: :email, autofocus: true, autocomplete: "email", required: true,
                 value: (resource.pending_reconfirmation? ? resource.unconfirmed_email : resource.email) %>
     <%= f.submit_button "Send link", class: "mt-5 w-full btn-lg" %>
