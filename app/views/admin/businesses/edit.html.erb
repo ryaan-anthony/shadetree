@@ -3,7 +3,7 @@
 <%= render "settings_header", current: tab %>
 
 <% if tab == "branding" %>
-  <div class="card overflow-hidden"><%= render "branding_tab" %></div>
+  <%= render "branding_tab" %>
 <% else %>
   <%= form_with model: @business, url: admin_business_path(tab:), method: :patch, class: "max-w-3xl space-y-4" do |f| %>
     <% if @business.errors.any? %>

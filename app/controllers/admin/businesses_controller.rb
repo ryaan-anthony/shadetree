@@ -69,6 +69,6 @@ class Admin::BusinessesController < Admin::BaseController
   end
 
   def branding_params
-    params.require(:business).permit(:logo_url, :brand_color)
+    params.require(:business).permit(:logo, :remove_logo, :brand_color)
   end
 end
