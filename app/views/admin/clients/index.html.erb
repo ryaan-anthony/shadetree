@@ -2,39 +2,32 @@
   <%= link_to new_admin_client_path, class: button_classes do %><%= icon "plus" %> Add client<% end %>
 <% end %>
 
-<nav class="tabs mb-4" aria-label="Client view">
-  <%= link_to "Active", admin_clients_path, class: "tab", "aria-current": ("page" unless @showing_archived) %>
-  <%= link_to "Archived (#{@archived_count})", admin_clients_path(archived: 1), class: "tab", "aria-current": ("page" if @showing_archived) %>
-</nav>
-
-<% if @clients.empty? %>
-  <div class="card">
-    <% if @showing_archived %>
-      <%= empty_state title: "No archived clients", text: "Archived clients are hidden from pickers. Their history is kept.", icon: "archive" %>
-    <% else %>
-      <%= empty_state title: "Add your first client", text: "A name and a phone number is enough to start. Quotes, jobs and invoices all begin with a client.", icon: "users" do %>
-        <%= link_to new_admin_client_path, class: button_classes do %><%= icon "plus" %> Add client<% end %>
-      <% end %>
-    <% end %>
+<%# The filters are one form, posted to #search (POST keeps search terms out of URLs); its
+    results replace only the frame below. The tabs and pagination inside the frame are
+    controls of this form (form="client-filters"), so they re-render with the results and the
+    form never holds stale state. %>
+<%= form_with url: search_admin_clients_path, method: :post, id: "client-filters", class: "mb-4 flex flex-wrap items-end gap-2",
+              data: { controller: "search-form", turbo_frame: "client_results" } do %>
+  <div class="relative min-w-0 flex-1 basis-full sm:basis-64">
+    <label class="sr-only" for="q">Search clients</label>
+    <%= icon "search", class: "pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-faint" %>
+    <%= search_field_tag :q, @query, class: "input pl-9", placeholder: "Name, phone, email or address", autocomplete: "off",
+                         data: { action: "input->search-form#queue keydown.enter->search-form#submit:prevent" } %>
   </div>
-<% else %>
-  <%= card flush: true do %>
-    <ul class="list">
-      <% @clients.each do |client| %>
-        <li id="client-<%= client.uid %>" class="flex-wrap">
-          <%= link_to admin_client_path(client), class: "flex min-w-0 flex-1 items-center gap-3" do %>
-            <%= avatar client.display_name %>
-            <span class="min-w-0">
-              <span class="block truncate font-semibold text-ink"><%= client.display_name %><% if client.company_name %> <span class="font-normal text-muted">· <%= client.company_name %></span><% end %></span>
-              <span class="block truncate text-sm2 text-muted"><%= [ client.primary_contact&.value, client.primary_property&.one_line ].compact.join(" · ").presence || "No contact details" %></span>
-            </span>
-          <% end %>
-          <% if client.tags.any? %>
-            <span class="hidden flex-wrap gap-1 sm:flex"><% client.tags.first(3).each do |tag| %><%= badge tag, dot: false %><% end %></span>
-          <% end %>
-        </li>
-      <% end %>
-    </ul>
+  <% if @tag_options.any? %>
+    <div class="field">
+      <label class="label" for="tag">Tag</label>
+      <%= select_tag :tag, options_for_select(@tag_options, @tag), include_blank: "All tags", class: "select",
+                     data: { action: "search-form#submit" } %>
+    </div>
   <% end %>
-  <div class="mt-4"><%= pagination page: @page, per_page: Admin::ClientsController::PER_PAGE, total_count: @total_count %></div>
+  <div class="field">
+    <label class="label" for="sort">Sort by</label>
+    <%= select_tag :sort, options_for_select(Client::SORTS.invert, @sort), class: "select", data: { action: "search-form#submit" } %>
+  </div>
+  <noscript><%= submit_tag "Search", class: button_classes(:secondary), name: nil %></noscript>
+<% end %>
+
+<%= turbo_frame_tag "client_results" do %>
+  <%= render "results" %>
 <% end %>

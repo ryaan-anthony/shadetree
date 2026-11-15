@@ -16,6 +16,14 @@ module FormattingHelper
     tag.time(l(local, format:), datetime: time.utc.iso8601)
   end
 
+  # local_time_ago(client.last_activity_at) => "3 days ago", with the exact local time as a
+  # tooltip and in the datetime attribute.
+  def local_time_ago(time, zone: Time.zone)
+    return if time.nil?
+
+    tag.time("#{time_ago_in_words(time)} ago", datetime: time.utc.iso8601, title: l(time.in_time_zone(zone)))
+  end
+
   # Date-only values (due dates, closures) have no zone and are never shifted.
   def local_date(date, format: :default)
     return if date.nil?

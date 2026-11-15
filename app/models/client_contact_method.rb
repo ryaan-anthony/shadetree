@@ -12,6 +12,10 @@ class ClientContactMethod < ApplicationRecord
   normalizes :value, with: ->(value) { value.to_s.strip }
   normalizes :label, with: ->(value) { value.to_s.squish.presence }
 
+  # Keep the client's search digest current (CLI-02); queued once per transaction.
+  after_save { client&.queue_search_refresh }
+  after_destroy { client&.queue_search_refresh unless destroyed_by_association }
+
   before_validation { self.business ||= client&.business }
   before_validation { self.normalized = self.class.normalize(kind, value) }
 

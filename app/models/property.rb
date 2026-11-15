@@ -10,6 +10,10 @@ class Property < ApplicationRecord
   normalizes :label, :address_line1, :address_line2, :city, :region, :postal_code, with: ->(value) { value.to_s.squish.presence }
   normalizes :country, with: ->(value) { value.to_s.strip.upcase.presence }
 
+  # Keep the client's search digest current (CLI-02); queued once per transaction.
+  after_save { client&.queue_search_refresh }
+  after_destroy { client&.queue_search_refresh unless destroyed_by_association }
+
   before_validation { self.business ||= client&.business }
 
   validates :address_line1, presence: true, length: { maximum: 120 }

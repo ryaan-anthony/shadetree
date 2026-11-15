@@ -22,17 +22,17 @@ twenty clients or five thousand, and from a phone in a truck as easily as a desk
 
 ## Acceptance criteria
 
-- [ ] A client list shows name, primary contact, primary property, tags, and (once available)
+- [x] A client list shows name, primary contact, primary property, tags, and (once available)
       outstanding balance and last activity.
-- [ ] Search matches partial name, company, email, phone (ignoring formatting) and address,
+- [x] Search matches partial name, company, email, phone (ignoring formatting) and address,
       returning results as the user types without full page reloads.
-- [ ] Filters: tag, archived vs active. Sort: name, recently added, recent activity.
-- [ ] The list paginates and stays responsive at 10,000 clients per business (seed a large
+- [x] Filters: tag, archived vs active. Sort: name, recently added, recent activity.
+- [x] The list paginates and stays responsive at 10,000 clients per business (seed a large
       business in tests or a benchmark to prove it).
-- [ ] The same search powers client pickers in quotes, jobs and invoices.
-- [ ] Mobile layout is a readable list with tap-to-open; desktop uses a table.
-- [ ] Empty states guide the user to add or import clients.
-- [ ] Technicians have no access; tenancy is covered by tests.
+- [x] The same search powers client pickers in quotes, jobs and invoices.
+- [x] Mobile layout is a readable list with tap-to-open; desktop uses a table.
+- [x] Empty states guide the user to add or import clients.
+- [x] Technicians have no access; tenancy is covered by tests.
 
 ## Out of scope
 
@@ -40,5 +40,6 @@ twenty clients or five thousand, and from a phone in a truck as easily as a desk
 
 ## Open questions
 
-- Is fuzzy matching (typos) required, or is substring matching enough? Recommend substring at
-  launch; depends on database choice (PLT-01).
+- ~~Is fuzzy matching (typos) required, or is substring matching enough?~~ Resolved: substring
+  matching at launch, on a trigram index (pg_trgm), which can also back similarity (typo)
+  search later without new infrastructure.

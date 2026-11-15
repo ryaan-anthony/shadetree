@@ -1,0 +1,35 @@
+<%# locals: (name:, selected: nil, label: "Client", required: true) -%>
+<%# The client picker for quotes, jobs and invoices (CLI-02). Searches like the client list
+    and submits the chosen client's uid as `name`; choosing dispatches "client-picker:change"
+    with Client#as_picker_json in event.detail. `required` stops the host form submitting
+    without a client in the browser; the host model must still validate presence. Its "New client" button opens the page's
+    quick-create modal: render admin/clients/quick_create (button: false) once on the page,
+    outside any form. %>
+<% picker_id = "client-picker-#{SecureRandom.hex(3)}" %>
+<div class="field" data-controller="client-picker"
+     data-client-picker-url-value="<%= search_admin_clients_path(format: :json) %>" data-client-picker-required-value="<%= required %>"
+     data-action="quick-create:picked@window->client-picker#created keydown->client-picker#keydown focusout->client-picker#blur">
+  <div class="flex items-end justify-between gap-2">
+    <label class="label" for="<%= picker_id %>"><%= label %></label>
+    <button type="button" class="<%= button_classes(:ghost, :sm) %>" data-action="client-picker#requestNew"><%= icon "plus" %> New client</button>
+  </div>
+  <%= hidden_field_tag name, selected&.uid, data: { client_picker_target: "value" }, id: nil %>
+
+  <div class="flex items-center gap-3 rounded-lg border border-line bg-white px-3 py-2.5" data-client-picker-target="chosen" <%= "hidden" unless selected %>>
+    <div class="min-w-0 flex-1">
+      <p class="truncate font-semibold text-ink" data-client-picker-target="chosenName"><%= selected&.display_name %></p>
+      <p class="truncate text-sm2 text-muted" data-client-picker-target="chosenDetail"><%= [ selected&.primary_contact&.value, selected&.primary_property&.one_line ].compact.join(" · ") %></p>
+    </div>
+    <button type="button" class="<%= button_classes(:ghost, :sm) %>" data-action="client-picker#change">Change</button>
+  </div>
+
+  <div class="relative" data-client-picker-target="searchBox" <%= "hidden" if selected %>>
+    <%= icon "search", class: "pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-faint" %>
+    <input id="<%= picker_id %>" type="search" class="input pl-9" autocomplete="off" placeholder="Search by name, phone, email or address"
+           role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="<%= picker_id %>-list"
+           data-client-picker-target="input" data-action="input->client-picker#search">
+    <ul id="<%= picker_id %>-list" class="menu left-0 right-0 top-full mt-1 max-h-72 overflow-y-auto" role="listbox" hidden
+        data-client-picker-target="list"></ul>
+  </div>
+  <p class="sr-only" aria-live="polite" data-client-picker-target="status"></p>
+</div>

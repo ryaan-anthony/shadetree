@@ -329,7 +329,10 @@
   }
   .tab:hover { color: var(--color-ink); }
   .tab[aria-current="page"],
+  .tab-radio:has(:checked),
   .tab[aria-selected="true"] { border-bottom-color: var(--color-canopy); color: var(--color-ink); }
+  .tab-radio { cursor: pointer; }
+  .tab-radio:has(:focus-visible) { outline: 2px solid var(--color-canopy); outline-offset: 2px; border-radius: 4px; }
 
   /* ---------- Flow rail: where a job is in quote → approve → schedule → work → invoice → paid ---------- */
   .flow { display: flex; align-items: center; width: 100%; min-width: max-content; margin: 0; padding: 0; list-style: none; }

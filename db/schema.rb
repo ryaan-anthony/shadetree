@@ -10,9 +10,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_15_000200) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_15_000320) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+  enable_extension "pg_trgm"
 
   create_table "business_users", force: :cascade do |t|
     t.bigint "business_id", null: false
@@ -165,7 +166,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_000200) do
     t.datetime "archived_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "search_text", default: "", null: false
+    t.datetime "last_activity_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.index "business_id, lower((display_name)::text), id", name: "index_clients_on_business_and_name"
+    t.index ["business_id", "created_at"], name: "index_clients_on_business_id_and_created_at"
+    t.index ["business_id", "last_activity_at"], name: "index_clients_on_business_id_and_last_activity_at"
     t.index ["business_id"], name: "index_clients_on_business_id"
+    t.index ["search_text"], name: "index_clients_on_search_text", opclass: :gin_trgm_ops, using: :gin
     t.index ["tags"], name: "index_clients_on_tags", using: :gin
     t.index ["uid"], name: "index_clients_on_uid", unique: true
   end
