@@ -39,6 +39,9 @@ gem "kamal", require: false
 gem "thruster", require: false
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
+# PDFs from the client-page HTML with headless Chrome (ADR 0010, QTE-02); QR codes on them
+gem "ferrum", "~> 0.17"
+gem "rqrcode", "~> 3.1"
 gem "image_processing", "~> 1.2"
 
 group :development, :test do
@@ -61,6 +64,7 @@ group :development do
 end
 
 group :test do
+  gem "pdf-reader", "~> 2.14"
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
   gem "capybara"
   gem "selenium-webdriver"

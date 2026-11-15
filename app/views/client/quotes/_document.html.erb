@@ -12,6 +12,7 @@
     <% if quote.property %><div><dt>Property</dt><dd><%= safe_join(quote.property.address_lines, tag.br) %></dd></div><% end %>
     <div><dt>Date</dt><dd><%= local_date(quote.created_at.in_time_zone(business.time_zone).to_date) %></dd></div>
     <% if quote.expires_on %><div><dt>Valid until</dt><dd><%= local_date(quote.expires_on) %></dd></div><% end %>
+    <% if pdf %><div><dt>Status</dt><dd><%= quote.state_label %></dd></div><% end %>
   </dl>
 </header>
 

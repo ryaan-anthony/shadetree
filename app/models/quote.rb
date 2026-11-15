@@ -9,6 +9,7 @@ class Quote < ApplicationRecord
   include BusinessOwned
   include HasMoney
   include HasDiscount
+  include HasPdf
 
   # QTE-04 sends (draft → sent); QTE-05 records the client's answer. "Viewed" comes from the
   # client link and "expired" from expires_on, so neither is stored.
@@ -63,6 +64,34 @@ class Quote < ApplicationRecord
   end
 
   def expired? = expires_on.present? && expires_on < business.today && status == "sent"
+
+  # QTE-02: the PDF. Sent quotes keep theirs (the same file until something on it changes);
+  # drafts are rendered fresh for staff.
+  def pdf_html = PdfDocument.render("pdfs/quote", quote: self, business:, online_url: pdf_online_url)
+  def pdf_filename = "Quote #{number}.pdf"
+  def pdf_paper = PdfRenderer.paper_for(business.country)
+  def store_pdf? = client_visible?
+
+  # Make the PDF when a quote is sent or answered, ahead of the first download.
+  after_commit -> { QuotePdfJob.perform_later(business_id, id) }, on: :update, if: -> { saved_change_to_status? && client_visible? }
+
+  def pdf_footer
+    %(<div style="width:100%;margin:0 0.55in;display:flex;justify-content:space-between;font:7.5pt sans-serif;color:#64748b">) +
+      %(<span>#{ERB::Util.h(business.name)}, quote #{ERB::Util.h(number)}</span>) +
+      %(<span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span></div>)
+  end
+
+  # The client page, for the QR code: the newest active link, if the quote has been sent.
+  def pdf_online_url
+    link = ClientLink.active.where(linkable: self).order(created_at: :desc).first if client_visible?
+    link && Rails.application.routes.url_helpers.client_link_url(link.token, **PdfDocument.url_options)
+  end
+
+  # The state in words, for the PDF.
+  def state_label
+    { draft: "Draft", awaiting: "Awaiting approval", approved: "Approved", declined: "Declined",
+      changes_requested: "Changes requested", expired: "Expired" }.fetch(client_state)
+  end
 
   # PLT-12: the partial client links render for a quote.
   def client_link_partial = "client/quotes/quote"
