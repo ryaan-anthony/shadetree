@@ -30,4 +30,30 @@ class BusinessUserOwnerRuleTest < ActiveSupport::TestCase
   test "deleting the business removes its memberships" do
     assert_difference("BusinessUser.count", -1) { @business.destroy }
   end
+
+  test "a rejected change can't be followed by destroying the same instance" do
+    assert_not @membership.update(role: "admin")
+    assert_not @membership.destroy, "guard reads the database, not unsaved attributes"
+    assert BusinessUser.exists?(@membership.id)
+  end
+
+  test "memberships can't move between businesses or users" do
+    assert_includes BusinessUser.readonly_attributes, "business_id"
+    assert_includes BusinessUser.readonly_attributes, "user_id"
+  end
+
+  test "deleting an account removes its own businesses first" do
+    assert_difference("Business.count", -1) { @owner.destroy }
+  end
+
+  test "an account that is the last owner of someone else's business can't be deleted" do
+    member = User.create!(email: "member@example.com", password: "password123", confirmed_at: Time.current)
+    theirs = Business.create!(name: "Theirs", owner: users(:two))
+    BusinessUser.create!(business: theirs, user: member, role: "owner")
+    theirs.business_users.find_by!(user: users(:two)).update!(role: "admin")
+
+    assert_not member.destroy
+    assert User.exists?(member.id)
+    assert theirs.business_users.active.owners.exists?(user: member)
+  end
 end

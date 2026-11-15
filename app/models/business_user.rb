@@ -16,8 +16,12 @@ class BusinessUser < ApplicationRecord
   validates :role, presence: true, inclusion: { in: ROLES }
   validates :active, inclusion: { in: [ true, false ] }
 
-  # A business always keeps at least one active Owner (ACC-02).
-  validate :keeps_an_active_owner, on: :update
+  # A membership never moves between users or businesses.
+  attr_readonly :user_id, :business_id
+
+  # A business always keeps at least one active Owner (ACC-02). Checked against the database
+  # under a lock on the business row, so concurrent demotions can't both pass.
+  before_update :keeps_an_active_owner
   before_destroy :ensure_not_last_owner
 
   # Scopes
@@ -49,18 +53,26 @@ class BusinessUser < ApplicationRecord
 
   LAST_OWNER_MESSAGE = "is the last owner. Make someone else an owner first".freeze
 
+  # Was this membership an active Owner in the database (ignoring unsaved changes)?
+  def persisted_active_owner? = attribute_in_database(:role) == "owner" && attribute_in_database(:active)
+
+  def other_active_owner_exists?
+    Business.lock.find(business_id) # serialise owner changes per business
+    business.business_users.active.owners.where.not(id:).exists?
+  end
+
   def keeps_an_active_owner
-    was_active_owner = role_was == "owner" && active_was
-    still_active_owner = owner? && active?
-    return unless was_active_owner && !still_active_owner
-    return if business.business_users.active.owners.where.not(id:).exists?
+    return unless persisted_active_owner? && !(owner? && active?)
+    return if other_active_owner_exists?
 
     errors.add(:base, "#{user.full_name} #{LAST_OWNER_MESSAGE}")
+    throw :abort
   end
 
   def ensure_not_last_owner
-    return if destroyed_by_association # the business itself is being deleted
-    return unless last_active_owner?
+    return if destroyed_by_association&.active_record == Business # the business itself is being deleted
+    return unless persisted_active_owner?
+    return if other_active_owner_exists?
 
     errors.add(:base, "#{user.full_name} #{LAST_OWNER_MESSAGE}")
     throw :abort

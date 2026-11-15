@@ -49,6 +49,14 @@ class BusinessOwnedTest < ActiveSupport::TestCase
     end
   end
 
+  test "a custom validation context can't skip the business check" do
+    as_business(@one) do
+      stray = Widget.new(name: "stray", business: @two)
+      assert_not stray.save(context: :setup)
+      assert_includes stray.errors[:business], "doesn't match the current business"
+    end
+  end
+
   test "records referenced by id must be in the same business" do
     as_business(@one) do
       child = Widget.new(name: "child", parent_id: @theirs.id)
