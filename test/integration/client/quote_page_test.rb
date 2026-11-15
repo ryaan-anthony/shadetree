@@ -81,12 +81,37 @@ class Client::QuotePageTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "photos and files are served through the link, and stop when it's revoked" do
+    get client_link_path(@link.token)
+    photo = as_business(@business) { @quote.attachments_attachments.first }
+    assert_select "img[src=?]", client_quote_file_path(@link.token, photo, size: "web")
+    assert_select "a[href=?]", client_quote_file_path(@link.token, photo)
+    assert_no_match %r{/rails/active_storage/}, response.body
+
+    get client_quote_file_path(@link.token, photo)
+    assert_response :redirect
+    assert_match %r{/rails/active_storage/disk/}, response.location
+    get client_quote_file_path(@link.token, photo, size: "web")
+    assert_response :redirect
+
+    other = as_business(@business) do
+      Quote.start(client: @quote.client).tap { _1.attach_files([ Rack::Test::UploadedFile.new(file_fixture("logo.png"), "image/png") ]); _1.save! }
+    end
+    get client_quote_file_path(@link.token, as_business(@business) { other.attachments_attachments.first })
+    assert_response :not_found, "another quote's file isn't reachable through this link"
+
+    as_business(@business) { @link.revoke! }
+    get client_quote_file_path(@link.token, photo)
+    assert_response :gone
+  end
+
   test "an expired quote can be viewed, not approved, and the client can ask for an updated one once" do
     set_quote(expires_on: 1.day.ago.to_date)
     get client_link_path(@link.token)
     assert_select ".banner-warning", /expired on/
     assert_select "#quote-actions", /This quote has expired/
 
+    lock_version = as_business(@business) { @quote.reload.lock_version }
     post request_quote_update_path(@link.token)
     assert_redirected_to client_link_path(@link.token)
     follow_redirect!
@@ -94,9 +119,14 @@ class Client::QuotePageTest < ActionDispatch::IntegrationTest
     requested_at = as_business(@business) { @quote.reload.update_requested_at }
     assert requested_at
 
-    post request_quote_update_path(@link.token)
+    travel 2.hours do
+      post request_quote_update_path(@link.token)
+      assert_redirected_to client_link_path(@link.token)
+      assert_match "You've already asked", flash[:notice]
+    end
     assert_equal requested_at, as_business(@business) { @quote.reload.update_requested_at }
     assert_equal 1, as_business(@business) { @link.events.where(kind: "quote_update_requested").count }
+    assert_equal lock_version, as_business(@business) { @quote.reload.lock_version }, "staff editing isn't interrupted"
 
     sign_in users(:one)
     post switch_admin_business_path, params: { business: @business.uid }
@@ -106,6 +136,29 @@ class Client::QuotePageTest < ActionDispatch::IntegrationTest
 
   test "a quote that hasn't expired can't be marked as needing an update" do
     post request_quote_update_path(@link.token)
+    assert_redirected_to client_link_path(@link.token)
+    assert_nil flash[:notice]
+    assert_nil as_business(@business) { @quote.reload.update_requested_at }
+    assert_equal 0, as_business(@business) { @link.events.where(kind: "quote_update_requested").count }
+  end
+
+  test "an update can't be asked for through a revoked, expired or unknown link, or for a draft" do
+    set_quote(expires_on: 1.day.ago.to_date)
+    as_business(@business) { @link.update_columns(expires_at: 1.minute.ago) }
+    post request_quote_update_path(@link.token)
+    assert_response :gone
+
+    as_business(@business) { @link.update_columns(expires_at: 1.day.from_now) }
+    as_business(@business) { @link.revoke! }
+    post request_quote_update_path(@link.token)
+    assert_response :gone
+
+    assert_not_found_across_businesses { post request_quote_update_path("1" * ClientLink::TOKEN_LENGTH) }
+    assert_not_found_across_businesses { post request_quote_update_path("not-a-token") }
+
+    fresh = as_business(@business) { ClientLink.issue!(@quote) }
+    set_quote(status: "draft")
+    assert_not_found_across_businesses { post request_quote_update_path(fresh.token) }
     assert_nil as_business(@business) { @quote.reload.update_requested_at }
   end
 

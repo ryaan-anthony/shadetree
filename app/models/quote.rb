@@ -23,7 +23,10 @@ class Quote < ApplicationRecord
   belongs_to :created_by, class_name: "User", optional: true
   has_many :line_items, -> { order(:position, :id) }, class_name: "QuoteLineItem", inverse_of: :quote,
            dependent: :delete_all, autosave: true
-  has_many_attached :attachments
+  # Photos get a page-sized version at upload, so the client's first view doesn't wait on it.
+  has_many_attached :attachments do |attachable|
+    attachable.variant :web, resize_to_limit: [ 640, 640 ], preprocessed: true
+  end
 
   def discount_currency = currency
 
@@ -63,6 +66,16 @@ class Quote < ApplicationRecord
 
   # PLT-12: the partial client links render for a quote.
   def client_link_partial = "client/quotes/quote"
+
+  # PLT-12: a quote's link outlives the quote by a month, so an expired quote can still be
+  # seen and an update asked for; never less than the default link lifetime.
+  CLIENT_LINK_GRACE = 30.days
+  def client_link_expires_at
+    default = ClientLink::DEFAULT_LIFETIME.from_now
+    return default unless expires_on
+
+    [ expires_on.in_time_zone(business.time_zone).end_of_day + CLIENT_LINK_GRACE, default ].max
+  end
 
   # Starts a draft for a client with the business's defaults: next number, expiry, terms,
   # and the tax rates new documents get (none for a tax-exempt client).

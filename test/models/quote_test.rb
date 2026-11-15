@@ -173,4 +173,17 @@ class QuoteTest < ActiveSupport::TestCase
       assert_equal :awaiting, quote.client_state
     end
   end
+
+  test "a quote's client link lasts a month past the quote, and never less than the default" do
+    quote = as_business(@business) { Quote.start(client: client) }
+    as_business(@business) do
+      quote.expires_on = @business.today + 120
+      expected = (quote.expires_on.in_time_zone(@business.time_zone).end_of_day + 30.days)
+      assert_in_delta expected, ClientLink.issue!(quote).expires_at, 1
+      quote.expires_on = @business.today + 5
+      assert_in_delta ClientLink::DEFAULT_LIFETIME.from_now, quote.client_link_expires_at, 1
+      quote.expires_on = nil
+      assert_in_delta ClientLink::DEFAULT_LIFETIME.from_now, quote.client_link_expires_at, 1
+    end
+  end
 end
