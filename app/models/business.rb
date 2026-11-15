@@ -48,7 +48,10 @@ class Business < ApplicationRecord
   validates :quote_terms, :invoice_terms, length: { maximum: 5_000 }
   before_validation :default_currency_from_country, if: :new_record?
   normalizes :quote_number_prefix, :invoice_number_prefix, with: ->(prefix) { prefix.to_s.strip.upcase }
-  normalizes :website, with: ->(url) { url.strip.then { _1.blank? || _1.match?(%r{\Ahttps?://}i) ? _1 : "https://#{_1}" } }
+  # Adds https:// only when no scheme was typed, so "ftp://…" still fails the format check.
+  normalizes :website, with: ->(url) { url.strip.then { _1.blank? || _1.match?(%r{\A[a-z][a-z0-9+.-]*://}i) ? _1 : "https://#{_1}" } }
+  # Store IANA identifiers ("America/New_York"), which is what the settings select offers.
+  normalizes :timezone, with: ->(zone) { ActiveSupport::TimeZone[zone.to_s.strip]&.tzinfo&.identifier || zone.to_s.strip.presence }
 
   # Scopes
   scope :active, -> { where(active: true) }

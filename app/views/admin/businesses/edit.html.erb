@@ -57,7 +57,8 @@
           <%= f.field :email, as: :email, label: "Business email", optional: true, placeholder: "office@example.com", autocomplete: "email" %>
           <%= f.field :phone, as: :phone, label: "Phone", optional: true, placeholder: "(555) 123-4567", autocomplete: "tel" %>
         </div>
-        <%= f.field :website, as: :url, optional: true, placeholder: "https://example.com" %>
+        <%# A text input (not type=url) so "example.com" reaches the server, which adds https://. %>
+        <%= f.field :website, optional: true, placeholder: "example.com", inputmode: "url", autocomplete: "url", spellcheck: false %>
       <% end %>
 
       <%= card title: "Address", subtitle: "Where clients and documents can reach you." do %>
@@ -74,7 +75,7 @@
       <%= card title: "Time zone and currency", subtitle: "Used for scheduling, due dates and every price." do %>
         <div class="grid gap-4 sm:grid-cols-2">
           <%= f.field :timezone, as: :select, label: "Time zone", include_blank: "Choose a time zone",
-                      choices: grouped_options_for_select(time_zone_options, @business.timezone) %>
+                      choices: grouped_options_for_select(time_zone_options(@business.timezone), time_zone_identifier(@business.timezone)) %>
           <%= f.field :currency, as: :select, choices: currency_options,
                       help: "Set once you start invoicing; changing it later doesn't convert old documents." %>
         </div>

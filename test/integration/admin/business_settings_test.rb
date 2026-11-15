@@ -84,4 +84,26 @@ class Admin::BusinessSettingsTest < ActionDispatch::IntegrationTest
     assert_not_equal @business.name, snapshot["name"]
     assert_equal %w[address_lines currency email name phone website], snapshot.keys.sort
   end
+
+  test "the website field accepts a bare domain in the browser and other schemes stay invalid" do
+    get edit_admin_business_path(tab: "business")
+    assert_select "input#business_website[type=text][inputmode=url]"
+    @business.update(website: "ftp://example.com")
+    assert_equal "ftp://example.com", @business.website
+    assert @business.errors.of_kind?(:website, :invalid)
+  end
+
+  test "a Rails time zone name is stored as its identifier and stays selected" do
+    @business.update_column(:timezone, "Eastern Time (US & Canada)")
+    get edit_admin_business_path(tab: "business")
+    assert_select "#business_timezone option[selected][value='America/New_York']"
+    @business.update!(timezone: "Eastern Time (US & Canada)")
+    assert_equal "America/New_York", @business.timezone
+  end
+
+  test "a valid zone without a friendly name is kept as an option" do
+    @business.update_column(:timezone, "America/Boise")
+    get edit_admin_business_path(tab: "business")
+    assert_select "#business_timezone option[selected][value='America/Boise']", "America/Boise"
+  end
 end
