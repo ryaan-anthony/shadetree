@@ -56,10 +56,22 @@ class Branding
     "--color-brand: #{color}; --color-brand-ink: #{ink}; --color-brand-soft: color-mix(in srgb, #{color} 10%, white);"
   end
 
-  def logo? = business.respond_to?(:logo) && business.logo.attached? && business.logo.blob&.persisted?
+  def logo? = logo_attachment.present?
 
   # A sized logo for :web, :email or :pdf, or nil without one.
-  def logo(size = :web) = logo? ? business.logo.variant(size) : nil
+  def logo(size = :web) = logo_attachment&.variant(size)
+
+  # The saved logo. A new upload waiting on a save that failed validation isn't shown; the
+  # logo already saved is, until the new one is.
+  def logo_attachment
+    return @logo_attachment if defined?(@logo_attachment)
+
+    @logo_attachment =
+      if !business.respond_to?(:logo) then nil
+      elsif business.attachment_changes["logo"].nil? then (business.logo.attachment if business.logo.attached?)
+      elsif business.persisted? then ActiveStorage::Attachment.find_by(record: business, name: "logo")
+      end
+  end
 
   # Up to two initials, for the name-based wordmark.
   def initials = name.split.filter_map { _1[0] }.first(2).join.upcase

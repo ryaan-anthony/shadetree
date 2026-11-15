@@ -37,12 +37,12 @@ class Business < ApplicationRecord
   normalizes :brand_color, with: ->(color) { color.to_s.strip.downcase.sub(/\A(?=\h{6}\z)/, "#").presence }
 
   # CAT-02: the uploaded logo. Branding::LOGO_SIZES are the sizes pages, emails and PDFs use.
-  LOGO_TYPES = %w[image/png image/jpeg image/webp].freeze
-  LOGO_MAX_BYTES = 5.megabytes
+  LOGO_TYPES = LogoUpload::FORMATS.values.map(&:first).freeze
+  LOGO_MAX_BYTES = LogoUpload::MAX_BYTES
   has_one_attached :logo do |attachable|
     Branding::LOGO_SIZES.each { |name, transform| attachable.variant name, **transform, saver: { strip: true } }
   end
-  validate :logo_is_a_small_image
+  validate { errors.add(:logo, @logo_error) if @logo_error }
   attr_accessor :remove_logo
   before_save { logo.purge_later if ActiveModel::Type::Boolean.new.cast(remove_logo) && attachment_changes["logo"].nil? && logo.attached? }
   validates :currency, inclusion: { in: Money::CURRENCIES.keys }, allow_blank: true
@@ -133,6 +133,15 @@ class Business < ApplicationRecord
   # Logo, brand color and what's derived from them (CAT-02).
   def branding = Branding.new(self)
 
+  # Every logo goes through LogoUpload: decoded, size-checked and stripped of metadata. A
+  # rejected file leaves the current logo in place and adds an error on save; a blank
+  # value (no file chosen) changes nothing.
+  def logo=(attachable)
+    result = LogoUpload.prepare(attachable)
+    @logo_error = result.error
+    super(result.attachable) if result.attachable
+  end
+
   def user_role(user)
     business_users.find_by(user: user)&.role
   end
@@ -147,14 +156,6 @@ class Business < ApplicationRecord
     return if timezone.blank? || ActiveSupport::TimeZone[timezone.to_s]
 
     errors.add(:timezone, "is not a time zone we recognise")
-  end
-
-  def logo_is_a_small_image
-    return unless attachment_changes["logo"] && logo.attached?
-
-    blob = logo.blob
-    errors.add(:logo, "must be a PNG, JPEG or WebP image") unless blob.content_type.in?(LOGO_TYPES)
-    errors.add(:logo, "must be smaller than #{LOGO_MAX_BYTES / 1.megabyte} MB") if blob.byte_size > LOGO_MAX_BYTES
   end
 
   def set_default_brand_color

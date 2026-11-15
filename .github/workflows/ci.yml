@@ -82,6 +82,8 @@ jobs:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/shadetree_test
     steps:
       - uses: actions/checkout@v7
+      - name: Install libvips (image processing, ADR 0008)
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends libvips42
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: .ruby-version
@@ -128,6 +130,8 @@ jobs:
       COVERAGE: "false"
     steps:
       - uses: actions/checkout@v7
+      - name: Install libvips (image processing, ADR 0008)
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends libvips42
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: .ruby-version

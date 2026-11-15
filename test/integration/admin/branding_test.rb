@@ -42,6 +42,22 @@ class Admin::BrandingTest < ActionDispatch::IntegrationTest
     assert_not @business.reload.logo.attached?
   end
 
+  test "a failed save keeps showing the saved logo" do
+    @business.update!(logo: { io: file_fixture("logo.png").open, filename: "logo.png" })
+    patch admin_business_path(tab: "branding"), params: { business: { brand_color: "orange", logo: fixture_file_upload("logo.png", "image/png") } }
+    assert_response :unprocessable_content
+    assert_select "img[alt='Your current logo']"
+    assert_select "input[name='business[remove_logo]']"
+    assert_select ".biz-switch .biz-logo img"
+    assert_select "input#business_logo[aria-describedby~=logo-check]"
+  end
+
+  test "direct uploads are switched off" do
+    sign_out :user
+    post "/rails/active_storage/direct_uploads", params: { blob: { filename: "x.png", byte_size: 10, checksum: "abc", content_type: "image/png" } }
+    assert_response :not_found
+  end
+
   test "a hard-to-read color is saved with a warning shown" do
     patch admin_business_path(tab: "branding"), params: { business: { brand_color: "#facc15" } }
     follow_redirect!

@@ -6,10 +6,12 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = ["hex", "picker", "swatch", "warnings", "preview", "previewLogo", "previewMark", "previewName",
     "logoInput", "logoError", "removeLogo", "currentLogo"]
-  static values = { maxBytes: Number, types: String, minText: Number, minPage: Number }
+  // savedLogo comes from the server, not the page, so a page restored from Turbo's cache
+  // (with a since-revoked blob: preview) still shows the saved logo.
+  static values = { maxBytes: Number, types: String, minText: Number, minPage: Number, savedLogo: String }
 
   connect() {
-    this.savedLogo = this.hasPreviewLogoTarget && !this.previewLogoTarget.hidden ? this.previewLogoTarget.src : null
+    this.objectUrl = null
     this.render()
   }
 
@@ -36,8 +38,7 @@ export default class extends Controller {
     let problem = null
     if (file && !this.typesValue.split(",").includes(file.type)) problem = "Logo must be a PNG, JPEG or WebP image."
     else if (file && file.size > this.maxBytesValue) problem = `Logo must be smaller than ${Math.round(this.maxBytesValue / 1048576)} MB.`
-    this.logoErrorTarget.textContent = problem || ""
-    this.logoErrorTarget.hidden = !problem
+    this.logoErrorTarget.textContent = problem ? problem : ""
     this.logoInputTarget.setAttribute("aria-invalid", problem ? "true" : "false")
 
     if (this.objectUrl) URL.revokeObjectURL(this.objectUrl)
@@ -60,7 +61,7 @@ export default class extends Controller {
     }
 
     const removing = this.hasRemoveLogoTarget && this.removeLogoTarget.checked
-    const logo = this.objectUrl || (removing ? null : this.savedLogo)
+    const logo = this.objectUrl || (removing ? null : this.savedLogoValue || null)
     this.previewLogoTarget.hidden = !logo
     if (logo) this.previewLogoTarget.src = logo
     this.previewMarkTarget.hidden = !!logo
@@ -81,6 +82,11 @@ export default class extends Controller {
       if (contrast(color, ink) < this.minTextValue) messages.push("Button text may be hard to read on this color. Pick a darker or lighter shade.")
       if (contrast(color, WHITE) < this.minPageValue) messages.push("This color is light against a white page, so links and outlines may be hard to see.")
     }
+    // Rewrite the live region only when the advice changes, so screen readers don't repeat it
+    // on every keystroke or picker drag.
+    const key = messages.join("|")
+    if (key === this.lastWarnings) return
+    this.lastWarnings = key
     this.warningsTarget.replaceChildren(...messages.map((message) => {
       const item = document.createElement("li")
       item.className = "flex items-start gap-2 text-sm2 text-warning"
