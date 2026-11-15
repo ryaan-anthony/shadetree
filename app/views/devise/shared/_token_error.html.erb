@@ -1,0 +1,8 @@
+<%# Shown when a confirmation or unlock link was invalid, expired or already used.
+    locals: (resource:, field:, what:) %>
+<% if resource.errors[field].any? %>
+  <div class="banner banner-danger mb-5" role="alert">
+    <%= icon "alert-circle" %>
+    <p>That <%= what %> link didn't work: it may have expired or already been used. Enter your email to get a new one.</p>
+  </div>
+<% end %>
