@@ -68,6 +68,14 @@ Rails.application.routes.draw do
       end
     end
 
+    # Tax rates (CAT-04)
+    resources :tax_rates, except: %i[show destroy] do
+      member do
+        patch :archive
+        patch :restore
+      end
+    end
+
     # Service catalog (CAT-03)
     resources :catalog_items, path: "catalog", except: %i[show destroy] do
       member do

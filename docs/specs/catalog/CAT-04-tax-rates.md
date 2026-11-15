@@ -42,5 +42,5 @@ rates and a default, so taxable line items are taxed correctly and documents sho
 
 ## Open questions
 
-- Is tax-inclusive pricing needed at launch (common outside the US)? Recommend support in the
-  math (PLT-08) but expose the setting later.
+- ~~Is tax-inclusive pricing needed at launch (common outside the US)?~~ Resolved: the math
+  supports it (PLT-08, `prices_include_tax:`); the business setting is exposed later.
