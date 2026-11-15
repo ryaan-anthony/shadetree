@@ -3,7 +3,8 @@
 #  - Production: when a GitHub release is published, or by running this workflow by hand.
 #    It promotes the image already built and tested on staging for that commit.
 #  - Rollback: run by hand with "rollback_to" set to a previous release's commit SHA.
-# Jobs skip themselves until the environment's variables are configured.
+# Jobs skip themselves until the repository-level switches STAGING_READY / PRODUCTION_READY are
+# "true" (job conditions can't see environment-scoped variables). See docs/runbooks/operations.md.
 name: Deploy
 
 on:
@@ -33,7 +34,7 @@ jobs:
   staging:
     name: Staging
     if: >-
-      vars.STAGING_HOST != '' && (
+      vars.STAGING_READY == 'true' && (
         (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push') ||
         (github.event_name == 'workflow_dispatch' && inputs.environment == 'staging'))
     runs-on: ubuntu-24.04
@@ -87,7 +88,7 @@ jobs:
   production:
     name: Production
     if: >-
-      vars.PRODUCTION_HOST != '' && (
+      vars.PRODUCTION_READY == 'true' && (
         github.event_name == 'release' ||
         (github.event_name == 'workflow_dispatch' && inputs.environment == 'production'))
     runs-on: ubuntu-24.04
@@ -129,11 +130,16 @@ jobs:
       - name: Trust the host key
         run: mkdir -p ~/.ssh && echo "${{ vars.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
       - uses: docker/setup-buildx-action@v3
+      - name: Sign in to the registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
       - name: Deploy or roll back
         run: |
           if [ -n "${{ inputs.rollback_to }}" ]; then
             bin/kamal rollback "${{ inputs.rollback_to }}" -d production
           else
-            # Promote the image staging already built and tested for this commit; build only if missing.
-            bin/kamal deploy -d production --skip-push --version="${{ github.sha }}" || bin/kamal deploy -d production
+            # Promote only the image staging built and ran for this commit. If it doesn't exist
+            # (the commit never reached staging), fail rather than build an untested image.
+            image="ghcr.io/${{ github.repository }}:${{ github.sha }}"
+            docker manifest inspect "$image" > /dev/null || { echo "::error::$image was never deployed to staging"; exit 1; }
+            bin/kamal deploy -d production --skip-push --version="${{ github.sha }}"
           fi

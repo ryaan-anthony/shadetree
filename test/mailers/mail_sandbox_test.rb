@@ -1,8 +1,8 @@
 require "test_helper"
 
 class MailSandboxTest < ActiveSupport::TestCase
-  def build_mail(to:, cc: nil, subject: "Your quote")
-    Mail.new(to:, cc:, subject:, from: "no-reply@example.com", body: "hi")
+  def build_mail(to:, cc: nil, bcc: nil, subject: "Your quote")
+    Mail.new(to:, cc:, bcc:, subject:, from: "no-reply@example.com", body: "hi")
   end
 
   def with_env(values)
@@ -27,9 +27,22 @@ class MailSandboxTest < ActiveSupport::TestCase
       mail = build_mail(to: [ "client@gmail.com" ], cc: [ "boss@client.com" ])
       MailSandbox.delivering_email(mail)
       assert_equal [ "sandbox@shadetree-team.test" ], mail.to
-      assert_nil mail.cc
+      assert_empty Array(mail.cc)
       assert_match "client@gmail.com, boss@client.com", mail.subject
       assert mail.perform_deliveries
+    end
+  end
+
+  test "mixed recipients keep their fields, the sandbox gets a copy, and Bcc stays hidden" do
+    with_env("MAIL_ALLOWLIST" => "@team.test", "MAIL_SANDBOX_TO" => "sandbox@team.test") do
+      mail = build_mail(to: [ "dev@team.test", "client@gmail.com" ], cc: [ "qa@team.test" ], bcc: [ "lead@team.test", "secret@client.com" ])
+      MailSandbox.delivering_email(mail)
+      assert_equal [ "dev@team.test", "sandbox@team.test" ], mail.to
+      assert_equal [ "qa@team.test" ], mail.cc
+      assert_equal [ "lead@team.test" ], mail.bcc
+      assert_match "client@gmail.com", mail.subject
+      assert_no_match "secret@client.com", mail.subject
+      assert_no_match "lead@team.test", mail.subject
     end
   end
 

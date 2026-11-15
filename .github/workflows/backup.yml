@@ -3,7 +3,9 @@
 #    The managed database's own daily snapshots and point-in-time recovery stay on as well.
 #  - Weekly: restore the latest dump into a throwaway PostgreSQL and check it, so we know
 #    backups actually restore.
-# Retention is a lifecycle rule on the backup bucket (30 daily dumps, 12 monthly).
+# Retention is two lifecycle rules on the backup bucket: db/ expires after 30 days, db-monthly/
+# (a copy made on the 1st) after 365 days. Jobs run in the `backups` environment (no approval
+# gate) and skip until the repository variable BACKUPS_READY is "true".
 name: Backup
 
 on:
@@ -23,9 +25,9 @@ permissions:
 jobs:
   backup:
     name: Back up production
-    if: vars.BACKUP_BUCKET != '' && !(github.event_name == 'schedule' && github.event.schedule == '41 8 * * 0') && !inputs.drill
+    if: vars.BACKUPS_READY == 'true' && !(github.event_name == 'schedule' && github.event.schedule == '41 8 * * 0') && !inputs.drill
     runs-on: ubuntu-24.04
-    environment: production
+    environment: backups
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_SECRET_ACCESS_KEY }}
@@ -47,22 +49,27 @@ jobs:
           /usr/lib/postgresql/17/bin/pg_dump --format=custom --no-owner --no-privileges "$DATABASE_URL" > "primary-$stamp.dump"
           test -s "primary-$stamp.dump"
           aws s3 cp "primary-$stamp.dump" "s3://$BACKUP_BUCKET/db/primary-$stamp.dump"
+          if [ "$(date -u +%d)" = "01" ]; then
+            aws s3 cp "primary-$stamp.dump" "s3://$BACKUP_BUCKET/db-monthly/primary-$stamp.dump"
+          fi
       - name: Copy uploaded files
         env:
           SOURCE_ACCESS_KEY_ID: ${{ secrets.STORAGE_ACCESS_KEY_ID }}
           SOURCE_SECRET_ACCESS_KEY: ${{ secrets.STORAGE_SECRET_ACCESS_KEY }}
           SOURCE_BUCKET: ${{ vars.STORAGE_BUCKET }}
+          SOURCE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
         run: |
           mkdir files
-          AWS_ACCESS_KEY_ID=$SOURCE_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$SOURCE_SECRET_ACCESS_KEY \
+          # The app bucket may live in another account: use its own endpoint and keys.
+          AWS_ACCESS_KEY_ID=$SOURCE_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$SOURCE_SECRET_ACCESS_KEY AWS_ENDPOINT_URL=$SOURCE_ENDPOINT \
             aws s3 sync "s3://$SOURCE_BUCKET" files --only-show-errors
           aws s3 sync files "s3://$BACKUP_BUCKET/files" --only-show-errors
 
   restore-drill:
     name: Restore drill
-    if: vars.BACKUP_BUCKET != '' && ((github.event_name == 'schedule' && github.event.schedule == '41 8 * * 0') || inputs.drill)
+    if: vars.BACKUPS_READY == 'true' && ((github.event_name == 'schedule' && github.event.schedule == '41 8 * * 0') || inputs.drill)
     runs-on: ubuntu-24.04
-    environment: production
+    environment: backups
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_SECRET_ACCESS_KEY }}
@@ -93,6 +100,7 @@ jobs:
           createdb -h localhost -U postgres shadetree_restore
           pg_restore -h localhost -U postgres --no-owner --dbname=shadetree_restore latest.dump
       - name: Check the restored data
+        shell: bash # pipefail, so a failed check isn't hidden by tee
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/shadetree_restore
           RAILS_ENV: test
