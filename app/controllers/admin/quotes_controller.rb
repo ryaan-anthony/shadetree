@@ -35,11 +35,13 @@ class Admin::QuotesController < Admin::BaseController
   # tab is refused instead of overwriting newer work.
   def update
     saved = Quote.transaction do
-      apply_builder_params
       # Always write the quote row, so its lock_version is checked and bumped even when only
-      # lines changed: a stale tab can't overwrite line edits.
+      # lines changed: a stale tab can't overwrite line edits. Marking it changed first also
+      # stops attachments.attach saving the quote early, before everything is validated.
       @quote.updated_at = Time.current
-      @quote.save
+      apply_builder_params
+      # A failed save keeps nothing from this request (lines, files), not just the quote row.
+      @quote.save || raise(ActiveRecord::Rollback)
     end
     response.set_header("X-Lock-Version", @quote.lock_version.to_s)
     respond_to do |format|
@@ -104,8 +106,7 @@ class Admin::QuotesController < Admin::BaseController
     attrs = builder_params
     @quote.lock_version = attrs[:lock_version] if attrs.key?(:lock_version)
     change_client(attrs[:client]) if attrs[:client].present? && attrs[:client] != @quote.client.uid
-    # After a client change the submitted property belongs to the old client, so keep the new default.
-    @quote.property = attrs[:property].present? ? @quote.client.properties.find_by(uid: attrs[:property]) : nil if attrs.key?(:property) && !@client_changed
+    assign_property(attrs[:property]) if attrs.key?(:property)
     @quote.assign_attributes(attrs.slice(:title, :message, :internal_notes, :terms, :expires_on, :prices_include_tax))
     @quote.set_discount(attrs[:discount_kind], attrs[:discount_value]) if attrs.key?(:discount_kind)
     # After a client change the ticks were for the old client; change_client chose the taxes.
@@ -114,6 +115,15 @@ class Admin::QuotesController < Admin::BaseController
     # that sent its (possibly empty) list, so removing every line works.
     @quote.sync_line_items((attrs[:lines] || {}).values) if attrs.key?(:lines) || attrs[:lines_present]
     @quote.attach_files(attrs[:attachments]) if attrs[:attachments].present?
+  end
+
+  # After a client change, a submitted property only counts if it's the new client's (the
+  # selector may already show the new client's properties); otherwise keep the new default.
+  def assign_property(uid)
+    property = @quote.client.properties.find_by(uid:) if uid.present?
+    return if @client_changed && property.nil?
+
+    @quote.property = property
   end
 
   # Moving a draft to another client resets its property, and its taxes when exemption differs.

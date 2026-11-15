@@ -1,7 +1,7 @@
 <%# locals: (client:, selected: nil) -%>
 <div class="field">
-  <label class="label" for="quote_property">Property <span class="label-optional">(optional)</span></label>
-  <select id="quote_property" name="quote[property]" class="select" <%= "disabled" if client.nil? %>>
+  <label class="label" for="quote_property_select">Property <span class="label-optional">(optional)</span></label>
+  <select id="quote_property_select" name="quote[property]" class="select" <%= "disabled" if client.nil? %>>
     <option value="">No property</option>
     <% client&.properties&.each do |property| %>
       <option value="<%= property.uid %>" <%= "selected" if property.uid == selected %>><%= property.label ? "#{property.label}: #{property.one_line}" : property.one_line %></option>
