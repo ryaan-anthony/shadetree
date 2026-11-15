@@ -24,23 +24,23 @@ catalog, adjusting quantities and prices, and seeing totals update live.
 
 ## Acceptance criteria
 
-- [ ] Owners/Admins create a draft quote for a client (picker or inline create) and optionally a
+- [x] Owners/Admins create a draft quote for a client (picker or inline create) and optionally a
       property; the quote gets the next sequential number for the business.
-- [ ] Line items can be added from the catalog (copying name, description, unit, price, taxable)
+- [x] Line items can be added from the catalog (copying name, description, unit, price, taxable)
       or as custom items; quantity, unit price and description are editable; items can be
       reordered and removed.
-- [ ] Discounts per line and/or on the whole quote, fixed or percentage.
-- [ ] Taxes apply per CAT-04 (default rates, per-line taxable flag, client exemption, per-quote
+- [x] Discounts per line and/or on the whole quote, fixed or percentage.
+- [x] Taxes apply per CAT-04 (default rates, per-line taxable flag, client exemption, per-quote
       override). Subtotal, discount, tax per rate, and total update live and use the shared
       PLT-08 calculation.
-- [ ] Quote fields: title, message to client, internal notes (never client-visible), terms
+- [x] Quote fields: title, message to client, internal notes (never client-visible), terms
       (defaulted from settings, editable), expiry date (defaulted from settings), attachments
       (photos/PDFs, limited count/size).
-- [ ] Draft work is never lost on mobile (autosave or equivalent); drafts can be deleted.
-- [ ] A "preview as client" action is available (consumed by QTE-03 once built).
-- [ ] The builder is fast and usable at 360 px; adding an item is ≤ 3 taps from the builder.
-- [ ] Technicians cannot create or view quotes (pending the backlog toggle).
-- [ ] Tests cover totals math integration, numbering under concurrency, roles and tenancy.
+- [x] Draft work is never lost on mobile (autosave or equivalent); drafts can be deleted.
+- [x] A "preview as client" action is available (consumed by QTE-03 once built).
+- [x] The builder is fast and usable at 360 px; adding an item is ≤ 3 taps from the builder.
+- [x] Technicians cannot create or view quotes (pending the backlog toggle).
+- [x] Tests cover totals math integration, numbering under concurrency, roles and tenancy.
 
 ## Out of scope
 
@@ -49,5 +49,6 @@ catalog, adjusting quantities and prices, and seeing totals update live.
 
 ## Open questions
 
-- Show per-line totals including or excluding tax? Recommend excluding, tax summarized below.
-- Should a quote be able to cover multiple properties? Recommend no; one property per quote.
+- ~~Show per-line totals including or excluding tax?~~ Resolved: excluding; tax is summarized
+  per rate below the lines.
+- ~~Should a quote be able to cover multiple properties?~~ Resolved: no; one property per quote.

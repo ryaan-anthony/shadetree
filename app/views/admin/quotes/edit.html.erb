@@ -1,0 +1,132 @@
+<% totals = @quote.totals %>
+<% lines = @quote.current_line_items %>
+<%= page_header "Quote #{@quote.number}", lede: "Draft for #{@quote.client.display_name}. Changes save as you go." do %>
+  <span class="save-status" id="save_status" role="status" data-quote-builder-target="status">Saved</span>
+  <%= link_to preview_admin_quote_path(@quote), class: button_classes(:secondary), target: "_blank", rel: "noopener",
+              data: { action: "quote-builder#saveNow" } do %><%= icon "eye" %> Preview as client<% end %>
+  <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
+    <button type="button" class="<%= button_classes(:ghost, :icon) %>" data-menu-target="button" data-action="menu#toggle"
+            aria-haspopup="true" aria-expanded="false" aria-label="More actions"><%= icon "more-horizontal" %></button>
+    <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
+      <%= button_to admin_quote_path(@quote), method: :delete, class: "menu-item text-danger",
+                    form: { class: "contents", data: { turbo_confirm: "Delete draft #{@quote.number}? This can't be undone.", turbo_confirm_button: "Delete draft" } } do %>
+        <%= icon "trash" %> Delete draft
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<div id="builder_banner"></div>
+
+<%= form_with model: @quote, url: admin_quote_path(@quote), method: :patch, id: "quote-builder", multipart: true,
+              class: "grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]",
+              data: { controller: "quote-builder", quote_builder_property_url_value: property_options_admin_quotes_path,
+                      action: "catalog-picker:pick->quote-builder#addFromCatalog client-picker:change->quote-builder#clientChanged input->quote-builder#changed change->quote-builder#changed" } do |f| %>
+  <%= f.hidden_field :lock_version, id: "quote_lock_version" %>
+  <input type="hidden" name="quote[lines_present]" value="1">
+
+  <div class="min-w-0 space-y-4">
+    <div id="builder_errors"><%= render "errors", quote: @quote %></div>
+
+    <%= card do %>
+      <div class="grid gap-4 sm:grid-cols-2 [&>*]:min-w-0">
+        <%= render "admin/clients/picker", name: "quote[client]", selected: @quote.client %>
+        <%= turbo_frame_tag "quote_property", data: { quote_builder_target: "property" } do %>
+          <%= render "property_select", client: @quote.client, selected: @quote.property&.uid %>
+        <% end %>
+      </div>
+      <div class="mt-4 grid gap-4 sm:grid-cols-[minmax(0,1fr)_11rem] [&>*]:min-w-0">
+        <%= f.field :title, optional: true, placeholder: "Spring cleanup", maxlength: 120, help: "Shown at the top of the quote." %>
+        <%= f.field :expires_on, as: :date, label: "Valid until", optional: true %>
+      </div>
+    <% end %>
+
+    <%= card title: "Items", flush: true do %>
+      <div class="quote-lines" data-quote-builder-target="lines">
+        <% lines.each_with_index do |line, index| %>
+          <%= render "line", line:, index:, subtotal: totals.lines[index]&.subtotal %>
+        <% end %>
+      </div>
+      <p class="px-5 py-6 text-center text-sm text-muted" data-quote-builder-target="empty" <%= "hidden" if lines.any? %>>
+        No items yet. Add one from your catalog or type a custom line.
+      </p>
+      <div class="flex flex-wrap items-end gap-2 border-t border-line px-5 py-4">
+        <div class="min-w-0 flex-1 basis-64"><%= render "admin/catalog_items/picker", label: "Add from catalog" %></div>
+        <button type="button" class="<%= button_classes(:secondary) %>" data-action="quote-builder#addCustom"><%= icon "plus" %> Custom line</button>
+      </div>
+      <template data-quote-builder-target="template">
+        <%= render "line", line: QuoteLineItem.new(quote: @quote, key: "NEW_KEY", quantity: 1, taxable: true), index: "NEW_INDEX" %>
+      </template>
+    <% end %>
+
+    <%= card title: "Message and terms" do %>
+      <div class="space-y-4">
+        <%= f.field :message, as: :textarea, optional: true, rows: 3, label: "Message to client",
+                    placeholder: "Thanks for having us out. Here's what we discussed." %>
+        <%= f.field :terms, as: :textarea, optional: true, rows: 4, help: "Defaults from your document settings; edit for this quote." %>
+        <%= f.field :internal_notes, as: :textarea, optional: true, rows: 2, label: "Internal notes",
+                    help: "Only your team sees these. Never shown to the client." %>
+      </div>
+    <% end %>
+
+    <%= card title: "Attachments", subtitle: "Photos or PDFs the client can see with the quote. Up to #{Quote::MAX_ATTACHMENTS}, #{Quote::ATTACHMENT_MAX_BYTES / 1.megabyte} MB each." do %>
+      <% if @quote.attachments.attached? %>
+        <ul class="mb-3 space-y-2">
+          <% @quote.attachments.select { _1.blob.persisted? }.each do |file| %>
+            <li class="flex items-center gap-2 text-sm" id="attachment-<%= file.id %>">
+              <%= icon(file.image? ? "image" : "file-text", class: "size-4 text-faint") %>
+              <%= link_to file.filename, rails_blob_path(file, disposition: "inline"), class: "min-w-0 flex-1 truncate hover:underline", target: "_blank", rel: "noopener" %>
+              <span class="text-sm2 text-muted"><%= number_to_human_size(file.byte_size) %></span>
+              <button type="submit" form="remove-attachment-<%= file.id %>" class="<%= button_classes(:ghost, :sm) %>" aria-label="Remove <%= file.filename %>"><%= icon "x" %></button>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+      <div class="field">
+        <label class="label" for="quote_attachments">Add files</label>
+        <%= f.file_field :attachments, multiple: true, accept: Quote::ATTACHMENT_TYPES.join(","), class: "input py-1.5",
+                         data: { action: "change->quote-builder#upload" } %>
+      </div>
+    <% end %>
+  </div>
+
+  <aside class="space-y-4 lg:sticky lg:top-6 lg:self-start">
+    <%= card title: "Totals" do %>
+      <div class="space-y-3">
+        <div class="flex items-end gap-2">
+          <div class="w-28 shrink-0">
+            <%= f.label :discount_kind, "Quote discount", class: "label" %>
+            <%= f.select :discount_kind, [ [ "None", "" ], [ "%", "percent" ], [ "Amount", "amount" ] ], {}, class: "select" %>
+          </div>
+          <div class="min-w-0 flex-1">
+            <label class="sr-only" for="quote_discount_value">Quote discount value</label>
+            <%= text_field_tag "quote[discount_value]", @quote.discount_value, id: "quote_discount_value", inputmode: "decimal", class: "input text-right tabular", placeholder: "0" %>
+          </div>
+        </div>
+        <% rates = (TaxRate.active.ordered.map(&:to_pricing) + @quote.tax_rate_list).uniq %>
+        <% if rates.any? %>
+          <fieldset>
+            <legend class="label">Tax<%= " (client is tax exempt)" if @quote.client.tax_exempt %></legend>
+            <input type="hidden" name="quote[tax_rates][]" value="">
+            <% rates.each do |rate| %>
+              <label class="flex items-center gap-2 py-0.5 text-sm">
+                <input type="checkbox" class="checkbox" name="quote[tax_rates][]" value="<%= tax_rate_key(rate) %>" <%= "checked" if @quote.tax_rate_list.include?(rate) %>>
+                <%= rate.name %> <span class="text-muted"><%= rate.percent.to_d.round(4).to_s("F").sub(/\.?0+\z/, "") %>%</span>
+              </label>
+            <% end %>
+          </fieldset>
+        <% end %>
+        <div class="border-t border-line pt-3"><%= render "totals", quote: @quote, totals: %></div>
+      </div>
+    <% end %>
+    <div class="flex flex-col gap-2">
+      <%= f.submit_button "Save draft" %>
+      <p class="text-center text-sm2 text-muted">Sending comes next: this draft is saved and can be finished later.</p>
+    </div>
+  </aside>
+<% end %>
+
+<% @quote.attachments.select { _1.blob.persisted? }.each do |file| %>
+  <%= form_with url: admin_quote_attachment_path(@quote, file), method: :delete, id: "remove-attachment-#{file.id}", class: "hidden" do %><% end %>
+<% end %>
+<%= render "admin/clients/quick_create", button: false %>

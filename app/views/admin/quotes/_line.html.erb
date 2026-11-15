@@ -1,0 +1,67 @@
+<%# locals: (line:, index:, subtotal: nil) -%>
+<%# One line of the quote builder. Field names carry the row's position (quote[lines][2][…]);
+    quote_builder_controller renumbers them whenever rows are added, removed or moved. %>
+<% base = "quote[lines][#{index}]" %>
+<div class="quote-line" data-quote-builder-target="line" data-key="<%= line.key %>" id="line-<%= line.key %>">
+  <input type="hidden" name="<%= base %>[key]" value="<%= line.key %>" data-field="key">
+  <input type="hidden" name="<%= base %>[catalog_item]" value="<%= line.catalog_item&.uid %>" data-field="catalog_item">
+  <div class="flex items-start gap-2">
+    <div class="min-w-0 flex-1 space-y-2">
+      <label class="sr-only" for="line-name-<%= line.key %>">Item</label>
+      <input type="text" id="line-name-<%= line.key %>" name="<%= base %>[name]" value="<%= line.name %>" data-field="name" maxlength="200"
+             class="input font-semibold" placeholder="Item or service" autocomplete="off">
+      <details class="quote-line-more" <%= "open" if line.description.present? %>>
+        <summary class="cursor-pointer text-sm2 text-muted">Description</summary>
+        <label class="sr-only" for="line-description-<%= line.key %>">Description</label>
+        <textarea id="line-description-<%= line.key %>" name="<%= base %>[description]" data-field="description" rows="2" maxlength="2000"
+                  class="input mt-1.5" placeholder="What's included (shown to the client)"><%= line.description %></textarea>
+      </details>
+    </div>
+    <div class="flex shrink-0 items-center">
+      <button type="button" class="<%= button_classes(:ghost, :sm, :icon) %>" data-action="quote-builder#moveUp" aria-label="Move up"><%= icon "arrow-up" %></button>
+      <button type="button" class="<%= button_classes(:ghost, :sm, :icon) %>" data-action="quote-builder#moveDown" aria-label="Move down"><%= icon "arrow-down" %></button>
+      <button type="button" class="<%= button_classes(:ghost, :sm, :icon) %>" data-action="quote-builder#remove" aria-label="Remove this line"><%= icon "trash" %></button>
+    </div>
+  </div>
+  <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-[5.5rem_6rem_8rem_minmax(0,1fr)_7rem] sm:items-end">
+    <div>
+      <label class="label text-xs" for="line-qty-<%= line.key %>">Qty</label>
+      <input type="text" inputmode="decimal" id="line-qty-<%= line.key %>" name="<%= base %>[quantity]" data-field="quantity"
+             value="<%= line.quantity.to_d.round(4).to_s("F").sub(/\.?0+\z/, "") %>" class="input text-right tabular">
+    </div>
+    <div>
+      <label class="label text-xs" for="line-unit-<%= line.key %>">Unit</label>
+      <input type="text" id="line-unit-<%= line.key %>" name="<%= base %>[unit]" data-field="unit" value="<%= line.unit %>" maxlength="20" class="input" placeholder="each">
+    </div>
+    <div>
+      <label class="label text-xs" for="line-price-<%= line.key %>">Price</label>
+      <input type="text" inputmode="decimal" id="line-price-<%= line.key %>" name="<%= base %>[unit_price]" data-field="unit_price"
+             value="<%= line.unit_price_before_type_cast unless line.new_record? && line.unit_price_cents.to_i.zero? %>" class="input text-right tabular" placeholder="0.00"
+             aria-invalid="<%= line.errors[:unit_price].any? %>">
+    </div>
+    <div class="col-span-2 flex items-end gap-2 sm:col-span-1">
+      <div class="w-24 shrink-0">
+        <label class="label text-xs" for="line-discount-kind-<%= line.key %>">Discount</label>
+        <select id="line-discount-kind-<%= line.key %>" name="<%= base %>[discount_kind]" data-field="discount_kind" class="select">
+          <%= options_for_select([ [ "None", "" ], [ "%", "percent" ], [ "Amount", "amount" ] ], line.discount_kind.to_s) %>
+        </select>
+      </div>
+      <div class="min-w-0 flex-1">
+        <label class="sr-only" for="line-discount-<%= line.key %>">Discount value</label>
+        <input type="text" inputmode="decimal" id="line-discount-<%= line.key %>" name="<%= base %>[discount_value]" data-field="discount_value"
+               value="<%= line.discount_value %>" class="input text-right tabular" placeholder="0">
+      </div>
+      <label class="mb-2 flex shrink-0 items-center gap-1.5 text-sm2 text-subtle">
+        <input type="hidden" name="<%= base %>[taxable]" value="0" data-field="taxable">
+        <input type="checkbox" class="checkbox" name="<%= base %>[taxable]" value="1" data-field="taxable" <%= "checked" if line.taxable %>> Taxed
+      </label>
+    </div>
+    <p class="col-span-2 text-right sm:col-span-1 sm:pb-2">
+      <span class="sr-only">Line total</span>
+      <span class="money font-semibold text-ink" id="line-total-<%= line.key %>"><%= subtotal ? money(subtotal) : "—" %></span>
+    </p>
+  </div>
+  <% if line.errors.any? %>
+    <p class="error-text mt-1.5"><%= icon "alert-circle" %><%= line.errors.full_messages.to_sentence %></p>
+  <% end %>
+</div>

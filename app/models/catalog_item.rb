@@ -74,6 +74,6 @@ class CatalogItem < ApplicationRecord
   # For the item picker.
   def as_picker_json
     { uid:, name:, description:, unit: unit_label, taxable:, category: category&.name,
-      price: unit_price&.format, unit_price_cents: }
+      price: unit_price&.format, unit_price: unit_price&.to_s, unit_price_cents: }
   end
 end
