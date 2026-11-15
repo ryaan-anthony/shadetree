@@ -1,5 +1,6 @@
 # Staff tools for client links: preview as the client sees it, revoke, and re-issue (PLT-12).
 class Admin::ClientLinksController < Admin::BaseController
+  before_action :require_office_role
   before_action :set_client_link
 
   # The client page with a preview banner. Not counted as a client view.
@@ -22,6 +23,12 @@ class Admin::ClientLinksController < Admin::BaseController
   end
 
   private
+
+  # Owners and admins only. Technicians reach documents through their assigned visits, which
+  # will get their own checks (ACC-04 replaces this with requires_permission :office).
+  def require_office_role
+    head :forbidden unless current_membership&.can_manage?
+  end
 
   def set_client_link
     @client_link = ClientLink.find_by_param!(params[:id])

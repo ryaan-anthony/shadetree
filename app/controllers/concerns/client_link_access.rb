@@ -17,13 +17,18 @@ module ClientLinkAccess
 
   included do
     layout "client"
-    before_action :load_client_link
-    after_action { response.set_header("X-Robots-Tag", "noindex, nofollow") }
-    after_action { response.set_header("Referrer-Policy", "no-referrer") } # keep tokens out of Referer
+    # Order matters: rate limit and headers apply even when the link is unknown or inactive.
     rate_limit to: 120, within: 1.minute, by: -> { request.remote_ip }, with: -> { head :too_many_requests }
+    before_action :set_client_page_headers
+    before_action :load_client_link
   end
 
   private
+
+  def set_client_page_headers
+    response.set_header("X-Robots-Tag", "noindex, nofollow")
+    response.set_header("Referrer-Policy", "no-referrer") # keep tokens out of Referer
+  end
 
   def load_client_link
     @client_link = ClientLink.find_by_token(params[:token])

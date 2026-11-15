@@ -91,4 +91,41 @@ class ClientLinkTest < ActiveSupport::TestCase
     assert_equal "Computer · Chrome", ClientDevice.describe("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36")
     assert_equal "Unknown", ClientDevice.describe(nil)
   end
+
+  test "rotating secret_key_base invalidates old links" do
+    token = @link.token
+    Rails.application.singleton_class.define_method(:secret_key_base) { "rotated" * 10 }
+    assert_nil ClientLink.find_by_token(token)
+  ensure
+    Rails.application.singleton_class.remove_method(:secret_key_base)
+  end
+
+  test "a revoke that lands after the link was loaded still blocks the action" do
+    stale = ClientLink.find_by_token(@link.token)
+    ClientLink.find_by_token(@link.token).revoke!
+    ran = false
+    assert_not stale.perform_once!(:approve) { ran = true }
+    assert_not ran
+  end
+
+  test "uniqueness errors from the action itself are raised, not mistaken for a repeat" do
+    assert_raises(ActiveRecord::RecordNotUnique) do
+      @link.perform_once!(:approve) { raise ActiveRecord::RecordNotUnique, "from the action" }
+    end
+    assert_not @link.performed?(:approve)
+  end
+
+  test "deleting a user keeps the links they created or revoked" do
+    user = User.create!(email: "leaver@example.com", password: "password123", confirmed_at: Time.current)
+    link = as_business(@business) { ClientLink.issue!(@document, by: user) }
+    link.revoke!(by: user)
+    user.destroy!
+    assert_nil link.reload.created_by_id
+    assert_nil link.revoked_by_id
+  end
+
+  test "path redaction" do
+    assert_equal 'Started GET "/c/[FILTERED]" for x', SecretPathLogger.redact('Started GET "/c/abc123" for x')
+    assert_equal "/invitations/[FILTERED]/accept", SecretPathLogger.redact("/invitations/abc/accept")
+  end
 end

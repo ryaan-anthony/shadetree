@@ -94,4 +94,39 @@ class ClientLinksTest < ActionDispatch::IntegrationTest
     assert_not_found_across_businesses { patch revoke_admin_client_link_path(@link) }
     assert_nil @link.reload.revoked_at
   end
+
+  test "technicians can't preview, revoke or re-issue links" do
+    tech = User.create!(email: "tech-#{SecureRandom.hex(3)}@example.com", password: "password123", confirmed_at: Time.current)
+    BusinessUser.create!(user: tech, business: @business, role: "technician")
+    sign_in tech
+    post switch_admin_business_path, params: { business: @business.uid }
+    get preview_admin_client_link_path(@link)
+    assert_response :forbidden
+    patch revoke_admin_client_link_path(@link)
+    assert_response :forbidden
+    assert_nil @link.reload.revoked_at
+  end
+
+  test "unknown links still get the security headers" do
+    get client_link_path("x" * ClientLink::TOKEN_LENGTH)
+    assert_equal "noindex, nofollow", response.headers["X-Robots-Tag"]
+    assert_equal "no-referrer", response.headers["Referrer-Policy"]
+  end
+
+  test "tokens are kept out of request logs" do
+    io = StringIO.new
+    previous, Rails.logger = Rails.logger, ActiveSupport::Logger.new(io)
+    get client_link_path(@link.token)
+    assert_match %r{Started GET "/c/\[FILTERED\]"}, io.string
+    assert_no_match @link.token, io.string
+  ensure
+    Rails.logger = previous
+  end
+
+  test "deleting a business deletes its links" do
+    @link.record_view!
+    assert_difference -> { Tenancy.across_businesses(reason: "test") { ClientLink.count } }, -1 do
+      Business.find(@business.id).destroy!
+    end
+  end
 end

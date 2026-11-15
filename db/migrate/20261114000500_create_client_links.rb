@@ -2,7 +2,8 @@
 class CreateClientLinks < ActiveRecord::Migration[8.1]
   def change
     create_table :client_links do |t|
-      t.references :business, null: false, foreign_key: true
+      # Deleting a business deletes its links and their events (no tenant scope needed).
+      t.references :business, null: false, foreign_key: { on_delete: :cascade }
       t.string :uid, null: false
       t.references :linkable, polymorphic: true, null: false
       # The token is never stored. `secret` (random) plus the app's secret_key_base derive it;
@@ -12,8 +13,9 @@ class CreateClientLinks < ActiveRecord::Migration[8.1]
       t.string :actions, array: true, null: false, default: []
       t.datetime :expires_at
       t.datetime :revoked_at
-      t.references :revoked_by, foreign_key: { to_table: :users }
-      t.references :created_by, foreign_key: { to_table: :users }
+      # Audit references survive a user deleting their account.
+      t.references :revoked_by, foreign_key: { to_table: :users, on_delete: :nullify }
+      t.references :created_by, foreign_key: { to_table: :users, on_delete: :nullify }
       t.datetime :first_viewed_at
       t.datetime :last_viewed_at
       t.integer :views_count, null: false, default: 0
@@ -24,8 +26,8 @@ class CreateClientLinks < ActiveRecord::Migration[8.1]
     add_index :client_links, :token_digest, unique: true
 
     create_table :client_link_events do |t|
-      t.references :business, null: false, foreign_key: true
-      t.references :client_link, null: false, foreign_key: true
+      t.references :business, null: false, foreign_key: { on_delete: :cascade }
+      t.references :client_link, null: false, foreign_key: { on_delete: :cascade }
       t.string :kind, null: false
       t.string :device
       t.datetime :occurred_at, null: false

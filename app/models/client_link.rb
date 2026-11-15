@@ -43,9 +43,11 @@ class ClientLink < ApplicationRecord
     def find_by_token(token)
       return nil unless token.is_a?(String) && token.match?(/\A[1-9A-HJ-NP-Za-km-z]{#{TOKEN_LENGTH}}\z/o)
 
-      Tenancy.across_businesses(reason: "client link lookup") do
+      link = Tenancy.across_businesses(reason: "client link lookup") do
         includes(:business).find_by(token_digest: digest(token))
       end
+      # Tokens derive from secret_key_base: after a rotation, old URLs stop matching (ADR 0016).
+      link if link && ActiveSupport::SecurityUtils.secure_compare(link.token, token)
     end
 
     def digest(token) = OpenSSL::Digest::SHA256.hexdigest(token)
@@ -76,12 +78,12 @@ class ClientLink < ApplicationRecord
   def allows?(action) = usable? && actions.include?(action.to_s)
 
   def revoke!(by: nil)
-    update!(revoked_at: Time.current, revoked_by: by) unless revoked_at
+    as_own_business { update!(revoked_at: Time.current, revoked_by: by) unless revoked_at }
   end
 
   # A new link for the same document and actions; this one stops working.
   def reissue!(by: nil, expires_at: :default)
-    transaction do
+    as_own_business do
       revoke!(by:)
       self.class.issue!(linkable, actions:, expires_at:, by:)
     end
@@ -102,15 +104,16 @@ class ClientLink < ApplicationRecord
   def perform_once!(action, device: nil)
     action = action.to_s
     raise ArgumentError, "#{action} is not a one-time action" unless ONE_TIME_ACTIONS.include?(action)
-    return false unless allows?(action)
 
     as_own_business(requires_new: true) do
-      events.create!(business:, kind: action, device:, occurred_at: Time.current)
+      # Re-read under a lock so a revoke committed after this request loaded the link wins.
+      lock!
+      return false unless allows?(action)
+      return false unless record_once(action, device)
+
       yield if block_given?
     end
     true
-  rescue ActiveRecord::RecordNotUnique
-    false
   end
 
   def performed?(action) = Tenancy.with_business(business) { events.exists?(kind: action.to_s) }
@@ -123,6 +126,15 @@ class ClientLink < ApplicationRecord
   end
 
   private
+
+  # Inserts the one-time event in its own savepoint; false if it already exists. Errors from the
+  # action itself are not swallowed.
+  def record_once(action, device)
+    transaction(requires_new: true) { events.create!(business:, kind: action, device:, occurred_at: Time.current) }
+    true
+  rescue ActiveRecord::RecordNotUnique
+    false
+  end
 
   # Client requests already run as the link's business; this keeps model calls safe from jobs
   # and the console too.

@@ -40,6 +40,9 @@ revoked or re-issued without changing the document, and it has nowhere to record
 
 - Documents add `client_link_partial` and `client_link_expires_at` and get links for free.
 - "Viewed" status comes from `first_viewed_at` and `views_count`.
-- Rotating `secret_key_base` needs a plan to re-issue open links. The runbook (PLT-09) records
-  this.
+- Rotating `secret_key_base` needs a plan to re-issue open links: lookups re-derive the token
+  and reject old URLs. The runbook (PLT-09) records this.
+- Tokens sit in URL paths. The Rails request log redacts them (`SecretPathLogger`) and
+  controller logs filter `:token`. kamal-proxy's access log also records paths, so production
+  keeps proxy logs off or on short retention (PLT-09/PLT-10).
 - **Cost:** none.
