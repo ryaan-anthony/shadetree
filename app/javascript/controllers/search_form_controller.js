@@ -5,6 +5,13 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static values = { delay: { type: Number, default: 250 } }
 
+  // Catch up on typing that happened before this controller loaded (a slow phone, a cold
+  // cache): if a box no longer holds what the page rendered, search now.
+  connect() {
+    const typed = [ ...this.element.querySelectorAll("input[type=search], input[type=text]") ].some((input) => input.value !== input.defaultValue)
+    if (typed) this.submit()
+  }
+
   disconnect() {
     clearTimeout(this.timer)
   }

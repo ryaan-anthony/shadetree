@@ -18,6 +18,8 @@ export default class extends Controller {
     this.form = this.element.closest("form")
     this.guard = (event) => this.checkChosen(event)
     this.form?.addEventListener("submit", this.guard, true)
+    // Typed before this controller loaded (slow phone, cold cache): search now.
+    if (document.activeElement === this.inputTarget && this.inputTarget.value.trim() !== "") this.search()
   }
 
   disconnect() {
