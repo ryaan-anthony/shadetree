@@ -38,10 +38,9 @@ class ClientSearchSystemTest < ApplicationSystemTestCase
 
   test "the picker finds a client by keyboard, refuses an empty submit, and takes a new client" do
     visit styleguide_path(anchor: "pickers")
+    within("#picker-demo") { click_on "Submit" }
+    assert_nil find("#picker-demo")["data-submitted"], "an empty required picker blocks the submit"
     within("#picker-demo") do
-      click_on "Submit"
-      assert_nil find("#picker-demo", visible: :all)["data-submitted"]
-
       find("input[type=search]").fill_in(with: "maria")
       assert_selector "[role=option]", text: "Maria Lopez"
       find("input[type=search]").send_keys(:down, :enter)
