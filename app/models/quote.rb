@@ -79,7 +79,7 @@ class Quote < ApplicationRecord
     @attachment_errors = []
     Array(files).compact_blank.each do |file|
       name = file.respond_to?(:original_filename) ? file.original_filename : "file"
-      if Marcel::MimeType.for(file.respond_to?(:tempfile) ? file.tempfile : file, name:) == "application/pdf"
+      if pdf?(file)
         next @attachment_errors << "#{name} must be smaller than #{ATTACHMENT_MAX_BYTES / 1.megabyte} MB" if file.size > ATTACHMENT_MAX_BYTES
 
         attachments.attach(file)
@@ -90,6 +90,14 @@ class Quote < ApplicationRecord
         attachments.attach(result.attachable)
       end
     end
+  end
+
+  # A real PDF starts with "%PDF-"; the name or claimed type doesn't count. (PDFs are kept as
+  # uploaded, metadata included; only photos are re-encoded.)
+  def pdf?(file)
+    io = file.respond_to?(:tempfile) ? file.tempfile : file
+    header = io.read(5).tap { io.rewind }
+    header == "%PDF-"
   end
 
   # Makes the saved lines match `rows` (the builder's full list, in order): rows are matched
@@ -116,13 +124,10 @@ class Quote < ApplicationRecord
 
     self.number ||= business.next_document_number(:quote)
     self.currency ||= business.currency_code
-    self.expires_on ||= business_today + business.quote_expiry_days.to_i.days if business.quote_expiry_days.to_i.positive?
+    self.expires_on ||= business.today + business.quote_expiry_days.to_i.days if business.quote_expiry_days.to_i.positive?
     self.terms ||= business.quote_terms
     self.tax_rate_list = TaxRate.for_new_document(client:) if tax_rates.blank?
   end
-
-  # "Today" where the business is, so a quote made late in the evening isn't dated tomorrow.
-  def business_today = Time.current.in_time_zone(ActiveSupport::TimeZone[business.timezone.to_s] || Time.zone).to_date
 
   def cache_totals
     result = totals

@@ -137,6 +137,14 @@ class QuoteTest < ActiveSupport::TestCase
       quote.attach_files([ Rack::Test::UploadedFile.new(file_fixture("logo.gif"), "image/gif") ])
       assert_not quote.save
       assert_match "logo.gif must be a photo (PNG, JPEG, WebP) or a PDF", quote.errors[:base].first
+
+      fake = Rack::Test::UploadedFile.new(StringIO.new("just some text"), "application/pdf", original_filename: "notes.pdf")
+      quote.reload.attach_files([ fake ])
+      assert_not quote.save, "a .pdf name doesn't make a PDF"
+      real = Rack::Test::UploadedFile.new(StringIO.new("%PDF-1.4\n%%EOF\n"), "application/pdf", original_filename: "plan.pdf")
+      quote.reload.attach_files([ real ])
+      assert quote.save
+      assert_equal "application/pdf", quote.attachments.last.content_type
     end
   end
 

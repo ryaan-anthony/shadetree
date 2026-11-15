@@ -43,8 +43,13 @@ class Admin::QuotesTest < ActionDispatch::IntegrationTest
     assert_redirected_to edit_admin_quote_path(quote)
     assert_equal [ "Q-0001", @maria ], fresh(quote) { [ _1.number, _1.client ] }
 
-    get new_admin_quote_path(client: @maria.uid)
-    assert_redirected_to edit_admin_quote_path(as_business(@business) { Quote.last })
+    assert_no_difference(-> { as_business(@business) { Quote.count } }, "a GET (or a hover prefetch) never creates a draft") do
+      get new_admin_quote_path(client: @maria.uid)
+    end
+    assert_select "input[type=hidden][name='quote[client]'][value=?]", @maria.uid
+
+    get admin_client_path(@maria)
+    assert_select "form[action=?][method=post] input[name='quote[client]'][value=?]", admin_quotes_path, @maria.uid
 
     post admin_quotes_path, params: { quote: { client: "" } }
     assert_response :unprocessable_content
@@ -56,6 +61,7 @@ class Admin::QuotesTest < ActionDispatch::IntegrationTest
     get edit_admin_quote_path(quote)
     assert_select "h1", /Quote #{quote.number}/
     assert_select "form#quote-builder[data-controller=quote-builder]"
+    assert_select "meta[name=turbo-cache-control][content=no-cache]"
     assert_select "#quote_terms", "Due on completion."
     assert_select "#quote_expires_on[value=?]", (Date.current + 30).iso8601
     assert_select "select#quote_property option[selected]", /Elm St/
@@ -75,6 +81,7 @@ class Admin::QuotesTest < ActionDispatch::IntegrationTest
     end
     assert_select "turbo-stream[action=update][target=line-total-k2] template", "$80.00"
     assert_select "turbo-stream[target=quote_lock_version] template input[value='1']"
+    assert_equal "1", response.headers["X-Lock-Version"]
 
     assert_equal [ "Spring cleanup", 27_125, %w[Leaf\ cleanup Mulch] ], fresh(quote) { [ _1.title, _1.total_cents, _1.line_items.map(&:name) ] }
     quote = fresh(quote) { _1 }
@@ -93,6 +100,23 @@ class Admin::QuotesTest < ActionDispatch::IntegrationTest
     assert_equal "From tab one", fresh(quote, &:title)
   end
 
+  test "a stale tab can't overwrite line-only edits" do
+    quote = draft
+    lines = [ { key: "a", name: "Mow", quantity: "1", unit_price: "45" }, { key: "b", name: "Edge", quantity: "1", unit_price: "15" } ]
+    patch admin_quote_path(quote), params: builder_params(quote, lines:), as: :turbo_stream
+    stale = response.headers["X-Lock-Version"]
+
+    tab_a = builder_params(quote, lines: [ lines[1].merge(name: "Edging (tab A)"), lines[0] ]).deep_merge(quote: { lock_version: stale })
+    patch admin_quote_path(quote), params: tab_a, as: :turbo_stream
+    assert_response :success
+    assert_operator response.headers["X-Lock-Version"].to_i, :>, stale.to_i
+
+    tab_b = builder_params(quote, lines: [ lines[0].merge(name: "Mow (tab B)"), lines[1] ]).deep_merge(quote: { lock_version: stale })
+    patch admin_quote_path(quote), params: tab_b, as: :turbo_stream
+    assert_response :conflict
+    assert_equal [ "Edging (tab A)", "Mow" ], fresh(quote) { _1.line_items.map(&:name) }
+  end
+
   test "invalid lines are explained and nothing is half-saved" do
     quote = draft
     patch admin_quote_path(quote), params: builder_params(quote, lines: [ { key: "k1", name: "Mowing", quantity: "1", unit_price: "lots" } ]), as: :turbo_stream
@@ -105,8 +129,13 @@ class Admin::QuotesTest < ActionDispatch::IntegrationTest
     as_business(@business) { TaxRate.create!(name: "State", percent: "6.25") }
     quote = draft
     church = client("Grace Church", exempt: true)
-    patch admin_quote_path(quote), params: builder_params(quote, property: fresh(quote) { _1.property.uid }).deep_merge(quote: { client: church.uid }), as: :turbo_stream
-    assert_equal [ church, church.billing_property, [] ], fresh(quote) { [ _1.client, _1.property, _1.tax_rates ] }
+    # The form always sends the ticked rates; for the old client they were State.
+    patch admin_quote_path(quote), params: builder_params(quote, property: fresh(quote) { _1.property.uid }, tax_rates: [ "", "State|6.25" ],
+                                                         lines: [ { key: "k1", name: "Hedges", quantity: "1", unit_price: "100" } ])
+                                                         .deep_merge(quote: { client: church.uid }), as: :turbo_stream
+    assert_equal [ church, church.billing_property, [], 10_000 ], fresh(quote) { [ _1.client, _1.property, _1.tax_rates, _1.total_cents ] }
+    assert_select "turbo-stream[action=replace][target=quote_tax_rates] template", /client is tax exempt/
+    assert_select "turbo-stream[target=quote_tax_rates] template input[type=checkbox][checked]", false
     assert_select "turbo-stream[target=quote_property] template option[selected]", /Elm St/
   end
 

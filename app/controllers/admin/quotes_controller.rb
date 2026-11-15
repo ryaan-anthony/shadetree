@@ -10,11 +10,10 @@ class Admin::QuotesController < Admin::BaseController
     @quotes = Quote.includes(:client).order(created_at: :desc).limit(100)
   end
 
-  # Pick a client (or ?client=<uid> from a client page) to start a draft.
+  # Pick a client to start a draft (?client=<uid> preselects one). Drafts are only created by
+  # POST: a GET (or Turbo's hover prefetch) never uses up a quote number.
   def new
     @client = Client.active.find_by(uid: params[:client])
-    return start_for(@client) if @client
-
     @quote = Quote.new
   end
 
@@ -37,8 +36,12 @@ class Admin::QuotesController < Admin::BaseController
   def update
     saved = Quote.transaction do
       apply_builder_params
+      # Always write the quote row, so its lock_version is checked and bumped even when only
+      # lines changed: a stale tab can't overwrite line edits.
+      @quote.updated_at = Time.current
       @quote.save
     end
+    response.set_header("X-Lock-Version", @quote.lock_version.to_s)
     respond_to do |format|
       format.turbo_stream { render :update, status: (saved ? :ok : :unprocessable_content) }
       format.html do
@@ -105,7 +108,8 @@ class Admin::QuotesController < Admin::BaseController
     @quote.property = attrs[:property].present? ? @quote.client.properties.find_by(uid: attrs[:property]) : nil if attrs.key?(:property) && !@client_changed
     @quote.assign_attributes(attrs.slice(:title, :message, :internal_notes, :terms, :expires_on, :prices_include_tax))
     @quote.set_discount(attrs[:discount_kind], attrs[:discount_value]) if attrs.key?(:discount_kind)
-    @quote.tax_rate_list = chosen_tax_rates(attrs[:tax_rates]) if attrs.key?(:tax_rates)
+    # After a client change the ticks were for the old client; change_client chose the taxes.
+    @quote.tax_rate_list = chosen_tax_rates(attrs[:tax_rates]) if attrs.key?(:tax_rates) && !@client_changed
     # lines arrives as { "0" => {…}, "1" => {…} } in form order; lines_present marks a form
     # that sent its (possibly empty) list, so removing every line works.
     @quote.sync_line_items((attrs[:lines] || {}).values) if attrs.key?(:lines) || attrs[:lines_present]
