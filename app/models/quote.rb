@@ -10,7 +10,9 @@ class Quote < ApplicationRecord
   include HasMoney
   include HasDiscount
 
-  STATUSES = %w[draft].freeze # QTE-04+ add sent, viewed, approved, declined, changes_requested, expired
+  # QTE-04 sends (draft → sent); QTE-05 records the client's answer. "Viewed" comes from the
+  # client link and "expired" from expires_on, so neither is stored.
+  STATUSES = %w[draft sent approved declined changes_requested].freeze
   MAX_LINES = 200
   MAX_ATTACHMENTS = 10
   ATTACHMENT_MAX_BYTES = 10.megabytes
@@ -45,6 +47,22 @@ class Quote < ApplicationRecord
 
   def draft? = status == "draft"
   def editable? = draft?
+
+  # Clients only ever see quotes that were sent (QTE-03): a draft is never reachable.
+  def client_visible? = !draft?
+
+  # What the client page says about the quote.
+  def client_state
+    return status.to_sym if status.in?(%w[draft approved declined changes_requested])
+    return :expired if expired?
+
+    :awaiting
+  end
+
+  def expired? = expires_on.present? && expires_on < business.today && status == "sent"
+
+  # PLT-12: the partial client links render for a quote.
+  def client_link_partial = "client/quotes/quote"
 
   # Starts a draft for a client with the business's defaults: next number, expiry, terms,
   # and the tax rates new documents get (none for a tax-exempt client).

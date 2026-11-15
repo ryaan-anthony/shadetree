@@ -77,6 +77,20 @@ Tenancy.with_business(business) do
     quote.sync_line_items(rows)
     quote.save!
   end
+
+  # A sent quote with a client link (QTE-03), to see the client page. Sending arrives with QTE-04.
+  sent_to = Client.where.not(id: maria&.id).order(:id).first
+  if sent_to && !Quote.exists?(client: sent_to)
+    quote = Quote.start(client: sent_to, created_by: owner)
+    item = CatalogItem.find_by(name: "Spring cleanup")
+    quote.title = "Weekly mowing, spring"
+    quote.sync_line_items([ { "key" => "seed-0", "catalog_item" => item&.uid, "name" => item&.name || "Spring cleanup",
+                              "quantity" => "1", "unit_price" => item&.unit_price&.to_s || "150", "taxable" => "1" } ])
+    quote.save!
+    quote.update_column(:status, "sent")
+    link = ClientLink.issue!(quote)
+    puts "Client page for quote #{quote.number}: http://localhost:3000/c/#{link.token}"
+  end
 end
 
 puts "Demo data ready. Sign in as owner@example.com, admin@example.com or tech@example.com " \

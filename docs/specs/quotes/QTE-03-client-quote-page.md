@@ -27,16 +27,22 @@ account, no clutter, instant load.
 - [ ] Opening a valid quote client link shows: business identity (logo, name, contact), quote
       title and number, message, property, line items with descriptions, discounts, taxes,
       total, terms, attachments (images viewable inline), expiry date, and PDF download.
+      *Everything but the PDF download is in place; the link arrives with QTE-02.*
 - [ ] The page has a prominent primary action area reserved for approval (QTE-05) and shows the
       quote's state (awaiting response, approved, declined, expired, superseded).
+      *All but superseded, which needs revisions (QTE-06).*
 - [ ] The page always shows the latest sent revision; older links resolve to the latest.
-- [ ] Expired quotes are viewable with a clear notice and a "request an updated quote" action
-      that notifies the business.
-- [ ] First client view and subsequent views are recorded (PLT-12); staff "preview as client"
+      *Revisions arrive with QTE-06.*
+- [x] Expired quotes are viewable with a clear notice and a "request an updated quote" action
+      that notifies the business. *The request is recorded on the link's history and flagged
+      in the quotes list; an email to the business follows once NTF-01 lands.*
+- [x] First client view and subsequent views are recorded (PLT-12); staff "preview as client"
       opens the same page in preview mode without recording a view.
-- [ ] Draft quotes are never reachable by clients.
+- [x] Draft quotes are never reachable by clients.
 - [ ] Loads in under 1 s on a mid-range phone on 4G; ≥ 90 mobile Lighthouse; WCAG 2.1 AA.
-- [ ] Tests cover states, preview mode, expiry and link isolation.
+      *Lighthouse mobile in development: accessibility 100, best practices 100, performance 88
+      (uncompressed dev assets). Re-check on staging once PLT-09 is up.*
+- [x] Tests cover states, preview mode, expiry and link isolation.
 
 ## Out of scope
 
@@ -44,5 +50,5 @@ account, no clutter, instant load.
 
 ## Open questions
 
-- Should the client see the business's other contact options (call/text buttons)? Recommend
-  yes — reduces friction for questions.
+- ~~Should the client see the business's other contact options (call/text buttons)?~~
+  Resolved: yes. The action area always shows the business's call and email buttons.

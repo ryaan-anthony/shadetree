@@ -26,6 +26,7 @@ Rails.application.routes.draw do
   # Client links (PLT-12): the only way clients reach documents.
   get "c/:token", to: "client_links#show", as: :client_link
   post "c/:token/fresh", to: "client_links#request_fresh", as: :request_fresh_client_link
+  post "c/:token/quote/update", to: "client/quotes#request_update", as: :request_quote_update # QTE-03
 
   # Admin routes
   namespace :admin do

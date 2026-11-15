@@ -154,4 +154,23 @@ class QuoteTest < ActiveSupport::TestCase
     as_business(businesses(:two)) { assert_nil Quote.find_by(id: quote.id) }
     as_business(@business) { assert_not maria.reload.deletable? }
   end
+
+  test "client_state: drafts and answered quotes keep their status; a sent quote past its date is expired" do
+    quote = as_business(@business) { Quote.start(client: client) }
+    as_business(@business) do
+      assert_equal :draft, quote.client_state
+      assert_not quote.client_visible?
+      quote.status = "sent"
+      assert quote.client_visible?
+      assert_equal :awaiting, quote.client_state
+      quote.expires_on = @business.today
+      assert_equal :awaiting, quote.client_state, "valid through its last day"
+      quote.expires_on = @business.today - 1
+      assert_equal :expired, quote.client_state
+      quote.status = "approved"
+      assert_equal :approved, quote.client_state, "an approved quote never expires"
+      quote.assign_attributes(status: "sent", expires_on: nil)
+      assert_equal :awaiting, quote.client_state
+    end
+  end
 end
