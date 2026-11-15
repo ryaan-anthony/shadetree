@@ -19,7 +19,7 @@ class ClientsSystemTest < ApplicationSystemTestCase
     visit new_admin_client_path
     fill_in "Name", with: "Lopez Rentals"
     first("input[type=tel]").fill_in with: "555 010 0100"
-    assert_text "A client already has this email or phone."
+    assert_text "A client already has this email or phone.", wait: 10 # the first lookup can be slow on a cold CI runner
     assert_link "Open", href: %r{/admin/clients/}
 
     click_on "Add phone"
