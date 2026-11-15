@@ -63,6 +63,9 @@ class Business < ApplicationRecord
   # Opaque id for URLs and forms (ADR 0014).
   def to_param = uid
 
+  # How long a visit usually takes in this industry (CAT-05), for scheduling defaults.
+  def default_visit_minutes = IndustryPreset.for(industry)&.default_visit_minutes || 60
+
   def industry_name = Industry.name_for(industry) || industry
 
   def country_entry = Country.find(country)

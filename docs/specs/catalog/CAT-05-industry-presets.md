@@ -41,7 +41,8 @@ empty and the first quote can be built immediately.
 
 ## Open questions
 
-- **(blocking for content, not code)** Which industries launch with presets, and who writes the
-  starter items? Recommended six: house cleaning, lawn care/landscaping, handyman, pest control,
-  painting, pressure washing.
-- Include suggested prices? Recommend no (03-catalog open question 2).
+- ~~Which industries launch with presets, and who writes the starter items?~~ Resolved: every
+  industry in `config/industries.yml` has a preset, including the recommended six (pressure
+  washing was added as an industry) and "Something else". The first drafts are in
+  `db/seeds/industry_presets.yml`; the operator owns the content from here.
+- ~~Include suggested prices?~~ Resolved: no. Owners fill in their own prices.

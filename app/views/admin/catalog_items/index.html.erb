@@ -1,4 +1,5 @@
 <%= page_header "Catalog", lede: "What you sell, with default prices. Pick from it when building quotes and invoices." do %>
+  <%= link_to "Starter services", admin_catalog_presets_path, class: button_classes(:secondary) %>
   <%= link_to new_admin_catalog_item_path, class: button_classes do %><%= icon "plus" %> Add item<% end %>
 <% end %>
 
@@ -27,8 +28,9 @@
     <% elsif @showing_archived %>
       <%= empty_state title: "No archived items", text: "Archived items are hidden from pickers but stay on old quotes and invoices.", icon: "archive" %>
     <% else %>
-      <%= empty_state title: "Your catalog is empty", text: "Add the services you offer most, like a weekly mow or a trip fee, so quoting takes seconds.", icon: "package" do %>
-        <%= link_to new_admin_catalog_item_path, class: button_classes do %><%= icon "plus" %> Add your first item<% end %>
+      <%= empty_state title: "Your catalog is empty", text: "Start with common services for your kind of business and fill in your prices, or add your own one at a time.", icon: "package" do %>
+        <%= link_to admin_catalog_presets_path, class: button_classes do %><%= icon "zap" %> Add starter services<% end %>
+        <%= link_to new_admin_catalog_item_path, class: button_classes(:secondary) do %><%= icon "plus" %> Add an item<% end %>
       <% end %>
     <% end %>
   </div>

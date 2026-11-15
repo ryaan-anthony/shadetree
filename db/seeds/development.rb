@@ -37,6 +37,14 @@ Tenancy.with_business(business) do
   # Tax rates (CAT-04): state and county, applied to new documents.
   TaxRate.find_or_create_by!(name: "State sales tax") { _1.percent = "6.25" }
   TaxRate.find_or_create_by!(name: "County") { _1.percent = "1" }
+  # Catalog (CAT-03, CAT-05): the landscaping starter services, with demo prices.
+  preset = IndustryPreset.for("landscaping")
+  preset&.add_to_catalog!(preset.item_list.map(&:name))
+  { "Lawn mowing" => "45", "Leaf cleanup" => "180", "Spring cleanup" => "240", "Mulch installation" => "85",
+    "Fertilizer application" => "65", "Aeration" => "120" }.each do |name, price|
+    item = CatalogItem.find_by(name:)
+    item.update!(unit_price: price) if item && item.unit_price.nil?
+  end
 end
 
 puts "Demo data ready. Sign in as owner@example.com, admin@example.com or tech@example.com " \

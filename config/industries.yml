@@ -20,5 +20,7 @@ pool:
   name: Pool & spa
 pest:
   name: Pest control
+pressure_washing:
+  name: Pressure washing
 other:
   name: Something else

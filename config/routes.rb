@@ -77,6 +77,7 @@ Rails.application.routes.draw do
     end
 
     # Service catalog (CAT-03)
+    resource :catalog_presets, path: "catalog/starter", only: %i[show create] # CAT-05
     resources :catalog_items, path: "catalog", except: %i[show destroy] do
       member do
         patch :archive
