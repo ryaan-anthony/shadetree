@@ -44,6 +44,20 @@ Tenancy.with_business(business) do
     "Fertilizer application" => "65", "Aeration" => "120" }.each do |name, price|
     item = CatalogItem.find_by(name:)
     item.update!(unit_price: price) if item && item.unit_price.nil?
+  # Clients (CLI-01, CLI-02).
+  [
+    [ "Maria Lopez", "Lopez Rentals", "(555) 380-1200", "maria@lopez.example.com", "12 Elm St", %w[commercial weekly] ],
+    [ "Sam Okafor", nil, "555-380-2299", nil, "9 Oak Ave", %w[weekly] ],
+    [ "Grace Chen", nil, "555.380.3141", "grace.chen@example.com", "77 Birch Rd", [] ],
+    [ "Riverside HOA", "Riverside Homeowners Assoc.", "555-380-4000", "board@riverside.example.com", "1 Riverside Dr", %w[commercial] ],
+    [ "Tom Becker", nil, "555-380-5512", nil, "403 Maple Ct", [] ]
+  ].each do |name, company, phone, email, street, tags|
+    next if Client.exists?(display_name: name)
+
+    contacts = [ { kind: "phone", value: phone, label: "Mobile" } ]
+    contacts << { kind: "email", value: email } if email
+    Client.create!(display_name: name, company_name: company, tags:, contact_methods_attributes: contacts,
+                   properties_attributes: [ { address_line1: street, city: "Asheville", region: "NC", postal_code: "28801", billing: true } ])
   end
 end
 

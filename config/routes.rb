@@ -37,6 +37,7 @@ Rails.application.routes.draw do
         get :picked
       end
       post :matches, on: :collection # POST keeps emails and phones out of URLs and access logs
+      get :search, on: :collection # the client picker (CLI-02)
     end
 
     # Business management (with tabs for profile, hours, branding)

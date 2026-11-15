@@ -31,9 +31,41 @@ class Client < ApplicationRecord
   before_validation :move_billing_to_newly_chosen_property
   before_save :clear_other_billing_properties
 
+  before_save { self.last_activity_at = Time.current if new_record? || changed? || last_activity_at.nil? }
+  # Contact methods and properties save after the client, so the digest is rebuilt once
+  # everything is committed (children refresh it too when they change on their own).
+  after_commit :refresh_search_text!, on: %i[create update]
+
+  SORTS = { "name" => "Name", "recent" => "Recently added", "activity" => "Recent activity" }.freeze
+  MAX_SEARCH_TERMS = 8
+
   scope :active, -> { where(archived_at: nil) }
   scope :archived, -> { where.not(archived_at: nil) }
   scope :alphabetical, -> { order(Arel.sql("lower(clients.display_name)"), :id) }
+  scope :sorted, ->(sort) {
+    case sort
+    when "recent" then order(created_at: :desc, id: :desc)
+    when "activity" then order(last_activity_at: :desc, id: :desc)
+    else alphabetical
+    end
+  }
+  scope :tagged, ->(tag) { tag.present? ? where("clients.tags @> ARRAY[?]::varchar[]", tag.to_s.downcase) : all }
+
+  # Clients matching every word of `query` anywhere in their name, company, email, phone or
+  # address (CLI-02). Phone-like words ("(555)", "010-01") match on digits, so formatting
+  # doesn't matter. Uses the trigram index on search_text.
+  def self.search(query)
+    query.to_s.downcase.split.first(MAX_SEARCH_TERMS).reduce(all) do |scope, term|
+      digits = term.gsub(/\D/, "")
+      term = digits if term.match?(/\A[\d()+.\-]+\z/) && digits.length >= 3
+      scope.where("clients.search_text LIKE ?", "%#{sanitize_sql_like(term)}%")
+    end
+  end
+
+  # Tags in use, for the filter.
+  def self.tag_options(limit: 200)
+    unscope(:order).distinct.order(:tag).limit(limit).pluck(Arel.sql("unnest(clients.tags) AS tag"))
+  end
 
   # Clients with any of these emails or phones, for duplicate suggestions (R4).
   def self.matching(emails: [], phones: [])
@@ -56,6 +88,23 @@ class Client < ApplicationRecord
   def primary_contact = primary_phone || primary_email
   def billing_property = properties.find(&:billing)
   def primary_property = billing_property || properties.first
+
+  # Called by later specs (quotes, jobs, invoices) when something happens for this client.
+  def touch_activity!(at = Time.current) = update_column(:last_activity_at, at)
+
+  # Rebuilds the search digest from the database (CLI-02).
+  def refresh_search_text!
+    return if destroyed? || !self.class.unscoped.exists?(id)
+
+    update_column(:search_text, build_search_text)
+  end
+
+  def build_search_text
+    methods = ClientContactMethod.unscoped.where(client_id: id).pluck(:kind, :value, :normalized)
+    places = Property.unscoped.where(client_id: id).pluck(:label, :address_line1, :address_line2, :city, :region, :postal_code)
+    [ display_name, company_name, *methods.flat_map { |kind, value, normalized| [ value, (normalized if kind == "phone") ] }, *places.flatten ]
+      .compact_blank.join(" ").squish.downcase
+  end
 
   def documents? = DOCUMENT_ASSOCIATIONS.any? { public_send(_1).exists? }
   def deletable? = !documents?
