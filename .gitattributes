@@ -7,3 +7,9 @@ db/schema.rb linguist-generated
 vendor/* linguist-vendored
 config/credentials/*.yml.enc diff=rails_credentials
 config/credentials.yml.enc diff=rails_credentials
+
+# Count ruby files with .erb extension as Ruby files for language statistics.
+*.erb linguist-language=Ruby
+
+# Mark the following files as documentation.
+docs/* linguist-vendored
