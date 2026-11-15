@@ -55,7 +55,7 @@
     <%# Filled in by later specs: requests (CLI-04), jobs (JOB-01), invoices (INV-01). %>
     <% quotes = @client.quotes.order(created_at: :desc).limit(5) %>
     <%= card title: "Work", flush: true,
-             actions: (link_to(new_admin_quote_path(client: @client.uid), class: button_classes(:secondary, :sm)) { icon("plus") + " New quote" } unless @client.archived?) do %>
+             actions: (button_to(admin_quotes_path, params: { "quote[client]" => @client.uid }, class: button_classes(:secondary, :sm)) { icon("plus") + " New quote" } unless @client.archived?) do %>
       <ul class="list">
         <li><%= icon "message-square", class: "size-4 text-faint" %><span class="flex-1 font-medium text-ink">Requests</span><span class="text-sm2 text-muted">None yet</span></li>
         <% if quotes.any? %>

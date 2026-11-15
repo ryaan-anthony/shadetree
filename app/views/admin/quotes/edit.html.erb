@@ -1,3 +1,4 @@
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
 <% totals = @quote.totals %>
 <% lines = @quote.current_line_items %>
 <%= page_header "Quote #{@quote.number}", lede: "Draft for #{@quote.client.display_name}. Changes save as you go." do %>
@@ -103,19 +104,7 @@
             <%= text_field_tag "quote[discount_value]", @quote.discount_value, id: "quote_discount_value", inputmode: "decimal", class: "input text-right tabular", placeholder: "0" %>
           </div>
         </div>
-        <% rates = (TaxRate.active.ordered.map(&:to_pricing) + @quote.tax_rate_list).uniq %>
-        <% if rates.any? %>
-          <fieldset>
-            <legend class="label">Tax<%= " (client is tax exempt)" if @quote.client.tax_exempt %></legend>
-            <input type="hidden" name="quote[tax_rates][]" value="">
-            <% rates.each do |rate| %>
-              <label class="flex items-center gap-2 py-0.5 text-sm">
-                <input type="checkbox" class="checkbox" name="quote[tax_rates][]" value="<%= tax_rate_key(rate) %>" <%= "checked" if @quote.tax_rate_list.include?(rate) %>>
-                <%= rate.name %> <span class="text-muted"><%= rate.percent.to_d.round(4).to_s("F").sub(/\.?0+\z/, "") %>%</span>
-              </label>
-            <% end %>
-          </fieldset>
-        <% end %>
+        <%= render "tax_rates", quote: @quote %>
         <div class="border-t border-line pt-3"><%= render "totals", quote: @quote, totals: %></div>
       </div>
     <% end %>
