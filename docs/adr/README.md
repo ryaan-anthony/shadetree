@@ -37,5 +37,5 @@ approach, a hosting change. Small, local choices belong in the PR description.
 | [0012](0012-keep-devise.md) | Keep Devise for authentication | Accepted |
 | [0013](0013-money-time-and-numbering.md) | Exact money, per-rate tax, UTC times and per-business document numbers | Accepted |
 | [0014](0014-tenant-scoping-enforcement.md) | Tenant scoping enforced by default, opaque ids in URLs | Accepted |
-| [0016](0016-client-links.md) | One client-link mechanism, with derived tokens and per-link state | Accepted |
 | [0015](0015-release-flags.md) | In-house release flags on PostgreSQL | Accepted |
+| [0016](0016-client-links.md) | One client-link mechanism, with derived tokens and per-link state | Accepted |

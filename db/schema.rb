@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_14_000800) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_14_000900) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -64,7 +64,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_000800) do
     t.string "device"
     t.datetime "occurred_at", null: false
     t.index ["business_id"], name: "index_client_link_events_on_business_id"
-    t.index ["client_link_id", "kind"], name: "index_client_link_events_once", unique: true, where: "((kind)::text <> ALL ((ARRAY['view'::character varying, 'fresh_link_requested'::character varying])::text[]))"
+    t.index ["client_link_id", "kind"], name: "index_client_link_events_once", unique: true, where: "((kind)::text <> ALL (ARRAY[('view'::character varying)::text, ('fresh_link_requested'::character varying)::text]))"
     t.index ["client_link_id"], name: "index_client_link_events_on_client_link_id"
   end
 
@@ -101,6 +101,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_000800) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["business_id", "kind"], name: "index_document_sequences_on_business_id_and_kind", unique: true
+  end
+
+  create_table "feature_flags", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "state", default: "off", null: false
+    t.integer "percentage", default: 0, null: false
+    t.bigint "business_ids", default: [], null: false, array: true
+    t.string "changed_by"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_feature_flags_on_name", unique: true
   end
 
   create_table "invitations", force: :cascade do |t|
