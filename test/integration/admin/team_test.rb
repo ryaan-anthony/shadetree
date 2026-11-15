@@ -55,7 +55,25 @@ class Admin::TeamTest < ActionDispatch::IntegrationTest
 
     invite("twice@example.com")
     invite("twice@example.com")
-    assert_match "already has a pending invitation", flash[:alert]
+    assert_match "already has an invitation", flash[:alert]
+  end
+
+  test "an expired invitation must be resent or revoked, not duplicated" do
+    as_member(@owner)
+    invite("again@example.com")
+    travel 8.days do
+      invite("again@example.com")
+      assert_match "Resend or revoke", flash[:alert]
+    end
+  end
+
+  test "the invitation email sends from a worker with no business context" do
+    as_member(@owner)
+    invite("worker@example.com")
+    Current.reset
+    assert_nil Current.business
+    perform_enqueued_jobs
+    assert_equal [ "worker@example.com" ], ActionMailer::Base.deliveries.last.to
   end
 
   test "admins can't invite owners; unconfirmed people can't invite at all" do
@@ -193,6 +211,29 @@ class Admin::TeamTest < ActionDispatch::IntegrationTest
     assert_not_found_across_businesses { patch deactivate_admin_member_path(business_users(:two)) }
     assert_not_found_across_businesses { patch revoke_admin_invitation_path(other_invite) }
     assert_nil other_invite.reload.revoked_at
+  end
+
+  test "a revoke that lands after the page loaded still stops acceptance" do
+    as_member(@owner)
+    invite(users(:two).email)
+    invitation = invitation_for(users(:two).email)
+    sign_out :user
+    sign_in users(:two)
+    get invitation_path(invitation.token)
+    Tenancy.across_businesses(reason: "test") { Invitation.find(invitation.id).revoke! }
+    post accept_invitation_path(invitation.token)
+    assert_response :gone
+    assert_not @business.business_users.exists?(user: users(:two))
+  end
+
+  test "deleting a business deletes its invitations; deleting the inviter keeps them" do
+    inviter = member_with_role(:admin)
+    invitation = as_business(@business) { Invitation.create!(email: "keep@example.com", role: "technician", invited_by: inviter) }
+    inviter.destroy!
+    assert_nil invitation.reload.invited_by_id
+    assert_difference -> { Tenancy.across_businesses(reason: "test") { Invitation.count } }, -1 do
+      Business.find(@business.id).destroy!
+    end
   end
 
   test "last active is recorded" do

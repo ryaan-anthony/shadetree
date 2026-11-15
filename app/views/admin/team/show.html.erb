@@ -47,7 +47,7 @@
               <div class="min-w-0 flex-1">
                 <p class="font-semibold text-ink"><%= invitation.email %></p>
                 <p class="text-sm2 text-muted">
-                  <%= invitation.role.humanize %> · invited by <%= invitation.invited_by.full_name %> ·
+                  <%= invitation.role.humanize %> · invited by <%= invitation.invited_by&.full_name || "a former member" %> ·
                   <% if invitation.pending? %>expires in <%= distance_of_time_in_words_to_now(invitation.expires_at) %><% else %><span class="font-medium text-warning">expired</span><% end %>
                 </p>
               </div>

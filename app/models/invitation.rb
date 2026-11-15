@@ -7,13 +7,14 @@ class Invitation < ApplicationRecord
   TOKEN_LENGTH = 32
   BASE58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz".freeze
 
-  belongs_to :invited_by, class_name: "User"
+  belongs_to :invited_by, class_name: "User", optional: true # nil once that user deletes their account
   belongs_to :accepted_by, class_name: "User", optional: true
 
   normalizes :email, with: ->(email) { email.to_s.strip.downcase }
 
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :role, inclusion: { in: BusinessUser::ROLES }
+  validates :invited_by, presence: true, on: :create
   validate :not_already_a_member, on: :create
   validate :not_already_invited, on: :create
 
@@ -57,8 +58,10 @@ class Invitation < ApplicationRecord
 
   def pending? = status == :pending
 
+  # The mail job carries plain ids and loads the invitation inside its business (BusinessOwned
+  # queries need one), since mail delivery jobs don't restore tenancy themselves.
   def deliver!
-    InvitationMailer.with(invitation: self).invite.deliver_later
+    InvitationMailer.with(invitation_id: id, business_id:).invite.deliver_later
     update!(last_sent_at: Time.current)
   end
 
@@ -71,13 +74,18 @@ class Invitation < ApplicationRecord
 
   def for?(user) = user.email.casecmp?(email)
 
+  class NotAcceptable < StandardError; end
+
   # Joins the user to the business with the invited role. Reactivates a deactivated member.
+  # Re-reads the invitation under a lock, so a revoke that commits first wins.
   def accept!(user)
-    raise ArgumentError, "This invitation is for #{email}" unless for?(user)
-    raise ArgumentError, "This invitation is no longer valid" unless pending?
+    raise NotAcceptable, "This invitation is for #{email}" unless for?(user)
 
     Tenancy.with_business(business) do
       transaction do
+        lock!
+        raise NotAcceptable, "This invitation is no longer valid" unless pending?
+
         membership = BusinessUser.find_or_initialize_by(business:, user:)
         membership.assign_attributes(role:, active: true, deactivated_at: nil) if membership.new_record? || !membership.active?
         membership.save!
@@ -97,9 +105,10 @@ class Invitation < ApplicationRecord
                                         "belongs to a deactivated member. Reactivate them on the team page instead")
   end
 
+  # Matches the database's uniqueness rule: any invitation not accepted or revoked, expired or not.
   def not_already_invited
-    return unless business && Invitation.pending.where(business:, email:).exists?
+    return unless business && Invitation.where(business:, email:, accepted_at: nil, revoked_at: nil).exists?
 
-    errors.add(:email, "already has a pending invitation. Resend it from the team page")
+    errors.add(:email, "already has an invitation. Resend or revoke it from the team page")
   end
 end

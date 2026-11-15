@@ -2,15 +2,16 @@
 class CreateInvitations < ActiveRecord::Migration[8.1]
   def up
     create_table :invitations do |t|
-      t.references :business, null: false, foreign_key: true
+      # Deleting a business deletes its invitations; deleting a user keeps invitation history.
+      t.references :business, null: false, foreign_key: { on_delete: :cascade }
       t.string :uid, null: false
       t.string :email, null: false
       t.string :role, null: false
       # Token = HMAC(secret_key_base, secret); only its digest is matched (as for client links).
       t.string :secret, null: false
       t.string :token_digest, null: false
-      t.references :invited_by, null: false, foreign_key: { to_table: :users }
-      t.references :accepted_by, foreign_key: { to_table: :users }
+      t.references :invited_by, foreign_key: { to_table: :users, on_delete: :nullify }
+      t.references :accepted_by, foreign_key: { to_table: :users, on_delete: :nullify }
       t.datetime :expires_at, null: false
       t.datetime :last_sent_at
       t.datetime :accepted_at

@@ -47,6 +47,9 @@ class InvitationsController < ApplicationController
 
   def join_and_switch(user)
     membership = @invitation.accept!(user)
+  rescue Invitation::NotAcceptable
+    render "invitations/unavailable", status: :gone
+  else
     session[:current_business_id] = membership.business_id
     user.update_column(:last_business_id, membership.business_id)
     redirect_to admin_root_path, notice: "Welcome to #{@business.name}."

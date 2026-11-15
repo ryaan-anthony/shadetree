@@ -1,4 +1,4 @@
-<% inviter = @invitation.invited_by.full_name %>
+<% inviter = @invitation.invited_by&.full_name || @business.name %>
 <% role = @invitation.role.humanize.downcase %>
 <%= render layout: "devise/shared/card", locals: {
       title: "Join #{@business.name}",
