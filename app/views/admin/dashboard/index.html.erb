@@ -2,6 +2,7 @@
                 lede: "Here's where #{current_business.name} stands." %>
 
 <div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+  <% if can?(:business_settings) %>
   <%= card title: "Get your business ready", subtitle: "#{@setup_steps.count { _1[:done] }} of #{@setup_steps.size} done", flush: true do %>
     <ul class="list">
       <% @setup_steps.each do |step| %>
@@ -19,6 +20,7 @@
         </li>
       <% end %>
     </ul>
+  <% end %>
   <% end %>
 
   <%= card title: "Quotes and jobs" do %>

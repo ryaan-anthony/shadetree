@@ -26,8 +26,8 @@ class BusinessUserTest < ActiveSupport::TestCase
 
   test "role helpers" do
     assert business_users(:one).owner?
-    assert business_users(:one).can_manage?
-    assert_not business_users(:one_member_of_two).can_manage?
+    assert business_users(:one).can?(:billing)
+    assert_not business_users(:one_member_of_two).can?(:office)
     assert_equal [ business_users(:one_member_of_two) ], BusinessUser.technicians.to_a
   end
 end

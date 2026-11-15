@@ -40,9 +40,48 @@ class BusinessUser < ApplicationRecord
     role == "admin"
   end
 
-  # Check if user can manage this business
-  def can_manage?
-    owner? || admin?
+  # Named permissions (ACC-04). Inactive memberships grant nothing.
+  def can?(permission) = active? && Permissions.granted?(role, permission)
+
+  # May `self` give `target` the role `new_role`? Admins manage the team but never Owners.
+  def can_assign_role?(target, new_role)
+    return false unless can?(:manage_team) && ROLES.include?(new_role.to_s) && target.business_id == business_id
+    return can?(:manage_owners) if target.owner? || new_role.to_s == "owner"
+
+    true
+  end
+
+  def last_active_owner?
+    owner? && active? && business.business_users.active.owners.where.not(id:).none?
+  end
+
+  private
+
+  LAST_OWNER_MESSAGE = "is the last owner. Make someone else an owner first".freeze
+
+  # Was this membership an active Owner in the database (ignoring unsaved changes)?
+  def persisted_active_owner? = attribute_in_database(:role) == "owner" && attribute_in_database(:active)
+
+  def other_active_owner_exists?
+    Business.lock.find(business_id) # serialise owner changes per business
+    business.business_users.active.owners.where.not(id:).exists?
+  end
+
+  def keeps_an_active_owner
+    return unless persisted_active_owner? && !(owner? && active?)
+    return if other_active_owner_exists?
+
+    errors.add(:base, "#{user.full_name} #{LAST_OWNER_MESSAGE}")
+    throw :abort
+  end
+
+  def ensure_not_last_owner
+    return if destroyed_by_association&.active_record == Business # the business itself is being deleted
+    return unless persisted_active_owner?
+    return if other_active_owner_exists?
+
+    errors.add(:base, "#{user.full_name} #{LAST_OWNER_MESSAGE}")
+    throw :abort
   end
 
   def last_active_owner?

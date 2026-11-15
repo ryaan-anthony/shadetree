@@ -45,5 +45,5 @@ the same way.
 
 ## Open questions
 
-- Should Technicians be able to view (read-only) the full client list for phone lookups?
-  Recommend no; they see clients only through assigned visits.
+- ~~Should Technicians see the full client list?~~ Resolved: no. They see clients only through
+  their assigned visits (`field_work`).
