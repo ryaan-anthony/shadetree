@@ -3,13 +3,16 @@ require "test_helper"
 class PermissionsTest < ActiveSupport::TestCase
   test "the role table matches the capability table in 02-accounts" do
     table = File.read(Rails.root.join("docs/plans/02-accounts.md"))
-    table.scan(/^\| [^|]+ \| ((?:`\w+`(?:, )?)+) \| (✔?) \| (✔?) \| (✔?) \|$/).each do |permissions, owner, admin, technician|
+    checked = []
+    table.scan(/^\|[^|\n]+\|\s*((?:`\w+`(?:,\s*)?)+)\s*\|\s*(✔?)\s*\|\s*(✔?)\s*\|\s*(✔?)\s*\|\s*$/).each do |permissions, owner, admin, technician|
       permissions.scan(/`(\w+)`/).flatten.each do |permission|
         expected = { "owner" => owner, "admin" => admin, "technician" => technician }.select { |_, mark| mark == "✔" }.keys
         assert_equal expected, Permissions.roles_with(permission), "02-accounts table vs Permissions for #{permission}"
+        checked << permission
       end
     end
-    assert_equal Permissions::CATALOG.keys.map(&:to_s).sort, table.scan(/`(\w+)`/).flatten.uniq.select { Permissions::CATALOG.key?(_1.to_sym) }.sort
+    # Every permission in code must appear in a parsed row, so a row the pattern misses fails here.
+    assert_equal Permissions::CATALOG.keys.map(&:to_s).sort, checked.uniq.sort
 
     assert_equal Permissions::CATALOG.keys, Permissions::ROLES["owner"]
     assert_equal %w[owner], Permissions.roles_with(:billing)
