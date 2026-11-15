@@ -33,6 +33,27 @@ the significant ones as an ADR (see below).
   item totals`.
 - Keep `main` linear: rebase on `main` rather than merging it into your branch.
 
+## Feature flags
+
+Use a release flag when a spec takes more than one PR, or when a change should reach a few
+businesses before everyone. Unfinished work then merges to `main` dark instead of living on a
+long branch ([ADR 0015](docs/adr/0015-release-flags.md)).
+
+1. Declare it in `config/feature_flags.yml` with a description, an owner and `remove_by` (the
+   milestone by which the flag and the old code path are deleted). Checking an undeclared flag
+   raises in tests.
+2. Check it with `feature?(:name)` in controllers and views, or
+   `Feature.enabled?(:name, business:)` in jobs and mailers. Keep checks at the edges (a route,
+   a button, a branch in a controller), not deep in models.
+3. Test both paths with `with_feature(:name) { … }` and `with_feature(:name, enabled: false) { … }`.
+4. Roll out with `bin/rails "flags:enable_for[name,BUSINESS_UID]"`, then
+   `"flags:percentage[name,25]"`, then `"flags:enable[name]"`. Use `"flags:disable[name]"` as the
+   kill switch. `bin/rails flags:list` shows every flag, its state and when it's due to go.
+5. Once a feature is fully on, open a PR that deletes the flag, its checks and the old path.
+   Flags past their `remove_by` milestone are tech debt to schedule.
+
+Flags are for releasing code. What a plan pays for is a separate concept (entitlements, BIL-01).
+
 ## Pull requests
 
 - **Small and focused.** Aim for under ~400 changed lines excluding generated files. A spec that

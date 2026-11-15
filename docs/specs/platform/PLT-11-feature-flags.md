@@ -41,5 +41,5 @@ in parallel without long-lived branches.
 
 ## Open questions
 
-- Use an established library or a small in-house implementation? Engineering decision; prefer
-  something that works with the chosen database without extra infrastructure.
+- ~~Use an established library or a small in-house implementation?~~ Resolved: in-house, on
+  PostgreSQL with a 30-second cache (ADR 0015).
