@@ -58,6 +58,16 @@ Rails.application.routes.draw do
       end
     end
 
+    # Service catalog (CAT-03)
+    resources :catalog_items, path: "catalog", except: %i[show destroy] do
+      member do
+        patch :archive
+        patch :restore
+        patch :move
+      end
+      get :search, on: :collection
+    end
+
     # Dashboard
     resources :dashboard, only: [ :index ]
     root "dashboard#index"

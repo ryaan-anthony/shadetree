@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_14_001000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_14_001100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -66,6 +66,40 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_001000) do
     t.index ["industry"], name: "index_businesses_on_industry"
     t.index ["owner_id"], name: "index_businesses_on_owner_id"
     t.index ["uid"], name: "index_businesses_on_uid", unique: true
+  end
+
+  create_table "catalog_categories", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "business_id, lower((name)::text)", name: "index_catalog_categories_unique_name", unique: true
+    t.index ["business_id"], name: "index_catalog_categories_on_business_id"
+    t.index ["uid"], name: "index_catalog_categories_on_uid", unique: true
+  end
+
+  create_table "catalog_items", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.bigint "category_id"
+    t.string "name", null: false
+    t.text "description"
+    t.string "unit", default: "each", null: false
+    t.string "custom_unit"
+    t.integer "unit_price_cents"
+    t.boolean "taxable", default: true, null: false
+    t.integer "duration_minutes"
+    t.boolean "show_on_request_form", default: true, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "archived_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "archived_at", "position"], name: "idx_on_business_id_archived_at_position_80c3676433"
+    t.index ["business_id"], name: "index_catalog_items_on_business_id"
+    t.index ["category_id"], name: "index_catalog_items_on_category_id"
+    t.index ["uid"], name: "index_catalog_items_on_uid", unique: true
   end
 
   create_table "client_link_events", force: :cascade do |t|
@@ -178,6 +212,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_001000) do
   add_foreign_key "business_users", "businesses"
   add_foreign_key "business_users", "users"
   add_foreign_key "businesses", "users", column: "owner_id"
+  add_foreign_key "catalog_categories", "businesses", on_delete: :cascade
+  add_foreign_key "catalog_items", "businesses", on_delete: :cascade
+  add_foreign_key "catalog_items", "catalog_categories", column: "category_id", on_delete: :nullify
   add_foreign_key "client_link_events", "businesses", on_delete: :cascade
   add_foreign_key "client_link_events", "client_links", on_delete: :cascade
   add_foreign_key "client_links", "businesses", on_delete: :cascade

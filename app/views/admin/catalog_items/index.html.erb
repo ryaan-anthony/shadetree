@@ -1,0 +1,82 @@
+<%= page_header "Catalog", lede: "What you sell, with default prices. Pick from it when building quotes and invoices." do %>
+  <%= link_to new_admin_catalog_item_path, class: button_classes do %><%= icon "plus" %> Add item<% end %>
+<% end %>
+
+<div class="mb-4 flex flex-wrap items-center gap-2">
+  <%= form_with url: admin_catalog_items_path, method: :get, class: "flex min-w-0 flex-1 items-center gap-2", data: { turbo_frame: "_top" } do |f| %>
+    <% if @showing_archived %><%= hidden_field_tag :archived, "1" %><% end %>
+    <label class="sr-only" for="q">Search the catalog</label>
+    <div class="relative min-w-0 flex-1 sm:max-w-sm">
+      <%= icon "search", class: "pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-faint" %>
+      <%= search_field_tag :q, @query, class: "input pl-9", placeholder: "Search by name or description" %>
+    </div>
+    <%= f.submit "Search", class: button_classes(:secondary), name: nil %>
+  <% end %>
+  <nav class="tabs border-0" aria-label="Catalog view">
+    <%= link_to "Active", admin_catalog_items_path(q: @query.presence), class: "tab", "aria-current": ("page" unless @showing_archived) %>
+    <%= link_to "Archived (#{@archived_count})", admin_catalog_items_path(archived: 1, q: @query.presence), class: "tab", "aria-current": ("page" if @showing_archived) %>
+  </nav>
+</div>
+
+<% if @items.empty? %>
+  <div class="card">
+    <% if @query.present? %>
+      <%= empty_state title: "Nothing matches \"#{@query}\"", text: "Try a shorter word, or add it as a new item.", icon: "search" do %>
+        <%= link_to "Clear search", admin_catalog_items_path(archived: (1 if @showing_archived)), class: button_classes(:secondary) %>
+      <% end %>
+    <% elsif @showing_archived %>
+      <%= empty_state title: "No archived items", text: "Archived items are hidden from pickers but stay on old quotes and invoices.", icon: "archive" %>
+    <% else %>
+      <%= empty_state title: "Your catalog is empty", text: "Add the services you offer most, like a weekly mow or a trip fee, so quoting takes seconds.", icon: "package" do %>
+        <%= link_to new_admin_catalog_item_path, class: button_classes do %><%= icon "plus" %> Add your first item<% end %>
+      <% end %>
+    <% end %>
+  </div>
+<% else %>
+  <div class="space-y-4">
+    <% @groups.each do |category, items| %>
+      <%= card title: category&.name || "Uncategorized", subtitle: pluralize(items.size, "item"), flush: true,
+               actions: (link_to("Add here", new_admin_catalog_item_path(category: category&.uid), class: button_classes(:ghost, :sm)) unless @showing_archived) do %>
+        <ul class="list">
+          <% items.each_with_index do |item, index| %>
+            <li id="item-<%= item.uid %>" class="flex-wrap">
+              <div class="min-w-0 flex-1">
+                <p class="font-semibold text-ink">
+                  <%= link_to item.name, edit_admin_catalog_item_path(item), class: "hover:underline" %>
+                  <% unless item.taxable %><%= badge "Not taxed", dot: false %><% end %>
+                </p>
+                <p class="truncate text-sm2 text-muted"><%= [ item.description.presence, item.duration_label ].compact.join(" · ") %></p>
+              </div>
+              <p class="w-36 text-right">
+                <% if item.unit_price %>
+                  <span class="money font-semibold text-ink"><%= money(item.unit_price) %></span> <span class="text-sm2 text-muted">/ <%= item.unit_label %></span>
+                <% else %>
+                  <span class="text-sm2 text-muted">Price on quote</span>
+                <% end %>
+              </p>
+              <div class="flex items-center gap-1">
+                <% if @showing_archived %>
+                  <%= button_to "Restore", restore_admin_catalog_item_path(item), method: :patch, class: button_classes(:secondary, :sm) %>
+                <% else %>
+                  <% unless @query.present? %>
+                    <%= button_to move_admin_catalog_item_path(item, direction: -1), method: :patch, class: button_classes(:ghost, :sm, :icon), disabled: index.zero?, "aria-label": "Move #{item.name} up" do %><%= icon "arrow-up" %><% end %>
+                    <%= button_to move_admin_catalog_item_path(item, direction: 1), method: :patch, class: button_classes(:ghost, :sm, :icon), disabled: index == items.size - 1, "aria-label": "Move #{item.name} down" do %><%= icon "arrow-down" %><% end %>
+                  <% end %>
+                  <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
+                    <button type="button" class="<%= button_classes(:ghost, :sm, :icon) %>" data-menu-target="button" data-action="menu#toggle" aria-haspopup="true" aria-expanded="false" aria-label="More actions for <%= item.name %>"><%= icon "more-horizontal" %></button>
+                    <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
+                      <%= link_to edit_admin_catalog_item_path(item), class: "menu-item" do %><%= icon "edit-2" %> Edit<% end %>
+                      <%= link_to new_admin_catalog_item_path(duplicate_of: item.uid), class: "menu-item" do %><%= icon "copy" %> Duplicate<% end %>
+                      <div class="menu-sep"></div>
+                      <%= button_to archive_admin_catalog_item_path(item), method: :patch, class: "menu-item", form: { class: "contents" } do %><%= icon "archive" %> Archive<% end %>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

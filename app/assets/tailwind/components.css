@@ -286,7 +286,8 @@
   }
   .menu-item:hover,
   .menu-item:focus-visible,
-  .menu-item[aria-current="true"] { background: var(--color-sunken); color: var(--color-ink); }
+  .menu-item[aria-current="true"],
+  .menu-item[aria-selected="true"] { background: var(--color-sunken); color: var(--color-ink); }
   .menu-item svg { width: 1rem; height: 1rem; color: var(--color-muted); }
   .menu-label { padding: 0.5rem 0.625rem 0.25rem; font-size: 0.75rem; font-weight: 600; color: var(--color-muted); }
   .menu-sep { height: 1px; margin: 0.375rem -0.375rem; background: var(--color-line); }

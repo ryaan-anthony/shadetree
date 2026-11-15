@@ -43,6 +43,7 @@ per-location pricing, bundles or pricing rules.
 
 ## Open questions
 
-- Should items have an internal cost to compute margin? Recommend backlog.
-- Should the request form show all active services or only ones flagged "show on request form"?
-  Recommend a per-item flag, default on.
+- ~~Should items have an internal cost to compute margin?~~ Resolved: not now. It's in the
+  backlog; nothing in M1 reads it.
+- ~~Should the request form show all active services or only ones flagged "show on request form"?~~
+  Resolved: a per-item `show_on_request_form` flag, on by default.

@@ -1,0 +1,19 @@
+<%# locals: (label: "Add from catalog") -%>
+<%# The catalog item picker (CAT-03), reused by quote, invoice and job line editors.
+    Picking an item dispatches "catalog-picker:pick" with the item's JSON in event.detail;
+    the line editor copies the values it needs, so later catalog edits never change the line. %>
+<div class="relative" data-controller="catalog-picker"
+     data-catalog-picker-url-value="<%= search_admin_catalog_items_path(format: :json) %>"
+     data-catalog-picker-storage-key-value="catalog-recent:<%= current_business.uid %>"
+     data-action="keydown->catalog-picker#keydown focusout->catalog-picker#blur">
+  <label class="label" for="<%= picker_id = "catalog-picker-#{SecureRandom.hex(3)}" %>"><%= label %></label>
+  <div class="relative">
+    <%= icon "search", class: "pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-faint" %>
+    <input id="<%= picker_id %>" type="search" class="input pl-9" autocomplete="off" placeholder="Search your catalog"
+           role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="<%= picker_id %>-list"
+           data-catalog-picker-target="input" data-action="input->catalog-picker#search focus->catalog-picker#open">
+  </div>
+  <ul id="<%= picker_id %>-list" class="menu left-0 right-0 top-full mt-1 max-h-72 overflow-y-auto" role="listbox" hidden
+      data-catalog-picker-target="list"></ul>
+  <p class="sr-only" aria-live="polite" data-catalog-picker-target="status"></p>
+</div>

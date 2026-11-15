@@ -42,6 +42,7 @@
         <%= side_link "Team", admin_team_path, icon: "users", active: controller_name.in?(%w[team invitations members]) %>
       <% end %>
       <% if can?(:business_settings) %>
+        <%= side_link "Catalog", admin_catalog_items_path, icon: "package", active: controller_name == "catalog_items" %>
         <%= side_link "Settings", edit_admin_business_path, icon: "settings", active: controller_name == "businesses" && action_name.in?(%w[edit update]) %>
       <% end %>
     <% else %>

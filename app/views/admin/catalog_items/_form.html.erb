@@ -1,0 +1,42 @@
+<%= form_with model: @item, url: (@item.persisted? ? admin_catalog_item_path(@item) : admin_catalog_items_path), class: "max-w-2xl space-y-4" do |f| %>
+  <% if @item.errors.any? %>
+    <div class="banner banner-danger" role="alert"><%= icon "alert-circle" %>
+      <p><%= @item.errors.count == 1 ? "One thing" : "#{@item.errors.count} things" %> to fix before saving. Each one is marked below.</p>
+    </div>
+  <% end %>
+  <%= card do %>
+    <%= f.field :name, autofocus: @item.new_record?, placeholder: "Weekly lawn mowing" %>
+    <%= f.field :description, as: :textarea, optional: true, rows: 3, label: "Description for clients",
+                help: "Appears on quotes and invoices under the item name." %>
+    <div class="grid gap-4 sm:grid-cols-2" data-controller="custom-unit">
+      <%= f.field :unit_price, as: :money, label: "Default price", optional: true, currency: Money.currency(current_business.currency_code).symbol,
+                  help: "Leave blank to price it on each quote." %>
+      <div class="field">
+        <%= f.label :unit, "Per", class: "label" %>
+        <div class="flex gap-2">
+          <%= f.select :unit, CatalogItem::UNITS.map { |key, label| [ label, key ] }, {}, class: "select", data: { custom_unit_target: "select", action: "custom-unit#toggle" } %>
+          <%= f.text_field :custom_unit, class: "input", placeholder: "e.g. bag", maxlength: 20, "aria-label": "Custom unit",
+                           hidden: @item.unit != "custom", data: { custom_unit_target: "input" }, "aria-invalid": (@item.errors[:custom_unit].any? || nil) %>
+        </div>
+        <% if @item.errors[:custom_unit].any? %><p class="error-text"><%= icon "alert-circle" %>Custom unit <%= @item.errors[:custom_unit].to_sentence %></p><% end %>
+      </div>
+    </div>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="field">
+        <%= f.label :category_id, "Category", class: "label" %>
+        <%= f.select :category_id, CatalogCategory.all.map { [ _1.name, _1.uid ] }, { include_blank: "No category", selected: @item.category&.uid }, class: "select" %>
+        <%= text_field_tag "catalog_item[new_category_name]", params.dig(:catalog_item, :new_category_name), class: "input mt-2", placeholder: "Or type a new category", "aria-label": "New category" %>
+      </div>
+      <%= f.field :duration_minutes, as: :number, label: "Typical duration (minutes)", optional: true, min: 1, max: 1440,
+                  help: "Helps when scheduling the visit." %>
+    </div>
+    <div class="mt-4 space-y-3">
+      <%= f.check :taxable, label: "Taxable", hint: "Taxes apply when this is on a quote or invoice (rates come with CAT-04)." %>
+      <%= f.check :show_on_request_form, label: "Show on your request form", hint: "Clients can pick it when asking for work." %>
+    </div>
+  <% end %>
+  <div class="flex items-center justify-end gap-2">
+    <%= link_to "Cancel", admin_catalog_items_path, class: button_classes(:ghost) %>
+    <%= f.submit_button @item.persisted? ? "Save item" : "Add item" %>
+  </div>
+<% end %>
