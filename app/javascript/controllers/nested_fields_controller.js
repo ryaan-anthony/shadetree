@@ -21,16 +21,22 @@ export default class extends Controller {
     this.anchorTarget.previousElementSibling?.querySelector("input:not([type=hidden]), textarea")?.focus()
   }
 
-  // New rows are dropped; saved ones are hidden and marked for destruction.
+  // New rows are dropped; saved ones are hidden and marked for destruction, with their other
+  // controls disabled so browser validation skips them. Dispatches "nested-fields:removed".
   remove(event) {
     const row = event.target.closest("[data-nested-fields-target=row]")
     if (!row) return
-    const destroy = row.querySelector("[data-nested-fields-target=destroy]")
-    if (row.querySelector("input[name$='[id]']")) {
+    const id = row.querySelector("input[name$='[id]']")
+    if (id) {
+      const destroy = row.querySelector("[data-nested-fields-target=destroy]")
       destroy.value = "1"
+      row.querySelectorAll("input, select, textarea, button").forEach((control) => {
+        if (control !== id && control !== destroy) control.disabled = true
+      })
       row.hidden = true
     } else {
       row.remove()
     }
+    this.dispatch("removed")
   }
 }

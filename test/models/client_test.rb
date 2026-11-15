@@ -67,7 +67,7 @@ class ClientTest < ActiveSupport::TestCase
     as_business(@business) do
       client.tag_list = (1..21).map { "t#{_1}" }.join(",")
       assert_not client.valid?
-      assert_includes client.errors[:tags], "can have at most 20"
+      assert_includes client.errors[:tag_list], "can have at most 20 tags"
     end
   end
 
@@ -89,6 +89,19 @@ class ClientTest < ActiveSupport::TestCase
                                properties_attributes: [ { address_line1: "A", billing: true }, { address_line1: "B", billing: true } ])
       assert_not two_billing.valid?
       assert_includes two_billing.errors[:base], "Only one property can be the billing address."
+    end
+  end
+
+  test "a new property with only a label, access notes or billing still needs an address" do
+    as_business(@business) do
+      [ { label: "Rental" }, { access_notes: "Gate 1234" }, { billing: "1" } ].each do |row|
+        client = Client.new(display_name: "X", contact_methods_attributes: [ phone("5550100100") ], properties_attributes: [ row.merge(country: "US") ])
+        assert_not client.valid?, row.inspect
+      end
+      untouched = Client.new(display_name: "X", contact_methods_attributes: [ phone("5550100100") ],
+                             properties_attributes: [ { country: "US", billing: "0", address_line1: "" } ])
+      assert untouched.valid?
+      assert_empty untouched.properties
     end
   end
 

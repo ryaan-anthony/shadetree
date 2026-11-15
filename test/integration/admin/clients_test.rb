@@ -31,7 +31,7 @@ class Admin::ClientsTest < ActionDispatch::IntegrationTest
     assert_permission_matrix(owner: true, admin: true, technician: false) { get admin_clients_path }
     assert_permission_matrix(owner: true, admin: true, technician: false) { get admin_client_path(client) }
     assert_permission_matrix(owner: true, admin: true, technician: false) { get new_admin_client_path(inline: 1) }
-    assert_permission_matrix(owner: true, admin: true, technician: false) { get matches_admin_clients_path(phone: [ "5550100100" ]) }
+    assert_permission_matrix(owner: true, admin: true, technician: false) { post matches_admin_clients_path, params: { phone: [ "5550100100" ] } }
   end
 
   test "the empty list invites the first client" do
@@ -104,15 +104,15 @@ class Admin::ClientsTest < ActionDispatch::IntegrationTest
   test "duplicate suggestions match on email or phone" do
     maria = create_client(phone: "(555) 010-0100")
     as_member(@owner)
-    get matches_admin_clients_path(phone: [ "+1 555 010 0100" ])
-    assert_select "turbo-frame#client_matches", /Maria Lopez/
+    post matches_admin_clients_path, params: { phone: [ "+1 555 010 0100" ] }
+    assert_select "turbo-stream[target=client_matches]", /Maria Lopez/
     assert_select "a[href='#{admin_client_path(maria)}']", "Open"
 
-    get matches_admin_clients_path(phone: [ "+1 555 010 0100" ], inline: 1)
+    post matches_admin_clients_path(inline: 1), params: { phone: [ "+1 555 010 0100" ] }
     assert_select "a[data-turbo-frame=new_client][href=?]", picked_admin_client_path(maria, inline: 1), "Use this client"
 
-    get matches_admin_clients_path(phone: [ "5550100100" ], except: maria.uid)
-    assert_select "turbo-frame#client_matches", text: ""
+    post matches_admin_clients_path(except: maria.uid), params: { phone: [ "5550100100" ] }
+    assert_select "turbo-stream[target=client_matches] li", false
   end
 
   test "inline creation hands the client back to the picker" do
@@ -137,13 +137,49 @@ class Admin::ClientsTest < ActionDispatch::IntegrationTest
     assert_response :not_found
     patch archive_admin_client_path(theirs)
     assert_response :not_found
-    get matches_admin_clients_path(phone: [ "5550100100" ])
-    assert_select "turbo-frame#client_matches", text: ""
+    post matches_admin_clients_path, params: { phone: [ "5550100100" ] }
+    assert_select "turbo-stream[target=client_matches] li", false
   end
 
   test "the sidebar links to clients for office roles" do
     as_member(@owner)
     get admin_root_path
     assert_select "nav a[href='#{admin_clients_path}']", "Clients"
+  end
+
+  test "pickers never offer or accept archived clients" do
+    maria = create_client(phone: "(555) 010-0100")
+    as_business(@business) { maria.archive! }
+    as_member(@owner)
+    post matches_admin_clients_path(inline: 1), params: { phone: [ "5550100100" ] }
+    assert_select "turbo-stream[target=client_matches] li", false
+    post matches_admin_clients_path, params: { phone: [ "5550100100" ] }
+    assert_select "turbo-stream[target=client_matches]", /Maria Lopez/, "the full-page warning still mentions them"
+    get picked_admin_client_path(maria, inline: 1)
+    assert_select "turbo-frame#new_client", /archived/
+    assert_select "[data-controller=client-picked]", false
+  end
+
+  test "too many tags are explained beside the tags field" do
+    client = create_client
+    as_member(@owner)
+    patch admin_client_path(client), params: { client: { tag_list: (1..21).map { "t#{_1}" }.join(",") } }
+    assert_response :unprocessable_content
+    assert_select "input#client_tag_list[aria-invalid=true]"
+    assert_select ".error-text", /at most 20 tags/
+  end
+
+  test "client details are filtered from logs" do
+    filter = ActiveSupport::ParameterFilter.new(Rails.application.config.filter_parameters)
+    filtered = filter.filter("client" => { "display_name" => "Maria", "notes" => "n", "tag_list" => "vip",
+                                           "contact_methods_attributes" => { "0" => { "kind" => "phone", "value" => "555" } },
+                                           "properties_attributes" => { "0" => { "address_line1" => "1 Main", "access_notes" => "gate", "city" => "Austin" } } },
+                             "phone" => [ "555" ])
+    assert_equal "[FILTERED]", filtered.dig("client", "display_name")
+    assert_equal "[FILTERED]", filtered.dig("client", "contact_methods_attributes", "0", "value")
+    assert_equal "phone", filtered.dig("client", "contact_methods_attributes", "0", "kind")
+    assert_equal "[FILTERED]", filtered.dig("client", "properties_attributes", "0", "address_line1")
+    assert_equal "[FILTERED]", filtered.dig("client", "properties_attributes", "0", "access_notes")
+    assert_equal "[FILTERED]", filtered["phone"]
   end
 end

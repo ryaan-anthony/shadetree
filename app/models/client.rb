@@ -14,8 +14,7 @@ class Client < ApplicationRecord
 
   accepts_nested_attributes_for :contact_methods, allow_destroy: true,
                                 reject_if: ->(attributes) { attributes["id"].blank? && attributes["value"].blank? }
-  accepts_nested_attributes_for :properties, allow_destroy: true,
-                                reject_if: ->(attributes) { attributes["id"].blank? && Property::ADDRESS_FIELDS.all? { attributes[_1].blank? } }
+  accepts_nested_attributes_for :properties, allow_destroy: true, reject_if: :untouched_new_property?
 
   normalizes :display_name, :company_name, with: ->(value) { value.to_s.squish.presence }
   normalizes :tags, with: ->(tags) { Array(tags).flat_map { _1.to_s.split(",") }.map { _1.squish.downcase }.compact_blank.uniq }
@@ -83,13 +82,21 @@ class Client < ApplicationRecord
 
   def kept(collection) = collection.reject(&:marked_for_destruction?)
 
+  # The form always offers an empty property; it's skipped only if nothing was entered in it.
+  # A label, access notes or the billing box count, so a half-filled row reaches validation.
+  def untouched_new_property?(attributes)
+    attributes["id"].blank? && (Property::ADDRESS_FIELDS + %w[label access_notes]).all? { attributes[_1].blank? } &&
+      !ActiveModel::Type::Boolean.new.cast(attributes["billing"])
+  end
+
   def has_a_contact_method
     errors.add(:base, "Add an email or a phone number so you can reach this client.") if kept(contact_methods).empty?
   end
 
   def tags_are_short
-    errors.add(:tags, "can have at most #{MAX_TAGS}") if tags.size > MAX_TAGS
-    errors.add(:tags, "must each be 30 characters or fewer") if tags.any? { _1.length > 30 }
+    # On tag_list, the field the form shows.
+    errors.add(:tag_list, "can have at most #{MAX_TAGS} tags") if tags.size > MAX_TAGS
+    errors.add(:tag_list, "must each be 30 characters or fewer") if tags.any? { _1.length > 30 }
   end
 
   def one_billing_property

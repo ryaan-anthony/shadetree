@@ -66,16 +66,20 @@ class Admin::ClientsController < Admin::BaseController
     redirect_to admin_clients_path, notice: "#{@client.display_name} deleted."
   end
 
-  # Existing clients sharing an email or phone with the form (R4). Rendered into a frame.
+  # Existing clients sharing an email or phone with the form (R4), as a turbo stream that
+  # replaces the form's suggestions. A POST so contact details never appear in URLs.
   def matches
     @inline = inline?
-    @matches = Client.matching(emails: params[:email], phones: params[:phone])
-                     .where.not(uid: params[:except].to_s).includes(:contact_methods, :properties).alphabetical.limit(5)
-    render layout: false
+    scope = Client.matching(emails: params[:email], phones: params[:phone]).where.not(uid: params[:except].to_s)
+    scope = scope.active if @inline # pickers never offer archived clients
+    @matches = scope.includes(:contact_methods, :properties).alphabetical.limit(5)
+    render turbo_stream: turbo_stream.update("client_matches", partial: "matches", locals: { matches: @matches, inline: @inline })
   end
 
   # The end of the inline flow: hands the client back to the picker that opened it (R3).
   def picked
+    return render :picked_archived, layout: false if @client.archived?
+
     render layout: false
   end
 

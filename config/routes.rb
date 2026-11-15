@@ -36,7 +36,7 @@ Rails.application.routes.draw do
         patch :restore
         get :picked
       end
-      get :matches, on: :collection
+      post :matches, on: :collection # POST keeps emails and phones out of URLs and access logs
     end
 
     # Business management (with tabs for profile, hours, branding)

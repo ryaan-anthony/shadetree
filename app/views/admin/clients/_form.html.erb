@@ -2,7 +2,7 @@
 <%# The client form, full page or inline (R3: from a picker, in a modal). %>
 <% url = @client.persisted? ? admin_client_path(@client) : admin_clients_path(inline: (1 if inline)) %>
 <%= form_with model: @client, url:, class: (inline ? "space-y-4" : "max-w-3xl space-y-4"),
-              data: { controller: "client-matches", client_matches_url_value: matches_admin_clients_path(inline: (1 if inline), except: @client.uid) } do |f| %>
+              data: { controller: "client-matches", action: "nested-fields:removed->client-matches#check", client_matches_url_value: matches_admin_clients_path(inline: (1 if inline), except: @client.uid) } do |f| %>
   <% if @client.errors.any? %>
     <div class="banner banner-danger" role="alert"><%= icon "alert-circle" %>
       <div>
@@ -33,9 +33,7 @@
             <button type="button" class="<%= button_classes(:ghost, :sm) %>" data-action="nested-fields#add" data-nested-fields-kind-param="phone"><%= icon "plus" %> Add phone</button>
           </div>
         <% end %>
-        <%= turbo_frame_tag "client_matches", data: { client_matches_target: "frame" } do %>
-          <%= render "matches", matches: @matches || [], inline: %>
-        <% end %>
+        <div id="client_matches" data-client-matches-target="results"></div>
       </div>
     <% end %>
   <% end %>
