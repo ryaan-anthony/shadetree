@@ -1,0 +1,148 @@
+# Starter services offered to a business for its industry (CAT-05). Loaded into the
+# industry_presets table by db/seeds.rb (missing industries only) and by
+#   bin/rails presets:sync            # add industries that aren't in the database yet
+#   bin/rails presets:sync OVERWRITE=1  # replace every preset with this file
+# Operators can also edit presets in the database without a deploy (see presets:export).
+#
+# Each item: name (required), description, unit (each, hour, visit, sq_ft, linear_ft or
+# custom with custom_unit), taxable (default true), duration_minutes, category.
+# No prices: owners fill in their own (03-catalog, open question 2).
+
+cleaning:
+  default_visit_minutes: 150
+  items:
+    - { name: Standard clean, unit: visit, duration_minutes: 150, category: Cleaning,
+        description: "Kitchen, bathrooms, dusting, vacuuming and mopping throughout." }
+    - { name: Deep clean, unit: visit, duration_minutes: 300, category: Cleaning,
+        description: "Everything in a standard clean plus baseboards, inside appliances and detailed scrubbing." }
+    - { name: Move-in / move-out clean, unit: visit, duration_minutes: 360, category: Cleaning,
+        description: "Empty-home clean including inside cabinets, closets and appliances." }
+    - { name: Inside oven, unit: each, duration_minutes: 45, category: Add-ons }
+    - { name: Inside fridge, unit: each, duration_minutes: 30, category: Add-ons }
+    - { name: Interior windows, unit: each, duration_minutes: 10, category: Add-ons }
+    - { name: Laundry, unit: custom, custom_unit: load, duration_minutes: 60, category: Add-ons }
+
+landscaping:
+  default_visit_minutes: 60
+  items:
+    - { name: Lawn mowing, unit: visit, duration_minutes: 45, category: Lawn care,
+        description: "Mow, edge walkways and blow clippings off hard surfaces." }
+    - { name: Hedge and shrub trimming, unit: hour, category: Lawn care }
+    - { name: Leaf cleanup, unit: visit, duration_minutes: 120, category: Seasonal,
+        description: "Rake or blow leaves from lawn and beds and haul away." }
+    - { name: Spring cleanup, unit: visit, duration_minutes: 180, category: Seasonal }
+    - { name: Mulch installation, unit: custom, custom_unit: cubic yard, category: Landscaping,
+        description: "Supply and spread mulch in beds." }
+    - { name: Fertilizer application, unit: visit, duration_minutes: 30, category: Lawn care }
+    - { name: Aeration, unit: visit, duration_minutes: 60, category: Lawn care }
+
+maintenance:
+  default_visit_minutes: 120
+  items:
+    - { name: Handyman labor, unit: hour, taxable: false, category: Labor,
+        description: "General repairs and odd jobs." }
+    - { name: Trip charge, unit: each, category: Fees }
+    - { name: Drywall patch, unit: each, duration_minutes: 60, category: Repairs }
+    - { name: Fixture installation, unit: each, duration_minutes: 45, category: Installation,
+        description: "Install a light fixture, ceiling fan, faucet or similar." }
+    - { name: TV mounting, unit: each, duration_minutes: 60, category: Installation }
+    - { name: Furniture assembly, unit: hour, category: Installation }
+    - { name: Materials, unit: each, category: Materials,
+        description: "Parts and supplies for the job." }
+
+hvac:
+  default_visit_minutes: 90
+  items:
+    - { name: Diagnostic visit, unit: visit, duration_minutes: 60, category: Service }
+    - { name: System tune-up, unit: visit, duration_minutes: 90, category: Maintenance,
+        description: "Inspect, clean and test heating or cooling equipment." }
+    - { name: Filter replacement, unit: each, duration_minutes: 15, category: Maintenance }
+    - { name: Refrigerant recharge, unit: custom, custom_unit: lb, category: Repairs }
+    - { name: Repair labor, unit: hour, category: Repairs }
+    - { name: Maintenance plan visit, unit: visit, duration_minutes: 90, category: Maintenance }
+
+plumbing:
+  default_visit_minutes: 90
+  items:
+    - { name: Service call, unit: visit, duration_minutes: 60, category: Service }
+    - { name: Drain cleaning, unit: each, duration_minutes: 60, category: Drains }
+    - { name: Faucet replacement, unit: each, duration_minutes: 60, category: Fixtures }
+    - { name: Toilet repair, unit: each, duration_minutes: 60, category: Fixtures }
+    - { name: Water heater flush, unit: each, duration_minutes: 60, category: Water heaters }
+    - { name: Plumbing labor, unit: hour, category: Labor }
+    - { name: Parts and materials, unit: each, category: Materials }
+
+electrical:
+  default_visit_minutes: 90
+  items:
+    - { name: Service call, unit: visit, duration_minutes: 60, category: Service }
+    - { name: Outlet or switch replacement, unit: each, duration_minutes: 30, category: Repairs }
+    - { name: Light fixture installation, unit: each, duration_minutes: 60, category: Installation }
+    - { name: Ceiling fan installation, unit: each, duration_minutes: 90, category: Installation }
+    - { name: Breaker replacement, unit: each, duration_minutes: 45, category: Panels }
+    - { name: Electrical labor, unit: hour, category: Labor }
+
+roofing:
+  default_visit_minutes: 120
+  items:
+    - { name: Roof inspection, unit: visit, duration_minutes: 60, category: Inspections }
+    - { name: Leak repair, unit: each, duration_minutes: 180, category: Repairs }
+    - { name: Shingle replacement, unit: custom, custom_unit: square, category: Repairs,
+        description: "Remove and replace shingles, priced per roofing square (100 sq ft)." }
+    - { name: Gutter cleaning, unit: linear_ft, category: Gutters }
+    - { name: Flashing repair, unit: linear_ft, category: Repairs }
+    - { name: Debris removal, unit: each, category: Fees }
+
+painting:
+  default_visit_minutes: 480
+  items:
+    - { name: Interior wall painting, unit: sq_ft, category: Interior,
+        description: "Two coats on prepared walls; ceilings and trim priced separately." }
+    - { name: Ceiling painting, unit: sq_ft, category: Interior }
+    - { name: Trim and baseboards, unit: linear_ft, category: Interior }
+    - { name: Door painting, unit: each, duration_minutes: 60, category: Interior }
+    - { name: Exterior painting, unit: sq_ft, category: Exterior }
+    - { name: Surface preparation, unit: hour, category: Prep,
+        description: "Patching, sanding, caulking and masking." }
+    - { name: Paint and supplies, unit: custom, custom_unit: gallon, category: Materials }
+
+pool:
+  default_visit_minutes: 45
+  items:
+    - { name: Weekly pool service, unit: visit, duration_minutes: 45, category: Service,
+        description: "Skim, brush, vacuum, empty baskets and balance chemicals." }
+    - { name: Pool opening, unit: visit, duration_minutes: 180, category: Seasonal }
+    - { name: Pool closing, unit: visit, duration_minutes: 180, category: Seasonal }
+    - { name: Filter cleaning, unit: each, duration_minutes: 60, category: Equipment }
+    - { name: Green pool cleanup, unit: visit, duration_minutes: 240, category: Repairs }
+    - { name: Chemicals, unit: each, category: Materials }
+
+pest:
+  default_visit_minutes: 45
+  items:
+    - { name: General pest treatment, unit: visit, duration_minutes: 45, category: Treatments,
+        description: "Interior and exterior treatment for common household pests." }
+    - { name: Quarterly service, unit: visit, duration_minutes: 45, category: Plans }
+    - { name: Termite inspection, unit: visit, duration_minutes: 60, category: Inspections }
+    - { name: Rodent control, unit: visit, duration_minutes: 60, category: Treatments }
+    - { name: Mosquito treatment, unit: visit, duration_minutes: 30, category: Treatments }
+    - { name: Bed bug treatment, unit: custom, custom_unit: room, category: Treatments }
+
+pressure_washing:
+  default_visit_minutes: 120
+  items:
+    - { name: House washing, unit: sq_ft, category: Washing,
+        description: "Soft wash of siding to remove dirt, mildew and algae." }
+    - { name: Driveway cleaning, unit: sq_ft, category: Washing }
+    - { name: Deck or patio cleaning, unit: sq_ft, category: Washing }
+    - { name: Fence cleaning, unit: linear_ft, category: Washing }
+    - { name: Roof soft wash, unit: sq_ft, category: Washing }
+    - { name: Gutter brightening, unit: linear_ft, category: Washing }
+
+other:
+  default_visit_minutes: 60
+  items:
+    - { name: Service call, unit: visit, duration_minutes: 60, category: Service }
+    - { name: Labor, unit: hour, category: Labor }
+    - { name: Materials, unit: each, category: Materials }
+    - { name: Trip charge, unit: each, category: Fees }

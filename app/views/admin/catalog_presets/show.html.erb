@@ -1,0 +1,60 @@
+<%= page_header "Add starter services", lede: "Common services for your kind of business. Pick the ones you offer; you can rename, price or remove them afterwards." %>
+
+<div class="max-w-3xl space-y-4">
+  <% if @presets.size > 1 %>
+    <%= form_with url: admin_catalog_presets_path, method: :get, class: "flex items-end gap-2" do %>
+      <div class="field min-w-0 flex-1 sm:max-w-xs">
+        <%= label_tag :industry, "Industry", class: "label" %>
+        <%= select_tag :industry, options_for_select(@presets.map { [ _1.name, _1.industry ] }, @industry), class: "select",
+                       include_blank: (@preset.nil? ? "Choose an industry" : false) %>
+      </div>
+      <%= submit_tag "Show services", class: button_classes(:secondary), name: nil %>
+    <% end %>
+  <% end %>
+
+  <% if @preset.nil? %>
+    <div class="card">
+      <% if @industry.blank? %>
+        <%= empty_state title: "Choose an industry", text: "Your business has no industry set. Choose one above to see its common services, or set it in settings.", icon: "package" do %>
+          <%= link_to "Business settings", edit_admin_business_path, class: button_classes(:secondary) %>
+        <% end %>
+      <% else %>
+        <%= empty_state title: "No starter services for this industry yet", text: "Pick another industry above, or add your services one at a time.", icon: "package" do %>
+          <%= link_to new_admin_catalog_item_path, class: button_classes do %><%= icon "plus" %> Add an item<% end %>
+        <% end %>
+      <% end %>
+    </div>
+  <% else %>
+    <% rows = @preset.with_existing %>
+    <%= form_with url: admin_catalog_presets_path, method: :post, data: { controller: "check-all" } do %>
+      <%= hidden_field_tag :industry, @preset.industry %>
+      <%= card title: @preset.name, subtitle: "#{rows.count { _2.nil? }} of #{rows.size} not in your catalog yet", flush: true do %>
+        <ul class="list">
+          <% rows.each_with_index do |(item, existing), index| %>
+            <li>
+              <% if existing %>
+                <%= icon "check", class: "size-4 shrink-0 text-canopy" %>
+              <% else %>
+                <%= check_box_tag "names[]", item.name, true, id: "preset-item-#{index}", class: "checkbox", data: { check_all_target: "box" } %>
+              <% end %>
+              <label for="preset-item-<%= index %>" class="min-w-0 flex-1 <%= "cursor-pointer" unless existing %>">
+                <span class="block font-semibold <%= existing ? "text-muted" : "text-ink" %>"><%= item.name %></span>
+                <span class="block truncate text-sm2 text-muted"><%= [ item.description.presence, item.category ].compact.join(" · ") %></span>
+              </label>
+              <span class="text-sm2 text-muted">
+                <% unit = item.unit == "custom" ? item.custom_unit : CatalogItem::UNITS.fetch(item.unit.presence || "each", "each") %>
+                <%= existing == :archived ? "Archived in your catalog" : existing ? "In your catalog" : (unit == "each" ? "each" : "per #{unit}") %>
+              </span>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+      <div class="mt-4 flex items-center justify-end gap-2">
+        <%= link_to "Cancel", admin_catalog_items_path, class: button_classes(:ghost) %>
+        <% if rows.any? { _2.nil? } %>
+          <%= submit_tag "Add selected services", class: button_classes, name: nil, data: { check_all_target: "submit" } %>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+</div>
