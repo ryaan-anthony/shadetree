@@ -4,6 +4,11 @@
 #   bin/rails presets:export > presets.yml # dump what's in the database, edit, then
 #   bin/rails presets:import FILE=presets.yml
 #   bin/rails presets:list
+# Every db:prepare (deploys via bin/docker-entrypoint, bin/setup) adds industries that are
+# missing from the database, so new presets ship with the deploy that adds them. Existing
+# rows are never overwritten.
+Rake::Task["db:prepare"].enhance { Rake::Task["presets:sync"].invoke } if Rake::Task.task_defined?("db:prepare")
+
 namespace :presets do
   desc "Load db/seeds/industry_presets.yml (OVERWRITE=1 replaces existing presets)"
   task sync: :environment do
@@ -11,12 +16,14 @@ namespace :presets do
     puts written.any? ? "Wrote presets: #{written.join(", ")}" : "Presets already up to date (OVERWRITE=1 to replace)"
   end
 
-  desc "Replace presets from FILE (same format as db/seeds/industry_presets.yml)"
+  desc "Replace the presets of each industry in FILE (others are left as they are); all or nothing"
   task import: :environment do
     file = ENV.fetch("FILE") { abort "Usage: bin/rails presets:import FILE=presets.yml" }
     IndustryPreset.transaction { puts "Imported: #{IndustryPreset.sync!(overwrite: true, source: file).join(", ")}" }
   rescue ActiveRecord::RecordInvalid => e
     abort "Not imported: #{e.record.industry}: #{e.record.errors.full_messages.to_sentence}"
+  rescue IndustryPreset::FileError, Errno::ENOENT => e
+    abort "Not imported: #{e.message}"
   end
 
   desc "Print the presets in the database as YAML"

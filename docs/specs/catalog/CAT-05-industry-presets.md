@@ -23,17 +23,19 @@ empty and the first quote can be built immediately.
 
 ## Acceptance criteria
 
-- [ ] Industries are maintained as data, each with: display name, starter catalog items (name,
+- [x] Industries are maintained as data, each with: display name, starter catalog items (name,
       description, unit, taxable, estimated duration; price optional), and default visit
-      duration.
-- [ ] Presets exist for the launch industry list (see open question) plus a generic "Other".
-- [ ] During onboarding (ACC-05) and from the catalog page, an Owner/Admin can preview and add a
-      preset's items in one action, choosing which to include.
-- [ ] Adding a preset twice does not create duplicates (matching by name is acceptable).
-- [ ] Items added from presets are ordinary catalog items afterward (fully editable).
-- [ ] Industry data is seeded in every environment and can be updated by operators
+      duration. (Preset content is database rows operators edit without a deploy; the list of
+      industries and their display names stays in `config/industries.yml`, because business
+      settings validate against it, so adding an industry is a deploy.)
+- [x] Presets exist for the launch industry list (see open question) plus a generic "Other".
+- [x] From the catalog page, an Owner/Admin can preview and add a preset's items in one action,
+      choosing which to include. (Onboarding offers the same step: ACC-05.)
+- [x] Adding a preset twice does not create duplicates (matching by name is acceptable).
+- [x] Items added from presets are ordinary catalog items afterward (fully editable).
+- [x] Industry data is seeded in every environment and can be updated by operators
       (a console/command is enough until the operator console exists).
-- [ ] Tests cover adding, de-duplication and tenancy.
+- [x] Tests cover adding, de-duplication and tenancy.
 
 ## Out of scope
 

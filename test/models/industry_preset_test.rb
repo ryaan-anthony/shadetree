@@ -37,6 +37,25 @@ class IndustryPresetTest < ActiveSupport::TestCase
     assert_match(/item 3 has unknown fields/, messages.join)
     assert_match(/item 4 has unknown fields/, messages.join)
     assert_not IndustryPreset.new(industry: "astrology", items: []).valid?
+
+    preset.items = [ { "name" => true }, { "name" => "Feed", "category" => 2024 }, { "name" => "Trim", "description" => %w[a b] } ]
+    assert_not preset.valid?
+    assert_equal [ "item 1 (true): name must be text", "item 2 (Feed): category must be text", "item 3 (Trim): description must be text" ],
+                 preset.errors[:items]
+  end
+
+  test "malformed preset files are refused with a clear message, and nothing changes" do
+    Dir.mktmpdir do |dir|
+      { "" => /should map industry keys/, "- cleaning\n" => /should map industry keys/, "cleaning:\n" => /cleaning: expected/,
+        "cleaning:\n  default_visit_minute: 90\n" => /unknown keys default_visit_minute/, "cleaning:\n  items: nope\n" => /items should be a list/,
+        "a: &x\n  items: []\nb: *x\n" => /isn't valid YAML/ }.each do |content, message|
+        path = File.join(dir, "presets.yml")
+        File.write(path, content)
+        error = assert_raises(IndustryPreset::FileError) { IndustryPreset.sync!(overwrite: true, source: path) }
+        assert_match message, error.message
+      end
+    end
+    assert_includes IndustryPreset.for("cleaning").item_list.map(&:name), "Deep clean"
   end
 
   test "adding items creates catalog items and categories, and never duplicates" do
@@ -57,6 +76,16 @@ class IndustryPresetTest < ActiveSupport::TestCase
 
       laundry = preset.add_to_catalog!([ "Laundry" ]).first
       assert_equal [ "custom", "load", "load" ], [ laundry.unit, laundry.custom_unit, laundry.unit_label ]
+    end
+  end
+
+  test "categories match ignoring case and extra spaces" do
+    preset = IndustryPreset.for("cleaning")
+    preset.update!(items: [ { "name" => "Window wash", "category" => "  add-ONS  " } ])
+    as_business(@business) do
+      addons = CatalogCategory.create!(name: "Add-ons")
+      assert_equal addons, preset.add_to_catalog!([ "Window wash" ]).first.category
+      assert_equal 1, CatalogCategory.count
     end
   end
 

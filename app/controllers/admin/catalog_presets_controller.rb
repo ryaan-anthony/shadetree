@@ -9,8 +9,13 @@ class Admin::CatalogPresetsController < Admin::BaseController
   end
 
   def create
-    preset = IndustryPreset.find_by!(industry: params[:industry].to_s)
-    added = preset.add_to_catalog!(params[:names])
+    preset = IndustryPreset.find_by!(industry: params[:industry].to_s.presence_in(Industry.keys))
+    names = Array(params[:names]).compact_blank
+    if names.empty?
+      return redirect_to admin_catalog_presets_path(industry: preset.industry), alert: "Pick at least one service to add."
+    end
+
+    added = preset.add_to_catalog!(names)
     message = added.any? ? "Added #{helpers.pluralize(added.size, "service")} to your catalog. Set your prices next." : "Nothing new to add: those services are already in your catalog."
     redirect_to admin_catalog_items_path, notice: message
   end

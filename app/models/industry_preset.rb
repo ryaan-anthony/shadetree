@@ -5,6 +5,11 @@
 class IndustryPreset < ApplicationRecord
   SOURCE = Rails.root.join("db/seeds/industry_presets.yml")
   ITEM_KEYS = %w[name description unit custom_unit taxable duration_minutes category].freeze
+  TEXT_KEYS = %w[name description unit custom_unit category].freeze
+  PRESET_KEYS = %w[default_visit_minutes items].freeze
+
+  # A preset file that isn't shaped like db/seeds/industry_presets.yml.
+  class FileError < StandardError; end
 
   # One starter service. `taxable` defaults to true, like a new catalog item.
   Item = Data.define(*ITEM_KEYS.map(&:to_sym)) do
@@ -13,7 +18,9 @@ class IndustryPreset < ApplicationRecord
       new(**ITEM_KEYS.index_with { nil }.merge(hash).merge("taxable" => hash.fetch("taxable", true)).symbolize_keys)
     end
 
-    def key = name.to_s.squish.downcase
+    def key = self.class.key(name)
+    def category_key = category.present? ? self.class.key(category) : nil
+    def self.key(text) = text.to_s.squish.downcase
 
     def catalog_attributes
       { name:, description:, unit: unit.presence || "each", custom_unit:, taxable:, duration_minutes: }
@@ -28,14 +35,30 @@ class IndustryPreset < ApplicationRecord
 
   # Loads the YAML file. Industries already in the database are left alone unless
   # overwrite: true, so operator edits survive deploys. Returns the industries written.
+  # Raises FileError for a malformed file and RecordInvalid for invalid content.
   def self.sync!(overwrite: false, source: SOURCE)
-    YAML.safe_load_file(source).filter_map do |industry, data|
+    read_file(source).filter_map do |industry, data|
       preset = find_or_initialize_by(industry:)
       next if preset.persisted? && !overwrite
 
-      preset.update!(default_visit_minutes: data.fetch("default_visit_minutes", 60), items: Array(data["items"]))
+      preset.update!(default_visit_minutes: data.fetch("default_visit_minutes", 60), items: data.fetch("items", []))
       industry
     end
+  end
+
+  def self.read_file(source)
+    data = YAML.safe_load_file(source)
+    raise FileError, "#{source} should map industry keys to presets" unless data.is_a?(Hash)
+
+    data.each do |industry, preset|
+      raise FileError, "#{industry}: expected default_visit_minutes and items" unless preset.is_a?(Hash)
+
+      unknown = preset.keys - PRESET_KEYS
+      raise FileError, "#{industry}: unknown keys #{unknown.join(", ")} (allowed: #{PRESET_KEYS.join(", ")})" if unknown.any?
+      raise FileError, "#{industry}: items should be a list" unless preset.fetch("items", []).is_a?(Array)
+    end
+  rescue Psych::Exception => e
+    raise FileError, "#{source} isn't valid YAML: #{e.message}"
   end
 
   def name = Industry.name_for(industry)
@@ -56,11 +79,11 @@ class IndustryPreset < ApplicationRecord
     CatalogItem.transaction do
       # Serialize concurrent adds for one business so the name check below can't race.
       Business.where(id: Current.business.id).lock.pluck(:id)
-      present = CatalogItem.pluck(:name).to_set { _1.squish.downcase }
-      categories = CatalogCategory.all.index_by { _1.name.downcase }
+      present = CatalogItem.pluck(:name).to_set { Item.key(_1) }
+      categories = CatalogCategory.all.index_by { Item.key(_1.name) }
 
       item_list.select { wanted.include?(_1.key) && !present.include?(_1.key) }.map do |item|
-        category = item.category.presence && (categories[item.category.downcase] ||= CatalogCategory.create!(name: item.category))
+        category = item.category_key && (categories[item.category_key] ||= CatalogCategory.create!(name: item.category))
         CatalogItem.create!(item.catalog_attributes.merge(category:))
       end
     end
@@ -89,6 +112,9 @@ class IndustryPreset < ApplicationRecord
   # a catalog item in.
   def item_problems(item)
     unit = item.unit.presence || "each"
+    wrong_type = TEXT_KEYS.select { (value = item.public_send(_1)) && !value.is_a?(String) }
+    return wrong_type.map { "#{_1} must be text" } if wrong_type.any?
+
     [
       ("name is missing" if item.name.to_s.squish.empty?),
       ("name is longer than 120 characters" if item.name.to_s.length > 120),

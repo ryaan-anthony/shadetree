@@ -2,19 +2,26 @@
 
 <div class="max-w-3xl space-y-4">
   <% if @presets.size > 1 %>
-    <%= form_with url: admin_catalog_presets_path, method: :get, class: "flex items-end gap-2", data: { controller: "auto-submit" } do %>
+    <%= form_with url: admin_catalog_presets_path, method: :get, class: "flex items-end gap-2" do %>
       <div class="field min-w-0 flex-1 sm:max-w-xs">
         <%= label_tag :industry, "Industry", class: "label" %>
-        <%= select_tag :industry, options_for_select(@presets.map { [ _1.name, _1.industry ] }, @industry), class: "select", data: { action: "auto-submit#submit" } %>
+        <%= select_tag :industry, options_for_select(@presets.map { [ _1.name, _1.industry ] }, @industry), class: "select",
+                       include_blank: (@preset.nil? ? "Choose an industry" : false) %>
       </div>
-      <noscript><%= submit_tag "Show", class: button_classes(:secondary), name: nil %></noscript>
+      <%= submit_tag "Show services", class: button_classes(:secondary), name: nil %>
     <% end %>
   <% end %>
 
   <% if @preset.nil? %>
     <div class="card">
-      <%= empty_state title: "No starter services for this industry yet", text: "Pick another industry above, or add your services one at a time.", icon: "package" do %>
-        <%= link_to new_admin_catalog_item_path, class: button_classes do %><%= icon "plus" %> Add an item<% end %>
+      <% if @industry.blank? %>
+        <%= empty_state title: "Choose an industry", text: "Your business has no industry set. Choose one above to see its common services, or set it in settings.", icon: "package" do %>
+          <%= link_to "Business settings", edit_admin_business_path, class: button_classes(:secondary) %>
+        <% end %>
+      <% else %>
+        <%= empty_state title: "No starter services for this industry yet", text: "Pick another industry above, or add your services one at a time.", icon: "package" do %>
+          <%= link_to new_admin_catalog_item_path, class: button_classes do %><%= icon "plus" %> Add an item<% end %>
+        <% end %>
       <% end %>
     </div>
   <% else %>

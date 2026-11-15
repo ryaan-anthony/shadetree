@@ -49,6 +49,21 @@ class Admin::CatalogPresetsTest < ActionDispatch::IntegrationTest
     assert_select "select#industry option[selected][value=cleaning]"
   end
 
+  test "a business without an industry is asked to choose one" do
+    @business.update_column(:industry, nil)
+    get admin_catalog_presets_path
+    assert_select "select#industry option[value='']", "Choose an industry"
+    assert_select "main", /Your business has no industry set/
+    assert_select "input[type=submit][value='Show services']"
+  end
+
+  test "submitting with nothing ticked asks for a pick" do
+    post admin_catalog_presets_path, params: { industry: "cleaning" }
+    assert_redirected_to admin_catalog_presets_path(industry: "cleaning")
+    assert_equal "Pick at least one service to add.", flash[:alert]
+    assert_empty as_business(@business) { CatalogItem.all.to_a }
+  end
+
   test "an unknown industry on submit is not found" do
     post admin_catalog_presets_path, params: { industry: "nonsense", names: [ "x" ] }
     assert_response :not_found
