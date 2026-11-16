@@ -8,6 +8,13 @@ class Admin::BaseController < ApplicationController
 
   private
 
+  # ACC-05: a page opened from the setup checklist (from=setup) goes back to it when done.
+  helper_method def from_setup? = params[:from] == "setup"
+
+  def redirect_after_setup_step(default, **options)
+    redirect_to(from_setup? ? admin_root_path : default, **options)
+  end
+
   # Staff pages need a current business; without one, send the user to create it.
   def require_business_setup
     redirect_to new_admin_business_path unless current_business

@@ -63,7 +63,7 @@ class Admin::QuoteSendsController < Admin::BaseController
                                             quote_id: @quote.id, link_id: link.id, subject: @form.subject, message: @form.message, cc: @form.cc_header)
       quote_send.update!(email_message: email)
     end
-    redirect_to preview_admin_quote_path(@quote), notice: "Quote #{@quote.number} is on its way to #{@form.to}."
+    redirect_after_setup_step preview_admin_quote_path(@quote), notice: "Quote #{@quote.number} is on its way to #{@form.to}."
   end
 
   def too_many_today? = @quote.sends.unscope(:order).where(channel: "email", created_at: 1.day.ago..).count >= EMAILS_PER_QUOTE_PER_DAY

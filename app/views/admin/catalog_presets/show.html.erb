@@ -3,6 +3,7 @@
 <div class="max-w-3xl space-y-4">
   <% if @presets.size > 1 %>
     <%= form_with url: admin_catalog_presets_path, method: :get, class: "flex items-end gap-2" do %>
+  <%= hidden_field_tag :from, "setup", id: nil if from_setup? %>
       <div class="field min-w-0 flex-1 sm:max-w-xs">
         <%= label_tag :industry, "Industry", class: "label" %>
         <%= select_tag :industry, options_for_select(@presets.map { [ _1.name, _1.industry ] }, @industry), class: "select",
@@ -27,6 +28,7 @@
   <% else %>
     <% rows = @preset.with_existing %>
     <%= form_with url: admin_catalog_presets_path, method: :post, data: { controller: "check-all" } do %>
+  <%= hidden_field_tag :from, "setup", id: nil if from_setup? %>
       <%= hidden_field_tag :industry, @preset.industry %>
       <%= card title: @preset.name, subtitle: "#{rows.count { _2.nil? }} of #{rows.size} not in your catalog yet", flush: true do %>
         <ul class="list">

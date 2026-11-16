@@ -102,6 +102,11 @@ class Business < ApplicationRecord
   normalizes :quote_approved_message, with: ->(text) { text.to_s.strip.presence }
   def quote_next_steps = quote_approved_message || "#{name} has your approval and will be in touch to schedule the work."
 
+  # ACC-05's product metric: seconds from the owner's sign-up to the business's first quote sent.
+  def seconds_to_first_quote
+    (first_quote_sent_at - owner.created_at).round if first_quote_sent_at && owner
+  end
+
   def currency_code = currency.presence || "USD"
 
   def money(amount) = Money.parse(amount, currency_code)

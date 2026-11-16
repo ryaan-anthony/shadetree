@@ -6,6 +6,7 @@
   <%= render "branding_tab" %>
 <% else %>
   <%= form_with model: @business, url: admin_business_path(tab:), method: :patch, class: "max-w-3xl space-y-4" do |f| %>
+  <%= hidden_field_tag :from, "setup", id: nil if from_setup? %>
     <% if @business.errors.any? %>
       <div class="banner banner-danger" role="alert">
         <%= icon "alert-circle" %>

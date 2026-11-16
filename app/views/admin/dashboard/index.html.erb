@@ -2,25 +2,15 @@
                 lede: "Here's where #{current_business.name} stands." %>
 
 <div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
-  <% if can?(:business_settings) %>
-  <%= card title: "Get your business ready", subtitle: "#{@setup_steps.count { _1[:done] }} of #{@setup_steps.size} done", flush: true do %>
-    <ul class="list">
-      <% @setup_steps.each do |step| %>
-        <li>
-          <span class="flex size-6 shrink-0 items-center justify-center rounded-full <%= step[:done] ? "bg-canopy text-white" : "border-2 border-slate-300" %>">
-            <% if step[:done] %><%= icon "check", class: "size-3.5" %><% end %>
-          </span>
-          <div class="min-w-0 flex-1">
-            <p class="font-semibold text-ink <%= "text-muted line-through decoration-slate-300" if step[:done] %>"><%= step[:title] %></p>
-            <p class="text-sm2 text-muted"><%= step[:text] %></p>
-          </div>
-          <% unless step[:done] %>
-            <%= link_to step[:action], step[:path], class: button_classes(:secondary, :sm) %>
-          <% end %>
-        </li>
-      <% end %>
-    </ul>
+  <% if can?(:business_settings) && @checklist.visible? %>
+    <%= render "setup_checklist", checklist: @checklist %>
   <% end %>
+  <%# ACC-05: a technician's one-screen welcome; their visits arrive with M3. %>
+  <% if Current.membership&.role == "technician" && Current.membership.welcome_dismissed_at.nil? %>
+    <%= card title: "Welcome to #{current_business.name}" do %>
+      <p class="text-sm text-body">You're on the team as a technician. When visits are assigned to you, they'll show up here with the client's address, access notes and what to do.</p>
+      <div class="mt-4"><%= button_to "Got it", admin_dismiss_welcome_path, method: :patch, class: button_classes(:secondary, :sm) %></div>
+    <% end %>
   <% end %>
 
   <%= card title: "Quotes and jobs" do %>

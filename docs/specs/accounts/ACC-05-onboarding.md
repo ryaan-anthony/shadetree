@@ -25,18 +25,19 @@ starter services, optional branding, and their first quote — with every step s
 
 ## Acceptance criteria
 
-- [ ] After creating a business, the owner sees a setup checklist: business details, add starter
+- [x] After creating a business, the owner sees a setup checklist: business details, add starter
       services (from industry preset), branding (optional), add a client, create and send a
       first quote. Completed steps tick automatically based on real data.
-- [ ] Each step deep-links into the real feature (no duplicate onboarding-only forms) and
-      returns to the checklist.
-- [ ] The checklist is visible on the dashboard until complete or dismissed; progress persists.
-- [ ] Choosing an industry offers to add that industry's starter services in one action.
-- [ ] A "preview a sample quote" action shows a realistic quote in the client-facing view using
+- [x] Each step deep-links into the real feature (no duplicate onboarding-only forms) and
+      returns to the checklist. *Sending by link stays on the page with the link to copy.*
+- [x] The checklist is visible on the dashboard until complete or dismissed; progress persists.
+- [x] Choosing an industry offers to add that industry's starter services in one action.
+- [x] A "preview a sample quote" action shows a realistic quote in the client-facing view using
       the business's branding, without creating real client data or counting toward usage.
-- [ ] Time from sign-up to first quote sent is measured (as a product metric, no PII).
-- [ ] The existing step-based setup flow is replaced; its onboarding fields are migrated or
-      removed.
+- [x] Time from sign-up to first quote sent is measured (as a product metric, no PII).
+      *`businesses.first_quote_sent_at` against the owner's sign-up.*
+- [x] The existing step-based setup flow is replaced; its onboarding fields are migrated or
+      removed. *`onboarding_step` removed; `onboarded_at` means finished or dismissed.*
 
 ## Out of scope
 
@@ -44,5 +45,5 @@ starter services, optional branding, and their first quote — with every step s
 
 ## Open questions
 
-- Should invited Admins/Technicians see a short role-specific welcome instead? Recommend a
-  one-screen welcome for Technicians pointing to "My day".
+- ~~Should invited Admins/Technicians see a short role-specific welcome instead?~~ Technicians
+  get a one-screen welcome on the dashboard, pointing to their visits (which arrive with M3).

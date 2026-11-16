@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_16_000300) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_16_000800) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -53,6 +53,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000300) do
     t.datetime "last_active_at"
     t.datetime "deactivated_at"
     t.string "uid", null: false
+    t.datetime "welcome_dismissed_at"
     t.index ["business_id", "active"], name: "index_business_users_on_business_id_and_active"
     t.index ["business_id"], name: "index_business_users_on_business_id"
     t.index ["uid"], name: "index_business_users_on_uid", unique: true
@@ -73,7 +74,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000300) do
     t.string "currency", default: "USD"
     t.string "brand_color", default: "#047857"
     t.boolean "active", default: true, null: false
-    t.string "onboarding_step"
     t.datetime "onboarded_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -91,6 +91,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000300) do
     t.string "quote_number_prefix", default: "Q", null: false
     t.string "invoice_number_prefix", default: "INV", null: false
     t.text "quote_approved_message"
+    t.datetime "first_quote_sent_at"
     t.index ["active"], name: "index_businesses_on_active"
     t.index ["industry"], name: "index_businesses_on_industry"
     t.index ["owner_id"], name: "index_businesses_on_owner_id"
@@ -371,7 +372,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000300) do
     t.index ["recorded_by_id"], name: "index_quote_responses_on_recorded_by_id"
     t.index ["uid"], name: "index_quote_responses_on_uid", unique: true
     t.check_constraint "kind::text <> 'approved'::text OR snapshot IS NOT NULL AND snapshot_digest IS NOT NULL AND signer_name IS NOT NULL", name: "quote_responses_approval_evidence"
-    t.check_constraint "kind::text = ANY (ARRAY['approved'::character varying, 'declined'::character varying, 'changes_requested'::character varying]::text[])", name: "quote_responses_kind"
+    t.check_constraint "kind::text = ANY (ARRAY['approved'::character varying::text, 'declined'::character varying::text, 'changes_requested'::character varying::text])", name: "quote_responses_kind"
   end
 
   create_table "quote_sends", force: :cascade do |t|

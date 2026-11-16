@@ -6,6 +6,7 @@
                       brand_preview_saved_logo_value: (url_for(branding.logo(:web)) if branding.logo?),
                       brand_preview_types_value: Business::LOGO_TYPES.join(","),
                       brand_preview_min_text_value: Branding::MIN_TEXT_CONTRAST, brand_preview_min_page_value: Branding::MIN_PAGE_CONTRAST } do |f| %>
+  <%= hidden_field_tag :from, "setup", id: nil if from_setup? %>
   <div class="min-w-0 space-y-4">
     <% if @business.errors.any? %>
       <div class="banner banner-danger" role="alert"><%= icon "alert-circle" %>

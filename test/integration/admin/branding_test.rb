@@ -65,11 +65,12 @@ class Admin::BrandingTest < ActionDispatch::IntegrationTest
   end
 
   test "the dashboard checklist counts an uploaded logo" do
+    @business.update!(brand_color: Branding::DEFAULT_COLOR) # a custom colour also counts
     get admin_root_path
-    assert_select "a[href=?]", edit_admin_business_path(tab: "branding"), "Add logo"
+    assert_select "a[href=?]", edit_admin_business_path(tab: "branding", from: "setup"), "Add branding"
     @business.update!(logo: { io: file_fixture("logo.png").open, filename: "logo.png" })
     get admin_root_path
-    assert_select "a[href=?]", edit_admin_business_path(tab: "branding"), false
+    assert_select "a[href=?]", edit_admin_business_path(tab: "branding", from: "setup"), false
   end
 
   test "client pages use the logo, or the name wordmark, and show Powered by Shadetree" do

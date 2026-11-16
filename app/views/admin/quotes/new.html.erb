@@ -1,5 +1,6 @@
 <%= page_header "New quote", lede: "Who is it for? You'll add items next." %>
 <%= form_with url: admin_quotes_path, method: :post, class: "max-w-xl space-y-4" do %>
+  <%= hidden_field_tag :from, "setup", id: nil if from_setup? %>
   <%= card do %>
     <%= render "admin/clients/picker", name: "quote[client]", selected: @client %>
     <% @quote.errors[:client].each do |message| %><p class="error-text mt-1.5"><%= icon "alert-circle" %><%= message %></p><% end %>

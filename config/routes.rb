@@ -78,6 +78,11 @@ Rails.application.routes.draw do
       end
     end
 
+    # Guided onboarding (ACC-05)
+    get "setup/sample-quote", to: "onboarding#sample_quote", as: :sample_quote
+    patch "setup/dismiss", to: "onboarding#dismiss", as: :dismiss_setup
+    patch "welcome/dismiss", to: "onboarding#dismiss_welcome", as: :dismiss_welcome
+
     # Quotes (QTE-01)
     resources :quotes do
       get :preview, on: :member
