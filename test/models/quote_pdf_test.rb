@@ -57,6 +57,22 @@ class QuotePdfTest < ActiveSupport::TestCase
 
       as_business(@business) { Quote.find(@quote.id).tap { _1.update!(title: "Fall cleanup") }.current_pdf }
       assert_equal 2, calls.size, "an edit to the quote makes a new file"
+
+      as_business(@business) { @quote.client.update!(display_name: "Maria Lopez-Reyes") }
+      as_business(@business) { Quote.find(@quote.id).current_pdf }
+      assert_equal 3, calls.size, "so does a change to the client it names"
+      assert_match "Maria Lopez-Reyes", calls.last[:html]
+
+      version = Quote::PDF_VERSION
+      Quote.send(:remove_const, :PDF_VERSION)
+      Quote.const_set(:PDF_VERSION, version + 1)
+      as_business(@business) { Quote.find(@quote.id).current_pdf }
+      assert_equal 4, calls.size, "and bumping PDF_VERSION replaces stored files"
+    ensure
+      if version
+        Quote.send(:remove_const, :PDF_VERSION)
+        Quote.const_set(:PDF_VERSION, version)
+      end
     end
   end
 

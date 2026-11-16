@@ -44,8 +44,8 @@ The approach should be reusable for invoices (PAY-02).
 - **Background:** a render takes about 2 s, so a sent quote's PDF is made by `QuotePdfJob` when
   its status changes and stored (`HasPdf`); a stored PDF is served in under 0.1 s. Drafts render
   inline, for staff only.
-- **Stability:** the stored file is kept until the quote's content or status changes; letterhead
-  edits, new links, expiry and deploys don't change it. Its status comes from the status alone.
+- **Stability:** the stored file is kept until the quote, its status, or the client or property it
+  names changes (or `PDF_VERSION` is bumped); letterhead edits, links and expiry don't change it.
 - **Pagination:** rows stay whole, except long descriptions (over 400 characters). **Date:** the
   prepared date until sending (QTE-04) records when it went out.
 - **No QR code:** it would carry one link's token into a file that outlives the link.

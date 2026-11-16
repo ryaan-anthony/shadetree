@@ -96,6 +96,14 @@ class Client::QuotePageTest < ActionDispatch::IntegrationTest
     assert_select ".quote-doc-title", "Spring cleanup"
   end
 
+  test "the page shows the status, including expiry" do
+    get client_link_path(@link.token)
+    assert_select ".quote-doc-meta", /Status\s*Awaiting approval/
+    set_quote(expires_on: @business.today - 1)
+    get client_link_path(@link.token)
+    assert_select ".quote-doc-meta", /Status\s*Expired/
+  end
+
   test "each state says where things stand" do
     { "approved" => /You approved this quote/, "declined" => /You declined this quote/, "changes_requested" => /You asked for changes/ }.each do |status, text|
       set_quote(status:)
