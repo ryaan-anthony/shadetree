@@ -484,8 +484,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000700) do
     t.index ["created_by_id"], name: "index_service_requests_on_created_by_id"
     t.index ["property_id"], name: "index_service_requests_on_property_id"
     t.index ["uid"], name: "index_service_requests_on_uid", unique: true
-    t.check_constraint "source::text = ANY (ARRAY['form'::character varying, 'phone'::character varying, 'email'::character varying, 'walk_in'::character varying, 'other'::character varying]::text[])", name: "service_requests_source"
-    t.check_constraint "status::text = ANY (ARRAY['new'::character varying, 'in_progress'::character varying, 'quoted'::character varying, 'archived'::character varying]::text[])", name: "service_requests_status"
+    t.check_constraint "source::text = ANY (ARRAY['form'::character varying::text, 'phone'::character varying::text, 'email'::character varying::text, 'walk_in'::character varying::text, 'other'::character varying::text])", name: "service_requests_source"
+    t.check_constraint "status::text = ANY (ARRAY['new'::character varying::text, 'in_progress'::character varying::text, 'quoted'::character varying::text, 'archived'::character varying::text])", name: "service_requests_status"
   end
 
   create_table "tax_rates", force: :cascade do |t|
