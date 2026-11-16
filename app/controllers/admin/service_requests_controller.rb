@@ -19,8 +19,9 @@ class Admin::ServiceRequestsController < Admin::BaseController
   end
 
   def show
-    @request.viewed_by!(current_user)
-    @request.views.reload # include this visit
+    # Turbo prefetches links on hover; only a real visit counts as seeing the request.
+    @request.viewed_by!(current_user) unless request.headers["X-Sec-Purpose"] == "prefetch"
+    @views = @request.views.includes(:user).order(viewed_at: :desc).to_a
     @note = ServiceRequestNote.new
   end
 
@@ -35,7 +36,7 @@ class Admin::ServiceRequestsController < Admin::BaseController
     @request = ServiceRequest.new(created_by: current_user, source: attrs[:source], description: attrs[:description], timing: attrs[:timing])
     @request.client = Client.active.find_by(uid: attrs[:client])
     @request.property = @request.client&.properties&.find_by(uid: attrs[:property])
-    @request.services = RequestSubmission.offered_services.where(uid: Array(attrs[:service_ids])).map { { "catalog_item_id" => _1.id, "name" => _1.name } }
+    @request.services = CatalogItem.active.where(uid: Array(attrs[:service_ids])).map { { "catalog_item_id" => _1.id, "name" => _1.name } }
     @request.errors.add(:client, "Choose a client, or add a new one.") unless @request.client
     return render(:new, status: :unprocessable_content) unless @request.client && @request.save
 
@@ -50,11 +51,15 @@ class Admin::ServiceRequestsController < Admin::BaseController
   end
 
   def quote
+    if @request.client.archived?
+      return redirect_to(admin_service_request_path(@request), alert: "#{@request.client.display_name} is archived. Restore them to quote this request.")
+    end
+
     quote = @request.create_quote!(by: current_user)
     redirect_to edit_admin_quote_path(quote), notice: "Draft #{quote.number} from the request. Nothing is sent until you send it."
   end
 
   private
 
-  def set_request = @request = ServiceRequest.includes(:client, :property, notes: :user, views: :user).find_by_param!(params[:id])
+  def set_request = @request = ServiceRequest.includes(:client, :property, notes: :user).find_by_param!(params[:id])
 end

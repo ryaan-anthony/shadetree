@@ -1,12 +1,17 @@
 <%= page_header "Log a request", lede: "For work that came in by phone, email or in person." %>
 
-<%= form_with model: @request, scope: :service_request, url: admin_service_requests_path, class: "max-w-2xl space-y-4" do |f| %>
+<%= form_with model: @request, scope: :service_request, url: admin_service_requests_path, class: "max-w-2xl space-y-4",
+              data: { controller: "property-loader", property_loader_url_value: property_options_admin_quotes_path,
+                      property_loader_name_value: "service_request[property]", action: "client-picker:change->property-loader#load" } do |f| %>
   <%= card do %>
     <div class="space-y-4">
       <% if @request.errors[:client].any? %>
         <p class="error-text" role="alert"><%= icon "alert-circle" %><%= @request.errors[:client].first %></p>
       <% end %>
       <%= render "admin/clients/picker", name: "service_request[client]", selected: @request.client %>
+      <%= turbo_frame_tag "quote_property", data: { property_loader_target: "frame" } do %>
+        <%= render "admin/quotes/property_select", client: @request.client, selected: @request.property&.uid, name: "service_request[property]" %>
+      <% end %>
 
       <fieldset>
         <legend class="label">How did they reach you?</legend>
@@ -17,7 +22,7 @@
         </div>
       </fieldset>
 
-      <% services = RequestSubmission.offered_services.to_a %>
+      <% services = CatalogItem.active.ordered.to_a # staff can log any service, not just the form's %>
       <% if services.any? %>
         <fieldset>
           <legend class="label">Services <span class="label-optional">(optional)</span></legend>
@@ -39,7 +44,7 @@
         <% if description_error %><p class="error-text"><%= icon "alert-circle" %><%= description_error %></p><% end %>
       </div>
       <%= f.field :timing, label: "When", optional: true, maxlength: 120, placeholder: "e.g. Before Memorial Day" %>
-      <p class="text-sm2 text-muted">The quote uses the client's address; you can change it there.</p>
+
     </div>
   <% end %>
   <div class="flex justify-end gap-2">

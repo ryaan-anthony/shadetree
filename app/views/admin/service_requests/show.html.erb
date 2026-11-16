@@ -75,7 +75,7 @@
     <% end %>
     <%= card title: "Seen by" do %>
       <ul class="space-y-1 text-sm2">
-        <% request_record.views.sort_by(&:viewed_at).reverse_each do |view| %>
+        <% @views.each do |view| %>
           <li><span class="text-ink"><%= view.user.full_name %></span> <span class="text-muted"><%= local_time_ago(view.viewed_at) %></span></li>
         <% end %>
       </ul>

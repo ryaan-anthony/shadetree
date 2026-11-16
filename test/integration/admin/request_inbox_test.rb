@@ -59,6 +59,8 @@ class Admin::RequestInboxTest < ActionDispatch::IntegrationTest
     assert_equal "in_progress", as_business(@business) { @service_request.reload.status }
     patch status_admin_service_request_path(@service_request, status: "bogus")
     assert_response :unprocessable_content
+    patch status_admin_service_request_path(@service_request, status: "quoted")
+    assert_response :unprocessable_content, "Quoted only comes from making a quote"
 
     post quote_admin_service_request_path(@service_request)
     quote = as_business(@business) { Quote.order(:id).last }
@@ -67,32 +69,58 @@ class Admin::RequestInboxTest < ActionDispatch::IntegrationTest
       assert_equal "quoted", @service_request.reload.status
       assert_equal @service_request, quote.service_request
       assert_equal @maria, quote.client
-      assert_equal "9 Oak Ave", quote.property.address_line1, "the typed address becomes a property once staff act on it"
-      assert_not quote.property.billing
+      assert_equal "12 Elm St", quote.property.address_line1, "a new typed address isn't added to the client"
+      assert_equal [ "12 Elm St" ], @maria.properties.map(&:address_line1)
       assert_equal [ [ "Weekly mowing", "Mow and trim", 4_500 ] ], quote.line_items.map { [ _1.name, _1.description, _1.unit_price_cents ] }
       assert_equal 1, quote.attachments.count
     end
     follow_redirect!
     assert_select "a[href=?]", admin_service_request_path(@service_request), /request R-/
+    assert_select "p", /They asked about.*9 Oak Ave, Austin.*isn't one of/m
     get admin_service_request_path(@service_request)
     assert_select "a", /#{quote.number}/
     # Every quote made from it is listed.
     post quote_admin_service_request_path(@service_request)
     assert_equal 2, as_business(@business) { @service_request.quotes.count }
+
+    # With every quote deleted, it's back in progress.
+    as_business(@business) { @service_request.quotes.each(&:destroy!) }
+    assert_equal "in_progress", as_business(@business) { @service_request.reload.status }
+  end
+
+  test "an archived client's request can't be quoted until they're restored" do
+    as_business(@business) { @maria.archive! }
+    post quote_admin_service_request_path(@service_request)
+    assert_match "is archived", flash[:alert]
+    assert_equal 0, as_business(@business) { Quote.count }
+  end
+
+  test "hovering a request (Turbo's prefetch) doesn't count as seeing it" do
+    get admin_service_request_path(@service_request), headers: { "X-Sec-Purpose" => "prefetch" }
+    assert_empty as_business(@business) { @service_request.views.to_a }
   end
 
   test "staff log a request from a call, with the client and services" do
     get new_admin_service_request_path
     assert_response :success
-    post admin_service_requests_path, params: { service_request: { client: @maria.uid, source: "phone", description: "Called about mowing", service_ids: [ @mowing.uid ] } }
+    hidden = as_business(@business) { CatalogItem.create!(name: "Snow removal", unit: "visit", show_on_request_form: false) }
+    property = as_business(@business) { @maria.properties.sole }
+    post admin_service_requests_path, params: { service_request: { client: @maria.uid, property: property.uid, source: "phone",
+                                                                   description: "Called about mowing", service_ids: [ @mowing.uid, hidden.uid ] } }
     logged = as_business(@business) { ServiceRequest.order(:id).last }
     assert_redirected_to admin_service_request_path(logged)
-    assert_equal [ "phone", "new", users(:one).id, [ "Weekly mowing" ], @maria.id ],
-                 [ logged.source, logged.status, logged.created_by_id, logged.service_names, logged.client_id ]
+    assert_equal [ "phone", "new", users(:one).id, [ "Weekly mowing", "Snow removal" ], @maria.id, property.id ],
+                 [ logged.source, logged.status, logged.created_by_id, logged.service_names, logged.client_id, logged.property_id ]
+    get new_admin_service_request_path
+    assert_select "select[name='service_request[property]']"
+    get property_options_admin_quotes_path(client: @maria.uid, name: "service_request[property]")
+    assert_select "select[name='service_request[property]'] option", /12 Elm St/
 
     post admin_service_requests_path, params: { service_request: { client: "", source: "phone", description: "" } }
     assert_response :unprocessable_content
     assert_select ".error-text", /Choose a client, or add a new one\./
+    post admin_service_requests_path, params: { service_request: { client: @maria.uid, source: "phone", description: "" } }
+    assert_select ".error-text", "Say what they need."
   end
 
   test "internal notes are added with who wrote them" do

@@ -31,7 +31,8 @@
     <ul class="list">
       <% @requests.each do |request| %>
         <li id="request-<%= request.uid %>" class="p-0">
-          <%= link_to admin_service_request_path(request), class: "block min-w-0 flex-1 px-4 py-3" do %>
+          <%# No hover prefetch: opening a request records who saw it. %>
+          <%= link_to admin_service_request_path(request), class: "block min-w-0 flex-1 px-4 py-3", data: { turbo_prefetch: false } do %>
             <span class="flex items-baseline justify-between gap-3">
               <span class="min-w-0 truncate font-semibold text-ink">
                 <% unless @seen_by_me.include?(request.id) %><span class="mr-1 inline-block size-2 rounded-full bg-canopy align-middle" title="Not opened by you"></span><span class="sr-only">Not opened by you. </span><% end %><%= request.client.display_name %>
@@ -39,7 +40,7 @@
               <span class="shrink-0 text-sm2 text-muted"><%= local_time_ago(request.created_at) %></span>
             </span>
             <% if request.service_names.any? %><span class="mt-0.5 block truncate text-sm2 text-ink"><%= request.service_names.join(", ") %></span><% end %>
-            <% if request.description %><span class="mt-0.5 block truncate text-sm2 text-subtle"><%= request.description %></span><% end %>
+            <% if request.description %><span class="mt-0.5 block truncate text-sm2 text-subtle"><%= truncate(request.description, length: 160) %></span><% end %>
             <span class="mt-1 block truncate text-sm2 text-muted">
               <%= safe_join([ request.source == "form" ? request.source_label : "#{request.source_label}#{", logged by #{request.created_by.full_name}" if request.created_by}",
                               (pluralize(request.photos.size, "photo") if request.photos.attached?),

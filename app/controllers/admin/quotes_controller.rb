@@ -86,6 +86,8 @@ class Admin::QuotesController < Admin::BaseController
   def property_options
     @client = Client.find_by_param!(params[:client])
     @selected = params[:selected]
+    # The builder's field, or the request form's (CLI-04).
+    @field_name = params[:name].presence_in(%w[quote[property] service_request[property]]) || "quote[property]"
     render layout: false
   end
 

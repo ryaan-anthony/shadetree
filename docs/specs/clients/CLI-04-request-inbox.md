@@ -29,11 +29,12 @@ archive what isn't going anywhere.
       status; filters by status; a badge in navigation shows the New count.
 - [x] Opening a request marks who viewed it and shows all submitted details and photos.
 - [x] Owners/Admins can create a request manually (client picker/inline create, property,
-      services, notes, source such as phone/email/walk-in). *The quote uses the client's
-      property; it can be changed in the builder.*
+      services, notes, source such as phone/email/walk-in). *Any catalog service, not only the
+      form's.*
 - [x] "Create quote" opens the quote builder pre-filled with client, property, requested
       services as line items, and request photos available as attachments; the request links to
-      every quote created from it. *A typed address becomes a property only now, when staff act.*
+      every quote created from it. *A typed address that isn't one of the client's properties is
+      shown in the builder for staff to add; nothing is added to the client automatically.*
 - [x] Requests appear on the client's page.
 - [x] Internal notes can be added to a request.
 - [x] Technicians have no access; tenancy and role tests exist.
