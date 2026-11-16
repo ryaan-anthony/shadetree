@@ -3,7 +3,12 @@
 <% lines = @quote.current_line_items %>
 <%# The controller wraps the header too, so its save status and Preview are in scope. %>
 <div data-controller="quote-builder" data-quote-builder-property-url-value="<%= property_options_admin_quotes_path %>">
-<%= page_header "Quote #{@quote.number}", lede: "Draft for #{@quote.client.display_name}. Changes save as you go." do %>
+<% lede = if @quote.revising?
+     "Revision #{@quote.revision} for #{@quote.client.display_name}. Changes save as you go; your client sees it's being updated until you send it."
+   else
+     "Draft for #{@quote.client.display_name}. Changes save as you go."
+   end %>
+<%= page_header "Quote #{@quote.number}", lede: do %>
   <span class="save-status" id="save_status" role="status" data-quote-builder-target="status">Saved</span>
   <%= link_to preview_admin_quote_path(@quote), class: button_classes(:secondary), target: "_blank", rel: "noopener",
               data: { action: "quote-builder#preview" } do %><%= icon "eye" %> Preview as client<% end %>
@@ -14,9 +19,11 @@
             aria-haspopup="true" aria-expanded="false" aria-label="More actions"><%= icon "more-horizontal" %></button>
     <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
       <%= link_to pdf_admin_quote_path(@quote), class: "menu-item", data: { turbo: false } do %><%= icon "download" %> Download PDF<% end %>
-      <%= button_to admin_quote_path(@quote), method: :delete, class: "menu-item text-danger",
-                    form: { class: "contents", data: { turbo_confirm: "Delete draft #{@quote.number}? This can't be undone.", turbo_confirm_button: "Delete draft" } } do %>
-        <%= icon "trash" %> Delete draft
+      <% unless @quote.revising? %>
+        <%= button_to admin_quote_path(@quote), method: :delete, class: "menu-item text-danger",
+                      form: { class: "contents", data: { turbo_confirm: "Delete draft #{@quote.number}? This can't be undone.", turbo_confirm_button: "Delete draft" } } do %>
+          <%= icon "trash" %> Delete draft
+        <% end %>
       <% end %>
     </div>
   </div>

@@ -46,7 +46,7 @@ class QuoteResponse < ApplicationRecord
   def self.snapshot_of(quote)
     totals = quote.totals
     {
-      "number" => quote.number, "title" => quote.title, "version" => quote.lock_version, "currency" => quote.currency,
+      "number" => quote.number, "revision" => quote.revision, "title" => quote.title, "version" => quote.lock_version, "currency" => quote.currency,
       "client" => quote.client.display_name, "property" => quote.property&.address_lines,
       "sent_at" => quote.sent_at&.iso8601, "expires_on" => quote.expires_on&.iso8601, "message" => quote.message,
       "prices_include_tax" => quote.prices_include_tax, "tax_rates" => quote.tax_rates,
@@ -112,7 +112,7 @@ class QuoteResponse < ApplicationRecord
       "quote" => quote.uid, "number" => quote.number, "kind" => kind, "signer_name" => signer_name, "email" => email,
       "message" => message, "at" => created_at.utc.iso8601(6), "ip_address" => ip_address, "user_agent" => user_agent,
       "device" => device, "client_link_id" => client_link_id, "recorded_by_id" => recorded_by_id,
-      "quote_version" => quote_version, "snapshot_digest" => snapshot_digest
+      "quote_version" => quote_version, "revision" => revision, "snapshot_digest" => snapshot_digest
     }
     key = Rails.application.key_generator.generate_key("quote_response_signature", 32)
     OpenSSL::HMAC.hexdigest("SHA256", key, JSON.generate(self.class.canonical(evidence)))

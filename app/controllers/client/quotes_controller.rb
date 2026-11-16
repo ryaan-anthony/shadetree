@@ -31,7 +31,12 @@ class Client::QuotesController < ApplicationController
   def request_changes = respond_to_quote(:request_changes, response_params(:message))
 
   # QTE-02: the quote as a PDF, to print, forward or file.
-  def pdf = send_pdf(@document, back: client_link_path(@client_link.token))
+  def pdf
+    # While a new revision is being prepared there's no finished document to download.
+    return redirect_to(client_link_path(@client_link.token)) unless @document.client_visible?
+
+    send_pdf(@document, back: client_link_path(@client_link.token))
+  end
 
   private
 
@@ -69,14 +74,18 @@ class Client::QuotesController < ApplicationController
   rescue Quote::Changed
     redirect_to client_link_path(@client_link.token), alert: "This quote was updated after you opened it. Check this version, then approve again."
   rescue Quote::NotOpen
-    expired = action == :approve ? "This quote has expired, so it can't be approved as is." : "This quote has expired. Ask for an updated one below."
-    redirect_to client_link_path(@client_link.token), alert: @document.reload.expired? ? expired : "This quote has already been answered."
+    @document.reload
+    alert = if @document.revising? then "#{@business.name} is updating this quote. You'll get the new version soon."
+    elsif @document.expired? then action == :approve ? "This quote has expired, so it can't be approved as is." : "This quote has expired. Ask for an updated one below."
+    else "This quote has already been answered."
+    end
+    redirect_to client_link_path(@client_link.token), alert:
   end
 
   def response_params(*keys) = params.fetch(:quote_response, {}).permit(*keys).to_h.symbolize_keys
 
   def require_quote
-    render_link_not_found unless @document.is_a?(Quote) && @document.client_visible?
+    render_link_not_found unless @document.is_a?(Quote) && @document.client_page_visible?
   end
 
   # A conditional update, so concurrent requests record it once. The SQL-string form, because

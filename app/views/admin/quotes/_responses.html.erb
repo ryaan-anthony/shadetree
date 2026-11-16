@@ -31,7 +31,7 @@
         <% responses.each do |response| %>
           <li id="response-<%= response.uid %>">
             <p class="text-ink">
-              <span class="font-semibold"><%= response.label %></span>
+              <span class="font-semibold"><%= response.label %></span><% if quote.revision > 1 %> <span class="text-muted">on revision <%= response.revision %></span><% end %>
               <%= local_time(response.created_at) %>
               <% if response.on_behalf? %>
                 · recorded by <%= response.recorded_by&.full_name || "a former member" %><%= " for #{response.signer_name}" if response.signer_name %>

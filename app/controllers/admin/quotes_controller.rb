@@ -9,7 +9,7 @@ class Admin::QuotesController < Admin::BaseController
   include SendsPdf
   leaves_session_alone only: :search
 
-  before_action :set_quote, only: %i[show edit update destroy preview pdf archive unarchive duplicate extend_expiry]
+  before_action :set_quote, only: %i[show edit update destroy preview pdf archive unarchive duplicate extend_expiry revise revision]
   before_action :require_editable, only: %i[edit update]
 
   # The list, on the "All" tab (or ?filter= from a link). Searching posts to #search, so client
@@ -66,6 +66,21 @@ class Admin::QuotesController < Admin::BaseController
     redirect_to edit_admin_quote_path(copy), notice: "Draft #{copy.number} copied from #{@quote.number}."
   end
 
+  # QTE-06: reopens a sent quote as the draft of its next revision, in the builder.
+  def revise
+    @quote.revise!(by: current_user)
+    redirect_to edit_admin_quote_path(@quote), notice: "Revision #{@quote.revision} of #{@quote.number}. Your client sees it's being updated until you send it."
+  rescue ArgumentError => error
+    redirect_to admin_quote_path(@quote), alert: error.message
+  end
+
+  # A previous revision, as it was sent, and what changed in the next one.
+  def revision
+    @revision = @quote.revisions.find_by!(number: params[:number])
+    following = @quote.revisions.find_by(number: @revision.number + 1)
+    @changes = @revision.changes_to(following&.snapshot || QuoteResponse.snapshot_of(@quote))
+  end
+
   def extend_expiry
     @quote.extend_expiry!(params[:expires_on], by: current_user)
     redirect_to admin_quote_path(@quote), notice: "Quote #{@quote.number} is now valid until #{l(@quote.expires_on)}."
@@ -105,8 +120,8 @@ class Admin::QuotesController < Admin::BaseController
   end
 
   def destroy
-    unless @quote.draft?
-      return redirect_to(edit_admin_quote_path(@quote), alert: "Only draft quotes can be deleted.")
+    if !@quote.draft? || @quote.revising?
+      return redirect_to(helpers.staff_quote_path(@quote), alert: "Only quotes that were never sent can be deleted.")
     end
 
     @quote.destroy!

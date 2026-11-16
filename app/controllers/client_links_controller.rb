@@ -6,7 +6,8 @@ class ClientLinksController < ApplicationController
 
   def show
     # A document that isn't meant for clients yet (a draft quote) is never shown (QTE-03).
-    return render_link_unavailable if @document.respond_to?(:client_visible?) && !@document.client_visible?
+    visible = @document.respond_to?(:client_page_visible?) ? @document.client_page_visible? : @document.try(:client_visible?) != false
+    return render_link_unavailable unless visible
 
     @client_link.record_view!(device: client_device)
   end
