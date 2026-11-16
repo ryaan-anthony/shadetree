@@ -3,14 +3,23 @@
     inactive links, and the preview mustn't act as the client. %>
 <% client_link = nil if preview %>
 <%# The client's quote page (QTE-03), rendered from a client link (PLT-12) or as the staff
-    preview. Status first, then the document, attachments, and the action area that approval
-    (QTE-05) fills. %>
+    preview. Status first, then the document, attachments, and the action area where the client
+    approves, declines or asks for changes (QTE-05). %>
 <% quote = document %>
 <% state = quote.client_state %>
 <% totals = quote.totals %>
 
 <% if state == :approved %>
-  <div class="banner banner-success mb-4" role="status"><%= icon "check-circle" %><p>You approved this quote. <%= @business.name %> will be in touch to schedule the work.</p></div>
+  <% approval = quote.approval %>
+  <div class="banner banner-success mb-4" role="status"><%= icon "check-circle" %>
+    <div class="flex-1">
+      <p class="font-semibold"><%= approval&.signer_name ? "Thanks, #{approval.signer_name}. You're all set." : "This quote is approved." %></p>
+      <p class="mt-1"><%= @business.quote_next_steps %></p>
+      <% if approval %>
+        <p class="mt-1 text-sm2">Approved <%= local_time(approval.created_at, zone: @business.time_zone) %><%= " by #{approval.signer_name}" if approval.signer_name %>.</p>
+      <% end %>
+    </div>
+  </div>
 <% elsif state == :declined %>
   <div class="banner banner-info mb-4" role="status"><%= icon "info" %><p>You declined this quote. Questions? Contact <%= @business.name %> below.</p></div>
 <% elsif state == :changes_requested %>
@@ -59,7 +68,6 @@
   </section>
 <% end %>
 
-<%# The action area. Approve / decline / request changes arrive with QTE-05. %>
 <section class="client-card mt-4 p-5 text-center sm:p-6" id="quote-actions" aria-labelledby="actions-h">
   <h2 id="actions-h" class="text-base font-semibold text-ink">
     <% if state == :awaiting %>Total <span class="money"><%= money(totals.total) %></span>
@@ -71,10 +79,12 @@
   <% if state == :awaiting && quote.expires_on %>
     <p class="mt-1 text-sm2 text-muted">Valid until <%= local_date(quote.expires_on) %></p>
   <% end %>
-  <%= yield :quote_actions if content_for?(:quote_actions) %>
+  <% if state == :awaiting %>
+    <%= render "client/quotes/respond", quote:, totals:, client_link: %>
+  <% end %>
   <p class="mt-3">
     <%= link_to (client_link ? client_quote_pdf_path(client_link.token) : pdf_admin_quote_path(quote)), class: "inline-flex items-center gap-1.5 text-sm2 font-medium text-ink underline-offset-2 hover:underline", data: { turbo: false } do %>
-      <%= icon "download", class: "size-4" %> Download PDF
+      <%= icon "download", class: "size-4" %> <%= state == :approved ? "Download approved PDF" : "Download PDF" %>
     <% end %>
   </p>
   <%= render "client_links/business_contact" %>
