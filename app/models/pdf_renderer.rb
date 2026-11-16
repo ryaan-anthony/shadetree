@@ -16,6 +16,9 @@ class PdfRenderer
   # Countries that use US Letter; everyone else uses A4.
   LETTER_COUNTRIES = %w[US CA MX PR PH CL CO VE GT CR PA DO SV].freeze
   TIMEOUT = 15
+  # Starting Chrome is separate from rendering: a cold start on a busy host (a deploy, parallel
+  # test workers) can take longer than any one page operation should.
+  LAUNCH_TIMEOUT = 30
   WAIT = 10
   TURN = Concurrent::Semaphore.new(1)
 
@@ -48,7 +51,7 @@ class PdfRenderer
   private_class_method :print
 
   def self.browser_options
-    { browser_path: ENV["BROWSER_PATH"].presence, headless: "new", timeout: TIMEOUT, process_timeout: TIMEOUT,
+    { browser_path: ENV["BROWSER_PATH"].presence, headless: "new", timeout: TIMEOUT, process_timeout: LAUNCH_TIMEOUT,
       browser_options: { "no-sandbox" => nil, "disable-gpu" => nil, "disable-dev-shm-usage" => nil,
                          "proxy-server" => "127.0.0.1:9", "proxy-bypass-list" => "<-loopback>",
                          "blink-settings" => "scriptEnabled=false" } }.compact
