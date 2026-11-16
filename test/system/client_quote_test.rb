@@ -21,7 +21,10 @@ class ClientQuoteSystemTest < ApplicationSystemTestCase
     ActionController::Base.allow_forgery_protection = true
   end
 
-  teardown { ActionController::Base.allow_forgery_protection = @forgery_protection }
+  teardown do
+    ActionController::Base.allow_forgery_protection = @forgery_protection
+    page.current_window.resize_to(1400, 1400) # the browser is shared: later tests expect desktop width
+  end
 
   test "a client approves the quote from their phone" do
     page.current_window.resize_to(390, 844)
