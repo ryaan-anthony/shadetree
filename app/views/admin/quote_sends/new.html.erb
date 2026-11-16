@@ -11,6 +11,9 @@
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
   <%= card title: "Email it", subtitle: "Your message, a button to the quote page, and the PDF attached. Replies come to you." do %>
     <%= form_with model: @form, scope: :quote_send, url: admin_quote_send_path(@quote), method: :post do |f| %>
+      <% @form.errors[:base].each do |error| %>
+        <p class="mb-3 text-sm2 font-medium text-danger" role="alert"><%= error %></p>
+      <% end %>
       <%= f.field :to, as: :email, label: "To", required: true, autocomplete: "off",
                   help: ("#{@quote.client.display_name} has no email address yet." if @quote.client.primary_email.nil?) %>
       <%= f.field :cc, label: "CC", optional: true, help: "Up to #{QuoteSendForm::MAX_CC} addresses, separated by commas." %>
@@ -30,6 +33,9 @@
       <% else %>
         <%= button_to admin_quote_send_path(@quote), params: { channel: "link" }, class: button_classes(:secondary, extra: "w-full"),
                       disabled: !current_user.can_send_to_clients? do %><%= icon "link" %> Get the link<% end %>
+        <% unless @quote.draft? || current_user.can_send_to_clients? %>
+          <p class="mt-2 text-sm2 text-muted">Confirm your email address to see the link.</p>
+        <% end %>
       <% end %>
     <% end %>
 

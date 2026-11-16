@@ -1,5 +1,7 @@
 <%# A sent quote, for staff (QTE-04): when and how it went out, delivery problems, send again. %>
-<% problem = quote.sends.filter_map(&:email_message).find(&:problem?) %>
+<%# Only the latest email counts: a later successful resend settles it (as in the quotes list). %>
+<% latest = quote.sends.find { _1.channel == "email" }&.email_message %>
+<% problem = latest if latest&.problem? %>
 <section class="client-card mb-4 p-5 sm:p-6" aria-labelledby="sent-panel-h">
   <div class="flex flex-wrap items-center justify-between gap-3">
     <h2 id="sent-panel-h" class="text-sm font-semibold text-ink">

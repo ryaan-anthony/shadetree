@@ -4,6 +4,7 @@ class QuoteMailer < ClientMailer
   def sent
     @quote = Quote.find(params[:quote_id])
     @link = ClientLink.find(params[:link_id])
+    @link = @quote.client_link! unless @link.usable? # revoked or expired while the email waited
     @note = params[:message].to_s
     pdf = @quote.current_pdf
     attachments[@quote.pdf_filename] = { mime_type: "application/pdf", content: pdf.is_a?(ActiveStorage::Blob) ? pdf.download : pdf }

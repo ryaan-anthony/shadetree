@@ -65,16 +65,22 @@ class Quote < ApplicationRecord
       raise ArgumentError, "a #{status} quote can't be sent" unless draft? || sent?
 
       update!(status: "sent", sent_at: Time.current, sent_by: by) if draft?
-      UsageEvent.record!("quote_sent", self, at: sent_at)
+      UsageEvent.record!("quote_sent", self, at: sent_at || Time.current)
       sends.create!(business:, user: by, channel:, recipient:, cc:, email_message:)
     end
   end
 
-  # The link the client opens: the newest active one, or a new one.
-  def client_link! = ClientLink.active.where(linkable: self).order(created_at: :desc).first || ClientLink.issue!(self)
+  # The link the client opens: the newest active one with at least a month left (so an emailed
+  # link doesn't die soon after it's read), or a new one.
+  def client_link!
+    link = ClientLink.active.where(linkable: self).order(created_at: :desc).first
+    link && (link.expires_at.nil? || link.expires_at > 30.days.from_now) ? link : ClientLink.issue!(self)
+  end
 
-  # Whether it can go out: it needs something to quote.
-  def sendable? = (draft? || sent?) && line_items.any?
+  # Whether it can go out: it needs something to quote, and a valid-until date that hasn't
+  # passed (an expired quote is renewed with a revision, QTE-06).
+  def sendable? = (draft? || sent?) && line_items.any? && !past_expiry?
+  def past_expiry? = expires_on.present? && expires_on < business.today
 
   # Clients only ever see quotes that were sent (QTE-03): a draft is never reachable.
   def client_visible? = !draft?

@@ -76,7 +76,9 @@ export default class extends Controller {
     const href = event.currentTarget.href // currentTarget is gone after the await
     if (this.dirty) this.save()
     await this.saving
-    if (!this.dirty) Turbo.visit(href)
+    // Only once everything is saved: after a conflict (another tab saved newer work) the
+    // page says so and the quote stays here, so an older version can't go out.
+    if (!this.dirty && !this.conflict) Turbo.visit(href)
   }
 
   // Preview as client: save first, so the preview shows the latest. The tab opens at once
@@ -212,8 +214,9 @@ export default class extends Controller {
       // The builder may have been left meanwhile (another quote has the same target ids).
       if (!formElement.isConnected) return
       if (stream) Turbo.renderStreamMessage(stream)
+      this.conflict = response.status === 409
       if (response.ok) this.setStatus(this.dirty ? "Unsaved changes" : "Saved")
-      else if (response.status === 409) this.setStatus("Not saved")
+      else if (this.conflict) this.setStatus("Not saved")
       else { this.setStatus("Not saved: fix the errors above"); this.dirty = true }
     }).catch(() => {
       this.dirty = true

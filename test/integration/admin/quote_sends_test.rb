@@ -151,4 +151,114 @@ class Admin::QuoteSendsTest < ActionDispatch::IntegrationTest
       assert_select "#quote-#{@quote.uid}", /Not delivered/
     end
   end
+
+  test "a quote can be emailed at most five times a day" do
+    with_fake_pdf_renderer do
+      5.times { |i| send_email(to: "maria#{i}@example.com") }
+      send_email
+      assert_response :unprocessable_content
+      assert_select "[role=alert]", /emailed 5 times today/
+      assert_equal 5, as_business(@business) { @quote.sends.count }
+      travel(25.hours) do
+        send_email
+        assert_redirected_to preview_admin_quote_path(@quote)
+      end
+    end
+  end
+
+  test "a CC the mail server refused before is an error too" do
+    as_business(@business) { EmailSuppression.suppress!("old@example.com", reason: "hard_bounce") }
+    send_email(cc: "ok@example.com, old@example.com")
+    assert_response :unprocessable_content
+    assert_select ".field", /includes old@example.com, which the mail server refused before/
+  end
+
+  test "an expired quote can't be sent until its date is moved" do
+    as_business(@business) { @quote.update_columns(expires_on: @business.today - 1) }
+    get new_admin_quote_send_path(@quote)
+    assert_redirected_to edit_admin_quote_path(@quote)
+    assert_match "Change its valid-until date before sending", flash[:alert]
+    post admin_quote_send_path(@quote), params: { channel: "link" }
+    assert_equal "draft", fresh.status
+    assert_equal 0, usage_count
+  end
+
+  test "a PDF that can't be made yet is retried, not failed" do
+    with_fake_pdf_renderer(fail_with: PdfRenderer::Error.new("PDF renderer busy")) do
+      send_email
+      perform_enqueued_jobs
+      assert_enqueued_jobs 1, only: ClientMailDeliveryJob
+      assert_equal "queued", as_business(@business) { @quote.sends.first.email_message.status }
+    end
+  end
+
+  test "a refused message with CCs blames no address" do
+    with_fake_pdf_renderer do
+      send_email(cc: "partner@example.com")
+      FakeSmtpServer.run(rcpt: "550 5.1.1 no such user") do |settings|
+        previous = [ QuoteMailer.delivery_method, QuoteMailer.smtp_settings ]
+        QuoteMailer.delivery_method = :smtp
+        QuoteMailer.smtp_settings = settings
+        perform_enqueued_jobs
+      ensure
+        QuoteMailer.delivery_method, QuoteMailer.smtp_settings = previous
+      end
+      email = as_business(@business) { @quote.sends.first.email_message }
+      assert_equal [ "bounced", "The mail server refused one of the addresses (550 5.1.1)." ], [ email.status, email.error ]
+      assert_not as_business(@business) { EmailSuppression.suppressed?("maria@example.com") }
+    end
+  end
+
+  test "the client's address and the note stay out of the request log" do
+    logged = StringIO.new
+    previous, Rails.logger = Rails.logger, ActiveSupport::Logger.new(logged)
+    ActionController::Base.logger = Rails.logger
+    with_fake_pdf_renderer { send_email(message: "Gate code 4321") }
+    assert_match "[FILTERED]", logged.string
+    assert_no_match "maria@example.com", logged.string
+    assert_no_match "Gate code", logged.string
+  ensure
+    Rails.logger = ActionController::Base.logger = previous
+  end
+
+  test "a resend after a delivery problem clears the warning once it goes through" do
+    with_fake_pdf_renderer do
+      send_email
+      as_business(@business) { @quote.sends.first.email_message.mark!("bounced", error: "refused") }
+      send_email(to: "maria.lopez@example.com")
+      perform_enqueued_jobs
+      get preview_admin_quote_path(@quote)
+      assert_select "#quote-delivery-problem", 0
+      get admin_quotes_path
+      assert_no_match "Not delivered", response.body
+    end
+  end
+
+  test "an emailed link has at least a month left; a revoked one is replaced before sending" do
+    with_fake_pdf_renderer do
+      old = as_business(@business) { @quote.update_column(:status, "sent"); ClientLink.issue!(@quote, expires_at: 10.days.from_now) }
+      send_email
+      link = as_business(@business) { ClientLink.active.where(linkable: @quote).order(:created_at).last }
+      assert_not_equal old, link
+      assert_operator link.expires_at, :>, 30.days.from_now
+      as_business(@business) { link.revoke! }
+      perform_enqueued_jobs
+      body = ActionMailer::Base.deliveries.last.text_part.body.to_s
+      assert_no_match link.token, body
+      assert_match %r{/c/\w{32}}, body
+      assert_no_match "<time", body, "the plain-text part has no HTML"
+    end
+  end
+
+  test "an unconfirmed account doesn't see a sent quote's link" do
+    as_business(@business) { @quote.mark_sent!(by: users(:one), channel: "link") }
+    link = as_business(@business) { @quote.client_link! }
+    unconfirmed = users(:unconfirmed)
+    BusinessUser.create!(user: unconfirmed, business: @business, role: "admin", active: true)
+    sign_in unconfirmed
+    post switch_admin_business_path, params: { business: @business.uid }
+    get new_admin_quote_send_path(@quote)
+    assert_no_match link.token, response.body
+    assert_select "p", /Confirm your email address to see the link/
+  end
 end

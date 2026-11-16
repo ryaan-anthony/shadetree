@@ -31,8 +31,10 @@ class QuoteSendForm
   end
 
   def recipient_not_suppressed
-    return unless to && EmailSuppression.suppressed?(to)
-
-    errors.add(:to, "was refused by the mail server before. Check the address, or mark it as working on the client's page")
+    if to && EmailSuppression.suppressed?(to)
+      errors.add(:to, "was refused by the mail server before. Check the address, or mark it as working on the client's page")
+    end
+    refused = cc_list.find { EmailSuppression.suppressed?(_1) }
+    errors.add(:cc, "includes #{refused}, which the mail server refused before") if refused
   end
 end
