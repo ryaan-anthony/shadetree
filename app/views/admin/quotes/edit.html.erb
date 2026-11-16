@@ -23,6 +23,9 @@
 <% end %>
 
 <div id="builder_banner"></div>
+<% if @quote.service_request %>
+  <p class="-mt-2 mb-4 text-sm2 text-muted"><%= icon "inbox", class: "mr-1 inline size-4 align-text-bottom text-faint" %>From <%= link_to "request #{@quote.service_request.reference}", admin_service_request_path(@quote.service_request), class: "font-medium text-ink hover:underline" %></p>
+<% end %>
 
 <%= form_with model: @quote, url: admin_quote_path(@quote), method: :patch, id: "quote-builder", multipart: true,
               class: "grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]",

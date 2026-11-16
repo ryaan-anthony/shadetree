@@ -22,6 +22,7 @@ class Quote < ApplicationRecord
   belongs_to_business_record :client
   belongs_to_business_record :property, optional: true
   belongs_to :created_by, class_name: "User", optional: true
+  belongs_to_business_record :service_request, optional: true # CLI-04: the request it came from
   belongs_to :sent_by, class_name: "User", optional: true
   has_many :sends, -> { recent }, class_name: "QuoteSend", inverse_of: :quote, dependent: :delete_all
   has_many :email_messages, as: :related, dependent: :nullify

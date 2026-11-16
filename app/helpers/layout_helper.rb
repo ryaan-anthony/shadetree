@@ -1,8 +1,10 @@
 # Helpers for the three layouts (marketing, app, client).
 module LayoutHelper
-  def side_link(label, path, icon:, active: false)
+  # A sidebar link; `count` shows a badge (CLI-04: new requests) when it's above zero.
+  def side_link(label, path, icon:, active: false, count: nil)
     link_to path, class: "side-link", "aria-current": (active ? "page" : nil) do
-      icon(icon) + tag.span(label)
+      badge = tag.span(count, class: "side-count", "aria-label": "#{count} new") if count.to_i.positive?
+      safe_join([ icon(icon), tag.span(label), badge ].compact)
     end
   end
 
