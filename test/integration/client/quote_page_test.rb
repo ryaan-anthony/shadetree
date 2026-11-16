@@ -105,7 +105,7 @@ class Client::QuotePageTest < ActionDispatch::IntegrationTest
   end
 
   test "each state says where things stand" do
-    { "approved" => /You approved this quote/, "declined" => /You declined this quote/, "changes_requested" => /You asked for changes/ }.each do |status, text|
+    { "approved" => /This quote is approved/, "declined" => /You declined this quote/, "changes_requested" => /You asked for changes/ }.each do |status, text|
       set_quote(status:)
       get client_link_path(@link.token)
       assert_select ".banner", text, status

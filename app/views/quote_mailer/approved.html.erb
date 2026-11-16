@@ -1,0 +1,13 @@
+<p style="margin:0 0 12px;font-size:18px;font-weight:700;color:#0f172a;">Thanks, <%= @approval.signer_name %>. You're all set.</p>
+<p style="margin:0 0 16px;"><%= @business.quote_next_steps %></p>
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 20px;border:1px solid #e2e8f0;border-radius:8px;">
+  <tr><td style="padding:14px 16px;">
+    <p style="margin:0;font-size:13px;color:#64748b;">Quote <%= @quote.number %><%= " · #{@quote.title}" if @quote.title %></p>
+    <p style="margin:6px 0 0;font-size:22px;font-weight:700;color:#0f172a;"><%= money(@quote.totals.total) %></p>
+    <p style="margin:4px 0 0;font-size:13px;color:#64748b;">Approved <%= l(@approval.created_at.in_time_zone(@business.time_zone), format: :long) %> · reference <%= @approval.reference %></p>
+  </td></tr>
+</table>
+<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="border-radius:8px;background:<%= @branding.color %>;">
+  <a href="<%= client_link_url(@link.token) %>" style="display:inline-block;padding:12px 20px;font-weight:600;font-size:15px;color:<%= @branding.ink %>;text-decoration:none;">View quote</a>
+</td></tr></table>
+<p style="margin:16px 0 0;font-size:13px;color:#64748b;">The approved quote is attached as a PDF.</p>

@@ -20,6 +20,25 @@ class QuoteMailerPreview < ActionMailer::Preview
   end
 end
 
+# QTE-05: the client's approval confirmation and the team's notice, for the newest approved
+# quote (bin/rails db:seed makes one).
+class QuoteApprovalMailerPreview < ActionMailer::Preview
+  def approved
+    quote = approved_quote
+    QuoteMailer.with(business_id: quote.business_id, to: "maria@example.com", quote_id: quote.id).approved
+  end
+
+  def team_notice
+    quote = approved_quote
+    response = Tenancy.with_business(quote.business) { quote.approval }
+    QuoteActivityMailer.with(business_id: quote.business_id, response_id: response.id, user_id: quote.business.users.first.id).responded
+  end
+
+  private
+
+  def approved_quote = Tenancy.across_businesses(reason: "mailer preview") { Quote.where(status: "approved").order(:id).last }
+end
+
 # CLI-03: the request acknowledgment and the team's notice, for the newest request
 # (bin/rails db:seed makes one).
 class RequestMailerPreview < ActionMailer::Preview

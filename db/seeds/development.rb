@@ -91,6 +91,23 @@ Tenancy.with_business(business) do
     link = quote.client_link!
     puts "Client page for quote #{quote.number}: http://localhost:3000/c/#{link.token}"
   end
+
+  # QTE-05: one quote the client approved through their link, one they asked to change. (The
+  # team notices and the approval confirmation go to letter_opener when the queue runs.)
+  [ [ "Hedge trimming", :approve, { signer_name: nil, terms_accepted: "1", ip_address: "127.0.0.1", device: "iPhone, Safari" } ],
+    [ "Fall cleanup", :request_changes, { message: "Could you leave out the side yard? We'll do that one ourselves." } ] ].each_with_index do |(title, action, attributes), index|
+    client = Client.order(:id).offset(2 + index).first
+    next if client.nil? || Quote.exists?(client:)
+
+    quote = Quote.start(client:, created_by: owner)
+    quote.title = title
+    quote.sync_line_items([ { "key" => "seed-0", "name" => title, "quantity" => "1", "unit_price" => "240", "taxable" => "1" } ])
+    quote.save!
+    quote.mark_sent!(by: owner, channel: "link")
+    link = quote.client_link!
+    attributes = attributes.merge(signer_name: client.display_name) if action == :approve
+    quote.record_response!(action, link:, version: quote.lock_version, **attributes)
+  end
 end
 
 # CLI-03: the request form, on, with a request from someone new.

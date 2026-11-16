@@ -27,6 +27,9 @@
         <%= f.field :quote_terms, as: :textarea, label: "Terms", optional: true, rows: 5,
                     placeholder: "e.g. Prices include materials and disposal. 50% deposit to schedule.",
                     help: "Shown at the bottom of every new quote. You can edit it on each quote." %>
+        <%= f.field :quote_approved_message, as: :textarea, label: "After a client approves", optional: true, rows: 2, maxlength: 500,
+                    placeholder: @business.quote_next_steps,
+                    help: "What happens next, shown on the confirmation and in the approval email. Leave blank for the text shown here." %>
       <% end %>
 
       <%= card title: "Invoices" do %>
