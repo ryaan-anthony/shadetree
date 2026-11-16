@@ -81,7 +81,7 @@ engine with conditions, channels and timing offsets), and client notification pr
 
 | ID | Title | Milestone | Depends on |
 | --- | --- | --- | --- |
-| [NTF-01](../specs/notifications/NTF-01-email-foundation.md) | Transactional email foundation | M2 | CAT-02, PLT-09 |
+| [NTF-01](../specs/notifications/NTF-01-email-foundation.md) | Transactional email foundation | M2 | CAT-02 |
 | [NTF-02](../specs/notifications/NTF-02-team-notifications.md) | Team notifications | M3 | NTF-01, ACC-04 |
 | [NTF-03](../specs/notifications/NTF-03-message-templates.md) | Editable message templates | M5 | NTF-01, BIL-01 |
 | [NTF-04](../specs/notifications/NTF-04-workflow-automations.md) | Workflow automations | M5 | NTF-02, NTF-03, QTE-06, JOB-02, PAY-02 |
@@ -95,8 +95,9 @@ engine with conditions, channels and timing offsets), and client notification pr
 
 ## Open questions
 
-1. Email provider choice (transactional, with webhooks for bounces) — engineering decision in
-   NTF-01 ADR. Cost at Free-tier volume matters.
-2. Sending domain: `mail.getshadetree.com` or similar — depends on G8 (brand/domain).
+1. ~~Email provider choice~~: decided, the provider's SMTP relay in production, with no
+   provider integration ([ADR 0017](../adr/0017-transactional-email-smtp.md)). In development,
+   letter_opener_web opens every email in the browser.
+2. ~~Sending domain~~: decided, the root domain `getshadetree.com` (G8).
 3. Should reminder emails (visit reminders) be considered "transactional"? Recommend yes, with
    an opt-out link anyway.

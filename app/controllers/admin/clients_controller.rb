@@ -5,7 +5,7 @@ class Admin::ClientsController < Admin::BaseController
   PICKER_LIMIT = 8
 
   requires_permission :office
-  before_action :set_client, only: %i[show edit update archive restore destroy picked]
+  before_action :set_client, only: %i[show edit update archive restore destroy picked mark_deliverable]
   layout -> { inline? ? false : "app" }
 
   # The list, unfiltered (or with ?tag=/?sort=/?archived=1 from links). Searching happens in
@@ -78,6 +78,16 @@ class Admin::ClientsController < Admin::BaseController
 
     @client.destroy!
     redirect_to admin_clients_path, notice: "#{@client.display_name} deleted."
+  end
+
+  # Staff fixed or confirmed an address that bounced (NTF-01): send to it again.
+  def mark_deliverable
+    method = @client.contact_methods.find(params[:contact_method_id])
+    if EmailSuppression.clear!(method.normalized)
+      redirect_to admin_client_path(@client), notice: "#{method.value} can be emailed again."
+    else
+      redirect_to admin_client_path(@client), alert: "#{method.value} reported your email as spam, so it can't be emailed again. Use another address."
+    end
   end
 
   # Existing clients sharing an email or phone with the form (R4), as a turbo stream that

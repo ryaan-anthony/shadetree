@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_15_000900) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_16_000100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -140,6 +140,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_000900) do
     t.integer "position", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "undeliverable_at"
+    t.string "undeliverable_reason"
     t.index ["business_id", "kind", "normalized"], name: "idx_on_business_id_kind_normalized_9d4b32aefd"
     t.index ["business_id"], name: "index_client_contact_methods_on_business_id"
     t.index ["client_id"], name: "index_client_contact_methods_on_client_id"
@@ -211,6 +213,45 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_000900) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["business_id", "kind"], name: "index_document_sequences_on_business_id_and_kind", unique: true
+  end
+
+  create_table "email_messages", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.string "kind", null: false
+    t.string "to", null: false
+    t.string "subject"
+    t.string "related_type"
+    t.bigint "related_id"
+    t.string "status", default: "queued", null: false
+    t.string "provider_message_id"
+    t.text "error"
+    t.integer "attempts", default: 0, null: false
+    t.datetime "sent_at"
+    t.datetime "delivered_at"
+    t.datetime "bounced_at"
+    t.datetime "complained_at"
+    t.datetime "failed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "created_at"], name: "index_email_messages_on_business_id_and_created_at"
+    t.index ["business_id"], name: "index_email_messages_on_business_id"
+    t.index ["provider_message_id"], name: "index_email_messages_on_provider_message_id", unique: true
+    t.index ["related_type", "related_id"], name: "index_email_messages_on_related"
+    t.index ["uid"], name: "index_email_messages_on_uid", unique: true
+    t.check_constraint "status::text = ANY (ARRAY['queued'::character varying, 'sent'::character varying, 'delivered'::character varying, 'bounced'::character varying, 'complained'::character varying, 'failed'::character varying, 'suppressed'::character varying]::text[])", name: "email_messages_status"
+  end
+
+  create_table "email_suppressions", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "email", null: false
+    t.string "reason", null: false
+    t.bigint "email_message_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "email"], name: "index_email_suppressions_on_business_id_and_email", unique: true
+    t.index ["business_id"], name: "index_email_suppressions_on_business_id"
+    t.index ["email_message_id"], name: "index_email_suppressions_on_email_message_id"
   end
 
   create_table "feature_flags", force: :cascade do |t|
@@ -300,7 +341,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_000900) do
     t.index ["quote_id", "key"], name: "index_quote_line_items_on_quote_id_and_key", unique: true
     t.index ["quote_id", "position"], name: "index_quote_line_items_on_quote_id_and_position"
     t.index ["quote_id"], name: "index_quote_line_items_on_quote_id"
-    t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying, 'amount'::character varying]::text[]))", name: "quote_lines_discount_kind"
+    t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying::text, 'amount'::character varying::text]))", name: "quote_lines_discount_kind"
     t.check_constraint "quantity >= 0::numeric", name: "quote_lines_quantity_nonnegative"
   end
 
@@ -341,7 +382,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_000900) do
     t.index ["property_id"], name: "index_quotes_on_property_id"
     t.index ["uid"], name: "index_quotes_on_uid", unique: true
     t.check_constraint "discount_amount_cents IS NULL OR discount_amount_cents >= 0", name: "quotes_discount_amount_nonnegative"
-    t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying, 'amount'::character varying]::text[]))", name: "quotes_discount_kind"
+    t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying::text, 'amount'::character varying::text]))", name: "quotes_discount_kind"
     t.check_constraint "discount_percent IS NULL OR discount_percent >= 0::numeric AND discount_percent <= 100::numeric", name: "quotes_discount_percent_range"
   end
 
@@ -405,6 +446,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_000900) do
   add_foreign_key "client_links", "users", column: "revoked_by_id", on_delete: :nullify
   add_foreign_key "clients", "businesses", on_delete: :cascade
   add_foreign_key "document_sequences", "businesses"
+  add_foreign_key "email_messages", "businesses", on_delete: :cascade
+  add_foreign_key "email_suppressions", "businesses", on_delete: :cascade
+  add_foreign_key "email_suppressions", "email_messages", on_delete: :nullify
   add_foreign_key "invitations", "businesses", on_delete: :cascade
   add_foreign_key "invitations", "users", column: "accepted_by_id", on_delete: :nullify
   add_foreign_key "invitations", "users", column: "invited_by_id", on_delete: :nullify

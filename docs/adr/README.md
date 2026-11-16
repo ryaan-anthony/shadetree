@@ -33,9 +33,10 @@ approach, a hosting change. Small, local choices belong in the PR description.
 | [0008](0008-active-storage-object-storage.md) | Active Storage on S3-compatible object storage | Accepted |
 | [0009](0009-hosting-kamal-vps.md) | Kamal on a VPS, with managed PostgreSQL | Accepted |
 | [0010](0010-pdf-headless-chrome.md) | PDFs rendered from HTML with headless Chrome | Accepted |
-| [0011](0011-transactional-email-postmark.md) | Postmark for transactional email | Accepted |
+| [0011](0011-transactional-email-postmark.md) | Postmark for transactional email | Superseded by 0017 |
 | [0012](0012-keep-devise.md) | Keep Devise for authentication | Accepted |
 | [0013](0013-money-time-and-numbering.md) | Exact money, per-rate tax, UTC times and per-business document numbers | Accepted |
 | [0014](0014-tenant-scoping-enforcement.md) | Tenant scoping enforced by default, opaque ids in URLs | Accepted |
 | [0015](0015-release-flags.md) | In-house release flags on PostgreSQL | Accepted |
 | [0016](0016-client-links.md) | One client-link mechanism, with derived tokens and per-link state | Accepted |
+| [0017](0017-transactional-email-smtp.md) | Transactional email over SMTP | Accepted |

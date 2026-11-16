@@ -1,0 +1,10 @@
+Hi<%= " #{@recipient_name}" if @recipient_name.present? %>,
+
+This is how your emails look to clients: your contact details at the bottom, and replies go to <%= @business.email.presence || "your business email (not set yet)" %>.
+
+Quotes and invoices you send will include a link like this one:
+<%= root_url %>
+<% if @business.email.blank? %>
+
+Add your business email in Settings so client replies reach you.
+<% end %>

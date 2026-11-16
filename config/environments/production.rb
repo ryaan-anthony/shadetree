@@ -58,16 +58,23 @@ Rails.application.configure do
   # config.action_mailer.raise_delivery_errors = false
 
   # Set host to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = { host: "example.com" }
-
-  # Specify outgoing SMTP server. Remember to add smtp/* credentials via rails credentials:edit.
-  # config.action_mailer.smtp_settings = {
-  #   user_name: Rails.application.credentials.dig(:smtp, :user_name),
-  #   password: Rails.application.credentials.dig(:smtp, :password),
-  #   address: "smtp.example.com",
-  #   port: 587,
-  #   authentication: :plain
-  # }
+  # Transactional email over SMTP (ADR 0017, NTF-01), configured per environment: production
+  # uses the provider's credentials, staging its sandbox credentials. Without SMTP_ADDRESS
+  # nothing is sent (rather than trying localhost); client emails show "Couldn't send" and
+  # config/initializers/mail_settings.rb warns at boot.
+  if ENV["SMTP_ADDRESS"].present?
+    config.action_mailer.delivery_method = :smtp
+    config.action_mailer.raise_delivery_errors = true # ClientMailDeliveryJob sorts the errors
+    config.action_mailer.smtp_settings = {
+      address: ENV["SMTP_ADDRESS"], port: ENV.fetch("SMTP_PORT", 587).to_i,
+      user_name: ENV["SMTP_USERNAME"], password: ENV["SMTP_PASSWORD"], authentication: :plain,
+      enable_starttls_auto: true, open_timeout: 10, read_timeout: 20
+    }
+  else
+    config.action_mailer.perform_deliveries = false
+  end
+  # Links and images in email (logos, "View quote") point at the public app host (PLT-09).
+  config.action_mailer.default_url_options = { host: ENV.fetch("APP_HOST", "example.com"), protocol: "https" }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).

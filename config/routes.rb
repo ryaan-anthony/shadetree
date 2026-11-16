@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  mount LetterOpenerWeb::Engine, at: "/letter_opener" if Rails.env.development?
+
   devise_for :users,
              controllers: {
                sessions: "users/sessions",
@@ -38,6 +40,7 @@ Rails.application.routes.draw do
         patch :archive
         patch :restore
         get :picked
+        patch "contact_methods/:contact_method_id/deliverable", action: :mark_deliverable, as: :mark_deliverable # NTF-01
       end
       post :matches, on: :collection # POST keeps emails and phones out of URLs and access logs
       post :search, on: :collection # list results and the client picker (CLI-02); POST keeps search terms out of URLs
@@ -79,6 +82,9 @@ Rails.application.routes.draw do
       get :property_options, on: :collection
       resources :attachments, only: :destroy, controller: "quote_attachments"
     end
+
+    # "Send me a test email" from branding settings (NTF-01)
+    resource :test_email, only: :create
 
     # Tax rates (CAT-04)
     resources :tax_rates, except: %i[show destroy] do

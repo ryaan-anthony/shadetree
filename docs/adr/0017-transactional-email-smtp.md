@@ -1,0 +1,54 @@
+# 0017. Transactional email over SMTP
+
+- **Status:** Accepted
+- **Date:** 2026-11-16
+- **Specs:** NTF-01, ACC-01, ACC-03, QTE-04, PAY-02, JOB-05
+- **Supersedes:** [0011](0011-transactional-email-postmark.md)
+
+## Context
+
+NTF-01 needs authenticated sending from the platform domain, with the business's address as
+reply-to, a staging environment that can't email real clients, and low cost at launch volume.
+The product owner has picked an email provider and will use it through **SMTP**, Rails' built-in
+delivery method. There's no provider integration in the codebase: no SDK, no webhooks, no
+provider name. The provider appears only in production configuration.
+
+## Options considered
+
+1. **SMTP with Action Mailer's built-in `:smtp` delivery** (chosen): no dependencies, and the
+   provider can be swapped by changing settings. The app only learns what the SMTP conversation
+   tells it: accepted, refused (5xx), or try later (4xx).
+2. **A provider's HTTP API and event webhooks:** these would report bounces and complaints after
+   delivery. That's a custom integration the product owner doesn't want.
+
+## Decision
+
+- **Production** sends through the provider's SMTP relay. The settings are `SMTP_ADDRESS`,
+  `SMTP_PORT` (default 587, STARTTLS), `SMTP_USERNAME` and `SMTP_PASSWORD`.
+- **Sender:** the root domain `getshadetree.com` (vision G8), as
+  `"<Business> via Shadetree" <no-reply@getshadetree.com>`, with the business's own address as
+  reply-to. Message-IDs are generated on the sending domain.
+- **How the SMTP reply is handled** (`ClientMailDeliveryJob`):
+  - A refused recipient (550/551/553 or a 5.1.x status) fails the email and suppresses the
+    address for that business, flagged on the client page until staff send to it again.
+  - Any other 5xx, and bad credentials, fail the email without flagging the address.
+  - 4xx replies, timeouts and connection errors are retried with backoff.
+  - The server's reply text isn't stored or logged, because it can name the address.
+- **Bounces and complaints after acceptance** stay in the provider's dashboard.
+- **Staging** uses the provider's sandbox SMTP credentials, which only deliver to authorized
+  recipients, so it can't email real clients. This is configuration, not code.
+- **Development** opens every email in the browser (letter_opener_web at `/letter_opener`).
+  Tests never send.
+
+## Consequences
+
+- **No automatic bounce flags** for addresses the relay accepts and the recipient's server later
+  bounces. Staff see those in the provider's dashboard. Adding event webhooks later would be a
+  new ADR.
+- **DNS for getshadetree.com** comes from the provider's domain settings: SPF (an `include:` for
+  the provider, merged with any existing record), the provider's DKIM TXT record, and DMARC
+  (`_dmarc` TXT `v=DMARC1; p=none; rua=mailto:dmarc@getshadetree.com`, tightened once reports are
+  clean).
+- **Sending from the root domain** ties the site's domain reputation to transactional mail.
+  Moving to a mail subdomain later is a DNS and `MAIL_FROM` change.
+- **Settings** (PLT-09): the four `SMTP_*` settings, `MAIL_FROM` and `APP_HOST`.
