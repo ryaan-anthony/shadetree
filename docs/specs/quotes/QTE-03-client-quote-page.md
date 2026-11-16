@@ -24,19 +24,30 @@ account, no clutter, instant load.
 
 ## Acceptance criteria
 
-- [ ] Opening a valid quote client link shows: business identity (logo, name, contact), quote
+- [x] Opening a valid quote client link shows: business identity (logo, name, contact), quote
       title and number, message, property, line items with descriptions, discounts, taxes,
       total, terms, attachments (images viewable inline), expiry date, and PDF download.
 - [ ] The page has a prominent primary action area reserved for approval (QTE-05) and shows the
       quote's state (awaiting response, approved, declined, expired, superseded).
+      *All but superseded, which needs revisions (QTE-06).*
 - [ ] The page always shows the latest sent revision; older links resolve to the latest.
+      *Revisions arrive with QTE-06.*
 - [ ] Expired quotes are viewable with a clear notice and a "request an updated quote" action
-      that notifies the business.
-- [ ] First client view and subsequent views are recorded (PLT-12); staff "preview as client"
+      that notifies the business. *All but the notification: the request is flagged in the
+      quotes list; emailing the business follows NTF-01 (#149).*
+- [x] First client view and subsequent views are recorded (PLT-12); staff "preview as client"
       opens the same page in preview mode without recording a view.
-- [ ] Draft quotes are never reachable by clients.
+- [x] Draft quotes are never reachable by clients.
 - [ ] Loads in under 1 s on a mid-range phone on 4G; ≥ 90 mobile Lighthouse; WCAG 2.1 AA.
-- [ ] Tests cover states, preview mode, expiry and link isolation.
+      *Dev Lighthouse: accessibility 100, performance 88 (uncompressed assets); re-check on staging.*
+- [x] Tests cover states, preview mode, expiry and link isolation.
+
+## Decisions
+
+- A quote's link expires 30 days after the quote does, never sooner than the 90-day default.
+- Photos and files go through the link (to five-minute storage URLs), so revoking it cuts them off.
+- An update request is recorded once per quote; the business answers it with a revision
+  (QTE-06).
 
 ## Out of scope
 
@@ -44,5 +55,5 @@ account, no clutter, instant load.
 
 ## Open questions
 
-- Should the client see the business's other contact options (call/text buttons)? Recommend
-  yes — reduces friction for questions.
+- ~~Should the client see the business's other contact options (call/text buttons)?~~
+  Resolved: yes. The action area always shows the business's call and email buttons.

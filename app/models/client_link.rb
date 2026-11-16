@@ -58,11 +58,10 @@ class ClientLink < ApplicationRecord
     base58(raw).first(TOKEN_LENGTH)
   end
 
-
   # The partial that renders the document on the client page. Document types override it by
   # defining client_link_partial (e.g. "client/quotes/quote").
-  def document_partial
-    linkable.try(:client_link_partial) || "client_links/documents/#{linkable.model_name.element}"
+  def self.partial_for(document)
+    document.try(:client_link_partial) || "client_links/documents/#{document.model_name.element}"
   end
 
   # :active, :expired, :revoked or :unavailable (business suspended).

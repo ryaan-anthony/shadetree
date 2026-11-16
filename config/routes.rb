@@ -26,6 +26,9 @@ Rails.application.routes.draw do
   # Client links (PLT-12): the only way clients reach documents.
   get "c/:token", to: "client_links#show", as: :client_link
   post "c/:token/fresh", to: "client_links#request_fresh", as: :request_fresh_client_link
+  post "c/:token/quote/update", to: "client/quotes#request_update", as: :request_quote_update
+  get "c/:token/quote/files/:id", to: "client/quote_files#show", as: :client_quote_file
+  get "c/:token/quote/pdf", to: "client/quotes#pdf", as: :client_quote_pdf # QTE-03
 
   # Admin routes
   namespace :admin do
@@ -72,6 +75,7 @@ Rails.application.routes.draw do
     # Quotes (QTE-01)
     resources :quotes do
       get :preview, on: :member
+      get :pdf, on: :member
       get :property_options, on: :collection
       resources :attachments, only: :destroy, controller: "quote_attachments"
     end

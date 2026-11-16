@@ -3,7 +3,9 @@
 # QTE-04. Technicians can't see quotes (office permission).
 class Admin::QuotesController < Admin::BaseController
   requires_permission :office
-  before_action :set_quote, only: %i[show edit update destroy preview]
+  include SendsPdf
+
+  before_action :set_quote, only: %i[show edit update destroy preview pdf]
   before_action :require_editable, only: %i[edit update]
 
   def index
@@ -68,11 +70,17 @@ class Admin::QuotesController < Admin::BaseController
     redirect_to admin_quotes_path, notice: "Draft #{@quote.number} deleted."
   end
 
-  # How the client will see it (QTE-03 replaces this with the real client page).
+  # The client page (QTE-03) exactly as the client will see it, with a preview banner. Not a
+  # client view, and works for drafts.
   def preview
     @business = current_business
-    render layout: "client"
+    @document = @quote
+    @preview = true
+    render "client_links/show", layout: "client"
   end
+
+  # QTE-02: the PDF. A draft is rendered fresh; a sent quote's stored file is reused.
+  def pdf = send_pdf(@quote, back: @quote.editable? ? edit_admin_quote_path(@quote) : admin_quotes_path)
 
   # The property choices for a client, for the builder's property select.
   def property_options

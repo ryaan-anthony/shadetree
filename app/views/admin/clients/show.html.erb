@@ -61,7 +61,7 @@
         <% if quotes.any? %>
           <% quotes.each do |quote| %>
             <li><%= icon "quote", class: "size-4 text-faint" %>
-              <%= link_to "#{quote.number}#{" · #{quote.title}" if quote.title}", edit_admin_quote_path(quote), class: "min-w-0 flex-1 truncate font-medium text-ink hover:underline" %>
+              <%= link_to "#{quote.number}#{" · #{quote.title}" if quote.title}", staff_quote_path(quote), class: "min-w-0 flex-1 truncate font-medium text-ink hover:underline" %>
               <%= badge quote.status.humanize %><span class="money text-sm2 text-subtle"><%= money(quote.total) %></span></li>
           <% end %>
         <% else %>

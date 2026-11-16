@@ -9,8 +9,11 @@ class Quote < ApplicationRecord
   include BusinessOwned
   include HasMoney
   include HasDiscount
+  include HasPdf
 
-  STATUSES = %w[draft].freeze # QTE-04+ add sent, viewed, approved, declined, changes_requested, expired
+  # QTE-04 sends (draft → sent); QTE-05 records the client's answer. "Viewed" comes from the
+  # client link and "expired" from expires_on, so neither is stored.
+  STATUSES = %w[draft sent approved declined changes_requested].freeze
   MAX_LINES = 200
   MAX_ATTACHMENTS = 10
   ATTACHMENT_MAX_BYTES = 10.megabytes
@@ -21,7 +24,10 @@ class Quote < ApplicationRecord
   belongs_to :created_by, class_name: "User", optional: true
   has_many :line_items, -> { order(:position, :id) }, class_name: "QuoteLineItem", inverse_of: :quote,
            dependent: :delete_all, autosave: true
-  has_many_attached :attachments
+  # Photos get a page-sized version at upload, so the client's first view doesn't wait on it.
+  has_many_attached :attachments do |attachable|
+    attachable.variant :web, resize_to_limit: [ 640, 640 ], preprocessed: true
+  end
 
   def discount_currency = currency
 
@@ -45,6 +51,64 @@ class Quote < ApplicationRecord
 
   def draft? = status == "draft"
   def editable? = draft?
+
+  # Clients only ever see quotes that were sent (QTE-03): a draft is never reachable.
+  def client_visible? = !draft?
+
+  # What the client page says about the quote.
+  def client_state
+    return status.to_sym if status.in?(%w[draft approved declined changes_requested])
+    return :expired if expired?
+
+    :awaiting
+  end
+
+  def expired? = expires_on.present? && expires_on < business.today && status == "sent"
+
+  # QTE-02: the PDF. Sent quotes keep theirs (the same file until something on it changes);
+  # drafts are rendered fresh for staff.
+  def pdf_html = PdfDocument.render("pdfs/quote", quote: self, business:)
+  def pdf_filename = "Quote #{number}.pdf"
+  def pdf_paper = PdfRenderer.paper_for(business.country)
+  def store_pdf? = client_visible?
+  LONG_DESCRIPTION = 400 # characters; longer lines may split across PDF pages
+  # What a stored PDF must match: the template version (bump PDF_VERSION to replace stored files
+  # after a template fix), the quote's own content (any saved edit bumps lock_version) and status,
+  # and the client and property it names. Not the letterhead or the expiry date: a sent PDF
+  # keeps the business's details as sent, and says "Valid until" either way.
+  PDF_VERSION = 1
+  def pdf_fingerprint
+    [ PDF_VERSION, id, lock_version, status, client.updated_at.to_f, property&.updated_at.to_f ].join(":")
+  end
+
+  # Make the PDF when a quote is sent or answered, ahead of the first download.
+  after_commit -> { QuotePdfJob.perform_later(business_id, id) }, on: :update, if: -> { saved_change_to_status? && client_visible? }
+
+  def pdf_footer
+    %(<div style="width:100%;margin:0 0.55in;display:flex;justify-content:space-between;font:7.5pt sans-serif;color:#64748b">) +
+      %(<span>#{ERB::Util.h(business.name)}, quote #{ERB::Util.h(number)}</span>) +
+      %(<span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span></div>)
+  end
+
+  # The status in words, for the document. From the status alone, so a sent quote's stored PDF
+  # doesn't change when its date passes (the client page shows expiry separately).
+  STATUS_LABELS = { "draft" => "Draft", "sent" => "Awaiting approval", "approved" => "Approved", "declined" => "Declined",
+                    "changes_requested" => "Changes requested" }.freeze
+  def state_label = STATUS_LABELS.fetch(status)
+  def client_state_label = client_state == :expired ? "Expired" : state_label
+
+  # PLT-12: the partial client links render for a quote.
+  def client_link_partial = "client/quotes/quote"
+
+  # PLT-12: a quote's link outlives the quote by a month, so an expired quote can still be
+  # seen and an update asked for; never less than the default link lifetime.
+  CLIENT_LINK_GRACE = 30.days
+  def client_link_expires_at
+    default = ClientLink::DEFAULT_LIFETIME.from_now
+    return default unless expires_on
+
+    [ expires_on.in_time_zone(business.time_zone).end_of_day + CLIENT_LINK_GRACE, default ].max
+  end
 
   # Starts a draft for a client with the business's defaults: next number, expiry, terms,
   # and the tax rates new documents get (none for a tax-exempt client).

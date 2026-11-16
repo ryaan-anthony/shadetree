@@ -1,0 +1,13 @@
+<%# Documents printed to PDF by PdfRenderer (ADR 0010): self-contained, no scripts, no
+    network. Styles and the font are inlined by PdfDocument. %>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title><%= content_for(:title) %></title>
+    <style><%== PdfDocument.stylesheet %></style>
+  </head>
+  <body class="pdf" style="<%= Branding.new(@business).css_variables %>">
+    <%= yield %>
+  </body>
+</html>

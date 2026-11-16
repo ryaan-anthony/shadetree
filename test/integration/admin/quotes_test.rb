@@ -65,10 +65,13 @@ class Admin::QuotesTest < ActionDispatch::IntegrationTest
       assert_select "[data-quote-builder-target=status]"
       assert_select "a[data-action='quote-builder#preview']"
       assert_select "form#quote-builder[data-quote-builder-target=form]"
+      # Totals and attachments stay inside the form, so their changes autosave.
+      assert_select "form#quote-builder > aside #quote_totals"
+      assert_select "form#quote-builder input[type=file][name='quote[attachments][]']"
     end
     assert_select "meta[name=turbo-cache-control][content=no-cache]"
     assert_select "#quote_terms", "Due on completion."
-    assert_select "#quote_expires_on[value=?]", (Date.current + 30).iso8601
+    assert_select "#quote_expires_on[value=?]", (@business.today + 30).iso8601 # the business's date, not UTC's
     assert_select "select#quote_property_select option[selected]", /Elm St/
     assert_select "template[data-quote-builder-target=template] input[name='quote[lines][NEW_INDEX][name]']"
     assert_select "#quote_totals", /Total.*\$0\.00/m

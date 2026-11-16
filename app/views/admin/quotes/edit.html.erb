@@ -11,6 +11,7 @@
     <button type="button" class="<%= button_classes(:ghost, :icon) %>" data-menu-target="button" data-action="menu#toggle"
             aria-haspopup="true" aria-expanded="false" aria-label="More actions"><%= icon "more-horizontal" %></button>
     <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
+      <%= link_to pdf_admin_quote_path(@quote), class: "menu-item", data: { turbo: false } do %><%= icon "download" %> Download PDF<% end %>
       <%= button_to admin_quote_path(@quote), method: :delete, class: "menu-item text-danger",
                     form: { class: "contents", data: { turbo_confirm: "Delete draft #{@quote.number}? This can't be undone.", turbo_confirm_button: "Delete draft" } } do %>
         <%= icon "trash" %> Delete draft
@@ -71,7 +72,6 @@
                     help: "Only your team sees these. Never shown to the client." %>
       </div>
     <% end %>
-</div>
 
     <%= card title: "Attachments", subtitle: "Photos or PDFs the client can see with the quote. Up to #{Quote::MAX_ATTACHMENTS}, #{Quote::ATTACHMENT_MAX_BYTES / 1.megabyte} MB each." do %>
       <% if @quote.attachments.attached? %>
@@ -117,6 +117,7 @@
     </div>
   </aside>
 <% end %>
+</div>
 
 <% @quote.attachments.select { _1.blob.persisted? }.each do |file| %>
   <%= form_with url: admin_quote_attachment_path(@quote, file), method: :delete, id: "remove-attachment-#{file.id}", class: "hidden" do %><% end %>

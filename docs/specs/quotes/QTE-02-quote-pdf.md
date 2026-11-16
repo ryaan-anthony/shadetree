@@ -26,15 +26,30 @@ The approach should be reusable for invoices (PAY-02).
 - [ ] A quote PDF includes: business branding and contact details, client and property, quote
       number, dates (issued, expiry), title, message, line items (name, description, quantity,
       unit, unit price, line total), discounts, tax per rate, total, terms, and approval status
-      (and signer/date once approved).
-- [ ] Layout is legible on US Letter and A4, paginates long quotes cleanly (repeated header,
+      (and signer/date once approved). *Signer and date arrive with approval (QTE-05).*
+- [x] Layout is legible on US Letter and A4, paginates long quotes cleanly (repeated header,
       no split rows) and handles long descriptions.
-- [ ] Staff can download the PDF from the quote; clients can from the client page (QTE-03).
-- [ ] The PDF for a sent revision is stable: re-downloading shows the same content.
-- [ ] Generation happens without blocking the web request for long documents, or is fast
+- [x] Staff can download the PDF from the quote; clients can from the client page (QTE-03).
+- [x] The PDF for a sent revision is stable: re-downloading shows the same content.
+- [x] Generation happens without blocking the web request for long documents, or is fast
       enough (< 2 s p95) to be inline — decision recorded.
-- [ ] The rendering approach is shared so invoices can reuse it with minimal work.
-- [ ] Visual regression or content tests guard the layout.
+- [x] The rendering approach is shared so invoices can reuse it with minimal work.
+- [x] Visual regression or content tests guard the layout.
+
+## Decisions
+
+- **Rendering:** `PdfRenderer` prints self-contained HTML (`PdfDocument` inlines styles, font,
+  logo) in headless Chrome with no network and scripts off, one render per process at a time.
+  Letter or A4 by country; the image adds Noto CJK fonts (about 50 MB).
+- **Background:** a render takes about 2 s, so a sent quote's PDF is made by `QuotePdfJob` when
+  its status changes and stored (`HasPdf`); a stored PDF is served in under 0.1 s. Drafts render
+  inline, for staff only.
+- **Stability:** the stored file is kept until the quote, its status, or the client or property it
+  names changes (or `PDF_VERSION` is bumped); letterhead edits, links and expiry don't change it.
+- **Pagination:** rows stay whole, except long descriptions (over 400 characters). **Date:** the
+  prepared date until sending (QTE-04) records when it went out.
+- **No QR code:** it would carry one link's token into a file that outlives the link.
+- **Invoices (PAY-02):** include `HasPdf`, add its two columns, a template, and `SendsPdf`.
 
 ## Out of scope
 
@@ -42,5 +57,4 @@ The approach should be reusable for invoices (PAY-02).
 
 ## Open questions
 
-- PDF generation approach and hosting memory budget — decided in PLT-01 ADR.
-- Include a "scan to view/approve online" QR code on the PDF? Recommend yes — cheap and useful.
+- ~~PDF generation approach and memory budget~~: ADR 0010; about 150 MB while rendering.

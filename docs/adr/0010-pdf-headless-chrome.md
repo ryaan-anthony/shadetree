@@ -34,4 +34,7 @@ Regenerate only when a new revision is sent.
   memory per render. Limit to one render at a time on a small VPS.
 - If memory becomes a problem, rendering can move to a separate worker or an external rendering
   service without changing templates.
+- Implemented in QTE-02: `PdfRenderer` (Chrome with no network and scripts off, one render per
+  process at a time) and `HasPdf`. A sent document's PDF is made in a background job and stored
+  until the document itself changes, so downloads are served from storage.
 - **Cost:** none beyond VPS memory headroom.

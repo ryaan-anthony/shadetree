@@ -215,7 +215,8 @@ export default class extends Controller {
       this.saving = null
       if (this.again) {
         this.again = false
-        this.save()
+        // Returned, so anyone awaiting this save (Preview) also waits for the queued one.
+        return this.save()
       }
     })
     return this.saving
