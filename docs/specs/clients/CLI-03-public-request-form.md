@@ -33,8 +33,8 @@ threads. Each submission becomes a client (or matches one) and a request in the 
       is three simple options; up to 5 photos of 10 MB, re-encoded without metadata.*
 - [x] Submitting creates a request linked to a new or matched client (matched on email/phone
       within the business only) and property; nothing is merged destructively. *Active
-      clients only, email before phone. A match gets a new property for a new address, but
-      none of the typed contact details; the request keeps what was typed.*
+      clients only, email before phone. A match is linked to its property at that address if
+      it has one, and gets nothing typed added; the request keeps what was typed.*
 - [x] The submitter sees a branded confirmation; an acknowledgment email is sent if an email was
       given; the business receives a "new request" notification (email now, in-app via NTF-02).
       *The acknowledgment repeats nothing the person typed, and counts toward the hourly limit.*
