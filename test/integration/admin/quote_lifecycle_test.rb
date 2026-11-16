@@ -39,13 +39,25 @@ class Admin::QuoteLifecycleTest < ActionDispatch::IntegrationTest
     post switch_admin_business_path, params: { business: businesses(:two).uid }
     assert_not_found_across_businesses { get admin_quote_path(@sent) }
     assert_not_found_across_businesses { post duplicate_admin_quote_path(@sent) }
+    assert_not_found_across_businesses { patch archive_admin_quote_path(@sent) }
+    assert_not_found_across_businesses { patch unarchive_admin_quote_path(@sent) }
+    assert_not_found_across_businesses { patch extend_expiry_admin_quote_path(@sent), params: { expires_on: (@today + 9).iso8601 } }
+    post search_admin_quotes_path, params: { q: "Maria" }
+    assert_select "tbody tr", 0
+
+    # Duplicating into another business's client is refused too.
+    sign_in users(:one)
+    post switch_admin_business_path, params: { business: @business.uid }
+    stranger = as_business(businesses(:two)) { Client.create!(display_name: "Stranger", contact_methods_attributes: [ { kind: "phone", value: "5550100999" } ]) }
+    post duplicate_admin_quote_path(@sent), params: { client: stranger.uid }
+    assert_equal "Choose a client for the copy.", flash[:alert]
   end
 
   test "the list filters by status, with counts and totals for what's shown" do
     get admin_quotes_path
-    assert_select "label.tab", /All\s*5/
-    assert_select "label.tab", /Awaiting response\s*1/
-    assert_select "label.tab", /Expired\s*1/
+    assert_select "button.tab[aria-pressed=true]", /All\s*5/
+    assert_select "button.tab", /Awaiting response\s*1/
+    assert_select "button.tab", /Expired\s*1/
     assert_select "[role=status]", /5 quotes, \$1,500\.00/
     assert_equal [ "Wall", "Patio", "Mulch", "Hedges", "Spring cleanup" ], row_titles
 
@@ -58,6 +70,11 @@ class Admin::QuoteLifecycleTest < ActionDispatch::IntegrationTest
     assert_select "tr", /Hedges.*Sent.*Not opened/m
     post search_admin_quotes_path, params: { filter: "declined" }
     assert_select "tr", /Wall.*Declined.*Went with a mason/m
+    post search_admin_quotes_path, params: { filter: "draft" }
+    assert_select "tr", /Spring cleanup.*Updated/m
+    # The current tab carries into a search.
+    post search_admin_quotes_path, params: { filter: "approved", q: "o" }
+    assert_equal [ "Patio" ], row_titles
   end
 
   test "search finds quotes by number or client, and stays out of the URL" do
@@ -81,6 +98,20 @@ class Admin::QuoteLifecycleTest < ActionDispatch::IntegrationTest
     assert_select ".quote-doc-lines", /Wall/
   end
 
+  test "the client's link stays open past a later valid-until date" do
+    link = as_business(@business) { ClientLink.issue!(@sent, expires_at: 10.days.from_now) }
+    patch extend_expiry_admin_quote_path(@sent), params: { expires_on: (@today + 300).iso8601 }
+    assert as_business(@business) { link.reload.expires_at > (@today + 300).end_of_day }
+  end
+
+  test "an expired quote's activity says so, and drafts can't be archived" do
+    get admin_quote_path(@expired)
+    assert_select "#quote-activity li", /Expired without an answer/
+    patch archive_admin_quote_path(@draft)
+    assert_equal "Delete a draft instead of archiving it.", flash[:alert]
+    assert_nil as_business(@business) { @draft.reload.archived_at }
+  end
+
   test "archiving hides a quote from the other tabs, and restoring brings it back" do
     patch archive_admin_quote_path(@approved)
     assert_redirected_to admin_quote_path(@approved)
@@ -96,23 +127,40 @@ class Admin::QuoteLifecycleTest < ActionDispatch::IntegrationTest
     assert_includes row_titles, "Patio"
   end
 
-  test "duplicating makes a fresh draft, for the same client or another" do
-    as_business(@business) { @sent.update!(message: "Thanks!", internal_notes: "Gate code 4") }
+  test "duplicating for the same client keeps everything but numbers, dates and sends" do
+    as_business(@business) do
+      @maria.properties.create!(address_line1: "1 Elm St")
+      @maria.properties.create!(address_line1: "9 Oak Ave")
+      @sent.update!(message: "Thanks!", internal_notes: "Gate code 4", property: @maria.properties.last)
+      @sent.attach_files([ Rack::Test::UploadedFile.new(file_fixture("logo.png"), "image/png", original_filename: "yard.png") ])
+      @sent.save!
+    end
     post duplicate_admin_quote_path(@sent)
     copy = as_business(@business) { Quote.order(:id).last }
     assert_redirected_to edit_admin_quote_path(copy)
     as_business(@business) do
-      assert_equal [ "draft", @maria.id, "Hedges", "Thanks!", "Gate code 4" ], [ copy.status, copy.client_id, copy.title, copy.message, copy.internal_notes ]
+      assert_equal [ "draft", @maria.id, "Hedges", "Thanks!", "Gate code 4", "9 Oak Ave" ],
+                   [ copy.status, copy.client_id, copy.title, copy.message, copy.internal_notes, copy.property.address_line1 ]
       assert_equal [ [ "Hedges", 20_000 ] ], copy.line_items.map { [ _1.name, _1.unit_price_cents ] }
+      assert_equal 1, copy.attachments.count
       assert_not_equal @sent.number, copy.number
       assert_nil copy.sent_at
       assert_equal @sent.number, copy.events.sole.data["from"]
     end
+  end
 
+  test "a copy for another client carries nothing about the first client" do
+    as_business(@business) do
+      @sent.update!(message: "Hi Maria", internal_notes: "Gate code 4")
+      @sent.attach_files([ Rack::Test::UploadedFile.new(file_fixture("logo.png"), "image/png", original_filename: "yard.png") ])
+      @sent.save!
+    end
     post duplicate_admin_quote_path(@sent), params: { client: @sam.uid }
-    assert_equal @sam.id, as_business(@business) { Quote.order(:id).last.client_id }
-    post duplicate_admin_quote_path(@sent), params: { client: "nobody" }
-    assert_equal "Choose a client for the copy.", flash[:alert]
+    copy = as_business(@business) { Quote.order(:id).last }
+    as_business(@business) do
+      assert_equal [ @sam.id, "Hedges", nil, nil, 0 ], [ copy.client_id, copy.title, copy.message, copy.internal_notes, copy.attachments.count ]
+      assert_equal [ "Hedges" ], copy.line_items.map(&:name)
+    end
   end
 
   test "a sent or expired quote's valid-until date can be moved later, and it's recorded" do
@@ -126,6 +174,8 @@ class Admin::QuoteLifecycleTest < ActionDispatch::IntegrationTest
 
     patch extend_expiry_admin_quote_path(@sent), params: { expires_on: @today.iso8601 }
     assert_equal "Choose a date after today.", flash[:alert]
+    patch extend_expiry_admin_quote_path(@sent), params: { expires_on: (@today + 400).iso8601 }
+    assert_equal "Choose a date within a year.", flash[:alert]
     patch extend_expiry_admin_quote_path(@approved), params: { expires_on: (@today + 30).iso8601 }
     assert_equal "Only a sent quote's expiry can be extended.", flash[:alert]
   end

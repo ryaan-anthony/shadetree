@@ -1,0 +1,4 @@
+<%# locals: (quote:) -%>
+<%# Things to act on, shown beside a quote's status in the list (table and phone list). %>
+<% if quote.update_requested_at && quote.expired? %><%= badge "Update requested", tone: :warning %><% end %>
+<% if quote.sends.find { _1.channel == "email" }&.email_message&.problem? %><%= badge "Not delivered", tone: :danger %><% end %>

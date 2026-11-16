@@ -1,16 +1,6 @@
 <%# The quote list (QTE-06): on the page and as #search's frame response. %>
 <%= turbo_frame_tag "quote_results" do %>
   <%# min-w-0: a fieldset doesn't shrink by default, so the tab row would widen the page on phones. %>
-  <fieldset class="tabs mb-4 min-w-0" data-controller="submit-form tabs">
-    <legend class="sr-only">Show</legend>
-    <% Quote::FILTERS.each do |key, label| %>
-      <label class="tab tab-radio" <%= %(aria-current="page").html_safe if key == @filter %>>
-        <input type="radio" name="filter" value="<%= key %>" form="quote-filters" class="sr-only" <%= "checked" if key == @filter %>
-               data-action="submit-form#submit"><%= label %>
-        <% if @counts %><span class="tabular text-sm2 font-normal text-muted"><%= @counts[key] %></span><% end %>
-      </label>
-    <% end %>
-  </fieldset>
 
   <% if @quotes.empty? %>
     <div class="card">
@@ -43,7 +33,10 @@
               </span>
               <span class="mt-0.5 block truncate text-sm2 text-muted"><%= quote.number %> · <%= quote.client.display_name %></span>
               <span class="mt-1.5 flex flex-wrap items-center gap-1.5 text-sm2 text-muted"><%= quote_status_badge(quote) %>
-                <%= quote_viewed_note(quote, @views[quote.id]) %></span>
+                <%= render "list_flags", quote: %>
+                <%= quote_viewed_note(quote, @views[quote.id]) %>
+                <span class="ml-auto"><%= quote_list_date(quote) %></span></span>
+              <% if (reason = quote_decline_reason(quote)) %><span class="mt-1 block truncate text-sm2 text-muted">“<%= reason %>”</span><% end %>
             <% end %>
           </li>
         <% end %>
@@ -53,22 +46,19 @@
     <div class="card table-wrap hidden md:block">
       <table class="data-table">
         <thead>
-          <tr><th scope="col">Quote</th><th scope="col">Client</th><th scope="col">Status</th><th scope="col">Sent</th><th scope="col" class="text-right">Total</th></tr>
+          <tr><th scope="col">Quote</th><th scope="col">Client</th><th scope="col">Status</th><th scope="col">Sent or updated</th><th scope="col" class="text-right">Total</th></tr>
         </thead>
         <tbody>
           <% @quotes.each do |quote| %>
-            <% declined = quote.responses.reverse.find { _1.kind == "declined" } if quote.status == "declined" %>
             <tr id="quote-<%= quote.uid %>">
               <td><%= link_to (quote.title || "Quote #{quote.number}"), staff_quote_path(quote), class: "primary hover:underline", data: { turbo_frame: "_top" } %><span class="sub"><%= quote.number %></span></td>
               <td><%= quote.client.display_name %><% if quote.property %><span class="sub"><%= quote.property.one_line %></span><% end %></td>
               <td>
-                <span class="flex flex-wrap items-center gap-1"><%= quote_status_badge(quote) %>
-                  <% if quote.update_requested_at && quote.expired? %><%= badge "Update requested", tone: :warning %><% end %>
-                  <% if quote.sends.find { _1.channel == "email" }&.email_message&.problem? %><%= badge "Not delivered", tone: :danger %><% end %></span>
+                <span class="flex flex-wrap items-center gap-1"><%= quote_status_badge(quote) %><%= render "list_flags", quote: %></span>
                 <% if (note = quote_viewed_note(quote, @views[quote.id])) %><span class="sub"><%= note %></span><% end %>
-                <% if declined&.message %><span class="sub max-w-48 truncate">“<%= declined.message %>”</span><% end %>
+                <% if (reason = quote_decline_reason(quote)) %><span class="sub max-w-48 truncate">“<%= reason %>”</span><% end %>
               </td>
-              <td class="whitespace-nowrap text-sm2 text-subtle"><%= quote.sent_at ? local_date(quote.sent_at.in_time_zone(current_business.time_zone).to_date) : "Not sent" %></td>
+              <td class="whitespace-nowrap text-sm2 text-subtle"><%= quote_list_date(quote) %></td>
               <td class="money num"><%= money(quote.total) %></td>
             </tr>
           <% end %>

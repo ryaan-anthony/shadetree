@@ -3,9 +3,13 @@
 <% end %>
 
 <%# One filter form, posted to #search (POST keeps client names out of URLs); its results
-    replace only the frame below. The tabs and pages inside the frame belong to this form. %>
+    replace only the frame below, and the pages inside the frame belong to this form. The tabs
+    are its submit buttons and stay outside the frame, so focus stays on the tab you pressed;
+    the hidden field carries the current tab into searches and pages (a pressed tab's own value
+    comes after it and wins). Counts are for all quotes, whatever the search. %>
 <%= form_with url: search_admin_quotes_path, method: :post, id: "quote-filters", class: "mb-4",
-              data: { controller: "search-form", turbo_frame: "quote_results" } do %>
+              data: { controller: "search-form tabs", turbo_frame: "quote_results" } do %>
+  <input type="hidden" name="filter" value="<%= @filter %>" data-tabs-target="field">
   <div class="relative max-w-md">
     <label class="sr-only" for="q">Search quotes</label>
     <%= icon "search", class: "pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-faint" %>
@@ -13,6 +17,12 @@
                          data: { action: "input->search-form#queue keydown.enter->search-form#submit:prevent" } %>
   </div>
   <noscript><%= submit_tag "Search", class: button_classes(:secondary), name: nil %></noscript>
+  <nav class="tabs mt-4" aria-label="Show quotes" data-tabs-target="row">
+    <% Quote::FILTERS.each do |key, label| %>
+      <button type="submit" name="filter" value="<%= key %>" class="tab" aria-pressed="<%= key == @filter %>" data-action="tabs#press"><%= label %>
+        <span class="tabular text-sm2 font-normal text-muted"><%= @counts[key] %></span></button>
+    <% end %>
+  </nav>
 <% end %>
 
 <%= turbo_frame_tag "quote_results" do %>

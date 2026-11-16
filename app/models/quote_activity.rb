@@ -17,7 +17,7 @@ class QuoteActivity
   end
 
   def entries
-    (created + sends + responses + events + update_request + grouped_views(others_at: (sends + responses + events).map(&:at)))
+    (created + sends + responses + events + update_request + expiry + grouped_views(others_at: (sends + responses + events).map(&:at)))
       .sort_by { [ _1.at, _1.title ] }.reverse
   end
 
@@ -67,16 +67,25 @@ class QuoteActivity
     end
   end
 
+  # The end of the valid-until day, if it passed while the client still hadn't answered.
+  def expiry
+    return [] unless quote.expired?
+
+    [ Entry.new(at: quote.expires_on.in_time_zone(quote.business.time_zone).end_of_day, icon: "clock", title: "Expired without an answer") ]
+  end
+
   def update_request
     return [] unless quote.update_requested_at
 
     [ Entry.new(at: quote.update_requested_at, icon: "clock", title: "The client asked for an updated quote") ]
   end
 
-  # Client views, one entry per run of views between other events.
+  # Client views, one entry per run of views between other events. Only the latest few hundred
+  # are read: every page load is a view, and a history doesn't need them all.
+  VIEWS_SHOWN = 500
   def grouped_views(others_at:)
     views = ClientLinkEvent.joins(:client_link).where(client_links: { linkable_type: "Quote", linkable_id: quote.id }, kind: "view")
-                           .order(:occurred_at).pluck(:occurred_at)
+                           .order(occurred_at: :desc).limit(VIEWS_SHOWN).pluck(:occurred_at).reverse
     views.chunk_while { |a, b| others_at.none? { _1 > a && _1 <= b } }.map do |run|
       Entry.new(at: run.last, icon: "eye", title: run.one? ? "Viewed by the client" : "Viewed #{run.size} times", since: (run.first if run.many?))
     end

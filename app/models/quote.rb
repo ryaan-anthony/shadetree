@@ -104,7 +104,12 @@ class Quote < ApplicationRecord
 
   # QTE-06: staff tidy the list. Archiving hides a quote from the list's other tabs; the client's
   # link keeps working.
+  # Drafts aren't archived (delete them instead): only quotes that went out.
+  def archivable? = !draft? && !archived?
+
   def archive!(by:)
+    raise ArgumentError, "Delete a draft instead of archiving it." if draft?
+
     transaction { update_columns(archived_at: Time.current) && QuoteEvent.record!(self, :archived, by:) } unless archived?
   end
 
@@ -112,38 +117,47 @@ class Quote < ApplicationRecord
     transaction { update_columns(archived_at: nil) && QuoteEvent.record!(self, :unarchived, by:) } if archived?
   end
 
-  # A sent quote that hasn't been answered (or the client asked for changes) can be given more
-  # time, including one that has already expired. The new date must be in the future.
+  # A sent quote that hasn't been answered (or the client asked for changes) can be given a new
+  # valid-until date, including one that has already expired: any day from tomorrow to a year
+  # out. The client's links are kept alive past it (PLT-12 grace), so "the same link" holds.
   def expiry_extendable? = status.in?(%w[sent changes_requested])
+  MAX_VALIDITY = 1.year
 
   def extend_expiry!(date, by:)
     date = Date.parse(date.to_s) rescue nil # rubocop:disable Style/RescueModifier
     raise ArgumentError, "Choose a date after today." unless date && date > business.today
-    raise ArgumentError, "Only a sent quote's expiry can be extended." unless expiry_extendable?
+    raise ArgumentError, "Choose a date within a year." if date > business.today + MAX_VALIDITY
 
     transaction do
+      lock!
+      raise ArgumentError, "Only a sent quote's expiry can be extended." unless expiry_extendable?
+
       from = expires_on
       self.expires_on = date
       save!(validate: false)
+      ClientLink.active.where(linkable: self).where("expires_at IS NOT NULL AND expires_at < ?", client_link_expires_at)
+                .update_all(expires_at: client_link_expires_at)
       QuoteEvent.record!(self, :expiry_extended, by:, from: from&.iso8601, to: date.iso8601)
     end
   end
 
-  # A new draft with the same content, for this client or another (with their default property
-  # and, if their tax exemption differs, their taxes). Numbers, dates and sends start fresh.
+  # A new draft from this one: the lines, title, terms and discount. Numbers, dates, sends and
+  # taxes start fresh (today's rates for the client). For the same client it keeps the
+  # property, message, internal notes and files; for another client it keeps none of those,
+  # since they're about the first client (their yard's photos, a gate code, "Hi Maria").
   def duplicate!(client: self.client, by: nil)
+    same_client = client.id == client_id
     transaction do
-      copy = Quote.start(client:, created_by: by)
-      copy.assign_attributes(title:, message:, internal_notes:, terms:, prices_include_tax:,
-                             discount_kind:, discount_percent:, discount_amount_cents:)
-      copy.tax_rates = tax_rates if client.tax_exempt == self.client.tax_exempt
+      copy = Quote.start(client:, property: (property if same_client), created_by: by)
+      copy.assign_attributes(title:, terms:, prices_include_tax:, discount_kind:, discount_percent:, discount_amount_cents:)
+      copy.assign_attributes(message:, internal_notes:) if same_client
       copy.sync_line_items(current_line_items.map do |line|
         line.attributes.slice(*%w[name description quantity unit taxable discount_kind]).merge(
           "key" => SecureRandom.uuid, "unit_price" => line.unit_price&.to_s, "discount_value" => line.discount_value&.to_s,
           "catalog_item" => line.catalog_item&.uid
         )
       end)
-      attachments.each { copy.attachments.attach(_1.blob) }
+      attachments.each { copy.attachments.attach(_1.blob) } if same_client
       copy.save!
       QuoteEvent.record!(copy, :duplicated, by:, from: number)
       copy
