@@ -56,14 +56,15 @@ export default class extends Controller {
       })
       if (!response.ok) throw new Error(response.statusText)
       const { clients } = await response.json()
-      if (request === this.request) this.render(clients)
+      if (request === this.request) this.render(clients, query)
     } catch {
-      if (request === this.request) this.render([], "Couldn't search clients. Check your connection and try again.")
+      if (request === this.request) this.render([], query, "Couldn't search clients. Check your connection and try again.")
     }
   }
 
-  render(clients, emptyText = "No matching clients. Use New client to add one.") {
+  render(clients, query, emptyText = "No matching clients. Use New client to add one.") {
     this.clients = clients
+    this.renderedQuery = query
     this.active = -1
     this.listTarget.replaceChildren()
     clients.forEach((client, index) => {
@@ -88,9 +89,18 @@ export default class extends Controller {
       empty.textContent = emptyText
       this.listTarget.append(empty)
     }
-    this.listTarget.hidden = false
-    this.inputTarget.setAttribute("aria-expanded", "true")
+    // Results that land after focus moved away wait until the search box is focused again.
+    if (this.element.contains(document.activeElement)) this.show()
     this.statusTarget.textContent = clients.length ? `${clients.length} clients` : emptyText
+  }
+
+  // Back in the search box: show the results for what's typed, searching again if the
+  // results on hand are for something else.
+  reopen() {
+    const query = this.inputTarget.value.trim()
+    if (query === "") return
+    if (query === this.renderedQuery) this.show()
+    else this.search()
   }
 
   keydown(event) {
@@ -158,8 +168,10 @@ export default class extends Controller {
     this.inputTarget.focus()
   }
 
+  // Losing focus only hides the list. A search already under way still finishes, so typing
+  // that races a focus change (a validation bubble, a tap elsewhere) isn't dropped.
   blur(event) {
-    if (!this.element.contains(event.relatedTarget)) this.close()
+    if (!this.element.contains(event.relatedTarget)) this.hide()
   }
 
   cancel() {
@@ -169,6 +181,16 @@ export default class extends Controller {
 
   close() {
     this.cancel()
+    this.renderedQuery = null
+    this.hide()
+  }
+
+  show() {
+    this.listTarget.hidden = false
+    this.inputTarget.setAttribute("aria-expanded", "true")
+  }
+
+  hide() {
     this.listTarget.hidden = true
     this.inputTarget.setAttribute("aria-expanded", "false")
     this.inputTarget.removeAttribute("aria-activedescendant")

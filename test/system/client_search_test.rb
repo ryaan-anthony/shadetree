@@ -61,4 +61,19 @@ class ClientSearchSystemTest < ApplicationSystemTestCase
     person = as_business(@business) { Client.find_by!(display_name: "Picker Person") }
     assert_equal person.uid, find("input[type=hidden][name='demo[client]']", visible: :all).value
   end
+
+  test "a picker search that races a focus change still finishes" do
+    visit styleguide_path(anchor: "pickers")
+    within("#picker-demo") do
+      input = find("input[type=search]")
+      input.fill_in(with: "sam")
+      # Focus leaves before the debounced search fires; it used to be dropped here.
+      execute_script("arguments[0].blur()", input)
+      assert_no_selector "[role=option]"
+      # The search finished while the list was hidden.
+      assert_selector "[data-client-picker-target=status]", text: "1 clients", visible: :all, wait: 5
+      input.click
+      assert_selector "[role=option]", text: "Sam Okafor"
+    end
+  end
 end
