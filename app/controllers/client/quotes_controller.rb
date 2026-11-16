@@ -24,11 +24,11 @@ class Client::QuotesController < ApplicationController
   def approve
     # A typed email only counts when there's none on file (the form only offers it then).
     keys = @document.client.primary_email ? %i[signer_name terms_accepted] : %i[signer_name email terms_accepted]
-    respond_to_quote(:approve, response_params(*keys), version: params[:version].presence || -1)
+    respond_to_quote(:approve, response_params(*keys), version: page_version)
   end
 
-  def decline = respond_to_quote(:decline, response_params(:message))
-  def request_changes = respond_to_quote(:request_changes, response_params(:message))
+  def decline = respond_to_quote(:decline, response_params(:message), version: page_version)
+  def request_changes = respond_to_quote(:request_changes, response_params(:message), version: page_version)
 
   # QTE-02: the quote as a PDF, to print, forward or file.
   def pdf
@@ -56,11 +56,13 @@ class Client::QuotesController < ApplicationController
 
     attributes = attributes.merge(ip_address: request.remote_ip, user_agent: request.user_agent.to_s.first(500).presence, device: client_device)
     record = -> { @response = @document.record_response!(action, link: @client_link, version:, **attributes) }
-    recorded = if ClientLink::ONE_TIME_ACTIONS.include?(action.to_s)
+    # Approving is once per link for good (an approved quote never reopens). Declining and asking
+    # for changes are once per revision: the quote's locked status check refuses a second
+    # answer, and a revision sent on the same link can be answered again.
+    recorded = if action == :approve
       client_link_action!(action, &record)
     else
-      # Not one-time per link, but still refused once the quote is answered, and re-checked
-      # under a lock so a revoke that just committed wins.
+      # Re-checked under a lock so a revoke that just committed wins.
       ClientLink.transaction { @client_link.lock!.allows?(action) && record.call }
     end
     return redirect_to(client_link_path(@client_link.token), notice: RESPONDED.fetch(action)&.call(@business, @response)) if recorded
@@ -72,7 +74,7 @@ class Client::QuotesController < ApplicationController
     @response = error.record
     render "client_links/show", status: :unprocessable_content
   rescue Quote::Changed
-    redirect_to client_link_path(@client_link.token), alert: "This quote was updated after you opened it. Check this version, then approve again."
+    redirect_to client_link_path(@client_link.token), alert: "This quote was updated after you opened it. Check this version, then #{{ approve: "approve", decline: "decline", request_changes: "send your changes" }.fetch(action)} again."
   rescue Quote::NotOpen
     @document.reload
     alert = if @document.revising? then "#{@business.name} is updating this quote. You'll get the new version soon."
@@ -81,6 +83,10 @@ class Client::QuotesController < ApplicationController
     end
     redirect_to client_link_path(@client_link.token), alert:
   end
+
+  # The version of the quote the page showed: an answer from an older page (a revision since)
+  # is refused. A form without one counts as old.
+  def page_version = params[:version].presence || -1
 
   def response_params(*keys) = params.fetch(:quote_response, {}).permit(*keys).to_h.symbolize_keys
 

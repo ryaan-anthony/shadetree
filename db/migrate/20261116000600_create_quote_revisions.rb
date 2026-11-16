@@ -9,7 +9,7 @@ class CreateQuoteRevisions < ActiveRecord::Migration[8.1]
 
     create_table :quote_revisions do |t|
       t.references :business, null: false, foreign_key: true, index: false
-      t.references :quote, null: false, foreign_key: { on_delete: :cascade }
+      t.references :quote, null: false, foreign_key: { on_delete: :cascade }, index: false # [quote_id, number] below
       t.integer :number, null: false
       # What the client was sent, as QuoteResponse.snapshot_of records it, and its PDF.
       t.jsonb :snapshot, null: false

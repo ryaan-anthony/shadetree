@@ -187,7 +187,8 @@ class Admin::QuotesController < Admin::BaseController
   def apply_builder_params
     attrs = builder_params
     @quote.lock_version = attrs[:lock_version] if attrs.key?(:lock_version)
-    change_client(attrs[:client]) if attrs[:client].present? && attrs[:client] != @quote.client.uid
+    # A revision stays with its client: its link was sent to them (QTE-06).
+    change_client(attrs[:client]) if attrs[:client].present? && attrs[:client] != @quote.client.uid && !@quote.revising?
     assign_property(attrs[:property]) if attrs.key?(:property)
     @quote.assign_attributes(attrs.slice(:title, :message, :internal_notes, :terms, :expires_on, :prices_include_tax))
     @quote.set_discount(attrs[:discount_kind], attrs[:discount_value]) if attrs.key?(:discount_kind)

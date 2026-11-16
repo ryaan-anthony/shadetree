@@ -9,7 +9,8 @@ class ClientLinksController < ApplicationController
     visible = @document.respond_to?(:client_page_visible?) ? @document.client_page_visible? : @document.try(:client_visible?) != false
     return render_link_unavailable unless visible
 
-    @client_link.record_view!(device: client_device)
+    # A page saying the quote is being revised isn't a view of the quote.
+    @client_link.record_view!(device: client_device) unless @document.try(:revising?)
   end
 
   # From the "no longer active" page: tell the business the client wants a new link.

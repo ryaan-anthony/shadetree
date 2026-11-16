@@ -401,7 +401,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000600) do
     t.index ["business_id"], name: "index_quote_revisions_on_business_id"
     t.index ["pdf_blob_id"], name: "index_quote_revisions_on_pdf_blob_id"
     t.index ["quote_id", "number"], name: "index_quote_revisions_on_quote_id_and_number", unique: true
-    t.index ["quote_id"], name: "index_quote_revisions_on_quote_id"
     t.index ["revised_by_id"], name: "index_quote_revisions_on_revised_by_id"
   end
 

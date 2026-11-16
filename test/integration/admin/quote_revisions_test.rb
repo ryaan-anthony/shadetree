@@ -43,10 +43,13 @@ class Admin::QuoteRevisionsTest < ActionDispatch::IntegrationTest
 
   test "revising keeps what the client was sent and reopens the quote in the builder" do
     as_business(@business) { @quote.record_response!(:request_changes, link: @link, message: "Skip the side yard") }
+    with_fake_pdf_renderer { as_business(@business) { @quote.reload.current_pdf } } # QuotePdfJob, after the status change
     revise
     assert_redirected_to edit_admin_quote_path(@quote)
     follow_redirect!
     assert_select ".page-lede", /Revision 2 for Maria Lopez/
+    assert_select ".banner", /Changes requested on revision 1.*Skip the side yard/m
+    assert_select "input[name='quote[client]']", false, "a revision stays with its client"
 
     quote = fresh
     assert_equal [ "draft", 2 ], [ quote.status, quote.revision ]
@@ -92,6 +95,42 @@ class Admin::QuoteRevisionsTest < ActionDispatch::IntegrationTest
     assert_select "#quote-revisions", /Rev 2.*Current.*Rev 1.*superseded/m
     assert_select "#quote-activity li", /Revision 2 sent as a link/
     assert_select "#quote-activity li", /Revision 2 started by/
+  end
+
+  test "a revision can't move to another client, and the client can decline the revision after declining before" do
+    as_business(@business) { @quote.record_response!(:decline, link: @link) }
+    revise
+    bob = as_business(@business) { Client.create!(display_name: "Bob", contact_methods_attributes: [ { kind: "phone", value: "5550100199" } ]) }
+    patch admin_quote_path(@quote), params: { quote: { lock_version: fresh.lock_version, client: bob.uid } }
+    assert_equal "Maria Lopez", as_business(@business) { fresh.client.display_name }
+
+    post admin_quote_send_path(@quote), params: { channel: "link" }
+    post decline_client_quote_path(@link.token), params: { version: fresh.lock_version, quote_response: { message: "Still no" } }
+    assert_equal "declined", fresh.status
+    assert_equal [ 1, 2 ], as_business(@business) { @quote.responses.map(&:revision) }
+  end
+
+  test "a decline or change request from a page of the previous revision doesn't apply to the new one" do
+    old_version = fresh.lock_version
+    revise
+    post admin_quote_send_path(@quote), params: { channel: "link" }
+    post decline_client_quote_path(@link.token), params: { version: old_version }
+    assert_match "updated after you opened it", flash[:alert]
+    post request_changes_client_quote_path(@link.token), params: { version: old_version, quote_response: { message: "x" } }
+    assert_equal "sent", fresh.status
+  end
+
+  test "files the client was sent stay with the revision, even if removed from the draft" do
+    as_business(@business) do
+      @quote.attach_files([ Rack::Test::UploadedFile.new(file_fixture("logo.png"), "image/png", original_filename: "yard.png") ])
+      @quote.save!
+    end
+    revise
+    attachment = as_business(@business) { fresh.attachments.sole }
+    delete admin_quote_attachment_path(@quote, attachment)
+    assert ActiveStorage::Blob.exists?(attachment.blob_id)
+    get revision_admin_quote_path(@quote, number: 1)
+    assert_select "a", /yard.png/
   end
 
   test "a previous revision shows what was sent and what changed next" do

@@ -7,7 +7,8 @@
 class QuoteRevisionDiff
   LINE_FIELDS = { "description" => "description", "quantity" => "quantity", "unit" => "unit", "unit_price_cents" => "price",
                   "taxable" => "tax", "discount_value" => "discount" }.freeze
-  FIELDS = { "title" => "Title", "message" => "Message", "terms" => "Terms", "property" => "Property" }.freeze
+  FIELDS = { "title" => "Title", "message" => "Message", "terms" => "Terms", "property" => "Property", "discount" => "Discount",
+             "tax_rates" => "Taxes", "prices_include_tax" => "Tax-inclusive pricing", "files" => "Files" }.freeze
 
   def initialize(before, after)
     @before = before || {}
@@ -23,24 +24,35 @@ class QuoteRevisionDiff
   attr_reader :before, :after
 
   def field_changes
-    FIELDS.filter_map { |key, label| "#{label} changed" if before[key] != after[key] }
+    FIELDS.filter_map do |key, label|
+      from, to = before[key], after[key]
+      from, to = [ from, to ].map { |files| Array(files).map { _1["filename"] }.sort } if key == "files"
+      "#{label} changed" if from != to
+    end
   end
 
-  def line_changes
-    old_lines = (before["lines"] || []).index_by { _1["name"] }
-    new_lines = (after["lines"] || []).index_by { _1["name"] }
-    removed = (old_lines.keys - new_lines.keys).map { "Removed #{_1.presence || "an untitled line"}" }
-    added = (new_lines.keys - old_lines.keys).map { "Added #{_1.presence || "an untitled line"}" }
-    changed = (old_lines.keys & new_lines.keys).filter_map do |name|
-      diffs = LINE_FIELDS.filter_map do |key, label|
-        from, to = old_lines[name][key], new_lines[name][key]
-        next if same?(from, to)
+  # Lines are keyed by name and occurrence, so two lines with the same name are compared in order.
+  def keyed(lines) = Array(lines).group_by { _1["name"] }.flat_map { |name, group| group.each_with_index.map { |line, i| [ [ name, i ], line ] } }.to_h
 
-        key == "unit_price_cents" ? "#{label} #{money(from)} → #{money(to)}" : (key.in?(%w[quantity discount_value]) ? "#{label} #{number(from)} → #{number(to)}" : "#{label} changed")
-      end
-      "#{name}: #{diffs.join(", ")}" if diffs.any?
+  def line_changes
+    old_lines = keyed(before["lines"])
+    new_lines = keyed(after["lines"])
+    name_of = ->(line_key) { line_key[0].presence || "an untitled line" }
+    removed = (old_lines.keys - new_lines.keys).map { "Removed #{name_of.(_1)}" }
+    added = (new_lines.keys - old_lines.keys).map { "Added #{name_of.(_1)}" }
+    changed = (old_lines.keys & new_lines.keys).filter_map do |line_key|
+      diffs = LINE_FIELDS.filter_map { |field, label| field_change(field, label, old_lines[line_key][field], new_lines[line_key][field]) }
+      "#{name_of.(line_key)}: #{diffs.join(", ")}" if diffs.any?
     end
     removed + added + changed
+  end
+
+  def field_change(field, label, from, to)
+    return if same?(from, to)
+    return "#{label} #{money(from)} → #{money(to)}" if field == "unit_price_cents"
+    return "#{label} #{number(from)} → #{number(to)}" if field.in?(%w[quantity discount_value])
+
+    "#{label} changed"
   end
 
   def expiry_change

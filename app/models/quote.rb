@@ -105,24 +105,20 @@ class Quote < ApplicationRecord
   # requested, or declined. Not archived ones (restore first).
   def revisable? = status.in?(%w[sent changes_requested declined]) && !archived?
 
-  # Keeps what the client was sent as revision N (its snapshot and stored PDF) and reopens the
-  # quote as the draft of revision N+1. An expired quote gets the business's usual validity
-  # from today, and an "update requested" is answered by the next send.
+  # Keeps what the client was sent as revision N and reopens the quote as the draft of revision
+  # N+1. The record is the snapshot (with its files, which are then kept even if removed from
+  # the draft) plus the stored PDF if there is one: the same content as sent, though its status
+  # line may say how the client answered. Nothing is rendered here. An expired quote gets the
+  # business's usual validity from today, and an "update requested" is answered by the next send.
   def revise!(by:)
-    raise ArgumentError, "Quote #{number} can't be revised." unless revisable?
-
-    # The file the client got, made before the lock if it was never stored (rendering is slow).
-    pdf = begin
-      current_pdf
-    rescue PdfRenderer::Error
-      nil
-    end
     transaction do
       lock!
       raise ArgumentError, "Quote #{number} can't be revised." unless revisable?
 
-      revisions.create!(business:, number: revision, snapshot: QuoteResponse.snapshot_of(self), status: expired? ? "expired" : status,
-                        pdf_blob: (pdf if pdf.is_a?(ActiveStorage::Blob) && pdf_blob_id == pdf.id), sent_at:, revised_by: by)
+      snapshot = QuoteResponse.snapshot_of(self).merge(
+        "files" => attachments_attachments.includes(:blob).map { { "blob_id" => _1.blob_id, "filename" => _1.filename.to_s } }
+      )
+      revisions.create!(business:, number: revision, snapshot:, status: expired? ? "expired" : status, pdf_blob_id:, sent_at:, revised_by: by)
       days = business.quote_expiry_days.to_i
       self.expires_on = business.today + days.days if past_expiry? && days.positive?
       assign_attributes(status: "draft", revision: revision + 1, update_requested_at: nil, pdf_blob_id: nil, pdf_digest: nil)

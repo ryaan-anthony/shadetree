@@ -112,8 +112,10 @@ class QuoteResponse < ApplicationRecord
       "quote" => quote.uid, "number" => quote.number, "kind" => kind, "signer_name" => signer_name, "email" => email,
       "message" => message, "at" => created_at.utc.iso8601(6), "ip_address" => ip_address, "user_agent" => user_agent,
       "device" => device, "client_link_id" => client_link_id, "recorded_by_id" => recorded_by_id,
-      "quote_version" => quote_version, "revision" => revision, "snapshot_digest" => snapshot_digest
+      "quote_version" => quote_version, "snapshot_digest" => snapshot_digest
     }
+    # The revision is signed from revision 2 on, so answers recorded before revisions existed verify.
+    evidence["revision"] = revision if revision.to_i > 1
     key = Rails.application.key_generator.generate_key("quote_response_signature", 32)
     OpenSSL::HMAC.hexdigest("SHA256", key, JSON.generate(self.class.canonical(evidence)))
   end
