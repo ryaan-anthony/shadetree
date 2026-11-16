@@ -6,7 +6,7 @@ class PublicRequestsTest < ActionDispatch::IntegrationTest
 
   setup do
     @business = businesses(:one)
-    @business.update!(handle: "oakline", request_form_intro: "We reply within a day.")
+    @business.update!(handle: "oakline", request_form_intro: "We reply within a day.", request_form_enabled: true)
     as_business(@business) do
       @mowing = CatalogItem.create!(name: "Weekly mowing", unit: "visit", show_on_request_form: true)
       @hidden = CatalogItem.create!(name: "Internal fee", unit: "each", show_on_request_form: false)
@@ -65,7 +65,7 @@ class PublicRequestsTest < ActionDispatch::IntegrationTest
     assert_no_match "Hannah", ack.html_part.body.to_s
   end
 
-  test "a known email or phone links to that client without changing their details" do
+  test "a known email or phone links to that client without changing their record" do
     maria = as_business(@business) do
       Client.create!(display_name: "Maria Lopez", contact_methods_attributes: [ { kind: "phone", value: "555-010-0100" } ],
                      properties_attributes: [ { address_line1: "12 Maple Street", postal_code: "06804", billing: true } ])
@@ -76,13 +76,14 @@ class PublicRequestsTest < ActionDispatch::IntegrationTest
     assert request.matched_existing_client
     as_business(@business) do
       assert_equal [ "555-010-0100" ], maria.reload.contact_methods.map(&:value), "typed contacts aren't added to the client"
-      assert_equal [ "12 Maple Street", "9 Oak Ave" ], maria.properties.map(&:address_line1).sort
-      assert_not request.property.billing
+      assert_equal [ "12 Maple Street" ], maria.properties.map(&:address_line1), "nor is a new address"
     end
+    assert_nil request.property_id
+    assert_equal "9 Oak Ave, 06804", request.address_line
     assert_equal [ "someone.else@example.com", "(555) 010-0100" ], [ request.contact_email, request.contact_phone ]
 
-    submit(email: "", phone: "5550100100", address_line1: " 9  oak ave ")
-    assert_equal 2, as_business(@business) { maria.properties.count }, "the same street address reuses the property"
+    submit(email: "", phone: "5550100100", address_line1: " 12  maple street ")
+    assert_equal as_business(@business) { maria.properties.sole.id }, requests.max_by(&:id).property_id, "a known address links its property"
     assert_equal 1, clients.size
   end
 
@@ -148,14 +149,55 @@ class PublicRequestsTest < ActionDispatch::IntegrationTest
     assert_select ".error-text", /Tell us your name\./
   end
 
-  test "too many submissions from one address are refused" do
+  test "too many attempts from one address are refused, keeping what was typed, and only on that business's page" do
     cache, Rails.cache = Rails.cache, ActiveSupport::Cache::MemoryStore.new
-    6.times { submit(email: "", phone: "5550100#{100 + _1}") }
-    assert_response :too_many_requests
-    assert_select "h1", "That's a lot of requests"
-    assert_equal 5, requests.size
+    10.times { submit(name: "") }
+    submit
+    assert_response :unprocessable_content
+    assert_select ".banner-warning", /a lot of requests/
+    assert_select "input[name='request_submission[name]'][value='Hannah Brooks']"
+    assert_empty requests
+
+    businesses(:two).update!(request_form_enabled: true)
+    post public_request_path("two-biz"), params: { website: "", form_token: Rails.application.message_verifier("request_form").generate(10.seconds.ago.to_f, purpose: "two-biz", expires_in: 1.day),
+                                                  request_submission: { name: "Hannah Brooks", phone: "5550100100", address_line1: "1 Elm St", description: "Mowing" } }
+    assert_redirected_to public_request_sent_path("two-biz")
   ensure
     Rails.cache = cache
+  end
+
+  test "a business takes at most #{PublicRequestsController::REQUESTS_PER_HOUR} requests an hour" do
+    as_business(@business) do
+      client = Client.create!(display_name: "Many", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ])
+      PublicRequestsController::REQUESTS_PER_HOUR.times { ServiceRequest.create!(client:, description: "x") }
+    end
+    submit
+    assert_response :unprocessable_content
+    assert_select ".banner-warning", /a lot of requests/
+  end
+
+  test "no acknowledgment until the business's owner has confirmed their account" do
+    users(:one).update_columns(confirmed_at: nil)
+    submit
+    assert_redirected_to public_request_sent_path("oakline")
+    follow_redirect!
+    assert_select "p", { text: /emailed you/, count: 0 }
+    assert_empty as_business(@business) { EmailMessage.where(to: "hannah@example.com").to_a }
+  end
+
+  test "a client with requests can't be deleted" do
+    submit
+    assert_not as_business(@business) { requests.sole.client.deletable? }
+  end
+
+  test "requests belong to their business" do
+    submit
+    request = requests.sole
+    assert_raises(ActiveRecord::RecordNotFound) { as_business(businesses(:two)) { ServiceRequest.find(request.id) } }
+  end
+
+  test "the form is off until an Owner or Admin turns it on" do
+    assert_not Business.create!(name: "Brand New", owner: users(:one)).request_form_enabled?
   end
 
   test "when the form is off, the page shows contact details and takes nothing" do

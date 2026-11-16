@@ -37,10 +37,13 @@
 
       <div class="field">
         <label class="label" for="request_submission_photos">Photos <span class="label-optional">(optional, helps us quote faster)</span></label>
+        <% photo_errors = f.object.errors.full_messages_for(:photos) %>
         <%= f.file_field :photos, multiple: true, accept: "image/png,image/jpeg,image/webp", class: "input h-auto py-2",
-                         "aria-describedby": "request_submission_photos_help" %>
-        <p class="help" id="request_submission_photos_help">Up to <%= ServiceRequest::MAX_PHOTOS %> photos, <%= ServiceRequest::PHOTO_MAX_BYTES / 1.megabyte %> MB each.</p>
-        <% if f.object.errors[:photos].any? %><p class="error-text"><%= icon "alert-circle" %><%= f.object.errors.full_messages_for(:photos).to_sentence %></p><% end %>
+                         "aria-invalid": ("true" if photo_errors.any?),
+                         "aria-describedby": [ "request_submission_photos_help", ("request_submission_photos_error" if photo_errors.any?) ].compact.join(" ") %>
+        <p class="help" id="request_submission_photos_help">Up to <%= ServiceRequest::MAX_PHOTOS %> photos, <%= ServiceRequest::PHOTO_MAX_BYTES / 1.megabyte %> MB each.
+          <% if request.post? && params.dig(:request_submission, :photos).present? %><strong class="font-semibold text-ink">Add your photos again before sending.</strong><% end %></p>
+        <% if photo_errors.any? %><p class="error-text" id="request_submission_photos_error"><%= icon "alert-circle" %><%= photo_errors.to_sentence %></p><% end %>
       </div>
 
       <fieldset>

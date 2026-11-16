@@ -10,7 +10,8 @@ module Shadetree
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.0
-    # Lets a locale give an attribute its own full-message format (quotes.en.yml uses "%{message}").
+    # Lets a locale give an attribute its own full-message format ("%{message}"), for messages
+    # shown to clients and the public as written. Attributes without one keep Rails' format.
     config.active_model.i18n_customize_full_message = true
 
     # Please, add to the `ignore` list any other `lib` subdirectories that do

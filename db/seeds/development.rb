@@ -93,7 +93,8 @@ Tenancy.with_business(business) do
   end
 end
 
-# CLI-03: a request from the public form, from someone new.
+# CLI-03: the request form, on, with a request from someone new.
+business.update!(request_form_enabled: true)
 Tenancy.with_business(business) do
   unless ServiceRequest.exists?
     services = CatalogItem.active.where(show_on_request_form: true).ordered.limit(2).map(&:uid)

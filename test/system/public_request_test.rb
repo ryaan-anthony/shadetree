@@ -4,6 +4,7 @@ require "application_system_test_case"
 class PublicRequestSystemTest < ApplicationSystemTestCase
   setup do
     @business = businesses(:one)
+    @business.update!(request_form_enabled: true)
     as_business(@business) { CatalogItem.create!(name: "Weekly mowing", unit: "visit", show_on_request_form: true) }
     @forgery_protection = ActionController::Base.allow_forgery_protection
     ActionController::Base.allow_forgery_protection = true

@@ -1,6 +1,0 @@
-<% content_for :title, "Try again later" %>
-<div class="client-card p-6 text-center sm:p-8">
-  <h1 class="text-lg font-bold text-ink">That's a lot of requests</h1>
-  <p class="mx-auto mt-2 max-w-sm text-sm text-subtle">Wait a few minutes and try again, or call or email <%= @business&.name || "the business" %>.</p>
-  <% if @business %><%= render "client_links/business_contact" %><% end %>
-</div>

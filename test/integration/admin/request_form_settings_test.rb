@@ -47,5 +47,6 @@ class Admin::RequestFormSettingsTest < ActionDispatch::IntegrationTest
     business = Business.order(:id).last
     assert_equal "test-business-one", business.handle
     assert_equal "test-business-one-2", Business.create!(name: "Test Business One!", owner: users(:one)).handle
+    assert_equal "joe-s-lawn", Business.create!(name: "Joe_s Lawn", owner: users(:one)).handle
   end
 end

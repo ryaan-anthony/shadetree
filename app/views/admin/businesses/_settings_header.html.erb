@@ -3,7 +3,7 @@
 <% business = current_business %>
 <%= page_header "Settings", lede: "How #{business.name_was.presence || business.name} appears to clients, and the defaults new quotes and invoices start from." %>
 
-<nav class="tabs mb-5" aria-label="Settings">
+<nav class="tabs mb-5" aria-label="Settings" data-controller="tabs">
   <%= link_to "Business", edit_admin_business_path, class: "tab", "aria-current": ("page" if current == "business") %>
   <%= link_to "Documents", edit_admin_business_path(tab: "documents"), class: "tab", "aria-current": ("page" if current == "documents") %>
   <%= link_to "Taxes", admin_tax_rates_path, class: "tab", "aria-current": ("page" if current == "taxes") %>

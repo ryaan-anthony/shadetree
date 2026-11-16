@@ -4,13 +4,14 @@
 class CreateServiceRequests < ActiveRecord::Migration[8.1]
   def up
     add_column :businesses, :handle, :string
-    add_column :businesses, :request_form_enabled, :boolean, default: true, null: false
+    # Off until an Owner or Admin turns it on: nobody gets a public form they didn't choose.
+    add_column :businesses, :request_form_enabled, :boolean, default: false, null: false
     add_column :businesses, :request_form_intro, :text
 
     # Existing businesses get a handle from their name, made unique with a number.
     taken = []
     select_rows("SELECT id, name FROM businesses ORDER BY id").each do |id, name|
-      base = name.to_s.parameterize.first(30).sub(/-+\z/, "")
+      base = name.to_s.parameterize.tr("_", "-").squeeze("-").first(30).delete_prefix("-").sub(/-+\z/, "")
       base = "business" if base.length < 3 || %w[admin api app assets help login new request requests settings shadetree signup support www].include?(base)
       handle = base
       number = 1
@@ -37,6 +38,8 @@ class CreateServiceRequests < ActiveRecord::Migration[8.1]
       t.string :contact_email
       t.string :contact_phone
       t.boolean :matched_existing_client, null: false, default: false
+      # The service address as typed: { "address_line1", "address_line2", "city", "region", "postal_code" }.
+      t.jsonb :address, null: false, default: {}
       t.timestamps
       t.check_constraint "status IN ('new', 'in_progress', 'quoted', 'archived')", name: "service_requests_status"
       t.check_constraint "source IN ('form', 'phone', 'email', 'walk_in', 'other')", name: "service_requests_source"

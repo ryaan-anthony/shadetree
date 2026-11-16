@@ -3,19 +3,17 @@
 #
 # Spam protection is invisible to people: a field they can't see (bots fill it, and get the
 # usual "sent" page with nothing created), a signed timestamp that must be from this page and
-# at least a few seconds old (otherwise the form is shown again, filled in), and rate limits
-# per IP address and per business.
+# at least a few seconds old, and limits on attempts per IP address (per business) and on
+# requests per business. Anything but the hidden field shows the form again, filled in.
 class PublicRequestsController < ApplicationController
   layout "client"
 
   MIN_SECONDS_ON_PAGE = 3
   FORM_LIFETIME = 1.day
-
-  PER_IP = [ 5, 10.minutes ].freeze
-  PER_BUSINESS = [ 60, 1.hour ].freeze
+  ATTEMPTS_PER_IP = [ 10, 10.minutes ].freeze # per business, so one page's traffic can't block another's
+  REQUESTS_PER_HOUR = 60 # per business: requests created, so failed attempts can't use them up
 
   before_action :load_business
-  before_action :within_limits, only: :create
   around_action :as_business
 
   def new
@@ -28,10 +26,16 @@ class PublicRequestsController < ApplicationController
     return redirect_to(public_request_sent_path(@business.handle)) if params[:website].present?
 
     @submission = RequestSubmission.new(business: @business, **submission_params)
-    return render(:new, status: :unprocessable_content) unless @submission.valid? && fresh_form?
-    return render(:new, status: :unprocessable_content) unless @submission.save
+    if (problem = form_problem || limit_problem)
+      @submission.photos = [] # not worth processing for a form that goes back anyway
+      @submission.valid?
+      @submission.errors.add(:base, problem)
+      return render(:new, status: :unprocessable_content)
+    end
+    saved = @submission.save
+    return render(:new, status: :unprocessable_content) unless saved
 
-    redirect_to public_request_sent_path(@business.handle), flash: { emailed: @submission.email.present? }
+    redirect_to public_request_sent_path(@business.handle), flash: { emailed: saved.acknowledgment_queued? }
   end
 
   def sent; end
@@ -45,25 +49,23 @@ class PublicRequestsController < ApplicationController
 
   def as_business(&) = Tenancy.with_business(@business, &)
 
-  # Submissions per IP address and per business, counted in Rails.cache (shared across
-  # processes in production).
-  def within_limits
-    limited = { "ip:#{request.remote_ip}" => PER_IP, "business:#{@business.id}" => PER_BUSINESS }.any? do |key, (limit, period)|
-      count = Rails.cache.increment("request-form:#{key}", 1, expires_in: period)
-      count && count > limit
-    end
-    render :limited, status: :too_many_requests if limited
-  end
-
-  # The form must have been shown by us, within a day, and more than a few seconds ago. A
-  # person who trips this (autofill and a quick tap) sees the form again, filled in, to send.
-  def fresh_form?
+  # Why the form can't be taken as sent: not from this page, too old, or sent within seconds of
+  # opening it (people take longer; scripts don't). Nil when it's fine.
+  def form_problem
     started = form_verifier.verified(params[:form_token].to_s, purpose: @business.handle)
-    message = if started.nil? then "This page was open for a while. Check your details and send it again."
+    if started.nil? then "This page was open for a while. Check your details and send it again."
     elsif Time.zone.at(started.to_f) > MIN_SECONDS_ON_PAGE.seconds.ago then "Check your details, then send your request."
     end
-    @submission.errors.add(:base, message) if message
-    message.nil?
+  end
+
+  # Attempts per IP address on this business's page (in Rails.cache, shared across processes
+  # in production), then requests created for the business in the last hour.
+  def limit_problem
+    limit, period = ATTEMPTS_PER_IP
+    attempts = Rails.cache.increment("request-form:#{@business.id}:#{request.remote_ip}", 1, expires_in: period)
+    if (attempts && attempts > limit) || ServiceRequest.where(source: "form", created_at: 1.hour.ago..).count >= REQUESTS_PER_HOUR
+      "We've had a lot of requests in the last few minutes. Please try again shortly, or call or email instead."
+    end
   end
 
   def form_verifier = Rails.application.message_verifier("request_form")

@@ -35,15 +35,23 @@ class ServiceRequest < ApplicationRecord
 
   def service_names = services.map { _1["name"] }
 
+  # The service address as typed, one line ("12 Maple St, Austin, 06804").
+  def address_line = address.values_at(*%w[address_line1 address_line2 city region postal_code]).compact.join(", ").presence
+
+  # Whether the acknowledgment email was queued (set when the request is created).
+  def acknowledgment_queued? = @acknowledgment_queued == true
+
   private
 
-  # The team hears about it; the person who sent it gets an acknowledgment if they gave an
-  # email (counted toward the business's hourly client email limit, like any client email a
-  # stranger can trigger).
+  # The team hears about it. The person who sent it gets an acknowledgment if they gave an
+  # email, the business's owner has confirmed their account (so a throwaway sign-up can't use
+  # the platform's address to send its name to anyone, as AGENTS.md requires of client email),
+  # and the business is under its hourly client email limit.
   def notify
     NewRequestMailer.deliver_later_for(self)
-    return if contact_email.blank? || EmailMessage.hourly_limit_reached?
+    return if contact_email.blank? || !business.owner&.can_send_to_clients? || EmailMessage.hourly_limit_reached?
 
     RequestMailer.send_later(:received, business:, to: contact_email, kind: "request_received", related: self, request_id: id)
+    @acknowledgment_queued = true
   end
 end

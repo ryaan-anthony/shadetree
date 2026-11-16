@@ -77,7 +77,7 @@ class Business < ApplicationRecord
 
   # A free handle based on a business name ("Oakline Lawn & Care" -> "oakline-lawn-care").
   def self.available_handle(name)
-    base = name.to_s.parameterize.first(34).sub(/-+\z/, "")
+    base = name.to_s.parameterize.tr("_", "-").squeeze("-").first(34).delete_prefix("-").sub(/-+\z/, "")
     base = "business-#{base}".first(34).sub(/-+\z/, "") if base.length < 3 || RESERVED_HANDLES.include?(base)
     candidates = [ base, *(2..50).map { "#{base}-#{_1}" } ]
     taken = where(handle: candidates).pluck(:handle)

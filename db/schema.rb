@@ -91,7 +91,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000400) do
     t.string "quote_number_prefix", default: "Q", null: false
     t.string "invoice_number_prefix", default: "INV", null: false
     t.string "handle", null: false
-    t.boolean "request_form_enabled", default: true, null: false
+    t.boolean "request_form_enabled", default: false, null: false
     t.text "request_form_intro"
     t.index ["active"], name: "index_businesses_on_active"
     t.index ["handle"], name: "index_businesses_on_handle", unique: true
@@ -424,6 +424,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000400) do
     t.string "contact_email"
     t.string "contact_phone"
     t.boolean "matched_existing_client", default: false, null: false
+    t.jsonb "address", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["business_id", "status", "created_at"], name: "idx_on_business_id_status_created_at_f13f5269d8"
