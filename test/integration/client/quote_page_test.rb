@@ -106,7 +106,7 @@ class Client::QuotePageTest < ActionDispatch::IntegrationTest
   end
 
   test "an expired quote can be viewed, not approved, and the client can ask for an updated one once" do
-    set_quote(expires_on: 1.day.ago.to_date)
+    set_quote(expires_on: @business.today - 1) # the business's date, not UTC's
     get client_link_path(@link.token)
     assert_select ".banner-warning", /expired on/
     assert_select "#quote-actions", /This quote has expired/
@@ -143,7 +143,7 @@ class Client::QuotePageTest < ActionDispatch::IntegrationTest
   end
 
   test "an update can't be asked for through a revoked, expired or unknown link, or for a draft" do
-    set_quote(expires_on: 1.day.ago.to_date)
+    set_quote(expires_on: @business.today - 1) # the business's date, not UTC's
     as_business(@business) { @link.update_columns(expires_at: 1.minute.ago) }
     post request_quote_update_path(@link.token)
     assert_response :gone

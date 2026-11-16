@@ -68,7 +68,7 @@ class Admin::QuotesTest < ActionDispatch::IntegrationTest
     end
     assert_select "meta[name=turbo-cache-control][content=no-cache]"
     assert_select "#quote_terms", "Due on completion."
-    assert_select "#quote_expires_on[value=?]", (Date.current + 30).iso8601
+    assert_select "#quote_expires_on[value=?]", (@business.today + 30).iso8601 # the business's date, not UTC's
     assert_select "select#quote_property_select option[selected]", /Elm St/
     assert_select "template[data-quote-builder-target=template] input[name='quote[lines][NEW_INDEX][name]']"
     assert_select "#quote_totals", /Total.*\$0\.00/m
