@@ -9,6 +9,11 @@ import { Controller } from "@hotwired/stimulus"
 //   </div>
 export default class extends Controller {
   static targets = ["dialog"]
+  static values = { open: Boolean } // open on load (a form the server re-rendered with errors)
+
+  connect() {
+    if (this.openValue && !this.dialogTarget.open) this.dialogTarget.showModal()
+  }
 
   open(event) {
     event?.preventDefault()

@@ -10,6 +10,7 @@ module EmailCatalog
     [ "request_received", "Request received", "Client", "A client submits the request form", "CLI-03", true ],
     [ "new_request", "New request", "Team", "A client submits the request form", "CLI-03", false ],
     [ "quote_sent", "Quote sent", "Client", "Staff send a quote", "QTE-04", true ],
+    [ "quote_approved", "Quote approved", "Client", "A client approves a quote", "QTE-05", true ],
     [ "quote_activity", "Quote viewed / approved / declined / changes requested", "Team", "A client acts on a quote", "QTE-05", false ],
     [ "visit_scheduled", "Visit scheduled / changed / cancelled / reminder", "Client", "A visit is booked, moved, cancelled or due", "JOB-05", true ],
     [ "visit_assigned", "Visit assigned / changed", "Technician", "A visit is assigned or changed", "JOB-02", false ],

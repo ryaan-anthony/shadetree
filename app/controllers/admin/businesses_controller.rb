@@ -64,7 +64,7 @@ class Admin::BusinessesController < Admin::BaseController
     params.require(:business).permit(
       :name, :industry, :description, :email, :phone, :website,
       :address_line1, :address_line2, :city, :region, :postal_code, :country, :timezone, :currency,
-      :quote_expiry_days, :quote_terms, :invoice_due_days, :invoice_terms, :quote_number_prefix, :invoice_number_prefix
+      :quote_expiry_days, :quote_terms, :quote_approved_message, :invoice_due_days, :invoice_terms, :quote_number_prefix, :invoice_number_prefix
     )
   end
 

@@ -1,0 +1,53 @@
+<%# locals: (quote:) -%>
+<%# Staff only (QTE-05): the client's answers with their evidence, and recording an approval
+    the client gave another way. %>
+<% responses = quote.responses.includes(:recorded_by, :client_link) %>
+<% if responses.any? || quote.staff_can_approve? %>
+  <section class="client-card mb-4 p-5 sm:p-6" aria-labelledby="responses-h">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h2 id="responses-h" class="text-sm font-semibold text-ink">Client response</h2>
+      <% if quote.staff_can_approve? %>
+        <div data-controller="modal" data-modal-open-value="false">
+          <button type="button" class="<%= button_classes(:secondary, :sm) %>" data-action="modal#open" aria-haspopup="dialog"><%= icon "check" %> Mark approved</button>
+          <%= modal id: "quote-mark-approved", title: "Mark quote #{quote.number} approved",
+                    description: "For an approval your client gave you another way. It's recorded with your name and this note." do %>
+            <%= form_with model: QuoteResponse.new(signer_name: quote.client.display_name), scope: :quote_response,
+                          url: admin_quote_approval_path(quote), class: "space-y-4" do |f| %>
+              <%= f.field :signer_name, label: "Who approved", maxlength: 120, required: true %>
+              <%= f.field :message, as: :textarea, label: "How they approved", rows: 3, maxlength: QuoteResponse::MESSAGE_MAX, required: true,
+                          placeholder: "e.g. Approved on the phone on Tuesday" %>
+              <div class="flex justify-end gap-2">
+                <button type="button" class="<%= button_classes(:secondary) %>" data-action="modal#close">Cancel</button>
+                <%= f.submit_button "Mark approved" %>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+    <% if responses.any? %>
+      <ul class="mt-3 space-y-3 text-sm2">
+        <% responses.each do |response| %>
+          <li id="response-<%= response.uid %>">
+            <p class="text-ink">
+              <span class="font-semibold"><%= response.label %></span>
+              <%= local_time(response.created_at) %>
+              <% if response.on_behalf? %>
+                · recorded by <%= response.recorded_by&.full_name || "a former member" %><%= " for #{response.signer_name}" if response.signer_name %>
+              <% elsif response.signer_name %>
+                · signed by <%= response.signer_name %>
+              <% end %>
+            </p>
+            <% if response.message %><p class="mt-1 whitespace-pre-line text-subtle"><%= response.message %></p><% end %>
+            <% unless response.on_behalf? %>
+              <p class="mt-1 text-muted">From <%= [ response.device, response.ip_address ].compact.join(", ").presence || "an unknown device" %><%= ", asked for a copy at #{response.email}" if response.email %></p>
+            <% end %>
+            <% if response.approved? %>
+              <p class="mt-1 text-muted">Version <%= response.quote_version %>, fingerprint <span class="font-mono"><%= response.snapshot_digest.first(12) %></span></p>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  </section>
+<% end %>

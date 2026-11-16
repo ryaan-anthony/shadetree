@@ -31,6 +31,9 @@ Rails.application.routes.draw do
   post "c/:token/quote/update", to: "client/quotes#request_update", as: :request_quote_update
   get "c/:token/quote/files/:id", to: "client/quote_files#show", as: :client_quote_file
   get "c/:token/quote/pdf", to: "client/quotes#pdf", as: :client_quote_pdf # QTE-03
+  post "c/:token/quote/approve", to: "client/quotes#approve", as: :approve_client_quote # QTE-05
+  post "c/:token/quote/decline", to: "client/quotes#decline", as: :decline_client_quote
+  post "c/:token/quote/changes", to: "client/quotes#request_changes", as: :request_changes_client_quote
 
   # Admin routes
   namespace :admin do
@@ -82,6 +85,7 @@ Rails.application.routes.draw do
       get :property_options, on: :collection
       resources :attachments, only: :destroy, controller: "quote_attachments"
       resource :send, only: %i[new create], controller: "quote_sends" # QTE-04
+      resource :approval, only: :create, controller: "quote_approvals" # QTE-05: on the client's behalf
     end
 
     # "Send me a test email" from branding settings (NTF-01)

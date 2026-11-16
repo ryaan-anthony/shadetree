@@ -1,0 +1,63 @@
+<%# locals: (quote:, totals:, client_link:) -%>
+<%# QTE-05: approve, ask for changes or decline. Each button opens its dialog; a dialog the
+    server re-renders with errors opens again on load. %>
+<% response = @response if @response&.new_record? %>
+<% open = response && @response_action %>
+<% business = quote.business %>
+<% if client_link.nil? %>
+  <div class="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-center">
+    <% [ [ "Ask for changes", :secondary ], [ "Decline quote", :secondary ], [ "Approve quote", :primary ] ].each do |label, variant| %>
+      <button type="button" class="<%= button_classes(variant) %>" disabled><%= label %></button>
+    <% end %>
+  </div>
+  <p class="mt-2 text-sm2 text-muted">Your client answers here. The buttons don't work in the preview.</p>
+<% elsif (Quote::CLIENT_ACTIONS - client_link.actions).any? %>
+  <%# An older link that only shows the quote. %>
+  <p class="mt-3 text-sm2 text-muted">To approve or answer this quote, ask <%= business.name %> to send it again.</p>
+<% else %>
+  <% forms = {
+       approve: { label: "Approve quote", variant: :primary, title: "Approve this quote",
+                  description: "#{quote.title || "Quote #{quote.number}"} · #{money(totals.total)}", url: approve_client_quote_path(client_link.token) },
+       decline: { label: "Decline quote", variant: :secondary, title: "Decline this quote?",
+                  description: "Letting #{business.name} know why is optional, but it helps.", url: decline_client_quote_path(client_link.token) },
+       request_changes: { label: "Ask for changes", variant: :secondary, title: "What would you like changed?",
+                          description: "#{business.name} will update the quote and send you a new version.", url: request_changes_client_quote_path(client_link.token) }
+     } %>
+  <%# Approve first in the markup, last in the row on wider screens; on phones it's on top. %>
+  <div class="mt-4 flex flex-col gap-2 sm:flex-row-reverse sm:justify-center">
+    <% forms.each do |action, form| %>
+      <div class="contents" data-controller="modal" data-modal-open-value="<%= open == action %>">
+        <button type="button" class="<%= button_classes(form[:variant]) %>" data-action="modal#open" aria-haspopup="dialog"><%= form[:label] %></button>
+        <%= modal id: "quote-#{action.to_s.dasherize}", title: form[:title], description: form[:description] do %>
+          <%= form_with model: (open == action ? response : QuoteResponse.new), scope: :quote_response, url: form[:url],
+                        class: "space-y-4 text-left", data: { turbo: false } do |f| %>
+            <% if action == :approve %>
+              <%= hidden_field_tag :version, quote.lock_version, id: nil %>
+              <%= f.field :signer_name, label: "Type your full name to sign", autocomplete: "name", maxlength: 120, required: true %>
+              <% unless quote.client.primary_email %>
+                <%= f.field :email, as: :email, label: "Email for your copy", optional: true, autocomplete: "email", maxlength: 254,
+                            help: "We'll email you the approved quote." %>
+              <% end %>
+              <%= f.check :terms_accepted, label: "I agree to the quote and its terms.", required: true %>
+              <% if (error = f.object.errors.full_messages_for(:terms_accepted).first) %>
+                <p class="error-text" role="alert"><%= icon "alert-circle" %><%= error %></p>
+              <% end %>
+              <%= f.submit_button "Approve quote", class: "w-full", data: { disable_with: "Approving…" } %>
+              <p class="text-xs text-muted">We record your name, the time and this exact version of the quote.</p>
+            <% elsif action == :request_changes %>
+              <%= f.field :message, as: :textarea, label: "Your changes", rows: 4, maxlength: QuoteResponse::MESSAGE_MAX, required: true,
+                          placeholder: "e.g. Can you skip the side yard?" %>
+              <%= f.submit_button "Send to #{business.name}", class: "w-full", data: { disable_with: "Sending…" } %>
+            <% else %>
+              <%= f.field :message, as: :textarea, label: "Reason", optional: true, rows: 3, maxlength: QuoteResponse::MESSAGE_MAX %>
+              <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <button type="button" class="<%= button_classes(:secondary) %>" data-action="modal#close">Keep quote</button>
+                <%= f.submit_button "Decline", variant: :danger, data: { disable_with: "Declining…" } %>
+              </div>
+            <% end %>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

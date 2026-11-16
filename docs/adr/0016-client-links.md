@@ -28,7 +28,9 @@ revoked or re-issued without changing the document, and it has nowhere to record
   - Every client controller includes `ClientLinkAccess`. It resolves the link (the only
     cross-business lookup), sets `Current.business`, refuses inactive links with a friendly
     page (business contact details and "request a new link"), sends `noindex` and
-    `Referrer-Policy: no-referrer`, and rate-limits by IP.
+    `Referrer-Policy: same-origin` (tokens never reach another site's Referer; `no-referrer`
+    would make browsers send `Origin: null` on the page's own forms, which Rails' CSRF origin
+    check refuses), and rate-limits by IP.
   - Staff "preview" renders the same page with a banner and records no view.
 - **One-time actions** (`perform_once!`) write a uniquely indexed event in the same
   transaction as the action. A replayed or double-submitted approve or pay does nothing.

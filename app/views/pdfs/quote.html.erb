@@ -21,6 +21,14 @@
   <%= render "client/quotes/document", quote: @quote, pdf: true %>
 </article>
 
+<%# QTE-05: who approved and when; from the approval record, so the file shows it as signed. %>
+<% if @quote.approved? && (approval = @quote.approval) %>
+  <section class="pdf-approval">
+    <p class="pdf-approval-title">Approved</p>
+    <p>Signed by <strong><%= approval.signer_name %></strong> on <%= l(approval.created_at.in_time_zone(@business.time_zone), format: :long) %><%= ", recorded by #{approval.recorded_by.full_name}" if approval.recorded_by %>.</p>
+  </section>
+<% end %>
+
 <% if @quote.status == "sent" %>
   <p class="pdf-online">To approve this quote or ask a question, open it from the email <%= @business.name %> sent you.</p>
 <% end %>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_16_000200) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_16_000300) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -90,6 +90,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000200) do
     t.text "invoice_terms"
     t.string "quote_number_prefix", default: "Q", null: false
     t.string "invoice_number_prefix", default: "INV", null: false
+    t.text "quote_approved_message"
     t.index ["active"], name: "index_businesses_on_active"
     t.index ["industry"], name: "index_businesses_on_industry"
     t.index ["owner_id"], name: "index_businesses_on_owner_id"
@@ -345,6 +346,33 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000200) do
     t.check_constraint "quantity >= 0::numeric", name: "quote_lines_quantity_nonnegative"
   end
 
+  create_table "quote_responses", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.bigint "quote_id", null: false
+    t.string "kind", null: false
+    t.string "signer_name"
+    t.string "email"
+    t.text "message"
+    t.bigint "client_link_id"
+    t.bigint "recorded_by_id"
+    t.string "ip_address"
+    t.string "user_agent", limit: 500
+    t.string "device"
+    t.integer "quote_version", null: false
+    t.jsonb "snapshot"
+    t.string "snapshot_digest"
+    t.datetime "created_at", null: false
+    t.index ["business_id", "created_at"], name: "index_quote_responses_on_business_id_and_created_at"
+    t.index ["client_link_id"], name: "index_quote_responses_on_client_link_id"
+    t.index ["quote_id"], name: "index_quote_responses_on_quote_id"
+    t.index ["quote_id"], name: "index_quote_responses_one_approval", unique: true, where: "((kind)::text = 'approved'::text)"
+    t.index ["recorded_by_id"], name: "index_quote_responses_on_recorded_by_id"
+    t.index ["uid"], name: "index_quote_responses_on_uid", unique: true
+    t.check_constraint "kind::text <> 'approved'::text OR snapshot IS NOT NULL AND snapshot_digest IS NOT NULL AND signer_name IS NOT NULL", name: "quote_responses_approval_evidence"
+    t.check_constraint "kind::text = ANY (ARRAY['approved'::character varying, 'declined'::character varying, 'changes_requested'::character varying]::text[])", name: "quote_responses_kind"
+  end
+
   create_table "quote_sends", force: :cascade do |t|
     t.bigint "business_id", null: false
     t.bigint "quote_id", null: false
@@ -359,7 +387,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000200) do
     t.index ["email_message_id"], name: "index_quote_sends_on_email_message_id"
     t.index ["quote_id"], name: "index_quote_sends_on_quote_id"
     t.index ["user_id"], name: "index_quote_sends_on_user_id"
-    t.check_constraint "channel::text = ANY (ARRAY['email'::character varying, 'link'::character varying]::text[])", name: "quote_sends_channel"
+    t.check_constraint "channel::text = ANY (ARRAY['email'::character varying::text, 'link'::character varying::text])", name: "quote_sends_channel"
   end
 
   create_table "quotes", force: :cascade do |t|
@@ -489,6 +517,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000200) do
   add_foreign_key "quote_line_items", "businesses", on_delete: :cascade
   add_foreign_key "quote_line_items", "catalog_items", on_delete: :nullify
   add_foreign_key "quote_line_items", "quotes", on_delete: :cascade
+  add_foreign_key "quote_responses", "businesses"
+  add_foreign_key "quote_responses", "client_links", on_delete: :nullify
+  add_foreign_key "quote_responses", "quotes", on_delete: :cascade
+  add_foreign_key "quote_responses", "users", column: "recorded_by_id", on_delete: :nullify
   add_foreign_key "quote_sends", "businesses"
   add_foreign_key "quote_sends", "email_messages", on_delete: :nullify
   add_foreign_key "quote_sends", "quotes", on_delete: :cascade
