@@ -6,6 +6,7 @@ class Admin::CatalogItemsController < Admin::BaseController
   RECENT_LIMIT = 5
 
   before_action :set_item, only: %i[edit update archive restore move]
+  leaves_session_alone only: :search
 
   def index
     @query = params[:q].to_s.strip
