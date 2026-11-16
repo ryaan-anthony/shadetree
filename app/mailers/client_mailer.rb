@@ -8,7 +8,7 @@
 # - comes from the platform address as "<Business> via Shadetree", with the business's
 #   email as reply-to, so replies reach the owner;
 # - uses the branded layout (logo, color, contact footer) with a plain-text part;
-# - isn't sent to an address the business has suppressed (hard bounce or spam complaint).
+# - isn't sent to an address the business has suppressed (the mail server refused it).
 class ClientMailer < ApplicationMailer
   layout "mailer_client"
   helper FormattingHelper

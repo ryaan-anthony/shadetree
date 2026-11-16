@@ -85,15 +85,10 @@
           </li>
           <% if method.undeliverable? %>
             <li class="rounded-md bg-warning-50 px-3 py-2 text-sm2 text-subtle" id="undeliverable-<%= method.id %>">
-              <% if method.undeliverable_reason == "complaint" %>
-                <p><span class="font-semibold text-ink"><%= method.value %></span> marked one of your emails as spam, so it can't be
-                  emailed again. Add another address if the client wants email.</p>
-              <% else %>
-                <p><span class="font-semibold text-ink"><%= method.value %></span> bounced, so emails to it are paused.
-                  Fix the address, or if it's right, send to it again.</p>
-                <%= button_to "Send to it again", mark_deliverable_admin_client_path(@client, contact_method_id: method.id), method: :patch,
-                              class: "#{button_classes(:secondary, :sm)} mt-2" %>
-              <% end %>
+              <p><span class="font-semibold text-ink"><%= method.value %></span> was refused by the mail server, so emails to it are
+                paused. Fix the address, or if it's right, send to it again.</p>
+              <%= button_to "Send to it again", mark_deliverable_admin_client_path(@client, contact_method_id: method.id), method: :patch,
+                            class: "#{button_classes(:secondary, :sm)} mt-2" %>
             </li>
           <% end %>
         <% end %>

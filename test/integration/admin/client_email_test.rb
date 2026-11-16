@@ -17,7 +17,7 @@ class Admin::ClientEmailTest < ActionDispatch::IntegrationTest
     as_business(@business) { EmailSuppression.suppress!("maria@example.com", reason: "hard_bounce") }
     get admin_client_path(@maria)
     method = as_business(@business) { @maria.contact_methods.first }
-    assert_select "#undeliverable-#{method.id}", /bounced, so emails to it are paused/
+    assert_select "#undeliverable-#{method.id}", /was refused by the mail server, so emails to it are/
 
     patch mark_deliverable_admin_client_path(@maria, contact_method_id: method.id)
     assert_redirected_to admin_client_path(@maria)
@@ -25,18 +25,6 @@ class Admin::ClientEmailTest < ActionDispatch::IntegrationTest
       assert_not EmailSuppression.suppressed?("maria@example.com")
       assert_not method.reload.undeliverable?
     end
-  end
-
-  test "a spam complaint can't be undone; the address has to change" do
-    as_business(@business) { EmailSuppression.suppress!("maria@example.com", reason: "complaint") }
-    method = as_business(@business) { @maria.contact_methods.first }
-    get admin_client_path(@maria)
-    assert_select "#undeliverable-#{method.id}", /marked one of your emails as spam, so it can't be/
-    assert_select "#undeliverable-#{method.id} form", 0
-
-    patch mark_deliverable_admin_client_path(@maria, contact_method_id: method.id)
-    assert_equal "maria@example.com reported your email as spam, so it can't be emailed again. Use another address.", flash[:alert]
-    as_business(@business) { assert EmailSuppression.suppressed?("maria@example.com") }
   end
 
   test "an address that's already blocked is flagged when it's added to a client" do
@@ -66,7 +54,7 @@ class Admin::ClientEmailTest < ActionDispatch::IntegrationTest
 
   test "changing a flagged address clears the flag" do
     as_business(@business) do
-      EmailSuppression.suppress!("maria@example.com", reason: "complaint")
+      EmailSuppression.suppress!("maria@example.com", reason: "hard_bounce")
       method = @maria.contact_methods.first
       method.reload.update!(value: "maria.lopez@example.com")
       assert_not method.reload.undeliverable?
@@ -92,6 +80,6 @@ class Admin::ClientEmailTest < ActionDispatch::IntegrationTest
   test "recent emails show on the client with their outcome" do
     as_business(@business) { EmailMessage.create!(kind: "test_message", to: "maria@example.com", subject: "Your quote", status: "bounced") }
     get admin_client_path(@maria)
-    assert_select "[id^=email-]", /Your quote.*Bounced/m
+    assert_select "[id^=email-]", /Your quote.*Address refused/m
   end
 end

@@ -24,16 +24,23 @@ provider name. The provider appears only in production configuration.
 ## Decision
 
 - **Production** sends through the provider's SMTP relay. The settings are `SMTP_ADDRESS`,
-  `SMTP_PORT` (default 587, STARTTLS), `SMTP_USERNAME` and `SMTP_PASSWORD`.
+  `SMTP_PORT`, `SMTP_USERNAME` and `SMTP_PASSWORD`. Encryption is required, never just
+  attempted: STARTTLS is always used on 587, implicit TLS on 465.
 - **Sender:** the root domain `getshadetree.com` (vision G8), as
   `"<Business> via Shadetree" <no-reply@getshadetree.com>`, with the business's own address as
   reply-to. Message-IDs are generated on the sending domain.
 - **How the SMTP reply is handled** (`ClientMailDeliveryJob`):
-  - A refused recipient (550/551/553 or a 5.1.x status) fails the email and suppresses the
-    address for that business, flagged on the client page until staff send to it again.
-  - Any other 5xx, and bad credentials, fail the email without flagging the address.
-  - 4xx replies, timeouts and connection errors are retried with backoff.
-  - The server's reply text isn't stored or logged, because it can name the address.
+  - The address is suppressed only when the server refused the recipient's mailbox (status
+    5.1.1, 5.1.2, 5.1.3, 5.1.6, 5.1.10 or 5.2.1). The email is marked bounced and the address
+    flagged on the client page until staff send to it again.
+  - Any other permanent reply (sender, policy, content), and rejected credentials, fail the email
+    without blaming the address.
+  - 4xx replies, timeouts and connection errors are retried with backoff for about four hours.
+    Anything else is a bug: it's marked failed and re-raised for error reporting.
+  - Only the reply code is kept. The server's text isn't stored or logged, because it can name
+    the address.
+- **Platform email** (sign-up confirmation, password reset, invitations) is also sent in the
+  background, so a slow server never holds up a request.
 - **Bounces and complaints after acceptance** stay in the provider's dashboard.
 - **Staging** uses the provider's sandbox SMTP credentials, which only deliver to authorized
   recipients, so it can't email real clients. This is configuration, not code.

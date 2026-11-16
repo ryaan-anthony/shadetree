@@ -36,8 +36,9 @@ business branding, reply-to the business, delivery tracking and bounce handling.
 - [x] Addresses the mail server refuses suppress further sends to that address for that business
       and flag the client record; staff can clear the flag after fixing the address.
 - [x] Sending is asynchronous with retries; failures are visible on the related record.
-- [x] Staging cannot email real clients (sandbox or allow-list). *Staging uses the provider's
-      sandbox SMTP credentials, which only deliver to authorized recipients.*
+- [ ] Staging cannot email real clients (sandbox or allow-list). *Decided: staging gets the
+      provider's sandbox SMTP credentials, which only deliver to authorized recipients. Ticked
+      once the staging deploy sets them (PLT-09).*
 - [x] The message catalog in 08-notifications is kept in a single place in the app; previews of
       each message are available in development.
 - [x] Platform emails (auth, invitations) use a Shadetree-branded variant of the layout.

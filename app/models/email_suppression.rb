@@ -1,9 +1,9 @@
-# An address a business must not email again (NTF-01): it hard-bounced or the recipient
-# marked a message as spam. Clearing it (after the address is fixed) allows sending again.
+# An address a business must not email again (NTF-01): the mail server refused it. Clearing it
+# (after the address is fixed or confirmed) allows sending again.
 class EmailSuppression < ApplicationRecord
   include BusinessOwned
 
-  REASONS = %w[hard_bounce complaint].freeze
+  REASONS = %w[hard_bounce].freeze
 
   belongs_to :email_message, optional: true
 
@@ -22,18 +22,12 @@ class EmailSuppression < ApplicationRecord
     record
   end
 
-  # Staff confirmed a refused address is right: allow sending again. A spam complaint isn't
-  # cleared: the address has to change.
+  # Staff confirmed a refused address is right: allow sending again.
   def self.clear!(email)
     email = email.to_s.strip.downcase
-    return false if where(email:, reason: "complaint").exists?
-
     where(email:).delete_all
     ClientContactMethod.where(kind: "email", normalized: email).update_all(undeliverable_at: nil, undeliverable_reason: nil)
-    true
   end
 
   def self.for(email) = find_by(email: email.to_s.strip.downcase)
-
-  def reason_label = reason == "complaint" ? "marked an email as spam" : "bounced"
 end

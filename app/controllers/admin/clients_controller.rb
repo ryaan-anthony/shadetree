@@ -83,11 +83,8 @@ class Admin::ClientsController < Admin::BaseController
   # Staff fixed or confirmed an address that bounced (NTF-01): send to it again.
   def mark_deliverable
     method = @client.contact_methods.find(params[:contact_method_id])
-    if EmailSuppression.clear!(method.normalized)
-      redirect_to admin_client_path(@client), notice: "#{method.value} can be emailed again."
-    else
-      redirect_to admin_client_path(@client), alert: "#{method.value} reported your email as spam, so it can't be emailed again. Use another address."
-    end
+    EmailSuppression.clear!(method.normalized)
+    redirect_to admin_client_path(@client), notice: "#{method.value} can be emailed again."
   end
 
   # Existing clients sharing an email or phone with the form (R4), as a turbo stream that

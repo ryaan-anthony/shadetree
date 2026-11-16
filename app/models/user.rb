@@ -50,6 +50,11 @@ class User < ApplicationRecord
   end
 
   # Unconfirmed users can work but not send to clients (ACC-01).
+  # Devise's emails go out in the background (NTF-01): a slow mail server can't stall sign-up.
+  def send_devise_notification(notification, *)
+    devise_mailer.send(notification, self, *).deliver_later
+  end
+
   def can_send_to_clients? = confirmed?
   def full_name
     return email if first_name.blank? && last_name.blank?

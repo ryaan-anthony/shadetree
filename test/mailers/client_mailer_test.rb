@@ -71,56 +71,96 @@ class ClientMailerTest < ActionMailer::TestCase
     ClientMailer.delivery_method = previous
   end
 
-  test "failures are retried, then shown as failed on the record" do
+  # Delivers through FakeSmtpServer, so net-smtp raises what it really raises at each stage.
+  def deliver_over_smtp(**replies)
+    FakeSmtpServer.run(**replies) do |settings|
+      previous = [ ClientMailer.delivery_method, ClientMailer.smtp_settings ]
+      ClientMailer.delivery_method = :smtp
+      ClientMailer.smtp_settings = settings
+      yield
+    ensure
+      ClientMailer.delivery_method, ClientMailer.smtp_settings = previous
+    end
+  end
+
+  def outcome(message) = as_business(@business) { message.reload.then { [ _1.status, _1.error ] } }
+  def suppressed? = as_business(@business) { EmailSuppression.suppressed?("dana@example.com") }
+
+  test "a clean SMTP conversation marks the email sent" do
     message = send_test
-    with_failing_delivery(Net::ReadTimeout.new("provider timed out")) do
+    deliver_over_smtp { perform_enqueued_jobs }
+    assert_equal [ "sent", nil ], outcome(message)
+  end
+
+  test "a mailbox the server refuses (550 5.1.1, or 501 5.1.3 syntax) is bounced and flagged, without the reply text" do
+    { "550 5.1.1 <dana@example.com>: Recipient address rejected" => "550 5.1.1", "501 5.1.3 Bad recipient address syntax" => "501 5.1.3" }.each do |reply, label|
+      message = send_test
+      deliver_over_smtp(rcpt: reply) { perform_enqueued_jobs }
+      assert_no_enqueued_jobs
+      assert_equal [ "bounced", "The mail server refused this address (#{label})." ], outcome(message), reply
+      assert suppressed?
+      as_business(@business) { EmailSuppression.clear!("dana@example.com") }
+    end
+  end
+
+  test "refusals that aren't about the mailbox fail without flagging it: sender, policy, content" do
+    { { mail: "550 5.7.1 Sender address not verified" } => "550 5.7.1", { mail: "553 5.1.8 Sender domain rejected" } => "553 5.1.8",
+      { rcpt: "550 Mailbox unavailable" } => "550", { message: "554 5.7.1 Message rejected as spam" } => "554 5.7.1" }.each do |replies, label|
+      message = send_test
+      deliver_over_smtp(**replies) { perform_enqueued_jobs }
+      assert_no_enqueued_jobs
+      assert_equal [ "failed", "The mail server refused the email (#{label})." ], outcome(message), replies.inspect
+      assert_not suppressed?
+    end
+  end
+
+  test "rejected credentials fail at once; a temporary AUTH reply is retried" do
+    message = send_test
+    deliver_over_smtp(auth: "535 5.7.8 Authentication credentials invalid") { perform_enqueued_jobs }
+    assert_equal [ "failed", "The mail server refused the email (credentials rejected, 535 5.7.8)." ], outcome(message)
+
+    send_test
+    deliver_over_smtp(auth: "454 4.7.0 Temporary authentication failure") { perform_enqueued_jobs }
+    assert_enqueued_jobs 1, only: ClientMailDeliveryJob
+  end
+
+  test "temporary replies and connection errors are retried, then failed, without addresses in the logs" do
+    message = send_test
+    logged = StringIO.new
+    previous, ActiveJob::Base.logger = ActiveJob::Base.logger, ActiveSupport::Logger.new(logged)
+    deliver_over_smtp(rcpt: "450 4.2.0 <dana@example.com>: Mailbox busy") do
       ClientMailDeliveryJob::ATTEMPTS.times { perform_enqueued_jobs(at: 1.year.from_now) }
     end
-    message = as_business(@business) { message.reload }
-    assert_equal "failed", message.status
-    assert_equal "The mail server couldn't be reached (ReadTimeout).", message.error
-    assert message.problem?
-    assert_no_enqueued_jobs
+    assert_equal [ "failed", "The mail server couldn't take the email (450 4.2.0)." ], outcome(message)
+    assert_no_match "dana@example.com", logged.string
+    assert_match "Retrying", logged.string
+  ensure
+    ActiveJob::Base.logger = previous
+  end
+
+  test "a server that isn't there is retried" do
+    message = send_test
+    with_failing_delivery(Errno::ECONNREFUSED.new) { perform_enqueued_jobs }
+    assert_enqueued_jobs 1, only: ClientMailDeliveryJob
+    assert_equal "queued", as_business(@business) { message.reload.status }
+  end
+
+  test "a bug isn't retried as a mail problem: the email is marked failed and the error raised" do
+    message = send_test
+    with_failing_delivery(NoMethodError.new("undefined method")) do
+      assert_raises(NoMethodError) { perform_enqueued_jobs }
+    end
+    assert_equal [ "failed", "Something went wrong sending this email." ], outcome(message)
   end
 
   class PlatformMailer < ApplicationMailer
     def hello = mail(to: "owner@example.com", subject: "Hi", body: "Hi")
   end
 
-  test "platform mail gets a Message-ID on the sending domain too" do
+  test "platform mail gets a Message-ID on the sending domain, and goes out in the background" do
     assert_match(/\A[0-9a-f-]{36}@getshadetree\.com\z/, PlatformMailer.hello.deliver_now.message_id)
-  end
-
-  def smtp_error(klass, reply) = klass.new(Net::SMTP::Response.parse(reply))
-
-  test "an address the mail server refuses fails at once and is flagged, without the reply in the record" do
-    message = send_test
-    with_failing_delivery(smtp_error(Net::SMTPFatalError, "550 5.1.1 <dana@example.com>: Recipient address rejected")) { perform_enqueued_jobs }
-    assert_no_enqueued_jobs
-    message = as_business(@business) { message.reload }
-    assert_equal [ "bounced", "The mail server refused this address (550 5.1.1)." ], [ message.status, message.error ]
-    assert as_business(@business) { EmailSuppression.suppressed?("dana@example.com") }
-  end
-
-  test "a permanent refusal that isn't about the address fails without flagging it" do
-    message = send_test
-    with_failing_delivery(smtp_error(Net::SMTPFatalError, "554 5.7.1 Message rejected as spam")) { perform_enqueued_jobs }
-    assert_no_enqueued_jobs
-    assert_equal [ "failed", "The mail server refused the message (554 5.7.1)." ], as_business(@business) { message.reload.then { [ _1.status, _1.error ] } }
-    assert_not as_business(@business) { EmailSuppression.suppressed?("dana@example.com") }
-  end
-
-  test "bad credentials fail at once" do
-    message = send_test
-    with_failing_delivery(smtp_error(Net::SMTPAuthenticationError, "535 5.7.8 Authentication failed")) { perform_enqueued_jobs }
-    assert_no_enqueued_jobs
-    assert_equal "The mail server rejected our credentials.", as_business(@business) { message.reload.error }
-  end
-
-  test "a busy server or a timeout is retried" do
-    send_test
-    with_failing_delivery(smtp_error(Net::SMTPServerBusy, "421 4.7.0 Try again later")) { perform_enqueued_jobs }
-    assert_enqueued_jobs 1, only: ClientMailDeliveryJob
+    assert_equal PlatformMailDeliveryJob, PlatformMailer.delivery_job
+    assert_enqueued_with(job: PlatformMailDeliveryJob) { users(:unconfirmed).send_confirmation_instructions }
   end
 
   test "without a provider, nothing is sent and the record says so" do

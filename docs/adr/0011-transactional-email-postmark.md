@@ -39,15 +39,3 @@ a webhook adapter.
 - Domain DNS setup is part of PLT-09 and NTF-01 and depends on the brand/domain decision (G8).
 - **Cost:** about $15/month for 10,000 emails, enough for hundreds of active businesses. Revisit
   SES if volume grows past ~50,000 a month.
-- **Suppression is per business in Shadetree but platform-wide at Postmark.** Every business
-  sends through one Postmark server and stream, and Postmark deactivates an address after a
-  hard bounce or spam complaint. Shadetree keeps its own per-business suppression list, which
-  drives the client flag and the "Send to it again" action, and follows Postmark's verdict
-  (the bounce event's `Inactive` flag). Consequences:
-  - Clearing a bounce also deletes Postmark's suppression.
-  - A spam complaint can't be lifted at Postmark, so Shadetree doesn't offer to clear one.
-  - If another business sends to an address Postmark deactivated, that send is refused and the
-    address is suppressed for that business too. That's correct for a dead mailbox. For a
-    complaint, it means one business's complaint blocks the address for all of them.
-  - If complaints across businesses become a problem, the fix is a message stream per business
-    (or per sending domain, with custom domains).
