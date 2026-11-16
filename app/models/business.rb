@@ -56,6 +56,7 @@ class Business < ApplicationRecord
   validates :quote_number_prefix, :invoice_number_prefix,
             format: { with: /\A[A-Z0-9][A-Z0-9-]{0,7}\z/, message: "use up to 8 capital letters, digits or dashes" }
   validates :quote_terms, :invoice_terms, length: { maximum: 5_000 }
+  validates :quote_approved_message, length: { maximum: 500 }
   before_validation :default_currency_from_country, if: :new_record?
   normalizes :quote_number_prefix, :invoice_number_prefix, with: ->(prefix) { prefix.to_s.strip.upcase }
   # Adds https:// only when no scheme was typed, so "ftp://…" still fails the format check.
@@ -117,6 +118,10 @@ class Business < ApplicationRecord
   end
 
   # Money, time and numbering conventions (ADR 0013).
+
+  # QTE-05: what a client is told after approving a quote (settings → documents).
+  normalizes :quote_approved_message, with: ->(text) { text.to_s.strip.presence }
+  def quote_next_steps = quote_approved_message || "#{name} has your approval and will be in touch to schedule the work."
 
   def currency_code = currency.presence || "USD"
 

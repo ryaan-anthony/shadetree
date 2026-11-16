@@ -1,0 +1,11 @@
+Thanks, <%= @approval.signer_name %>. You're all set.
+
+<%= @business.quote_next_steps %>
+
+Quote <%= @quote.number %><%= " - #{@quote.title}" if @quote.title %>
+Total: <%= money(@quote.totals.total) %>
+Approved <%= l(@approval.created_at.in_time_zone(@business.time_zone), format: :long) %>, reference <%= @approval.reference %>
+
+View the quote: <%= client_link_url(@link.token) %>
+
+The approved quote is attached as a PDF.

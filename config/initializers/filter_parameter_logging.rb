@@ -12,6 +12,8 @@ Rails.application.config.filter_parameters += [
   /\Aq\z/,
   # Sending a quote (QTE-04): the client's address and the owner's note.
   /\Aquote_send\.(to|cc|subject|message)\z/,
+  # Answering a quote (QTE-05): the signer's name, their email and their message or note.
+  /\Aquote_response\.(signer_name|email|message)\z/,
   # The public request form (CLI-03): everything the person types.
   /\Arequest_submission\.(name|address_line\d|region|description)\z/
 ]

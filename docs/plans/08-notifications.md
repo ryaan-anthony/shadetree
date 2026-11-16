@@ -44,6 +44,7 @@ engine with conditions, channels and timing offsets), and client notification pr
 | Request received | Client | CLI-03 |
 | New request | Team | CLI-03 |
 | Quote sent | Client | QTE-04 |
+| Quote approved (confirmation with the approved PDF) | Client | QTE-05 |
 | Quote viewed / approved / declined / changes requested | Team | QTE-05 |
 | Visit scheduled / changed / cancelled / reminder | Client | JOB-05 |
 | Visit assigned / changed | Technician | JOB-02 |

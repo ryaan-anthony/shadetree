@@ -1,0 +1,23 @@
+en:
+  activerecord:
+    attributes:
+      quote_response:
+        signer_name: "Full name"
+        email: "Email for your copy"
+        message: "Message"
+        terms_accepted: "Agreement"
+    errors:
+      models:
+        quote_response:
+          attributes:
+            # Shown to clients as written, without the attribute name in front.
+            signer_name:
+              format: "%{message}"
+              blank: "Type your full name to sign."
+              too_long: "Your name can be at most %{count} characters."
+            message:
+              format: "%{message}"
+              too_long: "Keep it to %{count} characters."
+            terms_accepted:
+              format: "%{message}"
+              accepted: "Confirm that you agree to the quote and its terms."

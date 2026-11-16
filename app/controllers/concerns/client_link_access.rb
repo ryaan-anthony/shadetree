@@ -27,7 +27,10 @@ module ClientLinkAccess
 
   def set_client_page_headers
     response.set_header("X-Robots-Tag", "noindex, nofollow")
-    response.set_header("Referrer-Policy", "no-referrer") # keep tokens out of Referer
+    # Keep tokens out of the Referer other sites see. Not "no-referrer": with it, browsers send
+    # "Origin: null" when the page's own forms submit natively (not through Turbo's fetch), and
+    # Rails' CSRF origin check refuses them.
+    response.set_header("Referrer-Policy", "same-origin")
   end
 
   def load_client_link
