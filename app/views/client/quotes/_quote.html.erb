@@ -1,4 +1,7 @@
 <%# locals: (document:, client_link: nil, preview: false) -%>
+<%# A staff preview of a link still uses staff routes: the public ones refuse drafts and
+    inactive links, and the preview mustn't act as the client. %>
+<% client_link = nil if preview %>
 <%# The client's quote page (QTE-03), rendered from a client link (PLT-12) or as the staff
     preview. Status first, then the document, attachments, and the action area that approval
     (QTE-05) fills. %>

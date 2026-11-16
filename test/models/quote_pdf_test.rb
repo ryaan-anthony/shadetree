@@ -69,6 +69,21 @@ class QuotePdfTest < ActiveSupport::TestCase
     end
   end
 
+  test "losing the race to an older state re-renders: an approval doesn't come back as 'Awaiting approval'" do
+    as_business(@business) { @quote.update_column(:status, "sent") }
+    with_fake_pdf_renderer do |calls|
+      sent = as_business(@business) { Quote.find(@quote.id) }
+      as_business(@business) { @quote.update_column(:status, "approved") }
+      approved = as_business(@business) { Quote.find(@quote.id) }
+      as_business(@business) { sent.current_pdf } # the older state is stored first
+      as_business(@business) { approved.current_pdf }
+      assert_match "Approved", calls.last[:html][/Status.{0,80}/m]
+      assert_equal 3, calls.size, "the approved render lost the race, then rendered again"
+      stored = as_business(@business) { @quote.reload.pdf_digest }
+      assert_equal Digest::SHA256.hexdigest(calls.last[:html].sub(%r{<style>.*?</style>}m, "")), stored
+    end
+  end
+
   test "two first downloads at once keep one file and delete the other" do
     as_business(@business) { @quote.update_column(:status, "sent") }
     with_fake_pdf_renderer do

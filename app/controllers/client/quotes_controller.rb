@@ -31,6 +31,11 @@ class Client::QuotesController < ApplicationController
   # the hash form bumps lock_version and would interrupt a staff member editing the quote.
   def record_update_request
     Quote.transaction do
+      # Re-read the link under a lock, so a revoke committed after this request loaded it wins
+      # (as ClientLink#perform_once! does).
+      @client_link.lock!
+      next false unless @client_link.usable?
+
       now = Time.current
       next false unless Quote.where(id: @document.id, update_requested_at: nil).update_all([ "update_requested_at = ?", now ]) == 1
 

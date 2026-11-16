@@ -60,6 +60,29 @@ class Client::QuotePageTest < ActionDispatch::IntegrationTest
     assert_equal 2, as_business(@business) { @link.reload.views_count }
   end
 
+  test "staff previewing a link get staff routes for files and the PDF, and no client actions" do
+    set_quote(expires_on: @business.today - 1)
+    sign_in users(:one)
+    post switch_admin_business_path, params: { business: @business.uid }
+    get preview_admin_client_link_path(@link)
+    assert_response :success
+    assert_select "a[href=?]", pdf_admin_quote_path(@quote), /Download PDF/
+    assert_no_match %r{/c/#{@link.token}/}, response.body
+    assert_select "form[action=?]", request_quote_update_path(@link.token), count: 0
+  end
+
+  test "sent quotes open in the read-only preview from the quotes list and the client page; drafts in the builder" do
+    sign_in users(:one)
+    post switch_admin_business_path, params: { business: @business.uid }
+    get admin_quotes_path
+    assert_select "a[href=?]", preview_admin_quote_path(@quote), @quote.number
+    get admin_client_path(@quote.client)
+    assert_select "a[href=?]", preview_admin_quote_path(@quote)
+    set_quote(status: "draft")
+    get admin_quotes_path
+    assert_select "a[href=?]", edit_admin_quote_path(@quote), @quote.number
+  end
+
   test "staff can preview a draft, but a client link never shows one" do
     set_quote(status: "draft")
     get client_link_path(@link.token)

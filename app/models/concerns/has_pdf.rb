@@ -18,8 +18,8 @@ module HasPdf
     belongs_to :pdf_blob, class_name: "ActiveStorage::Blob", optional: true
   end
 
-  # The PDF as it should be now: [data or blob, filename]. A blob when stored.
-  def current_pdf
+  # The PDF as it should be now: binary data for a draft, a blob when stored.
+  def current_pdf(attempts: 3)
     html = pdf_html
     return PdfRenderer.render(html, paper: pdf_paper, footer: pdf_footer) unless store_pdf?
 
@@ -33,8 +33,11 @@ module HasPdf
     # Compare-and-set: if another request stored one meanwhile, keep theirs and drop ours.
     stored = self.class.where(id:, pdf_blob_id: previous_id).update_all([ "pdf_blob_id = ?, pdf_digest = ?", blob.id, digest ]) == 1
     unless stored
+      # Another request stored one meanwhile, possibly of an older state (sent, while this one
+      # rendered approved). Drop ours and check again against what's stored now.
       blob.purge_later
-      return self.pdf_blob = ActiveStorage::Blob.find(self.class.where(id:).pick(:pdf_blob_id))
+      reload
+      return attempts > 1 ? current_pdf(attempts: attempts - 1) : pdf_blob
     end
 
     ActiveStorage::Blob.find_by(id: previous_id)&.purge_later
