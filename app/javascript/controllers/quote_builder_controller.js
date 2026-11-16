@@ -70,6 +70,15 @@ export default class extends Controller {
     this.save()
   }
 
+  // Send: save first, then go to the send page in this tab.
+  async saveAndGo(event) {
+    event.preventDefault()
+    const href = event.currentTarget.href // currentTarget is gone after the await
+    if (this.dirty) this.save()
+    await this.saving
+    if (!this.dirty) Turbo.visit(href)
+  }
+
   // Preview as client: save first, so the preview shows the latest. The tab opens at once
   // (popup blockers allow that only during the click) and is pointed at the preview after.
   async preview(event) {

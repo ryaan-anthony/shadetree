@@ -1,0 +1,9 @@
+<% if @note.present? %><%= @note %>
+
+<% end %>Quote <%= @quote.number %><%= " - #{@quote.title}" if @quote.title %>
+Total: <%= money(@quote.totals.total) %>
+<% if @quote.expires_on %>Valid until <%= local_date(@quote.expires_on) %>
+<% end %>
+View the quote: <%= client_link_url(@link.token) %>
+
+The quote is also attached as a PDF.
