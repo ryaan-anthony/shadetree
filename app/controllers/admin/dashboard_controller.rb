@@ -3,6 +3,6 @@ class Admin::DashboardController < Admin::BaseController
 
   def index
     @business = current_business
-    @checklist = SetupChecklist.new(@business) # ACC-05
+    @checklist = SetupChecklist.new(@business, membership: Current.membership) # ACC-05
   end
 end

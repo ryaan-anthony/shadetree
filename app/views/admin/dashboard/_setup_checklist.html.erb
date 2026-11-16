@@ -2,14 +2,14 @@
 <%# ACC-05: the setup checklist. Steps tick from real data; each opens the real feature with
     from=setup, which comes back here. %>
 <% business = current_business %>
-<% latest_draft = Quote.drafts.order(updated_at: :desc).first %>
+<% latest_draft = checklist.latest_draft %>
 <%= card title: "Get to your first quote", subtitle: "#{checklist.done_count} of #{checklist.required.size} done",
          actions: button_to("Hide", admin_dismiss_setup_path, method: :patch, class: button_classes(:ghost, :sm),
-                            form: { class: "contents", data: { turbo_confirm: "Hide the setup checklist? You'll find everything in the menu.", turbo_confirm_button: "Hide" } }),
+                            form: { class: "contents" }),
          flush: true do %>
   <ul class="list">
     <% checklist.steps.each do |step| %>
-      <li id="setup-<%= step.key %>">
+      <li id="setup-<%= step.key %>" class="flex-wrap sm:flex-nowrap">
         <span class="flex size-6 shrink-0 items-center justify-center rounded-full <%= step.done ? "bg-canopy text-white" : "border-2 border-slate-300" %>">
           <% if step.done %><%= icon "check", class: "size-3.5" %><span class="sr-only">Done:</span><% end %>
         </span>
@@ -18,10 +18,13 @@
           <p class="text-sm2 text-muted"><%= step.text %></p>
         </div>
         <% unless step.done %>
+          <div class="w-full pl-9 sm:w-auto sm:pl-0">
           <% if step.key == "details" %>
             <%= link_to step.action, edit_admin_business_path(from: "setup"), class: button_classes(:secondary, :sm) %>
           <% elsif step.key == "services" %>
-            <% if (preset = checklist.preset) %>
+            <% if checklist.unpriced_services? %>
+              <%= link_to step.action, admin_catalog_items_path, class: button_classes(:secondary, :sm) %>
+            <% elsif (preset = checklist.preset) %>
               <%= button_to step.action, admin_catalog_presets_path, params: { industry: preset.industry, from: "setup", names: preset.item_list.map(&:name) },
                             class: button_classes(:secondary, :sm), form: { class: "contents" } %>
             <% else %>
@@ -34,12 +37,13 @@
           <% elsif step.key == "quote" %>
             <%= link_to step.action, latest_draft ? edit_admin_quote_path(latest_draft, from: "setup") : new_admin_quote_path(from: "setup"), class: button_classes(:secondary, :sm) %>
           <% end %>
+          </div>
         <% end %>
       </li>
     <% end %>
   </ul>
   <div class="card-foot flex flex-wrap items-center justify-between gap-2 text-sm2">
     <span class="text-muted">Want to see what clients get first?</span>
-    <%= link_to admin_sample_quote_path, class: "font-semibold text-ink underline-offset-2 hover:underline", target: "_blank", rel: "noopener" do %><%= icon "eye", class: "mr-1 inline size-4" %>Preview a sample quote<% end %>
+    <%= link_to admin_sample_quote_path, class: "font-semibold text-ink underline-offset-2 hover:underline" do %><%= icon "eye", class: "mr-1 inline size-4" %>Preview a sample quote<% end %>
   </div>
 <% end %>

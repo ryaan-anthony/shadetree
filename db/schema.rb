@@ -54,6 +54,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000800) do
     t.datetime "deactivated_at"
     t.string "uid", null: false
     t.datetime "welcome_dismissed_at"
+    t.datetime "setup_hidden_at"
     t.index ["business_id", "active"], name: "index_business_users_on_business_id_and_active"
     t.index ["business_id"], name: "index_business_users_on_business_id"
     t.index ["uid"], name: "index_business_users_on_uid", unique: true
@@ -74,6 +75,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000800) do
     t.string "currency", default: "USD"
     t.string "brand_color", default: "#047857"
     t.boolean "active", default: true, null: false
+    t.string "onboarding_step"
     t.datetime "onboarded_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false

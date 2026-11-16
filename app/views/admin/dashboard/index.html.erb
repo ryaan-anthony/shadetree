@@ -5,6 +5,9 @@
   <% if can?(:business_settings) && @checklist.visible? %>
     <%= render "setup_checklist", checklist: @checklist %>
   <% end %>
+  <% if can?(:business_settings) && @checklist.hidden_by_member? %>
+    <div class="lg:col-span-2 lg:row-start-2"><%= button_to "Show setup checklist", admin_show_setup_path, method: :patch, class: "btn-link text-sm2" %></div>
+  <% end %>
   <%# ACC-05: a technician's one-screen welcome; their visits arrive with M3. %>
   <% if Current.membership&.role == "technician" && Current.membership.welcome_dismissed_at.nil? %>
     <%= card title: "Welcome to #{current_business.name}" do %>

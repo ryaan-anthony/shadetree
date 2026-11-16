@@ -10,14 +10,16 @@ class SampleQuote
   end
 
   def build
+    rows = lines
     quote = Quote.new(business:, number: "#{business.quote_number_prefix.presence || "Q"}-SAMPLE", status: "sent", currency: business.currency_code,
-                      title: "Spring cleanup", terms: business.quote_terms, sent_at: Time.current, expires_on: business.today + 30,
+                      title: rows.first["name"], terms: business.quote_terms, sent_at: Time.current,
+                      expires_on: business.today + business.quote_expiry_days.to_i.clamp(1, 365),
                       message: "Thanks for having us out. Here's what we talked about; any questions, just reply.")
     quote.client = Client.new(business:, display_name: "Jordan Rivera")
     quote.property = Property.new(business:, client: quote.client, address_line1: "12 Maple Street", city: business.city.presence || "Springfield",
                                   region: business.region, postal_code: business.postal_code, country: business.country)
     quote.tax_rate_list = TaxRate.for_new_document
-    quote.sync_line_items(lines)
+    quote.sync_line_items(rows)
     quote
   end
 
@@ -31,7 +33,8 @@ class SampleQuote
 
     preset = IndustryPreset.for(business.industry)
     starter = preset&.item_list&.first(3)
-    return starter.each_with_index.map { |item, i| row(i, item.name, item.try(:description), 1, nil, item.try(:unit_price).presence || "120") } if starter.present?
+    # Starter services have no prices yet: plausible placeholders.
+    return starter.each_with_index.map { |item, i| row(i, item.name, item.description, 1, nil, %w[180 95 60][i]) } if starter.present?
 
     [ row(0, "Site visit and assessment", "Walk the property and agree the scope", 1, nil, "75"),
       row(1, "Labor", "Two-person crew", 4, "hour", "65"),

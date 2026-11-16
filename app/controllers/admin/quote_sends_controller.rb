@@ -37,7 +37,7 @@ class Admin::QuoteSendsController < Admin::BaseController
     elsif @quote.past_expiry? then "Quote #{@quote.number} expired on #{l(@quote.expires_on)}. Change its valid-until date before sending."
     else "Quote #{@quote.number} can't be sent now."
     end
-    redirect_to(@quote.editable? ? edit_admin_quote_path(@quote) : preview_admin_quote_path(@quote), alert: message)
+    redirect_to(@quote.editable? ? edit_admin_quote_path(@quote, from: ("setup" if from_setup?)) : preview_admin_quote_path(@quote), alert: message)
   end
 
   def send_link

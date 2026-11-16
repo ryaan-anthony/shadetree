@@ -31,13 +31,16 @@ starter services, optional branding, and their first quote — with every step s
 - [x] Each step deep-links into the real feature (no duplicate onboarding-only forms) and
       returns to the checklist. *Sending by link stays on the page with the link to copy.*
 - [x] The checklist is visible on the dashboard until complete or dismissed; progress persists.
+      *Finishing is remembered; each Owner or Admin can hide it for themselves and show it again.*
 - [x] Choosing an industry offers to add that industry's starter services in one action.
 - [x] A "preview a sample quote" action shows a realistic quote in the client-facing view using
       the business's branding, without creating real client data or counting toward usage.
 - [x] Time from sign-up to first quote sent is measured (as a product metric, no PII).
-      *`businesses.first_quote_sent_at` against the owner's sign-up.*
+      *`businesses.first_quote_sent_at`, from the business's setup (backfilled);
+      `bin/rails onboarding:time_to_first_quote` summarizes it.*
 - [x] The existing step-based setup flow is replaced; its onboarding fields are migrated or
-      removed. *`onboarding_step` removed; `onboarded_at` means finished or dismissed.*
+      removed. *`onboarding_step` is ignored now and dropped in a later migration; `onboarded_at`
+      means the checklist was finished.*
 
 ## Out of scope
 

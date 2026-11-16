@@ -44,11 +44,11 @@ class Admin::OnboardingTest < ActionDispatch::IntegrationTest
   end
 
   test "sending the first quote completes it, records the time, and hides the checklist" do
-    travel_to(@business.owner.created_at + 2.hours) do
+    travel_to(@business.created_at + 2.hours) do
       as_business(@business) do
         @business.update!(phone: "555-0100", address_line1: "1 Main St")
         client = Client.create!(display_name: "Maria", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ])
-        CatalogItem.create!(name: "Mowing")
+        CatalogItem.create!(name: "Mowing", unit_price: "40")
         quote = Quote.start(client:)
         quote.sync_line_items([ { "key" => "a", "name" => "Mowing", "quantity" => "1", "unit_price" => "40" } ])
         quote.save!
@@ -58,14 +58,40 @@ class Admin::OnboardingTest < ActionDispatch::IntegrationTest
     assert_in_delta 2.hours.to_i, @business.reload.seconds_to_first_quote, 1
     get admin_root_path
     assert_select "h2", { text: /Get to your first quote/, count: 0 }
+    # Finished is remembered: clearing a detail later doesn't bring it back.
+    assert @business.reload.onboarded_at
+    @business.update!(address_line1: nil)
+    get admin_root_path
+    assert_select "h2", { text: /Get to your first quote/, count: 0 }
   end
 
-  test "the checklist can be hidden for good" do
+  test "starter services come without prices, so the step asks for them next" do
+    as_business(@business) { CatalogItem.create!(name: "Mowing") }
+    get admin_root_path
+    assert_select "#setup-services a[href=?]", admin_catalog_items_path, "Set your prices"
+    as_business(@business) { CatalogItem.first.update!(unit_price: "40") }
+    get admin_root_path
+    assert_select "#setup-services .sr-only", "Done:"
+  end
+
+  test "each member can hide the checklist for themselves, and show it again" do
     patch admin_dismiss_setup_path
     assert_redirected_to admin_root_path
     follow_redirect!
     assert_select "h2", { text: /Get to your first quote/, count: 0 }
-    assert @business.reload.onboarded_at
+    assert_nil @business.reload.onboarded_at
+
+    admin = member_with_role(:admin)
+    sign_in admin
+    post switch_admin_business_path, params: { business: @business.uid }
+    get admin_root_path
+    assert_select "h2", /Get to your first quote/
+
+    sign_in users(:one)
+    post switch_admin_business_path, params: { business: @business.uid }
+    patch admin_show_setup_path
+    follow_redirect!
+    assert_select "h2", /Get to your first quote/
   end
 
   test "the sample quote shows the client page with branding and saves nothing" do
@@ -74,7 +100,7 @@ class Admin::OnboardingTest < ActionDispatch::IntegrationTest
     get admin_sample_quote_path
     assert_response :success
     assert_select ".banner", /Sample quote/
-    assert_select ".quote-doc-title", "Spring cleanup"
+    assert_select ".quote-doc-title", IndustryPreset.for("landscaping").item_list.first.name
     assert_select ".quote-doc-meta", /Jordan Rivera/
     assert_select ".quote-doc-lines tbody tr", 3
     assert_select "header.client-head", /#{@business.name}/
