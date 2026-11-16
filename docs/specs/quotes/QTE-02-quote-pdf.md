@@ -26,8 +26,7 @@ The approach should be reusable for invoices (PAY-02).
 - [ ] A quote PDF includes: business branding and contact details, client and property, quote
       number, dates (issued, expiry), title, message, line items (name, description, quantity,
       unit, unit price, line total), discounts, tax per rate, total, terms, and approval status
-      (and signer/date once approved). *All but signer and date, which arrive with approval
-      (QTE-05).*
+      (and signer/date once approved). *Signer and date arrive with approval (QTE-05).*
 - [x] Layout is legible on US Letter and A4, paginates long quotes cleanly (repeated header,
       no split rows) and handles long descriptions.
 - [x] Staff can download the PDF from the quote; clients can from the client page (QTE-03).
@@ -39,22 +38,18 @@ The approach should be reusable for invoices (PAY-02).
 
 ## Decisions
 
-- **Rendering:** `PdfRenderer` prints self-contained HTML (`PdfDocument`: the `pdf` layout with
-  the stylesheet, font and logo inlined) in headless Chrome via Ferrum. Chrome has no network
-  (a dead proxy plus request interception) and scripts are off. One render runs at a time per
-  process, and a render waits at most 10 s for its turn. Business countries that use US Letter
-  get Letter; everyone else gets A4. The image includes Noto CJK fonts (about 50 MB) for names in Chinese,
-  Japanese and Korean.
-- **Inline or background:** a render takes about 2 s (mostly Chrome starting), which is over the
-  2 s p95 budget for inline. So sent quotes keep their PDF (`HasPdf`: a blob plus a digest of
-  the HTML), and `QuotePdfJob` makes it ahead of the first download. The job is enqueued
-  whenever a quote's status changes to one the client sees: sent, approved, and so on. A stored PDF is served in under 0.1 s. Drafts are rendered inline for staff only.
-- **Stability:** the stored file is reused while the document's HTML is unchanged. The inlined
-  stylesheet isn't part of the key, so a deploy doesn't re-render every sent quote. A change
-  that shows on the PDF (approval, say) makes a new file and purges the old one.
-- **QR code:** yes. Sent quotes with an active link carry a QR code to the client page.
-- **Reuse for invoices (PAY-02):** include `HasPdf`, add `pdf_blob_id`/`pdf_digest`, write a
-  `pdfs/invoice` template, and use `SendsPdf` in the controllers.
+- **Rendering:** `PdfRenderer` prints self-contained HTML (`PdfDocument` inlines styles, font,
+  logo) in headless Chrome with no network and scripts off, one render per process at a time.
+  Letter or A4 by country; the image adds Noto CJK fonts (about 50 MB).
+- **Background:** a render takes about 2 s, so a sent quote's PDF is made by `QuotePdfJob` when
+  its status changes and stored (`HasPdf`); a stored PDF is served in under 0.1 s. Drafts render
+  inline, for staff only.
+- **Stability:** the stored file is kept until the quote's content or status changes; letterhead
+  edits, new links, expiry and deploys don't change it. Its status comes from the status alone.
+- **Pagination:** rows stay whole, except long descriptions (over 400 characters). **Date:** the
+  prepared date until sending (QTE-04) records when it went out.
+- **No QR code:** it would carry one link's token into a file that outlives the link.
+- **Invoices (PAY-02):** include `HasPdf`, add its two columns, a template, and `SendsPdf`.
 
 ## Out of scope
 
@@ -62,6 +57,4 @@ The approach should be reusable for invoices (PAY-02).
 
 ## Open questions
 
-- ~~PDF generation approach and hosting memory budget~~: ADR 0010. One Chrome per process at a
-  time (about 150 MB while rendering); the image installs `chromium`.
-- ~~Include a "scan to view/approve online" QR code on the PDF?~~ Yes, see Decisions.
+- ~~PDF generation approach and memory budget~~: ADR 0010; about 150 MB while rendering.

@@ -10,9 +10,11 @@
   <dl class="quote-doc-meta">
     <div><dt>Prepared for</dt><dd><%= quote.client.display_name %><% if quote.client.company_name %><br><%= quote.client.company_name %><% end %></dd></div>
     <% if quote.property %><div><dt>Property</dt><dd><%= safe_join(quote.property.address_lines, tag.br) %></dd></div><% end %>
-    <div><dt>Date</dt><dd><%= local_date(quote.created_at.in_time_zone(business.time_zone).to_date) %></dd></div>
+    <%# The prepared date until sending records when it went out (QTE-04). %>
+    <div><dt>Prepared on</dt><dd><%= local_date(quote.created_at.in_time_zone(business.time_zone).to_date) %></dd></div>
     <% if quote.expires_on %><div><dt>Valid until</dt><dd><%= local_date(quote.expires_on) %></dd></div><% end %>
-    <% if pdf %><div><dt>Status</dt><dd><%= quote.state_label %></dd></div><% end %>
+    <%# The PDF's status comes from the status alone (so a stored file stays the same); the page also shows expiry. %>
+    <div><dt>Status</dt><dd><%= pdf ? quote.state_label : quote.client_state_label %></dd></div>
   </dl>
 </header>
 
@@ -28,7 +30,8 @@
   <tbody role="rowgroup">
     <% quote.current_line_items.each_with_index do |line, index| %>
       <% result = totals.lines[index] %>
-      <tr role="row">
+      <%# A line with a long description may split across PDF pages rather than leave a gap. %>
+      <tr role="row" class="<%= "quote-doc-line-long" if line.description.to_s.length > Quote::LONG_DESCRIPTION %>">
         <td role="cell">
           <p class="quote-doc-line-name"><%= line.name.presence || "Item" %></p>
           <% if line.description %><p class="quote-doc-line-description"><%= line.description %></p><% end %>

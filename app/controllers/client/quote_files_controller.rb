@@ -12,6 +12,9 @@ class Client::QuoteFilesController < ApplicationController
 
     attachment = @document.attachments_attachments.find_by(id: params[:id]) or return render_link_not_found
     file = params[:size] == "web" && attachment.image? ? attachment.variant(:web).processed : attachment
+    # The browser may reuse the redirect while the storage URL it points to is still valid, so
+    # revisiting the page doesn't download every photo again.
+    expires_in URL_LIFETIME - 1.minute, public: false
     redirect_to file.url(expires_in: URL_LIFETIME, disposition: :inline), allow_other_host: true
   end
 end

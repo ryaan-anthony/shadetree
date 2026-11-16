@@ -30,15 +30,34 @@ class QuotePdfTest < ActiveSupport::TestCase
     # Nothing to fetch: no external stylesheets, scripts or images.
     assert_empty doc.css("link[rel=stylesheet], script")
     doc.css("img").each { assert_match(/\Adata:/, _1["src"]) }
-    assert_nil doc.at_css(".pdf-qr"), "a draft has no online version"
+    assert_nil doc.at_css(".pdf-online"), "a draft can't be answered yet"
   end
 
-  test "a sent quote with a link carries a QR code for its client page" do
+  test "a sent quote's PDF says how to answer it, and carries no link token" do
     as_business(@business) { @quote.update_column(:status, "sent") }
     link = as_business(@business) { ClientLink.issue!(@quote) }
-    assert as_business(@business) { @quote.reload.pdf_online_url }.end_with?("/c/#{link.token}")
-    assert html.at_css("svg.pdf-qr")
-    assert_match "Awaiting approval", html.at_css(".quote-doc-meta").text
+    doc = html
+    assert_match "Awaiting approval", doc.at_css(".quote-doc-meta").text
+    assert_match "open it from the email #{@business.name} sent you", doc.at_css(".pdf-online").text
+    assert_no_match link.token, doc.to_html
+    assert_nil doc.at_css("svg")
+  end
+
+  test "a sent PDF stays the same when the letterhead changes, another link is issued or the date passes" do
+    as_business(@business) { @quote.update_columns(status: "sent", expires_on: @business.today + 1) }
+    with_fake_pdf_renderer do |calls|
+      first = as_business(@business) { @quote.reload.current_pdf }
+      @business.update!(phone: "555-999-0000")
+      as_business(@business) { ClientLink.issue!(@quote) }
+      travel 3.days do
+        assert_equal first, as_business(@business) { Quote.find(@quote.id).current_pdf }
+      end
+      assert_equal 1, calls.size
+      assert_match "Awaiting approval", calls.last[:html][/Status.{0,80}/m], "the status comes from the status, not the date"
+
+      as_business(@business) { Quote.find(@quote.id).tap { _1.update!(title: "Fall cleanup") }.current_pdf }
+      assert_equal 2, calls.size, "an edit to the quote makes a new file"
+    end
   end
 
   test "drafts are rendered fresh each time and never stored" do
@@ -79,8 +98,7 @@ class QuotePdfTest < ActiveSupport::TestCase
       as_business(@business) { approved.current_pdf }
       assert_match "Approved", calls.last[:html][/Status.{0,80}/m]
       assert_equal 3, calls.size, "the approved render lost the race, then rendered again"
-      stored = as_business(@business) { @quote.reload.pdf_digest }
-      assert_equal Digest::SHA256.hexdigest(calls.last[:html].sub(%r{<style>.*?</style>}m, "")), stored
+      assert_equal Digest::SHA256.hexdigest(approved.pdf_fingerprint), as_business(@business) { @quote.reload.pdf_digest }
     end
   end
 

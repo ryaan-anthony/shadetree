@@ -501,7 +501,7 @@
   .quote-doc-lines th { padding: 0 0 0.5rem; border-bottom: 1px solid var(--color-line); text-align: left; font-size: 0.75rem; font-weight: 600; color: var(--color-muted); }
   .quote-doc-lines td { padding: 0.75rem 0; border-bottom: 1px solid var(--color-line); vertical-align: top; color: var(--color-ink); }
   .quote-doc-lines .num { padding-left: 0.75rem; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .quote-doc-lines tr { break-inside: avoid; }
+  .quote-doc-lines tr:not(.quote-doc-line-long) { break-inside: avoid; }
   .quote-doc-line-name { font-weight: 600; }
   .quote-doc-line-description { margin-top: 0.125rem; white-space: pre-line; font-size: 0.8125rem; color: var(--color-muted); overflow-wrap: anywhere; }
   .quote-doc-line-discount { margin-top: 0.125rem; font-size: 0.8125rem; color: var(--color-success-ink); }
@@ -544,9 +544,11 @@
   .pdf-business-name { font-size: 1.25rem; font-weight: 700; color: var(--color-ink); }
   .pdf-contact { font-style: normal; font-size: 0.8125rem; line-height: 1.45; text-align: right; color: var(--color-subtle); }
   .pdf .quote-doc-lines thead { display: table-header-group; }
-  .pdf .quote-doc-lines td { padding: 0.45rem 0; }
-  .pdf .quote-doc-lines tr, .pdf .quote-doc-totals, .pdf .quote-doc-terms, .pdf-online { break-inside: avoid; }
-  .pdf-online { display: flex; align-items: center; gap: 1rem; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--color-line);
-                font-size: 0.8125rem; color: var(--color-subtle); }
-  .pdf-qr { width: 6rem; height: 6rem; flex: none; }
+  .pdf .quote-doc-lines td { padding-top: 0.45rem; padding-bottom: 0.45rem; }
+  /* Rows stay whole, except long ones, which would otherwise leave most of a page blank;
+     long terms flow on, keeping their heading with the first lines. */
+  .pdf .quote-doc-lines tr, .pdf .quote-doc-totals { break-inside: avoid; }
+  .pdf .quote-doc-lines tr.quote-doc-line-long, .pdf .quote-doc-terms { break-inside: auto; }
+  .pdf .quote-doc-terms h2 { break-after: avoid; }
+  .pdf-online { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--color-line); font-size: 0.8125rem; color: var(--color-subtle); break-inside: avoid; }
 }

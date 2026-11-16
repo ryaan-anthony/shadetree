@@ -24,5 +24,10 @@ module PdfDocument
     "data:#{content_type};base64,#{Base64.strict_encode64(data)}"
   end
 
-  def self.url_options = ActionMailer::Base.default_url_options.presence || { host: "localhost" }
+  # The public host over https in production (APP_HOST), else the mailer's (localhost in dev).
+  def self.url_options
+    return { host: ENV["APP_HOST"], protocol: "https" } if ENV["APP_HOST"].present?
+
+    ActionMailer::Base.default_url_options.presence || { host: "localhost" }
+  end
 end

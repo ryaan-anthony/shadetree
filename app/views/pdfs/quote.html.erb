@@ -21,10 +21,7 @@
   <%= render "client/quotes/document", quote: @quote, pdf: true %>
 </article>
 
-<% if @online_url %>
-  <aside class="pdf-online">
-    <%= raw RQRCode::QRCode.new(@online_url).as_svg(module_size: 3, use_path: true, viewbox: true, svg_attributes: { class: "pdf-qr", role: "img", "aria-label": "QR code for this quote online" }) %>
-    <p><span class="font-semibold text-ink">View this quote online</span><br>Scan the code, or open the link from the email
-      <%= @business.name %> sent you.</p>
-  </aside>
+<% if @quote.status == "sent" %>
+  <p class="pdf-online">To approve this quote or ask a question, open it from the email <%= @business.name %> sent you.</p>
 <% end %>
+

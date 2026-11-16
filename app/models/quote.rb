@@ -67,10 +67,14 @@ class Quote < ApplicationRecord
 
   # QTE-02: the PDF. Sent quotes keep theirs (the same file until something on it changes);
   # drafts are rendered fresh for staff.
-  def pdf_html = PdfDocument.render("pdfs/quote", quote: self, business:, online_url: pdf_online_url)
+  def pdf_html = PdfDocument.render("pdfs/quote", quote: self, business:)
   def pdf_filename = "Quote #{number}.pdf"
   def pdf_paper = PdfRenderer.paper_for(business.country)
   def store_pdf? = client_visible?
+  LONG_DESCRIPTION = 400 # characters; longer lines may split across PDF pages
+  # The quote's own content (any saved edit bumps lock_version) and its status. Not the
+  # expiry, which only the client page reflects: a sent PDF says "Valid until" either way.
+  def pdf_fingerprint = [ id, lock_version, status ].join(":")
 
   # Make the PDF when a quote is sent or answered, ahead of the first download.
   after_commit -> { QuotePdfJob.perform_later(business_id, id) }, on: :update, if: -> { saved_change_to_status? && client_visible? }
@@ -81,17 +85,12 @@ class Quote < ApplicationRecord
       %(<span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span></div>)
   end
 
-  # The client page, for the QR code: the newest active link, if the quote has been sent.
-  def pdf_online_url
-    link = ClientLink.active.where(linkable: self).order(created_at: :desc).first if client_visible?
-    link && Rails.application.routes.url_helpers.client_link_url(link.token, **PdfDocument.url_options)
-  end
-
-  # The state in words, for the PDF.
-  def state_label
-    { draft: "Draft", awaiting: "Awaiting approval", approved: "Approved", declined: "Declined",
-      changes_requested: "Changes requested", expired: "Expired" }.fetch(client_state)
-  end
+  # The status in words, for the document. From the status alone, so a sent quote's stored PDF
+  # doesn't change when its date passes (the client page shows expiry separately).
+  STATUS_LABELS = { "draft" => "Draft", "sent" => "Awaiting approval", "approved" => "Approved", "declined" => "Declined",
+                    "changes_requested" => "Changes requested" }.freeze
+  def state_label = STATUS_LABELS.fetch(status)
+  def client_state_label = client_state == :expired ? "Expired" : state_label
 
   # PLT-12: the partial client links render for a quote.
   def client_link_partial = "client/quotes/quote"

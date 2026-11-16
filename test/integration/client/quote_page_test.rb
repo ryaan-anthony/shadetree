@@ -128,6 +128,31 @@ class Client::QuotePageTest < ActionDispatch::IntegrationTest
     assert_response :gone
   end
 
+  test "file redirects can be reused briefly; drafts, expired links and other businesses get nothing" do
+    photo = as_business(@business) { @quote.attachments_attachments.first }
+    get client_quote_file_path(@link.token, photo)
+    assert_match(/private/, response.headers["Cache-Control"])
+    assert_match(/max-age=240/, response.headers["Cache-Control"])
+
+    theirs = as_business(businesses(:two)) do
+      client = Client.create!(display_name: "Theirs", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ])
+      quote = Quote.start(client:)
+      quote.attach_files([ Rack::Test::UploadedFile.new(file_fixture("logo.png"), "image/png") ])
+      quote.save!
+      quote.update_column(:status, "sent")
+      [ ClientLink.issue!(quote), quote.attachments_attachments.first ]
+    end
+    assert_not_found_across_businesses { get client_quote_file_path(@link.token, theirs.last) }
+    assert_not_found_across_businesses { get client_quote_file_path(theirs.first.token, photo) }
+
+    set_quote(status: "draft")
+    assert_not_found_across_businesses { get client_quote_file_path(@link.token, photo) }
+    set_quote(status: "sent")
+    as_business(@business) { @link.update_columns(expires_at: 1.minute.ago) }
+    get client_quote_file_path(@link.token, photo)
+    assert_response :gone
+  end
+
   test "an expired quote can be viewed, not approved, and the client can ask for an updated one once" do
     set_quote(expires_on: @business.today - 1) # the business's date, not UTC's
     get client_link_path(@link.token)

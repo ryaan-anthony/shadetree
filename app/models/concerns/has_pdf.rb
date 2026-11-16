@@ -5,12 +5,12 @@
 #   pdf_paper    - :letter or :a4
 #   pdf_footer   - Chrome's footer template (page numbers), or nil
 #   store_pdf?   - whether to keep the file (sent documents) or render fresh (drafts)
+#   pdf_fingerprint - what the stored file must match: the document's own content and status
 #
-# The stored file is reused while the document's content is unchanged (the inlined stylesheet
-# isn't part of the key, so a deploy doesn't re-render every sent document), and a sent
-# revision downloads the same every time; a change on it (approval, say) makes a new one.
-# Storing touches neither the document's updated_at nor its lock_version, and two first
-# downloads at once keep one file and delete the other.
+# The stored file is reused until the document itself changes (its content or status), so a
+# sent revision downloads the same every time: editing the letterhead, issuing another link or
+# a deploy doesn't change it. Storing touches neither the document's updated_at nor its
+# lock_version, and two first downloads at once keep one file and delete the other.
 module HasPdf
   extend ActiveSupport::Concern
 
@@ -18,15 +18,15 @@ module HasPdf
     belongs_to :pdf_blob, class_name: "ActiveStorage::Blob", optional: true
   end
 
-  # The PDF as it should be now: binary data for a draft, a blob when stored.
+  # The PDF as it should be now: binary data for a draft, a blob when stored. The stored file
+  # is checked against the fingerprint, so a cache hit renders nothing at all.
   def current_pdf(attempts: 3)
-    html = pdf_html
-    return PdfRenderer.render(html, paper: pdf_paper, footer: pdf_footer) unless store_pdf?
+    return PdfRenderer.render(pdf_html, paper: pdf_paper, footer: pdf_footer) unless store_pdf?
 
-    digest = Digest::SHA256.hexdigest(html.sub(%r{<style>.*?</style>}m, ""))
+    digest = Digest::SHA256.hexdigest(pdf_fingerprint.to_s)
     return pdf_blob if pdf_blob && pdf_digest == digest
 
-    data = PdfRenderer.render(html, paper: pdf_paper, footer: pdf_footer)
+    data = PdfRenderer.render(pdf_html, paper: pdf_paper, footer: pdf_footer)
     blob = ActiveStorage::Blob.create_and_upload!(io: StringIO.new(data), filename: pdf_filename, content_type: "application/pdf",
                                                   identify: false)
     previous_id = pdf_blob_id
