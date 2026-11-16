@@ -26,6 +26,7 @@
   <section class="pdf-approval">
     <p class="pdf-approval-title">Approved</p>
     <p>Signed by <strong><%= approval.signer_name %></strong> on <%= l(approval.created_at.in_time_zone(@business.time_zone), format: :long) %><%= ", recorded by #{approval.recorded_by.full_name}" if approval.recorded_by %>.</p>
+    <p>Approval reference <%= approval.reference %></p>
   </section>
 <% end %>
 

@@ -54,7 +54,10 @@ class Admin::QuoteApprovalsTest < ActionDispatch::IntegrationTest
   test "a note is required, and an answered quote can't be marked approved" do
     sign_in_owner
     mark_approved(note: "")
-    assert_equal "Add a note about how the client approved.", flash[:alert]
+    assert_response :unprocessable_content
+    # The dialog is open again on what was typed, with a staff-worded error.
+    assert_select "[data-modal-open-value=true] #quote-mark-approved", /Add a note about how the client approved\./
+    assert_select "#quote-mark-approved input[name='quote_response[signer_name]'][value='Maria Lopez']"
     assert_equal "sent", as_business(@business) { @quote.reload.status }
 
     as_business(@business) { @quote.record_response!(:decline) }

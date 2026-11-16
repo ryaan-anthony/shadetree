@@ -74,9 +74,50 @@ class Client::QuoteResponsesTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "the approved PDF shows who signed and when" do
+  test "the approved PDF shows who signed, when, and the approval reference" do
     approve
-    assert_match(/Signed by\s*<strong>Maria Lopez<\/strong>/, as_business(@business) { fresh.pdf_html })
+    approval = responses.sole
+    html = as_business(@business) { fresh.pdf_html }
+    assert_match(/Signed by\s*<strong>Maria Lopez<\/strong>/, html)
+    assert_match "Approval reference #{approval.reference}", html
+  end
+
+  test "the approval record is signed: editing it in the database alone is detectable" do
+    approve
+    approval = responses.sole
+    assert as_business(@business) { approval.signature_valid? }
+    as_business(@business) { QuoteResponse.where(id: approval.id).update_all(signer_name: "Someone else") }
+    assert_not as_business(@business) { approval.reload.signature_valid? }
+  end
+
+  test "an email on file wins over a typed one" do
+    as_business(@business) { @quote.client.contact_methods.create!(kind: "email", value: "maria@example.com") }
+    get client_link_path(@link.token)
+    assert_select "input[name='quote_response[email]']", false
+    approve(email: "someone@elsewhere.example")
+    perform_enqueued_jobs
+    assert_nil responses.sole.email
+    assert_empty ActionMailer::Base.deliveries.select { _1.to == [ "someone@elsewhere.example" ] }
+    assert_equal "maria@example.com", as_business(@business) { fresh.email_messages.sole.to }
+  end
+
+  test "the confirmation counts toward the business's hourly client email limit" do
+    as_business(@business) do
+      EmailMessage::CLIENT_EMAILS_PER_HOUR.times { EmailMessage.create!(kind: "quote_sent", to: "x#{_1}@example.com") }
+    end
+    approve(email: "maria@example.com")
+    assert_equal "approved", fresh.status
+    assert_empty as_business(@business) { fresh.email_messages.to_a }
+  end
+
+  test "the client's words reach the team as text, never as links or images" do
+    post request_changes_client_quote_path(@link.token),
+         params: { quote_response: { message: %(Call me <a href="https://evil.example">here</a> <img src="https://evil.example/p.gif">) } }
+    perform_enqueued_jobs
+    html = ActionMailer::Base.deliveries.sole.html_part.body.to_s
+    assert_no_match(/<a href="https:\/\/evil/, html)
+    assert_no_match(/<img src="https:\/\/evil/, html)
+    assert_match "&lt;a href=", html
   end
 
   test "approving needs a name and agreement to the terms" do
@@ -141,6 +182,7 @@ class Client::QuoteResponsesTest < ActionDispatch::IntegrationTest
     approve
     assert_equal "This quote has expired, so it can't be approved as is.", flash[:alert]
     post decline_client_quote_path(@link.token)
+    assert_equal "This quote has expired. Ask for an updated one below.", flash[:alert]
     assert_equal "sent", fresh.status
     assert_empty responses
   end

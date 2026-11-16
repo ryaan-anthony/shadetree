@@ -27,7 +27,7 @@ class ClientQuoteSystemTest < ApplicationSystemTestCase
   end
 
   test "a client approves the quote from their phone" do
-    page.current_window.resize_to(390, 844)
+    page.current_window.resize_to(360, 740)
     visit client_link_path(@link.token)
     click_on "Approve quote"
     within("#quote-approve") do

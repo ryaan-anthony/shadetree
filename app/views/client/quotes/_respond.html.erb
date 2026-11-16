@@ -30,7 +30,7 @@
         <button type="button" class="<%= button_classes(form[:variant]) %>" data-action="modal#open" aria-haspopup="dialog"><%= form[:label] %></button>
         <%= modal id: "quote-#{action.to_s.dasherize}", title: form[:title], description: form[:description] do %>
           <%= form_with model: (open == action ? response : QuoteResponse.new), scope: :quote_response, url: form[:url],
-                        class: "space-y-4 text-left", data: { turbo: false } do |f| %>
+                        class: "space-y-4 text-left" do |f| %>
             <% if action == :approve %>
               <%= hidden_field_tag :version, quote.lock_version, id: nil %>
               <%= f.field :signer_name, label: "Type your full name to sign", autocomplete: "name", maxlength: 120, required: true %>
@@ -38,21 +38,23 @@
                 <%= f.field :email, as: :email, label: "Email for your copy", optional: true, autocomplete: "email", maxlength: 254,
                             help: "We'll email you the approved quote." %>
               <% end %>
-              <%= f.check :terms_accepted, label: "I agree to the quote and its terms.", required: true %>
-              <% if (error = f.object.errors.full_messages_for(:terms_accepted).first) %>
-                <p class="error-text" role="alert"><%= icon "alert-circle" %><%= error %></p>
+              <% terms_error = f.object.errors.full_messages_for(:terms_accepted).first %>
+              <%= f.check :terms_accepted, label: "I agree to the quote and its terms.", required: true,
+                          "aria-invalid": ("true" if terms_error), "aria-describedby": ("quote_terms_error" if terms_error) %>
+              <% if terms_error %>
+                <p class="error-text" id="quote_terms_error"><%= icon "alert-circle" %><%= terms_error %></p>
               <% end %>
-              <%= f.submit_button "Approve quote", class: "w-full", data: { disable_with: "Approving…" } %>
+              <%= f.submit_button "Approve quote", class: "w-full", data: { turbo_submits_with: "Approving…" } %>
               <p class="text-xs text-muted">We record your name, the time and this exact version of the quote.</p>
             <% elsif action == :request_changes %>
               <%= f.field :message, as: :textarea, label: "Your changes", rows: 4, maxlength: QuoteResponse::MESSAGE_MAX, required: true,
                           placeholder: "e.g. Can you skip the side yard?" %>
-              <%= f.submit_button "Send to #{business.name}", class: "w-full", data: { disable_with: "Sending…" } %>
+              <%= f.submit_button "Send to #{business.name}", class: "w-full", data: { turbo_submits_with: "Sending…" } %>
             <% else %>
               <%= f.field :message, as: :textarea, label: "Reason", optional: true, rows: 3, maxlength: QuoteResponse::MESSAGE_MAX %>
               <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <button type="button" class="<%= button_classes(:secondary) %>" data-action="modal#close">Keep quote</button>
-                <%= f.submit_button "Decline", variant: :danger, data: { disable_with: "Declining…" } %>
+                <%= f.submit_button "Decline", variant: :danger, data: { turbo_submits_with: "Declining…" } %>
               </div>
             <% end %>
           <% end %>

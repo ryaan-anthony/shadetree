@@ -87,7 +87,10 @@ class Quote < ApplicationRecord
       raise Changed, "This quote was updated after you opened it." if version && version.to_i != lock_version
 
       response = responses.create!(business:, kind:, client_link: link, recorded_by: by, quote_version: lock_version, **attributes)
-      update!(status: kind)
+      # Only the status changes; the quote's content was frozen when it was sent, so its
+      # validations aren't re-run (a rule added since mustn't block the client's answer).
+      self.status = kind
+      save!(validate: false)
       response
     end
   end

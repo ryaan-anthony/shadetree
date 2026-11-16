@@ -5,6 +5,6 @@
 <% end %>
 <% if @response.message %>
   <p style="margin:0 0 4px;font-size:13px;color:#64748b;"><%= { "declined" => "Reason", "changes_requested" => "What they'd like changed" }.fetch(@response.kind, "Note") %></p>
-  <div style="margin:0 0 12px;padding:10px 12px;border-left:3px solid #e2e8f0;"><%= simple_format(@response.message, style: "margin:0 0 8px;") %></div>
+  <div style="margin:0 0 12px;padding:10px 12px;border-left:3px solid #e2e8f0;"><%= simple_format(h(@response.message), style: "margin:0 0 8px;") %></div>
 <% end %>
 <%= render "shared/mailer/button", label: "Open quote", url: @url %>

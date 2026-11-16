@@ -40,3 +40,4 @@ approach, a hosting change. Small, local choices belong in the PR description.
 | [0015](0015-release-flags.md) | In-house release flags on PostgreSQL | Accepted |
 | [0016](0016-client-links.md) | One client-link mechanism, with derived tokens and per-link state | Accepted |
 | [0017](0017-transactional-email-smtp.md) | Transactional email over SMTP | Accepted |
+| [0018](0018-client-page-referrer-policy.md) | Client pages send Referrer-Policy: same-origin | Accepted |

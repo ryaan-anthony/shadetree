@@ -20,7 +20,8 @@ class QuoteResponse < ApplicationRecord
   normalizes :message, with: ->(value) { value.to_s.strip.presence }
 
   validates :kind, inclusion: { in: KINDS }
-  validates :signer_name, presence: true, length: { maximum: 120 }, if: :approved?
+  validates :signer_name, presence: true, length: { maximum: 120 }, if: -> { approved? && !on_behalf? }
+  validates :signer_name, presence: { message: "Add who approved." }, length: { maximum: 120 }, if: -> { approved? && on_behalf? }
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "doesn't look like an email address" }, length: { maximum: 254 }, allow_nil: true
   validates :message, length: { maximum: MESSAGE_MAX }
   validates :message, presence: { message: "Say what you'd like changed." }, if: -> { kind == "changes_requested" }
@@ -30,6 +31,7 @@ class QuoteResponse < ApplicationRecord
   attr_accessor :terms_accepted
 
   before_create :capture_snapshot, if: :approved?
+  before_create :sign
   after_create_commit :notify
 
   def readonly? = persisted?
@@ -77,6 +79,13 @@ class QuoteResponse < ApplicationRecord
   # this is for anyone checking the evidence).
   def snapshot_intact? = snapshot.present? && self.class.digest(snapshot) == snapshot_digest
 
+  # Whether the record is as it was written: an HMAC (keyed from secret_key_base) over who,
+  # when, from where and what. Someone editing the database alone can't make it verify.
+  def signature_valid? = signature.present? && ActiveSupport::SecurityUtils.secure_compare(signature, compute_signature)
+
+  # A short reference for the approval, shown to the client (PDF, email) and staff.
+  def reference = signature.to_s.first(12).upcase.scan(/.{4}/).join("-")
+
   # The email the client's approval confirmation goes to: the one typed at approval, or the
   # client's own.
   def confirmation_email = email || quote.client.primary_email&.value
@@ -88,8 +97,25 @@ class QuoteResponse < ApplicationRecord
   def notify
     QuoteActivityMailer.deliver_later_for(self)
     return unless approved? && !on_behalf? && (to = confirmation_email)
+    return if EmailMessage.hourly_limit_reached? # the approval stands; only the copy is skipped
 
     QuoteMailer.send_later(:approved, business:, to:, kind: "quote_approved", related: quote, quote_id: quote.id)
+  end
+
+  def sign
+    self.created_at ||= Time.current.floor(6) # stored to the microsecond, so it reads back the same
+    self.signature = compute_signature
+  end
+
+  def compute_signature
+    evidence = {
+      "quote" => quote.uid, "number" => quote.number, "kind" => kind, "signer_name" => signer_name, "email" => email,
+      "message" => message, "at" => created_at.utc.iso8601(6), "ip_address" => ip_address, "user_agent" => user_agent,
+      "device" => device, "client_link_id" => client_link_id, "recorded_by_id" => recorded_by_id,
+      "quote_version" => quote_version, "snapshot_digest" => snapshot_digest
+    }
+    key = Rails.application.key_generator.generate_key("quote_response_signature", 32)
+    OpenSSL::HMAC.hexdigest("SHA256", key, JSON.generate(self.class.canonical(evidence)))
   end
 
   def capture_snapshot

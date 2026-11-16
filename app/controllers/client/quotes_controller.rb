@@ -22,7 +22,9 @@ class Client::QuotesController < ApplicationController
   # QTE-05. Approving signs with a typed name and agreement to the terms, against the version
   # of the quote the page showed.
   def approve
-    respond_to_quote(:approve, response_params(:signer_name, :email, :terms_accepted), version: params[:version].presence || -1)
+    # A typed email only counts when there's none on file (the form only offers it then).
+    keys = @document.client.primary_email ? %i[signer_name terms_accepted] : %i[signer_name email terms_accepted]
+    respond_to_quote(:approve, response_params(*keys), version: params[:version].presence || -1)
   end
 
   def decline = respond_to_quote(:decline, response_params(:message))
@@ -34,7 +36,7 @@ class Client::QuotesController < ApplicationController
   private
 
   RESPONDED = {
-    approve: ->(business, response) { "Thanks, #{response.signer_name}. #{business.name} has your approval." },
+    approve: nil, # the page's own banner thanks them
     decline: ->(business, _) { "#{business.name} has been told you declined the quote." },
     request_changes: ->(business, _) { "Sent. #{business.name} will update the quote and send you a new version." }
   }.freeze
@@ -56,7 +58,9 @@ class Client::QuotesController < ApplicationController
       # under a lock so a revoke that just committed wins.
       ClientLink.transaction { @client_link.lock!.allows?(action) && record.call }
     end
-    return redirect_to(client_link_path(@client_link.token), notice: RESPONDED.fetch(action).call(@business, @response)) if recorded
+    return redirect_to(client_link_path(@client_link.token), notice: RESPONDED.fetch(action)&.call(@business, @response)) if recorded
+    # The link stopped working while this request waited for it (revoked, expired).
+    return render_link_unavailable unless @client_link.reload.usable?
 
     redirect_to client_link_path(@client_link.token), alert: "This quote has already been answered."
   rescue ActiveRecord::RecordInvalid => error
@@ -65,7 +69,8 @@ class Client::QuotesController < ApplicationController
   rescue Quote::Changed
     redirect_to client_link_path(@client_link.token), alert: "This quote was updated after you opened it. Check this version, then approve again."
   rescue Quote::NotOpen
-    redirect_to client_link_path(@client_link.token), alert: @document.reload.expired? ? "This quote has expired, so it can't be approved as is." : "This quote has already been answered."
+    expired = action == :approve ? "This quote has expired, so it can't be approved as is." : "This quote has expired. Ask for an updated one below."
+    redirect_to client_link_path(@client_link.token), alert: @document.reload.expired? ? expired : "This quote has already been answered."
   end
 
   def response_params(*keys) = params.fetch(:quote_response, {}).permit(*keys).to_h.symbolize_keys

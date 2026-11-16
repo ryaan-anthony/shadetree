@@ -7,7 +7,7 @@ class Admin::QuoteSendsController < Admin::BaseController
   requires_permission :office
   # Emails per business per hour, and per quote per day (below): the platform's sending domain
   # isn't a relay. Only a quote's first send counts toward plan usage, so usage can't be the cap.
-  rate_limit to: 30, within: 1.hour, by: -> { current_business.id }, only: :create,
+  rate_limit to: EmailMessage::CLIENT_EMAILS_PER_HOUR, within: 1.hour, by: -> { current_business.id }, only: :create,
              with: -> { redirect_to new_admin_quote_send_path(@quote || params[:quote_id]), alert: "That's a lot of emails in an hour. Try again later." }
   EMAILS_PER_QUOTE_PER_DAY = 5
 

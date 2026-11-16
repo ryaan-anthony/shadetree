@@ -362,6 +362,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000300) do
     t.integer "quote_version", null: false
     t.jsonb "snapshot"
     t.string "snapshot_digest"
+    t.string "signature", null: false
     t.datetime "created_at", null: false
     t.index ["business_id", "created_at"], name: "index_quote_responses_on_business_id_and_created_at"
     t.index ["client_link_id"], name: "index_quote_responses_on_client_link_id"

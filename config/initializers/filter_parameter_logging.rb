@@ -11,5 +11,7 @@ Rails.application.config.filter_parameters += [
   # Search boxes (CLI-02 client search is by name, phone or address).
   /\Aq\z/,
   # Sending a quote (QTE-04): the client's address and the owner's note.
-  /\Aquote_send\.(to|cc|subject|message)\z/
+  /\Aquote_send\.(to|cc|subject|message)\z/,
+  # Answering a quote (QTE-05): the signer's name, their email and their message or note.
+  /\Aquote_response\.(signer_name|email|message)\z/
 ]

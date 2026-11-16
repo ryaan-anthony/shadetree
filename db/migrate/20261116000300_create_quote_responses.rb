@@ -20,6 +20,9 @@ class CreateQuoteResponses < ActiveRecord::Migration[8.1]
       t.integer :quote_version, null: false
       t.jsonb :snapshot
       t.string :snapshot_digest
+      # HMAC over the whole record (who, when, from where, what): edits in the database alone
+      # don't verify.
+      t.string :signature, null: false
       t.datetime :created_at, null: false
       t.check_constraint "kind IN ('approved', 'declined', 'changes_requested')", name: "quote_responses_kind"
       t.check_constraint "kind <> 'approved' OR (snapshot IS NOT NULL AND snapshot_digest IS NOT NULL AND signer_name IS NOT NULL)",
