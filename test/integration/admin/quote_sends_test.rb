@@ -38,7 +38,7 @@ class Admin::QuoteSendsTest < ActionDispatch::IntegrationTest
   test "sending by email freezes the quote, records the send and usage once, and emails the client" do
     with_fake_pdf_renderer do
       send_email(cc: "partner@example.com")
-      assert_redirected_to preview_admin_quote_path(@quote)
+      assert_redirected_to admin_quote_path(@quote)
 
       quote = fresh
       assert_equal "sent", quote.status
@@ -73,7 +73,7 @@ class Admin::QuoteSendsTest < ActionDispatch::IntegrationTest
       assert_equal sent_at, fresh.sent_at
       assert_equal 2, as_business(@business) { @quote.sends.count }
       assert_equal 1, usage_count
-      get preview_admin_quote_path(@quote)
+      get admin_quote_path(@quote)
       assert_select "#sent-panel-h", /Sent/
       assert_select "li", /Emailed to maria.lopez@example.com/
     end
@@ -145,7 +145,7 @@ class Admin::QuoteSendsTest < ActionDispatch::IntegrationTest
     with_fake_pdf_renderer do
       send_email
       as_business(@business) { @quote.sends.first.email_message.mark!("bounced", error: "The mail server refused this address (550 5.1.1).") }
-      get preview_admin_quote_path(@quote)
+      get admin_quote_path(@quote)
       assert_select "#quote-delivery-problem", /wasn't delivered: The mail server refused this address/
       get admin_quotes_path
       assert_select "#quote-#{@quote.uid}", /Not delivered/
@@ -161,7 +161,7 @@ class Admin::QuoteSendsTest < ActionDispatch::IntegrationTest
       assert_equal 5, as_business(@business) { @quote.sends.count }
       travel(25.hours) do
         send_email
-        assert_redirected_to preview_admin_quote_path(@quote)
+        assert_redirected_to admin_quote_path(@quote)
       end
     end
   end
@@ -227,7 +227,7 @@ class Admin::QuoteSendsTest < ActionDispatch::IntegrationTest
       as_business(@business) { @quote.sends.first.email_message.mark!("bounced", error: "refused") }
       send_email(to: "maria.lopez@example.com")
       perform_enqueued_jobs
-      get preview_admin_quote_path(@quote)
+      get admin_quote_path(@quote)
       assert_select "#quote-delivery-problem", 0
       get admin_quotes_path
       assert_no_match "Not delivered", response.body

@@ -1,28 +1,20 @@
-<%= page_header "Quotes", lede: "Drafts you're working on. Sending, statuses and filters are on the way." do %>
+<%= page_header "Quotes", lede: "Every quote and where it stands." do %>
   <%= link_to new_admin_quote_path, class: button_classes do %><%= icon "plus" %> New quote<% end %>
 <% end %>
-<% if @quotes.empty? %>
-  <div class="card">
-    <%= empty_state title: "No quotes yet", text: "Pick a client, add items from your catalog and send a professional quote in a couple of minutes.", icon: "quote" do %>
-      <%= link_to new_admin_quote_path, class: button_classes do %><%= icon "plus" %> New quote<% end %>
-    <% end %>
+
+<%# One filter form, posted to #search (POST keeps client names out of URLs); its results
+    replace only the frame below. The tabs and pages inside the frame belong to this form. %>
+<%= form_with url: search_admin_quotes_path, method: :post, id: "quote-filters", class: "mb-4",
+              data: { controller: "search-form", turbo_frame: "quote_results" } do %>
+  <div class="relative max-w-md">
+    <label class="sr-only" for="q">Search quotes</label>
+    <%= icon "search", class: "pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-faint" %>
+    <%= search_field_tag :q, @query, class: "input pl-9", placeholder: "Quote number or client", autocomplete: "off",
+                         data: { action: "input->search-form#queue keydown.enter->search-form#submit:prevent" } %>
   </div>
-<% else %>
-  <div class="card table-wrap">
-    <table class="data-table">
-      <thead><tr><th scope="col">Quote</th><th scope="col">Client</th><th scope="col">Status</th><th scope="col" class="text-right">Total</th><th scope="col" class="text-right">Updated</th></tr></thead>
-      <tbody>
-        <% @quotes.each do |quote| %>
-          <tr id="quote-<%= quote.uid %>">
-            <td><%= link_to quote.number, staff_quote_path(quote), class: "primary hover:underline" %><% if quote.title %><span class="sub"><%= quote.title %></span><% end %></td>
-            <td><%= quote.client.display_name %></td>
-            <td><%= badge quote.status.humanize %><% if quote.update_requested_at %> <%= badge "Update requested", tone: :warning %><% end %>
-              <% if quote.sends.find { _1.channel == "email" }&.email_message&.problem? %> <%= badge "Not delivered", tone: :danger %><% end %></td>
-            <td class="money text-right"><%= money(quote.total) %></td>
-            <td class="whitespace-nowrap text-right text-sm2 text-muted"><%= local_time_ago(quote.updated_at) %></td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  </div>
+  <noscript><%= submit_tag "Search", class: button_classes(:secondary), name: nil %></noscript>
+<% end %>
+
+<%= turbo_frame_tag "quote_results" do %>
+  <%= render "results" %>
 <% end %>

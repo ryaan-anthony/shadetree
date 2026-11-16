@@ -331,7 +331,8 @@
   .tab[aria-current="page"],
   .tab-radio:has(:checked),
   .tab[aria-selected="true"] { border-bottom-color: var(--color-canopy); color: var(--color-ink); }
-  .tab-radio { cursor: pointer; }
+  /* relative: keeps the visually hidden radio inside the scrolling tab row, so it can't widen the page. */
+  .tab-radio { cursor: pointer; position: relative; }
   .tab-radio:has(:focus-visible) { outline: 2px solid var(--color-canopy); outline-offset: 2px; border-radius: 4px; }
 
   /* ---------- Flow rail: where a job is in quote → approve → schedule → work → invoice → paid ---------- */
