@@ -1,0 +1,16 @@
+<p style="margin:0 0 12px;font-size:18px;font-weight:700;color:#0f172a;">New request from <%= @request.contact_name %></p>
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px;font-size:14px;">
+  <% [ [ "Email", @request.contact_email ], [ "Phone", @request.contact_phone ],
+       [ "Address", @request.property&.address_lines&.join(", ") ], [ "Services", @request.service_names.join(", ").presence ],
+       [ "Timing", @request.timing ], [ "Photos", (@request.photos.size if @request.photos.attached?) ] ].each do |label, value| %>
+    <% next if value.blank? %>
+    <tr><td style="padding:3px 12px 3px 0;color:#64748b;vertical-align:top;white-space:nowrap;"><%= label %></td><td style="padding:3px 0;"><%= value %></td></tr>
+  <% end %>
+</table>
+<% if @request.description %>
+  <div style="margin:0 0 16px;padding:10px 12px;border-left:3px solid #e2e8f0;"><%= simple_format(h(@request.description), style: "margin:0 0 8px;") %></div>
+<% end %>
+<% if @request.matched_existing_client %>
+  <p style="margin:0 0 12px;font-size:13px;color:#64748b;">Matched to your existing client <%= @request.client.display_name %>. Check the details above before you reply.</p>
+<% end %>
+<%= render "shared/mailer/button", label: "Open client", url: @url %>

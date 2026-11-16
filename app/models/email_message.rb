@@ -16,6 +16,12 @@ class EmailMessage < ApplicationRecord
   validates :status, inclusion: { in: STATUSES }
 
   scope :recent, -> { order(created_at: :desc, id: :desc) }
+
+  # Client email a business can trigger in an hour (the platform's sending domain isn't a
+  # relay). Staff sends are rate limited at the controller; email a client's action triggers
+  # (an approval confirmation to an address they typed) checks this before queueing.
+  CLIENT_EMAILS_PER_HOUR = 30
+  def self.hourly_limit_reached? = where(created_at: 1.hour.ago..).count >= CLIENT_EMAILS_PER_HOUR
   scope :problems, -> { where(status: PROBLEMS) }
 
   def problem? = status.in?(PROBLEMS)

@@ -1,0 +1,21 @@
+en:
+  activemodel:
+    attributes:
+      request_submission:
+        name: "Your name"
+        email: "Email"
+        phone: "Phone"
+        address_line1: "Street address"
+        description: "Tell us about the job"
+        photos: "Photos"
+    errors:
+      models:
+        request_submission:
+          attributes:
+            # Shown to the public as written, without the field name in front.
+            name: { format: "%{message}" }
+            email: { format: "%{message}", invalid: "That email doesn't look right." }
+            phone: { format: "%{message}" }
+            address_line1: { format: "%{message}" }
+            description: { format: "%{message}" }
+            photos: { format: "%{message}" }

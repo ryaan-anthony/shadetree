@@ -93,5 +93,16 @@ Tenancy.with_business(business) do
   end
 end
 
+# CLI-03: a request from the public form, from someone new.
+Tenancy.with_business(business) do
+  unless ServiceRequest.exists?
+    services = CatalogItem.active.where(show_on_request_form: true).ordered.limit(2).map(&:uid)
+    RequestSubmission.new(business:, name: "Hannah Brooks", email: "hannah@example.com", address_line1: "12 Maple St",
+                          city: "Asheville", region: "NC", postal_code: "28801", timing: "In the next few weeks",
+                          description: "Front and back yard. The back gets a lot of shade.", service_ids: services).save
+  end
+  puts "Request form: http://localhost:3000/request/#{business.handle}"
+end
+
 puts "Demo data ready. Sign in as owner@example.com, admin@example.com or tech@example.com " \
      "with password #{demo_password}."

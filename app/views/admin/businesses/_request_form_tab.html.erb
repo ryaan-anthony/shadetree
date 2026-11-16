@@ -1,0 +1,25 @@
+<%# locals: (f:) -%>
+<%# CLI-03: the public request form, its link and QR code. %>
+<% saved_handle = @business.handle_was.presence || @business.handle %>
+<% url = public_request_url(saved_handle) %>
+<%= card title: "Your request link", subtitle: "Put it on your website, Google profile and social pages. New requests are emailed to you and your admins." do %>
+  <div class="flex flex-wrap items-center gap-2" data-controller="clipboard">
+    <input type="hidden" value="<%= url %>" data-clipboard-target="source">
+    <%= link_to url, url, class: "min-w-0 break-all font-medium text-ink underline-offset-2 hover:underline", target: "_blank", rel: "noopener" %>
+    <button type="button" class="<%= button_classes(:secondary, :sm) %>" data-action="clipboard#copy" data-clipboard-target="button"><%= icon "link" %> Copy link</button>
+    <%= link_to request_form_qr_admin_business_path, class: button_classes(:secondary, :sm), data: { turbo: false } do %><%= icon "download" %> QR code<% end %>
+  </div>
+<% end %>
+
+<%= card title: "Request form" do %>
+  <%= f.check :request_form_enabled, label: "Take requests online", hint: "When it's off, the page shows your phone and email instead." %>
+  <div class="mt-4">
+    <%= f.field :request_form_intro, as: :textarea, label: "Intro", optional: true, rows: 3, maxlength: 500,
+                placeholder: "Tell us what you need and #{@business.name} will get back to you.",
+                help: "Shown at the top of the form. Say how fast you reply, or what to include." %>
+  </div>
+  <div class="mt-4"><%= f.field :handle, label: "Link name", maxlength: 40, autocapitalize: "none", spellcheck: false,
+              help: "Your link is #{public_request_url("name").delete_suffix("name")}<name>. Changing it stops the old link working." %></div>
+  <p class="mt-3 text-sm2 text-muted">Services on the form are the catalog items marked "Show on your request form".
+    <%= link_to "Edit services", admin_catalog_items_path, class: "font-medium text-ink underline-offset-2 hover:underline" %></p>
+<% end %>

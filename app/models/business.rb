@@ -63,6 +63,27 @@ class Business < ApplicationRecord
   # Store IANA identifiers ("America/New_York"), which is what the settings select offers.
   normalizes :timezone, with: ->(zone) { ActiveSupport::TimeZone[zone.to_s.strip]&.tzinfo&.identifier || zone.to_s.strip.presence }
 
+  # CLI-03: the public request page lives at /request/<handle>. Owners and Admins can change
+  # the handle (old links then stop working); new businesses get one from their name.
+  HANDLE_FORMAT = /\A[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])\z/
+  RESERVED_HANDLES = %w[admin api app assets help login new request requests settings shadetree signup support www].freeze
+  normalizes :handle, with: ->(handle) { handle.to_s.strip.downcase }
+  normalizes :request_form_intro, with: ->(text) { text.to_s.strip.presence }
+  before_validation(if: :new_record?) { self.handle = self.class.available_handle(name) if handle.blank? } # any context (setup)
+  validates :handle, presence: true, uniqueness: { case_sensitive: false },
+                     format: { with: HANDLE_FORMAT, message: "use 3 to 40 lowercase letters, digits or dashes, starting and ending with a letter or digit" },
+                     exclusion: { in: RESERVED_HANDLES, message: "is reserved. Try another" }
+  validates :request_form_intro, length: { maximum: 500 }
+
+  # A free handle based on a business name ("Oakline Lawn & Care" -> "oakline-lawn-care").
+  def self.available_handle(name)
+    base = name.to_s.parameterize.first(34).sub(/-+\z/, "")
+    base = "business-#{base}".first(34).sub(/-+\z/, "") if base.length < 3 || RESERVED_HANDLES.include?(base)
+    candidates = [ base, *(2..50).map { "#{base}-#{_1}" } ]
+    taken = where(handle: candidates).pluck(:handle)
+    candidates.find { !taken.include?(_1) } || "#{base}-#{SecureRandom.alphanumeric(4).downcase}"
+  end
+
   # Scopes
   scope :active, -> { where(active: true) }
   scope :by_industry, ->(industry) { where(industry: industry) }

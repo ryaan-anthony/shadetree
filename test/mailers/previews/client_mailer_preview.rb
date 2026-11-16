@@ -19,3 +19,21 @@ class QuoteMailerPreview < ActionMailer::Preview
     end
   end
 end
+
+# CLI-03: the request acknowledgment and the team's notice, for the newest request
+# (bin/rails db:seed makes one).
+class RequestMailerPreview < ActionMailer::Preview
+  def received
+    request = latest_request
+    RequestMailer.with(business_id: request.business_id, to: "hannah@example.com", request_id: request.id).received
+  end
+
+  def team_notice
+    request = latest_request
+    NewRequestMailer.with(business_id: request.business_id, request_id: request.id, user_id: request.business.owner_id).received
+  end
+
+  private
+
+  def latest_request = Tenancy.across_businesses(reason: "mailer preview") { ServiceRequest.order(:id).last }
+end
