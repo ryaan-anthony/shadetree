@@ -115,6 +115,20 @@ class Admin::ClientsTest < ActionDispatch::IntegrationTest
     assert_select "turbo-stream[target=client_matches] li", false
   end
 
+  test "background lookups leave the session cookie alone, so a racing submit keeps its flash" do
+    create_client(phone: "(555) 010-0100")
+    as_member(@owner)
+    get admin_clients_path
+    assert response.headers["Set-Cookie"].to_s.include?("_session"), "ordinary pages still write the session"
+
+    post matches_admin_clients_path, params: { phone: [ "5550100100" ] }
+    assert_response :success
+    assert_not response.headers["Set-Cookie"].to_s.include?("_session")
+    post search_admin_clients_path, params: { q: "maria" }, as: :json
+    assert_response :success
+    assert_not response.headers["Set-Cookie"].to_s.include?("_session")
+  end
+
   test "inline creation hands the client back to the picker" do
     as_member(@owner)
     get new_admin_client_path(inline: 1)

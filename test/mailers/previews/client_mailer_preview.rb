@@ -7,3 +7,15 @@ class ClientMailerPreview < ActionMailer::Preview
     ClientMailer.with(business_id: business.id, to: "dana@example.com", recipient_name: "Dana").test_message
   end
 end
+
+# QTE-04: the quote email, for the newest quote with lines (bin/rails db:seed makes one).
+class QuoteMailerPreview < ActionMailer::Preview
+  def sent
+    quote = Tenancy.across_businesses(reason: "mailer preview") { Quote.joins(:line_items).order(:id).last }
+    Tenancy.with_business(quote.business) do
+      link = quote.client_link!
+      QuoteMailer.with(business_id: quote.business_id, to: "maria@example.com", quote_id: quote.id, link_id: link.id,
+                       subject: QuoteMailer.default_subject(quote), message: "Hi Maria,\n\nHere's the quote we talked about.").sent
+    end
+  end
+end

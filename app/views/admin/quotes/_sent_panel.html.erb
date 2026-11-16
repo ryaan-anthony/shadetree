@@ -1,0 +1,21 @@
+<%# A sent quote, for staff (QTE-04): when and how it went out, delivery problems, send again. %>
+<%# Only the latest email counts: a later successful resend settles it (as in the quotes list). %>
+<% latest = quote.sends.find { _1.channel == "email" }&.email_message %>
+<% problem = latest if latest&.problem? %>
+<section class="client-card mb-4 p-5 sm:p-6" aria-labelledby="sent-panel-h">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h2 id="sent-panel-h" class="text-sm font-semibold text-ink">
+      Sent <%= local_time(quote.sent_at) if quote.sent_at %><%= " by #{quote.sent_by.full_name}" if quote.sent_by %>
+    </h2>
+    <% if quote.sendable? %>
+      <%= link_to new_admin_quote_send_path(quote), class: button_classes(:secondary, :sm) do %><%= icon "send" %> Send again<% end %>
+    <% end %>
+  </div>
+  <% if problem %>
+    <p class="mt-3 text-sm2 font-medium text-danger" id="quote-delivery-problem">
+      The email to <%= problem.to %> wasn't delivered: <%= problem.error.presence || problem.status_label.downcase %>.
+      Check the address, or send the link yourself.
+    </p>
+  <% end %>
+  <div class="mt-3"><%= render "admin/quote_sends/history", quote: %></div>
+</section>

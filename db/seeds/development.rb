@@ -78,7 +78,7 @@ Tenancy.with_business(business) do
     quote.save!
   end
 
-  # A sent quote with a client link (QTE-03), to see the client page. Sending arrives with QTE-04.
+  # A sent quote (QTE-04: sent as a link, so the seed sends no email), to see the client page.
   sent_to = Client.where.not(id: maria&.id).order(:id).first
   if sent_to && !Quote.exists?(client: sent_to)
     quote = Quote.start(client: sent_to, created_by: owner)
@@ -87,8 +87,8 @@ Tenancy.with_business(business) do
     quote.sync_line_items([ { "key" => "seed-0", "catalog_item" => item&.uid, "name" => item&.name || "Spring cleanup",
                               "quantity" => "1", "unit_price" => item&.unit_price&.to_s || "150", "taxable" => "1" } ])
     quote.save!
-    quote.update_column(:status, "sent")
-    link = ClientLink.issue!(quote)
+    quote.mark_sent!(by: owner, channel: "link")
+    link = quote.client_link!
     puts "Client page for quote #{quote.number}: http://localhost:3000/c/#{link.token}"
   end
 end

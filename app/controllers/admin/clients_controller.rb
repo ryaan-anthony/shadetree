@@ -7,6 +7,7 @@ class Admin::ClientsController < Admin::BaseController
   requires_permission :office
   before_action :set_client, only: %i[show edit update archive restore destroy picked mark_deliverable]
   layout -> { inline? ? false : "app" }
+  leaves_session_alone only: %i[search matches]
 
   # The list, unfiltered (or with ?tag=/?sort=/?archived=1 from links). Searching happens in
   # #search, so names, phones and addresses never appear in URLs.

@@ -22,6 +22,9 @@ class Quote < ApplicationRecord
   belongs_to_business_record :client
   belongs_to_business_record :property, optional: true
   belongs_to :created_by, class_name: "User", optional: true
+  belongs_to :sent_by, class_name: "User", optional: true
+  has_many :sends, -> { recent }, class_name: "QuoteSend", inverse_of: :quote, dependent: :delete_all
+  has_many :email_messages, as: :related, dependent: :nullify
   has_many :line_items, -> { order(:position, :id) }, class_name: "QuoteLineItem", inverse_of: :quote,
            dependent: :delete_all, autosave: true
   # Photos get a page-sized version at upload, so the client's first view doesn't wait on it.
@@ -50,7 +53,34 @@ class Quote < ApplicationRecord
   scope :drafts, -> { where(status: "draft") }
 
   def draft? = status == "draft"
+  def sent? = status == "sent"
   def editable? = draft?
+
+  # QTE-04: what the client sees is frozen from here on (changes after sending are revisions,
+  # QTE-06). Records the send, and on the first one marks the quote sent and records the
+  # billable "quote_sent" usage event exactly once (BIL-02). Returns the QuoteSend.
+  def mark_sent!(by:, channel:, recipient: nil, cc: nil, email_message: nil)
+    transaction do
+      lock!
+      raise ArgumentError, "a #{status} quote can't be sent" unless draft? || sent?
+
+      update!(status: "sent", sent_at: Time.current, sent_by: by) if draft?
+      UsageEvent.record!("quote_sent", self, at: sent_at || Time.current)
+      sends.create!(business:, user: by, channel:, recipient:, cc:, email_message:)
+    end
+  end
+
+  # The link the client opens: the newest active one with at least a month left (so an emailed
+  # link doesn't die soon after it's read), or a new one.
+  def client_link!
+    link = ClientLink.active.where(linkable: self).order(created_at: :desc).first
+    link && (link.expires_at.nil? || link.expires_at > 30.days.from_now) ? link : ClientLink.issue!(self)
+  end
+
+  # Whether it can go out: it needs something to quote, and a valid-until date that hasn't
+  # passed (an expired quote is renewed with a revision, QTE-06).
+  def sendable? = (draft? || sent?) && line_items.any? && !past_expiry?
+  def past_expiry? = expires_on.present? && expires_on < business.today
 
   # Clients only ever see quotes that were sent (QTE-03): a draft is never reachable.
   def client_visible? = !draft?

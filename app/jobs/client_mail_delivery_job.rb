@@ -34,8 +34,13 @@ class ClientMailDeliveryJob < ActionMailer::MailDeliveryJob
   rescue_from RecipientRefused do |error|
     message = email_message or next
     Tenancy.with_business(message.business) do
-      message.mark!("bounced", error: "The mail server refused this address (#{error.message}).")
-      EmailSuppression.suppress!(message.to, reason: "hard_bounce", email_message: message)
+      if cc?
+        # With CCs the reply doesn't say which address was refused, so none is blamed.
+        message.mark!("bounced", error: "The mail server refused one of the addresses (#{error.message}).")
+      else
+        message.mark!("bounced", error: "The mail server refused this address (#{error.message}).")
+        EmailSuppression.suppress!(message.to, reason: "hard_bounce", email_message: message)
+      end
     end
   end
   # A deleted business or message has nothing left to send.
@@ -47,6 +52,8 @@ class ClientMailDeliveryJob < ActionMailer::MailDeliveryJob
     super
   rescue *NETWORK_ERRORS => error
     raise Temporary, error.class.name.demodulize
+  rescue PdfRenderer::Error
+    raise Temporary, "the PDF couldn't be made yet" # an attached PDF (QTE-04): busy or slow Chrome
   rescue Net::SMTPError => error
     raise self.class.classify(error)
   rescue ActiveRecord::RecordNotFound
@@ -68,6 +75,8 @@ class ClientMailDeliveryJob < ActionMailer::MailDeliveryJob
 
     Permanent.new(label)
   end
+
+  def cc? = arguments.last.is_a?(Hash) && arguments.last.dig(:params, :cc).present?
 
   def email_message
     id = arguments.last.is_a?(Hash) && arguments.last.dig(:params, :email_message_id)

@@ -81,6 +81,7 @@ Rails.application.routes.draw do
       get :pdf, on: :member
       get :property_options, on: :collection
       resources :attachments, only: :destroy, controller: "quote_attachments"
+      resource :send, only: %i[new create], controller: "quote_sends" # QTE-04
     end
 
     # "Send me a test email" from branding settings (NTF-01)

@@ -9,5 +9,7 @@ Rails.application.config.filter_parameters += [
   :phone, :display_name, :company_name, :address, :city, :postal_code, :notes, :tag_list,
   /\Aclient\.contact_methods_attributes\.\d+\.value\z/,
   # Search boxes (CLI-02 client search is by name, phone or address).
-  /\Aq\z/
+  /\Aq\z/,
+  # Sending a quote (QTE-04): the client's address and the owner's note.
+  /\Aquote_send\.(to|cc|subject|message)\z/
 ]
