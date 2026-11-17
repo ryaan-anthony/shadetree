@@ -84,6 +84,15 @@ Rails.application.routes.draw do
       end
     end
 
+    # The request inbox (CLI-04)
+    resources :service_requests, path: "requests", only: %i[index show new create] do
+      member do
+        patch :status
+        post :quote
+      end
+      resources :notes, only: :create, controller: "service_request_notes"
+    end
+
     # Quotes (QTE-01)
     resources :quotes do
       get :preview, on: :member

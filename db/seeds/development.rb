@@ -119,6 +119,13 @@ Tenancy.with_business(business) do
                           city: "Asheville", region: "NC", postal_code: "28801", timing: "In the next few weeks",
                           description: "Front and back yard. The back gets a lot of shade.", service_ids: services).save
   end
+  # CLI-04: one logged by phone, already in progress.
+  unless ServiceRequest.exists?(source: "phone")
+    client = Client.order(:id).offset(1).first
+    logged = ServiceRequest.create!(client:, property: client&.properties&.first, source: "phone", created_by: owner, status: "in_progress",
+                                    description: "Called about monthly grounds maintenance next season. Wants a quote by Dec 15.")
+    logged.notes.create!(business:, user: owner, body: "Site visit booked for Thursday.")
+  end
   puts "Request form: http://localhost:3000/request/#{business.handle}"
 end
 

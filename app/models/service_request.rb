@@ -14,6 +14,10 @@ class ServiceRequest < ApplicationRecord
 
   belongs_to_business_record :client
   belongs_to_business_record :property, optional: true
+  belongs_to :created_by, class_name: "User", optional: true
+  has_many :views, class_name: "ServiceRequestView", dependent: :delete_all
+  has_many :notes, -> { order(:created_at, :id) }, class_name: "ServiceRequestNote", dependent: :delete_all
+  has_many :quotes, -> { order(:created_at) }, dependent: :nullify
   has_many_attached :photos do |attachable|
     attachable.variant :web, resize_to_limit: [ 640, 640 ], preprocessed: true
   end
@@ -23,6 +27,7 @@ class ServiceRequest < ApplicationRecord
   normalizes :contact_email, with: ->(value) { value.to_s.strip.downcase.presence }
 
   validates :status, inclusion: { in: STATUSES }
+  validates :description, presence: { message: "Say what they need." }, if: -> { source != "form" && services.empty? }
   validates :source, inclusion: { in: SOURCES }
   validates :description, length: { maximum: 5_000 }
   validates :timing, length: { maximum: 120 }
@@ -33,6 +38,52 @@ class ServiceRequest < ApplicationRecord
 
   scope :recent, -> { order(created_at: :desc, id: :desc) }
 
+  LABELS = { "new" => "New", "in_progress" => "In progress", "quoted" => "Quoted", "archived" => "Archived" }.freeze
+  SOURCE_LABELS = { "form" => "Request form", "phone" => "Phone", "email" => "Email", "walk_in" => "In person", "other" => "Other" }.freeze
+  def status_label = LABELS.fetch(status)
+  def source_label = SOURCE_LABELS.fetch(source)
+
+  # A short reference for lists and quotes: R-<id> would leak volume, so the uid's start (case
+  # kept: uids are case-sensitive).
+  def reference = "R-#{uid.first(8)}"
+
+  # CLI-04: opening a request records that this member has seen it.
+  def viewed_by!(user)
+    ServiceRequestView.upsert({ business_id:, service_request_id: id, user_id: user.id, viewed_at: Time.current },
+                              unique_by: %i[service_request_id user_id], update_only: %i[viewed_at])
+  end
+
+  # Staff change the status by hand, except to Quoted: that happens when a quote is made.
+  MANUAL_STATUSES = %w[new in_progress archived].freeze
+  def move_to!(status)
+    raise ArgumentError, "Can't set status #{status.inspect} by hand" unless MANUAL_STATUSES.include?(status.to_s)
+
+    update!(status:)
+  end
+
+  # CLI-04: a draft quote from this request: its client and property (a property for the
+  # typed address if the request has none, now that a staff member has checked it), its
+  # services as lines with today's catalog prices, and its photos.
+  def create_quote!(by:)
+    transaction do
+      lock!
+      property = self.property || property_matching_address
+      quote = Quote.start(client:, property:, created_by: by)
+      items = CatalogItem.where(id: services.map { _1["catalog_item_id"] }).index_by(&:id)
+      quote.sync_line_items(services.each_with_index.map do |service, index|
+        item = items[service["catalog_item_id"]]
+        base = { "key" => "request-#{index}", "name" => service["name"], "quantity" => "1" }
+        item ? base.merge("catalog_item" => item.uid, "name" => item.name, "description" => item.description, "unit" => item.unit_label,
+                          "unit_price" => item.unit_price&.to_s || "0", "taxable" => item.taxable ? "1" : "0") : base
+      end)
+      photos.each { quote.attachments.attach(_1.blob) }
+      quote.service_request = self
+      quote.save!
+      update!(status: "quoted", property: property || self.property)
+      quote
+    end
+  end
+
   def service_names = services.map { _1["name"] }
 
   # The service address as typed, one line ("12 Maple St, Austin, 06804").
@@ -41,7 +92,23 @@ class ServiceRequest < ApplicationRecord
   # Whether the acknowledgment email was queued (set when the request is created).
   def acknowledgment_queued? = @acknowledgment_queued == true
 
+  # A quote made from this request was deleted: with none left, it's back to In progress.
+  def quote_removed!
+    update!(status: "in_progress") if status == "quoted" && !quotes.exists? # exists? always asks the database
+  end
+
   private
+
+  # The client's property at the typed street address and postal code, if they have one. A new
+  # address isn't added to the client here: the builder shows it, for staff to add if it's real.
+  def property_matching_address
+    return if address["address_line1"].blank?
+
+    key = ->(line1, postal) { [ line1.to_s.squish.downcase, postal.to_s.delete(" ").downcase ] }
+    wanted = key.(address["address_line1"], address["postal_code"])
+    client.properties.find { key.(_1.address_line1, _1.postal_code) == wanted }
+  end
+
 
   # The team hears about it. The person who sent it gets an acknowledgment if they gave an
   # email, the business's owner has confirmed their account (so a throwaway sign-up can't use

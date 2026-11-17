@@ -23,19 +23,21 @@ archive what isn't going anywhere.
 
 ## Acceptance criteria
 
-- [ ] Requests have statuses New, In progress, Quoted, Archived; status changes automatically to
+- [x] Requests have statuses New, In progress, Quoted, Archived; status changes automatically to
       Quoted when a quote is created from it, and can be changed manually otherwise.
-- [ ] The inbox lists requests newest first with client, property, requested services, age and
+- [x] The inbox lists requests newest first with client, property, requested services, age and
       status; filters by status; a badge in navigation shows the New count.
-- [ ] Opening a request marks who viewed it and shows all submitted details and photos.
-- [ ] Owners/Admins can create a request manually (client picker/inline create, property,
-      services, notes, source such as phone/email/walk-in).
-- [ ] "Create quote" opens the quote builder pre-filled with client, property, requested
+- [x] Opening a request marks who viewed it and shows all submitted details and photos.
+- [x] Owners/Admins can create a request manually (client picker/inline create, property,
+      services, notes, source such as phone/email/walk-in). *Any catalog service, not only the
+      form's.*
+- [x] "Create quote" opens the quote builder pre-filled with client, property, requested
       services as line items, and request photos available as attachments; the request links to
-      every quote created from it.
-- [ ] Requests appear on the client's page.
-- [ ] Internal notes can be added to a request.
-- [ ] Technicians have no access; tenancy and role tests exist.
+      every quote created from it. *A typed address that isn't one of the client's properties is
+      shown in the builder for staff to add; nothing is added to the client automatically.*
+- [x] Requests appear on the client's page.
+- [x] Internal notes can be added to a request.
+- [x] Technicians have no access; tenancy and role tests exist.
 
 ## Out of scope
 
@@ -43,5 +45,5 @@ archive what isn't going anywhere.
 
 ## Open questions
 
-- Should "In progress" exist, or is New/Quoted/Archived enough? Recommend keeping it for
-  requests needing a site visit before quoting.
+- ~~Should "In progress" exist, or is New/Quoted/Archived enough?~~ Keep it, for requests
+  needing a site visit before quoting.

@@ -19,3 +19,9 @@ en:
             address_line1: { format: "%{message}" }
             description: { format: "%{message}" }
             photos: { format: "%{message}" }
+  activerecord:
+    errors:
+      models:
+        service_request:
+          attributes:
+            description: { format: "%{message}" } # CLI-04: "Say what they need."

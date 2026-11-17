@@ -1,3 +1,4 @@
 <%= turbo_frame_tag "quote_property" do %>
-  <%= render "property_select", client: @client, selected: @selected.presence || (@client.billing_property || @client.properties.first)&.uid %>
+  <%= render "property_select", client: @client, selected: @selected.presence || (@client.billing_property || @client.properties.first)&.uid,
+                                name: @field_name %>
 <% end %>
