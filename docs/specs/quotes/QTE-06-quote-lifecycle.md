@@ -37,8 +37,8 @@ completes the quote lifecycle around building, sending and approving.
       unarchive, extend expiry, and reopen an expired quote by revising.
 - [x] The quote page shows an activity history: created, sent (to whom), viewed, responses,
       revisions, status changes, with who/when.
-- [ ] Quotes appear on the client page (CLI-01) and link back to their originating request.
-      *On the client page; requests arrive with CLI-04.*
+- [x] Quotes appear on the client page (CLI-01) and link back to their originating request.
+      *The builder and a sent quote's page both say "From request R-…", linking to it.*
 - [x] Tests cover status transitions, auto-expiry, revisioning, duplication, roles and tenancy.
 
 ## Out of scope

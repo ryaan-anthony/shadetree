@@ -88,6 +88,15 @@ class Admin::RequestInboxTest < ActionDispatch::IntegrationTest
     assert_equal "in_progress", as_business(@business) { @service_request.reload.status }
   end
 
+  test "a sent quote's page links back to its request (QTE-06)" do
+    post quote_admin_service_request_path(@service_request)
+    quote = as_business(@business) { Quote.order(:id).last.tap { _1.update_columns(status: "sent", sent_at: Time.current) } }
+    get admin_quote_path(quote)
+    assert_response :success
+    assert_select "a[href=?]", admin_service_request_path(@service_request), /request #{@service_request.reference}/
+    assert_select "p", { text: /They asked about/, count: 0 }, "the address note is for drafts, where the property can still change"
+  end
+
   test "an archived client's request can't be quoted until they're restored" do
     as_business(@business) { @maria.archive! }
     post quote_admin_service_request_path(@service_request)
