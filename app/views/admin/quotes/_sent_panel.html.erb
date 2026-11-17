@@ -2,7 +2,7 @@
 <%# Only the latest email counts: a later successful resend settles it (as in the quotes list). %>
 <% latest = quote.sends.find { _1.channel == "email" }&.email_message %>
 <% problem = latest if latest&.problem? %>
-<section class="client-card mb-4 p-5 sm:p-6" aria-labelledby="sent-panel-h">
+<section class="card card-body" aria-labelledby="sent-panel-h">
   <div class="flex flex-wrap items-center justify-between gap-3">
     <h2 id="sent-panel-h" class="text-sm font-semibold text-ink">
       Sent <%= local_time(quote.sent_at) if quote.sent_at %><%= " by #{quote.sent_by.full_name}" if quote.sent_by %>

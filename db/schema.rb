@@ -323,6 +323,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000800) do
     t.index ["uid"], name: "index_properties_on_uid", unique: true
   end
 
+  create_table "quote_events", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "quote_id", null: false
+    t.bigint "user_id"
+    t.string "kind", null: false
+    t.jsonb "data", default: {}, null: false
+    t.datetime "occurred_at", null: false
+    t.index ["business_id", "quote_id", "occurred_at"], name: "index_quote_events_on_business_id_and_quote_id_and_occurred_at"
+    t.index ["quote_id"], name: "index_quote_events_on_quote_id"
+    t.index ["user_id"], name: "index_quote_events_on_user_id"
+    t.check_constraint "kind::text = ANY (ARRAY['archived'::character varying, 'unarchived'::character varying, 'expiry_extended'::character varying, 'duplicated'::character varying, 'revised'::character varying]::text[])", name: "quote_events_kind"
+  end
+
   create_table "quote_line_items", force: :cascade do |t|
     t.bigint "business_id", null: false
     t.bigint "quote_id", null: false
@@ -425,6 +438,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000800) do
     t.string "pdf_digest"
     t.datetime "sent_at"
     t.bigint "sent_by_id"
+    t.datetime "archived_at"
+    t.index ["business_id", "archived_at", "created_at"], name: "index_quotes_on_business_id_and_archived_at_and_created_at"
     t.index ["business_id", "number"], name: "index_quotes_on_business_id_and_number", unique: true
     t.index ["business_id", "status", "created_at"], name: "index_quotes_on_business_id_and_status_and_created_at"
     t.index ["business_id"], name: "index_quotes_on_business_id"
@@ -518,6 +533,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000800) do
   add_foreign_key "invitations", "users", column: "invited_by_id", on_delete: :nullify
   add_foreign_key "properties", "businesses", on_delete: :cascade
   add_foreign_key "properties", "clients", on_delete: :cascade
+  add_foreign_key "quote_events", "businesses"
+  add_foreign_key "quote_events", "quotes", on_delete: :cascade
+  add_foreign_key "quote_events", "users", on_delete: :nullify
   add_foreign_key "quote_line_items", "businesses", on_delete: :cascade
   add_foreign_key "quote_line_items", "catalog_items", on_delete: :nullify
   add_foreign_key "quote_line_items", "quotes", on_delete: :cascade

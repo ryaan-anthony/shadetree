@@ -20,7 +20,7 @@ module BusinessContext
     # membership. Every candidate must be an active membership.
     membership = [ session[:current_business_id], current_user.last_business_id ].compact.uniq
                    .lazy.filter_map { |id| memberships.find_by(business_id: id) }.first
-    membership ||= memberships.order(created_at: :desc).first
+    membership ||= memberships.order(created_at: :desc, id: :desc).first
     note_lost_access(membership) if session[:current_business_id] && session[:current_business_id] != membership&.business_id
 
     session[:current_business_id] = membership&.business_id

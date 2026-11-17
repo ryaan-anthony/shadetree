@@ -71,16 +71,16 @@ class Client::QuotePageTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?]", request_quote_update_path(@link.token), count: 0
   end
 
-  test "sent quotes open in the read-only preview from the quotes list and the client page; drafts in the builder" do
+  test "sent quotes open on their own page from the quotes list and the client page; drafts in the builder" do
     sign_in users(:one)
     post switch_admin_business_path, params: { business: @business.uid }
     get admin_quotes_path
-    assert_select "a[href=?]", preview_admin_quote_path(@quote), @quote.number
+    assert_select "a[href=?]", admin_quote_path(@quote), "Spring cleanup"
     get admin_client_path(@quote.client)
-    assert_select "a[href=?]", preview_admin_quote_path(@quote)
+    assert_select "a[href=?]", admin_quote_path(@quote)
     set_quote(status: "draft")
     get admin_quotes_path
-    assert_select "a[href=?]", edit_admin_quote_path(@quote), @quote.number
+    assert_select "a[href=?]", edit_admin_quote_path(@quote), "Spring cleanup"
   end
 
   test "staff can preview a draft, but a client link never shows one" do
@@ -187,7 +187,7 @@ class Client::QuotePageTest < ActionDispatch::IntegrationTest
     sign_in users(:one)
     post switch_admin_business_path, params: { business: @business.uid }
     get admin_quotes_path
-    assert_select "tr", /#{@quote.number}.*Sent.*Update requested/m
+    assert_select "tr", /#{@quote.number}.*Expired.*Update requested/m
   end
 
   test "a quote that hasn't expired can't be marked as needing an update" do

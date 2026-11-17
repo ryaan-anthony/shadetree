@@ -1,0 +1,77 @@
+<%# The quote list (QTE-06): on the page and as #search's frame response. %>
+<%= turbo_frame_tag "quote_results" do %>
+  <%# min-w-0: a fieldset doesn't shrink by default, so the tab row would widen the page on phones. %>
+
+  <% if @quotes.empty? %>
+    <div class="card">
+      <% if !@any_quotes %>
+        <%= empty_state title: "No quotes yet", text: "Pick a client, add items from your catalog and send a professional quote in a couple of minutes.", icon: "quote" do %>
+          <%= link_to new_admin_quote_path, class: button_classes, data: { turbo_frame: "_top" } do %><%= icon "plus" %> New quote<% end %>
+        <% end %>
+      <% elsif @query.present? %>
+        <%= empty_state title: "No quotes match", text: "Try the quote number, or part of the client's name.", icon: "search" do %>
+          <%= link_to "Clear search", admin_quotes_path(filter: @filter), class: button_classes(:secondary), data: { turbo_frame: "_top" } %>
+        <% end %>
+      <% else %>
+        <%= empty_state title: "Nothing here", text: "No quotes are #{Quote::FILTERS.fetch(@filter).downcase} right now.", icon: "quote" %>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="mb-2 text-sm2 text-muted" role="status">
+      <%= pluralize(@total_count, "quote") %>, <span class="money font-semibold text-ink"><%= safe_join(@totals.map { money(_1) }, " + ") %></span>
+    </p>
+
+    <%# Phones: a list with tap-to-open rows. %>
+    <%= card flush: true, class: "md:hidden" do %>
+      <ul class="list">
+        <% @quotes.each do |quote| %>
+          <li id="quote-<%= quote.uid %>-row" class="p-0">
+            <%= link_to staff_quote_path(quote), class: "block min-w-0 flex-1 px-4 py-3", data: { turbo_frame: "_top" } do %>
+              <span class="flex items-baseline justify-between gap-3">
+                <span class="min-w-0 truncate font-semibold text-ink"><%= quote.title || "Quote #{quote.number}" %></span>
+                <span class="money text-sm font-semibold text-ink"><%= money(quote.total) %></span>
+              </span>
+              <span class="mt-0.5 block truncate text-sm2 text-muted"><%= quote.number %> · <%= quote.client.display_name %></span>
+              <span class="mt-1.5 flex flex-wrap items-center gap-1.5 text-sm2 text-muted"><%= quote_status_badge(quote) %>
+                <%= render "list_flags", quote: %>
+                <%= quote_viewed_note(quote, @views[quote.id]) %>
+                <span class="ml-auto"><%= quote_list_date(quote) %></span></span>
+              <% if (reason = quote_decline_reason(quote)) %><span class="mt-1 block truncate text-sm2 text-muted">“<%= reason %>”</span><% end %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+
+    <div class="card table-wrap hidden md:block">
+      <table class="data-table">
+        <thead>
+          <tr><th scope="col">Quote</th><th scope="col">Client</th><th scope="col">Status</th><th scope="col">Sent or updated</th><th scope="col" class="text-right">Total</th></tr>
+        </thead>
+        <tbody>
+          <% @quotes.each do |quote| %>
+            <tr id="quote-<%= quote.uid %>">
+              <td><%= link_to (quote.title || "Quote #{quote.number}"), staff_quote_path(quote), class: "primary hover:underline", data: { turbo_frame: "_top" } %><span class="sub"><%= quote.number %></span></td>
+              <td><%= quote.client.display_name %><% if quote.property %><span class="sub"><%= quote.property.one_line %></span><% end %></td>
+              <td>
+                <span class="flex flex-wrap items-center gap-1"><%= quote_status_badge(quote) %><%= render "list_flags", quote: %></span>
+                <% if (note = quote_viewed_note(quote, @views[quote.id])) %><span class="sub"><%= note %></span><% end %>
+                <% if (reason = quote_decline_reason(quote)) %><span class="sub max-w-48 truncate">“<%= reason %>”</span><% end %>
+              </td>
+              <td class="whitespace-nowrap text-sm2 text-subtle"><%= quote_list_date(quote) %></td>
+              <td class="money num"><%= money(quote.total) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <nav class="pagination mt-4" aria-label="Pagination">
+      <p>Showing <span class="tabular font-semibold text-ink"><%= ((@page - 1) * Admin::QuotesController::PER_PAGE) + 1 %>–<%= [ @page * Admin::QuotesController::PER_PAGE, @total_count ].min %></span> of <span class="tabular"><%= @total_count %></span></p>
+      <div class="pagination-links">
+        <button type="submit" form="quote-filters" name="page" value="<%= @page - 1 %>" class="<%= button_classes(:secondary, :sm) %>" <%= "disabled" if @page <= 1 %>><%= icon "chevron-left" %> Previous</button>
+        <button type="submit" form="quote-filters" name="page" value="<%= @page + 1 %>" class="<%= button_classes(:secondary, :sm) %>" <%= "disabled" if @page >= @total_pages %>>Next <%= icon "chevron-right" %></button>
+      </div>
+    </nav>
+  <% end %>
+<% end %>
