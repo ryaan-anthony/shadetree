@@ -32,11 +32,11 @@ class Admin::QuoteApprovalsTest < ActionDispatch::IntegrationTest
   test "records who did it and the note, tells the rest of the team, and doesn't email the client" do
     admin = member_with_role(:admin)
     sign_in_owner
-    get preview_admin_quote_path(@quote)
+    get admin_quote_path(@quote)
     assert_select "form[action=?] input[name='quote_response[signer_name]'][value='Maria Lopez']", admin_quote_approval_path(@quote)
 
     mark_approved
-    assert_redirected_to preview_admin_quote_path(@quote)
+    assert_redirected_to admin_quote_path(@quote)
     approval = as_business(@business) { @quote.reload.approval }
     assert_equal [ "approved", users(:one).id, "Approved on the phone" ], [ @quote.status, approval.recorded_by_id, approval.message ]
     assert_nil approval.client_link_id

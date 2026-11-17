@@ -24,7 +24,7 @@ response is recorded with strong evidence and the business is told immediately.
 ## Acceptance criteria
 
 - [x] On an open (sent, unexpired, not superseded) quote, the client can Approve, Decline or
-      Request changes. *Superseded revisions arrive with QTE-06.*
+      Request changes.
 - [x] Approve requires typing a full name and confirming acceptance of the terms; on submit, the
       quote becomes Approved and records signer name, timestamp, IP, user agent and an
       immutable snapshot/version reference of exactly what was approved. *A JSON snapshot of
@@ -40,9 +40,9 @@ response is recorded with strong evidence and the business is told immediately.
 - [x] Owners/Admins can mark a quote approved on the client's behalf (e.g. verbal approval),
       recording who did it and a required note. *Also after a change request; not on an
       expired quote. No client email is sent for these.*
-- [ ] Double submissions and stale pages are handled (no duplicate approvals; approving a
-      superseded revision is refused with a link to the latest). *Double submissions and stale
-      pages are handled. Refusing superseded revisions waits for revisions (QTE-06).*
+- [x] Double submissions and stale pages are handled (no duplicate approvals; approving a
+      superseded revision is refused with a link to the latest). *A superseded revision's page
+      shows the latest at the same link; an answer posted from it fails the version check.*
 - [x] Approved quotes are locked from editing.
 - [x] Tests cover each action, evidence capture, idempotency, expiry and link scope.
 

@@ -31,8 +31,8 @@
         <%= modal id: "quote-#{action.to_s.dasherize}", title: form[:title], description: form[:description] do %>
           <%= form_with model: (open == action ? response : QuoteResponse.new), scope: :quote_response, url: form[:url],
                         class: "space-y-4 text-left" do |f| %>
+            <%= hidden_field_tag :version, quote.lock_version, id: nil %>
             <% if action == :approve %>
-              <%= hidden_field_tag :version, quote.lock_version, id: nil %>
               <%= f.field :signer_name, label: "Type your full name to sign", autocomplete: "name", maxlength: 120, required: true %>
               <% unless quote.client.primary_email %>
                 <%= f.field :email, as: :email, label: "Email for your copy", optional: true, autocomplete: "email", maxlength: 254,

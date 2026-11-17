@@ -112,7 +112,7 @@ class Client::QuoteResponsesTest < ActionDispatch::IntegrationTest
 
   test "the client's words reach the team as text, never as links or images" do
     post request_changes_client_quote_path(@link.token),
-         params: { quote_response: { message: %(Call me <a href="https://evil.example">here</a> <img src="https://evil.example/p.gif">) } }
+         params: { version: fresh.lock_version, quote_response: { message: %(Call me <a href="https://evil.example">here</a> <img src="https://evil.example/p.gif">) } }
     perform_enqueued_jobs
     html = ActionMailer::Base.deliveries.sole.html_part.body.to_s
     assert_no_match(/<a href="https:\/\/evil/, html)
@@ -149,7 +149,7 @@ class Client::QuoteResponsesTest < ActionDispatch::IntegrationTest
   end
 
   test "declining takes an optional reason and keeps the quote viewable" do
-    post decline_client_quote_path(@link.token), params: { quote_response: { message: "" } }
+    post decline_client_quote_path(@link.token), params: { version: fresh.lock_version, quote_response: { message: "" } }
     assert_redirected_to client_link_path(@link.token)
     assert_equal "declined", fresh.status
     assert_nil responses.sole.message
@@ -160,11 +160,11 @@ class Client::QuoteResponsesTest < ActionDispatch::IntegrationTest
   end
 
   test "asking for changes needs a message, and the team gets it" do
-    post request_changes_client_quote_path(@link.token), params: { quote_response: { message: " " } }
+    post request_changes_client_quote_path(@link.token), params: { version: fresh.lock_version, quote_response: { message: " " } }
     assert_response :unprocessable_content
     assert_select "[data-modal-open-value=true] #quote-request-changes", /Say what you'd like changed\./
 
-    post request_changes_client_quote_path(@link.token), params: { quote_response: { message: "Can you skip the side yard?" } }
+    post request_changes_client_quote_path(@link.token), params: { version: fresh.lock_version, quote_response: { message: "Can you skip the side yard?" } }
     assert_equal "changes_requested", fresh.status
     assert_equal "Can you skip the side yard?", responses.sole.message
     perform_enqueued_jobs
@@ -181,7 +181,7 @@ class Client::QuoteResponsesTest < ActionDispatch::IntegrationTest
     as_business(@business) { @quote.update_columns(expires_on: @business.today - 1) }
     approve
     assert_equal "This quote has expired, so it can't be approved as is.", flash[:alert]
-    post decline_client_quote_path(@link.token)
+    post decline_client_quote_path(@link.token), params: { version: fresh.lock_version }
     assert_equal "This quote has expired. Ask for an updated one below.", flash[:alert]
     assert_equal "sent", fresh.status
     assert_empty responses
@@ -207,6 +207,7 @@ class Client::QuoteResponsesTest < ActionDispatch::IntegrationTest
 
   test "the staff preview shows the buttons but can't act" do
     sign_in users(:one)
+    post switch_admin_business_path, params: { business: @business.uid }
     get preview_admin_quote_path(@quote)
     assert_select "#quote-actions button[disabled]", 3
     assert_select "#quote-actions form", false

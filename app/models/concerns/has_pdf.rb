@@ -43,5 +43,9 @@ module HasPdf
     ActiveStorage::Blob.find_by(id: previous_id)&.purge_later
     self.pdf_digest = digest
     self.pdf_blob = blob
+    # Already in the database (the update_all above): not unsaved changes, which would stop a
+    # later lock! or save on this object.
+    clear_attribute_changes(%w[pdf_blob_id pdf_digest])
+    blob
   end
 end

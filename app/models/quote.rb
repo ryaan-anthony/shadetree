@@ -29,6 +29,8 @@ class Quote < ApplicationRecord
   has_many :email_messages, as: :related, dependent: :nullify
   has_many :responses, -> { order(:created_at, :id) }, class_name: "QuoteResponse", inverse_of: :quote, dependent: :delete_all
   has_one :approval, -> { where(kind: "approved") }, class_name: "QuoteResponse", inverse_of: :quote
+  has_many :events, -> { order(:occurred_at, :id) }, class_name: "QuoteEvent", inverse_of: :quote, dependent: :delete_all
+  has_many :revisions, -> { order(:number) }, class_name: "QuoteRevision", inverse_of: :quote, dependent: :delete_all
   has_many :line_items, -> { order(:position, :id) }, class_name: "QuoteLineItem", inverse_of: :quote,
            dependent: :delete_all, autosave: true
   # Photos get a page-sized version at upload, so the client's first view doesn't wait on it.
@@ -55,6 +57,41 @@ class Quote < ApplicationRecord
   before_save :cache_totals
 
   scope :drafts, -> { where(status: "draft") }
+  scope :unarchived, -> { where(archived_at: nil) }
+  scope :archived, -> { where.not(archived_at: nil) }
+
+  # QTE-06: the list's tabs. "Expired" and "awaiting response" depend on the business's today.
+  FILTERS = { "all" => "All", "awaiting" => "Awaiting response", "changes_requested" => "Changes requested", "draft" => "Drafts",
+              "approved" => "Approved", "declined" => "Declined", "expired" => "Expired", "archived" => "Archived" }.freeze
+  def self.filtered(filter, today:)
+    case filter
+    when "all" then unarchived
+    when "archived" then archived
+    when "awaiting" then unarchived.where(status: "sent").where("quotes.expires_on IS NULL OR quotes.expires_on >= ?", today)
+    when "expired" then unarchived.where(status: "sent").where("quotes.expires_on < ?", today)
+    else unarchived.where(status: filter)
+    end
+  end
+
+  # How many quotes each tab holds, in one query.
+  def self.filter_counts(today:)
+    bucket = sanitize_sql_array([ <<~SQL.squish, today ])
+      CASE WHEN quotes.archived_at IS NOT NULL THEN 'archived'
+           WHEN quotes.status = 'sent' AND quotes.expires_on < ? THEN 'expired'
+           WHEN quotes.status = 'sent' THEN 'awaiting'
+           ELSE quotes.status END
+    SQL
+    counts = group(Arel.sql(bucket)).count
+    FILTERS.keys.index_with { counts.fetch(_1, 0) }.merge("all" => counts.except("archived").values.sum)
+  end
+
+  # By quote number, or by client (name, phone, email or address, as CLI-02 searches).
+  def self.search(query)
+    query = query.to_s.strip
+    return all if query.empty?
+
+    where("quotes.number ILIKE ?", "%#{sanitize_sql_like(query)}%").or(where(client_id: Client.search(query).select(:id)))
+  end
 
   def draft? = status == "draft"
   def sent? = status == "sent"
@@ -62,9 +99,104 @@ class Quote < ApplicationRecord
   # Only drafts change. A sent quote is revised (QTE-06); an approved one is locked for good.
   def editable? = draft?
 
+  # QTE-06: a sent quote reopened as a draft of its next revision. The client sees that it's
+  # being updated (not the unfinished edits) until it's sent again.
+  def revising? = draft? && revision > 1
+
+  # Any quote the client has been sent and hasn't approved: sent (expired or not), changes
+  # requested, or declined. Not archived ones (restore first).
+  def revisable? = status.in?(%w[sent changes_requested declined]) && !archived?
+
+  # Keeps what the client was sent as revision N and reopens the quote as the draft of revision
+  # N+1. The record is the snapshot (with its files, which are then kept even if removed from
+  # the draft) plus the stored PDF if there is one: the same content as sent, though its status
+  # line may say how the client answered. Nothing is rendered here. An expired quote gets the
+  # business's usual validity from today, and an "update requested" is answered by the next send.
+  def revise!(by:)
+    transaction do
+      lock!
+      raise ArgumentError, "Quote #{number} can't be revised." unless revisable?
+
+      snapshot = QuoteResponse.snapshot_of(self).merge(
+        "files" => attachments_attachments.includes(:blob).map { { "blob_id" => _1.blob_id, "filename" => _1.filename.to_s } }
+      )
+      revisions.create!(business:, number: revision, snapshot:, status: expired? ? "expired" : status, pdf_blob_id:, sent_at:, revised_by: by)
+      days = business.quote_expiry_days.to_i
+      self.expires_on = business.today + days.days if past_expiry? && days.positive?
+      assign_attributes(status: "draft", revision: revision + 1, update_requested_at: nil, pdf_blob_id: nil, pdf_digest: nil)
+      save!(validate: false)
+      QuoteEvent.record!(self, :revised, by:, revision:)
+    end
+  end
+
   # QTE-05: the client can approve, decline or ask for changes while the quote is sent and
-  # still valid. (Revisions, QTE-06, add "and not superseded".)
+  # still valid. A superseded revision can't be answered: its page now shows the latest, and
+  # an answer posted from an old page fails the version check (Changed).
   def open_for_response? = sent? && !expired?
+
+  def archived? = archived_at.present?
+
+  # QTE-06: staff tidy the list. Archiving hides a quote from the list's other tabs; the client's
+  # link keeps working.
+  # Drafts aren't archived (delete them instead): only quotes that went out.
+  def archivable? = !draft? && !archived?
+
+  def archive!(by:)
+    raise ArgumentError, "Delete a draft instead of archiving it." if draft?
+
+    transaction { update_columns(archived_at: Time.current) && QuoteEvent.record!(self, :archived, by:) } unless archived?
+  end
+
+  def unarchive!(by:)
+    transaction { update_columns(archived_at: nil) && QuoteEvent.record!(self, :unarchived, by:) } if archived?
+  end
+
+  # A sent quote that hasn't been answered (or the client asked for changes) can be given a new
+  # valid-until date, including one that has already expired: any day from tomorrow to a year
+  # out. The client's links are kept alive past it (PLT-12 grace), so "the same link" holds.
+  def expiry_extendable? = status.in?(%w[sent changes_requested])
+  MAX_VALIDITY = 1.year
+
+  def extend_expiry!(date, by:)
+    date = Date.parse(date.to_s) rescue nil # rubocop:disable Style/RescueModifier
+    raise ArgumentError, "Choose a date after today." unless date && date > business.today
+    raise ArgumentError, "Choose a date within a year." if date > business.today + MAX_VALIDITY
+
+    transaction do
+      lock!
+      raise ArgumentError, "Only a sent quote's expiry can be extended." unless expiry_extendable?
+
+      from = expires_on
+      self.expires_on = date
+      save!(validate: false)
+      ClientLink.active.where(linkable: self).where("expires_at IS NOT NULL AND expires_at < ?", client_link_expires_at)
+                .update_all(expires_at: client_link_expires_at)
+      QuoteEvent.record!(self, :expiry_extended, by:, from: from&.iso8601, to: date.iso8601)
+    end
+  end
+
+  # A new draft from this one: the lines, title, terms and discount. Numbers, dates, sends and
+  # taxes start fresh (today's rates for the client). For the same client it keeps the
+  # property, message, internal notes and files; for another client it keeps none of those,
+  # since they're about the first client (their yard's photos, a gate code, "Hi Maria").
+  def duplicate!(client: self.client, by: nil)
+    same_client = client.id == client_id
+    transaction do
+      copy = Quote.start(client:, property: (property if same_client), created_by: by)
+      copy.assign_attributes(title:, terms:, prices_include_tax:, discount_kind:, discount_percent:, discount_amount_cents:)
+      copy.assign_attributes(message:, internal_notes:) if same_client
+      copy.sync_line_items(current_line_items.map do |line|
+        line.attributes.slice(*%w[name description quantity unit taxable discount_kind]).merge(
+          "key" => SecureRandom.uuid, "unit_price" => line.unit_price&.to_s, "discount_value" => line.discount_value&.to_s,
+          "catalog_item" => line.catalog_item&.uid
+        )
+      end)
+      attachments.each { copy.attachments.attach(_1.blob) } if same_client
+      copy.save!
+      QuoteEvent.record!(copy, :duplicated, by:, from: number)
+      copy
+    end
+  end
 
   # Staff can also record an approval after the client asked for changes (they agreed on the
   # phone after all), but not on an expired quote: its dates come first.
@@ -88,7 +220,7 @@ class Quote < ApplicationRecord
       raise NotOpen, "This quote isn't open for a response." unless open_for_response? || staff_approval
       raise Changed, "This quote was updated after you opened it." if version && version.to_i != lock_version
 
-      response = responses.create!(business:, kind:, client_link: link, recorded_by: by, quote_version: lock_version, **attributes)
+      response = responses.create!(business:, kind:, client_link: link, recorded_by: by, quote_version: lock_version, revision:, **attributes)
       # Only the status changes; the quote's content was frozen when it was sent, so its
       # validations aren't re-run (a rule added since mustn't block the client's answer).
       self.status = kind
@@ -107,7 +239,7 @@ class Quote < ApplicationRecord
 
       update!(status: "sent", sent_at: Time.current, sent_by: by) if draft?
       UsageEvent.record!("quote_sent", self, at: sent_at || Time.current)
-      sends.create!(business:, user: by, channel:, recipient:, cc:, email_message:)
+      sends.create!(business:, user: by, channel:, recipient:, cc:, email_message:, revision:)
     end
   end
 
@@ -127,9 +259,12 @@ class Quote < ApplicationRecord
 
   # Clients only ever see quotes that were sent (QTE-03): a draft is never reachable.
   def client_visible? = !draft?
+  # The client page itself also opens while a new revision is being prepared (QTE-06).
+  def client_page_visible? = client_visible? || revising?
 
   # What the client page says about the quote.
   def client_state
+    return :revising if revising?
     return status.to_sym if status.in?(%w[draft approved declined changes_requested])
     return :expired if expired?
 
@@ -143,7 +278,7 @@ class Quote < ApplicationRecord
   def pdf_html = PdfDocument.render("pdfs/quote", quote: self, business:)
   def pdf_filename = "Quote #{number}.pdf"
   def pdf_paper = PdfRenderer.paper_for(business.country)
-  def store_pdf? = client_visible?
+  def store_pdf? = !draft?
   LONG_DESCRIPTION = 400 # characters; longer lines may split across PDF pages
   # What a stored PDF must match: the template version (bump PDF_VERSION to replace stored files
   # after a template fix), the quote's own content (any saved edit bumps lock_version) and status,
@@ -155,7 +290,7 @@ class Quote < ApplicationRecord
   end
 
   # Make the PDF when a quote is sent or answered, ahead of the first download.
-  after_commit -> { QuotePdfJob.perform_later(business_id, id) }, on: :update, if: -> { saved_change_to_status? && client_visible? }
+  after_commit -> { QuotePdfJob.perform_later(business_id, id) }, on: :update, if: -> { saved_change_to_status? && store_pdf? }
 
   def pdf_footer
     %(<div style="width:100%;margin:0 0.55in;display:flex;justify-content:space-between;font:7.5pt sans-serif;color:#64748b">) +

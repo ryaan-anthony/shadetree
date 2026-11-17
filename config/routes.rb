@@ -98,6 +98,15 @@ Rails.application.routes.draw do
       get :preview, on: :member
       get :pdf, on: :member
       get :property_options, on: :collection
+      post :search, on: :collection # QTE-06: POST keeps client names out of URLs
+      member do
+        patch :archive
+        patch :unarchive
+        post :duplicate
+        patch :extend_expiry
+        post :revise
+        get "revisions/:number", action: :revision, as: :revision, constraints: { number: /\d+/ }
+      end
       resources :attachments, only: :destroy, controller: "quote_attachments"
       resource :send, only: %i[new create], controller: "quote_sends" # QTE-04
       resource :approval, only: :create, controller: "quote_approvals" # QTE-05: on the client's behalf

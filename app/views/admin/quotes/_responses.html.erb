@@ -4,7 +4,7 @@
 <% responses = quote.responses.includes(:recorded_by).to_a %>
 <% form = @approval_form || QuoteResponse.new(signer_name: quote.client.display_name) %>
 <% if responses.any? || quote.staff_can_approve? %>
-  <section class="client-card mb-4 p-5 sm:p-6" aria-labelledby="responses-h">
+  <section class="card card-body" aria-labelledby="responses-h">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <h2 id="responses-h" class="text-sm font-semibold text-ink">Client response</h2>
       <% if quote.staff_can_approve? %>
@@ -31,7 +31,7 @@
         <% responses.each do |response| %>
           <li id="response-<%= response.uid %>">
             <p class="text-ink">
-              <span class="font-semibold"><%= response.label %></span>
+              <span class="font-semibold"><%= response.label %></span><% if quote.revision > 1 %> <span class="text-muted">on revision <%= response.revision %></span><% end %>
               <%= local_time(response.created_at) %>
               <% if response.on_behalf? %>
                 · recorded by <%= response.recorded_by&.full_name || "a former member" %><%= " for #{response.signer_name}" if response.signer_name %>

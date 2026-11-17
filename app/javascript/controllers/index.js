@@ -3,7 +3,8 @@
 // connected, so system tests can wait for the page to be interactive instead of racing a
 // cold cache. Stimulus only connects controllers once the DOM is ready, and cached imports
 // can finish before that, so the mark also waits for DOMContentLoaded and then one task, by
-// which time Stimulus (whose listener was added first) has started.
+// which time Stimulus (whose listener was added first) has started. A controller that fails
+// to load is logged and listed in <html data-controllers-failed>, rather than skipped silently.
 import { application } from "controllers/application"
 
 const importmap = JSON.parse(document.querySelector("script[type=importmap]")?.textContent || "{}")
@@ -11,6 +12,11 @@ const paths = Object.keys(importmap.imports || {}).filter((path) => /^controller
 const name = (path) => path.replace(/^controllers\//, "").replace(/_controller$/, "").replace(/\//g, "--").replace(/_/g, "-")
 
 const registered = Promise.allSettled(paths.map((path) => import(path).then((module) => application.register(name(path), module.default))))
+  .then((results) => {
+    const failed = paths.filter((_, index) => results[index].status === "rejected")
+    results.forEach((result, index) => result.status === "rejected" && console.error(`Couldn't load ${paths[index]}`, result.reason))
+    if (failed.length) document.documentElement.dataset.controllersFailed = failed.map(name).join(" ")
+  })
 const domReady = new Promise((resolve) => {
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", resolve, { once: true })
   else resolve()

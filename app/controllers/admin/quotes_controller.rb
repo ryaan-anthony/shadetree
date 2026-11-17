@@ -1,15 +1,24 @@
 # Quotes (QTE-01): start a draft for a client, build it with autosave, preview it as the
-# client will see it, delete a draft. The list and lifecycle grow with QTE-06; sending is
+# client will see it, delete a draft. QTE-06: the list with filters and search, the staff
+# quote page with its activity, and archiving, duplicating and extending expiry. Sending is
 # QTE-04. Technicians can't see quotes (office permission).
 class Admin::QuotesController < Admin::BaseController
+  PER_PAGE = 50
+
   requires_permission :office
   include SendsPdf
+  leaves_session_alone only: :search
 
-  before_action :set_quote, only: %i[show edit update destroy preview pdf]
+  before_action :set_quote, only: %i[show edit update destroy preview pdf archive unarchive duplicate extend_expiry revise revision]
   before_action :require_editable, only: %i[edit update]
 
-  def index
-    @quotes = Quote.includes(:client, sends: :email_message).order(created_at: :desc).limit(100)
+  # The list, on the "All" tab (or ?filter= from a link). Searching posts to #search, so client
+  # names never appear in URLs.
+  def index = load_list
+
+  def search
+    load_list
+    render partial: "results", layout: false
   end
 
   # Pick a client to start a draft (?client=<uid> preselects one). Drafts are only created by
@@ -28,7 +37,56 @@ class Admin::QuotesController < Admin::BaseController
     render :new, status: :unprocessable_content
   end
 
-  def show = redirect_to(edit_admin_quote_path(@quote))
+  # A draft opens in the builder; anything sent has its own page: status, actions, the
+  # document, the client's response and the activity history.
+  def show
+    return redirect_to(edit_admin_quote_path(@quote)) if @quote.editable?
+
+    @activity = QuoteActivity.for(@quote)
+  end
+
+  def archive
+    @quote.archive!(by: current_user)
+    redirect_to admin_quote_path(@quote), notice: "Quote #{@quote.number} archived. It's under Archived in the list."
+  rescue ArgumentError => error
+    redirect_to helpers.staff_quote_path(@quote), alert: error.message
+  end
+
+  def unarchive
+    @quote.unarchive!(by: current_user)
+    redirect_to admin_quote_path(@quote), notice: "Quote #{@quote.number} restored."
+  end
+
+  # A new draft from this quote, for the same client or another.
+  def duplicate
+    client = params[:client].present? ? Client.active.find_by(uid: params[:client]) : @quote.client
+    return redirect_to(helpers.staff_quote_path(@quote), alert: "Choose a client for the copy.") unless client
+
+    copy = @quote.duplicate!(client:, by: current_user)
+    redirect_to edit_admin_quote_path(copy), notice: "Draft #{copy.number} copied from #{@quote.number}."
+  end
+
+  # QTE-06: reopens a sent quote as the draft of its next revision, in the builder.
+  def revise
+    @quote.revise!(by: current_user)
+    redirect_to edit_admin_quote_path(@quote), notice: "Revision #{@quote.revision} of #{@quote.number}. Your client sees it's being updated until you send it."
+  rescue ArgumentError => error
+    redirect_to admin_quote_path(@quote), alert: error.message
+  end
+
+  # A previous revision, as it was sent, and what changed in the next one.
+  def revision
+    @revision = @quote.revisions.find_by!(number: params[:number])
+    following = @quote.revisions.find_by(number: @revision.number + 1)
+    @changes = @revision.changes_to(following&.snapshot || QuoteResponse.snapshot_of(@quote))
+  end
+
+  def extend_expiry
+    @quote.extend_expiry!(params[:expires_on], by: current_user)
+    redirect_to admin_quote_path(@quote), notice: "Quote #{@quote.number} is now valid until #{l(@quote.expires_on)}."
+  rescue ArgumentError => error
+    redirect_to admin_quote_path(@quote), alert: error.message
+  end
 
   def edit; end
 
@@ -62,8 +120,8 @@ class Admin::QuotesController < Admin::BaseController
   end
 
   def destroy
-    unless @quote.draft?
-      return redirect_to(edit_admin_quote_path(@quote), alert: "Only draft quotes can be deleted.")
+    if !@quote.draft? || @quote.revising?
+      return redirect_to(helpers.staff_quote_path(@quote), alert: "Only quotes that were never sent can be deleted.")
     end
 
     @quote.destroy!
@@ -93,6 +151,22 @@ class Admin::QuotesController < Admin::BaseController
 
   private
 
+  def load_list
+    today = current_business.today
+    @filter = params[:filter].presence_in(Quote::FILTERS.keys) || "all"
+    @query = params[:q].to_s.strip.first(100)
+    scope = Quote.filtered(@filter, today:).search(@query)
+    @total_count = scope.count
+    @totals = scope.group(:currency).sum(:total_cents).map { |currency, cents| Money.new(cents, currency) }
+    @total_pages = [ (@total_count.to_f / PER_PAGE).ceil, 1 ].max
+    @page = params[:page].to_i.clamp(1, @total_pages)
+    @quotes = scope.includes(:business, :client, :property, :responses, sends: :email_message).order(created_at: :desc, id: :desc)
+                   .offset((@page - 1) * PER_PAGE).limit(PER_PAGE).to_a
+    @views = ClientLink.where(linkable: @quotes).group(:linkable_id).sum(:views_count)
+    @counts = Quote.filter_counts(today:) unless request.post? # the tabs (and their counts) are outside the results
+    @any_quotes = @total_count.positive? || Quote.exists?
+  end
+
   def set_quote = @quote = Quote.includes(:client, :property, line_items: :catalog_item).find_by_param!(params[:id])
 
   def require_editable
@@ -115,7 +189,8 @@ class Admin::QuotesController < Admin::BaseController
   def apply_builder_params
     attrs = builder_params
     @quote.lock_version = attrs[:lock_version] if attrs.key?(:lock_version)
-    change_client(attrs[:client]) if attrs[:client].present? && attrs[:client] != @quote.client.uid
+    # A revision stays with its client: its link was sent to them (QTE-06).
+    change_client(attrs[:client]) if attrs[:client].present? && attrs[:client] != @quote.client.uid && !@quote.revising?
     assign_property(attrs[:property]) if attrs.key?(:property)
     @quote.assign_attributes(attrs.slice(:title, :message, :internal_notes, :terms, :expires_on, :prices_include_tax))
     @quote.set_discount(attrs[:discount_kind], attrs[:discount_value]) if attrs.key?(:discount_kind)
