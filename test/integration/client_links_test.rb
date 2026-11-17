@@ -67,6 +67,7 @@ class ClientLinksTest < ActionDispatch::IntegrationTest
 
   test "staff preview renders the client page without counting a view" do
     sign_in users(:one)
+    post switch_admin_business_path, params: { business: @business.uid }
     get preview_admin_client_link_path(@link)
     assert_response :success
     assert_select ".banner", /Preview/

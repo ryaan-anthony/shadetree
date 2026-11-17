@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_16_000300) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_16_000500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -320,6 +320,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000300) do
     t.index ["uid"], name: "index_properties_on_uid", unique: true
   end
 
+  create_table "quote_events", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "quote_id", null: false
+    t.bigint "user_id"
+    t.string "kind", null: false
+    t.jsonb "data", default: {}, null: false
+    t.datetime "occurred_at", null: false
+    t.index ["business_id", "quote_id", "occurred_at"], name: "index_quote_events_on_business_id_and_quote_id_and_occurred_at"
+    t.index ["quote_id"], name: "index_quote_events_on_quote_id"
+    t.index ["user_id"], name: "index_quote_events_on_user_id"
+    t.check_constraint "kind::text = ANY (ARRAY['archived'::character varying, 'unarchived'::character varying, 'expiry_extended'::character varying, 'duplicated'::character varying, 'revised'::character varying]::text[])", name: "quote_events_kind"
+  end
+
   create_table "quote_line_items", force: :cascade do |t|
     t.bigint "business_id", null: false
     t.bigint "quote_id", null: false
@@ -371,7 +384,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000300) do
     t.index ["recorded_by_id"], name: "index_quote_responses_on_recorded_by_id"
     t.index ["uid"], name: "index_quote_responses_on_uid", unique: true
     t.check_constraint "kind::text <> 'approved'::text OR snapshot IS NOT NULL AND snapshot_digest IS NOT NULL AND signer_name IS NOT NULL", name: "quote_responses_approval_evidence"
-    t.check_constraint "kind::text = ANY (ARRAY['approved'::character varying, 'declined'::character varying, 'changes_requested'::character varying]::text[])", name: "quote_responses_kind"
+    t.check_constraint "kind::text = ANY (ARRAY['approved'::character varying::text, 'declined'::character varying::text, 'changes_requested'::character varying::text])", name: "quote_responses_kind"
   end
 
   create_table "quote_sends", force: :cascade do |t|
@@ -422,6 +435,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000300) do
     t.string "pdf_digest"
     t.datetime "sent_at"
     t.bigint "sent_by_id"
+    t.datetime "archived_at"
+    t.index ["business_id", "archived_at", "created_at"], name: "index_quotes_on_business_id_and_archived_at_and_created_at"
     t.index ["business_id", "number"], name: "index_quotes_on_business_id_and_number", unique: true
     t.index ["business_id", "status", "created_at"], name: "index_quotes_on_business_id_and_status_and_created_at"
     t.index ["business_id"], name: "index_quotes_on_business_id"
@@ -515,6 +530,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000300) do
   add_foreign_key "invitations", "users", column: "invited_by_id", on_delete: :nullify
   add_foreign_key "properties", "businesses", on_delete: :cascade
   add_foreign_key "properties", "clients", on_delete: :cascade
+  add_foreign_key "quote_events", "businesses"
+  add_foreign_key "quote_events", "quotes", on_delete: :cascade
+  add_foreign_key "quote_events", "users", on_delete: :nullify
   add_foreign_key "quote_line_items", "businesses", on_delete: :cascade
   add_foreign_key "quote_line_items", "catalog_items", on_delete: :nullify
   add_foreign_key "quote_line_items", "quotes", on_delete: :cascade

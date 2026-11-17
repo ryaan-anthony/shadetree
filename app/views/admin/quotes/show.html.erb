@@ -1,0 +1,103 @@
+<%# QTE-06: a sent quote's page for staff. Drafts open in the builder instead. %>
+<% quote = @quote %>
+<% totals = quote.totals %>
+<% content_for :title, "#{quote.number}#{" #{quote.title}" if quote.title}" %>
+<%= page_header (quote.title || "Quote #{quote.number}"), lede: safe_join([ "#{quote.number} for ", link_to(quote.client.display_name, admin_client_path(quote.client), class: "font-medium text-ink hover:underline"), (", #{quote.property.one_line}" if quote.property) ].compact) do %>
+  <% if quote.sendable? %>
+    <%= link_to new_admin_quote_send_path(quote), class: button_classes(:secondary) do %><%= icon "send" %> Send again<% end %>
+  <% end %>
+  <%= link_to preview_admin_quote_path(quote), class: button_classes(:secondary), target: "_blank", rel: "noopener" do %><%= icon "eye" %> View as client<% end %>
+  <div class="contents" data-controller="modal">
+  <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
+    <button type="button" class="<%= button_classes(:ghost, :icon) %>" data-menu-target="button" data-modal-target="return" data-action="menu#toggle"
+            aria-haspopup="true" aria-expanded="false" aria-label="More actions"><%= icon "more-horizontal" %></button>
+    <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
+      <%= link_to pdf_admin_quote_path(quote), class: "menu-item", data: { turbo: false } do %><%= icon "download" %> Download PDF<% end %>
+      <%= button_to duplicate_admin_quote_path(quote), class: "menu-item", form: { class: "contents" } do %><%= icon "copy" %> Duplicate<% end %>
+      <button type="button" class="menu-item" data-action="modal#open menu#close" aria-haspopup="dialog"><%= icon "users" %> Duplicate for another client</button>
+      <% if quote.archived? %>
+        <%= button_to unarchive_admin_quote_path(quote), method: :patch, class: "menu-item", form: { class: "contents" } do %><%= icon "rotate-ccw" %> Restore from archive<% end %>
+      <% elsif quote.archivable? %>
+        <%= button_to archive_admin_quote_path(quote), method: :patch, class: "menu-item", form: { class: "contents" } do %><%= icon "archive" %> Archive<% end %>
+      <% end %>
+    </div>
+  </div>
+    <%# Duplicate for another client: the client picker in a dialog. %>
+    <%= modal id: "duplicate-for", title: "Duplicate for another client", description: "A new draft with the same lines, for the client you choose." do %>
+      <%= form_with url: duplicate_admin_quote_path(quote), class: "space-y-4" do %>
+        <%= render "admin/clients/picker", name: "client", required: true %>
+        <div class="flex justify-end gap-2">
+          <button type="button" class="<%= button_classes(:secondary) %>" data-action="modal#close">Cancel</button>
+          <%= submit_tag "Make a copy", class: button_classes(:primary), name: nil %>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>
+
+<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+  <div class="min-w-0 space-y-4">
+    <%= card do %>
+      <dl class="grid gap-4 text-sm sm:grid-cols-4">
+        <div><dt class="text-sm2 text-muted">Status</dt><dd class="mt-1"><%= quote_status_badge(quote) %></dd></div>
+        <div><dt class="text-sm2 text-muted">Sent</dt><dd class="mt-1 text-ink"><%= quote.sent_at ? local_date(quote.sent_at.in_time_zone(current_business.time_zone).to_date) : "Not sent" %></dd></div>
+        <div>
+          <dt class="text-sm2 text-muted">Valid until</dt>
+          <dd class="mt-1 text-ink"><%= quote.expires_on ? local_date(quote.expires_on) : "No end date" %>
+            <% if quote.expiry_extendable? %>
+              <span data-controller="modal">
+                <button type="button" class="btn-link ml-1 text-sm2" data-action="modal#open" aria-haspopup="dialog">Change</button>
+                <%= modal id: "quote-extend-expiry", title: "Change the valid-until date", description: "The client can approve until the end of this day. Their link stays the same." do %>
+                  <%= form_with url: extend_expiry_admin_quote_path(quote), method: :patch, class: "space-y-4" do %>
+                    <div class="field">
+                      <label class="label" for="expires_on">Valid until</label>
+                      <%= date_field_tag :expires_on, [ [ quote.expires_on, current_business.today ].compact.max + 14, current_business.today + Quote::MAX_VALIDITY ].min,
+                                       min: current_business.today + 1, max: current_business.today + Quote::MAX_VALIDITY, class: "input", required: true %>
+                    </div>
+                    <div class="flex justify-end gap-2">
+                      <button type="button" class="<%= button_classes(:secondary) %>" data-action="modal#close">Cancel</button>
+                      <%= submit_tag "Save date", class: button_classes(:primary), name: nil %>
+                    </div>
+                  <% end %>
+                <% end %>
+              </span>
+            <% end %>
+          </dd>
+        </div>
+        <div><dt class="text-sm2 text-muted">Total</dt><dd class="money mt-1 font-semibold text-ink"><%= money(totals.total) %></dd></div>
+      </dl>
+    <% end %>
+
+    <%= render "admin/quotes/responses", quote: %>
+
+    <%= card do %>
+      <div class="quote-doc"><%= render "client/quotes/document", quote:, totals: %></div>
+      <% if quote.internal_notes %>
+        <div class="mt-5 rounded-control bg-sunken p-3 text-sm2">
+          <p class="font-semibold text-ink">Internal notes</p>
+          <p class="mt-1 whitespace-pre-line text-subtle"><%= quote.internal_notes %></p>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+
+  <aside class="space-y-4">
+    <% if quote.sends.any? %><%= render "admin/quotes/sent_panel", quote: %><% end %>
+    <%= card title: "Activity" do %>
+      <ol class="space-y-3 text-sm2" id="quote-activity">
+        <% @activity.each do |entry| %>
+          <li class="flex gap-2.5">
+            <%= icon entry.icon, class: "mt-0.5 size-4 shrink-0 text-faint" %>
+            <div class="min-w-0">
+              <p class="text-ink"><%= entry.title %></p>
+              <% if entry.detail %><p class="mt-0.5 whitespace-pre-line text-subtle"><%= entry.detail %></p><% end %>
+              <p class="text-muted"><% if entry.since %><%= local_time(entry.since) %> to <% end %><%= local_time(entry.at) %></p>
+            </div>
+          </li>
+        <% end %>
+      </ol>
+    <% end %>
+  </aside>
+</div>
+
+<%= render "admin/clients/quick_create", button: false %>

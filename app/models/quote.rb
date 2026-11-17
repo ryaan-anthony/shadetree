@@ -27,6 +27,7 @@ class Quote < ApplicationRecord
   has_many :email_messages, as: :related, dependent: :nullify
   has_many :responses, -> { order(:created_at, :id) }, class_name: "QuoteResponse", inverse_of: :quote, dependent: :delete_all
   has_one :approval, -> { where(kind: "approved") }, class_name: "QuoteResponse", inverse_of: :quote
+  has_many :events, -> { order(:occurred_at, :id) }, class_name: "QuoteEvent", inverse_of: :quote, dependent: :delete_all
   has_many :line_items, -> { order(:position, :id) }, class_name: "QuoteLineItem", inverse_of: :quote,
            dependent: :delete_all, autosave: true
   # Photos get a page-sized version at upload, so the client's first view doesn't wait on it.
@@ -53,6 +54,41 @@ class Quote < ApplicationRecord
   before_save :cache_totals
 
   scope :drafts, -> { where(status: "draft") }
+  scope :unarchived, -> { where(archived_at: nil) }
+  scope :archived, -> { where.not(archived_at: nil) }
+
+  # QTE-06: the list's tabs. "Expired" and "awaiting response" depend on the business's today.
+  FILTERS = { "all" => "All", "awaiting" => "Awaiting response", "changes_requested" => "Changes requested", "draft" => "Drafts",
+              "approved" => "Approved", "declined" => "Declined", "expired" => "Expired", "archived" => "Archived" }.freeze
+  def self.filtered(filter, today:)
+    case filter
+    when "all" then unarchived
+    when "archived" then archived
+    when "awaiting" then unarchived.where(status: "sent").where("quotes.expires_on IS NULL OR quotes.expires_on >= ?", today)
+    when "expired" then unarchived.where(status: "sent").where("quotes.expires_on < ?", today)
+    else unarchived.where(status: filter)
+    end
+  end
+
+  # How many quotes each tab holds, in one query.
+  def self.filter_counts(today:)
+    bucket = sanitize_sql_array([ <<~SQL.squish, today ])
+      CASE WHEN quotes.archived_at IS NOT NULL THEN 'archived'
+           WHEN quotes.status = 'sent' AND quotes.expires_on < ? THEN 'expired'
+           WHEN quotes.status = 'sent' THEN 'awaiting'
+           ELSE quotes.status END
+    SQL
+    counts = group(Arel.sql(bucket)).count
+    FILTERS.keys.index_with { counts.fetch(_1, 0) }.merge("all" => counts.except("archived").values.sum)
+  end
+
+  # By quote number, or by client (name, phone, email or address, as CLI-02 searches).
+  def self.search(query)
+    query = query.to_s.strip
+    return all if query.empty?
+
+    where("quotes.number ILIKE ?", "%#{sanitize_sql_like(query)}%").or(where(client_id: Client.search(query).select(:id)))
+  end
 
   def draft? = status == "draft"
   def sent? = status == "sent"
@@ -63,6 +99,70 @@ class Quote < ApplicationRecord
   # QTE-05: the client can approve, decline or ask for changes while the quote is sent and
   # still valid. (Revisions, QTE-06, add "and not superseded".)
   def open_for_response? = sent? && !expired?
+
+  def archived? = archived_at.present?
+
+  # QTE-06: staff tidy the list. Archiving hides a quote from the list's other tabs; the client's
+  # link keeps working.
+  # Drafts aren't archived (delete them instead): only quotes that went out.
+  def archivable? = !draft? && !archived?
+
+  def archive!(by:)
+    raise ArgumentError, "Delete a draft instead of archiving it." if draft?
+
+    transaction { update_columns(archived_at: Time.current) && QuoteEvent.record!(self, :archived, by:) } unless archived?
+  end
+
+  def unarchive!(by:)
+    transaction { update_columns(archived_at: nil) && QuoteEvent.record!(self, :unarchived, by:) } if archived?
+  end
+
+  # A sent quote that hasn't been answered (or the client asked for changes) can be given a new
+  # valid-until date, including one that has already expired: any day from tomorrow to a year
+  # out. The client's links are kept alive past it (PLT-12 grace), so "the same link" holds.
+  def expiry_extendable? = status.in?(%w[sent changes_requested])
+  MAX_VALIDITY = 1.year
+
+  def extend_expiry!(date, by:)
+    date = Date.parse(date.to_s) rescue nil # rubocop:disable Style/RescueModifier
+    raise ArgumentError, "Choose a date after today." unless date && date > business.today
+    raise ArgumentError, "Choose a date within a year." if date > business.today + MAX_VALIDITY
+
+    transaction do
+      lock!
+      raise ArgumentError, "Only a sent quote's expiry can be extended." unless expiry_extendable?
+
+      from = expires_on
+      self.expires_on = date
+      save!(validate: false)
+      ClientLink.active.where(linkable: self).where("expires_at IS NOT NULL AND expires_at < ?", client_link_expires_at)
+                .update_all(expires_at: client_link_expires_at)
+      QuoteEvent.record!(self, :expiry_extended, by:, from: from&.iso8601, to: date.iso8601)
+    end
+  end
+
+  # A new draft from this one: the lines, title, terms and discount. Numbers, dates, sends and
+  # taxes start fresh (today's rates for the client). For the same client it keeps the
+  # property, message, internal notes and files; for another client it keeps none of those,
+  # since they're about the first client (their yard's photos, a gate code, "Hi Maria").
+  def duplicate!(client: self.client, by: nil)
+    same_client = client.id == client_id
+    transaction do
+      copy = Quote.start(client:, property: (property if same_client), created_by: by)
+      copy.assign_attributes(title:, terms:, prices_include_tax:, discount_kind:, discount_percent:, discount_amount_cents:)
+      copy.assign_attributes(message:, internal_notes:) if same_client
+      copy.sync_line_items(current_line_items.map do |line|
+        line.attributes.slice(*%w[name description quantity unit taxable discount_kind]).merge(
+          "key" => SecureRandom.uuid, "unit_price" => line.unit_price&.to_s, "discount_value" => line.discount_value&.to_s,
+          "catalog_item" => line.catalog_item&.uid
+        )
+      end)
+      attachments.each { copy.attachments.attach(_1.blob) } if same_client
+      copy.save!
+      QuoteEvent.record!(copy, :duplicated, by:, from: number)
+      copy
+    end
+  end
 
   # Staff can also record an approval after the client asked for changes (they agreed on the
   # phone after all), but not on an expired quote: its dates come first.

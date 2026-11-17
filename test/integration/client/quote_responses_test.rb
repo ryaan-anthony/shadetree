@@ -207,6 +207,7 @@ class Client::QuoteResponsesTest < ActionDispatch::IntegrationTest
 
   test "the staff preview shows the buttons but can't act" do
     sign_in users(:one)
+    post switch_admin_business_path, params: { business: @business.uid }
     get preview_admin_quote_path(@quote)
     assert_select "#quote-actions button[disabled]", 3
     assert_select "#quote-actions form", false

@@ -23,18 +23,21 @@ completes the quote lifecycle around building, sending and approving.
 
 ## Acceptance criteria
 
-- [ ] Quote statuses are Draft, Sent, Viewed, Changes requested, Approved, Declined, Expired,
+- [x] Quote statuses are Draft, Sent, Viewed, Changes requested, Approved, Declined, Expired,
       Archived; expiry is applied automatically at the expiry date in the business time zone.
-- [ ] The quote list shows number, client, title, total, status, sent/updated dates; filters by
+      *Viewed is an indicator on Sent ("Not opened", "Viewed 3×"); Expired follows the date in
+      the business's time zone; Archived is kept apart from status.*
+- [x] The quote list shows number, client, title, total, status, sent/updated dates; filters by
       status (with an "awaiting response" shortcut), search by client name or number, and shows
       totals for the filtered set.
 - [ ] Editing a sent (not approved) quote creates a new revision; resending shows the client the
       latest; staff can view previous revisions and what changed.
 - [ ] Staff can duplicate any quote into a new draft (optionally for another client), archive and
-      unarchive, extend expiry, and reopen an expired quote by revising.
+      unarchive, extend expiry, and reopen an expired quote by revising. *All but revising.*
 - [ ] The quote page shows an activity history: created, sent (to whom), viewed, responses,
-      revisions, status changes, with who/when.
+      revisions, status changes, with who/when. *All but revisions.*
 - [ ] Quotes appear on the client page (CLI-01) and link back to their originating request.
+      *On the client page; requests arrive with CLI-04.*
 - [ ] Tests cover status transitions, auto-expiry, revisioning, duplication, roles and tenancy.
 
 ## Out of scope
@@ -43,5 +46,6 @@ completes the quote lifecycle around building, sending and approving.
 
 ## Open questions
 
-- Should revising an approved quote be blocked (recommended, 05-quotes open question 2)?
-- Is "Viewed" a status or just an indicator? Recommend an indicator shown alongside Sent.
+- ~~Should revising an approved quote be blocked (recommended, 05-quotes open question 2)?~~
+  Yes: an approved quote can only be duplicated.
+- ~~Is "Viewed" a status or just an indicator?~~ An indicator shown alongside Sent.

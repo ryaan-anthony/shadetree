@@ -37,7 +37,7 @@ class Admin::QuoteSendsController < Admin::BaseController
     elsif @quote.past_expiry? then "Quote #{@quote.number} expired on #{l(@quote.expires_on)}. Change its valid-until date before sending."
     else "Quote #{@quote.number} can't be sent now."
     end
-    redirect_to(@quote.editable? ? edit_admin_quote_path(@quote) : preview_admin_quote_path(@quote), alert: message)
+    redirect_to(helpers.staff_quote_path(@quote), alert: message)
   end
 
   def send_link
@@ -63,7 +63,7 @@ class Admin::QuoteSendsController < Admin::BaseController
                                             quote_id: @quote.id, link_id: link.id, subject: @form.subject, message: @form.message, cc: @form.cc_header)
       quote_send.update!(email_message: email)
     end
-    redirect_to preview_admin_quote_path(@quote), notice: "Quote #{@quote.number} is on its way to #{@form.to}."
+    redirect_to admin_quote_path(@quote), notice: "Quote #{@quote.number} is on its way to #{@form.to}."
   end
 
   def too_many_today? = @quote.sends.unscope(:order).where(channel: "email", created_at: 1.day.ago..).count >= EMAILS_PER_QUOTE_PER_DAY
