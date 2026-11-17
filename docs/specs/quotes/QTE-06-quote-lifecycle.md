@@ -30,15 +30,16 @@ completes the quote lifecycle around building, sending and approving.
 - [x] The quote list shows number, client, title, total, status, sent/updated dates; filters by
       status (with an "awaiting response" shortcut), search by client name or number, and shows
       totals for the filtered set.
-- [ ] Editing a sent (not approved) quote creates a new revision; resending shows the client the
-      latest; staff can view previous revisions and what changed.
-- [ ] Staff can duplicate any quote into a new draft (optionally for another client), archive and
-      unarchive, extend expiry, and reopen an expired quote by revising. *All but revising.*
-- [ ] The quote page shows an activity history: created, sent (to whom), viewed, responses,
-      revisions, status changes, with who/when. *All but revisions.*
+- [x] Editing a sent (not approved) quote creates a new revision; resending shows the client the
+      latest; staff can view previous revisions and what changed. *"Revise" keeps what was sent
+      (snapshot and PDF); the client sees "being updated" until the next send.*
+- [x] Staff can duplicate any quote into a new draft (optionally for another client), archive and
+      unarchive, extend expiry, and reopen an expired quote by revising.
+- [x] The quote page shows an activity history: created, sent (to whom), viewed, responses,
+      revisions, status changes, with who/when.
 - [ ] Quotes appear on the client page (CLI-01) and link back to their originating request.
       *On the client page; requests arrive with CLI-04.*
-- [ ] Tests cover status transitions, auto-expiry, revisioning, duplication, roles and tenancy.
+- [x] Tests cover status transitions, auto-expiry, revisioning, duplication, roles and tenancy.
 
 ## Out of scope
 

@@ -1,0 +1,85 @@
+<% request_record = @request %>
+<% client = request_record.client %>
+<%= page_header client.display_name, lede: "#{request_record.matched_existing_client || request_record.source != "form" ? "Existing client" : "New client"} · #{request_record.source_label}#{" · logged by #{request_record.created_by.full_name}" if request_record.created_by} · #{l(request_record.created_at.in_time_zone(current_business.time_zone), format: :long)}" do %>
+  <% (ServiceRequest::STATUSES - [ request_record.status, "quoted" ]).each do |status| %>
+    <%= button_to status_admin_service_request_path(request_record, status:), method: :patch, class: button_classes(:secondary), form: { class: "contents" } do %>
+      <%= { "new" => "Mark new", "in_progress" => "Mark in progress", "archived" => "Archive" }.fetch(status) %>
+    <% end %>
+  <% end %>
+  <%= button_to quote_admin_service_request_path(request_record), class: button_classes, form: { class: "contents" } do %><%= icon "file-plus" %> Create quote<% end %>
+<% end %>
+
+<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+  <div class="min-w-0 space-y-4">
+    <%= card do %>
+      <div class="mb-3"><%= badge request_record.status_label, tone: { "new" => :info, "in_progress" => :warning, "quoted" => :success, "archived" => :neutral }.fetch(request_record.status) %></div>
+      <dl class="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-[8rem_1fr]">
+        <% [ [ "Email", request_record.contact_email && mail_to(request_record.contact_email, class: "hover:underline") ],
+             [ "Phone", request_record.contact_phone && link_to(request_record.contact_phone, "tel:#{request_record.contact_phone.gsub(/[^\d+]/, "")}", class: "hover:underline") ],
+             [ "Address", request_record.property ? safe_join(request_record.property.address_lines, ", ") : request_record.address_line ],
+             [ "Services", request_record.service_names.join(", ").presence ],
+             [ "Timing", request_record.timing ] ].each do |label, value| %>
+          <% next if value.blank? %>
+          <dt class="text-muted"><%= label %></dt><dd class="text-ink"><%= value %></dd>
+        <% end %>
+      </dl>
+      <% if request_record.matched_existing_client && request_record.source == "form" %>
+        <p class="mt-3 text-sm2 text-muted">Matched to <%= link_to client.display_name, admin_client_path(client), class: "font-medium text-ink hover:underline" %> by email or phone. The details above are what they typed; check them before you reply.</p>
+      <% end %>
+      <% if request_record.description %>
+        <h2 class="mt-5 text-sm font-semibold text-ink">What they need</h2>
+        <p class="mt-1 whitespace-pre-line text-sm text-body"><%= request_record.description %></p>
+      <% end %>
+      <% if request_record.photos.attached? %>
+        <h2 class="mt-5 text-sm font-semibold text-ink">Photos</h2>
+        <ul class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <% request_record.photos.each do |photo| %>
+            <li><%= link_to rails_blob_path(photo, disposition: "inline"), target: "_blank", rel: "noopener" do %>
+              <%= image_tag rails_representation_path(photo.variant(:web)), alt: "Photo #{request_record.photos.index(photo) + 1} from #{client.display_name}", loading: "lazy",
+                            class: "aspect-[4/3] w-full rounded-lg border border-line object-cover" %>
+            <% end %></li>
+          <% end %>
+        </ul>
+      <% end %>
+      <p class="mt-5 text-sm2 text-muted">Creating a quote fills in the client, the address and these services<%= " and attaches the photos" if request_record.photos.attached? %>. Nothing is sent until you send it.</p>
+    <% end %>
+
+    <%= card title: "Internal notes", id: "notes" do %>
+      <% if request_record.notes.any? %>
+        <ul class="mb-4 space-y-3 text-sm">
+          <% request_record.notes.each do |note| %>
+            <li><p class="whitespace-pre-line text-ink"><%= note.body %></p>
+              <p class="mt-0.5 text-sm2 text-muted"><%= note.user&.full_name || "A former member" %>, <%= local_time(note.created_at) %></p></li>
+          <% end %>
+        </ul>
+      <% end %>
+      <%= form_with model: @note, scope: :service_request_note, url: admin_service_request_notes_path(request_record), class: "space-y-3" do |f| %>
+        <%= f.field :body, as: :textarea, label: "Add a note", rows: 3, maxlength: 5_000, placeholder: "Only your team sees notes." %>
+        <%= f.submit_button "Add note", variant: :secondary %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <aside class="space-y-4">
+    <%= card title: "Quotes" do %>
+      <% if request_record.quotes.any? %>
+        <ul class="space-y-2 text-sm2">
+          <% request_record.quotes.each do |quote| %>
+            <li class="flex items-baseline justify-between gap-2"><%= link_to "#{quote.number}#{" · #{quote.title}" if quote.title}", staff_quote_path(quote), class: "min-w-0 truncate font-medium text-ink hover:underline" %>
+              <span class="money text-subtle"><%= money(quote.total) %></span></li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="text-sm2 text-muted">None yet.</p>
+      <% end %>
+    <% end %>
+    <%= card title: "Seen by" do %>
+      <ul class="space-y-1 text-sm2">
+        <% @views.each do |view| %>
+          <li><span class="text-ink"><%= view.user.full_name %></span> <span class="text-muted"><%= local_time_ago(view.viewed_at) %></span></li>
+        <% end %>
+      </ul>
+    <% end %>
+    <%= link_to "Client page", admin_client_path(client), class: button_classes(:secondary, extra: "w-full") %>
+  </aside>
+</div>

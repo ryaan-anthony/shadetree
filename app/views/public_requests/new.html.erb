@@ -1,0 +1,87 @@
+<% content_for :title, "Request a quote · #{@business.name}" %>
+<% content_for :head, tag.meta(name: "description", content: "Ask #{@business.name} for a quote.") %>
+<% if @business.request_form_enabled? %>
+  <div class="client-card p-5 sm:p-8">
+    <h1 class="text-xl font-bold text-ink">Request a quote</h1>
+    <p class="mt-1 whitespace-pre-line text-sm text-subtle"><%= @business.request_form_intro || "Tell us what you need and #{@business.name} will get back to you." %></p>
+
+    <%= form_with model: @submission, scope: :request_submission, url: public_request_path(@business.handle), multipart: true,
+                  class: "mt-6 space-y-5", data: { turbo: false } do |f| %>
+      <% if f.object.errors[:base].any? %>
+        <div class="banner banner-warning" role="alert"><%= icon "alert-circle" %><p><%= f.object.errors[:base].to_sentence %></p></div>
+      <% end %>
+      <%# Spam protection: a field people never see or fill (bots do), and when the form was shown. %>
+      <div class="hidden" aria-hidden="true">
+        <label for="request_website">Leave this empty</label>
+        <input type="text" name="website" id="request_website" tabindex="-1" autocomplete="off">
+      </div>
+      <%= hidden_field_tag :form_token, form_token, id: nil %>
+
+      <% services = RequestSubmission.offered_services.to_a %>
+      <% if services.any? %>
+        <fieldset>
+          <legend class="label">What can we help with? <span class="label-optional">(choose any)</span></legend>
+          <div class="grid gap-2 sm:grid-cols-2">
+            <% services.each do |item| %>
+              <label class="check rounded-control border border-line px-3 py-2.5">
+                <%= check_box_tag "request_submission[service_ids][]", item.uid, f.object.service_ids.include?(item.uid), id: "service_#{item.uid}" %>
+                <span class="font-medium text-ink"><%= item.name %></span>
+              </label>
+            <% end %>
+          </div>
+        </fieldset>
+      <% end %>
+
+      <%= f.field :description, as: :textarea, label: "Tell us about the job", optional: services.any?, rows: 4, maxlength: 5_000,
+                  placeholder: "What needs doing, how big it is, anything we should know." %>
+
+      <div class="field">
+        <label class="label" for="request_submission_photos">Photos <span class="label-optional">(optional, helps us quote faster)</span></label>
+        <% photo_errors = f.object.errors.full_messages_for(:photos) %>
+        <%= f.file_field :photos, multiple: true, accept: "image/png,image/jpeg,image/webp", class: "input h-auto py-2",
+                         "aria-invalid": ("true" if photo_errors.any?),
+                         "aria-describedby": [ "request_submission_photos_help", ("request_submission_photos_error" if photo_errors.any?) ].compact.join(" ") %>
+        <p class="help" id="request_submission_photos_help">Up to <%= ServiceRequest::MAX_PHOTOS %> photos, <%= ServiceRequest::PHOTO_MAX_BYTES / 1.megabyte %> MB each.
+          <% if request.post? && params.dig(:request_submission, :photos).present? %><strong class="font-semibold text-ink">Add your photos again before sending.</strong><% end %></p>
+        <% if photo_errors.any? %><p class="error-text" id="request_submission_photos_error"><%= icon "alert-circle" %><%= photo_errors.to_sentence %></p><% end %>
+      </div>
+
+      <fieldset>
+        <legend class="label">When would you like it done? <span class="label-optional">(optional)</span></legend>
+        <div class="flex flex-wrap gap-x-5 gap-y-2">
+          <% ServiceRequest::TIMINGS.each_with_index do |timing, index| %>
+            <label class="check"><%= f.radio_button :timing, timing, id: "timing_#{index}" %><span class="text-ink"><%= timing %></span></label>
+          <% end %>
+        </div>
+      </fieldset>
+
+      <hr class="border-line">
+
+      <%= f.field :name, label: "Your name", autocomplete: "name", maxlength: 120, required: true %>
+      <div class="grid gap-4 sm:grid-cols-2 [&>.field+.field]:mt-0">
+        <%= f.field :email, as: :email, label: "Email", optional: true, autocomplete: "email", maxlength: 254 %>
+        <%= f.field :phone, as: :phone, label: "Phone", optional: true, autocomplete: "tel", maxlength: 30 %>
+      </div>
+      <p class="-mt-3 text-sm2 text-muted">An email or phone number is enough. It's only used about this request.</p>
+
+      <fieldset class="space-y-4">
+        <legend class="label">Service address</legend>
+        <%= f.field :address_line1, label: "Street address", autocomplete: "address-line1", maxlength: 120, required: true %>
+        <%= f.field :address_line2, label: "Apartment, suite or unit", optional: true, autocomplete: "address-line2", maxlength: 120 %>
+        <div class="grid gap-4 sm:grid-cols-3 [&>.field+.field]:mt-0">
+          <%= f.field :city, label: "City", optional: true, autocomplete: "address-level2", maxlength: 120 %>
+          <%= f.field :region, label: "State or region", optional: true, autocomplete: "address-level1", maxlength: 120 %>
+          <%= f.field :postal_code, label: "Postal code", optional: true, autocomplete: "postal-code", maxlength: 20 %>
+        </div>
+      </fieldset>
+
+      <%= f.submit_button "Send request", class: "w-full sm:w-auto" %>
+    <% end %>
+  </div>
+<% else %>
+  <div class="client-card p-6 text-center sm:p-8">
+    <h1 class="text-lg font-bold text-ink">Get in touch with <%= @business.name %></h1>
+    <p class="mx-auto mt-2 max-w-sm text-sm text-subtle">Online requests are off right now. Call or email and we'll help.</p>
+    <%= render "client_links/business_contact" %>
+  </div>
+<% end %>

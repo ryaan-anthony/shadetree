@@ -6,11 +6,12 @@ class Client < ApplicationRecord
   MAX_TAGS = 20
   # Associations that make a client undeletable (archive instead). Later specs add theirs:
   # requests (CLI-04), quotes (QTE-01), jobs (JOB-01), invoices (INV-01).
-  DOCUMENT_ASSOCIATIONS = %i[quotes].freeze
+  DOCUMENT_ASSOCIATIONS = %i[quotes service_requests].freeze
 
   has_many :contact_methods, -> { order(:position, :id) }, class_name: "ClientContactMethod",
            inverse_of: :client, dependent: :delete_all
   has_many :quotes, dependent: :restrict_with_exception
+  has_many :service_requests, dependent: :restrict_with_exception # CLI-03
   has_many :properties, -> { order(billing: :desc, position: :asc, id: :asc) }, inverse_of: :client, dependent: :delete_all
 
   accepts_nested_attributes_for :contact_methods, allow_destroy: true,

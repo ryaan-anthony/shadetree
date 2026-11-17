@@ -9,10 +9,16 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   Capybara.enable_aria_label = true
 
   # When a test fails, show what the server did meanwhile (requests, status, timing) and the
-  # browser's console, so a CI-only failure can be diagnosed from the log.
-  teardown do
-    next if passed?
+  # browser's console, so a CI-only failure can be diagnosed from the log. This runs in
+  # before_teardown: Rails resets the browser to a blank page before teardown blocks run, so
+  # the page state must be read here, while the failing page is still open.
+  def before_teardown
+    print_failure_diagnostics if failed? && Capybara::Session.instance_created? # no browser, nothing to show
+  ensure
+    super
+  end
 
+  def print_failure_diagnostics
     log = Rails.root.join("log/test.log")
     lines = File.exist?(log) ? File.readlines(log).last(400).grep(/Started|Completed|Error|Processing by/).last(40) : []
     puts "\n--- server requests before the failure ---", lines.join
@@ -20,12 +26,15 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     puts "--- browser console ---", console.map { "#{_1.level} #{_1.message}" } if console.any?
     # Which controllers were running, and where focus and typing were, when it failed.
     state = page.evaluate_script(<<~JS) rescue nil # rubocop:disable Style/RescueModifier
-      ({ ready: document.readyState, loaded: document.documentElement.hasAttribute("data-controllers-loaded"),
+      ({ url: location.pathname, ready: document.readyState, loaded: document.documentElement.hasAttribute("data-controllers-loaded"),
+         failed: document.documentElement.dataset.controllersFailed,
          controllers: (window.Stimulus?.controllers || []).map((c) => c.identifier),
          focused: document.activeElement?.outerHTML?.slice(0, 200),
-         typed: [...document.querySelectorAll("input[type=search], input[type=text]")].map((i) => i.name + "=" + i.value) })
+         typed: [...document.querySelectorAll("input[type=search], input[type=text], input[type=tel], input[type=email]")].map((i) => i.name + "=" + i.value) })
     JS
     puts "--- page state ---", state.inspect
+  rescue StandardError => e
+    puts "--- diagnostics failed: #{e.class}: #{e.message}"
   end
 
   # Wait until every Stimulus controller has loaded (controllers/index.js marks <html>) before
@@ -34,5 +43,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   def visit(...)
     super
     assert_selector "html[data-controllers-loaded]", visible: :all, wait: 10
+    failed = page.evaluate_script("document.documentElement.dataset.controllersFailed")
+    flunk "Controllers failed to load: #{failed}" if failed # fail here, at the cause, not on a later assertion
   end
 end

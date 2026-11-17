@@ -2,7 +2,7 @@ class Admin::BusinessesController < Admin::BaseController
   skip_before_action :require_business_setup, only: [ :new, :create ]
   allow_without_business only: %i[new create]
   allow_any_member only: :switch
-  requires_permission :business_settings, only: %i[edit update]
+  requires_permission :business_settings, only: %i[edit update request_form_qr]
 
   # First business after sign-up, or another one from the switcher. Only name and industry.
   def new
@@ -38,6 +38,13 @@ class Admin::BusinessesController < Admin::BaseController
     end
   end
 
+  # CLI-03: the request form link as a QR code, to print on flyers and trucks.
+  def request_form_qr
+    business = current_business
+    png = RQRCode::QRCode.new(public_request_url(business.handle)).as_png(size: 600, border_modules: 2)
+    send_data png.to_s, type: "image/png", filename: "#{business.handle}-request-form-qr.png", disposition: "attachment"
+  end
+
   def switch
     membership = current_user.business_users.active.joins(:business).find_by(businesses: { uid: params[:business].to_s })
 
@@ -57,14 +64,15 @@ class Admin::BusinessesController < Admin::BaseController
 
   private
 
-  SETTINGS_TABS = %w[business documents branding].freeze
+  SETTINGS_TABS = %w[business documents branding request_form].freeze
 
   # Business and Documents tabs share one form model; each only sends its own fields.
   def settings_params
     params.require(:business).permit(
       :name, :industry, :description, :email, :phone, :website,
       :address_line1, :address_line2, :city, :region, :postal_code, :country, :timezone, :currency,
-      :quote_expiry_days, :quote_terms, :quote_approved_message, :invoice_due_days, :invoice_terms, :quote_number_prefix, :invoice_number_prefix
+      :quote_expiry_days, :quote_terms, :quote_approved_message, :invoice_due_days, :invoice_terms, :quote_number_prefix, :invoice_number_prefix,
+      :handle, :request_form_enabled, :request_form_intro # CLI-03
     )
   end
 

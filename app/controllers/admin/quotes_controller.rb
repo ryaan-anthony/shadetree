@@ -9,7 +9,7 @@ class Admin::QuotesController < Admin::BaseController
   include SendsPdf
   leaves_session_alone only: :search
 
-  before_action :set_quote, only: %i[show edit update destroy preview pdf archive unarchive duplicate extend_expiry]
+  before_action :set_quote, only: %i[show edit update destroy preview pdf archive unarchive duplicate extend_expiry revise revision]
   before_action :require_editable, only: %i[edit update]
 
   # The list, on the "All" tab (or ?filter= from a link). Searching posts to #search, so client
@@ -66,6 +66,21 @@ class Admin::QuotesController < Admin::BaseController
     redirect_to edit_admin_quote_path(copy), notice: "Draft #{copy.number} copied from #{@quote.number}."
   end
 
+  # QTE-06: reopens a sent quote as the draft of its next revision, in the builder.
+  def revise
+    @quote.revise!(by: current_user)
+    redirect_to edit_admin_quote_path(@quote), notice: "Revision #{@quote.revision} of #{@quote.number}. Your client sees it's being updated until you send it."
+  rescue ArgumentError => error
+    redirect_to admin_quote_path(@quote), alert: error.message
+  end
+
+  # A previous revision, as it was sent, and what changed in the next one.
+  def revision
+    @revision = @quote.revisions.find_by!(number: params[:number])
+    following = @quote.revisions.find_by(number: @revision.number + 1)
+    @changes = @revision.changes_to(following&.snapshot || QuoteResponse.snapshot_of(@quote))
+  end
+
   def extend_expiry
     @quote.extend_expiry!(params[:expires_on], by: current_user)
     redirect_to admin_quote_path(@quote), notice: "Quote #{@quote.number} is now valid until #{l(@quote.expires_on)}."
@@ -105,8 +120,8 @@ class Admin::QuotesController < Admin::BaseController
   end
 
   def destroy
-    unless @quote.draft?
-      return redirect_to(edit_admin_quote_path(@quote), alert: "Only draft quotes can be deleted.")
+    if !@quote.draft? || @quote.revising?
+      return redirect_to(helpers.staff_quote_path(@quote), alert: "Only quotes that were never sent can be deleted.")
     end
 
     @quote.destroy!
@@ -129,6 +144,8 @@ class Admin::QuotesController < Admin::BaseController
   def property_options
     @client = Client.find_by_param!(params[:client])
     @selected = params[:selected]
+    # The builder's field, or the request form's (CLI-04).
+    @field_name = params[:name].presence_in(%w[quote[property] service_request[property]]) || "quote[property]"
     render layout: false
   end
 
@@ -172,7 +189,8 @@ class Admin::QuotesController < Admin::BaseController
   def apply_builder_params
     attrs = builder_params
     @quote.lock_version = attrs[:lock_version] if attrs.key?(:lock_version)
-    change_client(attrs[:client]) if attrs[:client].present? && attrs[:client] != @quote.client.uid
+    # A revision stays with its client: its link was sent to them (QTE-06).
+    change_client(attrs[:client]) if attrs[:client].present? && attrs[:client] != @quote.client.uid && !@quote.revising?
     assign_property(attrs[:property]) if attrs.key?(:property)
     @quote.assign_attributes(attrs.slice(:title, :message, :internal_notes, :terms, :expires_on, :prices_include_tax))
     @quote.set_discount(attrs[:discount_kind], attrs[:discount_value]) if attrs.key?(:discount_kind)

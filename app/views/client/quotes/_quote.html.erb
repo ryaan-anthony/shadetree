@@ -8,6 +8,15 @@
 <% quote = document %>
 <% state = quote.client_state %>
 <% totals = quote.totals %>
+<% if state == :revising && !preview %>
+  <%# QTE-06: a new revision is being prepared; its unfinished edits are never shown. %>
+  <div class="client-card p-6 text-center sm:p-8" role="status">
+    <span class="empty-icon"><%= icon "edit-3" %></span>
+    <h1 class="text-lg font-bold text-ink"><%= @business.name %> is updating this quote</h1>
+    <p class="mx-auto mt-2 max-w-sm text-sm text-subtle">Quote <%= quote.number %><%= ", #{quote.title}," if quote.title %> is being revised. You'll get the new version soon, at this same link.</p>
+    <%= render "client_links/business_contact" %>
+  </div>
+<% else %>
 
 <% if state == :approved %>
   <% approval = quote.approval %>
@@ -91,3 +100,4 @@
   </p>
   <%= render "client_links/business_contact" %>
 </section>
+<% end %>
