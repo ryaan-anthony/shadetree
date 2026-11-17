@@ -13,7 +13,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   # before_teardown: Rails resets the browser to a blank page before teardown blocks run, so
   # the page state must be read here, while the failing page is still open.
   def before_teardown
-    print_failure_diagnostics unless passed? || skipped?
+    print_failure_diagnostics if failed? && Capybara::Session.instance_created? # no browser, nothing to show
   ensure
     super
   end
@@ -43,5 +43,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   def visit(...)
     super
     assert_selector "html[data-controllers-loaded]", visible: :all, wait: 10
+    failed = page.evaluate_script("document.documentElement.dataset.controllersFailed")
+    flunk "Controllers failed to load: #{failed}" if failed # fail here, at the cause, not on a later assertion
   end
 end
