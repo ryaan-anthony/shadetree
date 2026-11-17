@@ -1,0 +1,55 @@
+<%# The branded layout for client-facing email (NTF-01). Table layout with inline styles for
+    mail clients; the brand color is a validated hex (Branding), and text on it uses
+    Branding#ink for contrast. Dark mode: color-scheme declares light-only so clients that
+    force dark mode keep contrast, and nothing relies on background images. %>
+<% branding = @branding %>
+<% address = @business.address_lines.join(", ") %>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light only">
+    <meta name="supported-color-schemes" content="light">
+    <title><%= message.subject %></title>
+  </head>
+  <body style="margin:0;padding:0;background:#f4f5f7;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1e293b;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;">
+      <tr>
+        <td align="center" style="padding:28px 12px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
+            <tr>
+              <td style="padding:0 4px 18px;">
+                <% if branding.logo? %>
+                  <img src="<%= url_for(branding.logo(:email)) %>" alt="<%= @business.name %>" height="48" style="display:block;height:48px;width:auto;max-width:240px;border:0;">
+                <% else %>
+                  <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+                    <td style="background:<%= branding.color %>;color:<%= branding.ink %>;width:36px;height:36px;border-radius:8px;text-align:center;font-weight:700;font-size:14px;"><%= branding.initials %></td>
+                    <td style="padding-left:10px;font-size:17px;font-weight:700;color:#0f172a;"><%= @business.name %></td>
+                  </tr></table>
+                <% end %>
+              </td>
+            </tr>
+            <tr>
+              <td style="background:#ffffff;border:1px solid #e2e8f0;border-top:4px solid <%= branding.color %>;border-radius:12px;padding:28px;font-size:15px;line-height:1.6;color:#1e293b;">
+                <%= yield %>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:18px 4px 4px;font-size:13px;line-height:1.6;color:#475569;">
+                <strong style="color:#0f172a;"><%= @business.name %></strong>
+                <% [ address.presence, @business.phone.presence, @business.email.presence ].compact.each do |line| %><br><%= line %><% end %>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:10px 4px;font-size:12px;line-height:1.5;color:#64748b;">
+                Reply to this email to reach <%= @business.name %>.
+                <% if branding.show_powered_by? %><br>Sent with <a href="<%= root_url %>" style="color:#64748b;">Shadetree</a><% end %>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

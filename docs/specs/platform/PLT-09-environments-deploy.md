@@ -40,6 +40,14 @@ promoted deliberately, with backups we have actually restored.
 - [ ] A deploy/runbook document covers deploy, rollback, restore, and rotating secrets.
 - [ ] Monthly infrastructure cost is recorded against the < $50 pre-revenue target.
 
+### Configuration the app expects
+
+Set per environment in the secret store. Email (NTF-01, ADR 0017):
+- `APP_HOST`: public host for links and images in email. `MAIL_FROM`: the platform sender.
+- `SMTP_ADDRESS` (nothing is sent without it), `SMTP_PORT` (default 587, STARTTLS),
+  `SMTP_USERNAME`, `SMTP_PASSWORD`: the provider's SMTP relay.
+- **Staging** uses the provider's sandbox SMTP credentials, so it can't email real clients.
+
 ## Out of scope
 
 - Monitoring and alerting (PLT-10). Per-PR preview environments.

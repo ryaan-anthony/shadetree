@@ -60,6 +60,9 @@ end
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
+
+  # Emails sent in development open in the browser at /letter_opener (NTF-01, ADR 0017).
+  gem "letter_opener_web", "~> 3.0"
 end
 
 group :test do

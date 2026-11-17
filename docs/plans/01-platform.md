@@ -124,7 +124,7 @@ other.
 Decided in [`docs/adr`](../adr/README.md): PostgreSQL (0002), row-level tenancy (0003),
 compiled Tailwind (0004), partials + Stimulus (0005), Minitest (0006), Solid Queue (0007), object
 storage (0008), Kamal on a VPS with managed PostgreSQL (0009), headless-Chrome PDFs (0010),
-Postmark (0011), Devise (0012).
+Devise (0012), SMTP email (0017).
 
 1. **Hosting provider** for the VPS and managed PostgreSQL (ADR 0009 sets the shape). Picked in
    PLT-09; can staging share the production database server to stay under budget?

@@ -1,0 +1,13 @@
+<%= QuoteActivityMailer.subject_for(@response, @who) %>
+
+Quote <%= @quote.number %><%= " · #{@quote.title}" if @quote.title %> for <%= @quote.client.display_name %>, <%= money(@total) %>.
+<% if @response.approved? %>
+Signed by <%= @response.signer_name %> on <%= l(@response.created_at.in_time_zone(@business.time_zone), format: :long) %>.
+<% end %>
+<% if @response.message %>
+
+<%= { "declined" => "Reason", "changes_requested" => "What they'd like changed" }.fetch(@response.kind, "Note") %>:
+<%= @response.message %>
+<% end %>
+
+Open quote: <%= @url %>

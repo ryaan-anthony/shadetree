@@ -88,7 +88,8 @@ export default class extends Controller {
       empty.textContent = emptyText
       this.listTarget.append(empty)
     }
-    const show = this.listTarget.children.length > 0
+    // Results that land after focus moved away stay hidden; focusing the box again re-searches.
+    const show = this.listTarget.children.length > 0 && this.element.contains(document.activeElement)
     this.listTarget.hidden = !show
     this.inputTarget.setAttribute("aria-expanded", String(show))
     this.statusTarget.textContent = items.length ? `${items.length} items` : ""
@@ -129,8 +130,10 @@ export default class extends Controller {
     this.close()
   }
 
+  // Losing focus only hides the list. A search already under way still finishes, so typing
+  // that races a focus change isn't dropped.
   blur(event) {
-    if (!this.element.contains(event.relatedTarget)) this.close()
+    if (!this.element.contains(event.relatedTarget)) this.hide()
   }
 
   cancelPending() {
@@ -145,6 +148,10 @@ export default class extends Controller {
       this.active = -1
       this.listTarget.replaceChildren()
     }
+    this.hide()
+  }
+
+  hide() {
     this.listTarget.hidden = true
     this.inputTarget.setAttribute("aria-expanded", "false")
     this.inputTarget.removeAttribute("aria-activedescendant")

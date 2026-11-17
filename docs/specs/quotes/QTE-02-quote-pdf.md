@@ -23,10 +23,10 @@ The approach should be reusable for invoices (PAY-02).
 
 ## Acceptance criteria
 
-- [ ] A quote PDF includes: business branding and contact details, client and property, quote
+- [x] A quote PDF includes: business branding and contact details, client and property, quote
       number, dates (issued, expiry), title, message, line items (name, description, quantity,
       unit, unit price, line total), discounts, tax per rate, total, terms, and approval status
-      (and signer/date once approved). *Signer and date arrive with approval (QTE-05).*
+      (and signer/date once approved). *Signer and date: QTE-05's approved-PDF criterion.*
 - [x] Layout is legible on US Letter and A4, paginates long quotes cleanly (repeated header,
       no split rows) and handles long descriptions.
 - [x] Staff can download the PDF from the quote; clients can from the client page (QTE-03).
@@ -47,7 +47,7 @@ The approach should be reusable for invoices (PAY-02).
 - **Stability:** the stored file is kept until the quote, its status, or the client or property it
   names changes (or `PDF_VERSION` is bumped); letterhead edits, links and expiry don't change it.
 - **Pagination:** rows stay whole, except long descriptions (over 400 characters). **Date:** the
-  prepared date until sending (QTE-04) records when it went out.
+  sent date (QTE-04); a draft shows the prepared date.
 - **No QR code:** it would carry one link's token into a file that outlives the link.
 - **Invoices (PAY-02):** include `HasPdf`, add its two columns, a template, and `SendsPdf`.
 

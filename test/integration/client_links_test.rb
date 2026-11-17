@@ -19,7 +19,7 @@ class ClientLinksTest < ActionDispatch::IntegrationTest
     assert_select ".side, .topbar", count: 0
     assert_select "meta[name=robots][content=noindex]"
     assert_equal "noindex, nofollow", response.headers["X-Robots-Tag"]
-    assert_equal "no-referrer", response.headers["Referrer-Policy"]
+    assert_equal "same-origin", response.headers["Referrer-Policy"]
     assert_equal 1, @link.reload.views_count
     assert_equal "view", as_business(@business) { @link.events.first.kind }
   end
@@ -110,7 +110,7 @@ class ClientLinksTest < ActionDispatch::IntegrationTest
   test "unknown links still get the security headers" do
     get client_link_path("x" * ClientLink::TOKEN_LENGTH)
     assert_equal "noindex, nofollow", response.headers["X-Robots-Tag"]
-    assert_equal "no-referrer", response.headers["Referrer-Policy"]
+    assert_equal "same-origin", response.headers["Referrer-Policy"]
   end
 
   test "tokens are kept out of request logs" do

@@ -22,6 +22,11 @@ class Quote < ApplicationRecord
   belongs_to_business_record :client
   belongs_to_business_record :property, optional: true
   belongs_to :created_by, class_name: "User", optional: true
+  belongs_to :sent_by, class_name: "User", optional: true
+  has_many :sends, -> { recent }, class_name: "QuoteSend", inverse_of: :quote, dependent: :delete_all
+  has_many :email_messages, as: :related, dependent: :nullify
+  has_many :responses, -> { order(:created_at, :id) }, class_name: "QuoteResponse", inverse_of: :quote, dependent: :delete_all
+  has_one :approval, -> { where(kind: "approved") }, class_name: "QuoteResponse", inverse_of: :quote
   has_many :line_items, -> { order(:position, :id) }, class_name: "QuoteLineItem", inverse_of: :quote,
            dependent: :delete_all, autosave: true
   # Photos get a page-sized version at upload, so the client's first view doesn't wait on it.
@@ -50,7 +55,73 @@ class Quote < ApplicationRecord
   scope :drafts, -> { where(status: "draft") }
 
   def draft? = status == "draft"
+  def sent? = status == "sent"
+  def approved? = status == "approved"
+  # Only drafts change. A sent quote is revised (QTE-06); an approved one is locked for good.
   def editable? = draft?
+
+  # QTE-05: the client can approve, decline or ask for changes while the quote is sent and
+  # still valid. (Revisions, QTE-06, add "and not superseded".)
+  def open_for_response? = sent? && !expired?
+
+  # Staff can also record an approval after the client asked for changes (they agreed on the
+  # phone after all), but not on an expired quote: its dates come first.
+  def staff_can_approve? = status.in?(%w[sent changes_requested]) && !past_expiry?
+
+  # Why a response was refused; the message is for the client page.
+  class NotOpen < StandardError; end
+  class Changed < StandardError; end
+
+  # Records the client's answer (through `link`) or an approval staff record for the client
+  # (`by`), and moves the quote to the matching status, once: the quote row is locked and must
+  # still be open, so a double tap, a second device or a racing staff member records nothing
+  # more. `version` is the lock_version the client's page showed; approving a quote that has
+  # changed since is refused. Raises ActiveRecord::RecordInvalid for a missing name or note.
+  RESPONSE_STATUS = { approve: "approved", decline: "declined", request_changes: "changes_requested" }.freeze
+  def record_response!(action, link: nil, by: nil, version: nil, **attributes)
+    kind = RESPONSE_STATUS.fetch(action.to_sym)
+    transaction do
+      lock!
+      staff_approval = by && kind == "approved" && staff_can_approve?
+      raise NotOpen, "This quote isn't open for a response." unless open_for_response? || staff_approval
+      raise Changed, "This quote was updated after you opened it." if version && version.to_i != lock_version
+
+      response = responses.create!(business:, kind:, client_link: link, recorded_by: by, quote_version: lock_version, **attributes)
+      # Only the status changes; the quote's content was frozen when it was sent, so its
+      # validations aren't re-run (a rule added since mustn't block the client's answer).
+      self.status = kind
+      save!(validate: false)
+      response
+    end
+  end
+
+  # QTE-04: what the client sees is frozen from here on (changes after sending are revisions,
+  # QTE-06). Records the send, and on the first one marks the quote sent and records the
+  # billable "quote_sent" usage event exactly once (BIL-02). Returns the QuoteSend.
+  def mark_sent!(by:, channel:, recipient: nil, cc: nil, email_message: nil)
+    transaction do
+      lock!
+      raise ArgumentError, "a #{status} quote can't be sent" unless draft? || sent?
+
+      update!(status: "sent", sent_at: Time.current, sent_by: by) if draft?
+      UsageEvent.record!("quote_sent", self, at: sent_at || Time.current)
+      sends.create!(business:, user: by, channel:, recipient:, cc:, email_message:)
+    end
+  end
+
+  # The link the client opens: the newest active one with at least a month left (so an emailed
+  # link doesn't die soon after it's read), or a new one.
+  # It lets the client answer the quote (QTE-05); older links without those actions are replaced.
+  CLIENT_ACTIONS = %w[approve decline request_changes].freeze
+  def client_link!
+    link = ClientLink.active.where(linkable: self).where("actions @> ARRAY[?]::varchar[]", CLIENT_ACTIONS).order(created_at: :desc).first
+    link && (link.expires_at.nil? || link.expires_at > 30.days.from_now) ? link : ClientLink.issue!(self, actions: CLIENT_ACTIONS)
+  end
+
+  # Whether it can go out: it needs something to quote, and a valid-until date that hasn't
+  # passed (an expired quote is renewed with a revision, QTE-06).
+  def sendable? = (draft? || sent?) && line_items.any? && !past_expiry?
+  def past_expiry? = expires_on.present? && expires_on < business.today
 
   # Clients only ever see quotes that were sent (QTE-03): a draft is never reachable.
   def client_visible? = !draft?
@@ -63,7 +134,7 @@ class Quote < ApplicationRecord
     :awaiting
   end
 
-  def expired? = expires_on.present? && expires_on < business.today && status == "sent"
+  def expired? = past_expiry? && status == "sent"
 
   # QTE-02: the PDF. Sent quotes keep theirs (the same file until something on it changes);
   # drafts are rendered fresh for staff.

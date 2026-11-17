@@ -3,5 +3,10 @@
     <%= icon "eye" %>
     <p class="flex-1"><span class="font-semibold">Preview.</span> This is what your client sees. Previews aren't counted as views.</p>
   </div>
+  <%# Staff only: how a sent quote went out, and any delivery problem (QTE-04). %>
+  <% if @document.is_a?(Quote) %>
+    <%= render "admin/quotes/responses", quote: @document %>
+    <% if @document.sends.any? %><%= render "admin/quotes/sent_panel", quote: @document %><% end %>
+  <% end %>
 <% end %>
 <%= render ClientLink.partial_for(@document), document: @document, client_link: @client_link, preview: @preview %>

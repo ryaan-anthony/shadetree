@@ -3,7 +3,7 @@ id: NTF-01
 title: Transactional email foundation
 domain: notifications
 milestone: M2
-depends_on: [CAT-02, PLT-09]
+depends_on: [CAT-02]
 ---
 # NTF-01 · Transactional email foundation
 
@@ -26,19 +26,23 @@ business branding, reply-to the business, delivery tracking and bounce handling.
 
 - [ ] Client-facing emails send from a platform sending domain with SPF, DKIM and DMARC
       configured, using "<Business name> via Shadetree"-style display names and the business's
-      email as reply-to.
-- [ ] A shared branded layout (logo, brand color, business contact footer, plain-text part) is
+      email as reply-to. *In place: sending from `getshadetree.com` over SMTP, the display name
+      and reply-to. Still to do: the provider's DNS records (ADR 0017).*
+- [x] A shared branded layout (logo, brand color, business contact footer, plain-text part) is
       used by all client-facing emails; it renders well in major clients and dark mode.
-- [ ] Every outbound email is recorded per business with type, recipient, related record, time
-      and delivery outcome updated from provider events (delivered, bounced, complained).
-- [ ] Hard bounces/complaints suppress further sends to that address for that business and
-      flag the client record; staff can clear the flag after fixing the address.
-- [ ] Sending is asynchronous with retries; failures are visible on the related record.
-- [ ] Staging cannot email real clients (sandbox or allow-list).
-- [ ] The message catalog in 08-notifications is kept in a single place in the app; previews of
+- [x] Every outbound email is recorded per business with type, recipient, related record, time
+      and delivery outcome. *Outcome as the SMTP server reports it (sent, refused, failed); later
+      bounces and complaints stay in the provider's dashboard (ADR 0017).*
+- [x] Addresses the mail server refuses suppress further sends to that address for that business
+      and flag the client record; staff can clear the flag after fixing the address.
+- [x] Sending is asynchronous with retries; failures are visible on the related record.
+- [ ] Staging cannot email real clients (sandbox or allow-list). *Decided: staging gets the
+      provider's sandbox SMTP credentials, which only deliver to authorized recipients. Ticked
+      once the staging deploy sets them (PLT-09).*
+- [x] The message catalog in 08-notifications is kept in a single place in the app; previews of
       each message are available in development.
-- [ ] Platform emails (auth, invitations) use a Shadetree-branded variant of the layout.
-- [ ] Tests cover layout rendering, reply-to, suppression and event processing.
+- [x] Platform emails (auth, invitations) use a Shadetree-branded variant of the layout.
+- [x] Tests cover layout rendering, reply-to, suppression and SMTP failure handling.
 
 ## Out of scope
 
@@ -47,5 +51,10 @@ business branding, reply-to the business, delivery tracking and bounce handling.
 
 ## Open questions
 
-- Provider choice (cost at free-tier volume, event webhooks) — ADR. Domain depends on G8.
-- Track opens? Recommend no (privacy, unreliable); use client-link views instead.
+- ~~Provider choice (cost at free-tier volume, event webhooks) — ADR.~~ Resolved: the product
+  owner's provider over plain SMTP, with no provider integration (ADR 0017). In development,
+  letter_opener_web opens every email in the browser at `/letter_opener`.
+- ~~Sending domain?~~ Resolved: the root domain `getshadetree.com` (G8). Its DNS records are listed
+  in ADR 0017.
+- ~~Staging sandbox?~~ Resolved: the provider's sandbox SMTP credentials on staging.
+- ~~Track opens?~~ Resolved: no (privacy, unreliable); client-link views (PLT-12) are the signal.

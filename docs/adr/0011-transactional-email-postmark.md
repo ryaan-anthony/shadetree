@@ -1,6 +1,6 @@
 # 0011. Postmark for transactional email
 
-- **Status:** Accepted
+- **Status:** Superseded by [0017](0017-transactional-email-smtp.md)
 - **Date:** 2026-11-14
 - **Specs:** NTF-01, ACC-01, ACC-03, QTE-04, PAY-02, JOB-05
 
@@ -15,8 +15,8 @@ is low; the free tier must not make email expensive.
 
 1. **Amazon SES.** Cheapest per message (about $0.10 per 1,000). But it takes more setup and
    needs reputation management, and event handling has to be built with SNS.
-2. **SendGrid or Mailgun.** Full-featured, but marketing-oriented, with shared-IP reputation
-   that varies.
+2. **SendGrid and similar services.** Full-featured, but marketing-oriented, with shared-IP
+   reputation that varies.
 3. **Resend.** Simple API and a free tier, but younger, with less deliverability history.
 4. **Postmark.** Transactional-only and known for deliverability. It has separate message streams
    (transactional vs. broadcast), simple bounce and complaint webhooks, and an Action Mailer

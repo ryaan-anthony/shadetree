@@ -18,6 +18,9 @@ class ClientContactMethod < ApplicationRecord
 
   before_validation { self.business ||= client&.business }
   before_validation { self.normalized = self.class.normalize(kind, value) }
+  # The bounce flag follows the address (NTF-01): a new or changed address is flagged if the
+  # business already suppressed it, and otherwise starts clean.
+  before_save :match_suppression, if: :will_save_change_to_normalized?
 
   validates :kind, inclusion: { in: KINDS }
   validates :value, presence: true, length: { maximum: 254 }
@@ -40,6 +43,13 @@ class ClientContactMethod < ApplicationRecord
   end
 
   def email? = kind == "email"
+
+  def match_suppression
+    suppression = EmailSuppression.for(normalized) if email?
+    self.undeliverable_at = suppression && (undeliverable_at || Time.current)
+    self.undeliverable_reason = suppression&.reason
+  end
+  def undeliverable? = undeliverable_at.present?
   def phone? = kind == "phone"
 
   # tel: and mailto: links. Phones keep a leading + so international numbers dial correctly.

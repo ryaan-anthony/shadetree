@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  mount LetterOpenerWeb::Engine, at: "/letter_opener" if Rails.env.development?
+
   devise_for :users,
              controllers: {
                sessions: "users/sessions",
@@ -29,6 +31,9 @@ Rails.application.routes.draw do
   post "c/:token/quote/update", to: "client/quotes#request_update", as: :request_quote_update
   get "c/:token/quote/files/:id", to: "client/quote_files#show", as: :client_quote_file
   get "c/:token/quote/pdf", to: "client/quotes#pdf", as: :client_quote_pdf # QTE-03
+  post "c/:token/quote/approve", to: "client/quotes#approve", as: :approve_client_quote # QTE-05
+  post "c/:token/quote/decline", to: "client/quotes#decline", as: :decline_client_quote
+  post "c/:token/quote/changes", to: "client/quotes#request_changes", as: :request_changes_client_quote
 
   # Admin routes
   namespace :admin do
@@ -38,6 +43,7 @@ Rails.application.routes.draw do
         patch :archive
         patch :restore
         get :picked
+        patch "contact_methods/:contact_method_id/deliverable", action: :mark_deliverable, as: :mark_deliverable # NTF-01
       end
       post :matches, on: :collection # POST keeps emails and phones out of URLs and access logs
       post :search, on: :collection # list results and the client picker (CLI-02); POST keeps search terms out of URLs
@@ -78,7 +84,12 @@ Rails.application.routes.draw do
       get :pdf, on: :member
       get :property_options, on: :collection
       resources :attachments, only: :destroy, controller: "quote_attachments"
+      resource :send, only: %i[new create], controller: "quote_sends" # QTE-04
+      resource :approval, only: :create, controller: "quote_approvals" # QTE-05: on the client's behalf
     end
+
+    # "Send me a test email" from branding settings (NTF-01)
+    resource :test_email, only: :create
 
     # Tax rates (CAT-04)
     resources :tax_rates, except: %i[show destroy] do

@@ -1,6 +1,8 @@
 require "test_helper"
 
 class Users::SignUpTest < ActionDispatch::IntegrationTest
+  include ActiveJob::TestHelper
+
   def sign_up(**overrides)
     post user_registration_path, params: { user: {
       first_name: "Ana", last_name: "Silva", email: "ana@example.com",
@@ -44,8 +46,9 @@ class Users::SignUpTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
   end
 
-  test "Devise emails use the branded layout" do
-    sign_up
+  test "Devise emails use the branded layout, sent in the background" do
+    assert_enqueued_with(job: PlatformMailDeliveryJob) { sign_up }
+    perform_enqueued_jobs
     mail = ActionMailer::Base.deliveries.last
     assert_match "Confirm your email", mail.body.to_s
     assert_match "activity on your Shadetree account", mail.body.to_s

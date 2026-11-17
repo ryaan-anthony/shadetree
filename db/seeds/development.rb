@@ -78,7 +78,7 @@ Tenancy.with_business(business) do
     quote.save!
   end
 
-  # A sent quote with a client link (QTE-03), to see the client page. Sending arrives with QTE-04.
+  # A sent quote (QTE-04: sent as a link, so the seed sends no email), to see the client page.
   sent_to = Client.where.not(id: maria&.id).order(:id).first
   if sent_to && !Quote.exists?(client: sent_to)
     quote = Quote.start(client: sent_to, created_by: owner)
@@ -87,9 +87,26 @@ Tenancy.with_business(business) do
     quote.sync_line_items([ { "key" => "seed-0", "catalog_item" => item&.uid, "name" => item&.name || "Spring cleanup",
                               "quantity" => "1", "unit_price" => item&.unit_price&.to_s || "150", "taxable" => "1" } ])
     quote.save!
-    quote.update_column(:status, "sent")
-    link = ClientLink.issue!(quote)
+    quote.mark_sent!(by: owner, channel: "link")
+    link = quote.client_link!
     puts "Client page for quote #{quote.number}: http://localhost:3000/c/#{link.token}"
+  end
+
+  # QTE-05: one quote the client approved through their link, one they asked to change. (The
+  # team notices and the approval confirmation go to letter_opener when the queue runs.)
+  [ [ "Hedge trimming", :approve, { signer_name: nil, terms_accepted: "1", ip_address: "127.0.0.1", device: "iPhone, Safari" } ],
+    [ "Fall cleanup", :request_changes, { message: "Could you leave out the side yard? We'll do that one ourselves." } ] ].each_with_index do |(title, action, attributes), index|
+    client = Client.order(:id).offset(2 + index).first
+    next if client.nil? || Quote.exists?(client:)
+
+    quote = Quote.start(client:, created_by: owner)
+    quote.title = title
+    quote.sync_line_items([ { "key" => "seed-0", "name" => title, "quantity" => "1", "unit_price" => "240", "taxable" => "1" } ])
+    quote.save!
+    quote.mark_sent!(by: owner, channel: "link")
+    link = quote.client_link!
+    attributes = attributes.merge(signer_name: client.display_name) if action == :approve
+    quote.record_response!(action, link:, version: quote.lock_version, **attributes)
   end
 end
 

@@ -1,0 +1,9 @@
+<p style="margin:0 0 12px;">Hi<%= " #{@recipient_name}" if @recipient_name.present? %>,</p>
+<p style="margin:0 0 12px;">This is how your emails look to clients: your logo and color, your contact details at the bottom, and replies go to <strong><%= @business.email.presence || "your business email (not set yet)" %></strong>.</p>
+<p style="margin:0 0 20px;">Quotes and invoices you send will have a button like this one:</p>
+<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="border-radius:8px;background:<%= @branding.color %>;">
+  <a href="<%= root_url %>" style="display:inline-block;padding:12px 20px;font-weight:600;font-size:15px;color:<%= @branding.ink %>;text-decoration:none;">View quote</a>
+</td></tr></table>
+<% if @business.email.blank? %>
+  <p style="margin:20px 0 0;font-size:13px;color:#b45309;">Add your business email in Settings so client replies reach you.</p>
+<% end %>

@@ -10,8 +10,12 @@
   <dl class="quote-doc-meta">
     <div><dt>Prepared for</dt><dd><%= quote.client.display_name %><% if quote.client.company_name %><br><%= quote.client.company_name %><% end %></dd></div>
     <% if quote.property %><div><dt>Property</dt><dd><%= safe_join(quote.property.address_lines, tag.br) %></dd></div><% end %>
-    <%# The prepared date until sending records when it went out (QTE-04). %>
-    <div><dt>Prepared on</dt><dd><%= local_date(quote.created_at.in_time_zone(business.time_zone).to_date) %></dd></div>
+    <%# When it went out (QTE-04); a draft shows when it was prepared. %>
+    <% if quote.sent_at %>
+      <div><dt>Sent on</dt><dd><%= local_date(quote.sent_at.in_time_zone(business.time_zone).to_date) %></dd></div>
+    <% else %>
+      <div><dt>Prepared on</dt><dd><%= local_date(quote.created_at.in_time_zone(business.time_zone).to_date) %></dd></div>
+    <% end %>
     <% if quote.expires_on %><div><dt>Valid until</dt><dd><%= local_date(quote.expires_on) %></dd></div><% end %>
     <%# The PDF's status comes from the status alone (so a stored file stays the same); the page also shows expiry. %>
     <div><dt>Status</dt><dd><%= pdf ? quote.state_label : quote.client_state_label %></dd></div>

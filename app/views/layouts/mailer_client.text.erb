@@ -1,0 +1,11 @@
+<%= @business.name %>
+<%= "=" * @business.name.length %>
+
+<%= yield %>
+
+--
+<%= @business.name %>
+<%= [ @business.address_lines.join(", ").presence, @business.phone.presence, @business.email.presence ].compact.join("\n") %>
+
+Reply to this email to reach <%= @business.name %>.
+<% if @branding.show_powered_by? %>Sent with Shadetree: <%= root_url %><% end %>

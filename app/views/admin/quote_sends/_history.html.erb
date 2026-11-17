@@ -1,0 +1,14 @@
+<%# Each send of a quote and what became of its email (QTE-04). %>
+<ul class="space-y-2 text-sm2">
+  <% quote.sends.includes(:user, :email_message).each do |send| %>
+    <li class="flex flex-wrap items-baseline justify-between gap-x-3">
+      <span class="min-w-0 text-ink"><%= send.channel_label %><%= ", cc #{send.cc}" if send.cc %></span>
+      <span class="text-muted">
+        <%= local_time(send.created_at) %><%= " by #{send.user.full_name}" if send.user %>
+        <% if (email = send.email_message) %>
+          · <span class="<%= email.problem? ? "font-medium text-danger" : "" %>"><%= email.status_label %></span><% if email.problem? && email.error %> (<%= email.error %>)<% end %>
+        <% end %>
+      </span>
+    </li>
+  <% end %>
+</ul>

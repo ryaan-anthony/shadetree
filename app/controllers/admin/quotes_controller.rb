@@ -9,7 +9,7 @@ class Admin::QuotesController < Admin::BaseController
   before_action :require_editable, only: %i[edit update]
 
   def index
-    @quotes = Quote.includes(:client).order(created_at: :desc).limit(100)
+    @quotes = Quote.includes(:client, sends: :email_message).order(created_at: :desc).limit(100)
   end
 
   # Pick a client to start a draft (?client=<uid> preselects one). Drafts are only created by

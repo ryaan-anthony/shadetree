@@ -165,7 +165,7 @@ These apply to every spec; acceptance criteria assume them without repeating the
 | G5 | Is the marketing site staying inside the Rails app? | Yes until launch; revisit if marketing needs a CMS. | MKT-01 |
 | G6 | Do we keep `.project/` in the repo? | Keep until M1 completes, then delete (history is in git). | — |
 | G7 | Primary market and currency at launch? | US/USD first, data model allows other currencies. | PLT-08 |
-| G8 | Brand and domain (`getshadetree.com`?) confirmed? | Confirm before MKT and NTF work (email sending domain). | MKT-01, NTF-01 |
+| G8 | ~~Brand and domain?~~ **Decided: `getshadetree.com`**, which email also sends from ([ADR 0017](../adr/0017-transactional-email-smtp.md)). | — | MKT-01, NTF-01 |
 
 ## Definition of done (for any spec)
 
