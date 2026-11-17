@@ -41,6 +41,8 @@
         <%= f.field :invoice_terms, as: :textarea, label: "Terms", optional: true, rows: 5,
                     placeholder: "e.g. Thank you for your business. Late payments may incur a fee." %>
       <% end %>
+    <% elsif tab == "request_form" %>
+      <%= render "request_form_tab", f: %>
     <% else %>
       <%= card title: "Business profile", subtitle: "Shown on quotes, invoices and emails." do %>
         <%= f.field :name, label: "Business name", placeholder: "Oakline Lawn & Landscape" %>

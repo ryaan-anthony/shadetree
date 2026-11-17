@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_16_000600) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_16_000700) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -91,7 +91,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000600) do
     t.string "quote_number_prefix", default: "Q", null: false
     t.string "invoice_number_prefix", default: "INV", null: false
     t.text "quote_approved_message"
+    t.string "handle", null: false
+    t.boolean "request_form_enabled", default: false, null: false
+    t.text "request_form_intro"
     t.index ["active"], name: "index_businesses_on_active"
+    t.index ["handle"], name: "index_businesses_on_handle", unique: true
     t.index ["industry"], name: "index_businesses_on_industry"
     t.index ["owner_id"], name: "index_businesses_on_owner_id"
     t.index ["uid"], name: "index_businesses_on_uid", unique: true
@@ -455,6 +459,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000600) do
     t.bigint "sent_by_id"
     t.datetime "archived_at"
     t.integer "revision", default: 1, null: false
+    t.bigint "service_request_id"
     t.index ["business_id", "archived_at", "created_at"], name: "index_quotes_on_business_id_and_archived_at_and_created_at"
     t.index ["business_id", "number"], name: "index_quotes_on_business_id_and_number", unique: true
     t.index ["business_id", "status", "created_at"], name: "index_quotes_on_business_id_and_status_and_created_at"
@@ -463,10 +468,58 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000600) do
     t.index ["created_by_id"], name: "index_quotes_on_created_by_id"
     t.index ["property_id"], name: "index_quotes_on_property_id"
     t.index ["sent_by_id"], name: "index_quotes_on_sent_by_id"
+    t.index ["service_request_id"], name: "index_quotes_on_service_request_id"
     t.index ["uid"], name: "index_quotes_on_uid", unique: true
     t.check_constraint "discount_amount_cents IS NULL OR discount_amount_cents >= 0", name: "quotes_discount_amount_nonnegative"
     t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying::text, 'amount'::character varying::text]))", name: "quotes_discount_kind"
     t.check_constraint "discount_percent IS NULL OR discount_percent >= 0::numeric AND discount_percent <= 100::numeric", name: "quotes_discount_percent_range"
+  end
+
+  create_table "service_request_notes", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "service_request_id", null: false
+    t.bigint "user_id"
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["service_request_id"], name: "index_service_request_notes_on_service_request_id"
+    t.index ["user_id"], name: "index_service_request_notes_on_user_id"
+  end
+
+  create_table "service_request_views", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "service_request_id", null: false
+    t.bigint "user_id", null: false
+    t.datetime "viewed_at", null: false
+    t.index ["service_request_id", "user_id"], name: "index_service_request_views_on_service_request_id_and_user_id", unique: true
+    t.index ["user_id"], name: "index_service_request_views_on_user_id"
+  end
+
+  create_table "service_requests", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.bigint "client_id", null: false
+    t.bigint "property_id"
+    t.string "status", default: "new", null: false
+    t.string "source", default: "form", null: false
+    t.text "description"
+    t.string "timing"
+    t.jsonb "services", default: [], null: false
+    t.string "contact_name"
+    t.string "contact_email"
+    t.string "contact_phone"
+    t.boolean "matched_existing_client", default: false, null: false
+    t.jsonb "address", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "created_by_id"
+    t.index ["business_id", "status", "created_at"], name: "idx_on_business_id_status_created_at_f13f5269d8"
+    t.index ["client_id"], name: "index_service_requests_on_client_id"
+    t.index ["created_by_id"], name: "index_service_requests_on_created_by_id"
+    t.index ["property_id"], name: "index_service_requests_on_property_id"
+    t.index ["uid"], name: "index_service_requests_on_uid", unique: true
+    t.check_constraint "source::text = ANY (ARRAY['form'::character varying, 'phone'::character varying, 'email'::character varying, 'walk_in'::character varying, 'other'::character varying]::text[])", name: "service_requests_source"
+    t.check_constraint "status::text = ANY (ARRAY['new'::character varying, 'in_progress'::character varying, 'quoted'::character varying, 'archived'::character varying]::text[])", name: "service_requests_status"
   end
 
   create_table "tax_rates", force: :cascade do |t|
@@ -571,8 +624,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000600) do
   add_foreign_key "quotes", "businesses", on_delete: :cascade
   add_foreign_key "quotes", "clients"
   add_foreign_key "quotes", "properties", on_delete: :nullify
+  add_foreign_key "quotes", "service_requests", on_delete: :nullify
   add_foreign_key "quotes", "users", column: "created_by_id", on_delete: :nullify
   add_foreign_key "quotes", "users", column: "sent_by_id", on_delete: :nullify
+  add_foreign_key "service_request_notes", "businesses"
+  add_foreign_key "service_request_notes", "service_requests", on_delete: :cascade
+  add_foreign_key "service_request_notes", "users", on_delete: :nullify
+  add_foreign_key "service_request_views", "businesses"
+  add_foreign_key "service_request_views", "service_requests", on_delete: :cascade
+  add_foreign_key "service_request_views", "users", on_delete: :cascade
+  add_foreign_key "service_requests", "businesses"
+  add_foreign_key "service_requests", "clients"
+  add_foreign_key "service_requests", "properties", on_delete: :nullify
+  add_foreign_key "service_requests", "users", column: "created_by_id", on_delete: :nullify
   add_foreign_key "tax_rates", "businesses", on_delete: :cascade
   add_foreign_key "usage_events", "businesses"
   add_foreign_key "users", "businesses", column: "last_business_id", on_delete: :nullify

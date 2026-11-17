@@ -120,5 +120,24 @@ Tenancy.with_business(business) do
   end
 end
 
+# CLI-03: the request form, on, with a request from someone new.
+business.update!(request_form_enabled: true)
+Tenancy.with_business(business) do
+  unless ServiceRequest.exists?
+    services = CatalogItem.active.where(show_on_request_form: true).ordered.limit(2).map(&:uid)
+    RequestSubmission.new(business:, name: "Hannah Brooks", email: "hannah@example.com", address_line1: "12 Maple St",
+                          city: "Asheville", region: "NC", postal_code: "28801", timing: "In the next few weeks",
+                          description: "Front and back yard. The back gets a lot of shade.", service_ids: services).save
+  end
+  # CLI-04: one logged by phone, already in progress.
+  unless ServiceRequest.exists?(source: "phone")
+    client = Client.order(:id).offset(1).first
+    logged = ServiceRequest.create!(client:, property: client&.properties&.first, source: "phone", created_by: owner, status: "in_progress",
+                                    description: "Called about monthly grounds maintenance next season. Wants a quote by Dec 15.")
+    logged.notes.create!(business:, user: owner, body: "Site visit booked for Thursday.")
+  end
+  puts "Request form: http://localhost:3000/request/#{business.handle}"
+end
+
 puts "Demo data ready. Sign in as owner@example.com, admin@example.com or tech@example.com " \
      "with password #{demo_password}."

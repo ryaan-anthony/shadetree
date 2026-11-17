@@ -26,6 +26,11 @@ Rails.application.routes.draw do
   end
 
   # Client links (PLT-12): the only way clients reach documents.
+  # CLI-03: each business's public request form.
+  get "request/:handle", to: "public_requests#new", as: :public_request
+  post "request/:handle", to: "public_requests#create"
+  get "request/:handle/sent", to: "public_requests#sent", as: :public_request_sent
+
   get "c/:token", to: "client_links#show", as: :client_link
   post "c/:token/fresh", to: "client_links#request_fresh", as: :request_fresh_client_link
   post "c/:token/quote/update", to: "client/quotes#request_update", as: :request_quote_update
@@ -52,6 +57,7 @@ Rails.application.routes.draw do
     # Business management (with tabs for profile, hours, branding)
     resource :business, only: [ :new, :create, :edit, :update ] do
       post :switch, on: :collection
+      get :request_form_qr # CLI-03
     end
 
     # Team (ACC-03)
@@ -76,6 +82,15 @@ Rails.application.routes.draw do
         patch :revoke
         post :reissue
       end
+    end
+
+    # The request inbox (CLI-04)
+    resources :service_requests, path: "requests", only: %i[index show new create] do
+      member do
+        patch :status
+        post :quote
+      end
+      resources :notes, only: :create, controller: "service_request_notes"
     end
 
     # Quotes (QTE-01)

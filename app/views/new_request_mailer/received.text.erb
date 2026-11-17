@@ -1,0 +1,18 @@
+New request from <%= @request.contact_name %>
+
+<% [ [ "Email", @request.contact_email ], [ "Phone", @request.contact_phone ],
+     [ "Address", @request.address_line ], [ "Services", @request.service_names.join(", ").presence ],
+     [ "Timing", @request.timing ], [ "Photos", (@request.photos.size if @request.photos.attached?) ] ].each do |label, value| -%>
+<% next if value.blank? -%>
+<%= label %>: <%= value %>
+<% end -%>
+<% if @request.description %>
+
+<%= @request.description %>
+<% end %>
+<% if @request.matched_existing_client %>
+
+Matched to your existing client <%= @request.client.display_name %>. Check the details above before you reply.
+<% end %>
+
+Open client: <%= @url %>

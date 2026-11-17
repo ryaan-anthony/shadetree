@@ -1,0 +1,7 @@
+<% content_for :title, "Request sent · #{@business.name}" %>
+<div class="client-card p-6 text-center sm:p-8" role="status">
+  <span class="empty-icon bg-success-50 text-success"><%= icon "check" %></span>
+  <h1 class="text-lg font-bold text-ink">Request sent</h1>
+  <p class="mx-auto mt-2 max-w-sm text-sm text-subtle">Thanks! <%= @business.name %> will be in touch soon.<%= " We've emailed you a confirmation." if flash[:emailed] %></p>
+  <%= render "client_links/business_contact" %>
+</div>

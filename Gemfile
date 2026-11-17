@@ -42,6 +42,8 @@ gem "thruster", require: false
 # PDFs from the client-page HTML with headless Chrome (ADR 0010, QTE-02)
 gem "ferrum", "~> 0.17"
 gem "image_processing", "~> 1.2"
+# QR codes for the request form link (CLI-03); pure Ruby.
+gem "rqrcode", "~> 3.1"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
