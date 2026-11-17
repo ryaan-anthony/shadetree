@@ -41,7 +41,7 @@ gem "thruster", require: false
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 # PDFs from the client-page HTML with headless Chrome (ADR 0010, QTE-02)
 gem "ferrum", "~> 0.17"
-gem "image_processing", "~> 1.2"
+gem "image_processing", "~> 2.2"
 # QR codes for the request form link (CLI-03); pure Ruby.
 gem "rqrcode", "~> 3.1"
 
