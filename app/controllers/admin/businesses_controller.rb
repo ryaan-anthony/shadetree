@@ -32,7 +32,7 @@ class Admin::BusinessesController < Admin::BaseController
     attributes = @tab == "branding" ? branding_params : settings_params
 
     if @business.update(attributes)
-      redirect_to edit_admin_business_path(tab: (@tab unless @tab == "business")), notice: "Settings saved."
+      redirect_after_setup_step edit_admin_business_path(tab: (@tab unless @tab == "business")), notice: "Settings saved."
     else
       render :edit, status: :unprocessable_content
     end

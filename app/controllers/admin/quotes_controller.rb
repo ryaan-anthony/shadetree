@@ -175,7 +175,7 @@ class Admin::QuotesController < Admin::BaseController
 
   def start_for(client)
     quote = Quote.start(client:, created_by: current_user)
-    redirect_to edit_admin_quote_path(quote)
+    redirect_to edit_admin_quote_path(quote, from: ("setup" if from_setup?))
   end
 
   def builder_params

@@ -238,6 +238,8 @@ class Quote < ApplicationRecord
       raise ArgumentError, "a #{status} quote can't be sent" unless draft? || sent?
 
       update!(status: "sent", sent_at: Time.current, sent_by: by) if draft?
+      # ACC-05: when the business sent its first quote, for time-to-first-quote (no PII).
+      Business.where(id: business_id, first_quote_sent_at: nil).update_all(first_quote_sent_at: Time.current)
       UsageEvent.record!("quote_sent", self, at: sent_at || Time.current)
       sends.create!(business:, user: by, channel:, recipient:, cc:, email_message:, revision:)
     end

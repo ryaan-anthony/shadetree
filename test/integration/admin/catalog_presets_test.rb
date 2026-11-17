@@ -22,7 +22,7 @@ class Admin::CatalogPresetsTest < ActionDispatch::IntegrationTest
     get admin_catalog_items_path
     assert_select "a[href=?]", admin_catalog_presets_path, /Add starter services/
     get admin_root_path
-    assert_select "a[href=?]", admin_catalog_presets_path, "Add services"
+    assert_select "#setup-services form[action=?] button", admin_catalog_presets_path, /Add #{IndustryPreset.for("cleaning").item_list.size} starter services/ # one action (ACC-05)
   end
 
   test "preview the business's industry, pick some, add them" do

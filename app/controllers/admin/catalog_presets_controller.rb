@@ -17,6 +17,6 @@ class Admin::CatalogPresetsController < Admin::BaseController
 
     added = preset.add_to_catalog!(names)
     message = added.any? ? "Added #{helpers.pluralize(added.size, "service")} to your catalog. Set your prices next." : "Nothing new to add: those services are already in your catalog."
-    redirect_to admin_catalog_items_path, notice: message
+    redirect_after_setup_step admin_catalog_items_path, notice: message
   end
 end

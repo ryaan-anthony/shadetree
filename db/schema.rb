@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_16_000700) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_16_000800) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -53,6 +53,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000700) do
     t.datetime "last_active_at"
     t.datetime "deactivated_at"
     t.string "uid", null: false
+    t.datetime "welcome_dismissed_at"
+    t.datetime "setup_hidden_at"
     t.index ["business_id", "active"], name: "index_business_users_on_business_id_and_active"
     t.index ["business_id"], name: "index_business_users_on_business_id"
     t.index ["uid"], name: "index_business_users_on_uid", unique: true
@@ -94,6 +96,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000700) do
     t.string "handle", null: false
     t.boolean "request_form_enabled", default: false, null: false
     t.text "request_form_intro"
+    t.datetime "first_quote_sent_at"
     t.index ["active"], name: "index_businesses_on_active"
     t.index ["handle"], name: "index_businesses_on_handle", unique: true
     t.index ["industry"], name: "index_businesses_on_industry"

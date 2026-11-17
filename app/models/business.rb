@@ -17,6 +17,9 @@
 # @attr [Boolean] active Business status (default: true)
 # @attr [Integer] owner_id Business owner (foreign key to users)
 class Business < ApplicationRecord
+  # ACC-05 replaced the step-based setup; the column is dropped in a later migration.
+  self.ignored_columns += %w[onboarding_step]
+
   # Relationships
   belongs_to :owner, class_name: "User"
   has_many :business_users, dependent: :destroy
@@ -122,6 +125,13 @@ class Business < ApplicationRecord
   # QTE-05: what a client is told after approving a quote (settings → documents).
   normalizes :quote_approved_message, with: ->(text) { text.to_s.strip.presence }
   def quote_next_steps = quote_approved_message || "#{name} has your approval and will be in touch to schedule the work."
+
+  # ACC-05's product metric: seconds from setting the business up (straight after sign-up for a
+  # new owner) to its first quote sent. From the business, not the owner, so a second business or
+  # a change of owner doesn't skew it. `bin/rails onboarding:time_to_first_quote` summarizes it.
+  def seconds_to_first_quote
+    (first_quote_sent_at - created_at).round if first_quote_sent_at
+  end
 
   def currency_code = currency.presence || "USD"
 

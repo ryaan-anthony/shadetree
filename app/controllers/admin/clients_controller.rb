@@ -43,7 +43,7 @@ class Admin::ClientsController < Admin::BaseController
     if @client.save
       return redirect_to picked_admin_client_path(@client, inline: 1) if inline?
 
-      redirect_to admin_client_path(@client), notice: "#{@client.display_name} added."
+      redirect_after_setup_step admin_client_path(@client), notice: "#{@client.display_name} added."
     else
       build_blank_rows
       render :new, status: :unprocessable_content

@@ -1,4 +1,11 @@
-<% if @preview %>
+<% if @sample %>
+  <%# ACC-05: a sample quote, built in memory with the business's branding; nothing is saved. %>
+  <div class="banner banner-info mb-4" role="status">
+    <%= icon "eye" %>
+    <p class="flex-1"><span class="font-semibold">Sample quote.</span> This is how a quote looks to your clients, with your branding. Nothing here is real or saved.
+      <%= link_to "Back to setup", admin_root_path, class: "font-semibold underline-offset-2 hover:underline" %></p>
+  </div>
+<% elsif @preview %>
   <div class="banner banner-info mb-4" role="status">
     <%= icon "eye" %>
     <p class="flex-1"><span class="font-semibold">Preview.</span> This is what your client sees. Previews aren't counted as views.
