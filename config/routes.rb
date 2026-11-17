@@ -89,6 +89,8 @@ Rails.application.routes.draw do
         patch :unarchive
         post :duplicate
         patch :extend_expiry
+        post :revise
+        get "revisions/:number", action: :revision, as: :revision, constraints: { number: /\d+/ }
       end
       resources :attachments, only: :destroy, controller: "quote_attachments"
       resource :send, only: %i[new create], controller: "quote_sends" # QTE-04

@@ -108,6 +108,16 @@ Tenancy.with_business(business) do
     attributes = attributes.merge(signer_name: client.display_name) if action == :approve
     quote.record_response!(action, link:, version: quote.lock_version, **attributes)
   end
+
+  # QTE-06: the changes request answered with a revision, sent again.
+  changed = Quote.find_by(title: "Fall cleanup", status: "changes_requested", revision: 1)
+  if changed
+    changed.revise!(by: owner)
+    changed.sync_line_items([ { "key" => "seed-0", "name" => "Fall cleanup", "description" => "Front and back; side yard left out",
+                                "quantity" => "1", "unit_price" => "200", "taxable" => "1" } ])
+    changed.save!
+    changed.mark_sent!(by: owner, channel: "link")
+  end
 end
 
 puts "Demo data ready. Sign in as owner@example.com, admin@example.com or tech@example.com " \

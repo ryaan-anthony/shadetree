@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_16_000500) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_16_000600) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -330,7 +330,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000500) do
     t.index ["business_id", "quote_id", "occurred_at"], name: "index_quote_events_on_business_id_and_quote_id_and_occurred_at"
     t.index ["quote_id"], name: "index_quote_events_on_quote_id"
     t.index ["user_id"], name: "index_quote_events_on_user_id"
-    t.check_constraint "kind::text = ANY (ARRAY['archived'::character varying, 'unarchived'::character varying, 'expiry_extended'::character varying, 'duplicated'::character varying, 'revised'::character varying]::text[])", name: "quote_events_kind"
+    t.check_constraint "kind::text = ANY (ARRAY['archived'::character varying::text, 'unarchived'::character varying::text, 'expiry_extended'::character varying::text, 'duplicated'::character varying::text, 'revised'::character varying::text])", name: "quote_events_kind"
   end
 
   create_table "quote_line_items", force: :cascade do |t|
@@ -377,6 +377,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000500) do
     t.string "snapshot_digest"
     t.string "signature", null: false
     t.datetime "created_at", null: false
+    t.integer "revision", default: 1, null: false
     t.index ["business_id", "created_at"], name: "index_quote_responses_on_business_id_and_created_at"
     t.index ["client_link_id"], name: "index_quote_responses_on_client_link_id"
     t.index ["quote_id"], name: "index_quote_responses_on_quote_id"
@@ -385,6 +386,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000500) do
     t.index ["uid"], name: "index_quote_responses_on_uid", unique: true
     t.check_constraint "kind::text <> 'approved'::text OR snapshot IS NOT NULL AND snapshot_digest IS NOT NULL AND signer_name IS NOT NULL", name: "quote_responses_approval_evidence"
     t.check_constraint "kind::text = ANY (ARRAY['approved'::character varying::text, 'declined'::character varying::text, 'changes_requested'::character varying::text])", name: "quote_responses_kind"
+  end
+
+  create_table "quote_revisions", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "quote_id", null: false
+    t.integer "number", null: false
+    t.jsonb "snapshot", null: false
+    t.bigint "pdf_blob_id"
+    t.string "status", null: false
+    t.datetime "sent_at"
+    t.bigint "revised_by_id"
+    t.datetime "created_at", null: false
+    t.index ["business_id"], name: "index_quote_revisions_on_business_id"
+    t.index ["pdf_blob_id"], name: "index_quote_revisions_on_pdf_blob_id"
+    t.index ["quote_id", "number"], name: "index_quote_revisions_on_quote_id_and_number", unique: true
+    t.index ["revised_by_id"], name: "index_quote_revisions_on_revised_by_id"
   end
 
   create_table "quote_sends", force: :cascade do |t|
@@ -397,6 +414,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000500) do
     t.bigint "email_message_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "revision", default: 1, null: false
     t.index ["business_id", "quote_id"], name: "index_quote_sends_on_business_id_and_quote_id"
     t.index ["email_message_id"], name: "index_quote_sends_on_email_message_id"
     t.index ["quote_id"], name: "index_quote_sends_on_quote_id"
@@ -436,6 +454,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000500) do
     t.datetime "sent_at"
     t.bigint "sent_by_id"
     t.datetime "archived_at"
+    t.integer "revision", default: 1, null: false
     t.index ["business_id", "archived_at", "created_at"], name: "index_quotes_on_business_id_and_archived_at_and_created_at"
     t.index ["business_id", "number"], name: "index_quotes_on_business_id_and_number", unique: true
     t.index ["business_id", "status", "created_at"], name: "index_quotes_on_business_id_and_status_and_created_at"
@@ -540,6 +559,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000500) do
   add_foreign_key "quote_responses", "client_links", on_delete: :nullify
   add_foreign_key "quote_responses", "quotes", on_delete: :cascade
   add_foreign_key "quote_responses", "users", column: "recorded_by_id", on_delete: :nullify
+  add_foreign_key "quote_revisions", "active_storage_blobs", column: "pdf_blob_id", on_delete: :nullify
+  add_foreign_key "quote_revisions", "businesses"
+  add_foreign_key "quote_revisions", "quotes", on_delete: :cascade
+  add_foreign_key "quote_revisions", "users", column: "revised_by_id", on_delete: :nullify
   add_foreign_key "quote_sends", "businesses"
   add_foreign_key "quote_sends", "email_messages", on_delete: :nullify
   add_foreign_key "quote_sends", "quotes", on_delete: :cascade

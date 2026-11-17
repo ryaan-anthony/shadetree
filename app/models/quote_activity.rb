@@ -35,7 +35,8 @@ class QuoteActivity
   def sends
     quote.sends.includes(:user, :email_message).map do |send|
       by = " by #{send.user.full_name}" if send.user
-      title = send.channel == "email" ? "Emailed to #{send.recipient}#{by}" : "Link copied#{by}"
+      what = send.revision > 1 ? "Revision #{send.revision}" : nil
+      title = send.channel == "email" ? "#{what || "Emailed"}#{" emailed" if what} to #{send.recipient}#{by}" : "#{what ? "#{what} sent as a link" : "Link copied"}#{by}"
       detail = "Not delivered: #{send.email_message.error.presence || send.email_message.status_label.downcase}" if send.email_message&.problem?
       Entry.new(at: send.created_at, icon: "send", title:, detail:)
     end

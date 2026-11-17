@@ -28,6 +28,7 @@ class Quote < ApplicationRecord
   has_many :responses, -> { order(:created_at, :id) }, class_name: "QuoteResponse", inverse_of: :quote, dependent: :delete_all
   has_one :approval, -> { where(kind: "approved") }, class_name: "QuoteResponse", inverse_of: :quote
   has_many :events, -> { order(:occurred_at, :id) }, class_name: "QuoteEvent", inverse_of: :quote, dependent: :delete_all
+  has_many :revisions, -> { order(:number) }, class_name: "QuoteRevision", inverse_of: :quote, dependent: :delete_all
   has_many :line_items, -> { order(:position, :id) }, class_name: "QuoteLineItem", inverse_of: :quote,
            dependent: :delete_all, autosave: true
   # Photos get a page-sized version at upload, so the client's first view doesn't wait on it.
@@ -96,8 +97,39 @@ class Quote < ApplicationRecord
   # Only drafts change. A sent quote is revised (QTE-06); an approved one is locked for good.
   def editable? = draft?
 
+  # QTE-06: a sent quote reopened as a draft of its next revision. The client sees that it's
+  # being updated (not the unfinished edits) until it's sent again.
+  def revising? = draft? && revision > 1
+
+  # Any quote the client has been sent and hasn't approved: sent (expired or not), changes
+  # requested, or declined. Not archived ones (restore first).
+  def revisable? = status.in?(%w[sent changes_requested declined]) && !archived?
+
+  # Keeps what the client was sent as revision N and reopens the quote as the draft of revision
+  # N+1. The record is the snapshot (with its files, which are then kept even if removed from
+  # the draft) plus the stored PDF if there is one: the same content as sent, though its status
+  # line may say how the client answered. Nothing is rendered here. An expired quote gets the
+  # business's usual validity from today, and an "update requested" is answered by the next send.
+  def revise!(by:)
+    transaction do
+      lock!
+      raise ArgumentError, "Quote #{number} can't be revised." unless revisable?
+
+      snapshot = QuoteResponse.snapshot_of(self).merge(
+        "files" => attachments_attachments.includes(:blob).map { { "blob_id" => _1.blob_id, "filename" => _1.filename.to_s } }
+      )
+      revisions.create!(business:, number: revision, snapshot:, status: expired? ? "expired" : status, pdf_blob_id:, sent_at:, revised_by: by)
+      days = business.quote_expiry_days.to_i
+      self.expires_on = business.today + days.days if past_expiry? && days.positive?
+      assign_attributes(status: "draft", revision: revision + 1, update_requested_at: nil, pdf_blob_id: nil, pdf_digest: nil)
+      save!(validate: false)
+      QuoteEvent.record!(self, :revised, by:, revision:)
+    end
+  end
+
   # QTE-05: the client can approve, decline or ask for changes while the quote is sent and
-  # still valid. (Revisions, QTE-06, add "and not superseded".)
+  # still valid. A superseded revision can't be answered: its page now shows the latest, and
+  # an answer posted from an old page fails the version check (Changed).
   def open_for_response? = sent? && !expired?
 
   def archived? = archived_at.present?
@@ -186,7 +218,7 @@ class Quote < ApplicationRecord
       raise NotOpen, "This quote isn't open for a response." unless open_for_response? || staff_approval
       raise Changed, "This quote was updated after you opened it." if version && version.to_i != lock_version
 
-      response = responses.create!(business:, kind:, client_link: link, recorded_by: by, quote_version: lock_version, **attributes)
+      response = responses.create!(business:, kind:, client_link: link, recorded_by: by, quote_version: lock_version, revision:, **attributes)
       # Only the status changes; the quote's content was frozen when it was sent, so its
       # validations aren't re-run (a rule added since mustn't block the client's answer).
       self.status = kind
@@ -205,7 +237,7 @@ class Quote < ApplicationRecord
 
       update!(status: "sent", sent_at: Time.current, sent_by: by) if draft?
       UsageEvent.record!("quote_sent", self, at: sent_at || Time.current)
-      sends.create!(business:, user: by, channel:, recipient:, cc:, email_message:)
+      sends.create!(business:, user: by, channel:, recipient:, cc:, email_message:, revision:)
     end
   end
 
@@ -225,9 +257,12 @@ class Quote < ApplicationRecord
 
   # Clients only ever see quotes that were sent (QTE-03): a draft is never reachable.
   def client_visible? = !draft?
+  # The client page itself also opens while a new revision is being prepared (QTE-06).
+  def client_page_visible? = client_visible? || revising?
 
   # What the client page says about the quote.
   def client_state
+    return :revising if revising?
     return status.to_sym if status.in?(%w[draft approved declined changes_requested])
     return :expired if expired?
 
@@ -241,7 +276,7 @@ class Quote < ApplicationRecord
   def pdf_html = PdfDocument.render("pdfs/quote", quote: self, business:)
   def pdf_filename = "Quote #{number}.pdf"
   def pdf_paper = PdfRenderer.paper_for(business.country)
-  def store_pdf? = client_visible?
+  def store_pdf? = !draft?
   LONG_DESCRIPTION = 400 # characters; longer lines may split across PDF pages
   # What a stored PDF must match: the template version (bump PDF_VERSION to replace stored files
   # after a template fix), the quote's own content (any saved edit bumps lock_version) and status,
@@ -253,7 +288,7 @@ class Quote < ApplicationRecord
   end
 
   # Make the PDF when a quote is sent or answered, ahead of the first download.
-  after_commit -> { QuotePdfJob.perform_later(business_id, id) }, on: :update, if: -> { saved_change_to_status? && client_visible? }
+  after_commit -> { QuotePdfJob.perform_later(business_id, id) }, on: :update, if: -> { saved_change_to_status? && store_pdf? }
 
   def pdf_footer
     %(<div style="width:100%;margin:0 0.55in;display:flex;justify-content:space-between;font:7.5pt sans-serif;color:#64748b">) +

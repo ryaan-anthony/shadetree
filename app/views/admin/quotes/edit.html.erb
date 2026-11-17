@@ -3,7 +3,12 @@
 <% lines = @quote.current_line_items %>
 <%# The controller wraps the header too, so its save status and Preview are in scope. %>
 <div data-controller="quote-builder" data-quote-builder-property-url-value="<%= property_options_admin_quotes_path %>">
-<%= page_header "Quote #{@quote.number}", lede: "Draft for #{@quote.client.display_name}. Changes save as you go." do %>
+<% lede = if @quote.revising?
+     "Revision #{@quote.revision} for #{@quote.client.display_name}. Changes save as you go; your client sees it's being updated until you send it."
+   else
+     "Draft for #{@quote.client.display_name}. Changes save as you go."
+   end %>
+<%= page_header "Quote #{@quote.number}", lede: do %>
   <span class="save-status" id="save_status" role="status" data-quote-builder-target="status">Saved</span>
   <%= link_to preview_admin_quote_path(@quote), class: button_classes(:secondary), target: "_blank", rel: "noopener",
               data: { action: "quote-builder#preview" } do %><%= icon "eye" %> Preview as client<% end %>
@@ -14,15 +19,28 @@
             aria-haspopup="true" aria-expanded="false" aria-label="More actions"><%= icon "more-horizontal" %></button>
     <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
       <%= link_to pdf_admin_quote_path(@quote), class: "menu-item", data: { turbo: false } do %><%= icon "download" %> Download PDF<% end %>
-      <%= button_to admin_quote_path(@quote), method: :delete, class: "menu-item text-danger",
-                    form: { class: "contents", data: { turbo_confirm: "Delete draft #{@quote.number}? This can't be undone.", turbo_confirm_button: "Delete draft" } } do %>
-        <%= icon "trash" %> Delete draft
+      <% unless @quote.revising? %>
+        <%= button_to admin_quote_path(@quote), method: :delete, class: "menu-item text-danger",
+                      form: { class: "contents", data: { turbo_confirm: "Delete draft #{@quote.number}? This can't be undone.", turbo_confirm_button: "Delete draft" } } do %>
+          <%= icon "trash" %> Delete draft
+        <% end %>
       <% end %>
     </div>
   </div>
 <% end %>
 
 <div id="builder_banner"></div>
+<% if @quote.revising? && (previous = @quote.revisions.last) %>
+  <%# What this revision answers: the client's last words on the previous one. %>
+  <% answer = @quote.responses.reverse.find { _1.revision == previous.number } %>
+  <div class="banner banner-info mb-4"><%= icon "edit-3" %>
+    <div class="min-w-0 flex-1">
+      <p><% if answer %><span class="font-semibold"><%= answer.label %></span> on revision <%= previous.number %><%= answer.message ? ":" : "." %><% else %>Revising revision <%= previous.number %>.<% end %>
+        <%= link_to "See what was sent", revision_admin_quote_path(@quote, number: previous.number), class: "font-semibold underline-offset-2 hover:underline" %></p>
+      <% if answer&.message %><p class="mt-1 whitespace-pre-line">“<%= answer.message %>”</p><% end %>
+    </div>
+  </div>
+<% end %>
 
 <%= form_with model: @quote, url: admin_quote_path(@quote), method: :patch, id: "quote-builder", multipart: true,
               class: "grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]",
@@ -36,7 +54,13 @@
 
     <%= card do %>
       <div class="grid gap-4 sm:grid-cols-2 [&>*]:min-w-0">
-        <%= render "admin/clients/picker", name: "quote[client]", selected: @quote.client %>
+        <% if @quote.revising? %>
+          <%# A revision goes to the same client, through the same link. %>
+          <div class="field"><p class="label">Client</p><p class="text-sm font-semibold text-ink"><%= @quote.client.display_name %></p>
+            <p class="help">A revision goes to the same client. To quote someone else, duplicate the quote.</p></div>
+        <% else %>
+          <%= render "admin/clients/picker", name: "quote[client]", selected: @quote.client %>
+        <% end %>
         <%= turbo_frame_tag "quote_property", data: { quote_builder_target: "property" } do %>
           <%= render "property_select", client: @quote.client, selected: @quote.property&.uid %>
         <% end %>

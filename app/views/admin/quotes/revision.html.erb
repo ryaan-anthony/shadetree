@@ -1,0 +1,57 @@
+<%# QTE-06: a previous revision as the client was sent it, from its snapshot, and what changed next. %>
+<% snap = @revision.snapshot %>
+<% currency = snap["currency"] %>
+<% cents = ->(value) { money(Money.new(value.to_i, currency)) } %>
+<%= page_header "#{@quote.number}, revision #{@revision.number}",
+                lede: "Superseded #{l(@revision.created_at.in_time_zone(current_business.time_zone), format: :long)}#{" by #{@revision.revised_by.full_name}" if @revision.revised_by}. It was #{{ "sent" => "waiting for an answer", "changes_requested" => "waiting on changes", "declined" => "declined", "expired" => "expired" }.fetch(@revision.status, @revision.status)}." do %>
+  <%= link_to admin_quote_path(@quote), class: button_classes(:secondary) do %><%= icon "arrow-left" %> Back to the quote<% end %>
+<% end %>
+
+<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+  <%= card title: (snap["title"] || "Quote #{snap["number"]}") do %>
+    <dl class="mb-4 grid gap-3 text-sm sm:grid-cols-3">
+      <div><dt class="text-sm2 text-muted">Prepared for</dt><dd class="text-ink"><%= snap["client"] %></dd></div>
+      <% if snap["property"].present? %><div><dt class="text-sm2 text-muted">Property</dt><dd class="text-ink"><%= safe_join(snap["property"], tag.br) %></dd></div><% end %>
+      <div><dt class="text-sm2 text-muted">Valid until</dt><dd class="text-ink"><%= snap["expires_on"] ? l(Date.parse(snap["expires_on"])) : "No end date" %></dd></div>
+    </dl>
+    <% if snap["message"].present? %><p class="mb-4 whitespace-pre-line text-sm text-subtle"><%= snap["message"] %></p><% end %>
+    <div class="table-wrap -mx-[1.125rem]"><table class="data-table">
+      <thead><tr><th scope="col">Item</th><th scope="col" class="text-right">Qty</th><th scope="col" class="text-right">Price</th><th scope="col" class="text-right">Amount</th></tr></thead>
+      <tbody>
+        <% snap["lines"].each do |line| %>
+          <tr>
+            <td><span class="font-semibold text-ink"><%= line["name"].presence || "Item" %></span><% if line["description"].present? %><span class="sub whitespace-pre-line"><%= line["description"] %></span><% end %></td>
+            <td class="num"><%= line["quantity"].to_d.round(4).to_s("F").sub(/\.?0+\z/, "") %><%= " #{line["unit"]}" if line["unit"].present? %></td>
+            <td class="num"><%= cents.(line["unit_price_cents"]) %></td>
+            <td class="num"><%= cents.(line["amount_cents"]) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table></div>
+    <dl class="quote-totals ml-auto mt-4 max-w-xs">
+      <div><dt>Subtotal</dt><dd class="money"><%= cents.(snap.dig("totals", "subtotal_cents")) %></dd></div>
+      <% if snap.dig("totals", "discount_cents").to_i.positive? %><div><dt>Discounts</dt><dd class="money">−<%= cents.(snap.dig("totals", "discount_cents")) %></dd></div><% end %>
+      <% if snap.dig("totals", "tax_cents").to_i.positive? %><div><dt>Tax<% if snap["tax_rates"].present? %> (<%= snap["tax_rates"].map { "#{_1["name"]} #{_1["percent"]}%" }.join(", ") %>)<% end %></dt><dd class="money"><%= cents.(snap.dig("totals", "tax_cents")) %></dd></div><% end %>
+      <div class="quote-totals-total"><dt>Total</dt><dd class="money"><%= cents.(snap.dig("totals", "total_cents")) %></dd></div>
+    </dl>
+    <% if snap["terms"].present? %><p class="mt-4 whitespace-pre-line text-sm2 text-muted"><%= snap["terms"] %></p><% end %>
+    <% files = Array(snap["files"]) %>
+    <% if files.any? || @revision.pdf_blob %>
+      <ul class="mt-4 space-y-1 text-sm2">
+        <% if @revision.pdf_blob %><li><%= link_to rails_blob_path(@revision.pdf_blob, disposition: "attachment"), class: "font-medium text-ink hover:underline", data: { turbo: false } do %><%= icon "download", class: "mr-1 inline size-4" %>The PDF as stored<% end %></li><% end %>
+        <% blobs = ActiveStorage::Blob.where(id: files.map { _1["blob_id"] }).index_by(&:id) %>
+        <% files.each do |file| %>
+          <% if (blob = blobs[file["blob_id"]]) %><li><%= link_to rails_blob_path(blob, disposition: "inline"), class: "text-ink hover:underline", target: "_blank", rel: "noopener" do %><%= icon "paperclip", class: "mr-1 inline size-4" %><%= file["filename"] %><% end %></li><% end %>
+        <% end %>
+      </ul>
+    <% end %>
+  <% end %>
+
+  <%= card title: "Changed in revision #{@revision.number + 1}" do %>
+    <% if @changes.any? %>
+      <ul class="space-y-1.5 text-sm2 text-ink" id="revision-changes"><% @changes.each do |change| %><li><%= change %></li><% end %></ul>
+    <% else %>
+      <p class="text-sm2 text-muted">Nothing a client would see.</p>
+    <% end %>
+  <% end %>
+</div>
