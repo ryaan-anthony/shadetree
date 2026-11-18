@@ -26,6 +26,14 @@ class Visit < ApplicationRecord
   has_many :assignees, -> { order(:first_name, :last_name, :email) }, through: :assignments, source: :user
   has_many :events, -> { order(:occurred_at, :id) }, class_name: "VisitEvent", inverse_of: :visit, dependent: :delete_all
   has_many :notes, -> { order(:created_at, :id) }, class_name: "VisitNote", inverse_of: :visit, dependent: :delete_all # JOB-04
+  # JOB-04: photos from site, re-encoded without their metadata (phone photos carry GPS).
+  has_many_attached :photos do |attachable|
+    attachable.variant :thumb, resize_to_fill: [ 320, 320 ], preprocessed: true
+    attachable.variant :web, resize_to_limit: [ 1600, 1600 ]
+  end
+
+  MAX_PHOTOS = 30
+  PHOTO_MAX_BYTES = 20.megabytes
 
   normalizes :instructions, with: ->(value) { value.to_s.strip.presence }
   normalizes :cancel_reason, with: ->(value) { value.to_s.squish.presence }
@@ -211,6 +219,24 @@ class Visit < ApplicationRecord
       reset_ready_to_invoice
       tell_client(notify_client, by:)
       notify_crew("visit_assigned", assignees.to_a, "Back on: #{job.title} (#{job.number}), #{when_label}", by:)
+    end
+  end
+
+  # Adds one photo from site, cleaned like quote photos. Returns an error sentence, or nil.
+  # The count is checked again under the visit's lock, so two phones uploading at once can't
+  # go past the limit; the slow part (re-encoding) happens before taking it.
+  def add_photo(file, by:)
+    full = "This visit already has the most photos it can (#{MAX_PHOTOS})."
+    return full if photos.count >= MAX_PHOTOS
+
+    result = LogoUpload.clean_photo(file, max_bytes: PHOTO_MAX_BYTES)
+    return "#{file.respond_to?(:original_filename) ? file.original_filename : "That file"} #{result.error.sub("must be a PNG, JPEG or WebP image", "isn't a photo we can use (PNG, JPEG or WebP)")}." if result.error
+
+    with_lock do
+      next full if photos.count >= MAX_PHOTOS
+
+      photos.attach(result.attachable.merge(metadata: { "uploaded_by" => by&.id }))
+      nil
     end
   end
 

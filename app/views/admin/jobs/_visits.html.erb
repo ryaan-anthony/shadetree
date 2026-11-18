@@ -1,6 +1,6 @@
 <%# locals: (job:) -%>
 <%# JOB-02: the job's visits, in date order, with what changed and who changed it. %>
-<% visits = job.visits.includes(:assignees, events: :user, notes: :user).in_order.to_a %>
+<% visits = job.visits.includes(:assignees, events: :user, notes: :user, photos_attachments: :blob).in_order.to_a %>
 <% can_schedule = can?(:schedule) %>
 <%= card title: "Visits", flush: true, id: "visits",
          actions: (link_to(new_admin_job_visit_path(job), class: button_classes(:secondary, :sm)) { icon("plus") + " Schedule visit" } if can_schedule && job.open?) do %>
@@ -20,6 +20,14 @@
             <p class="text-sm2 text-muted">About <%= visit.duration_label %> · <%= visit.assignees.any? ? visit.assignees.map(&:full_name).to_sentence : "Nobody assigned yet" %></p>
             <% if visit.instructions %><p class="mt-1 whitespace-pre-line text-sm2 text-subtle"><%= visit.instructions %></p><% end %>
             <% if visit.cancel_reason %><p class="mt-1 text-sm2 text-subtle">Cancelled: “<%= visit.cancel_reason %>”</p><% end %>
+            <% if (photos = visit.photos.to_a).any? %>
+              <ul class="mt-2 flex flex-wrap gap-1.5">
+                <% photos.each.with_index(1) do |photo, number| %>
+                  <li><%= link_to rails_representation_path(photo.variant(:web)), target: "_blank", rel: "noopener" do %>
+                    <%= image_tag rails_representation_path(photo.variant(:thumb)), alt: "Photo #{number} of #{photos.size} from the #{visit.when_label} visit", loading: "lazy", class: "size-14 rounded-control bg-sunken object-cover" %><% end %></li>
+                <% end %>
+              </ul>
+            <% end %>
             <% visit.notes.each do |note| %>
               <p class="mt-1 text-sm2"><span class="whitespace-pre-line text-ink">“<%= note.body %>”</span> <span class="text-muted">— <%= note.user&.full_name || "Someone" %>, <%= local_time(note.created_at) %></span></p>
             <% end %>

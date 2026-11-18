@@ -30,18 +30,20 @@ I mark it done. Build a fast, phone-first "My day" that works with gloves on and
       access notes, tap-to-call and tap-to-text, job instructions and line items (names and
       quantities; prices hidden unless the business allows technicians to see prices).
       *The address opens Google Maps directions (the app where installed).*
-- [ ] Technicians can mark Start and Complete (timestamps recorded), add notes, and attach
+- [x] Technicians can mark Start and Complete (timestamps recorded), add notes, and attach
       photos from the camera (count/size limited; uploads tolerate poor connections with clear
       progress and retry).
+      *Up to 30 photos a visit, 20 MB each, cleaned of their metadata like quote photos. The day view sends them one at a time with progress, and keeps a failed one with Retry.*
 - [x] Completing the last visit of a job notifies Owners/Admins that the job is ready to invoice.
       *Whoever completes it (crew or office), or cancels the last open visit after work was done; once until a visit opens again.*
 - [x] Technicians can only see visits assigned to them and the client/property info for those
       visits; direct URLs to anything else are denied.
-- [ ] The view is fast (< 1 s on 4G), large-tap-target friendly, and installable to the home
+- [x] The view is fast (< 1 s on 4G), large-tap-target friendly, and installable to the home
       screen.
+      *My day renders in about 120 ms locally; Add to Home Screen opens the app at /admin, which takes technicians to My day.*
 - [x] A business setting controls whether technicians see prices.
       *Settings → Documents → Jobs; off by default. Owners and Admins always see them.*
-- [ ] Tests cover visibility rules, start/complete, photo upload and tenancy.
+- [x] Tests cover visibility rules, start/complete, photo upload and tenancy.
 
 ## Out of scope
 

@@ -3,6 +3,8 @@
 <html lang="en">
   <head>
     <%= render "layouts/head" %>
+    <%# JOB-04: the staff app installs to the home screen (the crew opens straight to My day); client and marketing pages don't offer it. %>
+    <link rel="manifest" href="<%= pwa_manifest_path(format: :json) %>">
   </head>
   <body class="bg-canvas text-sm text-body">
     <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[200] btn btn-secondary">Skip to content</a>

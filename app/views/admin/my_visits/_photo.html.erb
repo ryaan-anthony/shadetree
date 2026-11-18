@@ -1,0 +1,11 @@
+<%# locals: (photo:, visit:, number:, removable: true) -%>
+<li class="relative">
+  <%= link_to rails_representation_path(photo.variant(:web)), target: "_blank", rel: "noopener", class: "block" do %>
+    <%= image_tag rails_representation_path(photo.variant(:thumb)), alt: "Photo #{number} from the visit", loading: "lazy", class: "aspect-square w-full rounded-control bg-sunken object-cover" %>
+  <% end %>
+  <% if removable %>
+    <%# The tap target is 44 px; the visible dot stays small so it doesn't cover the photo. %>
+    <%= button_to admin_my_visit_photo_path(visit, photo), method: :delete, class: "absolute right-0 top-0 grid size-11 place-items-center text-white", "aria-label": "Remove photo #{number}",
+                  form: { data: { turbo_confirm: "Remove this photo?", turbo_confirm_button: "Remove" } } do %><span class="grid size-7 place-items-center rounded-full bg-black/60"><%= icon "x", class: "size-4" %></span><% end %>
+  <% end %>
+</li>

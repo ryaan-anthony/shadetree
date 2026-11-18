@@ -75,6 +75,40 @@
     <% end %>
   <% end %>
 
+  <%# Photos: take one with the camera, or choose several already taken. %>
+  <% photos = visit.photos.includes(:blob).to_a %>
+  <%= card title: "Photos", id: "photos", subtitle: "Before and after, damage, anything the office should see." do %>
+    <div data-controller="photo-upload" data-photo-upload-url-value="<%= admin_my_visit_photos_path(visit) %>" data-photo-upload-count-value="<%= photos.size %>"
+         data-action="online@window->photo-upload#reconnected beforeunload@window->photo-upload#guard turbo:before-visit@document->photo-upload#confirmLeave submit@document->photo-upload#confirmLeave">
+      <ul class="grid grid-cols-3 gap-2" data-photo-upload-target="list" id="visit-photos">
+        <% photos.each.with_index(1) do |photo, number| %>
+          <%= render "admin/my_visits/photo", photo:, visit:, number: %>
+        <% end %>
+      </ul>
+      <ul class="mt-3 space-y-2" data-photo-upload-target="queue"></ul>
+      <p class="sr-only" role="status" data-photo-upload-target="announce"></p>
+      <% if photos.size < Visit::MAX_PHOTOS %>
+        <%= form_with url: admin_my_visit_photos_path(visit), multipart: true, class: "mt-3" do %>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="<%= button_classes(:secondary) %> h-auto min-h-12 cursor-pointer justify-center">
+              <%= icon "camera" %> Take photo
+              <%= file_field_tag "photos[]", accept: "image/jpeg,image/png,image/webp", capture: "environment", class: "sr-only", id: "take-photo",
+                                 data: { action: "photo-upload#choose" } %>
+            </label>
+            <label class="<%= button_classes(:secondary) %> h-auto min-h-12 cursor-pointer justify-center">
+              <%= icon "image" %> Choose photos
+              <%= file_field_tag "photos[]", accept: "image/jpeg,image/png,image/webp", multiple: true, class: "sr-only", id: "choose-photos",
+                                 data: { action: "photo-upload#choose" } %>
+            </label>
+          </div>
+          <div class="mt-2 flex justify-end" data-photo-upload-fallback><%= submit_tag "Upload", class: button_classes(:secondary, :sm), name: nil %></div>
+        <% end %>
+      <% else %>
+        <p class="mt-3 text-sm2 text-muted">That's the most photos a visit can have (<%= Visit::MAX_PHOTOS %>).</p>
+      <% end %>
+    </div>
+  <% end %>
+
   <%= card title: "Notes", flush: true, id: "notes" do %>
     <% if visit.notes.any? %>
       <ul class="list">
