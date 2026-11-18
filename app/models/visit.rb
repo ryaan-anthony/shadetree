@@ -15,6 +15,8 @@ class Visit < ApplicationRecord
   MAX_DURATION = 24 * 60
   CLOCK = /\A([01]\d|2[0-3]):[0-5]\d(:00)?\z/ # "HH:MM" from a time field (browsers may add ":00")
 
+  MAX_DAYS = 31 # visits booked at once
+
   class NotOpen < StandardError; end
 
   belongs_to_business_record :job
@@ -63,6 +65,12 @@ class Visit < ApplicationRecord
 
   def assignee_ids = @assignee_ids || assignments.map(&:user_id)
 
+  # Whether the time, day, duration or crew differ from what's saved (what warnings are about).
+  def when_or_crew_changed?
+    (changes.keys & %w[scheduled_on timing starts_at window_ends_at duration_minutes]).any? ||
+      (!@assignee_ids.nil? && @assignee_ids.sort != assignments.map(&:user_id).sort)
+  end
+
   def status_label = LABELS.fetch(status)
   def open? = OPEN_STATUSES.include?(status)
   def anytime? = timing == "anytime"
@@ -91,12 +99,37 @@ class Visit < ApplicationRecord
   end
 
   # A new visit with its assignees, recorded and reflected in the job's status.
-  def schedule!(by:)
-    under_job_lock do
-      save!
-      sync_assignments
-      VisitEvent.record!(self, :scheduled, by:, to: snapshot, crew: crew_names, crew_ids: assignees.map(&:id))
+  def schedule!(by:) = self.class.schedule_all!([ self ], by:).first
+
+  # Several visits for one job at once (multi-day work: one visit per date), under one lock on
+  # the job; the people going hear about them in one notification each.
+  def self.schedule_all!(visits, by:)
+    job = visits.first.job
+    job.with_lock do
+      raise NotOpen, "#{job.number} is #{job.status_label.downcase}. Reopen it to change its visits." unless job.open?
+
+      visits.each do |visit|
+        visit.save!
+        visit.send(:sync_assignments)
+        VisitEvent.record!(visit, :scheduled, by:, to: visit.snapshot, crew: visit.crew_names, crew_ids: visit.assignees.map(&:id))
+      end
+      job.refresh_status!
     end
+    crew = visits.flat_map { _1.assignees.to_a }.uniq
+    dates = visits.size == 1 ? visits.first.when_label : "#{visits.size} visits, #{visits.first.scheduled_on.strftime("%b %-d")} to #{visits.last.scheduled_on.strftime("%b %-d")}"
+    visits.first.notify_crew("visit_assigned", crew, "You're on #{job.title} (#{job.number}): #{dates}", by:)
+    visits
+  end
+
+  # The days to book from the form: the first day, then every day through a last day (skipping
+  # days the business is closed, if asked) or other days picked one by one. At most MAX_DAYS.
+  def self.plan_dates(first, through: nil, extra: [], skip_closed: false, hours: nil)
+    first = Date.parse(first.to_s) rescue (return [])
+    last = Date.parse(through.to_s) rescue nil
+    dates = last && last > first ? (first..last).to_a : [ first ]
+    dates.select! { _1 == first || hours.nil? || hours.open_on?(_1) } if skip_closed
+    dates += Array(extra).filter_map { Date.parse(_1.to_s) rescue nil }
+    dates.uniq.sort.first(MAX_DAYS + 1)
   end
 
   # Date, time, duration, crew or instructions changed; records what changed and who changed it.
@@ -114,13 +147,21 @@ class Visit < ApplicationRecord
       save!
       sync_assignments
       after_crew = assignees.reload.to_a
-      VisitEvent.record!(self, :rescheduled, by:, from: before, to: snapshot) if snapshot.except("when") != before.except("when")
+      moved = snapshot.except("when") != before.except("when")
+      VisitEvent.record!(self, :rescheduled, by:, from: before, to: snapshot) if moved
       added, removed = after_crew - before_crew, before_crew - after_crew
       if added.any? || removed.any?
         VisitEvent.record!(self, :reassigned, by:, added: added.map(&:full_name), removed: removed.map(&:full_name),
                                                added_ids: added.map(&:id), removed_ids: removed.map(&:id))
       end
       VisitEvent.record!(self, :updated, by:, changed: details, duration_from: before_duration, duration_to: duration_minutes) if details.any?
+
+      notify_crew("visit_assigned", added, "You're on #{job.title} (#{job.number}): #{when_label}", by:)
+      notify_crew("visit_changed", removed, "You're no longer on #{job.title} (#{job.number}) on #{before["when"]}", by:)
+      if moved || details.any?
+        title = moved ? "Moved: #{job.title} (#{job.number}) is now #{when_label}" : "Updated: #{job.title} (#{job.number}), #{when_label}"
+        notify_crew("visit_changed", after_crew - added, title, by:, body: (instructions if details.include?("instructions")))
+      end
     end
   end
 
@@ -138,6 +179,7 @@ class Visit < ApplicationRecord
 
       update!(status: "scheduled", cancelled_at: nil, cancel_reason: nil)
       VisitEvent.record!(self, :restored, by:)
+      notify_crew("visit_assigned", assignees.to_a, "Back on: #{job.title} (#{job.number}), #{when_label}", by:)
     end
   end
 
@@ -160,6 +202,20 @@ class Visit < ApplicationRecord
     else
       update!(status:, cancelled_at: Time.current, cancel_reason: reason)
       VisitEvent.record!(self, :cancelled, by:, reason: cancel_reason)
+      notify_crew("visit_cancelled", assignees.to_a, "Cancelled: #{job.title} (#{job.number}), #{when_label}", by:, body: cancel_reason)
+    end
+  end
+
+  # NTF-02: tells the people going (not whoever made the change). The notification opens the
+  # job for those who can see jobs; technicians get their day view (JOB-04) once it exists.
+  def notify_crew(kind, users, title, by:, body: nil)
+    users = Array(users).reject { _1.id == by&.id }
+    return if users.empty?
+
+    paths = Rails.application.routes.url_helpers
+    office = business.business_users.active.where(user: users).select { _1.can?(:office) }.map(&:user_id)
+    users.partition { office.include?(_1.id) }.zip([ paths.admin_job_path(job), paths.admin_root_path ]).each do |group, path|
+      NotificationType.deliver(kind, business:, subject: self, actor: by, to: group, title:, body:, path:) if group.any?
     end
   end
 

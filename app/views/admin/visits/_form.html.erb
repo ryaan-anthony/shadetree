@@ -8,10 +8,47 @@
   <% problems = visit.errors.reject { _1.attribute.in?(%i[scheduled_on start_time window_end_time duration_minutes instructions]) }.map(&:full_message) %>
   <% if problems.any? %><div class="banner banner-danger" role="alert"><%= icon "alert-circle" %><p><%= problems.to_sentence %></p></div><% end %>
   <%= f.hidden_field :lock_version if visit.persisted? %>
+  <% if @warnings.present? %>
+    <div class="banner banner-warning" role="alert"><%= icon "alert-triangle" %>
+      <div><p class="font-semibold">Before you <%= visit.new_record? ? "book" : "save" %> this</p>
+        <ul class="mt-1 list-disc pl-5"><% @warnings.each do |warning| %><li><%= warning %></li><% end %></ul>
+        <p class="mt-1">You can still <%= visit.new_record? ? "schedule it" : "save it" %>, or change it below.</p></div>
+    </div>
+    <%= hidden_field_tag :confirm, "1" %>
+  <% end %>
 
   <%= card do %>
     <div class="space-y-4">
-      <div class="w-48"><%= f.field :scheduled_on, as: :date, label: "Date" %></div>
+      <div class="w-48"><%= f.field :scheduled_on, as: :date, label: visit.new_record? ? "Date (or first day)" : "Date" %></div>
+      <% if visit.new_record? %>
+        <%# Work over several days: one visit per day, each its own to move or cancel later. %>
+        <details class="rounded-control border border-line p-3" <%= "open" if params[:through].present? || Array(params[:extra_dates]).any?(&:present?) %>>
+          <summary class="cursor-pointer text-sm font-medium text-ink">More than one day</summary>
+          <p class="mt-2 text-sm2 text-muted">Each day becomes its own visit, with the same time, crew and instructions.</p>
+          <div class="mt-3 flex flex-wrap items-end gap-x-4 gap-y-2">
+            <div class="field w-48">
+              <label class="label" for="through">Every day through <span class="label-optional">(optional)</span></label>
+              <%= date_field_tag :through, params[:through], class: "input" %>
+            </div>
+            <label class="check items-center pb-2"><%= check_box_tag :skip_closed, "1", params.key?(:skip_closed) ? params[:skip_closed] == "1" : true, id: "skip_closed" %>
+              <span class="text-ink">Skip days you're closed</span></label>
+          </div>
+          <div class="mt-3" data-controller="nested-fields">
+            <p class="label">Or these days too</p>
+            <div class="flex flex-wrap items-center gap-2">
+              <% Array(params[:extra_dates]).select(&:present?).each do |date| %>
+                <%= date_field_tag "extra_dates[]", date, class: "input w-44", id: nil, "aria-label": "Another day" %>
+              <% end %>
+              <template data-nested-fields-target="template" data-kind="day">
+                <span><%= date_field_tag "extra_dates[]", nil, class: "input w-44", id: nil, "aria-label": "Another day" %></span>
+              </template>
+              <span data-nested-fields-target="anchor">
+                <button type="button" class="<%= button_classes(:secondary, :sm) %>" data-action="nested-fields#add" data-nested-fields-kind-param="day"><%= icon "plus" %> Add a day</button>
+              </span>
+            </div>
+          </div>
+        </details>
+      <% end %>
 
       <fieldset class="group">
         <legend class="label">Arrival</legend>
@@ -53,6 +90,6 @@
   <% end %>
   <div class="flex items-center justify-end gap-2">
     <%= link_to "Cancel", admin_job_path(@job), class: button_classes(:ghost) %>
-    <%= f.submit_button visit.new_record? ? "Schedule visit" : "Save visit" %>
+    <%= f.submit_button (visit.new_record? ? "Schedule" : "Save") + (@warnings.present? ? " anyway" : (visit.new_record? ? " visit" : " visit")) %>
   </div>
 <% end %>

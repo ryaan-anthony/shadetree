@@ -38,7 +38,14 @@ class NotificationType
     Definition.new(kind: "quote_changes_requested", label: "Changes requested", hint: "A client asks for changes to a quote.",
                    permission: :office, email_by_default: true, icon: "edit-3"),
     Definition.new(kind: "invitation_accepted", label: "Someone joins the team", hint: "An invitation you or a teammate sent is accepted.",
-                   permission: :manage_team, email_by_default: false, icon: "user-plus")
+                   permission: :manage_team, email_by_default: false, icon: "user-plus"),
+    # JOB-02: to the people going on a visit.
+    Definition.new(kind: "visit_assigned", label: "You're put on a visit", hint: "A visit is booked with you on it, or you're added to one.",
+                   permission: :field_work, email_by_default: true, icon: "calendar", audience: :named),
+    Definition.new(kind: "visit_changed", label: "A visit you're on changes", hint: "It moves, its instructions change, or you're taken off it.",
+                   permission: :field_work, email_by_default: true, icon: "clock", audience: :named),
+    Definition.new(kind: "visit_cancelled", label: "A visit you're on is cancelled", hint: "With the reason, if one was given.",
+                   permission: :field_work, email_by_default: true, icon: "x-circle", audience: :named)
   ].index_by(&:kind).freeze
 
   class UnknownKind < ArgumentError; end
