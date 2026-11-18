@@ -148,6 +148,24 @@ Tenancy.with_business(business) do
                           assignee_ids: [ tech&.id, owner.id ].compact, created_by: owner).schedule!(by: owner)
     from_quote.visits.first.notes.create!(user: tech, body: "Side gate was locked; the client let us in at 9.") if tech # JOB-04
   end
+
+  # JOB-03: a full week on the calendar: weekly mowing for a few clients, spread over the crew,
+  # with an overlap, an "anytime" visit and one nobody's on yet.
+  unless Job.exists?(title: "Weekly mowing")
+    crew = User.where(email: %w[owner@example.com admin@example.com tech@example.com]).index_by(&:email)
+    week = business.today.beginning_of_week
+    plan = [ [ 0, "exact", "08:00", 90, %w[tech@example.com] ], [ 0, "exact", "10:30", 60, %w[tech@example.com] ],
+             [ 1, "window", "09:00", 120, %w[admin@example.com] ], [ 1, "exact", "09:30", 60, %w[tech@example.com] ],
+             [ 2, "anytime", nil, 60, %w[owner@example.com] ], [ 2, "exact", "13:00", 120, %w[tech@example.com admin@example.com] ],
+             [ 3, "exact", "08:30", 60, [] ], [ 4, "window", "12:00", 90, %w[admin@example.com] ], [ 4, "exact", "15:00", 60, %w[tech@example.com] ] ]
+    clients = Client.order(:id).to_a
+    plan.each_with_index do |(day, timing, at, minutes, people), index|
+      client = clients[index % clients.size] # fewer clients than visits: some get two
+      job = Job.create!(client:, property: client.primary_property, created_by: owner, title: "Weekly mowing")
+      job.visits.new(scheduled_on: week + day, timing:, start_time: at, window_end_time: (timing == "window" ? (Time.zone.parse(at) + 2.hours).strftime("%H:%M") : nil),
+                     duration_minutes: minutes, assignee_ids: people.filter_map { crew[_1]&.id }, created_by: owner).schedule!(by: owner)
+    end
+  end
 end
 
 # CLI-03: the request form, on, with a request from someone new.

@@ -44,6 +44,9 @@
         <%= side_link "Clients", admin_clients_path, icon: "users", active: controller_name == "clients" %>
         <%= side_link "Quotes", admin_quotes_path, icon: "quote", active: controller_name.in?(%w[quotes quote_attachments]) %>
         <%= side_link "Jobs", admin_jobs_path, icon: "job", active: controller_name.in?(%w[jobs quote_jobs]) %>
+        <% if can?(:schedule) %>
+          <%= side_link "Schedule", admin_schedule_path, icon: "calendar", active: controller_name == "schedule" %>
+        <% end %>
       <% end %>
       <% if can?(:business_settings) || can?(:manage_team) %>
         <p class="side-group">Business</p>

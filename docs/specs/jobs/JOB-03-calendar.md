@@ -22,19 +22,34 @@ or one person — spot gaps, and move work around quickly, on a desktop or a pho
 
 ## Acceptance criteria
 
-- [ ] Day and week views show visits by time (start time or window; "anytime" visits in an
+- [x] Day and week views show visits by time (start time or window; "anytime" visits in an
       all-day row) with client name, property area, job title and assignees; colored by
       assignee or status.
-- [ ] Filter by member (including "unassigned"); jump to today; navigate periods.
-- [ ] Off-hours and closures from CAT-06 are visually shaded.
-- [ ] An "unscheduled" panel lists jobs needing visits; scheduling from it is quick.
+- [x] Filter by member (including "unassigned"); jump to today; navigate periods.
+- [x] Off-hours and closures from CAT-06 are visually shaded.
+- [x] An "unscheduled" panel lists jobs needing visits; scheduling from it is quick.
 - [ ] On desktop, visits can be dragged to a new time/day/member, with the same warnings as
       JOB-02 and undo; on mobile, a quick-edit sheet offers the same changes.
-- [ ] On mobile, the default view is an agenda list grouped by day.
-- [ ] Opening a visit shows its details and links to the job.
-- [ ] The calendar loads quickly with 200 visits in a week for 10 members.
-- [ ] Technicians do not see the team calendar; they use their day view (JOB-04).
+- [x] On mobile, the default view is an agenda list grouped by day.
+- [x] Opening a visit shows its details and links to the job.
+- [x] The calendar loads quickly with 200 visits in a week for 10 members.
+- [x] Technicians do not see the team calendar; they use their day view (JOB-04).
 - [ ] Tests cover filtering, rescheduling, warnings and tenancy (system tests for drag/quick-edit).
+
+## Implementation notes
+
+- Part 1 (the views, filters, shading, "Needs scheduling", the visit panel) is one PR; dragging,
+  undo and the phone quick-edit sheet are part 2.
+- A window visit fills the grid from the window's start to its latest finish (window end plus
+  duration), the same span the JOB-02 overlap warnings use.
+- Visits that overlap share their day's width side by side; a short visit is drawn at least
+  22 px tall so its text can be read.
+- The grid's hours come from the weekly hours, so a closure at the start or end of a day is
+  shaded on it. Short visits are drawn at least 22 px tall, and blocks that would touch sit side by side.
+- Someone no longer on the team isn't a filter, and their visits are drawn in the neutral color.
+- On phones the agenda comes first and this week's past days are folded into "Earlier this week".
+- Measured: a week of 200 visits for 10 people renders in well under a second with 25 queries,
+  cached ones included (test).
 
 ## Out of scope
 

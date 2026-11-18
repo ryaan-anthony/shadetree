@@ -119,6 +119,10 @@ Rails.application.routes.draw do
       resource :job, only: :create, controller: "quote_jobs" # JOB-01: an approved quote becomes a job
     end
 
+    # The team calendar (JOB-03)
+    get "schedule", to: "schedule#show", as: :schedule
+    get "schedule/visits/:id", to: "schedule#visit", as: :schedule_visit
+
     # The day view for the people going on visits (JOB-04): only their own visits.
     get "my-day", to: "my_day#show", as: :my_day
     resources :my_visits, only: :show, path: "my-day/visits", controller: "my_visits" do

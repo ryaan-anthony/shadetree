@@ -1,0 +1,20 @@
+<%# locals: (visit:) -%>
+<%# JOB-03: a visit opened from the calendar: its details, and the way to the job. %>
+<%= turbo_frame_tag "schedule_visit" do %>
+  <% job = visit.job %>
+  <%= card title: job.client.display_name, subtitle: visit.when_label do %>
+    <dl class="space-y-2 text-sm">
+      <div><dt class="text-sm2 text-muted">Job</dt><dd class="text-ink"><%= job.number %> <%= job.title %></dd></div>
+      <% if job.property %><div><dt class="text-sm2 text-muted">Where</dt><dd class="text-ink"><%= job.property.one_line %></dd></div><% end %>
+      <div><dt class="text-sm2 text-muted">Who's going</dt><dd class="text-ink"><%= visit.assignees.any? ? visit.assignees.map(&:full_name).to_sentence : "Nobody yet" %></dd></div>
+      <div><dt class="text-sm2 text-muted">How long</dt><dd class="text-ink">About <%= visit.duration_label %> · <%= visit.status_label %></dd></div>
+      <% if visit.instructions %><div><dt class="text-sm2 text-muted">Instructions</dt><dd class="whitespace-pre-line text-ink"><%= visit.instructions %></dd></div><% end %>
+    </dl>
+    <div class="mt-4 flex flex-wrap gap-2">
+      <%= link_to "Open job", admin_job_path(job, anchor: "visit-#{visit.uid}"), class: button_classes(:secondary, :sm), data: { turbo_frame: "_top" } %>
+      <% if visit.open? %>
+        <%= link_to "Reschedule", edit_admin_job_visit_path(job, visit), class: button_classes(:secondary, :sm), data: { turbo_frame: "_top" } %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>
