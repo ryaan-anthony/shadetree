@@ -82,17 +82,29 @@ jobs:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/shadetree_test
     steps:
       - uses: actions/checkout@v7
-      # The runner image version keys the cache, so a new image (weekly) caches its own packages.
-      - name: Runner image version
+      # libvips from cached packages (script/ci/install-libvips), keyed by Ubuntu release and
+      # week; a run that had to download saves what it got under a new key, and the newest of
+      # the week is restored.
+      - name: libvips cache key
         id: image
-        run: echo "version=${ImageVersion:-unknown}" >> "$GITHUB_OUTPUT"
-      - name: Cache libvips packages
-        uses: actions/cache@v6
+        # The Ubuntu release (the packages are built for it, whatever the runner image) and the
+        # ISO week, so the cache refreshes weekly and picks up security updates.
+        run: echo "version=$(. /etc/os-release && echo "$VERSION_CODENAME")-$(date +%G-%V)" >> "$GITHUB_OUTPUT"
+      - name: Restore libvips packages
+        uses: actions/cache/restore@v6
         with:
           path: ~/.cache/debs
-          key: libvips-debs-${{ runner.os }}-${{ steps.image.outputs.version }}
+          key: libvips-debs-${{ runner.os }}-${{ steps.image.outputs.version }}-${{ github.run_id }}-${{ github.job }}
+          restore-keys: libvips-debs-${{ runner.os }}-${{ steps.image.outputs.version }}-
       - name: Install libvips (image processing, ADR 0008)
+        id: libvips
         run: script/ci/install-libvips
+      - name: Save libvips packages
+        if: steps.libvips.outputs.refreshed == 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ~/.cache/debs
+          key: libvips-debs-${{ runner.os }}-${{ steps.image.outputs.version }}-${{ github.run_id }}-${{ github.job }}
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: .ruby-version
@@ -139,17 +151,29 @@ jobs:
       COVERAGE: "false"
     steps:
       - uses: actions/checkout@v7
-      # The runner image version keys the cache, so a new image (weekly) caches its own packages.
-      - name: Runner image version
+      # libvips from cached packages (script/ci/install-libvips), keyed by Ubuntu release and
+      # week; a run that had to download saves what it got under a new key, and the newest of
+      # the week is restored.
+      - name: libvips cache key
         id: image
-        run: echo "version=${ImageVersion:-unknown}" >> "$GITHUB_OUTPUT"
-      - name: Cache libvips packages
-        uses: actions/cache@v6
+        # The Ubuntu release (the packages are built for it, whatever the runner image) and the
+        # ISO week, so the cache refreshes weekly and picks up security updates.
+        run: echo "version=$(. /etc/os-release && echo "$VERSION_CODENAME")-$(date +%G-%V)" >> "$GITHUB_OUTPUT"
+      - name: Restore libvips packages
+        uses: actions/cache/restore@v6
         with:
           path: ~/.cache/debs
-          key: libvips-debs-${{ runner.os }}-${{ steps.image.outputs.version }}
+          key: libvips-debs-${{ runner.os }}-${{ steps.image.outputs.version }}-${{ github.run_id }}-${{ github.job }}
+          restore-keys: libvips-debs-${{ runner.os }}-${{ steps.image.outputs.version }}-
       - name: Install libvips (image processing, ADR 0008)
+        id: libvips
         run: script/ci/install-libvips
+      - name: Save libvips packages
+        if: steps.libvips.outputs.refreshed == 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ~/.cache/debs
+          key: libvips-debs-${{ runner.os }}-${{ steps.image.outputs.version }}-${{ github.run_id }}-${{ github.job }}
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: .ruby-version
