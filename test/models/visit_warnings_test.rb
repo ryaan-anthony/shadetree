@@ -61,14 +61,39 @@ class VisitWarningsTest < ActiveSupport::TestCase
                  Visit.plan_dates("2026-11-26", through: "2026-11-30", skip_closed: true, hours:), "Thu, Fri, then Mon"
     assert_equal [ Date.new(2026, 11, 26), Date.new(2026, 11, 27), Date.new(2026, 12, 3) ],
                  Visit.plan_dates("2026-11-26", extra: [ "2026-12-03", "", "2026-11-27", "nonsense" ])
-    assert_equal Visit::MAX_DAYS + 1, Visit.plan_dates("2026-01-01", through: "2026-12-31").size
+    assert_equal Visit::MAX_DAYS + 1, Visit.plan_dates("2026-01-01", through: "9999-12-31").size, "stops early, however far the last day"
+    assert_raises(Visit::BadDates) { Visit.plan_dates("2026-11-26", through: "2026-11-20") }
+    assert_equal [ Date.new(2026, 11, 26) ], Visit.plan_dates("2026-11-26", extra: [ "Nov" ]), "only YYYY-MM-DD"
 
     visits = Visit.plan_dates("2026-11-24", through: "2026-11-26").map { build(scheduled_on: _1) }
     as_business(@business) { Visit.schedule_all!(visits, by: @owner) }
     assert_equal 3, as_business(@business) { @job.visits.count }
-    assert_equal [ "You're on Spring cleanup (#{@job.number}): 3 visits, Nov 24 to Nov 26" ], as_business(@business) { Notification.where(user: @tech).pluck(:title) }
+    assert_equal [ "You're on Spring cleanup (#{@job.number}): 3 days (Nov 24, Nov 25, and Nov 26), 9 am" ], as_business(@business) { Notification.where(user: @tech).pluck(:title) }
     several = warnings(build(scheduled_on: Date.new(2026, 11, 28), timing: "anytime"), build(scheduled_on: Date.new(2026, 11, 29), timing: "anytime"))
     assert_equal [ "Sat, Nov 28: You're closed on Saturdays.", "Sun, Nov 29: You're closed on Sundays." ], several
+  end
+
+  test "another business's visits never count as overlaps" do
+    as_business(businesses(:two)) do
+      BusinessUser.create!(business: businesses(:two), user: @tech, role: "technician")
+      client = Client.create!(display_name: "Theirs", contact_methods_attributes: [ { kind: "phone", value: "5550100199" } ])
+      Job.create!(client:, title: "Theirs").visits.new(scheduled_on: Date.new(2026, 11, 24), timing: "exact", start_time: "09:00", assignee_ids: [ @tech.id ]).schedule!(by: nil)
+    end
+    assert_empty warnings(build)
+  end
+
+  test "completing a job tells the crew once about their upcoming visits, not past ones" do
+    travel_to Time.utc(2026, 11, 23, 15) do
+      past = build(scheduled_on: Date.new(2026, 11, 20))
+      later = [ build(scheduled_on: Date.new(2026, 11, 24)), build(scheduled_on: Date.new(2026, 11, 25)) ]
+      as_business(@business) do
+        Visit.schedule_all!([ past ], by: @owner)
+        Visit.schedule_all!(later, by: @owner)
+        Notification.delete_all
+        @job.reload.cancel!(by: @owner, reason: "Moved away")
+      end
+      assert_equal [ "Spring cleanup (#{@job.number}) was cancelled: your 2 visits are cancelled" ], as_business(@business) { Notification.where(user: @tech).pluck(:title) }
+    end
   end
 
   test "the people going hear about visits they're put on, moved, taken off or cancelled" do
@@ -84,7 +109,7 @@ class VisitWarningsTest < ActiveSupport::TestCase
     mine = "/admin/my-day/visits/#{visit.uid}"
     assert_equal [ [ "visit_assigned", "You're on Spring cleanup (#{@job.number}): Tue, Nov 24 · 9 am", mine ],
                    [ "visit_changed", "Moved: Spring cleanup (#{@job.number}) is now Wed, Nov 25 · 9 am", mine ],
-                   [ "visit_changed", "You're no longer on Spring cleanup (#{@job.number}) on Wed, Nov 25, 2026 · 9 am", mine ] ], titles.(@tech)
+                   [ "visit_changed", "You're no longer on Spring cleanup (#{@job.number}) on Wed, Nov 25 · 9 am", mine ] ], titles.(@tech)
     assert_equal [ [ "visit_assigned", "You're on Spring cleanup (#{@job.number}): Wed, Nov 25 · 9 am", job_path ] ], titles.(admin),
                  "an admin opens the job; the one who cancelled isn't told"
     assert_empty titles.(@owner), "the person making changes isn't notified"

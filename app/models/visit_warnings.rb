@@ -7,17 +7,18 @@
 # A visit's time for these checks runs from its start to its end (a window's latest arrival plus
 # the duration). "Anytime" visits are checked against the day only, and don't overlap anything.
 class VisitWarnings
-  def self.for(visits) = new(visits).messages
+  def self.for(visits, hours: nil) = new(visits, hours:).messages
 
-  def initialize(visits)
+  def initialize(visits, hours: nil)
     @visits = Array(visits)
     @business = @visits.first&.business
+    @hours = hours
   end
 
   def messages
     return [] if @visits.empty?
 
-    hours = OpeningHours.new(@business)
+    hours = @hours || OpeningHours.new(@business)
     several = @visits.size > 1
     @visits.flat_map do |visit|
       found = hours.problems(visit.scheduled_on, visit.starts_at, visit.ends_at).map(&:message) + overlaps(visit)
@@ -27,6 +28,7 @@ class VisitWarnings
 
   private
 
+  # Visits on the same date only: a visit running past midnight from the day before isn't seen.
   def overlaps(visit)
     return [] if visit.anytime? || visit.assignee_ids.empty?
 
