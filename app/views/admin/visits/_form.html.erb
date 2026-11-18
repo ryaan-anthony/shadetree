@@ -14,7 +14,7 @@
         <ul class="mt-1 list-disc pl-5"><% @warnings.each do |warning| %><li><%= warning %></li><% end %></ul>
         <p class="mt-1">You can still <%= visit.new_record? ? "schedule it" : "save it" %>, or change it below.</p></div>
     </div>
-    <%= hidden_field_tag :confirm, "1" %>
+    <%= hidden_field_tag :confirm, confirm_digest %>
   <% end %>
 
   <%= card do %>
@@ -30,6 +30,7 @@
               <label class="label" for="through">Every day through <span class="label-optional">(optional)</span></label>
               <%= date_field_tag :through, params[:through], class: "input" %>
             </div>
+            <%= hidden_field_tag :skip_closed, "0", id: nil %>
             <label class="check items-center pb-2"><%= check_box_tag :skip_closed, "1", params.key?(:skip_closed) ? params[:skip_closed] == "1" : true, id: "skip_closed" %>
               <span class="text-ink">Skip days you're closed</span></label>
           </div>
@@ -37,11 +38,9 @@
             <p class="label">Or these days too</p>
             <div class="flex flex-wrap items-center gap-2">
               <% Array(params[:extra_dates]).select(&:present?).each do |date| %>
-                <%= date_field_tag "extra_dates[]", date, class: "input w-44", id: nil, "aria-label": "Another day" %>
+                <%= render "admin/visits/extra_day", date: %>
               <% end %>
-              <template data-nested-fields-target="template" data-kind="day">
-                <span><%= date_field_tag "extra_dates[]", nil, class: "input w-44", id: nil, "aria-label": "Another day" %></span>
-              </template>
+              <template data-nested-fields-target="template" data-kind="day"><%= render "admin/visits/extra_day", date: nil %></template>
               <span data-nested-fields-target="anchor">
                 <button type="button" class="<%= button_classes(:secondary, :sm) %>" data-action="nested-fields#add" data-nested-fields-kind-param="day"><%= icon "plus" %> Add a day</button>
               </span>
@@ -90,6 +89,6 @@
   <% end %>
   <div class="flex items-center justify-end gap-2">
     <%= link_to "Cancel", admin_job_path(@job), class: button_classes(:ghost) %>
-    <%= f.submit_button (visit.new_record? ? "Schedule" : "Save") + (@warnings.present? ? " anyway" : (visit.new_record? ? " visit" : " visit")) %>
+    <%= f.submit_button "#{visit.new_record? ? "Schedule" : "Save"} #{@warnings.present? ? "anyway" : "visit"}" %>
   </div>
 <% end %>

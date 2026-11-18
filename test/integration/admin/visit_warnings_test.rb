@@ -19,15 +19,22 @@ class Admin::VisitWarningsTest < ActionDispatch::IntegrationTest
   def visit_fields(**fields) = { scheduled_on: "2026-11-24", timing: "exact", start_time: "09:00", duration_hours: "2", assignee_ids: [ "", @tech.id ] }.merge(fields)
   def visits = as_business(@business) { @job.visits.in_order.to_a }
 
+  # What the form sends back with "Schedule anyway": a digest of the warnings it showed.
+  def shown_confirm = css_select("input[name=confirm]").first&.[]("value")
+
   test "a warning comes back to the form first, then Schedule anyway books it" do
     post admin_job_visits_path(@job), params: { visit: visit_fields(scheduled_on: "2026-11-26") }
     assert_response :unprocessable_content
     assert_select ".banner-warning li", "You're closed for Thanksgiving."
-    assert_select "input[type=hidden][name=confirm][value='1']"
     assert_select "input[type=submit][value='Schedule anyway']"
+    confirm = shown_confirm
     assert_empty visits
 
-    post admin_job_visits_path(@job), params: { visit: visit_fields(scheduled_on: "2026-11-26"), confirm: "1" }
+    post admin_job_visits_path(@job), params: { visit: visit_fields(scheduled_on: "2026-11-28", start_time: "22:00"), confirm: }
+    assert_response :unprocessable_content, "a change after the warnings is checked again"
+    assert_select ".banner-warning li", "You're closed on Saturdays."
+
+    post admin_job_visits_path(@job), params: { visit: visit_fields(scheduled_on: "2026-11-26"), confirm: }
     assert_redirected_to admin_job_path(@job)
     assert_equal [ Date.new(2026, 11, 26) ], visits.map(&:scheduled_on)
   end
@@ -49,13 +56,24 @@ class Admin::VisitWarningsTest < ActionDispatch::IntegrationTest
     assert_equal "4 visits scheduled, Nov 25 to Dec 2.", flash[:notice]
     assert visits.all? { _1.starts_at.in_time_zone(@business.time_zone).hour == 9 }
 
-    post admin_job_visits_path(@job), params: { visit: visit_fields(scheduled_on: "2026-01-01"), through: "2026-12-31", skip_closed: "0" }
+    post admin_job_visits_path(@job), params: { visit: visit_fields(scheduled_on: "2026-01-01"), through: "9999-12-31", skip_closed: "0" }
     assert_response :unprocessable_content
     assert_select ".banner-danger", /more than #{Visit::MAX_DAYS} days/
+    post admin_job_visits_path(@job), params: { visit: visit_fields(scheduled_on: "2026-12-10"), through: "2026-12-01" }
+    assert_select ".banner-danger", /The last day is before the first/
+  end
+
+  test "unticking Skip days you're closed survives the warning step" do
+    post admin_job_visits_path(@job), params: { visit: visit_fields(scheduled_on: "2026-11-25"), through: "2026-11-30", skip_closed: "0" }
+    assert_select "input#skip_closed:not([checked])"
+    assert_select ".banner-warning li", /Thanksgiving/
+    post admin_job_visits_path(@job), params: { visit: visit_fields(scheduled_on: "2026-11-25"), through: "2026-11-30", skip_closed: "0", confirm: shown_confirm }
+    assert_equal 6, visits.size, "the days that were warned about are the days booked"
   end
 
   test "editing warns only when the time or crew changes" do
-    post admin_job_visits_path(@job), params: { visit: visit_fields(start_time: "16:00"), confirm: "1" }
+    post admin_job_visits_path(@job), params: { visit: visit_fields(start_time: "16:00") }
+    post admin_job_visits_path(@job), params: { visit: visit_fields(start_time: "16:00"), confirm: shown_confirm }
     visit = visits.sole
     patch admin_job_visit_path(@job, visit), params: { visit: { instructions: "Bring the ladder", lock_version: visit.lock_version } }
     assert_redirected_to admin_job_path(@job), "already outside hours, but only the instructions changed"
@@ -63,6 +81,13 @@ class Admin::VisitWarningsTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_content
     assert_select ".banner-warning li", /outside your hours/
     assert_select "input[type=submit][value='Save anyway']"
+  end
+
+  test "technicians can't book visits" do
+    sign_in @tech
+    post switch_admin_business_path, params: { business: @business.uid }
+    post admin_job_visits_path(@job), params: { visit: visit_fields, through: "2026-11-27" }
+    assert_response :forbidden
   end
 
   test "technicians choose how they hear about their visits" do

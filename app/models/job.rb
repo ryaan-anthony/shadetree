@@ -125,7 +125,8 @@ class Job < ApplicationRecord
       raise NotOpen, "#{number} is already #{status_label.downcase}." unless open?
 
       update!(status: "completed", completed_at: Time.current, completed_by: by)
-      visits.open.lock.each { _1.finish!(_1.status == "in_progress" ? "completed" : "cancelled", by:, reason: "Job completed") }
+      ended = visits.open.lock.to_a.each { _1.finish!(_1.status == "in_progress" ? "completed" : "cancelled", by:, reason: "Job completed", notify: false) }
+      tell_crew_job_ended(ended, "completed", by:)
     end
   end
 
@@ -134,7 +135,8 @@ class Job < ApplicationRecord
       raise NotOpen, "#{number} is already #{status_label.downcase}." unless open?
 
       update!(status: "cancelled", cancelled_at: Time.current, cancelled_by: by, cancel_reason: reason)
-      visits.open.lock.each { _1.finish!("cancelled", by:, reason: "Job cancelled") }
+      ended = visits.open.lock.to_a.each { _1.finish!("cancelled", by:, reason: "Job cancelled", notify: false) }
+      tell_crew_job_ended(ended, "cancelled", by:)
     end
   end
 
@@ -148,6 +150,15 @@ class Job < ApplicationRecord
 
   def visit_minutes_from_items
     line_items.includes(:catalog_item).sum { (_1.catalog_item&.duration_minutes || 0) * _1.quantity.to_d }.round
+  end
+
+  # The people who were going on its upcoming visits hear once that they're off (not per visit).
+  def tell_crew_job_ended(visits, how, by:)
+    upcoming = visits.select { _1.status == "cancelled" && _1.scheduled_on >= business.today }
+    crew = upcoming.flat_map { _1.assignees.to_a }.uniq
+    return if crew.empty?
+
+    upcoming.first.notify_crew("visit_cancelled", crew, "#{title} (#{number}) was #{how}: your #{upcoming.size == 1 ? "visit is" : "#{upcoming.size} visits are"} cancelled", by:)
   end
 
   # Visits it still has to happen: scheduled or under way.

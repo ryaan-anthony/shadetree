@@ -18,6 +18,7 @@ class Visit < ApplicationRecord
   MAX_DAYS = 31 # visits booked at once
 
   class NotOpen < StandardError; end
+  class BadDates < ArgumentError; end
 
   belongs_to_business_record :job
   belongs_to :created_by, class_name: "User", optional: true
@@ -110,27 +111,38 @@ class Visit < ApplicationRecord
 
       visits.each do |visit|
         visit.save!
-        visit.send(:sync_assignments)
+        visit.sync_assignments
         VisitEvent.record!(visit, :scheduled, by:, to: visit.snapshot, crew: visit.crew_names, crew_ids: visit.assignees.map(&:id))
       end
       job.refresh_status!
     end
     crew = visits.flat_map { _1.assignees.to_a }.uniq
-    dates = visits.size == 1 ? visits.first.when_label : "#{visits.size} visits, #{visits.first.scheduled_on.strftime("%b %-d")} to #{visits.last.scheduled_on.strftime("%b %-d")}"
+    dates = visits.size == 1 ? visits.first.when_label : "#{visits.size} days (#{visits.map { _1.scheduled_on.strftime("%b %-d") }.to_sentence}), #{visits.first.time_label}"
     visits.first.notify_crew("visit_assigned", crew, "You're on #{job.title} (#{job.number}): #{dates}", by:)
     visits
   end
 
   # The days to book from the form: the first day, then every day through a last day (skipping
-  # days the business is closed, if asked) or other days picked one by one. At most MAX_DAYS.
+  # days the business is closed, if asked) and other days picked one by one. Stops one past
+  # MAX_DAYS (so "too many" can be reported) however far away the last day is. Raises
+  # BadDates for a last day before the first.
   def self.plan_dates(first, through: nil, extra: [], skip_closed: false, hours: nil)
-    first = Date.parse(first.to_s) rescue (return [])
-    last = Date.parse(through.to_s) rescue nil
-    dates = last && last > first ? (first..last).to_a : [ first ]
-    dates.select! { _1 == first || hours.nil? || hours.open_on?(_1) } if skip_closed
-    dates += Array(extra).filter_map { Date.parse(_1.to_s) rescue nil }
+    first = parse_date(first) or return []
+    last = parse_date(through)
+    raise BadDates, "The last day is before the first." if last && last < first
+
+    dates = [ first ]
+    day = first + 1
+    while last && day <= last && dates.size <= MAX_DAYS
+      dates << day unless skip_closed && hours && !hours.open_on?(day)
+      day += 1
+    end
+    dates += Array(extra).first(MAX_DAYS + 1).filter_map { parse_date(_1) }
     dates.uniq.sort.first(MAX_DAYS + 1)
   end
+
+  # Only YYYY-MM-DD, as date fields send (Date.parse would read "Nov" as Nov 1).
+  def self.parse_date(value) = (Date.iso8601(value.to_s) if value.to_s.match?(/\A\d{4}-\d{2}-\d{2}\z/)) rescue nil
 
   # Date, time, duration, crew or instructions changed; records what changed and who changed it.
   # A change to the crew alone still changes the visit's row, so lock_version catches a stale form.
@@ -157,9 +169,10 @@ class Visit < ApplicationRecord
       VisitEvent.record!(self, :updated, by:, changed: details, duration_from: before_duration, duration_to: duration_minutes) if details.any?
 
       notify_crew("visit_assigned", added, "You're on #{job.title} (#{job.number}): #{when_label}", by:)
-      notify_crew("visit_changed", removed, "You're no longer on #{job.title} (#{job.number}) on #{before["when"]}", by:)
+      notify_crew("visit_changed", removed, "You're no longer on #{job.title} (#{job.number}) on #{before["when"].sub(/, #{business.today.year} ·/, " ·")}", by:)
       if moved || details.any?
-        title = moved ? "Moved: #{job.title} (#{job.number}) is now #{when_label}" : "Updated: #{job.title} (#{job.number}), #{when_label}"
+        what = details.map { { "duration_minutes" => "duration", "instructions" => "instructions" }.fetch(_1) }.to_sentence
+        title = moved ? "Moved: #{job.title} (#{job.number}) is now #{when_label}" : "New #{what}: #{job.title} (#{job.number}), #{when_label}"
         notify_crew("visit_changed", after_crew - added, title, by:, body: (instructions if details.include?("instructions")))
       end
     end
@@ -192,8 +205,9 @@ class Visit < ApplicationRecord
   end
 
   # Ends an open visit as completed or cancelled. Callers hold the job's and the visit's locks
-  # (Job#complete! and #cancel! lock their open visits up front).
-  def finish!(status, by:, reason: nil)
+  # (Job#complete! and #cancel! lock their open visits up front, and tell the crew once
+  # themselves rather than per visit).
+  def finish!(status, by:, reason: nil, notify: true)
     raise NotOpen, "This visit is already #{status_label.downcase}." unless open?
 
     if status == "completed"
@@ -202,7 +216,7 @@ class Visit < ApplicationRecord
     else
       update!(status:, cancelled_at: Time.current, cancel_reason: reason)
       VisitEvent.record!(self, :cancelled, by:, reason: cancel_reason)
-      notify_crew("visit_cancelled", assignees.to_a, "Cancelled: #{job.title} (#{job.number}), #{when_label}", by:, body: cancel_reason)
+      notify_crew("visit_cancelled", assignees.to_a, "Cancelled: #{job.title} (#{job.number}), #{when_label}", by:, body: cancel_reason) if notify
     end
   end
 
@@ -226,6 +240,18 @@ class Visit < ApplicationRecord
   end
 
   def crew_names = assignees.map(&:full_name)
+
+  # Called by schedule_all! for each visit it saves.
+  def sync_assignments
+    return if @assignee_ids.nil?
+
+    current = assignments.map(&:user_id)
+    assignments.where(user_id: current - @assignee_ids).delete_all
+    (@assignee_ids - current).each { assignments.create!(user_id: _1) }
+    assignments.reset
+    assignees.reset
+    @assignee_ids = nil
+  end
 
   private
 
@@ -277,16 +303,5 @@ class Visit < ApplicationRecord
 
     allowed = business.business_users.active.where(user_id: @assignee_ids).pluck(:user_id) + (persisted? ? assignments.pluck(:user_id) : [])
     errors.add(:base, "Only people on your team can be assigned.") unless (@assignee_ids - allowed).empty?
-  end
-
-  def sync_assignments
-    return if @assignee_ids.nil?
-
-    current = assignments.map(&:user_id)
-    assignments.where(user_id: current - @assignee_ids).delete_all
-    (@assignee_ids - current).each { assignments.create!(user_id: _1) }
-    assignments.reset
-    assignees.reset
-    @assignee_ids = nil
   end
 end
