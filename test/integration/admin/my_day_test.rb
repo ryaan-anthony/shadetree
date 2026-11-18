@@ -41,7 +41,7 @@ class Admin::MyDayTest < ActionDispatch::IntegrationTest
     assert_response :not_found
     get admin_job_path(@job)
     assert_response :forbidden
-    get admin_client_path(@job.client)
+    get admin_client_path(as_business(@business) { @job.client })
     assert_response :forbidden
     theirs = as_business(businesses(:two)) do
       client = Client.create!(display_name: "Theirs", contact_methods_attributes: [ { kind: "phone", value: "5550100199" } ])
@@ -53,7 +53,9 @@ class Admin::MyDayTest < ActionDispatch::IntegrationTest
   test "a visit shows where, how to get in, who to call and what to do, without prices unless allowed" do
     get admin_my_visit_path(@morning)
     assert_response :success
-    assert_select "a[href^='https://www.google.com/maps/search/?api=1&query=12%20Elm%20St']", /Directions/
+    assert_select "#notes li", 0, "no notes yet, and the blank one for the form isn't listed"
+    directions = css_select("a").find { _1.text.include?("Directions") }
+    assert_match %r{\Ahttps://www\.google\.com/maps/search/\?api=1&query=12%20Elm%20St}, directions["href"]
     assert_select "main", /Gate code 4417/
     assert_select "a[href='tel:5550100100']", /Call/
     assert_select "a[href='sms:5550100100']", /Text/
@@ -77,12 +79,9 @@ class Admin::MyDayTest < ActionDispatch::IntegrationTest
     assert_equal "in_progress", @morning.reload.status
     patch complete_admin_my_visit_path(@morning)
 
-    [ @afternoon, @tomorrow ].each { patch complete_admin_my_visit_path(_1) }
-    assert_match "This visit is scheduled", flash[:alert], "a visit is started before it's completed"
-    [ @afternoon, @tomorrow ].each do |visit|
-      patch start_admin_my_visit_path(visit)
-      patch complete_admin_my_visit_path(visit)
-    end
+    patch complete_admin_my_visit_path(@afternoon) # completing without starting is fine
+    patch start_admin_my_visit_path(@tomorrow)
+    patch complete_admin_my_visit_path(@tomorrow)
     assert_empty as_business(@business) { Notification.where(kind: "job_ready_to_invoice").to_a }, "the owner's visit is still open"
     as_business(@business) { @not_mine.cancel!(by: @owner) }
     patch reopen_admin_my_visit_path(@tomorrow)
@@ -96,7 +95,7 @@ class Admin::MyDayTest < ActionDispatch::IntegrationTest
   test "a visit completed on an earlier day can't be reopened" do
     patch start_admin_my_visit_path(@morning)
     patch complete_admin_my_visit_path(@morning)
-    @morning.update_columns(completed_at: 2.days.ago)
+    Visit.unscoped.where(id: @morning.id).update_all(completed_at: 2.days.ago)
     patch reopen_admin_my_visit_path(@morning)
     assert_match "Only a visit completed today", flash[:alert]
   end

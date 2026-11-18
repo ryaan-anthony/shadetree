@@ -42,7 +42,8 @@ invoice. Jobs can also be created directly for work agreed by phone.
       client/title/number, and is usable on mobile. *"Needs scheduling" is the shortcut.*
 - [ ] Completing a job prompts "Create invoice" (wired up in PAY-01).
 - [x] Jobs appear on the client page.
-- [ ] Technicians see a job only through visits assigned to them (JOB-04).
+- [x] Technicians see a job only through visits assigned to them (JOB-04).
+      *Through My day; the job and client pages stay Owner/Admin only.*
 - [x] Tests cover creation paths, status derivation, roles and tenancy. *Derivation from visits is tested with JOB-02's visits.*
 
 ## Out of scope

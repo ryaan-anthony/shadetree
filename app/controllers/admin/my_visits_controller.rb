@@ -5,7 +5,7 @@ class Admin::MyVisitsController < Admin::BaseController
   before_action :set_visit
 
   def show
-    @note = @visit.notes.new
+    @note = VisitNote.new # not through @visit.notes, which would list it
   end
 
   def start = transition("Started. Complete it when you're done.") { @visit.start!(by: current_user) }

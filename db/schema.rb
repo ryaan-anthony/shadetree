@@ -344,7 +344,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000500) do
     t.datetime "updated_at", null: false
     t.index ["catalog_item_id"], name: "index_job_line_items_on_catalog_item_id"
     t.index ["job_id", "position"], name: "index_job_line_items_on_job_id_and_position"
-    t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying, 'amount'::character varying]::text[]))", name: "job_lines_discount_kind"
+    t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying::text, 'amount'::character varying::text]))", name: "job_lines_discount_kind"
   end
 
   create_table "jobs", force: :cascade do |t|
@@ -384,8 +384,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000500) do
     t.index ["property_id"], name: "index_jobs_on_property_id"
     t.index ["quote_id"], name: "index_jobs_on_quote_id", unique: true
     t.index ["uid"], name: "index_jobs_on_uid", unique: true
-    t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying, 'amount'::character varying]::text[]))", name: "jobs_discount_kind"
-    t.check_constraint "status::text = ANY (ARRAY['unscheduled'::character varying, 'scheduled'::character varying, 'in_progress'::character varying, 'completed'::character varying, 'cancelled'::character varying]::text[])", name: "jobs_status"
+    t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying::text, 'amount'::character varying::text]))", name: "jobs_discount_kind"
+    t.check_constraint "status::text = ANY (ARRAY['unscheduled'::character varying::text, 'scheduled'::character varying::text, 'in_progress'::character varying::text, 'completed'::character varying::text, 'cancelled'::character varying::text])", name: "jobs_status"
   end
 
   create_table "notifications", force: :cascade do |t|
@@ -623,8 +623,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000500) do
     t.index ["created_by_id"], name: "index_service_requests_on_created_by_id"
     t.index ["property_id"], name: "index_service_requests_on_property_id"
     t.index ["uid"], name: "index_service_requests_on_uid", unique: true
-    t.check_constraint "source::text = ANY (ARRAY['form'::character varying, 'phone'::character varying, 'email'::character varying, 'walk_in'::character varying, 'other'::character varying]::text[])", name: "service_requests_source"
-    t.check_constraint "status::text = ANY (ARRAY['new'::character varying, 'in_progress'::character varying, 'quoted'::character varying, 'archived'::character varying]::text[])", name: "service_requests_status"
+    t.check_constraint "source::text = ANY (ARRAY['form'::character varying::text, 'phone'::character varying::text, 'email'::character varying::text, 'walk_in'::character varying::text, 'other'::character varying::text])", name: "service_requests_source"
+    t.check_constraint "status::text = ANY (ARRAY['new'::character varying::text, 'in_progress'::character varying::text, 'quoted'::character varying::text, 'archived'::character varying::text])", name: "service_requests_status"
   end
 
   create_table "tax_rates", force: :cascade do |t|
@@ -700,7 +700,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000500) do
     t.jsonb "data", default: {}, null: false
     t.datetime "occurred_at", null: false
     t.index ["visit_id"], name: "index_visit_events_on_visit_id"
-    t.check_constraint "kind::text = ANY (ARRAY['scheduled'::character varying, 'rescheduled'::character varying, 'reassigned'::character varying, 'updated'::character varying, 'cancelled'::character varying, 'restored'::character varying, 'started'::character varying, 'completed'::character varying, 'reopened'::character varying]::text[])", name: "visit_events_kind"
+    t.check_constraint "kind::text = ANY (ARRAY['scheduled'::character varying::text, 'rescheduled'::character varying::text, 'reassigned'::character varying::text, 'updated'::character varying::text, 'cancelled'::character varying::text, 'restored'::character varying::text, 'started'::character varying::text, 'completed'::character varying::text, 'reopened'::character varying::text])", name: "visit_events_kind"
   end
 
   create_table "visit_notes", force: :cascade do |t|
@@ -737,8 +737,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000500) do
     t.index ["uid"], name: "index_visits_on_uid", unique: true
     t.check_constraint "(timing::text = 'anytime'::text) = (starts_at IS NULL) AND (timing::text = 'window'::text) = (window_ends_at IS NOT NULL)", name: "visits_times"
     t.check_constraint "duration_minutes >= 5 AND duration_minutes <= 1440", name: "visits_duration"
-    t.check_constraint "status::text = ANY (ARRAY['scheduled'::character varying, 'in_progress'::character varying, 'completed'::character varying, 'cancelled'::character varying]::text[])", name: "visits_status"
-    t.check_constraint "timing::text = ANY (ARRAY['exact'::character varying, 'window'::character varying, 'anytime'::character varying]::text[])", name: "visits_timing"
+    t.check_constraint "status::text = ANY (ARRAY['scheduled'::character varying::text, 'in_progress'::character varying::text, 'completed'::character varying::text, 'cancelled'::character varying::text])", name: "visits_status"
+    t.check_constraint "timing::text = ANY (ARRAY['exact'::character varying::text, 'window'::character varying::text, 'anytime'::character varying::text])", name: "visits_timing"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
