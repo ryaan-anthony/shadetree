@@ -8,13 +8,6 @@
   <% if can?(:business_settings) && @checklist.hidden_by_member? %>
     <div class="lg:col-span-2 lg:row-start-2"><%= button_to "Show setup checklist", admin_show_setup_path, method: :patch, class: "btn-link text-sm2" %></div>
   <% end %>
-  <%# ACC-05: a technician's one-screen welcome; their visits arrive with M3. %>
-  <% if Current.membership&.role == "technician" && Current.membership.welcome_dismissed_at.nil? %>
-    <%= card title: "Welcome to #{current_business.name}" do %>
-      <p class="text-sm text-body">You're on the team as a technician. When visits are assigned to you, they'll show up here with the client's address, access notes and what to do.</p>
-      <div class="mt-4"><%= button_to "Got it", admin_dismiss_welcome_path, method: :patch, class: button_classes(:secondary, :sm) %></div>
-    <% end %>
-  <% end %>
 
   <%= card title: "Quotes and jobs" do %>
     <%= empty_state title: "Nothing to follow up yet",

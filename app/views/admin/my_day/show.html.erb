@@ -1,0 +1,42 @@
+<%# JOB-04: the signed-in member's visits. Large tap targets; one tap opens everything about a visit. %>
+<% content_for :title, "My day" %>
+<%= page_header "My day", lede: local_date(current_business.today) %>
+
+<div class="max-w-2xl space-y-4">
+  <%# ACC-05: a technician's one-screen welcome. %>
+  <% if Current.membership&.role == "technician" && Current.membership.welcome_dismissed_at.nil? %>
+    <%= card title: "Welcome to #{current_business.name}" do %>
+      <p class="text-sm text-body">You're on the team as a technician. Visits you're going on show up here, with the client's address, how to get in and what to do. Tap one to start it.</p>
+      <div class="mt-4"><%= button_to "Got it", admin_dismiss_welcome_path, method: :patch, class: button_classes(:secondary, :sm) %></div>
+    <% end %>
+  <% end %>
+
+  <%= card title: "Today", flush: true do %>
+    <% if @today.empty? %>
+      <p class="px-5 py-4 text-sm2 text-muted">Nothing booked for you today.</p>
+    <% else %>
+      <ul class="list"><%= render partial: "admin/my_day/visit_row", collection: @today, as: :visit %></ul>
+    <% end %>
+  <% end %>
+
+  <% if @earlier.any? %>
+    <%= card title: "Still open from earlier", subtitle: "Complete these, or tell the office.", flush: true do %>
+      <ul class="list">
+        <% @earlier.each do |visit| %>
+          <%= render "admin/my_day/visit_row", visit: %>
+        <% end %>
+      </ul>
+    <% end %>
+  <% end %>
+
+  <%= card title: "Coming up", subtitle: "The next #{Admin::MyDayController::UPCOMING_DAYS} days.", flush: true do %>
+    <% if @upcoming.empty? %>
+      <p class="px-5 py-4 text-sm2 text-muted">Nothing else booked for you yet.</p>
+    <% else %>
+      <% @upcoming.each do |date, visits| %>
+        <h3 class="border-t border-line bg-sunken/60 px-4 py-1.5 text-sm2 font-semibold text-muted first:border-t-0"><%= date.strftime("%A, %b %-d") %></h3>
+        <ul class="list"><%= render partial: "admin/my_day/visit_row", collection: visits, as: :visit %></ul>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>

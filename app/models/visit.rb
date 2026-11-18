@@ -24,6 +24,7 @@ class Visit < ApplicationRecord
   has_many :assignments, class_name: "VisitAssignment", inverse_of: :visit, dependent: :delete_all
   has_many :assignees, -> { order(:first_name, :last_name, :email) }, through: :assignments, source: :user
   has_many :events, -> { order(:occurred_at, :id) }, class_name: "VisitEvent", inverse_of: :visit, dependent: :delete_all
+  has_many :notes, -> { order(:created_at, :id) }, class_name: "VisitNote", inverse_of: :visit, dependent: :delete_all # JOB-04
 
   normalizes :instructions, with: ->(value) { value.to_s.strip.presence }
   normalizes :cancel_reason, with: ->(value) { value.to_s.squish.presence }
@@ -183,11 +184,37 @@ class Visit < ApplicationRecord
     end
   end
 
-  # Done (staff here; technicians from their day view, JOB-04).
+  # On site (JOB-04): the person going starts the visit.
+  def start!(by:)
+    under_job_lock do
+      lock!
+      raise NotOpen, "This visit is #{status_label.downcase}." unless status == "scheduled"
+
+      update!(status: "in_progress", started_at: Time.current)
+      VisitEvent.record!(self, :started, by:)
+    end
+  end
+
+  # Done (staff from the job page; the people going from their day view, JOB-04). Completing a
+  # job's last open visit tells the office it's ready to invoice.
   def complete!(by:)
     under_job_lock do
       lock!
       finish!("completed", by:)
+      notify_ready_to_invoice(by:) unless job.visits.open.exists?
+    end
+  end
+
+  # A visit completed by mistake can be reopened the same day (by the business's clock).
+  def reopenable? = status == "completed" && completed_at && completed_at.in_time_zone(business.time_zone).to_date == business.today
+
+  def reopen!(by:)
+    under_job_lock do
+      lock!
+      raise NotOpen, "Only a visit completed today can be reopened." unless reopenable?
+
+      update!(status: started_at ? "in_progress" : "scheduled", completed_at: nil)
+      VisitEvent.record!(self, :reopened, by:)
     end
   end
 
@@ -207,16 +234,23 @@ class Visit < ApplicationRecord
   end
 
   # NTF-02: tells the people going (not whoever made the change). The notification opens the
-  # job for those who can see jobs; technicians get their day view (JOB-04) once it exists.
+  # job for those who can see jobs, and the visit in their day view (JOB-04) for everyone else.
   def notify_crew(kind, users, title, by:, body: nil)
     users = Array(users).reject { _1.id == by&.id }
     return if users.empty?
 
     paths = Rails.application.routes.url_helpers
     office = business.business_users.active.where(user: users).select { _1.can?(:office) }.map(&:user_id)
-    users.partition { office.include?(_1.id) }.zip([ paths.admin_job_path(job), paths.admin_root_path ]).each do |group, path|
+    users.partition { office.include?(_1.id) }.zip([ paths.admin_job_path(job), paths.admin_my_visit_path(self) ]).each do |group, path|
       NotificationType.deliver(kind, business:, subject: self, actor: by, to: group, title:, body:, path:) if group.any?
     end
+  end
+
+  # JOB-04: the office hears that a job's visits are all done.
+  def notify_ready_to_invoice(by:)
+    NotificationType.deliver("job_ready_to_invoice", business:, subject: job, actor: by,
+                             title: "#{job.title} (#{job.number}) is ready to invoice", body: "#{by&.full_name || "The crew"} completed the last visit.",
+                             path: Rails.application.routes.url_helpers.admin_job_path(job))
   end
 
   # When it is, as shown ("when") and as values, for the history and for later notices.

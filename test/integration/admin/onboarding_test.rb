@@ -107,7 +107,7 @@ class Admin::OnboardingTest < ActionDispatch::IntegrationTest
     assert_equal before, counts.call
   end
 
-  test "only Owners and Admins see the checklist and the sample; technicians get a welcome" do
+  test "only Owners and Admins see the checklist and the sample; technicians get a welcome on My day" do
     sign_out :user
     assert_permission_matrix(owner: true, admin: true, technician: false) { get admin_sample_quote_path }
     assert_permission_matrix(owner: true, admin: true, technician: false) { patch admin_dismiss_setup_path }
@@ -116,10 +116,12 @@ class Admin::OnboardingTest < ActionDispatch::IntegrationTest
     sign_in tech
     post switch_admin_business_path, params: { business: @business.uid }
     get admin_root_path
+    assert_redirected_to admin_my_day_path
+    follow_redirect!
     assert_select "h2", { text: /Get to your first quote/, count: 0 }
     assert_select "h2", /Welcome to #{@business.name}/
     patch admin_dismiss_welcome_path
-    get admin_root_path
+    get admin_my_day_path
     assert_select "h2", { text: /Welcome to/, count: 0 }
   end
 end

@@ -58,6 +58,7 @@ class Admin::BusinessesAndSwitchingTest < ActionDispatch::IntegrationTest
     other_device = open_session
     other_device.post user_session_path, params: { user: { email: @user.email, password: "password123" } }
     other_device.get admin_root_path
+    other_device.follow_redirect! if other_device.response.redirect? # a technician there lands on My day (JOB-04)
     assert_match businesses(:two).name, other_device.response.body[/class="biz-switch".*?<\/button>/m]
   end
 

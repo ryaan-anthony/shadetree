@@ -81,9 +81,10 @@ class VisitWarningsTest < ActiveSupport::TestCase
     end
     titles = ->(user) { as_business(@business) { Notification.where(user:).order(:id).map { [ _1.kind, _1.title, _1.path ] } } }
     job_path = "/admin/jobs/#{@job.uid}"
-    assert_equal [ [ "visit_assigned", "You're on Spring cleanup (#{@job.number}): Tue, Nov 24 · 9 am", "/admin" ],
-                   [ "visit_changed", "Moved: Spring cleanup (#{@job.number}) is now Wed, Nov 25 · 9 am", "/admin" ],
-                   [ "visit_changed", "You're no longer on Spring cleanup (#{@job.number}) on Wed, Nov 25, 2026 · 9 am", "/admin" ] ], titles.(@tech)
+    mine = "/admin/my-day/visits/#{visit.uid}"
+    assert_equal [ [ "visit_assigned", "You're on Spring cleanup (#{@job.number}): Tue, Nov 24 · 9 am", mine ],
+                   [ "visit_changed", "Moved: Spring cleanup (#{@job.number}) is now Wed, Nov 25 · 9 am", mine ],
+                   [ "visit_changed", "You're no longer on Spring cleanup (#{@job.number}) on Wed, Nov 25, 2026 · 9 am", mine ] ], titles.(@tech)
     assert_equal [ [ "visit_assigned", "You're on Spring cleanup (#{@job.number}): Wed, Nov 25 · 9 am", job_path ] ], titles.(admin),
                  "an admin opens the job; the one who cancelled isn't told"
     assert_empty titles.(@owner), "the person making changes isn't notified"

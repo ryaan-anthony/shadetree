@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_17_000400) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_17_000500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -100,6 +100,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000400) do
     t.datetime "first_quote_sent_at"
     t.jsonb "weekly_hours"
     t.boolean "auto_create_jobs", default: true, null: false
+    t.boolean "technicians_see_prices", default: false, null: false
     t.index ["active"], name: "index_businesses_on_active"
     t.index ["handle"], name: "index_businesses_on_handle", unique: true
     t.index ["industry"], name: "index_businesses_on_industry"
@@ -702,6 +703,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000400) do
     t.check_constraint "kind::text = ANY (ARRAY['scheduled'::character varying, 'rescheduled'::character varying, 'reassigned'::character varying, 'updated'::character varying, 'cancelled'::character varying, 'restored'::character varying, 'started'::character varying, 'completed'::character varying, 'reopened'::character varying]::text[])", name: "visit_events_kind"
   end
 
+  create_table "visit_notes", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "visit_id", null: false
+    t.bigint "user_id"
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["visit_id"], name: "index_visit_notes_on_visit_id"
+  end
+
   create_table "visits", force: :cascade do |t|
     t.bigint "business_id", null: false
     t.string "uid", null: false
@@ -813,6 +824,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000400) do
   add_foreign_key "visit_events", "businesses", on_delete: :cascade
   add_foreign_key "visit_events", "users", on_delete: :nullify
   add_foreign_key "visit_events", "visits", on_delete: :cascade
+  add_foreign_key "visit_notes", "businesses", on_delete: :cascade
+  add_foreign_key "visit_notes", "users", on_delete: :nullify
+  add_foreign_key "visit_notes", "visits", on_delete: :cascade
   add_foreign_key "visits", "businesses", on_delete: :cascade
   add_foreign_key "visits", "jobs", on_delete: :cascade
   add_foreign_key "visits", "users", column: "created_by_id", on_delete: :nullify

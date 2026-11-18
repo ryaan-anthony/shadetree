@@ -119,6 +119,17 @@ Rails.application.routes.draw do
       resource :job, only: :create, controller: "quote_jobs" # JOB-01: an approved quote becomes a job
     end
 
+    # The day view for the people going on visits (JOB-04): only their own visits.
+    get "my-day", to: "my_day#show", as: :my_day
+    resources :my_visits, only: :show, path: "my-day/visits", controller: "my_visits" do
+      member do
+        patch :start
+        patch :complete
+        patch :reopen
+      end
+      resources :notes, only: :create, controller: "my_visit_notes"
+    end
+
     # Jobs (JOB-01)
     resources :jobs, only: %i[index show new create edit update] do
       post :search, on: :collection # POST keeps client names out of URLs

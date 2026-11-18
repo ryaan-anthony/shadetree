@@ -1,0 +1,16 @@
+<%# locals: (visit:) -%>
+<% job = visit.job %>
+<li id="my-visit-<%= visit.uid %>" class="p-0">
+  <%= link_to admin_my_visit_path(visit), class: "flex min-w-0 flex-1 items-start gap-3 px-4 py-3.5" do %>
+    <span class="w-20 shrink-0 pt-0.5 text-sm font-semibold text-ink"><%= visit.time_label.delete_prefix("Arrive ") %></span>
+    <span class="min-w-0 flex-1">
+      <span class="block truncate font-semibold text-ink"><%= job.client.display_name %></span>
+      <span class="block truncate text-sm2 text-muted"><%= job.property&.one_line || "No address on file" %></span>
+      <span class="block truncate text-sm2 text-subtle"><%= job.title %> · about <%= visit.duration_label %></span>
+    </span>
+    <% unless visit.status == "scheduled" %>
+      <%= badge visit.status_label, tone: { "in_progress" => :info, "completed" => :success, "cancelled" => :neutral }.fetch(visit.status) %>
+    <% end %>
+    <%= icon "chevron-right", class: "mt-1 size-4 shrink-0 text-faint" %>
+  <% end %>
+</li>
