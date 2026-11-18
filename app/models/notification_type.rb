@@ -44,6 +44,8 @@ class NotificationType
                    permission: :field_work, email_by_default: true, icon: "calendar", audience: :named),
     Definition.new(kind: "visit_changed", label: "A visit you're on changes", hint: "It moves, its instructions change, or you're taken off it.",
                    permission: :field_work, email_by_default: true, icon: "clock", audience: :named),
+    Definition.new(kind: "job_ready_to_invoice", label: "A job is ready to invoice", hint: "The last visit on a job is completed.",
+                   permission: :office, email_by_default: true, icon: "check-circle"),
     Definition.new(kind: "visit_cancelled", label: "A visit you're on is cancelled", hint: "With the reason, if one was given.",
                    permission: :field_work, email_by_default: true, icon: "x-circle", audience: :named)
   ].index_by(&:kind).freeze

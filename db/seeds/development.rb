@@ -146,6 +146,7 @@ Tenancy.with_business(business) do
                           assignee_ids: [ tech&.id ].compact, instructions: "Start with the front hedges.", created_by: owner).schedule!(by: owner)
     from_quote.visits.new(scheduled_on: monday + 1, timing: "exact", start_time: "13:00", duration_minutes: 120,
                           assignee_ids: [ tech&.id, owner.id ].compact, created_by: owner).schedule!(by: owner)
+    from_quote.visits.first.notes.create!(user: tech, body: "Side gate was locked; the client let us in at 9.") if tech # JOB-04
   end
 
   # JOB-03: a full week on the calendar: weekly mowing for a few clients, spread over the crew,

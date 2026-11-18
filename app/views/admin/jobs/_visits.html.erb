@@ -1,6 +1,6 @@
 <%# locals: (job:) -%>
 <%# JOB-02: the job's visits, in date order, with what changed and who changed it. %>
-<% visits = job.visits.includes(:assignees, events: :user).in_order.to_a %>
+<% visits = job.visits.includes(:assignees, events: :user, notes: :user).in_order.to_a %>
 <% can_schedule = can?(:schedule) %>
 <%= card title: "Visits", flush: true, id: "visits",
          actions: (link_to(new_admin_job_visit_path(job), class: button_classes(:secondary, :sm)) { icon("plus") + " Schedule visit" } if can_schedule && job.open?) do %>
@@ -20,6 +20,9 @@
             <p class="text-sm2 text-muted">About <%= visit.duration_label %> · <%= visit.assignees.any? ? visit.assignees.map(&:full_name).to_sentence : "Nobody assigned yet" %></p>
             <% if visit.instructions %><p class="mt-1 whitespace-pre-line text-sm2 text-subtle"><%= visit.instructions %></p><% end %>
             <% if visit.cancel_reason %><p class="mt-1 text-sm2 text-subtle">Cancelled: “<%= visit.cancel_reason %>”</p><% end %>
+            <% visit.notes.each do |note| %>
+              <p class="mt-1 text-sm2"><span class="whitespace-pre-line text-ink">“<%= note.body %>”</span> <span class="text-muted">— <%= note.user&.full_name || "Someone" %>, <%= local_time(note.created_at) %></span></p>
+            <% end %>
             <% if visit.events.size > 1 %>
               <details class="mt-1 text-sm2">
                 <summary class="cursor-pointer text-muted">History</summary>
