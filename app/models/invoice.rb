@@ -93,7 +93,7 @@ class Invoice < ApplicationRecord
   def draft? = status == "draft"
   def void? = status == "void"
   def paid? = status == "paid"
-  def status_label = STATUS_LABELS.fetch(status)
+  def status_label = revising? ? "Revising" : STATUS_LABELS.fetch(status)
   def terms_label = TERM_LABELS.fetch(payment_terms)
 
   # Drafts are edited freely, including a sent invoice reopened as its next revision. Once
@@ -113,7 +113,7 @@ class Invoice < ApplicationRecord
       lock!
       raise ArgumentError, "Invoice #{number} can't be revised: #{payments? ? "it has payments" : "only a sent invoice can"}." unless revisable?
 
-      revisions.create!(business:, number: revision, snapshot:, revised_by: by, created_at: Time.current)
+      revisions.create!(business:, number: revision, snapshot:, status:, sent_at:, pdf_blob_id:, revised_by: by, created_at: Time.current)
       assign_attributes(status: "draft", revision: revision + 1, pdf_blob_id: nil, pdf_digest: nil)
       save!(validate: false)
       record!(:revised, by:, revision:)
@@ -133,7 +133,9 @@ class Invoice < ApplicationRecord
       lock!
       raise ArgumentError, "Invoice #{number} can't be voided#{" while it has payments" if payments?}." unless voidable?
 
-      update!(status: "void", voided_at: Time.current, voided_by: by, void_reason: reason.first(200))
+      # Skips validation, as revise! does: an old row that no longer validates can still be voided.
+      assign_attributes(status: "void", voided_at: Time.current, voided_by: by, void_reason: reason.first(200))
+      save!(validate: false)
       record!(:voided, by:, reason: void_reason)
     end
   end
@@ -205,7 +207,7 @@ class Invoice < ApplicationRecord
   # What's owed on the outstanding invoices in a scope, per currency, and how much of it is overdue.
   def self.owed(today:)
     outstanding = where(status: OUTSTANDING)
-    sum_by = ->(scope) { scope.group(:currency).sum(Arel.sql("invoices.total_cents - invoices.amount_paid_cents")).map { |currency, cents| Money.new(cents.to_i, currency) } }
+    sum_by = ->(scope) { scope.group(:currency).sum(Arel.sql("GREATEST(invoices.total_cents - invoices.amount_paid_cents, 0)")).map { |currency, cents| Money.new(cents.to_i, currency) } }
     { outstanding: sum_by.(outstanding), overdue: sum_by.(outstanding.where(due_on: ...today)) }
   end
 

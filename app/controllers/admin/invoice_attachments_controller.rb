@@ -9,7 +9,8 @@ class Admin::InvoiceAttachmentsController < Admin::BaseController
 
     attachment = invoice.attachments.find(params[:id])
     kept = invoice.revisions.any? { |revision| Array(revision.snapshot["files"]).any? { _1["blob_id"] == attachment.blob_id } }
-    # A job's photo is shared with its visit: only this invoice's link to it goes.
+    # A job's photo is shared with its visit: only this invoice's link to it goes. (If the visit
+    # later deletes it, a revision's record of it points at nothing; the revision keeps the name.)
     shared = ActiveStorage::Attachment.where(blob_id: attachment.blob_id).where.not(id: attachment.id).exists?
     kept || shared ? attachment.delete : attachment.purge_later
     redirect_to edit_admin_invoice_path(invoice), notice: "#{attachment.filename} removed."

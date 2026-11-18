@@ -32,7 +32,7 @@ export default class extends Controller {
     this.onBeforeVisit = (event) => { if (this.dirty) this.flush() }
     document.addEventListener("turbo:before-visit", this.onBeforeVisit)
     this.onBeforeUnload = (event) => {
-      if (!this.dirty && !this.saving) return
+      if (this.uploading || (!this.dirty && !this.saving && !this.photosTicked())) return
       this.flush()
       event.preventDefault()
       event.returnValue = ""
@@ -54,8 +54,22 @@ export default class extends Controller {
   // part of the document.
   changed(event) {
     const target = event.target
-    if (target.type === "file" || !target.name || target.name.endsWith("[job_photos][]") || target.closest("[data-controller~=catalog-picker]")) return
+    if (target.name?.endsWith("[job_photos][]")) return this.photoTicked()
+    if (target.type === "file" || !target.name || target.closest("[data-controller~=catalog-picker]")) return
     this.schedule()
+  }
+
+  // Ticked job photos are added by the "Add ticked photos" button or by "Save draft"; until
+  // then the button is live, the status says so and leaving the page asks first.
+  photoTicked() {
+    const ticked = this.photosTicked()
+    this.element.querySelectorAll("[data-photos-add]").forEach((button) => { button.disabled = !ticked })
+    if (ticked) this.setStatus("Ticked photos aren't added yet")
+    else if (!this.dirty && !this.saving) this.setStatus("Saved")
+  }
+
+  photosTicked() {
+    return this.formTarget.querySelector(`input[name="${this.scopeValue}[job_photos][]"]:checked`) !== null
   }
 
   schedule() {
@@ -66,10 +80,11 @@ export default class extends Controller {
     this.timer = setTimeout(() => this.save(), this.delayValue)
   }
 
-  // "Save draft" goes through the same queue as autosave, so it can't race one in flight.
+  // "Save draft" goes through the same queue as autosave, so it can't race one in flight. With
+  // job photos ticked it adds them too (a normal submit, as an upload is).
   submit(event) {
     event.preventDefault()
-    this.save()
+    this.photosTicked() ? this.upload() : this.save()
   }
 
   // Send: save first, then go to the send page in this tab.
@@ -168,7 +183,7 @@ export default class extends Controller {
     this.schedule()
   }
 
-  // A file was chosen (or "Add ticked photos" pressed): submit the whole form normally, so the upload and any pending edits
+  // A file was chosen (or ticked photos added): submit the whole form normally, so the upload and any pending edits
   // save together and the page reloads with the attachment listed.
   upload() {
     clearTimeout(this.timer)

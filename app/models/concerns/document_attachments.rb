@@ -17,6 +17,10 @@ module DocumentAttachments
     validate :attachments_are_allowed
   end
 
+  # The files actually saved, from the database: after a refused save, the attachments that
+  # failed (an upload, or a ticked photo whose blob already exists) aren't listed as if they had.
+  def saved_attachments = attachments_attachments.includes(:blob).order(:id).to_a
+
   def attach_files(files)
     @attachment_errors = []
     Array(files).compact_blank.each do |file|

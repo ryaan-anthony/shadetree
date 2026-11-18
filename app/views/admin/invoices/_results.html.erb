@@ -12,7 +12,8 @@
           <%= link_to "Clear search", admin_invoices_path(filter: @filter), class: button_classes(:secondary), data: { turbo_frame: "_top" } %>
         <% end %>
       <% else %>
-        <%= empty_state title: "Nothing here", text: "No invoices are #{Invoice::FILTERS.fetch(@filter).downcase} right now.", icon: "invoice" %>
+        <% empty = { "outstanding" => "No invoices are awaiting payment.", "overdue" => "No invoices are overdue.", "draft" => "No draft invoices.", "paid" => "No paid invoices yet.", "void" => "No void invoices." } %>
+        <%= empty_state title: "Nothing here", text: empty.fetch(@filter, "No invoices yet."), icon: "invoice" %>
       <% end %>
     </div>
   <% else %>
@@ -20,7 +21,7 @@
     <p class="mb-2 text-sm2 text-muted" role="status" id="invoice-totals">
       <%= pluralize(@total_count, "invoice") %>.
       <% if @owed[:outstanding].any? %>
-        Outstanding <span class="money font-semibold text-ink"><%= safe_join(@owed[:outstanding].map { money(_1) }, " + ") %></span><% if @owed[:overdue].any? %>,
+        Awaiting payment <span class="money font-semibold text-ink"><%= safe_join(@owed[:outstanding].map { money(_1) }, " + ") %></span><% if @owed[:overdue].any? %>,
         overdue <span class="money font-semibold text-danger"><%= safe_join(@owed[:overdue].map { money(_1) }, " + ") %></span><% end %>.
       <% else %>
         Nothing outstanding.
@@ -35,7 +36,7 @@
             <%= link_to staff_invoice_path(invoice), class: "block min-w-0 flex-1 px-4 py-3", data: { turbo_frame: "_top" } do %>
               <span class="flex items-baseline justify-between gap-3">
                 <span class="min-w-0 truncate font-semibold text-ink"><%= invoice.client.display_name %></span>
-                <span class="money text-sm font-semibold text-ink"><%= money(invoice.outstanding? ? invoice.balance : invoice.total) %></span>
+                <span class="text-right text-sm"><span class="money font-semibold text-ink"><%= money(invoice.outstanding? ? invoice.balance : invoice.total) %></span><span class="block text-xs text-muted"><%= invoice.outstanding? ? "due" : "total" %></span></span>
               </span>
               <span class="mt-0.5 block truncate text-sm2 text-muted"><%= invoice.number %><%= " · #{invoice.title}" if invoice.title %></span>
               <span class="mt-1.5 flex flex-wrap items-center gap-1.5 text-sm2 text-muted"><%= invoice_status_badge(invoice) %>

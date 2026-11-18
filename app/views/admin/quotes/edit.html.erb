@@ -103,7 +103,7 @@
     <%= card title: "Attachments", subtitle: "Photos or PDFs the client can see with the quote. Up to #{Quote::MAX_ATTACHMENTS}, #{Quote::ATTACHMENT_MAX_BYTES / 1.megabyte} MB each." do %>
       <% if @quote.attachments.attached? %>
         <ul class="mb-3 space-y-2">
-          <% @quote.attachments.select { _1.blob.persisted? }.each do |file| %>
+          <% @quote.saved_attachments.each do |file| %>
             <li class="flex items-center gap-2 text-sm" id="attachment-<%= file.id %>">
               <%= icon(file.image? ? "image" : "file-text", class: "size-4 text-faint") %>
               <%= link_to file.filename, rails_blob_path(file, disposition: "inline"), class: "min-w-0 flex-1 truncate hover:underline", target: "_blank", rel: "noopener" %>
@@ -146,7 +146,7 @@
 <% end %>
 </div>
 
-<% @quote.attachments.select { _1.blob.persisted? }.each do |file| %>
+<% @quote.saved_attachments.each do |file| %>
   <%= form_with url: admin_quote_attachment_path(@quote, file), method: :delete, id: "remove-attachment-#{file.id}", class: "hidden" do %><% end %>
 <% end %>
 <%= render "admin/clients/quick_create", button: false %>

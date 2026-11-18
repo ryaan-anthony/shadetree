@@ -38,14 +38,14 @@ class Admin::InvoiceListTest < ActionDispatch::IntegrationTest
     assert_select "nav.tabs button[value=all]", /All\s+5/
     assert_select "nav.tabs button[value=outstanding]", /Awaiting payment\s+2/
     assert_select "nav.tabs button[value=overdue]", /Overdue\s+1/
-    assert_select "#invoice-totals", /5 invoices.*Outstanding \$450\.00.*overdue \$250\.00/m
+    assert_select "#invoice-totals", /5 invoices.*Awaiting payment \$450\.00.*overdue \$250\.00/m
     assert_select "tr#invoice-#{@late.uid}", /Partly paid.*Overdue.*\$300\.00.*\$250\.00/m
     assert_select "tr#invoice-#{@draft.uid} a[href=?]", edit_admin_invoice_path(@draft)
     assert_select "a[href=?]", admin_invoices_path, text: /Invoices/
 
     post search_admin_invoices_path, params: { filter: "overdue" }
     assert_select "tbody tr", 1
-    assert_select "#invoice-totals", /1 invoice.*Outstanding \$250\.00/m
+    assert_select "#invoice-totals", /1 invoice.*Awaiting payment \$250\.00/m
     post search_admin_invoices_path, params: { filter: "all", q: "okafor" }
     assert_select "tbody tr", 3
     post search_admin_invoices_path, params: { filter: "all", q: @sent.number }
@@ -125,5 +125,67 @@ class Admin::InvoiceListTest < ActionDispatch::IntegrationTest
     delete admin_invoice_attachment_path(invoice, shared)
     assert_equal 1, fresh(invoice) { _1.attachments.count }
     assert as_business(@business) { photo.reload.blob.persisted? }, "the visit keeps its photo"
+  end
+
+  test "technicians can't revise, void or remove files; another business's invoices, files and photos are out of reach" do
+    file = as_business(@business) { @sent.attachments.attach(io: file_fixture("logo.png").open, filename: "a.png", content_type: "image/png"); @sent.attachments_attachments.first }
+    assert_permission_matrix(technician: false) { post revise_admin_invoice_path(@sent) }
+    assert_permission_matrix(technician: false) { patch void_admin_invoice_path(@sent), params: { reason: "No" } }
+    assert_permission_matrix(technician: false) { delete admin_invoice_attachment_path(@sent, file) }
+    assert_equal [ "sent", 1 ], fresh(@sent) { [ _1.status, _1.attachments.count ] }
+
+    theirs, their_photo = as_business(businesses(:two)) do
+      client = Client.create!(display_name: "Theirs", contact_methods_attributes: [ { kind: "phone", value: "5550109999" } ])
+      job = Job.create!(client:, title: "Theirs", line_items_attributes: [ { name: "Work", quantity: 1, unit_price: "10" } ])
+      visit = job.visits.new(scheduled_on: Date.current, timing: "anytime").tap { _1.schedule!(by: users(:two), notify_client: false) }
+      visit.photos.attach(io: file_fixture("logo.png").open, filename: "theirs.png", content_type: "image/png")
+      invoice = Invoice.from_job!(job)
+      invoice.attachments.attach(io: file_fixture("logo.png").open, filename: "theirs.png", content_type: "image/png")
+      [ invoice, visit.photos.attachments.first ]
+    end
+    sign_in @owner
+    post switch_admin_business_path, params: { business: @business.uid }
+    assert_not_found_across_businesses { post revise_admin_invoice_path(theirs) }
+    assert_not_found_across_businesses { patch void_admin_invoice_path(theirs), params: { reason: "No" } }
+    assert_not_found_across_businesses { delete admin_invoice_attachment_path(theirs, as_business(businesses(:two)) { theirs.attachments_attachments.first }) }
+    # Their attachment id on our invoice.
+    assert_not_found_across_businesses { delete admin_invoice_attachment_path(@draft, as_business(businesses(:two)) { theirs.attachments_attachments.first }) }
+    patch admin_invoice_path(@draft), params: { invoice: { lock_version: @draft.lock_version, job_photos: [ their_photo.id ] } }
+    assert_empty fresh(@draft) { _1.attachments.to_a }, "another business's visit photo isn't attached"
+  end
+
+  test "over the file limit, ticked job photos are refused with the message, not an error" do
+    job, photos = as_business(@business) do
+      job = Job.create!(client: @maria, title: "Spring cleanup", line_items_attributes: [ { name: "Mowing", quantity: 1, unit_price: "50" } ])
+      visit = job.visits.new(scheduled_on: @today, timing: "anytime").tap { _1.schedule!(by: @owner, notify_client: false) }
+      2.times { |n| visit.photos.attach(io: file_fixture("logo.png").open, filename: "after#{n}.png", content_type: "image/png") }
+      [ job, visit.photos.attachments.to_a ]
+    end
+    invoice = as_business(@business) do
+      Invoice.from_job!(job).tap do |invoice|
+        9.times { |n| invoice.attachments.attach(io: file_fixture("logo.png").open, filename: "f#{n}.png", content_type: "image/png") }
+      end
+    end
+    patch admin_invoice_path(invoice), params: { invoice: { lock_version: fresh(invoice, &:lock_version), job_photos: photos.map(&:id) } }
+    assert_response :unprocessable_content
+    assert_match "at most #{Invoice::MAX_ATTACHMENTS} files", response.body
+    assert_select "[id^=attachment-]", 9, "only the saved files are listed"
+    assert_select "input[name='invoice[job_photos][]']", 2, "the refused photos can be ticked again"
+    assert_equal 9, fresh(invoice) { _1.attachments.count }
+  end
+
+  test "a revision keeps what was sent; while revising it shows as Revising and can still be voided" do
+    as_business(@business) { @sent.update_columns(pdf_digest: "x") }
+    sent_at = fresh(@sent, &:sent_at)
+    post revise_admin_invoice_path(@sent)
+    revision = fresh(@sent) { _1.revisions.last }
+    assert_equal [ "sent", sent_at.to_i ], [ revision.status, revision.sent_at.to_i ]
+
+    get admin_invoices_path(filter: "draft")
+    assert_select "#invoice-#{@sent.uid}-row", /Revising/
+    get edit_admin_invoice_path(@sent)
+    assert_select "form[action=?]", void_admin_invoice_path(@sent)
+    patch void_admin_invoice_path(@sent), params: { reason: "Sent in error" }
+    assert_equal "void", fresh(@sent, &:status)
   end
 end

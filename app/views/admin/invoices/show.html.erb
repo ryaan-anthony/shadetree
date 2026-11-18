@@ -5,25 +5,9 @@
 <%= page_header "Invoice #{invoice.number}", lede: safe_join([ "For ", link_to(invoice.client.display_name, admin_client_path(invoice.client), class: "font-medium text-ink hover:underline") ]) do %>
   <% if invoice.revisable? %>
     <%= button_to revise_admin_invoice_path(invoice), class: button_classes(:secondary),
-                  form: { class: "contents", data: { turbo_confirm: "Until you send the new version, #{invoice.client.display_name}'s link says the invoice is being updated.", turbo_confirm_button: "Revise" } } do %><%= icon "edit-3" %> Revise<% end %>
+                  form: { class: "contents", data: { turbo_confirm: "This reopens #{invoice.number} as a draft to correct. Until you send the new version it isn't counted as awaiting payment, and #{invoice.client.display_name}'s link says the invoice is being updated.", turbo_confirm_button: "Revise" } } do %><%= icon "edit-3" %> Revise<% end %>
   <% end %>
-  <% if invoice.voidable? %>
-    <div class="contents" data-controller="modal">
-      <button type="button" class="<%= button_classes(:ghost) %>" data-action="modal#open" data-modal-target="return" aria-haspopup="dialog">Void</button>
-      <%= modal id: "invoice-void", title: "Void #{invoice.number}?", description: "It stays on record as Void and can't be paid. To bill again, create a new invoice." do %>
-        <%= form_with url: void_admin_invoice_path(invoice), method: :patch, class: "space-y-4" do %>
-          <div class="field">
-            <label class="label" for="void_reason">Reason</label>
-            <%= text_field_tag :reason, nil, id: "void_reason", class: "input", maxlength: 200, required: true, placeholder: "Billed twice" %>
-          </div>
-          <div class="flex justify-end gap-2">
-            <button type="button" class="<%= button_classes(:secondary) %>" data-action="modal#close">Keep invoice</button>
-            <%= submit_tag "Void invoice", class: button_classes(:danger), name: nil %>
-          </div>
-        <% end %>
-      <% end %>
-    </div>
-  <% end %>
+  <%= render "void", invoice: invoice if invoice.voidable? %>
 <% end %>
 
 <% if invoice.void? %>
@@ -59,7 +43,7 @@
       <div class="border-t border-line px-5 py-3"><%= render "admin/quotes/totals", quote: invoice, totals: %></div>
     <% end %>
 
-    <% if (files = invoice.attachments.select { _1.blob.persisted? }).any? %>
+    <% if (files = invoice.saved_attachments).any? %>
       <%= card title: "Attachments", flush: true do %>
         <ul class="list"><% files.each do |file| %>
           <li class="text-sm"><%= icon(file.image? ? "image" : "file-text", class: "size-4 text-faint") %>

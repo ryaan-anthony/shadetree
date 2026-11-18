@@ -6,6 +6,8 @@
      data-quote-builder-property-url-value="<%= property_options_admin_quotes_path(name: "invoice[property]") %>">
 <% lede = @invoice.revising? ? "Revision #{@invoice.revision} for #{@invoice.client.display_name}. Changes save as you go." : "Draft for #{@invoice.client.display_name}. Changes save as you go." %>
 <%= page_header "Invoice #{@invoice.number}", lede: do %>
+  <%# A sent invoice being revised can still be voided instead of re-sent. %>
+  <%= render "void", invoice: @invoice if @invoice.voidable? %>
   <span class="save-status" id="save_status" role="status" data-quote-builder-target="status">Saved</span>
   <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
     <button type="button" class="<%= button_classes(:ghost, :icon) %>" data-menu-target="button" data-action="menu#toggle"
@@ -112,7 +114,7 @@
   </aside>
 <% end %>
 </div>
-<% @invoice.attachments.select { _1.blob.persisted? }.each do |file| %>
+<% @invoice.saved_attachments.each do |file| %>
   <%= form_with url: admin_invoice_attachment_path(@invoice, file), method: :delete, id: "remove-attachment-#{file.id}", class: "hidden" do %><% end %>
 <% end %>
 <%= render "admin/clients/quick_create", button: false %>

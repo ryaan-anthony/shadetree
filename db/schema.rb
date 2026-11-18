@@ -369,10 +369,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_18_000200) do
     t.bigint "invoice_id", null: false
     t.integer "number", null: false
     t.jsonb "snapshot", default: {}, null: false
+    t.string "status", null: false
+    t.datetime "sent_at"
+    t.bigint "pdf_blob_id"
     t.bigint "revised_by_id"
     t.datetime "created_at", null: false
     t.index ["business_id"], name: "index_invoice_revisions_on_business_id"
     t.index ["invoice_id", "number"], name: "index_invoice_revisions_on_invoice_id_and_number", unique: true
+    t.index ["pdf_blob_id"], name: "index_invoice_revisions_on_pdf_blob_id"
     t.index ["revised_by_id"], name: "index_invoice_revisions_on_revised_by_id"
   end
 
@@ -887,9 +891,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_18_000200) do
   add_foreign_key "invoice_line_items", "businesses"
   add_foreign_key "invoice_line_items", "catalog_items"
   add_foreign_key "invoice_line_items", "invoices"
+  add_foreign_key "invoice_revisions", "active_storage_blobs", column: "pdf_blob_id", on_delete: :nullify
   add_foreign_key "invoice_revisions", "businesses"
   add_foreign_key "invoice_revisions", "invoices"
   add_foreign_key "invoice_revisions", "users", column: "revised_by_id"
+  add_foreign_key "invoices", "active_storage_blobs", column: "pdf_blob_id", on_delete: :nullify
   add_foreign_key "invoices", "businesses"
   add_foreign_key "invoices", "clients"
   add_foreign_key "invoices", "jobs"
