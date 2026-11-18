@@ -76,7 +76,38 @@ class Visit < ApplicationRecord
 
   def assignee_ids = @assignee_ids || assignments.map(&:user_id)
 
+  # The form's values (times, crew) aren't columns, so a reload forgets them too; otherwise a
+  # reloaded visit would still show the times it was first given.
+  def reload(...)
+    @start_time = @window_end_time = @assignee_ids = nil
+    super
+  end
+
   # Whether the time, day, duration or crew differ from what's saved (what warnings are about).
+  # JOB-03: the changes for a visit moved on the calendar, for reschedule!. `on` is the new day;
+  # `at` a new start ("HH:MM", a window keeps its length); `from`/`to` move it from one person
+  # to another (nil for nobody); `crew`, when given, is everyone going (an undo puts it back).
+  def move_attributes(on:, at: nil, from: nil, to: nil, crew: nil)
+    attributes = { scheduled_on: on }
+    if at && !anytime?
+      raise ArgumentError, "Choose a time like 09:30." unless CLOCK.match?(at)
+
+      length = window? ? ((window_ends_at - starts_at) / 60).round : 0
+      start = (at[0, 2].to_i * 60) + at[3, 2].to_i
+      raise ArgumentError, "That window would run past midnight." if start + length >= 24 * 60
+
+      attributes[:start_time] = at.first(5)
+      attributes[:window_end_time] = format("%02d:%02d", *(start + length).divmod(60)) if window?
+    else
+      attributes[:start_time], attributes[:window_end_time] = start_time, window_end_time
+    end
+    ids = assignee_ids
+    ids = crew.map(&:to_i).uniq if crew
+    ids = ((ids - [ from ]) | [ to ]).compact if crew.nil? && from != to
+    attributes[:assignee_ids] = ids unless ids.sort == assignee_ids.sort
+    attributes
+  end
+
   def when_or_crew_changed?
     (changes.keys & %w[scheduled_on timing starts_at window_ends_at duration_minutes]).any? ||
       (!@assignee_ids.nil? && @assignee_ids.sort != assignments.map(&:user_id).sort)

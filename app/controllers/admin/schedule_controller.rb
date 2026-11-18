@@ -12,9 +12,80 @@ class Admin::ScheduleController < Admin::BaseController
                                                    color_by: params[:color])
   end
 
+  # A visit dragged to another day, time or person (JOB-03), or changed in the quick-edit sheet.
+  # Same warnings as the visit form: the first answer lists them, and the same move sent again
+  # with their digest goes ahead. An undo (from the toast) skips them. On success the next page
+  # shows a toast with Undo; drags get JSON and reload the calendar themselves.
+  def move
+    @visit = Visit.includes(:assignees, job: %i[client property]).find_by_param!(params[:id])
+    previous = { on: @visit.scheduled_on.iso8601, at: @visit.start_time, crew: @visit.assignee_ids.map(&:to_s).presence || [ "" ] } # [""]: nobody, kept through compact_blank
+    return refuse("Someone changed this visit just now. Here's the latest.", status: :conflict) if params[:lock_version].present? && params[:lock_version].to_i != @visit.lock_version
+
+    on = Date.iso8601(params[:on].to_s) rescue nil
+    return refuse("Choose a day.") unless on
+
+    changes = @visit.move_attributes(on:, at: params[:at].presence, from: member_param(:from), to: member_param(:to),
+                                     crew: (Array(params[:crew]).compact_blank if params.key?(:crew)))
+    @visit.assign_attributes(changes)
+    return refuse(@visit.errors.full_messages.to_sentence) unless @visit.valid?
+    return render_move(:ok, "Nothing changed.") unless @visit.when_or_crew_changed?
+
+    @warnings = VisitWarnings.for([ @visit ])
+    if @warnings.any? && params[:undo].blank? && params[:confirm] != Admin::VisitsController.digest(@warnings)
+      respond_to do |format|
+        format.json { render json: { warnings: @warnings, confirm: Admin::VisitsController.digest(@warnings) }, status: :unprocessable_content }
+        format.html do
+          @proposed = { on: @visit.scheduled_on, at: @visit.start_time, crew: @visit.assignee_ids }
+          @visit = Visit.includes(:assignees, job: %i[client property]).find(@visit.id) # the details show it as it is; the sheet, as asked
+          render :visit, status: :unprocessable_content
+        end
+      end
+      return
+    end
+
+    @visit.reload.reschedule!(changes, by: current_user)
+    flash[:notice] = "#{params[:undo].present? ? "Put back" : "Moved"}: #{@visit.job.client.display_name}, #{@visit.when_label}#{" · #{@visit.crew_names.to_sentence.presence || "nobody yet"}" if changes.key?(:assignee_ids)}."
+    flash[:undo] = { "path" => admin_schedule_move_path(@visit), "params" => previous.merge(lock_version: @visit.lock_version, undo: 1, view: params[:view], member: params[:member]).compact_blank } unless params[:undo].present?
+    render_move(:ok)
+  rescue ArgumentError => error
+    refuse(error.message)
+  rescue ActiveRecord::StaleObjectError
+    refuse("Someone changed this visit just now. Here's the latest.", status: :conflict)
+  rescue Visit::NotOpen => error
+    refuse(error.message)
+  end
+
   # The details of one visit, for the panel beside the calendar.
   def visit
     @visit = Visit.includes(:assignees, job: %i[client property]).find_by_param!(params[:id])
     render partial: "admin/schedule/visit", locals: { visit: @visit }, layout: false if turbo_frame_request?
+  end
+
+  private
+
+  # A member id from the drag ("none" for the "Nobody yet" column), only if they're in this business.
+  def member_param(key)
+    value = params[key].presence
+    return nil if value.nil? || value == "none"
+
+    current_business.business_users.where(user_id: value.to_i).pick(:user_id) || raise(ArgumentError, "That person isn't on your team.")
+  end
+
+  def back_to_calendar = admin_schedule_path({ view: params[:view], date: (@visit&.scheduled_on || current_business.today).iso8601, member: params[:member] }.compact_blank)
+
+  def render_move(status, message = nil)
+    flash[:notice] = message if message
+    respond_to do |format|
+      format.json { render json: { ok: true }, status: }
+      format.html { redirect_to back_to_calendar }
+    end
+  end
+
+  def refuse(message, status: :unprocessable_content)
+    flash[:alert] = message
+    respond_to do |format|
+      format.json { render json: { error: message }, status: }
+      format.html { redirect_to back_to_calendar }
+    end
   end
 end

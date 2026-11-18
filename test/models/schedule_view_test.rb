@@ -38,7 +38,7 @@ class ScheduleViewTest < ActiveSupport::TestCase
   test "short visits one after another, drawn taller than they last, sit side by side" do
     monday = Date.new(2026, 11, 23)
     first, second = book(monday, "09:00", 10), book(monday, "09:10", 10)
-    placed = view(monday).placed_on(monday).index_by(&:visit)
+    placed = view(monday).placed_in(ScheduleView::Column.new(monday, nil)).index_by(&:visit)
     assert_equal [ 0, 1 ], [ first, second ].map { placed[_1].column }
   end
 
@@ -48,7 +48,7 @@ class ScheduleViewTest < ActiveSupport::TestCase
     b = book(monday, "10:00", 60)
     c = book(monday, "11:00", 60)
     d = book(monday, "13:00", 15)
-    placed = view(monday).placed_on(monday).index_by(&:visit)
+    placed = view(monday).placed_in(ScheduleView::Column.new(monday, nil)).index_by(&:visit)
     hour = ScheduleView::HOUR_PX
     assert_equal [ hour, 2 * hour ], placed[a].to_h.values_at(:top, :height), "9 am is an hour below 8 am"
     assert_equal [ 0, 1, 0 ], [ a, b, c ].map { placed[_1].column }, "11:00 goes under 9:00 once that's done"
@@ -60,7 +60,7 @@ class ScheduleViewTest < ActiveSupport::TestCase
     sunday = Date.new(2026, 11, 1) # clocks go back at 2 am
     book(sunday, "10:00", 60)
     schedule = ScheduleView.new(@business, view: "day", date: sunday)
-    assert_equal (10 - schedule.hours.first) * ScheduleView::HOUR_PX, schedule.placed_on(sunday).sole.top
+    assert_equal (10 - schedule.hours.first) * ScheduleView::HOUR_PX, schedule.placed_in(ScheduleView::Column.new(sunday, nil)).sole.top
   end
 
   test "closed time is shaded: before opening, after closing and closures" do

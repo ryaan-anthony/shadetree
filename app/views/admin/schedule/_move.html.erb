@@ -1,0 +1,50 @@
+<%# locals: (visit:, warnings: nil, proposed: nil) -%>
+<%# JOB-03: the quick edit: a visit's day, start and who's going, in a sheet on phones (and the
+    keyboard's way to do what dragging does). Warnings come back here with "Move anyway". %>
+<% proposed ||= { on: visit.scheduled_on, at: visit.start_time, crew: visit.assignee_ids } %>
+<% members = current_business.business_users.active.includes(:user).map(&:user).sort_by { _1.full_name.downcase } %>
+<div class="contents" data-controller="modal" data-modal-open-value="<%= warnings.present? %>">
+  <button type="button" class="<%= button_classes(:secondary, :sm) %>" data-action="modal#open" data-modal-target="return" aria-haspopup="dialog">Move</button>
+  <%= modal id: "move-#{visit.uid}", title: "Move #{visit.job.client.display_name}", description: visit.job.title, sheet: true do %>
+    <%= form_with url: admin_schedule_move_path(visit), method: :patch, class: "space-y-4", data: { turbo_frame: "_top" } do %>
+      <%= hidden_field_tag :lock_version, visit.lock_version, id: nil %>
+      <%= hidden_field_tag :view, params[:view], id: nil if params[:view].present? %>
+      <%= hidden_field_tag :member, params[:member], id: nil if params[:member].present? %>
+      <% if warnings.present? %>
+        <div class="banner banner-warning" role="alert"><%= icon "alert-triangle" %>
+          <div><p class="font-semibold">Before you move this</p>
+            <ul class="mt-1 list-disc pl-5"><% warnings.each do |warning| %><li><%= warning %></li><% end %></ul>
+            <p class="mt-1">You can still move it, or change it below.</p></div>
+        </div>
+        <%= hidden_field_tag :confirm, Admin::VisitsController.digest(warnings), id: nil %>
+      <% end %>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="field">
+          <label class="label" for="move-<%= visit.uid %>-on">Day</label>
+          <%= date_field_tag :on, proposed[:on]&.iso8601, class: "input", id: "move-#{visit.uid}-on", required: true %>
+        </div>
+        <% unless visit.anytime? %>
+          <div class="field">
+            <label class="label" for="move-<%= visit.uid %>-at"><%= visit.window? ? "Window starts" : "Starts" %></label>
+            <%= time_field_tag :at, proposed[:at], class: "input", id: "move-#{visit.uid}-at", step: 900, required: true %>
+          </div>
+        <% end %>
+      </div>
+      <fieldset class="field">
+        <legend class="label">Who's going</legend>
+        <%= hidden_field_tag "crew[]", "", id: nil %>
+        <div class="grid gap-1 sm:grid-cols-2">
+          <% members.each do |user| %>
+            <label class="flex min-h-11 items-center gap-2 text-sm text-ink">
+              <%= check_box_tag "crew[]", user.id, proposed[:crew].include?(user.id), id: "move-#{visit.uid}-crew-#{user.id}", class: "checkbox" %> <%= user.full_name %>
+            </label>
+          <% end %>
+        </div>
+      </fieldset>
+      <div class="flex justify-end gap-2">
+        <button type="button" class="<%= button_classes(:secondary) %>" data-action="modal#close">Keep as is</button>
+        <%= submit_tag warnings.present? ? "Move anyway" : "Move visit", class: button_classes(:primary), name: nil %>
+      </div>
+    <% end %>
+  <% end %>
+</div>

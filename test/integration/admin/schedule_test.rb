@@ -65,9 +65,12 @@ class Admin::ScheduleTest < ActionDispatch::IntegrationTest
 
     get admin_schedule_path(view: "day", date: @monday.iso8601)
     assert_select "h1", "Monday, November 23"
+    assert_select "#schedule-grid .cal-day", 3, "a day for everyone has a column per person, and one for nobody yet"
+    assert_select "#schedule-grid .cal-day[aria-label='Monday, November 23, Technician'] #cal-visit-#{@timed.uid}-#{@tech.id}"
+    assert_select "#schedule-grid [id^=cal-visit-#{@anytime.uid}]", 0
+    get admin_schedule_path(view: "day", date: @monday.iso8601, member: @tech.id)
     assert_select "#schedule-grid .cal-day", 1
     assert_select "#cal-visit-#{@timed.uid}"
-    assert_select "#cal-visit-#{@anytime.uid}", 0
 
     get admin_schedule_path(date: "2026-W48-1")
     assert_response :success, "a date that isn't YYYY-MM-DD falls back to today"

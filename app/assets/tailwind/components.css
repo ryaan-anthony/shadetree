@@ -256,6 +256,12 @@
     color: var(--color-body);
     box-shadow: var(--shadow-pop);
   }
+  @media (max-width: 47.99rem) {
+    .modal-sheet { width: 100vw; max-width: 100vw; max-height: 88vh; margin: auto 0 0; border-radius: var(--radius-dialog) var(--radius-dialog) 0 0;
+                   padding-bottom: env(safe-area-inset-bottom); }
+    .modal-sheet[open] { animation: sheet-in 0.2s ease-out; }
+  }
+  @keyframes sheet-in { from { transform: translateY(100%); } }
   .modal::backdrop { background: rgb(15 23 42 / 0.42); }
   .modal[open] { animation: modal-in 0.16s ease-out; }
   @keyframes modal-in { from { opacity: 0; transform: translateY(8px) scale(0.985); } }
@@ -562,6 +568,12 @@
 
   /* ---------- Team calendar (JOB-03). One hour is 56px (ScheduleView::HOUR_PX). ---------- */
   .cal-grid { display: grid; grid-template-columns: 3.5rem repeat(var(--cal-days), minmax(0, 1fr)); }
+  .cal-grid.cal-wide { grid-template-columns: 3.5rem repeat(var(--cal-days), minmax(7.5rem, 1fr)); } /* a day split by many people scrolls sideways */
+  /* Dragging a visit: it follows the pointer; the column under it is outlined. */
+  .cal-dragging { opacity: 0.85; box-shadow: 0 8px 24px rgb(15 23 42 / 0.18); z-index: 20; pointer-events: none; cursor: grabbing; }
+  .cal-drop { outline: 2px dashed var(--color-ink); outline-offset: -2px; }
+  .cal-moving { opacity: 0.5; }
+  [data-schedule-drag-target="visit"] { cursor: grab; }
   .cal-day { position: relative; border-left: 1px solid var(--color-line-2);
     background-image: linear-gradient(var(--color-line-2) 1px, transparent 1px); background-size: 100% 56px; }
   .cal-shade { position: absolute; left: 0; right: 0;

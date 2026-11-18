@@ -9,6 +9,11 @@ class ScheduleView
   COLORS = %w[sky violet amber rose teal lime indigo orange].freeze # tones in components.css (.cal-<color>)
 
   Placed = Data.define(:visit, :top, :height, :column, :columns)
+  # One column of the grid: a day (week view), or one person's day (day view for everyone).
+  # `member` is a user, :none for "Nobody yet", or nil for everyone.
+  Column = Data.define(:date, :member) do
+    def member_key = member == :none ? "none" : member&.id&.to_s
+  end
   Shade = Data.define(:top, :height)
 
   attr_reader :business, :view, :date, :member, :color_by
@@ -50,12 +55,35 @@ class ScheduleView
   end
 
   def visits_on(date) = by_date.fetch(date, [])
-  def anytime_on(date) = visits_on(date).select(&:anytime?)
+
+  # The grid's columns. A day for everyone is split by person, so a visit can be dragged from
+  # one person to another; a visit with two people going shows in both their columns.
+  def columns
+    @columns ||= if @view == "day" && @member.nil?
+      [ *members.map { Column.new(@date, _1) }, Column.new(@date, :none) ]
+    else
+      dates.map { Column.new(_1, nil) }
+    end
+  end
+
+  def by_person? = columns.first.member.present?
+
+  def visits_in(column)
+    visits = visits_on(column.date)
+    case column.member
+    when nil then visits
+    when :none then visits.select { _1.assignees.empty? }
+    else visits.select { |visit| visit.assignees.include?(column.member) }
+    end
+  end
+
+  def anytime_in(column) = visits_in(column).select(&:anytime?)
 
   # The timed visits of a day, with their place on the grid. Visits that overlap share the
   # column's width side by side.
-  def placed_on(date)
-    timed = visits_on(date).reject(&:anytime?).sort_by { [ _1.starts_at, -_1.duration_minutes ] }
+  def placed_in(column)
+    date = column.date
+    timed = visits_in(column).reject(&:anytime?).sort_by { [ _1.starts_at, -_1.duration_minutes ] }
     groups = []
     # Where each visit's drawn block ends: a short one is drawn MIN_PX tall, so it can cover the next.
     drawn_end = ->(visit) { [ visit.ends_at, visit.starts_at + (MIN_PX * 60.0 / HOUR_PX).ceil.minutes ].max }

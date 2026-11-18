@@ -39,8 +39,9 @@ module ComponentsHelper
 
   # A <dialog>. Open it with a button carrying data-action="modal#open" inside a
   # data-controller="modal" wrapper, or call modal_trigger.
-  def modal(id:, title:, description: nil, footer: nil, &block)
-    render "components/modal", id:, title:, description:, footer:, body: capture(&block)
+  # sheet: true docks it to the bottom of the screen on phones (JOB-03's quick edit).
+  def modal(id:, title:, description: nil, footer: nil, sheet: false, &block)
+    render "components/modal", id:, title:, description:, footer:, sheet:, body: capture(&block)
   end
 
   # Previous/next pagination with a "Showing 21–40 of 132" summary. Keeps other query params.
