@@ -140,6 +140,19 @@ Rails.application.routes.draw do
     # "Send me a test email" from branding settings (NTF-01)
     resource :test_email, only: :create
 
+    # Team notifications (NTF-02): the notification center and each member's email choices
+    resources :notifications, only: :index do
+      collection do
+        patch :read_all
+        get :settings
+        patch :settings, action: :update_settings
+      end
+      member do
+        get :open # marks it read and goes to what it's about
+        patch :read
+      end
+    end
+
     # Tax rates (CAT-04)
     resources :tax_rates, except: %i[show destroy] do
       member do

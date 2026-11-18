@@ -1,0 +1,9 @@
+<%= @notification.title %>
+<% if @notification.body %>
+
+<%= @notification.body %>
+<% end %>
+
+Open in Shadetree: <%= @url %>
+
+<%= render "shared/mailer/notification_settings" %>

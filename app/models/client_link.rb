@@ -91,11 +91,14 @@ class ClientLink < ApplicationRecord
   # Records a client view. Staff previews don't call this.
   def record_view!(device: nil)
     now = Time.current
-    as_own_business do
+    first = as_own_business do
       events.create!(business:, kind: "view", device:, occurred_at: now)
-      self.class.where(id:).update_all([ "views_count = views_count + 1, last_viewed_at = ?, first_viewed_at = COALESCE(first_viewed_at, ?)", now, now ])
+      self.class.where(id:).update_all([ "views_count = views_count + 1, last_viewed_at = ?", now ])
+      self.class.where(id:, first_viewed_at: nil).update_all(first_viewed_at: now) == 1 # only one request wins
     end
     reload
+    notify_first_view if first
+    self
   end
 
   # Runs a one-time client action (approve, pay…) at most once per link. Returns false if the
@@ -135,8 +138,19 @@ class ClientLink < ApplicationRecord
     false
   end
 
+  # NTF-02: the office team hears when a client first opens a quote (deliver never raises).
+  def notify_first_view
+    Tenancy.with_business(business) do
+      return unless linkable.is_a?(Quote)
+
+      NotificationType.deliver("quote_viewed", business:, subject: linkable, title: "#{linkable.client.display_name} opened quote #{linkable.number}",
+                               body: linkable.title, path: Rails.application.routes.url_helpers.admin_quote_path(linkable))
+    end
+  end
+
   # Client requests already run as the link's business; this keeps model calls safe from jobs
   # and the console too.
+
   def as_own_business(requires_new: false, &block)
     Tenancy.with_business(business) { transaction(requires_new:, &block) }
   end
