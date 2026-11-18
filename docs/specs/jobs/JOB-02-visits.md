@@ -24,19 +24,22 @@ work (windows, "anytime"), and helpful about conflicts without being bossy.
 
 ## Acceptance criteria
 
-- [ ] Owners/Admins add visits to a job with: date; a start time, an arrival window, or
+- [x] Owners/Admins add visits to a job with: date; a start time, an arrival window, or
       "anytime"; estimated duration (defaulted from catalog items/industry); assigned members
       (zero or more, any role); optional visit-specific instructions.
-- [ ] Visits can be rescheduled, reassigned and cancelled (with optional reason); each change is
+      *Arrival is a window, a start time, or anytime; the duration starts from the job's catalog services, else the industry default, else an hour.*
+- [x] Visits can be rescheduled, reassigned and cancelled (with optional reason); each change is
       recorded with who/when.
+      *Shown as each visit's history on the job page; cancelled visits can be restored.*
 - [ ] Non-blocking warnings appear when a visit is outside business hours, on a closure
       (CAT-06), or overlaps another visit for an assigned member.
-- [ ] Visits have statuses Scheduled, In progress, Completed, Cancelled; job status updates
+- [x] Visits have statuses Scheduled, In progress, Completed, Cancelled; job status updates
       accordingly (JOB-01).
+      *A job with a visit under way, or work done and more to come, is In progress; visits booked and none done is Scheduled; nothing booked is Unscheduled. Completing a job finishes a visit under way and cancels ones not started; cancelling a job cancels its open visits.*
 - [ ] Assigned members are notified of assignment and changes (in-app/email via NTF-02 when
       available; feature works without it).
-- [ ] Times are entered and shown in the business time zone (PLT-08).
-- [ ] Scheduling a visit is possible directly from the job page and from the "unscheduled" list.
+- [x] Times are entered and shown in the business time zone (PLT-08).
+- [x] Scheduling a visit is possible directly from the job page and from the "unscheduled" list.
 - [ ] Tests cover windows, warnings, DST, reassignment, roles and tenancy.
 
 ## Out of scope
@@ -46,5 +49,6 @@ work (windows, "anytime"), and helpful about conflicts without being bossy.
 
 ## Open questions
 
-- Multi-day visits (a 3-day painting job): one visit spanning days or one visit per day?
-  Recommend one visit per day, with a "repeat for N days" shortcut.
+- ~~Multi-day visits (a 3-day painting job): one visit spanning days or one visit per day?~~
+  *Decided: staff pick a date range (Wed–Fri) or separate dates (Thu, Fri, Mon) when scheduling,
+  and each date becomes its own visit.*
