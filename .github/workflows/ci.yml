@@ -82,8 +82,17 @@ jobs:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/shadetree_test
     steps:
       - uses: actions/checkout@v7
+      # The runner image version keys the cache, so a new image (weekly) caches its own packages.
+      - name: Runner image version
+        id: image
+        run: echo "version=${ImageVersion:-unknown}" >> "$GITHUB_OUTPUT"
+      - name: Cache libvips packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/debs
+          key: libvips-debs-${{ runner.os }}-${{ steps.image.outputs.version }}
       - name: Install libvips (image processing, ADR 0008)
-        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends libvips42
+        run: script/ci/install-libvips
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: .ruby-version
@@ -130,8 +139,17 @@ jobs:
       COVERAGE: "false"
     steps:
       - uses: actions/checkout@v7
+      # The runner image version keys the cache, so a new image (weekly) caches its own packages.
+      - name: Runner image version
+        id: image
+        run: echo "version=${ImageVersion:-unknown}" >> "$GITHUB_OUTPUT"
+      - name: Cache libvips packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/debs
+          key: libvips-debs-${{ runner.os }}-${{ steps.image.outputs.version }}
       - name: Install libvips (image processing, ADR 0008)
-        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends libvips42
+        run: script/ci/install-libvips
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: .ruby-version
