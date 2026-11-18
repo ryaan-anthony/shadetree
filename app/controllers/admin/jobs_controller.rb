@@ -56,7 +56,7 @@ class Admin::JobsController < Admin::BaseController
   end
 
   def complete
-    @job.complete!(by: current_user, notify_client: params[:notify_client] != "0")
+    @job.complete!(by: current_user)
     redirect_to admin_job_path(@job), notice: "Job #{@job.number} completed."
   rescue Job::NotOpen => error
     redirect_to admin_job_path(@job), alert: error.message

@@ -124,7 +124,7 @@ class Visit < ApplicationRecord
       end
       visits.first.reset_ready_to_invoice
       job.refresh_status!
-      visits.first.tell_client(notify_client, visits)
+      visits.first.tell_client(notify_client, visits, by:)
     end
     crew = visits.flat_map { _1.assignees.to_a }.uniq
     dates = visits.size == 1 ? visits.first.when_label : "#{visits.size} days (#{visits.map { _1.scheduled_on.strftime("%b %-d") }.to_sentence}), #{visits.first.time_label}"
@@ -171,7 +171,7 @@ class Visit < ApplicationRecord
       after_crew = assignees.reload.to_a
       moved = snapshot.except("when") != before.except("when")
       VisitEvent.record!(self, :rescheduled, by:, from: before, to: snapshot) if moved
-      tell_client(notify_client) if moved
+      tell_client(notify_client, by:) if moved
       added, removed = after_crew - before_crew, before_crew - after_crew
       if added.any? || removed.any?
         VisitEvent.record!(self, :reassigned, by:, added: added.map(&:full_name), removed: removed.map(&:full_name),
@@ -197,7 +197,7 @@ class Visit < ApplicationRecord
       lock!
       finish!("cancelled", by:, reason:)
       notify_ready_to_invoice(by:) if !job.visits.open.exists? && job.visits.where(status: "completed").exists?
-      tell_client(notify_client)
+      tell_client(notify_client, by:)
     end
   end
 
@@ -209,7 +209,7 @@ class Visit < ApplicationRecord
       update!(status: "scheduled", cancelled_at: nil, cancel_reason: nil)
       VisitEvent.record!(self, :restored, by:)
       reset_ready_to_invoice
-      tell_client(notify_client)
+      tell_client(notify_client, by:)
       notify_crew("visit_assigned", assignees.to_a, "Back on: #{job.title} (#{job.number}), #{when_label}", by:)
     end
   end
@@ -291,7 +291,7 @@ class Visit < ApplicationRecord
   # When it is, as shown ("when") and as values, for the history and for later notices.
   # JOB-05: what the client would be told about this visit: booked (and when) or cancelled.
   def client_state
-    { "state" => status == "cancelled" ? "cancelled" : "booked", "when" => when_label(with_year: true), "on" => scheduled_on.iso8601,
+    { "state" => status == "cancelled" ? "cancelled" : "booked", "when" => when_label, "on" => scheduled_on.iso8601,
       "timing" => timing, "starts_at" => starts_at&.utc&.iso8601, "window_ends_at" => window_ends_at&.utc&.iso8601 }
   end
 
@@ -299,11 +299,15 @@ class Visit < ApplicationRecord
   def client_up_to_date? = client_told&.except("when") == client_state.except("when")
 
   # After a change the client should hear about: their email goes out shortly, with the job's
-  # other changes, unless staff chose not to tell them, in which case this is what they know.
-  def tell_client(notify_client, visits = [ self ])
-    if notify_client
+  # other changes. When staff chose not to tell them (or can't email clients yet, ACC-01, or the
+  # client has no email), this is what the client knows, unless an email about an earlier change
+  # is already on its way: then that email carries the visit as it is now, rather than the
+  # earlier change being lost.
+  def tell_client(notify_client, visits = [ self ], by: nil)
+    sender_ok = by.nil? || by.can_send_to_clients?
+    if notify_client && sender_ok && job.client.primary_email
       job.queue_client_notice!
-    else
+    elsif job.client_notice_due_at.nil?
       visits.each { _1.update_columns(client_told: _1.client_state) }
     end
   end

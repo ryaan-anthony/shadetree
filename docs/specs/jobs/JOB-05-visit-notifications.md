@@ -49,7 +49,12 @@ when, where and how to reach the business.
   email, and a change undone in time (or a visit booked and cancelled) sends nothing. Mixed
   changes ("moved one, cancelled another") are one email too.
 - **"Don't notify client":** a checkbox on the visit form and the cancel dialogs (job and visit),
-  shown when the client has an email. Unticked, the change counts as what the client knows.
+  shown when the client has an email. Unticked, the change counts as what the client knows,
+  unless an email about an earlier change is already due: that email then shows the visit as
+  it is now. Completing a job doesn't email about the visits it cancels.
+- Only someone who has confirmed their email can email clients (ACC-01); otherwise the form
+  says so and nothing is sent. The business's hourly client email limit postpones a notice by
+  15 minutes rather than dropping it.
 - Only visits from today on are news; a past visit's changes aren't emailed.
 - **Visit instructions** stay the crew's. A visit has a separate **Note for the client**, shown in
   their emails and on their page.

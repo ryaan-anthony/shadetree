@@ -76,6 +76,13 @@ class ClientVisitEmailsTest < ActionDispatch::IntegrationTest
     assert_select "#client-emails", 0, "cancelled then restored before it went: nothing to say"
   end
 
+  test "someone who hasn't confirmed their email is told why the client won't be emailed" do
+    users(:one).update_columns(confirmed_at: nil)
+    get new_admin_job_visit_path(@job)
+    assert_select "input[name=notify_client]", 0
+    assert_select "p", text: /Confirm your email address to email Maria Lopez about visits/
+  end
+
   test "the job page lists the emails sent, with how they went" do
     schedule
     settle

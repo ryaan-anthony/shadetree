@@ -61,7 +61,7 @@ class VisitClientNoticeTest < ActiveSupport::TestCase
     visit.reload.reschedule!({ scheduled_on: @day + 2, start_time: "13:00", window_end_time: "15:00" }, by: @owner)
     settle
     assert_equal %w[visit_scheduled visit_changed], emails.map(&:kind)
-    assert_match(/Was #{Regexp.escape(@day.strftime("%a, %b %-d"))}, #{@day.year} · Arrive 8–10 am/, mails.last.text_part.body.to_s)
+    assert_match(/Was #{Regexp.escape(@day.strftime("%a, %b %-d"))} · Arrive 8–10 am/, mails.last.text_part.body.to_s)
 
     visit.reload.reschedule!({ scheduled_on: @day + 3 }, by: @owner)
     visit.reload.reschedule!({ scheduled_on: @day + 2 }, by: @owner)
@@ -118,6 +118,66 @@ class VisitClientNoticeTest < ActiveSupport::TestCase
     past = book(@business.today - 1)
     assert_no_difference("EmailMessage.count") { settle }
     assert_nil past.reload.client_told, "past visits aren't news"
+  end
+
+  test "unticked after an email is already due: that email still goes, with the visit as it is now" do
+    visit = book
+    visit.reload.reschedule!({ scheduled_on: @day + 1 }, by: @owner, notify_client: false)
+    settle
+    assert_equal %w[visit_scheduled], emails.map(&:kind)
+    assert_match "Visit booked: #{(@day + 1).strftime("%a, %b %-d")}", mails.last.subject
+  end
+
+  test "anytime and exact-time visits are up to date once told" do
+    anytime = book(timing: "anytime", start_time: nil, window_end_time: nil)
+    exact = book(@day + 1, timing: "exact", start_time: "09:00", window_end_time: nil)
+    settle
+    assert [ anytime, exact ].all? { _1.reload.client_up_to_date? }
+    book(@day + 2)
+    settle
+    assert_equal %w[visit_scheduled visit_scheduled], emails.map(&:kind), "the second email is only about the new visit"
+    assert_equal 1, mails.last.text_part.body.to_s.scan("View visit:").size
+  end
+
+  test "someone who hasn't confirmed their email can't email clients; the hourly limit postpones, never drops" do
+    unconfirmed = users(:unconfirmed)
+    visit = @job.visits.new(scheduled_on: @day, timing: "anytime").tap { _1.schedule!(by: unconfirmed) }
+    assert_nil @job.reload.client_notice_due_at
+    assert visit.reload.client_up_to_date?
+
+    book(@day + 1)
+    EmailMessage::CLIENT_EMAILS_PER_HOUR.times { EmailMessage.create!(kind: "quote_sent", to: "someone@example.com") }
+    settle
+    assert_empty emails
+    assert_operator @job.reload.client_notice_due_at, :>, Time.current
+    travel(1.hour + VisitClientNotice::HOURLY_LIMIT_WAIT) { perform_enqueued_jobs(only: VisitClientNoticeJob) }
+    assert_equal %w[visit_scheduled], emails.map(&:kind)
+  end
+
+  test "completing a job doesn't email about the visits it cancels" do
+    book
+    settle
+    @job.complete!(by: @owner)
+    assert_no_difference("EmailMessage.count") { settle }
+  end
+
+  test "the email shows the visit as it was decided, even if it changes before delivery" do
+    visit = book
+    travel(Job::CLIENT_NOTICE_DELAY + 1.second) { perform_enqueued_jobs(only: VisitClientNoticeJob) }
+    visit.reload.reschedule!({ scheduled_on: @day + 3 }, by: @owner, notify_client: false)
+    perform_enqueued_jobs(only: ClientMailDeliveryJob)
+    assert_match "Visit booked: #{@day.strftime("%a, %b %-d")}", mails.last.subject
+  end
+
+  test "a job from another business isn't touched" do
+    theirs = Tenancy.with_business(businesses(:two)) do
+      client = Client.create!(display_name: "Theirs", contact_methods_attributes: [ { kind: "email", value: "them@example.com" } ])
+      Job.create!(client:, title: "Theirs").tap { |job| job.visits.new(scheduled_on: @day, timing: "anytime").schedule!(by: nil) }
+    end
+    Current.reset
+    VisitClientNoticeJob.perform_now(@business.id, theirs.id)
+    Tenancy.with_business(businesses(:two)) { assert theirs.reload.client_notice_due_at, "still pending in its own business" }
+    Current.business = @business
   end
 
   test "a visit's client link is kept, and lasts until a month after the visit wherever it moves" do
