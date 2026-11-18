@@ -119,6 +119,21 @@ Rails.application.routes.draw do
       resource :job, only: :create, controller: "quote_jobs" # JOB-01: an approved quote becomes a job
     end
 
+    # The team calendar (JOB-03)
+    get "schedule", to: "schedule#show", as: :schedule
+    get "schedule/visits/:id", to: "schedule#visit", as: :schedule_visit
+
+    # The day view for the people going on visits (JOB-04): only their own visits.
+    get "my-day", to: "my_day#show", as: :my_day
+    resources :my_visits, only: :show, path: "my-day/visits", controller: "my_visits" do
+      member do
+        patch :start
+        patch :complete
+        patch :reopen
+      end
+      resources :notes, only: :create, controller: "my_visit_notes"
+    end
+
     # Jobs (JOB-01)
     resources :jobs, only: %i[index show new create edit update] do
       post :search, on: :collection # POST keeps client names out of URLs
@@ -127,10 +142,31 @@ Rails.application.routes.draw do
         patch :cancel
         patch :reopen
       end
+      # Visits (JOB-02)
+      resources :visits, only: %i[new create edit update] do
+        member do
+          patch :cancel
+          patch :restore
+          patch :complete
+        end
+      end
     end
 
     # "Send me a test email" from branding settings (NTF-01)
     resource :test_email, only: :create
+
+    # Team notifications (NTF-02): the notification center and each member's email choices
+    resources :notifications, only: :index do
+      collection do
+        patch :read_all
+        get :settings
+        patch :settings, action: :update_settings
+      end
+      member do
+        get :open # marks it read and goes to what it's about
+        patch :read
+      end
+    end
 
     # Tax rates (CAT-04)
     resources :tax_rates, except: %i[show destroy] do

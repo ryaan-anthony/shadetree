@@ -23,22 +23,25 @@ noise.
 
 ## Acceptance criteria
 
-- [ ] An in-app notification center shows recent notifications with unread count in the app
+- [x] An in-app notification center shows recent notifications with unread count in the app
       chrome (desktop and mobile); items link to the record and can be marked read
-      individually or all at once.
+      individually or all at once. *A bell in the top bar; opening an item marks it read.*
 - [ ] Notification types (initial set): new request; quote first viewed; quote approved,
       declined, changes requested; visit assigned/changed/cancelled (to assignees); job ready to
       invoice; invoice paid; online payment failed; team invitation accepted.
-- [ ] Recipients are role-aware: Owners/Admins get business events; Technicians only get events
-      about their own visits.
-- [ ] Each member can turn email on/off per type (in-app always on) in personal settings;
-      defaults are sensible per role.
-- [ ] Features raise notifications through one shared mechanism; adding a new type is a small,
-      documented change.
-- [ ] Notifications respect tenancy (a member of two businesses sees each business's
+      *Done for the events that exist: new request, quote first viewed, approved, declined,
+      changes requested, invitation accepted. Visits (JOB-02) and ready to invoice (JOB-04)
+      are added; payments (PAY-*) add theirs when they're built.*
+- [x] Recipients are role-aware: Owners/Admins get business events; Technicians only get events
+      about their own visits. *By permission; `to:` names the people for visit events (JOB-02).*
+- [x] Each member can turn email on/off per type (in-app always on) in personal settings;
+      defaults are sensible per role. *Notifications → Email settings, per business.*
+- [x] Features raise notifications through one shared mechanism; adding a new type is a small,
+      documented change. *`NotificationType.deliver`; CONTRIBUTING.md "Team notifications".*
+- [x] Notifications respect tenancy (a member of two businesses sees each business's
       notifications in that business).
-- [ ] Old notifications are pruned after a retention period.
-- [ ] Tests cover recipient rules, preferences and tenancy.
+- [x] Old notifications are pruned after a retention period. *90 days, daily.*
+- [x] Tests cover recipient rules, preferences and tenancy.
 
 ## Out of scope
 
@@ -46,4 +49,4 @@ noise.
 
 ## Open questions
 
-- Should Owners get a daily digest email instead of individual emails? Recommend backlog.
+- ~~Should Owners get a daily digest email instead of individual emails?~~ *Decided: backlog.*

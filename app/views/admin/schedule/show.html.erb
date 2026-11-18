@@ -1,0 +1,158 @@
+<%# JOB-03: the team calendar. Desktop: a time grid; phones: an agenda grouped by day. %>
+<% s = @schedule %>
+<% content_for :title, "Schedule" %>
+<%= page_header s.title, lede: (s.view == "day" ? "Day" : "Week") do %>
+  <div class="flex items-center gap-1" role="group" aria-label="Period">
+    <%= link_to admin_schedule_path(schedule_link_params(s, date: s.previous_date.iso8601)), class: button_classes(:secondary, :icon), "aria-label": "Previous #{s.view}" do %><%= icon "chevron-left" %><% end %>
+    <%= link_to "Today", admin_schedule_path(schedule_link_params(s, date: nil)), class: button_classes(:secondary), "aria-current": ("date" if s.today?) %>
+    <%= link_to admin_schedule_path(schedule_link_params(s, date: s.next_date.iso8601)), class: button_classes(:secondary, :icon), "aria-label": "Next #{s.view}" do %><%= icon "chevron-right" %><% end %>
+  </div>
+  <nav class="tabs hidden md:flex" aria-label="View">
+    <%= link_to "Day", admin_schedule_path(schedule_link_params(s, view: "day")), class: "tab", "aria-current": ("page" if s.view == "day") %>
+    <%= link_to "Week", admin_schedule_path(schedule_link_params(s, view: "week")), class: "tab", "aria-current": ("page" if s.view == "week") %>
+  </nav>
+<% end %>
+
+<div class="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <aside class="order-2 min-w-0 space-y-4 lg:order-none">
+    <%= turbo_frame_tag "schedule_visit", data: { controller: "schedule-panel", action: "turbo:frame-load->schedule-panel#show" } %>
+
+    <%= card title: "Crew", flush: true do %>
+      <ul class="list" id="schedule-members">
+        <li class="p-0"><%= link_to admin_schedule_path(schedule_link_params(s, member: nil)), class: "flex flex-1 items-center gap-2 px-4 py-2.5 #{"font-semibold" if s.member.nil?}", "aria-current": ("true" if s.member.nil?) do %>Everyone<% end %></li>
+        <% s.members.each do |user| %>
+          <li class="p-0"><%= link_to admin_schedule_path(schedule_link_params(s, member: user.id)), class: "flex flex-1 items-center gap-2 px-4 py-2.5 #{"font-semibold" if s.member == user.id}", "aria-current": ("true" if s.member == user.id) do %>
+            <span class="cal-dot cal-<%= s.color_for(user) %>" aria-hidden="true"></span>
+            <span class="min-w-0 flex-1 truncate text-ink"><%= user.full_name %></span>
+            <span class="tabular text-sm2 text-muted"><%= booked_hours_label(s.booked_hours[user.id]) %></span>
+          <% end %></li>
+        <% end %>
+        <li class="p-0"><%= link_to admin_schedule_path(schedule_link_params(s, member: "unassigned")), class: "flex flex-1 items-center gap-2 px-4 py-2.5 #{"font-semibold" if s.member == "unassigned"}", "aria-current": ("true" if s.member == "unassigned") do %>
+          <span class="cal-dot cal-none" aria-hidden="true"></span><span class="flex-1 text-ink">Nobody yet</span><span class="tabular text-sm2 text-muted"><%= s.unassigned_count %></span>
+        <% end %></li>
+      </ul>
+      <p class="border-t border-line px-4 py-2 text-sm2">
+        Color by <%= link_to_unless s.color_by == "member", "person", admin_schedule_path(schedule_link_params(s, color: nil)), class: "underline-offset-2 hover:underline" %>
+        · <%= link_to_unless s.color_by == "status", "status", admin_schedule_path(schedule_link_params(s, color: "status")), class: "underline-offset-2 hover:underline" %></p>
+      <% if s.color_by == "status" %>
+        <ul class="flex flex-wrap gap-x-3 gap-y-1 px-4 pb-2.5 text-sm2 text-muted" aria-label="Status colors">
+          <% { "scheduled" => "Scheduled", "in-progress" => "In progress", "completed" => "Done" }.each do |key, label| %>
+            <li class="flex items-center gap-1.5"><span class="cal-dot cal-status-<%= key %>" aria-hidden="true"></span><%= label %></li>
+          <% end %>
+        </ul>
+      <% end %>
+    <% end %>
+
+    <% jobs = s.unscheduled_jobs.to_a %>
+    <%= card title: "Needs scheduling", flush: true, id: "needs-scheduling" do %>
+      <% if jobs.empty? %>
+        <p class="px-4 py-3 text-sm2 text-muted">Every open job has a visit booked.</p>
+      <% else %>
+        <ul class="list">
+          <% jobs.each do |job| %>
+            <li class="items-start">
+              <div class="min-w-0 flex-1">
+                <p class="truncate font-medium text-ink"><%= link_to job.title, admin_job_path(job), class: "hover:underline" %></p>
+                <p class="truncate text-sm2 text-muted"><%= job.client.display_name %><%= ", #{job.property.one_line}" if job.property %></p>
+              </div>
+              <%= link_to "Schedule", new_admin_job_visit_path(job, on: s.date.iso8601), class: button_classes(:secondary, :sm), "aria-label": "Schedule #{job.number}" %>
+            </li>
+          <% end %>
+        </ul>
+        <% if s.unscheduled_count > jobs.size %>
+          <p class="border-t border-line px-4 py-2 text-sm2"><%= link_to "See all #{s.unscheduled_count}", admin_jobs_path(filter: "unscheduled"), class: "underline-offset-2 hover:underline" %></p>
+        <% end %>
+      <% end %>
+    <% end %>
+  </aside>
+
+  <div class="order-1 min-w-0 lg:order-none">
+    <%# Phones: an agenda list grouped by day, first on the page; this week's past days are folded away. %>
+    <div class="md:hidden space-y-3" id="schedule-agenda">
+      <% past, coming = s.dates.partition { _1 < s.business.today } %>
+      <% past = [] if coming.empty? %>
+      <% if past.any? { s.visits_on(_1).any? } %>
+        <details class="card px-4 py-2.5 text-sm2" id="schedule-earlier">
+          <summary class="cursor-pointer font-medium text-ink">Earlier this week (<%= pluralize(past.sum { s.visits_on(_1).size }, "visit") %>)</summary>
+          <ul class="mt-2 space-y-1.5">
+            <% past.each do |date| %><% s.visits_on(date).each do |visit| %>
+              <li><%= link_to "#{date.strftime("%a")} #{visit.time_label.delete_prefix("Arrive ")} · #{visit.job.client.display_name}", admin_schedule_visit_path(visit, s.member ? { member: s.member } : {}), class: "text-body hover:underline" %></li>
+            <% end %><% end %>
+          </ul>
+        </details>
+      <% end %>
+      <% shown = (coming.any? ? coming : s.dates).select { s.visits_on(_1).any? || _1 == s.business.today } %>
+      <% if shown.empty? && past.none? { s.visits_on(_1).any? } %>
+        <%= card do %><p class="text-sm2 text-muted">Nothing booked <%= s.view == "day" ? "this day" : "this week" %>.</p><% end %>
+      <% end %>
+      <% shown.each do |date| %>
+        <% day = s.visits_on(date) %>
+        <% next if day.empty? && date != s.business.today %>
+        <%= card flush: true do %>
+          <h2 class="border-b border-line px-4 py-2 text-sm font-semibold text-ink"><%= date.strftime("%A, %b %-d") %>
+            <% s.closures_on(date).each do |closure| %><span class="ml-1 text-sm2 font-normal text-muted">· Closed: <%= closure.reason %></span><% end %></h2>
+          <% if day.empty? %>
+            <p class="px-4 py-3 text-sm2 text-muted">Nothing booked.</p>
+          <% else %>
+            <ul class="list">
+              <% day.each do |visit| %>
+                <li class="p-0"><%= link_to admin_schedule_visit_path(visit, s.member ? { member: s.member } : {}), class: "flex min-w-0 flex-1 items-start gap-3 px-4 py-3" do %>
+                  <span class="w-16 shrink-0 text-sm font-semibold text-ink"><%= visit.time_label.delete_prefix("Arrive ") %></span>
+                  <span class="min-w-0 flex-1"><span class="block truncate font-medium text-ink"><%= visit.job.client.display_name %></span>
+                    <span class="block truncate text-sm2 text-muted"><%= visit.job.title %> · <%= crew_first_names(visit) %></span></span>
+                  <span class="cal-dot cal-<%= s.visit_color(visit) %> mt-1.5" aria-hidden="true"></span>
+                <% end %></li>
+              <% end %>
+            </ul>
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
+
+    <%# Desktop: the time grid, "anytime" visits in a row above it. %>
+    <div class="card hidden overflow-hidden md:block" id="schedule-grid" style="--cal-days: <%= s.dates.size %>">
+      <div class="cal-grid border-b border-line">
+        <div></div>
+        <% s.dates.each do |date| %>
+          <div class="border-l border-line-2 px-2 py-2 text-sm2 <%= date == s.business.today ? "font-semibold text-ink" : "text-muted" %>" <%= 'aria-current="date"'.html_safe if date == s.business.today %>>
+            <%= link_to admin_schedule_path(schedule_link_params(s, view: "day", date: date.iso8601)), class: "hover:underline" do %><%= date.strftime("%a") %> <span class="text-base font-semibold text-ink"><%= date.day %></span><% end %>
+            <% s.closures_on(date).each do |closure| %><span class="block truncate text-xs text-muted" title="<%= closure.reason %>">Closed: <%= closure.reason %></span><% end %>
+          </div>
+        <% end %>
+      </div>
+      <div class="cal-grid border-b border-line bg-sunken/40">
+        <div class="py-1.5 pr-2 text-right text-xs text-faint">Anytime</div>
+        <% s.dates.each do |date| %>
+          <div class="min-h-9 min-w-0 space-y-1 border-l border-line-2 p-1" role="group" aria-label="Anytime, <%= date.strftime("%A, %B %-d") %>">
+            <% s.anytime_on(date).each do |visit| %>
+              <%= link_to admin_schedule_visit_path(visit), class: "cal-chip cal-#{s.visit_color(visit)}", id: "cal-visit-#{visit.uid}", data: { turbo_frame: "schedule_visit" } do %>
+                <span class="block truncate font-semibold"><%= visit.job.client.display_name %> <span class="sr-only">, anytime <%= date.strftime("%A, %B %-d") %></span></span>
+                <span class="block truncate"><%= visit.job.title %><%= ", #{visit.job.property.city}" if visit.job.property&.city.present? %> · <%= crew_first_names(visit) %></span>
+              <% end %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+      <div class="max-h-[42rem] overflow-y-auto pt-2">
+        <div class="cal-grid" style="height: <%= s.grid_height %>px">
+          <div><% s.hours.each do |hour| %><div class="cal-hour"><%= hour_label(hour) %></div><% end %></div>
+          <% s.dates.each do |date| %>
+            <div class="cal-day" role="group" aria-label="<%= date.strftime("%A, %B %-d") %>">
+              <% s.shades_on(date).each do |shade| %><div class="cal-shade" style="top: <%= shade.top %>px; height: <%= shade.height %>px"></div><% end %>
+              <% s.placed_on(date).each do |placed| %>
+                <% visit = placed.visit %>
+                <% width = 100.0 / placed.columns %>
+                <%= link_to admin_schedule_visit_path(visit), class: "cal-visit cal-#{s.visit_color(visit)}", id: "cal-visit-#{visit.uid}", data: { turbo_frame: "schedule_visit" },
+                            style: "top: #{placed.top}px; height: #{placed.height}px; left: calc(#{(width * placed.column).round(3)}% + 2px); width: calc(#{width.round(3)}% - 4px)" do %>
+                  <span class="block font-semibold"><%= visit.time_label.delete_prefix("Arrive ") %> <%= visit.job.client.display_name %><span class="sr-only">, <%= date.strftime("%A, %B %-d") %></span></span>
+                  <span class="block truncate"><%= visit.job.title %><%= ", #{visit.job.property.city}" if visit.job.property&.city.present? %></span>
+                  <span class="block truncate opacity-80"><%= crew_first_names(visit) %></span>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

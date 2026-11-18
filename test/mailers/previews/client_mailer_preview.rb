@@ -56,3 +56,24 @@ class RequestMailerPreview < ActionMailer::Preview
 
   def latest_request = Tenancy.across_businesses(reason: "mailer preview") { ServiceRequest.order(:id).last }
 end
+
+# JOB-05: a client's visit emails, for the seeded job with visits (bin/rails db:seed).
+class VisitMailerPreview < ActionMailer::Preview
+  def booked = update([ "scheduled", "scheduled" ])
+  def moved = update([ "changed" ], before: "Mon, Nov 23, 2026 · Arrive 8–10 am")
+  def cancelled = update([ "cancelled" ])
+  def mixed = update([ "changed", "cancelled" ], before: "Mon, Nov 23, 2026 · 1 pm")
+
+  def reminder
+    visit = Tenancy.across_businesses(reason: "mailer preview") { Visit.order(:id).first }
+    VisitMailer.with(business_id: visit.business_id, to: "maria@example.com", job_id: visit.job_id, visit_id: visit.id).reminder
+  end
+
+  private
+
+  def update(kinds, before: nil)
+    visits = Tenancy.across_businesses(reason: "mailer preview") { Visit.order(:id).limit(kinds.size).to_a }
+    changes = visits.zip(kinds).map { |visit, kind| { "visit_id" => visit.id, "kind" => kind, "before" => (before if kind == "changed") } }
+    VisitMailer.with(business_id: visits.first.business_id, to: "maria@example.com", job_id: visits.first.job_id, changes:).update
+  end
+end

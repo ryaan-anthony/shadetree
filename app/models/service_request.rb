@@ -114,7 +114,10 @@ class ServiceRequest < ApplicationRecord
   # the platform's address to send its name to anyone, as AGENTS.md requires of client email),
   # and the business is under its hourly client email limit.
   def notify
-    NewRequestMailer.deliver_later_for(self)
+    NotificationType.deliver("new_request", business:, subject: self,
+                             title: "New request from #{contact_name}", body: service_names.join(", ").presence || description,
+                             path: Rails.application.routes.url_helpers.admin_service_request_path(self),
+                             email: ->(user) { NewRequestMailer.with(business_id:, request_id: id, user_id: user.id).received })
     return if contact_email.blank? || !business.owner&.can_send_to_clients? || EmailMessage.hourly_limit_reached?
 
     RequestMailer.send_later(:received, business:, to: contact_email, kind: "request_received", related: self, request_id: id)

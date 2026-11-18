@@ -26,6 +26,6 @@ class Admin::OnboardingController < Admin::BaseController
 
   def dismiss_welcome
     Current.membership.update!(welcome_dismissed_at: Time.current)
-    redirect_to admin_root_path
+    redirect_to((can?(:office) || can?(:business_settings)) ? admin_root_path : admin_my_day_path)
   end
 end

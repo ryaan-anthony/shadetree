@@ -95,7 +95,11 @@ class QuoteResponse < ApplicationRecord
   # The team hears about every response; a client who approved gets a confirmation (not when
   # staff recorded the approval for them).
   def notify
-    QuoteActivityMailer.deliver_later_for(self)
+    who = on_behalf? ? recorded_by&.full_name || "A teammate" : quote.client.display_name
+    NotificationType.deliver("quote_#{kind}", business:, subject: quote, actor: recorded_by,
+                             title: QuoteActivityMailer.subject_for(self, who), body: message.presence&.then { "“#{_1.squish.truncate(280)}”" },
+                             path: Rails.application.routes.url_helpers.admin_quote_path(quote),
+                             email: ->(user) { QuoteActivityMailer.with(response_id: id, business_id:, user_id: user.id).responded })
     return unless approved? && !on_behalf? && (to = confirmation_email)
     return if EmailMessage.hourly_limit_reached? # the approval stands; only the copy is skipped
 

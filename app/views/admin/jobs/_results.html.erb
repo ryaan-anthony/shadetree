@@ -21,7 +21,7 @@
     <%= card flush: true, class: "md:hidden" do %>
       <ul class="list">
         <% @jobs.each do |job| %>
-          <li id="job-<%= job.uid %>-row" class="p-0">
+          <li id="job-<%= job.uid %>-row" class="flex-wrap p-0">
             <%= link_to admin_job_path(job), class: "block min-w-0 flex-1 px-4 py-3", data: { turbo_frame: "_top" } do %>
               <span class="flex items-baseline justify-between gap-3">
                 <span class="min-w-0 truncate font-semibold text-ink"><%= job.title %></span>
@@ -30,6 +30,9 @@
               <span class="mt-0.5 block truncate text-sm2 text-muted"><%= job.number %> · <%= job.client.display_name %><%= " · #{job.property.one_line}" if job.property %></span>
               <span class="mt-1.5 flex flex-wrap items-center gap-1.5 text-sm2 text-muted"><%= job_status_badge(job) %>
                 <% if job.quote %><span class="ml-auto">From <%= job.quote.number %></span><% end %></span>
+            <% end %>
+            <% if job.status == "unscheduled" && can?(:schedule) %>
+              <div class="-mt-1 w-full px-4 pb-3"><%= link_to new_admin_job_visit_path(job), class: button_classes(:secondary, :sm), data: { turbo_frame: "_top" }, "aria-label": "Schedule #{job.number}" do %><%= icon "calendar" %> Schedule<% end %></div>
             <% end %>
           </li>
         <% end %>
@@ -46,7 +49,10 @@
             <tr id="job-<%= job.uid %>">
               <td><%= link_to job.title, admin_job_path(job), class: "primary hover:underline", data: { turbo_frame: "_top" } %><span class="sub"><%= job.number %></span></td>
               <td><%= job.client.display_name %><% if job.property %><span class="sub"><%= job.property.one_line %></span><% end %></td>
-              <td><%= job_status_badge(job) %></td>
+              <td><%= job_status_badge(job) %>
+                <% if job.status == "unscheduled" && can?(:schedule) %>
+                  <%= link_to "Schedule", new_admin_job_visit_path(job), class: "sub font-medium text-ink underline-offset-2 hover:underline", data: { turbo_frame: "_top" } %>
+                <% end %></td>
               <td class="text-sm2 text-subtle"><%= job.quote ? link_to(job.quote.number, admin_quote_path(job.quote), class: "hover:underline", data: { turbo_frame: "_top" }) : "Added directly" %></td>
               <td class="money num"><%= job.total_cents.zero? ? "—" : money(job.total) %></td>
             </tr>
