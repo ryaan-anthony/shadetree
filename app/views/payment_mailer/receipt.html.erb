@@ -5,7 +5,7 @@
     <p style="margin:6px 0 0;font-size:22px;font-weight:700;color:#0f172a;"><%= money(@payment.amount) %></p>
     <p style="margin:4px 0 0;font-size:13px;color:#64748b;"><%= @payment.method_label %><%= " #{@payment.reference}" if @payment.reference %>, received <%= local_date(@payment.received_on) %></p>
     <p style="margin:10px 0 0;font-size:14px;font-weight:600;color:#0f172a;">
-      <%= @invoice.paid? ? "Paid in full" : "#{money(@invoice.balance)} left to pay" %>
+      <%= @balance.zero? ? "Paid in full" : "#{money(@balance)} left to pay" %>
     </p>
   </td></tr>
 </table>

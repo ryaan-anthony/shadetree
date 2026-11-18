@@ -95,6 +95,7 @@ end
 class PaymentMailerPreview < ActionMailer::Preview
   def receipt
     payment = Tenancy.across_businesses(reason: "mailer preview") { Payment.order(:id).last }
+    return PaymentMailer.with(business_id: Business.first.id, to: "maria@example.com").test_message unless payment
     PaymentMailer.with(business_id: payment.business_id, to: "maria@example.com", payment_id: payment.id).receipt
   end
 end

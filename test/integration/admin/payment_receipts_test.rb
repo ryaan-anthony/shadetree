@@ -35,7 +35,7 @@ class Admin::PaymentReceiptsTest < ActionDispatch::IntegrationTest
     assert_match "Receipt on its way to maria@example.com", flash[:notice]
     perform_enqueued_jobs
     mail = ActionMailer::Base.deliveries.last
-    assert_equal [ [ "maria@example.com" ], "Payment received for invoice #{@invoice.number} from #{@business.name}" ], [ mail.to, mail.subject ]
+    assert_equal [ [ "maria@example.com" ], "Receipt for invoice #{@invoice.number} from #{@business.name}" ], [ mail.to, mail.subject ]
     body = mail.html_part.body.to_s
     assert_match "$50.00", body
     assert_match "Check 1042", body
@@ -64,7 +64,34 @@ class Admin::PaymentReceiptsTest < ActionDispatch::IntegrationTest
     assert_select "input[name=send_receipt]", 0
     as_business(@business) { EmailSuppression.where(email: "maria@example.com").delete_all }
     record("10")
-    assert_no_match(/receipt/i, flash[:notice])
+    assert_match "confirm your email address first", flash[:notice]
+    assert_no_enqueued_emails
+  end
+
+  test "each receipt says what was left after its payment; one for a deleted payment isn't sent" do
+    record("50")
+    record("150", receipt: "0")
+    perform_enqueued_jobs
+    assert_match "$150.00 left to pay", ActionMailer::Base.deliveries.last.text_part.body.to_s
+
+    ActionMailer::Base.deliveries.clear
+    as_business(@business) { @invoice.reload.payments.each { |payment| @invoice.delete_payment!(payment, by: users(:one), reason: "Test") } }
+    record("20")
+    payment = as_business(@business) { @invoice.reload.payments.last }
+    as_business(@business) { @invoice.delete_payment!(payment, by: users(:one), reason: "Wrong invoice") }
+    perform_enqueued_jobs
+    assert_empty ActionMailer::Base.deliveries
+    email = as_business(@business) { EmailMessage.where(kind: "payment_receipt").order(:id).last }
+    assert_equal [ "failed", "The payment was deleted before the receipt went out." ], [ email.status, email.error ]
+  end
+
+  test "receipts stop at five a day per client, and at the business's hourly cap" do
+    as_business(@business) { 5.times { EmailMessage.create!(kind: "payment_receipt", to: "maria@example.com") } }
+    record("10")
+    assert_match "has had 5 receipts today", flash[:notice]
+    as_business(@business) { EmailMessage.delete_all; EmailMessage::CLIENT_EMAILS_PER_HOUR.times { EmailMessage.create!(kind: "quote_sent", to: "x@example.com") } }
+    record("10")
+    assert_match "a lot of emails in an hour", flash[:notice]
     assert_no_enqueued_emails
   end
 end

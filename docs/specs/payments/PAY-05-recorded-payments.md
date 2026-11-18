@@ -58,4 +58,6 @@ accurate regardless of how the money arrived.
 - Part 2: the optional receipt (`PaymentMailer#receipt`, catalog type `payment_receipt`, which
   PAY-04 reuses for online payments): a box on the record form, off by default, shown when the
   client has an email and the account may email clients. It goes to the client's email on file
-  within the hourly cap and not to a refused address; its delivery shows on the payment.
+  within the hourly cap, at most five receipts a day per client, and not to a refused address;
+  its delivery shows on the payment. It states the balance as of its payment, and one queued
+  for a payment deleted since isn't sent (marked failed).

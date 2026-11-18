@@ -4,6 +4,8 @@
 class Admin::InvoicePaymentsController < Admin::BaseController
   requires_permission :office
 
+  RECEIPTS_PER_CLIENT_PER_DAY = 5
+
   before_action :set_invoice
   before_action :set_payment, only: %i[edit update destroy]
 
@@ -68,9 +70,12 @@ class Admin::InvoicePaymentsController < Admin::BaseController
     return "" unless params[:send_receipt] == "1"
 
     to = @invoice.client.primary_email&.value
-    if to.nil? || !current_user.can_send_to_clients? then ""
+    if to.nil? then " No receipt sent: #{@invoice.client.display_name} has no email address."
+    elsif !current_user.can_send_to_clients? then " No receipt sent: confirm your email address first."
     elsif EmailSuppression.suppressed?(to) then " No receipt sent: the mail server refused #{to} before."
     elsif EmailMessage.hourly_limit_reached? then " No receipt sent: that's a lot of emails in an hour. Try again later."
+    elsif EmailMessage.where(kind: "payment_receipt", to:, created_at: 1.day.ago..).count >= RECEIPTS_PER_CLIENT_PER_DAY
+      " No receipt sent: #{to} has had #{RECEIPTS_PER_CLIENT_PER_DAY} receipts today."
     else
       PaymentMailer.send_later(:receipt, business: current_business, to:, kind: "payment_receipt", related: @payment, payment_id: @payment.id)
       " Receipt on its way to #{to}."
