@@ -19,18 +19,20 @@ class Admin::ScheduleController < Admin::BaseController
   def move
     @visit = Visit.includes(:assignees, job: %i[client property]).find_by_param!(params[:id])
     previous = { on: @visit.scheduled_on.iso8601, at: @visit.start_time, crew: @visit.assignee_ids.map(&:to_s).presence || [ "" ] } # [""]: nobody, kept through compact_blank
-    return refuse("Someone changed this visit just now. Here's the latest.", status: :conflict) if params[:lock_version].present? && params[:lock_version].to_i != @visit.lock_version
+    return refuse("Someone changed this visit just now. Here's the latest.", status: :conflict) if params[:lock_version].to_s != @visit.lock_version.to_s
 
     on = Date.iso8601(params[:on].to_s) rescue nil
     return refuse("Choose a day.") unless on
 
     changes = @visit.move_attributes(on:, at: params[:at].presence, from: member_param(:from), to: member_param(:to),
-                                     crew: (Array(params[:crew]).compact_blank if params.key?(:crew)))
+                                     crew: (Array(params[:crew]).select { _1.is_a?(String) || _1.is_a?(Integer) }.map(&:to_s).compact_blank if params.key?(:crew)))
     @visit.assign_attributes(changes)
     return refuse(@visit.errors.full_messages.to_sentence) unless @visit.valid?
     return render_move(:ok, "Nothing changed.") unless @visit.when_or_crew_changed?
 
     @warnings = VisitWarnings.for([ @visit ])
+    # An undo puts back what was there, so it doesn't warn again. (Warnings are advice, not rules:
+    # anyone who can move a visit can also choose "Move anyway".)
     if @warnings.any? && params[:undo].blank? && params[:confirm] != Admin::VisitsController.digest(@warnings)
       respond_to do |format|
         format.json { render json: { warnings: @warnings, confirm: Admin::VisitsController.digest(@warnings) }, status: :unprocessable_content }
@@ -43,7 +45,7 @@ class Admin::ScheduleController < Admin::BaseController
       return
     end
 
-    @visit.reload.reschedule!(changes, by: current_user)
+    @visit.reload.reschedule!(changes.merge(lock_version: params[:lock_version]), by: current_user) # stale since the check above: refused
     flash[:notice] = "#{params[:undo].present? ? "Put back" : "Moved"}: #{@visit.job.client.display_name}, #{@visit.when_label}#{" · #{@visit.crew_names.to_sentence.presence || "nobody yet"}" if changes.key?(:assignee_ids)}."
     flash[:undo] = { "path" => admin_schedule_move_path(@visit), "params" => previous.merge(lock_version: @visit.lock_version, undo: 1, view: params[:view], member: params[:member]).compact_blank } unless params[:undo].present?
     render_move(:ok)

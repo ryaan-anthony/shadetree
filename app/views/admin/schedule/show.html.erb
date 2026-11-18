@@ -141,7 +141,7 @@
           <div class="min-h-9 min-w-0 space-y-1 border-l border-line-2 p-1" role="group" aria-label="Anytime, <%= schedule_column_label(column) %>"
                data-schedule-drag-target="column" data-kind="anytime" data-date="<%= date.iso8601 %>" data-member="<%= column.member_key %>">
             <% s.anytime_in(column).each do |visit| %>
-              <%= link_to admin_schedule_visit_path(visit), class: "cal-chip cal-#{s.visit_color(visit)}", id: schedule_visit_id(visit, column, s),
+              <%= link_to admin_schedule_visit_path(visit, params_now), class: "cal-chip cal-#{s.visit_color(visit)}", id: schedule_visit_id(visit, column, s),
                           data: { turbo_frame: "schedule_visit", **schedule_drag_data(visit, column) } do %>
                 <span class="block truncate font-semibold"><%= visit.job.client.display_name %> <span class="sr-only">, anytime <%= date.strftime("%A, %B %-d") %></span></span>
                 <span class="block truncate"><%= visit.job.title %><%= ", #{visit.job.property.city}" if visit.job.property&.city.present? %> · <%= crew_first_names(visit) %></span>
@@ -161,7 +161,7 @@
               <% s.placed_in(column).each do |placed| %>
                 <% visit = placed.visit %>
                 <% width = 100.0 / placed.columns %>
-                <%= link_to admin_schedule_visit_path(visit), class: "cal-visit cal-#{s.visit_color(visit)}", id: schedule_visit_id(visit, column, s),
+                <%= link_to admin_schedule_visit_path(visit, params_now), class: "cal-visit cal-#{s.visit_color(visit)}", id: schedule_visit_id(visit, column, s),
                             data: { turbo_frame: "schedule_visit", **schedule_drag_data(visit, column) },
                             style: "top: #{placed.top}px; height: #{placed.height}px; left: calc(#{(width * placed.column).round(3)}% + 2px); width: calc(#{width.round(3)}% - 4px)" do %>
                   <span class="block font-semibold"><%= visit.time_label.delete_prefix("Arrive ") %> <%= visit.job.client.display_name %><span class="sr-only">, <%= date.strftime("%A, %B %-d") %></span></span>

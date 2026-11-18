@@ -36,6 +36,7 @@ export default class extends Controller {
 
   press = (event) => {
     if (event.button !== 0 || event.pointerType !== "mouse" || this.drag) return
+    event.preventDefault() // no text selection while dragging; the click still opens the visit
     const element = event.currentTarget
     const box = element.getBoundingClientRect()
     this.drag = { element, x: event.clientX, y: event.clientY, grabY: event.clientY - box.top, moving: false }
@@ -67,8 +68,11 @@ export default class extends Controller {
     if (!drag) return
     this.stopListening()
     if (!drag.moving) { this.drag = null; return } // a click: opens the visit as usual
-    // The click that ends a drag mustn't also open the visit.
-    drag.element.addEventListener("click", (click) => { click.preventDefault(); click.stopImmediatePropagation() }, { capture: true, once: true })
+    // The click that ends a drag mustn't also open the visit. It lands wherever the pointer is
+    // (the dragged visit ignores the pointer), so catch it on the window, for this click only.
+    const swallow = (click) => { click.preventDefault(); click.stopImmediatePropagation() }
+    window.addEventListener("click", swallow, { capture: true, once: true })
+    setTimeout(() => window.removeEventListener("click", swallow, { capture: true }), 0)
     const target = this.dropAt(event)
     this.reset()
     if (!target || this.unchanged(drag.element, target)) return
@@ -164,11 +168,15 @@ export default class extends Controller {
     list.className = "list-disc space-y-1 pl-5"
     warnings.forEach((warning) => list.append(Object.assign(document.createElement("li"), { textContent: warning })))
     dialog.querySelector("[data-confirm-message]").replaceChildren(list)
-    dialog.querySelector("[data-confirm-button]").textContent = "Move anyway"
+    const button = dialog.querySelector("[data-confirm-button]")
+    const style = button.className
+    button.textContent = "Move anyway"
+    button.className = style.replace("btn-danger-solid", "btn-primary") // a warning, not something destructive
     dialog.showModal()
     return new Promise((resolve) => {
       dialog.addEventListener("close", () => {
         dialog.querySelector("[data-confirm-title]").textContent = "Are you sure?"
+        button.className = style
         resolve(dialog.returnValue === "confirm")
       }, { once: true })
     })

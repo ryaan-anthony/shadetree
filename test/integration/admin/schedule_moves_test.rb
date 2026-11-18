@@ -35,6 +35,7 @@ class Admin::ScheduleMovesTest < ActionDispatch::IntegrationTest
 
     get admin_schedule_path(date: @monday.iso8601)
     assert_select "#flash", text: /Moved: Maria Lopez, Wed, Nov 25 · Arrive 1:30–3:30 pm/
+    assert_select "#flash [data-dismiss-after-value='0']", 1, "a toast with Undo stays until dismissed"
     undo = css_select("#flash form").sole
     assert_equal admin_schedule_move_path(@visit), undo["action"]
     fields = undo.css("input[type=hidden]").to_h { [ _1["name"], _1["value"] ] }
@@ -116,6 +117,25 @@ class Admin::ScheduleMovesTest < ActionDispatch::IntegrationTest
 
     patch admin_schedule_move_path(@visit), params: { on: (@monday + 1).iso8601, at: "10:00", crew: [ "" ], lock_version: fresh.lock_version }
     assert_empty fresh.assignee_ids, "unticking everyone leaves nobody on it"
+  end
+
+  test "someone who left the team: their visits keep a column in the day view, and the sheet doesn't drop them" do
+    as_business(@business) { BusinessUser.find_by!(user: @tech).update!(active: false) }
+    get admin_schedule_path(view: "day", date: @monday.iso8601)
+    assert_select "#schedule-grid .cal-day[aria-label='Monday, November 23, Technician'] [id^=cal-visit-#{@visit.uid}]", 1
+
+    get admin_schedule_visit_path(@visit)
+    assert_select "dialog input[name='crew[]'][value=?][checked]", @tech.id.to_s
+    patch admin_schedule_move_path(@visit), params: { on: (@monday + 1).iso8601, at: "09:00", crew: [ "", @tech.id ], lock_version: fresh.lock_version }
+    assert_equal [ @monday + 1, [ @tech.id ] ], fresh.then { [ _1.scheduled_on, _1.assignee_ids ] }
+  end
+
+  test "a move must say which version it's moving, and odd crew values are ignored" do
+    patch admin_schedule_move_path(@visit), params: { on: (@monday + 1).iso8601 }, as: :json
+    assert_response :conflict
+    drag(on: @monday.iso8601, crew: [ { "id" => 1 } ])
+    assert_response :ok
+    assert_empty fresh.assignee_ids
   end
 
   test "only Owners and Admins move visits, and another business's visits aren't found" do

@@ -5,7 +5,7 @@
   <% messages.each do |key, message| %>
     <% tone = flash_tone(key) %>
     <% with_undo = undo.is_a?(Hash) && tone == :success %>
-    <div class="toast <%= "toast-danger" if tone == :danger %>" data-controller="dismiss" data-dismiss-after-value="<%= tone == :danger ? 0 : (with_undo ? 12000 : 6000) %>">
+    <div class="toast <%= "toast-danger" if tone == :danger %>" data-controller="dismiss" data-dismiss-after-value="<%= tone == :danger || with_undo ? 0 : 6000 %>">
       <%= icon tone %>
       <span><%= message %></span>
       <% if with_undo %>

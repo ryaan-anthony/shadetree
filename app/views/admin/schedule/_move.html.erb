@@ -2,7 +2,8 @@
 <%# JOB-03: the quick edit: a visit's day, start and who's going, in a sheet on phones (and the
     keyboard's way to do what dragging does). Warnings come back here with "Move anyway". %>
 <% proposed ||= { on: visit.scheduled_on, at: visit.start_time, crew: visit.assignee_ids } %>
-<% members = current_business.business_users.active.includes(:user).map(&:user).sort_by { _1.full_name.downcase } %>
+<%# Everyone on the team, and anyone already on the visit who has since left (unticking them is a choice, not a side effect). %>
+<% members = current_business.business_users.includes(:user).select { _1.active? || visit.assignee_ids.include?(_1.user_id) }.map(&:user).sort_by { _1.full_name.downcase } %>
 <div class="contents" data-controller="modal" data-modal-open-value="<%= warnings.present? %>">
   <button type="button" class="<%= button_classes(:secondary, :sm) %>" data-action="modal#open" data-modal-target="return" aria-haspopup="dialog">Move</button>
   <%= modal id: "move-#{visit.uid}", title: "Move #{visit.job.client.display_name}", description: visit.job.title, sheet: true do %>

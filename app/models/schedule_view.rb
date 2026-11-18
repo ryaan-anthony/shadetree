@@ -60,7 +60,9 @@ class ScheduleView
   # one person to another; a visit with two people going shows in both their columns.
   def columns
     @columns ||= if @view == "day" && @member.nil?
-      [ *members.map { Column.new(@date, _1) }, Column.new(@date, :none) ]
+      # Also anyone still on a visit that day who has left the team, so their work isn't hidden.
+      others = visits_on(@date).flat_map(&:assignees).uniq - members
+      [ *members.map { Column.new(@date, _1) }, *others.sort_by { _1.full_name.downcase }.map { Column.new(@date, _1) }, Column.new(@date, :none) ]
     else
       dates.map { Column.new(_1, nil) }
     end
