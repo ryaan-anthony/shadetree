@@ -63,7 +63,7 @@ class Admin::JobsController < Admin::BaseController
   end
 
   def cancel
-    @job.cancel!(by: current_user, reason: params[:reason])
+    @job.cancel!(by: current_user, reason: params[:reason], notify_client: params[:notify_client] != "0")
     redirect_to admin_job_path(@job), notice: "Job #{@job.number} cancelled."
   rescue Job::NotOpen, ActiveRecord::RecordInvalid => error
     redirect_to admin_job_path(@job), alert: error.message.delete_prefix("Validation failed: ")

@@ -1,0 +1,11 @@
+<% item = @items.first %>
+Hi <%= @job.client.display_name %>,
+
+A reminder that <%= @business.name %> is coming tomorrow.
+
+<%= item.visit.when_label %>
+<%= @job.title %><%= " - #{@job.property.one_line}" if @job.property %>
+<% if item.visit.client_note.present? %><%= item.visit.client_note %>
+<% end %>View visit: <%= client_link_url(item.link.token) %>
+
+Need to change it? Reply to this email<%= " or call #{@business.phone}" if @business.phone.present? %>.
