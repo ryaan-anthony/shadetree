@@ -40,6 +40,23 @@
                     hint: "On the visits they're sent to. Otherwise they see what to do and how much, without prices." %></div>
       <% end %>
 
+      <%= card title: "Visit emails to clients", subtitle: "Sent to the client's email address, from your business, with a link to their visit." do %>
+        <div class="space-y-3">
+          <% hints = { "scheduled" => "When you book visits. Several booked together are one email.",
+                       "changed" => "When you move a visit to another day or time.",
+                       "cancelled" => "When you cancel a visit, or its job.",
+                       "reminder" => "The day before, at #{Business::VISIT_REMINDER_HOUR} am your time, for visits still booked." } %>
+          <% Business::CLIENT_VISIT_EMAILS.each do |kind, label| %>
+            <label class="flex items-start gap-2 text-sm" for="client-visit-email-<%= kind %>">
+              <%= hidden_field_tag "business[client_visit_emails][#{kind}]", "0", id: nil %>
+              <%= check_box_tag "business[client_visit_emails][#{kind}]", "1", @business.client_visit_email?(kind), id: "client-visit-email-#{kind}", class: "checkbox mt-0.5" %>
+              <span><span class="font-medium text-ink"><%= label %></span><span class="block text-sm2 text-muted"><%= hints.fetch(kind) %></span></span>
+            </label>
+          <% end %>
+        </div>
+        <p class="mt-3 text-sm2 text-muted">You can also skip the email for one change, from the visit form.</p>
+      <% end %>
+
       <%= card title: "Invoices" do %>
         <div class="grid gap-4 sm:grid-cols-2">
           <%= f.field :invoice_due_days, as: :number, label: "Payment due (days after sending)", min: 0, max: 365,

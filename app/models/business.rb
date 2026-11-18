@@ -179,6 +179,17 @@ class Business < ApplicationRecord
                           "reminder" => "Reminder the day before" }.freeze
   def client_visit_email?(kind) = client_visit_emails.fetch(kind.to_s, true) != false
 
+  # From the settings form ("1"/"0" per kind); a kind not given keeps its current setting.
+  def client_visit_emails=(values)
+    values = (values.respond_to?(:to_unsafe_h) ? values.to_unsafe_h : values.to_h).stringify_keys
+    super(CLIENT_VISIT_EMAILS.keys.to_h do |kind|
+      [ kind, values.key?(kind) ? ActiveModel::Type::Boolean.new.cast(values[kind]) != false : client_visit_email?(kind) ]
+    end)
+  end
+
+  # JOB-05: day-before reminders go out from this hour, business time.
+  VISIT_REMINDER_HOUR = 10
+
   # Every logo goes through LogoUpload: decoded, size-checked and stripped of metadata. A
   # rejected file leaves the current logo in place and adds an error on save; a blank
   # value (no file chosen) changes nothing.

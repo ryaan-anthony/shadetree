@@ -180,6 +180,7 @@ class Visit < ApplicationRecord
       moved = snapshot.except("when") != before.except("when")
       VisitEvent.record!(self, :rescheduled, by:, from: before, to: snapshot) if moved
       tell_client(notify_client, by:) if moved
+      update_columns(reminder_sent_at: nil) if reminder_sent_at && before["on"] != scheduled_on.iso8601 # a new day gets its own reminder
       added, removed = after_crew - before_crew, before_crew - after_crew
       if added.any? || removed.any?
         VisitEvent.record!(self, :reassigned, by:, added: added.map(&:full_name), removed: removed.map(&:full_name),
@@ -217,6 +218,7 @@ class Visit < ApplicationRecord
       update!(status: "scheduled", cancelled_at: nil, cancel_reason: nil)
       VisitEvent.record!(self, :restored, by:)
       reset_ready_to_invoice
+      update_columns(reminder_sent_at: nil)
       tell_client(notify_client, by:)
       notify_crew("visit_assigned", assignees.to_a, "Back on: #{job.title} (#{job.number}), #{when_label}", by:)
     end
@@ -322,7 +324,7 @@ class Visit < ApplicationRecord
   end
 
   # Whether the client has been told about the visit as it is now ("when" is only the label).
-  def client_up_to_date? = client_told&.except("when") == client_state.except("when")
+  def client_up_to_date? = client_told&.except("when", "emailed_at") == client_state.except("when")
 
   # After a change the client should hear about: their email goes out shortly, with the job's
   # other changes. When staff chose not to tell them (or can't email clients yet, ACC-01, or the

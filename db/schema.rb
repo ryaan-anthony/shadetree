@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_17_000600) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_17_000700) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -741,6 +741,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000600) do
     t.datetime "reminder_sent_at"
     t.index ["business_id", "scheduled_on"], name: "index_visits_on_business_id_and_scheduled_on"
     t.index ["job_id", "scheduled_on"], name: "index_visits_on_job_id_and_scheduled_on"
+    t.index ["scheduled_on"], name: "index_visits_awaiting_reminder", where: "(((status)::text = 'scheduled'::text) AND (reminder_sent_at IS NULL))"
     t.index ["uid"], name: "index_visits_on_uid", unique: true
     t.check_constraint "(timing::text = 'anytime'::text) = (starts_at IS NULL) AND (timing::text = 'window'::text) = (window_ends_at IS NOT NULL)", name: "visits_times"
     t.check_constraint "duration_minutes >= 5 AND duration_minutes <= 1440", name: "visits_duration"
