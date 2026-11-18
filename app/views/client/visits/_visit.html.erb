@@ -1,0 +1,27 @@
+<%# locals: (document:, client_link: nil, preview: false) -%>
+<%# JOB-05: the client's page for one visit, from the link in their visit emails (PLT-12):
+    when, where, the business's note for them, and how to reach the business. %>
+<% visit = document %>
+<% job = visit.job %>
+<% content_for :title, "Your visit with #{@business.name}" %>
+<% if visit.status == "cancelled" %>
+  <div class="banner banner-danger mb-4" role="status"><%= icon "x-circle" %>
+    <p class="flex-1"><span class="font-semibold">This visit is cancelled.</span> Get in touch if you'd like to book another time.</p>
+  </div>
+<% elsif visit.status == "completed" %>
+  <div class="banner banner-success mb-4" role="status"><%= icon "check-circle" %><p class="flex-1 font-semibold">This visit is done. Thank you!</p></div>
+<% end %>
+<div class="client-card p-6 sm:p-8">
+  <p class="text-sm2 text-muted">Your visit with <%= @business.name %></p>
+  <h1 class="mt-1 text-2xl font-bold text-ink <%= "line-through" if visit.status == "cancelled" %>"><%= visit.scheduled_on.strftime("%A, %B %-d") %></h1>
+  <p class="mt-1 text-lg text-ink"><%= visit.anytime? ? "Any time that day" : visit.time_label %></p>
+  <% if visit.window? %><p class="mt-1 text-sm2 text-subtle">We'll arrive in that window. The work takes about <%= visit.duration_label %>.</p><% end %>
+  <dl class="mt-5 space-y-3 text-sm">
+    <div><dt class="text-sm2 text-muted">For</dt><dd class="text-ink"><%= job.title %></dd></div>
+    <% if job.property %><div><dt class="text-sm2 text-muted">Where</dt><dd class="text-ink"><%= job.property.one_line %></dd></div><% end %>
+    <% if visit.client_note.present? && visit.status != "cancelled" %>
+      <div><dt class="text-sm2 text-muted">A note from <%= @business.name %></dt><dd class="whitespace-pre-line text-ink"><%= visit.client_note %></dd></div>
+    <% end %>
+  </dl>
+  <%= render "client_links/business_contact" %>
+</div>

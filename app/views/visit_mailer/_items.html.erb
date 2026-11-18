@@ -1,0 +1,15 @@
+<%# locals: (items:, job:) -%>
+<% labels = { "scheduled" => "Booked", "changed" => "Moved", "cancelled" => "Cancelled", "reminder" => "Tomorrow" } %>
+<% items.each do |item| %>
+  <% visit = item.visit %>
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px;border:1px solid #e2e8f0;border-radius:8px;">
+    <tr><td style="padding:14px 16px;">
+      <p style="margin:0;font-size:12px;font-weight:700;letter-spacing:0.02em;color:<%= item.kind == "cancelled" ? "#b91c1c" : "#64748b" %>;"><%= labels.fetch(item.kind) %></p>
+      <p style="margin:4px 0 0;font-size:17px;font-weight:700;color:#0f172a;<%= "text-decoration:line-through;" if item.kind == "cancelled" %>"><%= item.when %></p>
+      <% if item.before %><p style="margin:2px 0 0;font-size:13px;color:#64748b;">Was <%= item.before %></p><% end %>
+      <p style="margin:6px 0 0;font-size:14px;color:#334155;"><%= job.title %><%= " · #{job.property.one_line}" if job.property %></p>
+      <% if visit.client_note.present? && item.kind != "cancelled" %><p style="margin:8px 0 0;font-size:14px;color:#334155;white-space:pre-line;"><%= visit.client_note %></p><% end %>
+      <p style="margin:10px 0 0;"><a href="<%= client_link_url(item.link.token) %>" style="font-weight:600;font-size:14px;color:<%= @branding.color %>;">View visit</a></p>
+    </td></tr>
+  </table>
+<% end %>

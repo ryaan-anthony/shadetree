@@ -54,7 +54,7 @@ Rails.application.routes.draw do
       post :search, on: :collection # list results and the client picker (CLI-02); POST keeps search terms out of URLs
     end
 
-    # Business management (with tabs for profile, hours, branding)
+    # Business settings (tabs for profile, documents, branding, request form; hours and taxes have their own)
     resource :business, only: [ :new, :create, :edit, :update ] do
       post :switch, on: :collection
       get :request_form_qr # CLI-03
@@ -119,6 +119,21 @@ Rails.application.routes.draw do
       resource :job, only: :create, controller: "quote_jobs" # JOB-01: an approved quote becomes a job
     end
 
+    # The team calendar (JOB-03)
+    get "schedule", to: "schedule#show", as: :schedule
+    get "schedule/visits/:id", to: "schedule#visit", as: :schedule_visit
+
+    # The day view for the people going on visits (JOB-04): only their own visits.
+    get "my-day", to: "my_day#show", as: :my_day
+    resources :my_visits, only: :show, path: "my-day/visits", controller: "my_visits" do
+      member do
+        patch :start
+        patch :complete
+        patch :reopen
+      end
+      resources :notes, only: :create, controller: "my_visit_notes"
+    end
+
     # Jobs (JOB-01)
     resources :jobs, only: %i[index show new create edit update] do
       post :search, on: :collection # POST keeps client names out of URLs
@@ -126,6 +141,14 @@ Rails.application.routes.draw do
         patch :complete
         patch :cancel
         patch :reopen
+      end
+      # Visits (JOB-02)
+      resources :visits, only: %i[new create edit update] do
+        member do
+          patch :cancel
+          patch :restore
+          patch :complete
+        end
       end
     end
 
@@ -152,6 +175,10 @@ Rails.application.routes.draw do
         patch :restore
       end
     end
+
+    # Business hours and closures (CAT-06)
+    resource :hours, only: %i[show update], controller: "hours"
+    resources :closures, except: %i[index show]
 
     # Service catalog (CAT-03)
     resource :catalog_presets, path: "catalog/starter", only: %i[show create] # CAT-05

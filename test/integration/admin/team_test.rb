@@ -120,6 +120,8 @@ class Admin::TeamTest < ActionDispatch::IntegrationTest
     assert_equal @business.id, user.last_business_id
     assert invitation.reload.accepted_at
     follow_redirect!
+    assert_redirected_to admin_my_day_path, "a technician lands on their day view (JOB-04)"
+    follow_redirect!
     assert_select ".biz-switch", /#{@business.name}/
   end
 

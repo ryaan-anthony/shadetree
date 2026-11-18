@@ -32,8 +32,9 @@ invoice. Jobs can also be created directly for work agreed by phone.
 - [x] Optionally, approving a quote can auto-create the job (business setting, default on;
       may later become an automation recipe, NTF-04). *Settings → Documents → Jobs. It runs after
       the approval is saved, so a failure never undoes the client's answer.*
-- [ ] Job statuses: Unscheduled, Scheduled, In progress, Completed, Cancelled — derived from
+- [x] Job statuses: Unscheduled, Scheduled, In progress, Completed, Cancelled — derived from
       visits where possible, with manual Complete/Cancel (with reason) available.
+      *Derived from visits (JOB-02), with manual Complete, Cancel with a reason, and Reopen.*
 - [ ] The job page shows client & property (with access notes), line items, instructions for
       the crew, internal notes, attachments/photos, visits (from JOB-02), and links to the
       originating quote and any invoices.
@@ -41,9 +42,9 @@ invoice. Jobs can also be created directly for work agreed by phone.
       client/title/number, and is usable on mobile. *"Needs scheduling" is the shortcut.*
 - [ ] Completing a job prompts "Create invoice" (wired up in PAY-01).
 - [x] Jobs appear on the client page.
-- [ ] Technicians see a job only through visits assigned to them (JOB-04).
-- [ ] Tests cover creation paths, status derivation, roles and tenancy. *Creation, manual
-      statuses, roles and tenancy are tested; derivation from visits comes with JOB-02.*
+- [x] Technicians see a job only through visits assigned to them (JOB-04).
+      *Through My day; the job and client pages stay Owner/Admin only.*
+- [x] Tests cover creation paths, status derivation, roles and tenancy. *Derivation from visits is tested with JOB-02's visits.*
 
 ## Out of scope
 

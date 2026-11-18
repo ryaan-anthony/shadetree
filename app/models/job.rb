@@ -24,6 +24,8 @@ class Job < ApplicationRecord
   belongs_to :completed_by, class_name: "User", optional: true
   belongs_to :cancelled_by, class_name: "User", optional: true
   has_many :line_items, -> { order(:position, :id) }, class_name: "JobLineItem", inverse_of: :job, dependent: :delete_all
+  has_many :email_messages, as: :related, dependent: :nullify # JOB-05: what the client was sent
+  has_many :visits, inverse_of: :job, dependent: :restrict_with_exception # JOB-02
   accepts_nested_attributes_for :line_items, allow_destroy: true, reject_if: :blank_new_line?
 
   MAX_LINES = 100
@@ -117,20 +119,75 @@ class Job < ApplicationRecord
 
   # Status changes take the row lock and look again, so two people pressing at once (or a visit
   # changing it, JOB-02) can't both win.
-  def complete!(by:)
+  # Finishing a job finishes its visits too (JOB-02): a visit under way is done, and ones not
+  # started are cancelled. Cancelling a job cancels all its open visits.
+  # Completing a job doesn't email the client about visits it cancels (the work is done); they
+  # simply count as what the client knows.
+  def complete!(by:, notify_client: false)
     with_lock do
       raise NotOpen, "#{number} is already #{status_label.downcase}." unless open?
 
       update!(status: "completed", completed_at: Time.current, completed_by: by)
+      ended = visits.open.lock.to_a.each { _1.finish!(_1.status == "in_progress" ? "completed" : "cancelled", by:, reason: "Job completed", notify: false) }
+      tell_crew_job_ended(ended, "completed", by:)
+      ended.find { _1.status == "cancelled" }&.tell_client(notify_client, ended, by:)
     end
   end
 
-  def cancel!(by:, reason: nil)
+  def cancel!(by:, reason: nil, notify_client: true)
     with_lock do
       raise NotOpen, "#{number} is already #{status_label.downcase}." unless open?
 
       update!(status: "cancelled", cancelled_at: Time.current, cancelled_by: by, cancel_reason: reason)
+      ended = visits.open.lock.to_a.each { _1.finish!("cancelled", by:, reason: "Job cancelled", notify: false) }
+      tell_crew_job_ended(ended, "cancelled", by:)
+      ended.first&.tell_client(notify_client, ended, by:)
     end
+  end
+
+  # JOB-05: changes to a job's visits reach the client as one email, a few minutes after the
+  # last of them, so a burst of edits (or a booking moved straight away) doesn't become several.
+  CLIENT_NOTICE_DELAY = 3.minutes
+
+  def queue_client_notice!
+    due = CLIENT_NOTICE_DELAY.from_now
+    update_columns(client_notice_due_at: due)
+    ids = [ business_id, id ]
+    ActiveRecord.after_all_transactions_commit { VisitClientNoticeJob.set(wait_until: due).perform_later(*ids) }
+  end
+
+  # JOB-02: how long a visit should take, to start the form with: the catalog durations of its
+  # items (times their quantities), else the business's industry default, else an hour.
+  def suggested_visit_minutes
+    from_items = visit_minutes_from_items
+    minutes = from_items.positive? ? from_items : IndustryPreset.for(business.industry)&.default_visit_minutes || 60
+    minutes.clamp(15, 8 * 60) # a starting point; a long job is usually more than one visit
+  end
+
+  def visit_minutes_from_items
+    line_items.includes(:catalog_item).sum { (_1.catalog_item&.duration_minutes || 0) * _1.quantity.to_d }.round
+  end
+
+  # The people who were going on its upcoming visits hear once that they're off (not per visit).
+  def tell_crew_job_ended(visits, how, by:)
+    upcoming = visits.select { _1.status == "cancelled" && _1.scheduled_on >= business.today }
+    crew = upcoming.flat_map { _1.assignees.to_a }.uniq
+    return if crew.empty?
+
+    upcoming.first.notify_crew("visit_cancelled", crew, "#{title} (#{number}) was #{how}: your #{upcoming.size == 1 ? "visit is" : "#{upcoming.size} visits are"} cancelled", by:)
+  end
+
+  # Visits it still has to happen: scheduled or under way.
+  def open_visit_count = visits.open.count
+
+  # JOB-02: the status its visits give an open job. Visits call it under the job's row lock, with
+  # their change. Only the status is written: a visit change mustn't fail on (or re-save) the
+  # job's other fields, or count as an edit to the job form open in another tab.
+  def refresh_status!
+    return unless open?
+
+    new_status = visit_status
+    update_columns(status: new_status, updated_at: Time.current) if new_status != status
   end
 
   # Back to the status its visits give it, undoing Complete or Cancel.
@@ -142,8 +199,16 @@ class Job < ApplicationRecord
     end
   end
 
-  # What the visits say (JOB-02 fills this in): a job without visits is unscheduled.
-  def visit_status = "unscheduled"
+  # What the visits say: one under way, or work done with more to come, is In progress; visits
+  # booked and none done yet is Scheduled; nothing booked is Unscheduled (needs scheduling).
+  # Work done with nothing more booked stays In progress until staff complete the job.
+  def visit_status
+    statuses = visits.distinct.pluck(:status)
+    if statuses.include?("in_progress") || statuses.include?("completed") then "in_progress"
+    elsif statuses.include?("scheduled") then "scheduled"
+    else "unscheduled"
+    end
+  end
 
   # The rows in the form, in the order they were sent.
   def line_items_attributes=(rows)

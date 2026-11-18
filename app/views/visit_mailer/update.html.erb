@@ -1,0 +1,10 @@
+<% kinds = @items.map(&:kind).uniq %>
+<p style="margin:0 0 12px;">Hi <%= @job.client.display_name %>,</p>
+<p style="margin:0 0 16px;">
+  <% if kinds == [ "scheduled" ] %><%= @items.one? ? "Your visit is booked." : "Your visits are booked." %> We'll see you then.
+  <% elsif kinds == [ "changed" ] %><%= @items.one? ? "Your visit has moved." : "Your visits have moved." %> Here's when we'll be there now.
+  <% elsif kinds == [ "cancelled" ] %><%= @items.one? ? "Your visit is cancelled." : "Your visits are cancelled." %> Get in touch if you'd like to book another time.
+  <% else %>Your visits have changed. Here's where things stand.<% end %>
+</p>
+<%= render "visit_mailer/items", items: @items, job: @job %>
+<p style="margin:16px 0 0;font-size:13px;color:#64748b;">Questions? Reply to this email<%= " or call #{@business.phone}" if @business.phone.present? %>.</p>

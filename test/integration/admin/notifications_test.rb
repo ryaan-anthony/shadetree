@@ -87,7 +87,7 @@ class Admin::NotificationsTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "email settings per member: office types for Owners and Admins, nothing for Technicians yet" do
+  test "email settings per member: office types for Owners and Admins, their own visits for Technicians" do
     sign_in_owner
     get settings_admin_notifications_path
     assert_select "input[name='email[]'][value=quote_approved][checked]"
@@ -102,7 +102,8 @@ class Admin::NotificationsTest < ActionDispatch::IntegrationTest
     sign_in member_with_role(:technician)
     get settings_admin_notifications_path
     assert_response :success
-    assert_select "input[name='email[]']", 0
+    assert_select "input[name='email[]'][value^=visit_]", 3
+    assert_select "input[name='email[]'][value^=quote_]", 0
     get admin_notifications_path
     assert_response :success
   end

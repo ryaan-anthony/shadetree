@@ -34,6 +34,12 @@ end
 end
 
 Tenancy.with_business(business) do
+  # Hours and closures (CAT-06): weekdays 8–5 and Saturday mornings, Christmas every year,
+  # and a half day on the next Christmas Eve.
+  business.update!(weekly_hours: WeeklyHours::WEEKDAYS_8_TO_5.merge("6" => { "opens" => "08:00", "closes" => "12:00" })) if business.weekly_hours.nil?
+  Closure.find_or_create_by!(reason: "Christmas Day") { _1.assign_attributes(starts_on: Date.new(2026, 12, 25), repeats_yearly: true) }
+  eve = Date.new(business.today.year, 12, 24)
+  Closure.find_or_create_by!(reason: "Christmas Eve, closing at noon") { _1.assign_attributes(starts_on: eve, part_of_day: true, start_time: "12:00", end_time: "") }
   # Tax rates (CAT-04): state and county, applied to new documents.
   TaxRate.find_or_create_by!(name: "State sales tax") { _1.percent = "6.25" }
   TaxRate.find_or_create_by!(name: "County") { _1.percent = "1" }
@@ -128,6 +134,38 @@ Tenancy.with_business(business) do
     gutters.line_items.build(name: "Gutter cleaning", description: "Front and back, with downspouts flushed", quantity: 1, unit: "visit", unit_price: "165")
     gutters.save!
     Job.create!(client: first_client, property: first_client.primary_property, created_by: owner, title: "Spring aeration").complete!(by: owner)
+  end
+
+  # JOB-02: the job from the approved quote booked over two days with the technician, one in
+  # an arrival window and one at a start time.
+  from_quote = Job.where.not(quote_id: nil).first
+  if from_quote && from_quote.visits.none?
+    tech = User.find_by(email: "tech@example.com")
+    monday = business.today.next_occurring(:monday)
+    from_quote.visits.new(scheduled_on: monday, timing: "window", start_time: "08:00", window_end_time: "10:00", duration_minutes: 180,
+                          assignee_ids: [ tech&.id ].compact, instructions: "Start with the front hedges.", created_by: owner,
+                          client_note: "Please leave the side gate unlocked.").schedule!(by: owner, notify_client: false) # JOB-05
+    from_quote.visits.new(scheduled_on: monday + 1, timing: "exact", start_time: "13:00", duration_minutes: 120,
+                          assignee_ids: [ tech&.id, owner.id ].compact, created_by: owner).schedule!(by: owner, notify_client: false)
+    from_quote.visits.first.notes.create!(user: tech, body: "Side gate was locked; the client let us in at 9.") if tech # JOB-04
+  end
+
+  # JOB-03: a full week on the calendar: weekly mowing for a few clients, spread over the crew,
+  # with an overlap, an "anytime" visit and one nobody's on yet.
+  unless Job.exists?(title: "Weekly mowing")
+    crew = User.where(email: %w[owner@example.com admin@example.com tech@example.com]).index_by(&:email)
+    week = business.today.beginning_of_week
+    plan = [ [ 0, "exact", "08:00", 90, %w[tech@example.com] ], [ 0, "exact", "10:30", 60, %w[tech@example.com] ],
+             [ 1, "window", "09:00", 120, %w[admin@example.com] ], [ 1, "exact", "09:30", 60, %w[tech@example.com] ],
+             [ 2, "anytime", nil, 60, %w[owner@example.com] ], [ 2, "exact", "13:00", 120, %w[tech@example.com admin@example.com] ],
+             [ 3, "exact", "08:30", 60, [] ], [ 4, "window", "12:00", 90, %w[admin@example.com] ], [ 4, "exact", "15:00", 60, %w[tech@example.com] ] ]
+    clients = Client.order(:id).to_a
+    plan.each_with_index do |(day, timing, at, minutes, people), index|
+      client = clients[index % clients.size] # fewer clients than visits: some get two
+      job = Job.create!(client:, property: client.primary_property, created_by: owner, title: "Weekly mowing")
+      job.visits.new(scheduled_on: week + day, timing:, start_time: at, window_end_time: (timing == "window" ? (Time.zone.parse(at) + 2.hours).strftime("%H:%M") : nil),
+                     duration_minutes: minutes, assignee_ids: people.filter_map { crew[_1]&.id }, created_by: owner).schedule!(by: owner, notify_client: false)
+    end
   end
 end
 

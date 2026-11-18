@@ -37,6 +37,15 @@ class PublicRequestsTest < ActionDispatch::IntegrationTest
     assert_select "input[name=form_token]"
   end
 
+  test "the business's weekly hours show with its contact details (CAT-06)" do
+    @business.update!(request_form_enabled: false, phone: "(555) 380-4410")
+    get public_request_path("oakline")
+    assert_select "p", { text: /Hours:/, count: 0 }, "nothing until hours are set"
+    @business.update!(weekly_hours: WeeklyHours::WEEKDAYS_8_TO_5)
+    get public_request_path("oakline")
+    assert_select "p", /Hours:\s*Mon–Fri 8 am–5 pm/
+  end
+
   test "a submission from a new person creates a client, property and request, and tells everyone" do
     with_fake_pdf_renderer do
       submit
