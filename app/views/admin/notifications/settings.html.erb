@@ -1,0 +1,27 @@
+<%# NTF-02: which notifications this member also gets by email, in this business. %>
+<% content_for :title, "Email settings" %>
+<%= page_header "Email settings", lede: "Everything shows in Notifications. Choose what you also get by email from #{current_business.name}." %>
+
+<%= form_with url: settings_admin_notifications_path, method: :patch, class: "max-w-2xl space-y-4" do %>
+  <%= card title: "Email me when" do %>
+    <% if @types.empty? %>
+      <p class="text-sm2 text-muted">Nothing to choose yet.</p>
+    <% else %>
+      <div class="space-y-3">
+        <% @types.each do |type| %>
+          <label class="check">
+            <%= check_box_tag "email[]", type.kind, @membership.email_notification?(type.kind), id: "email_#{type.kind}" %>
+            <span><span class="font-medium text-ink"><%= type.label %></span><span class="check-hint"><%= type.hint %></span></span>
+          </label>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+  <% unless current_user.confirmed? %>
+    <p class="text-sm2 text-muted">Emails start once you've confirmed your email address.</p>
+  <% end %>
+  <div class="flex items-center justify-end gap-2">
+    <%= link_to "Back to notifications", admin_notifications_path, class: button_classes(:ghost) %>
+    <%= submit_tag "Save", class: button_classes(:primary), name: nil %>
+  </div>
+<% end %>

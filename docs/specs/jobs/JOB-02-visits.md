@@ -31,16 +31,18 @@ work (windows, "anytime"), and helpful about conflicts without being bossy.
 - [x] Visits can be rescheduled, reassigned and cancelled (with optional reason); each change is
       recorded with who/when.
       *Shown as each visit's history on the job page; cancelled visits can be restored.*
-- [ ] Non-blocking warnings appear when a visit is outside business hours, on a closure
+- [x] Non-blocking warnings appear when a visit is outside business hours, on a closure
       (CAT-06), or overlaps another visit for an assigned member.
+      *Shown on the form before booking or moving a visit, with "Schedule anyway". A visit runs from its start to its latest arrival plus the duration; "anytime" visits are checked against the day.*
 - [x] Visits have statuses Scheduled, In progress, Completed, Cancelled; job status updates
       accordingly (JOB-01).
       *A job with a visit under way, or work done and more to come, is In progress; visits booked and none done is Scheduled; nothing booked is Unscheduled. Completing a job finishes a visit under way and cancels ones not started; cancelling a job cancels its open visits.*
-- [ ] Assigned members are notified of assignment and changes (in-app/email via NTF-02 when
+- [x] Assigned members are notified of assignment and changes (in-app/email via NTF-02 when
       available; feature works without it).
+      *Through NTF-02: put on a visit, moved or updated, taken off, cancelled. Several days booked at once are one notification.*
 - [x] Times are entered and shown in the business time zone (PLT-08).
 - [x] Scheduling a visit is possible directly from the job page and from the "unscheduled" list.
-- [ ] Tests cover windows, warnings, DST, reassignment, roles and tenancy.
+- [x] Tests cover windows, warnings, DST, reassignment, roles and tenancy.
 
 ## Out of scope
 

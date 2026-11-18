@@ -1,21 +1,7 @@
-# QTE-05: tells the business's office team (Owners and Admins) that a client approved,
-# declined or asked for changes on a quote, or that a teammate recorded an approval. One email
-# per member, so addresses aren't shared. In-app notifications and per-member choices come with
-# NTF-02.
-class QuoteActivityMailer < ApplicationMailer
-  helper FormattingHelper
-
-  # The members to tell: active, confirmed, allowed to see quotes, not the person who did it.
-  def self.recipients(response)
-    roles = Permissions.roles_with(:office)
-    response.business.business_users.active.where(role: roles).includes(:user).map(&:user)
-            .select(&:confirmed?).reject { _1.id == response.recorded_by_id }
-  end
-
-  def self.deliver_later_for(response)
-    recipients(response).each { with(response_id: response.id, business_id: response.business_id, user_id: _1.id).responded.deliver_later }
-  end
-
+# QTE-05: tells an office team member (Owners and Admins) that a client approved, declined or
+# asked for changes on a quote, or that a teammate recorded an approval. Sent through
+# NotificationType.deliver (NTF-02) to the members who want it, one email each.
+class QuoteActivityMailer < TeamMailer
   def responded
     @business = Business.find(params[:business_id])
     user = User.find(params[:user_id])

@@ -11,3 +11,5 @@ Signed by <%= @response.signer_name %> on <%= l(@response.created_at.in_time_zon
 <% end %>
 
 Open quote: <%= @url %>
+
+<%= render "shared/mailer/notification_settings" %>

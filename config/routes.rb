@@ -54,7 +54,7 @@ Rails.application.routes.draw do
       post :search, on: :collection # list results and the client picker (CLI-02); POST keeps search terms out of URLs
     end
 
-    # Business management (with tabs for profile, hours, branding)
+    # Business settings (tabs for profile, documents, branding, request form; hours and taxes have their own)
     resource :business, only: [ :new, :create, :edit, :update ] do
       post :switch, on: :collection
       get :request_form_qr # CLI-03
@@ -140,6 +140,19 @@ Rails.application.routes.draw do
     # "Send me a test email" from branding settings (NTF-01)
     resource :test_email, only: :create
 
+    # Team notifications (NTF-02): the notification center and each member's email choices
+    resources :notifications, only: :index do
+      collection do
+        patch :read_all
+        get :settings
+        patch :settings, action: :update_settings
+      end
+      member do
+        get :open # marks it read and goes to what it's about
+        patch :read
+      end
+    end
+
     # Tax rates (CAT-04)
     resources :tax_rates, except: %i[show destroy] do
       member do
@@ -147,6 +160,10 @@ Rails.application.routes.draw do
         patch :restore
       end
     end
+
+    # Business hours and closures (CAT-06)
+    resource :hours, only: %i[show update], controller: "hours"
+    resources :closures, except: %i[index show]
 
     # Service catalog (CAT-03)
     resource :catalog_presets, path: "catalog/starter", only: %i[show create] # CAT-05

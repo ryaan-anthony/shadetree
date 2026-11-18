@@ -55,6 +55,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000400) do
     t.string "uid", null: false
     t.datetime "welcome_dismissed_at"
     t.datetime "setup_hidden_at"
+    t.jsonb "notification_emails", default: {}, null: false
     t.index ["business_id", "active"], name: "index_business_users_on_business_id_and_active"
     t.index ["business_id"], name: "index_business_users_on_business_id"
     t.index ["uid"], name: "index_business_users_on_uid", unique: true
@@ -97,6 +98,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000400) do
     t.boolean "request_form_enabled", default: false, null: false
     t.text "request_form_intro"
     t.datetime "first_quote_sent_at"
+    t.jsonb "weekly_hours"
     t.boolean "auto_create_jobs", default: true, null: false
     t.index ["active"], name: "index_businesses_on_active"
     t.index ["handle"], name: "index_businesses_on_handle", unique: true
@@ -213,6 +215,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000400) do
     t.index ["search_text"], name: "index_clients_on_search_text", opclass: :gin_trgm_ops, using: :gin
     t.index ["tags"], name: "index_clients_on_tags", using: :gin
     t.index ["uid"], name: "index_clients_on_uid", unique: true
+  end
+
+  create_table "closures", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.string "reason", null: false
+    t.date "starts_on", null: false
+    t.date "ends_on", null: false
+    t.integer "start_minute"
+    t.integer "end_minute"
+    t.boolean "repeats_yearly", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "ends_on"], name: "index_closures_on_business_id_and_ends_on"
+    t.index ["uid"], name: "index_closures_on_uid", unique: true
+    t.check_constraint "(start_minute IS NULL) = (end_minute IS NULL) AND (start_minute IS NULL OR start_minute >= 0 AND start_minute < end_minute AND end_minute <= 1440)", name: "closures_minutes"
+    t.check_constraint "ends_on >= starts_on", name: "closures_date_order"
   end
 
   create_table "document_sequences", force: :cascade do |t|
@@ -366,6 +385,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000400) do
     t.index ["uid"], name: "index_jobs_on_uid", unique: true
     t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying, 'amount'::character varying]::text[]))", name: "jobs_discount_kind"
     t.check_constraint "status::text = ANY (ARRAY['unscheduled'::character varying, 'scheduled'::character varying, 'in_progress'::character varying, 'completed'::character varying, 'cancelled'::character varying]::text[])", name: "jobs_status"
+  end
+
+  create_table "notifications", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "user_id", null: false
+    t.string "uid", null: false
+    t.string "kind", null: false
+    t.string "subject_type"
+    t.bigint "subject_id"
+    t.bigint "actor_id"
+    t.string "title", null: false
+    t.string "body"
+    t.string "path", null: false
+    t.datetime "read_at"
+    t.datetime "created_at", null: false
+    t.index ["business_id", "user_id", "created_at"], name: "index_notifications_on_business_id_and_user_id_and_created_at"
+    t.index ["business_id", "user_id"], name: "index_notifications_unread", where: "(read_at IS NULL)"
+    t.index ["created_at"], name: "index_notifications_on_created_at"
+    t.index ["uid"], name: "index_notifications_on_uid", unique: true
   end
 
   create_table "properties", force: :cascade do |t|
@@ -708,6 +746,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000400) do
   add_foreign_key "client_links", "users", column: "created_by_id", on_delete: :nullify
   add_foreign_key "client_links", "users", column: "revoked_by_id", on_delete: :nullify
   add_foreign_key "clients", "businesses", on_delete: :cascade
+  add_foreign_key "closures", "businesses", on_delete: :cascade
   add_foreign_key "document_sequences", "businesses"
   add_foreign_key "email_messages", "businesses", on_delete: :cascade
   add_foreign_key "email_suppressions", "businesses", on_delete: :cascade
@@ -725,6 +764,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000400) do
   add_foreign_key "jobs", "users", column: "cancelled_by_id", on_delete: :nullify
   add_foreign_key "jobs", "users", column: "completed_by_id", on_delete: :nullify
   add_foreign_key "jobs", "users", column: "created_by_id", on_delete: :nullify
+  add_foreign_key "notifications", "businesses", on_delete: :cascade
+  add_foreign_key "notifications", "users", column: "actor_id", on_delete: :nullify
+  add_foreign_key "notifications", "users", on_delete: :cascade
   add_foreign_key "properties", "businesses", on_delete: :cascade
   add_foreign_key "properties", "clients", on_delete: :cascade
   add_foreign_key "quote_events", "businesses"

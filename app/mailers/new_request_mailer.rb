@@ -1,12 +1,7 @@
-# CLI-03: tells the office team a request came in from the public form, with everything they
-# need to call back.
+# CLI-03: tells an office team member a request came in from the public form, with everything
+# they need to call back. Sent through NotificationType.deliver (NTF-02), to the members who
+# want it.
 class NewRequestMailer < TeamMailer
-  def self.deliver_later_for(request)
-    office_members(request.business).each do |user|
-      with(business_id: request.business_id, request_id: request.id, user_id: user.id).received.deliver_later
-    end
-  end
-
   def received
     @business = Business.find(params[:business_id])
     user = User.find(params[:user_id])

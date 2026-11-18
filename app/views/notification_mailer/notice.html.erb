@@ -1,0 +1,4 @@
+<p style="margin:0 0 12px;font-size:18px;font-weight:700;color:#0f172a;"><%= @notification.title %></p>
+<% if @notification.body %><p style="margin:0 0 16px;font-size:14px;color:#334155;"><%= @notification.body %></p><% end %>
+<%= render "shared/mailer/button", label: "Open in Shadetree", url: @url %>
+<%= render "shared/mailer/notification_settings" %>

@@ -24,6 +24,7 @@ class Business < ApplicationRecord
   belongs_to :owner, class_name: "User"
   has_many :business_users, dependent: :destroy
   has_many :users, through: :business_users
+  has_many :closures # CAT-06; the database removes them with the business
 
   # Callbacks
   before_validation { self.uid ||= SecureRandom.base58(BusinessOwned::UID_LENGTH) if new_record? }
@@ -50,6 +51,7 @@ class Business < ApplicationRecord
   before_save { logo.purge_later if ActiveModel::Type::Boolean.new.cast(remove_logo) && attachment_changes["logo"].nil? && logo.attached? }
   validates :currency, inclusion: { in: Money::CURRENCIES.keys }, allow_blank: true
   validate :timezone_must_be_known
+  validate { hours.problems.each { errors.add(:weekly_hours, :invalid, message: _1) } }
   validates :industry, inclusion: { in: ->(_) { Industry.keys }, message: "isn't one we know" }, allow_blank: true
   validates :country, inclusion: { in: ->(_) { Country.codes }, message: "isn't supported yet" }
   validates :website, format: { with: %r{\Ahttps?://\S+\.\S+\z}i, message: "should start with https://" }, allow_blank: true
@@ -168,6 +170,9 @@ class Business < ApplicationRecord
 
   # Logo, brand color and what's derived from them (CAT-02).
   def branding = Branding.new(self)
+
+  # Weekly opening hours (CAT-06); OpeningHours combines them with closures.
+  def hours = WeeklyHours.new(weekly_hours)
 
   # Every logo goes through LogoUpload: decoded, size-checked and stripped of metadata. A
   # rejected file leaves the current logo in place and adds an error on save; a blank
