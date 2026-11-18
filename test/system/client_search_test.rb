@@ -18,21 +18,29 @@ class ClientSearchSystemTest < ApplicationSystemTestCase
     assert_text "Home"
   end
 
+  # Types into the search box until the results show it took. On a slow headless Chrome,
+  # keys can be lost (the box stays empty and the list never filters); typing again is safe,
+  # since only the last search counts. A real failure still fails, after 15 seconds.
+  def search_clients(text, shows:, hides: nil)
+    field = find_field("Search clients")
+    page.document.synchronize(15) do
+      field.fill_in(with: text) unless field.value == text
+      done = field.value == text && (hides.nil? || page.has_no_text?(hides, wait: 3)) && page.has_text?(shows, wait: 0)
+      raise Capybara::ExpectationNotMet, "searching for #{text.inspect} didn't filter the list (the box holds #{field.value.inspect})" unless done
+    end
+  end
+
   test "typing filters the list in place, and the archived tab keeps working with search" do
     visit admin_clients_path
-    fill_in "Search clients", with: "+1 555 010 0299"
-    assert_no_text "Maria Lopez", wait: 5
-    assert_text "Sam Okafor"
+    search_clients "+1 555 010 0299", shows: "Sam Okafor", hides: "Maria Lopez"
     assert_current_path admin_clients_path # search terms never go into the URL
 
-    fill_in "Search clients", with: "okafor"
-    assert_text "Sam Okafor"
+    search_clients "okafor", shows: "Sam Okafor", hides: "Maria Lopez"
     find("label.tab-radio", text: "Archived").click
     assert_text "Old Okafor"
     assert_no_text "Sam Okafor"
 
-    fill_in "Search clients", with: "old"
-    assert_text "Old Okafor", wait: 5
+    search_clients "old", shows: "Old Okafor"
     assert find("input[name=archived][value='1']", visible: :all).checked?
   end
 
