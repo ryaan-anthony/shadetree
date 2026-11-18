@@ -34,8 +34,8 @@ Rails.application.routes.draw do
   get "c/:token", to: "client_links#show", as: :client_link
   post "c/:token/fresh", to: "client_links#request_fresh", as: :request_fresh_client_link
   post "c/:token/quote/update", to: "client/quotes#request_update", as: :request_quote_update
-  get "c/:token/quote/files/:id", to: "client/document_files#show", as: :client_quote_file
-  get "c/:token/invoice/files/:id", to: "client/document_files#show", as: :client_invoice_file # PAY-02
+  get "c/:token/quote/files/:id", to: "client/document_files#show", as: :client_quote_file, defaults: { kind: "quote" }
+  get "c/:token/invoice/files/:id", to: "client/document_files#show", as: :client_invoice_file, defaults: { kind: "invoice" } # PAY-02
   get "c/:token/invoice/pdf", to: "client/invoices#pdf", as: :client_invoice_pdf
   get "c/:token/quote/pdf", to: "client/quotes#pdf", as: :client_quote_pdf # QTE-03
   post "c/:token/quote/approve", to: "client/quotes#approve", as: :approve_client_quote # QTE-05
@@ -129,6 +129,7 @@ Rails.application.routes.draw do
       post :search, on: :collection # POST keeps client names out of URLs
       member do
         post :revise
+        post :discard_revision
         patch :void
       end
       resources :attachments, only: :destroy, controller: "invoice_attachments"

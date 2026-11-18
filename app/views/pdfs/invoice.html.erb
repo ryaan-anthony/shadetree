@@ -8,5 +8,5 @@
 </article>
 
 <% if @invoice.outstanding? %>
-  <p class="pdf-online">To see this invoice online, open it from the email <%= @business.name %> sent you.</p>
+  <p class="pdf-online">To see this invoice online, open the link <%= @business.name %> sent you.</p>
 <% end %>

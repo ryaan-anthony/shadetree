@@ -37,7 +37,7 @@ class Client::InvoicePageTest < ActionDispatch::IntegrationTest
     assert_select ".client-card", /Amount due.*\$227\.38.*Due/m
     assert_select ".quote-doc-kicker", "Invoice #{@invoice.number}"
     assert_select ".quote-doc-title", "Spring cleanup"
-    assert_select ".quote-doc-meta", /Maria Lopez.*Lopez Rentals.*12 Elm St.*Issued.*Due.*Status.*Due/m
+    assert_select ".quote-doc-meta", /Maria Lopez.*Lopez Rentals.*12 Elm St.*Issued.*Due.*Status.*Unpaid/m
     assert_select ".quote-doc-message", "Thanks for your business."
     assert_select ".quote-doc-lines tbody tr", 2
     assert_select "#quote_totals", /Subtotal.*\$214\.00.*State \(6\.25%\).*\$13\.38.*Total.*\$227\.38/m
@@ -65,6 +65,10 @@ class Client::InvoicePageTest < ActionDispatch::IntegrationTest
     assert_select ".banner-success", /Paid in full/
     assert_select ".invoice-doc-balance", /Balance due.*\$0\.00/m
 
+    set_invoice(status: "sent", amount_paid_cents: 0)
+    get client_link_path(@link.token)
+    assert_select ".invoice-doc-balance", 0, "with nothing paid, the total is what's due"
+
     set_invoice(status: "void", amount_paid_cents: 0)
     get client_link_path(@link.token)
     assert_select ".banner-info", /cancelled, so nothing is due/
@@ -83,7 +87,8 @@ class Client::InvoicePageTest < ActionDispatch::IntegrationTest
     assert_equal 0, as_business(@business) { @link.reload.views_count }, "not a view of the invoice"
 
     set_invoice(revision: 1)
-    assert_not_found_across_businesses { get client_invoice_pdf_path(@link.token) }
+    get client_invoice_pdf_path(@link.token)
+    assert_response :not_found
     get client_link_path(@link.token)
     assert_response :gone
   end
@@ -152,5 +157,59 @@ class Client::InvoicePageTest < ActionDispatch::IntegrationTest
     assert_equal 0, as_business(@business) { @link.reload.views_count }
     sign_out :user
     assert_permission_matrix(owner: true, admin: true, technician: false) { get preview_admin_invoice_path(@invoice) }
+  end
+
+  test "voiding or discarding a revision puts back what the client was sent; the edits are never shown" do
+    sign_in_staff
+    post revise_admin_invoice_path(@invoice)
+    edit = ->(title) do
+      as_business(@business) do
+        invoice = @invoice.reload
+        invoice.update!(title:, message: "Unfinished note")
+        invoice.sync_line_items([ { "key" => "z", "name" => "Draft-only line", "quantity" => "1", "unit_price" => "999" } ])
+        invoice.attach_files([ Rack::Test::UploadedFile.new(file_fixture("logo.png"), "image/png", original_filename: "new.png") ])
+        invoice.save!
+      end
+    end
+    edit.("Unfinished edit")
+    get edit_admin_invoice_path(@invoice)
+    assert_select "form[action=?]", discard_revision_admin_invoice_path(@invoice)
+    post discard_revision_admin_invoice_path(@invoice)
+    assert_redirected_to admin_invoice_path(@invoice)
+    invoice = as_business(@business) { @invoice.reload }
+    assert_equal [ "sent", 1, "Spring cleanup", "Thanks for your business.", 22_738, [ "Leaf cleanup", "Mulch" ], [ "yard.png" ], 0 ],
+                 [ invoice.status, invoice.revision, invoice.title, invoice.message, invoice.total_cents, as_business(@business) { invoice.current_line_items.map(&:name) },
+                   as_business(@business) { invoice.saved_attachments.map { _1.filename.to_s } }, as_business(@business) { invoice.revisions.count } ]
+    assert_equal "revision_discarded", as_business(@business) { invoice.events.last.kind }
+
+    post revise_admin_invoice_path(@invoice)
+    edit.("Unfinished again")
+    patch void_admin_invoice_path(@invoice), params: { reason: "Sent in error" }
+    assert_equal [ "void", "Spring cleanup" ], as_business(@business) { [ @invoice.reload.status, @invoice.title ] }
+    sign_out :user
+    get client_link_path(@link.token)
+    assert_select ".quote-doc-title", "Spring cleanup"
+    assert_no_match "Unfinished", response.body
+    assert_no_match "Draft-only line", response.body
+  end
+
+  test "an invoice link reissued by staff still doesn't expire while it's unpaid" do
+    sign_in_staff
+    as_business(@business) { @link.update!(expires_at: nil) }
+    post reissue_admin_client_link_path(@link)
+    fresh = as_business(@business) { ClientLink.active.where(linkable: @invoice).order(:created_at).last }
+    assert_not_equal @link.id, fresh.id
+    assert_nil fresh.expires_at
+    set_invoice(status: "paid", amount_paid_cents: 22_738)
+    assert_in_delta 1.year.from_now, as_business(@business) { @invoice.reload.client_link_expires_at }, 1.minute
+  end
+
+  test "files: none while it's being revised, and each document's files only through its own route" do
+    photo = as_business(@business) { @invoice.attachments_attachments.first }
+    get client_quote_file_path(@link.token, photo)
+    assert_response :not_found
+    set_invoice(status: "draft", revision: 2)
+    get client_invoice_file_path(@link.token, photo)
+    assert_response :not_found
   end
 end

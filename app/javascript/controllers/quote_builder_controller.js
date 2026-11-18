@@ -98,6 +98,15 @@ export default class extends Controller {
     if (!this.dirty && !this.conflict) Turbo.visit(href)
   }
 
+  // Download PDF: save first, so the PDF has the latest.
+  async download(event) {
+    event.preventDefault()
+    const href = event.currentTarget.href
+    if (this.dirty) this.save()
+    await this.saving
+    window.location = href
+  }
+
   // Preview as client: save first, so the preview shows the latest. The tab opens at once
   // (popup blockers allow that only during the click) and is pointed at the preview after.
   async preview(event) {

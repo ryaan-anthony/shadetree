@@ -8,7 +8,7 @@ class Client::DocumentFilesController < ApplicationController
   URL_LIFETIME = 5.minutes
 
   def show
-    return render_link_not_found unless @document.is_a?(DocumentAttachments) && @document.client_visible?
+    return render_link_not_found unless @document.is_a?(DocumentAttachments) && @document.model_name.element == params[:kind] && @document.client_visible?
 
     attachment = @document.attachments_attachments.find_by(id: params[:id]) or return render_link_not_found
     file = params[:size] == "web" && attachment.image? ? attachment.variant(:web).processed : attachment

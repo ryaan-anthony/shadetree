@@ -121,6 +121,23 @@ class Invoice < ApplicationRecord
     end
   end
 
+  # Drops a revision being prepared: the invoice is again exactly what the client was sent
+  # (lines, dates, terms, files and its PDF), and that revision's record is removed. Voiding a
+  # revising invoice does this first, so the client never sees the unfinished edits.
+  def discard_revision!(by:)
+    transaction do
+      lock!
+      raise ArgumentError, "Invoice #{number} isn't being revised." unless revising?
+
+      previous = revisions.last
+      restore_snapshot(previous.snapshot)
+      assign_attributes(status: previous.status, revision: previous.number, pdf_blob_id: previous.pdf_blob_id, pdf_digest: nil)
+      save!(validate: false)
+      previous.destroy!
+      record!(:revision_discarded, by:, revision: previous.number + 1)
+    end
+  end
+
   # Cancels an invoice that went out, with a reason; it stays on record, numbered, as Void. A
   # draft that never went out is deleted instead, and one with payments can't be voided (record
   # the money back first, PAY-05). Void and reissue is how a sent invoice is corrected at launch.
@@ -132,6 +149,7 @@ class Invoice < ApplicationRecord
 
     transaction do
       lock!
+      discard_revision!(by:) if revising?
       raise ArgumentError, "Invoice #{number} can't be voided#{" while it has payments" if payments?}." unless voidable?
 
       # Skips validation, as revise! does: an old row that no longer validates can still be voided.
@@ -222,10 +240,16 @@ class Invoice < ApplicationRecord
   # can always find what they owe; it's given an end a year after payment (PAY-04/PAY-05).
   CLIENT_LINK_AFTER_PAID = 1.year
   def client_link!
-    ClientLink.active.where(linkable: self).order(created_at: :desc).first || ClientLink.issue!(self, expires_at: client_link_expires_at)
+    ClientLink.active.where(linkable: self).order(created_at: :desc).first || ClientLink.issue!(self)
   end
 
-  def client_link_expires_at = paid? ? updated_at + CLIENT_LINK_AFTER_PAID : nil
+  # (Measured from the last change until PAY-05 records when the payment that settled it came.)
+  def client_link_expires_at
+    case status
+    when "paid" then updated_at + CLIENT_LINK_AFTER_PAID
+    when "void" then (voided_at || updated_at) + CLIENT_LINK_AFTER_PAID
+    end
+  end
 
   # PAY-02: the PDF (QTE-02's approach): sent invoices keep theirs until something on it
   # changes, including a payment (its balance); drafts are rendered fresh.
@@ -251,7 +275,7 @@ class Invoice < ApplicationRecord
     when "paid" then "Paid"
     when "void" then "Void"
     when "partially_paid" then "Partly paid"
-    else "Due"
+    else "Unpaid"
     end
   end
 
@@ -264,6 +288,25 @@ class Invoice < ApplicationRecord
   end
 
   private
+
+  # Puts back what a revision recorded (Invoice#snapshot), for discard_revision!.
+  def restore_snapshot(data)
+    assign_attributes(data.slice(*%w[title issued_on due_on payment_terms message terms tax_rates prices_include_tax]))
+    set_discount(data["discount_kind"], data["discount"])
+    lines = data["lines"].map { _1.slice(*%w[name description quantity unit taxable discount_kind]).merge("key" => SecureRandom.uuid, "discount_value" => _1["discount"]) }
+    sync_line_items(lines).zip(data["lines"]) { |item, line| item.unit_price_cents = line["unit_price_cents"] }
+    kept = data["files"].pluck("blob_id")
+    attachments_attachments.each do |file|
+      next if kept.include?(file.blob_id)
+
+      # A file another revision recorded, or that's shared (a visit photo), only loses this link.
+      recorded = revisions.any? { |revision| revision.snapshot["files"].to_a.any? { _1["blob_id"] == file.blob_id } }
+      shared = ActiveStorage::Attachment.where(blob_id: file.blob_id).where.not(id: file.id).exists?
+      recorded || shared ? file.delete : file.purge_later
+    end
+    present = attachments_attachments.map(&:blob_id)
+    ActiveStorage::Blob.where(id: kept - present).each { attachments.attach(_1) }
+  end
 
   def assign_number_and_defaults
     return unless business

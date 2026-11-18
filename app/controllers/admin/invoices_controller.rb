@@ -6,7 +6,7 @@ class Admin::InvoicesController < Admin::BaseController
   include DocumentBuilder
   include SendsPdf
   requires_permission :office
-  before_action :set_invoice, only: %i[show edit update destroy revise void preview pdf]
+  before_action :set_invoice, only: %i[show edit update destroy revise discard_revision void preview pdf]
   before_action :require_editable, only: %i[edit update]
 
   PER_PAGE = 50
@@ -71,6 +71,14 @@ class Admin::InvoicesController < Admin::BaseController
     redirect_to edit_admin_invoice_path(@invoice), notice: "Invoice #{@invoice.number} reopened as revision #{@invoice.revision}."
   rescue ArgumentError => error
     redirect_to admin_invoice_path(@invoice), alert: error.message
+  end
+
+  # Drops the changes to a revision being prepared: back to what the client was sent.
+  def discard_revision
+    @invoice.discard_revision!(by: current_user)
+    redirect_to admin_invoice_path(@invoice), notice: "Changes discarded. Invoice #{@invoice.number} is as the client was sent it."
+  rescue ArgumentError => error
+    redirect_to staff_invoice_path(@invoice), alert: error.message
   end
 
   def void

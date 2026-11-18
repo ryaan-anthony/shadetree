@@ -27,10 +27,13 @@ class ClientLinkTest < ActiveSupport::TestCase
     assert_nil ClientLink.find_by_token("0" * ClientLink::TOKEN_LENGTH) # not base58
   end
 
-  test "expiry follows the document's policy, or 90 days" do
+  test "expiry follows the document's policy (nil: no expiry), or 90 days without one" do
     assert_in_delta 30.days.from_now, @link.expires_at, 5.seconds
-    plain = Class.new(ClientLinkDocumentHelpers::TestDocument) { def client_link_expires_at = nil }
-    doc = as_business(@business) { plain.create!(title: "x") }
+    never = Class.new(ClientLinkDocumentHelpers::TestDocument) { def client_link_expires_at = nil }
+    doc = as_business(@business) { never.create!(title: "x") }
+    assert_nil as_business(@business) { ClientLink.issue!(doc) }.expires_at
+    plain = Class.new(ClientLinkDocumentHelpers::TestDocument) { undef_method :client_link_expires_at if method_defined?(:client_link_expires_at) }
+    doc = as_business(@business) { plain.create!(title: "y") }
     assert_in_delta 90.days.from_now, as_business(@business) { ClientLink.issue!(doc) }.expires_at, 5.seconds
   end
 

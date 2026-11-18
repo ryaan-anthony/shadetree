@@ -23,12 +23,15 @@
 
 <%= render "client/documents/lines", document: invoice, totals: %>
 
-<div class="quote-doc-totals"><dl class="quote-totals invoice-doc-balance">
-  <% if invoice.payments? %>
-    <div><dt>Paid</dt><dd class="money">−<%= money(invoice.amount_paid) %></dd></div>
-  <% end %>
-  <div class="quote-totals-total"><dt><%= invoice.void? ? "Nothing due (void)" : "Balance due" %></dt><dd class="money"><%= money(invoice.void? ? Money.zero(invoice.currency) : invoice.balance) %></dd></div>
-</dl></div>
+<%# What's been paid and what's left; with nothing paid, the total above is what's due. %>
+<% if invoice.payments? || invoice.void? %>
+  <div class="quote-doc-totals"><dl class="quote-totals invoice-doc-balance">
+    <% if invoice.payments? %>
+      <div><dt>Paid</dt><dd class="money">−<%= money(invoice.amount_paid) %></dd></div>
+    <% end %>
+    <div class="quote-totals-total"><dt><%= invoice.void? ? "Nothing due (void)" : "Balance due" %></dt><dd class="money"><%= money(invoice.void? ? Money.zero(invoice.currency) : invoice.balance) %></dd></div>
+  </dl></div>
+<% end %>
 
 <% if invoice.terms %>
   <section class="quote-doc-terms">
