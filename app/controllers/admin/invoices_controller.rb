@@ -78,7 +78,7 @@ class Admin::InvoicesController < Admin::BaseController
     @invoice.discard_revision!(by: current_user)
     redirect_to admin_invoice_path(@invoice), notice: "Changes discarded. Invoice #{@invoice.number} is as the client was sent it."
   rescue ArgumentError => error
-    redirect_to staff_invoice_path(@invoice), alert: error.message
+    redirect_to helpers.staff_invoice_path(@invoice), alert: error.message
   end
 
   def void

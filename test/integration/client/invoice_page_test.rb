@@ -181,6 +181,9 @@ class Client::InvoicePageTest < ActionDispatch::IntegrationTest
                  [ invoice.status, invoice.revision, invoice.title, invoice.message, invoice.total_cents, as_business(@business) { invoice.current_line_items.map(&:name) },
                    as_business(@business) { invoice.saved_attachments.map { _1.filename.to_s } }, as_business(@business) { invoice.revisions.count } ]
     assert_equal "revision_discarded", as_business(@business) { invoice.events.last.kind }
+    post discard_revision_admin_invoice_path(@invoice)
+    assert_redirected_to admin_invoice_path(@invoice)
+    assert_match "isn't being revised", flash[:alert]
 
     post revise_admin_invoice_path(@invoice)
     edit.("Unfinished again")
