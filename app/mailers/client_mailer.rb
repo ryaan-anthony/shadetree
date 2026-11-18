@@ -41,6 +41,13 @@ class ClientMailer < ApplicationMailer
     end
   end
 
+  # The document changed after the email was queued (revised, voided, answered): what would go
+  # out isn't what staff sent, so it's marked failed for them to send again.
+  def skip_changed_document(subject:, error:)
+    @email_message&.mark!("failed", subject:, error:)
+    mail(to: @email_message&.to || params[:to], subject:, body: "").tap { _1.perform_deliveries = false }
+  end
+
   def client_mail(subject:, to: @email_message&.to || params[:to], **options)
     if EmailSuppression.suppressed?(to)
       @email_message&.mark!("suppressed", subject:)

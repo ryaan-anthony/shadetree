@@ -113,6 +113,16 @@ class Invoice < ApplicationRecord
   # an unpaid sent invoice can be sent again. Paid and void ones aren't sent.
   def sendable? = status.in?(%w[draft sent partially_paid]) && line_items.any?
 
+  # The issue and due dates it goes out with. A draft first sent after its issue date is issued
+  # today, its due date following its terms (a custom date that has passed becomes today), so
+  # an invoice never goes out already overdue. Revisions keep their dates.
+  def dates_when_sent(today = business.today)
+    return [ issued_on, due_on ] if sent_at || issued_on.nil? || issued_on >= today
+
+    due = payment_terms == "custom" ? due_on : due_on_for(payment_terms, today)
+    [ today, [ due, today ].compact.max ]
+  end
+
   # Records a send by email or link. The first send of a draft, or of a revision, marks it
   # sent (who and when; the revision is now what the client has). Returns the InvoiceSend.
   def mark_sent!(by:, channel:, recipient: nil, cc: nil)
@@ -121,7 +131,8 @@ class Invoice < ApplicationRecord
       raise ArgumentError, "Invoice #{number} can't be sent." unless sendable?
 
       if draft?
-        update!(status: "sent", sent_at: Time.current, sent_by: by)
+        issued, due = dates_when_sent
+        update!(status: "sent", sent_at: Time.current, sent_by: by, issued_on: issued, due_on: due)
       end
       record!(:sent, by:, channel:, revision:)
       sends.create!(business:, user: by, channel:, recipient:, cc:, revision:)

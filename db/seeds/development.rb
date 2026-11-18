@@ -169,6 +169,19 @@ Tenancy.with_business(business) do
   end
 end
 
+# PAY-01/PAY-02: the approved quote billed and sent by link, and a draft for the gutter job.
+Tenancy.with_business(business) do
+  owner = User.find_by!(email: "owner@example.com")
+  approved = Quote.find_by(status: "approved")
+  if approved && approved.invoices.none?
+    invoice = Invoice.from_quote!(approved, by: owner)
+    invoice.mark_sent!(by: owner, channel: "link")
+    invoice.client_link!
+  end
+  gutters = Job.find_by(title: "Gutter cleaning")
+  Invoice.from_job!(gutters, by: owner) if gutters && Invoice.where(job: gutters).none?
+end
+
 # CLI-03: the request form, on, with a request from someone new.
 business.update!(request_form_enabled: true)
 Tenancy.with_business(business) do

@@ -140,7 +140,7 @@ class Admin::InvoiceSendsTest < ActionDispatch::IntegrationTest
     as_business(@business) { @invoice.update_columns(title: "x" * 300) }
     post admin_invoice_send_path(@invoice), params: { channel: "link" }
     assert_redirected_to edit_admin_invoice_path(@invoice)
-    assert_match "Fix the invoice before sending", flash[:alert]
+    assert_match "Fix the invoice before sending: Title is too long", flash[:alert]
     assert_equal "draft", fresh.status
   end
 
@@ -199,5 +199,32 @@ class Admin::InvoiceSendsTest < ActionDispatch::IntegrationTest
     assert notes.any?
     assert_equal [ "Maria Lopez opened invoice #{@invoice.number}" ], notes.map(&:title).uniq
     assert_equal admin_invoice_path(@invoice), notes.first.path
+  end
+
+  test "an email still queued when the invoice is revised or voided isn't sent; it's marked failed" do
+    with_fake_pdf_renderer do
+      send_email
+      post revise_admin_invoice_path(@invoice)
+      as_business(@business) { fresh.update!(title: "Unfinished") }
+      perform_enqueued_jobs
+      assert_empty ActionMailer::Base.deliveries
+      email = as_business(@business) { fresh.sends.first.email_message }
+      assert_equal [ "failed", "The invoice changed before the email went out. Send it again." ], [ email.status, email.error ]
+
+      send_email
+      as_business(@business) { fresh.void!(reason: "Billed twice", by: users(:one)) }
+      perform_enqueued_jobs
+      assert_empty ActionMailer::Base.deliveries
+    end
+  end
+
+  test "an old draft goes out issued today, never already overdue" do
+    as_business(@business) { @invoice.update_columns(issued_on: Date.current - 60, due_on: Date.current - 30, payment_terms: "net_30") }
+    get new_admin_invoice_send_path(@invoice)
+    assert_select ".banner-info", /Sent now, it's issued today and due/
+    post admin_invoice_send_path(@invoice), params: { channel: "link" }
+    today = @business.today
+    assert_equal [ today, today + 30 ], [ fresh.issued_on, fresh.due_on ]
+    assert_not fresh.overdue?(today)
   end
 end

@@ -7,7 +7,7 @@ class Admin::InvoiceSendsController < Admin::BaseController
 
   requires_permission :office
   # Emails per business per hour (shared with quotes' limit), and per invoice per day.
-  rate_limit to: EmailMessage::CLIENT_EMAILS_PER_HOUR, within: 1.hour, by: -> { current_business.id }, only: :create,
+  rate_limit to: EmailMessage::CLIENT_EMAILS_PER_HOUR, within: 1.hour, by: -> { current_business.id }, only: :create, scope: "client-emails",
              with: -> { redirect_to new_admin_invoice_send_path(params[:invoice_id]), alert: "That's a lot of emails in an hour. Try again later." }
   EMAILS_PER_INVOICE_PER_DAY = 5
 
@@ -25,7 +25,10 @@ class Admin::InvoiceSendsController < Admin::BaseController
   def create
     params[:channel] == "link" ? send_link : send_email
   rescue ActiveRecord::RecordInvalid => error
-    redirect_to edit_admin_invoice_path(@invoice), alert: "Fix the invoice before sending: #{error.record.errors.full_messages.to_sentence}."
+    problems = error.record.errors.full_messages.to_sentence
+    redirect_to helpers.staff_invoice_path(@invoice.reload), alert: "Fix the invoice before sending: #{problems}."
+  rescue ArgumentError => error # paid or voided since the page loaded
+    redirect_to helpers.staff_invoice_path(@invoice.reload), alert: error.message
   end
 
   private
@@ -61,7 +64,7 @@ class Admin::InvoiceSendsController < Admin::BaseController
       invoice_send = @invoice.mark_sent!(by: current_user, channel: "email", recipient: @form.to, cc: @form.cc_header)
       link = @invoice.client_link!
       email = InvoiceMailer.send_later(:sent, business: current_business, to: @form.to, kind: "invoice_sent", related: @invoice,
-                                              invoice_id: @invoice.id, link_id: link.id, subject: @form.subject, message: @form.message, cc: @form.cc_header)
+                                              invoice_id: @invoice.id, revision: @invoice.revision, link_id: link.id, subject: @form.subject, message: @form.message, cc: @form.cc_header)
       invoice_send.update!(email_message: email)
     end
     redirect_to admin_invoice_path(@invoice), notice: "Invoice #{@invoice.number} is on its way to #{@form.to}."
@@ -71,6 +74,9 @@ class Admin::InvoiceSendsController < Admin::BaseController
 
   def default_message
     name = @invoice.client.display_name.split.first
+    return "Hi #{name},\n\nHere's an updated version of invoice #{@invoice.number}. You can see the details with the button below, " \
+           "and the PDF is attached.\n\nAny questions, just reply to this email.\n\n#{current_user.first_name.presence || current_business.name}" if @invoice.revising?
+
     "Hi #{name},\n\nThanks for your business. Your invoice is ready: you can see the details with the button below, " \
       "and the PDF is attached.\n\nAny questions, just reply to this email.\n\n#{current_user.first_name.presence || current_business.name}"
   end

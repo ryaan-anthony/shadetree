@@ -22,6 +22,9 @@ class ClientMailDeliveryJob < ActionMailer::MailDeliveryJob
   class RecipientRefused < Permanent; end
 
   self.log_arguments = false
+  # Sends are recorded in the same transaction as the email (QTE-04, PAY-02): the job waits
+  # for the commit, so it never runs against a send or link that isn't there yet.
+  self.enqueue_after_transaction_commit = true
 
   retry_on Temporary, wait: :polynomially_longer, attempts: ATTEMPTS do |job, error|
     job.email_message&.mark!("failed", error: "The mail server couldn't take the email (#{error.message}).", attempts: ATTEMPTS)
