@@ -97,8 +97,6 @@ class ServiceRequest < ApplicationRecord
     update!(status: "in_progress") if status == "quoted" && !quotes.exists? # exists? always asks the database
   end
 
-  private
-
   # The client's property at the typed street address and postal code, if they have one. A new
   # address isn't added to the client here: the builder shows it, for staff to add if it's real.
   def property_matching_address
@@ -109,6 +107,7 @@ class ServiceRequest < ApplicationRecord
     client.properties.find { key.(_1.address_line1, _1.postal_code) == wanted }
   end
 
+  private
 
   # The team hears about it. The person who sent it gets an acknowledgment if they gave an
   # email, the business's owner has confirmed their account (so a throwaway sign-up can't use

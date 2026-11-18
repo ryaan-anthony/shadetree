@@ -30,12 +30,7 @@
 <% end %>
 
 <div id="builder_banner"></div>
-<% if (from_request = @quote.service_request) %>
-  <p class="-mt-2 mb-4 text-sm2 text-muted"><%= icon "inbox", class: "mr-1 inline size-4 align-text-bottom text-faint" %>From <%= link_to "request #{from_request.reference}", admin_service_request_path(from_request), class: "font-medium text-ink hover:underline" %>.
-    <% if from_request.property.nil? && from_request.address_line %>
-      They asked about <span class="font-medium text-ink"><%= from_request.address_line %></span>, which isn't one of <%= link_to "#{@quote.client.display_name}'s properties", edit_admin_client_path(@quote.client), class: "underline-offset-2 hover:underline" %> yet.
-    <% end %></p>
-<% end %>
+<%= render "admin/quotes/from_request", quote: @quote %>
 <% if @quote.revising? && (previous = @quote.revisions.last) %>
   <%# What this revision answers: the client's last words on the previous one. %>
   <% answer = @quote.responses.reverse.find { _1.revision == previous.number } %>

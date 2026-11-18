@@ -88,6 +88,26 @@ class Admin::RequestInboxTest < ActionDispatch::IntegrationTest
     assert_equal "in_progress", as_business(@business) { @service_request.reload.status }
   end
 
+  test "a sent quote's page links back to its request (QTE-06)" do
+    post quote_admin_service_request_path(@service_request)
+    quote = as_business(@business) { Quote.order(:id).last.tap { _1.update_columns(status: "sent", sent_at: Time.current) } }
+    get admin_quote_path(quote)
+    assert_response :success
+    assert_select "a[href=?]", admin_service_request_path(@service_request), /request #{@service_request.reference}/
+    assert_select "p", { text: /They asked about/, count: 0 }, "the address note is for drafts, where the property can still change"
+  end
+
+  test "the builder stops pointing out the typed address once the client has it" do
+    post quote_admin_service_request_path(@service_request)
+    quote = as_business(@business) { Quote.order(:id).last }
+    get edit_admin_quote_path(quote)
+    assert_select "p", /They asked about.*9 Oak Ave/m
+    as_business(@business) { @maria.properties.create!(address_line1: "9 oak ave ") }
+    get edit_admin_quote_path(quote)
+    assert_select "a[href=?]", admin_service_request_path(@service_request)
+    assert_select "p", { text: /They asked about/, count: 0 }
+  end
+
   test "an archived client's request can't be quoted until they're restored" do
     as_business(@business) { @maria.archive! }
     post quote_admin_service_request_path(@service_request)
