@@ -1,0 +1,3 @@
+<% content_for :title, "Visit" %>
+<div class="max-w-xl"><%= link_to admin_schedule_path(date: @visit.scheduled_on.iso8601), class: "#{button_classes(:ghost)} mb-3" do %><%= icon "arrow-left" %> Schedule<% end %>
+<%= render "admin/schedule/visit", visit: @visit %></div>
