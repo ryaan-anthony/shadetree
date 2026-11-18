@@ -41,7 +41,13 @@ class ClientSearchSystemTest < ApplicationSystemTestCase
     within("#picker-demo") { click_on "Submit" }
     assert_nil find("#picker-demo")["data-submitted"], "an empty required picker blocks the submit"
     within("#picker-demo") do
-      find("input[type=search]").fill_in(with: "maria")
+      input = find("input[type=search]")
+      # The blocked submit shows the browser's validation bubble and moves focus; typing that
+      # races it can be lost in headless Chrome. Wait for it, then type into the field.
+      assert_equal "Choose a client, or add a new one.", evaluate_script("arguments[0].validationMessage", input)
+      input.click
+      input.fill_in(with: "maria")
+      assert_equal "maria", input.value
       assert_selector "[role=option]", text: "Maria Lopez"
       find("input[type=search]").send_keys(:down, :enter)
       assert_text "Maria Lopez"

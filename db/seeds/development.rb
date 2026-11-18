@@ -118,6 +118,17 @@ Tenancy.with_business(business) do
     changed.save!
     changed.mark_sent!(by: owner, channel: "link")
   end
+
+  # JOB-01: the approved quote above became a job on its own; add one agreed by phone, with
+  # crew instructions, and one already done.
+  first_client = Client.order(:id).first
+  if first_client && !Job.exists?(quote_id: nil)
+    gutters = Job.new(client: first_client, property: first_client.primary_property, created_by: owner, title: "Gutter cleaning",
+                      instructions: "Ladder goes on the left side of the house. Bag the debris and leave it by the curb.")
+    gutters.line_items.build(name: "Gutter cleaning", description: "Front and back, with downspouts flushed", quantity: 1, unit: "visit", unit_price: "165")
+    gutters.save!
+    Job.create!(client: first_client, property: first_client.primary_property, created_by: owner, title: "Spring aeration").complete!(by: owner)
+  end
 end
 
 # CLI-03: the request form, on, with a request from someone new.

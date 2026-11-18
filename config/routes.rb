@@ -116,6 +116,17 @@ Rails.application.routes.draw do
       resources :attachments, only: :destroy, controller: "quote_attachments"
       resource :send, only: %i[new create], controller: "quote_sends" # QTE-04
       resource :approval, only: :create, controller: "quote_approvals" # QTE-05: on the client's behalf
+      resource :job, only: :create, controller: "quote_jobs" # JOB-01: an approved quote becomes a job
+    end
+
+    # Jobs (JOB-01)
+    resources :jobs, only: %i[index show new create edit update] do
+      post :search, on: :collection # POST keeps client names out of URLs
+      member do
+        patch :complete
+        patch :cancel
+        patch :reopen
+      end
     end
 
     # "Send me a test email" from branding settings (NTF-01)

@@ -31,6 +31,7 @@ class Quote < ApplicationRecord
   has_one :approval, -> { where(kind: "approved") }, class_name: "QuoteResponse", inverse_of: :quote
   has_many :events, -> { order(:occurred_at, :id) }, class_name: "QuoteEvent", inverse_of: :quote, dependent: :delete_all
   has_many :revisions, -> { order(:number) }, class_name: "QuoteRevision", inverse_of: :quote, dependent: :delete_all
+  has_one :job, dependent: :nullify # JOB-01: the work it became
   has_many :line_items, -> { order(:position, :id) }, class_name: "QuoteLineItem", inverse_of: :quote,
            dependent: :delete_all, autosave: true
   # Photos get a page-sized version at upload, so the client's first view doesn't wait on it.
@@ -226,7 +227,7 @@ class Quote < ApplicationRecord
       self.status = kind
       save!(validate: false)
       response
-    end
+    end.tap { create_job_after_approval(by) if kind == "approved" }
   end
 
   # QTE-04: what the client sees is frozen from here on (changes after sending are revisions,
@@ -409,6 +410,22 @@ class Quote < ApplicationRecord
     self.discount_total_cents = (result.discount + Money.sum(result.lines.map(&:discount), currency)).cents
     self.tax_cents = result.tax_total.cents
     self.total_cents = result.total.cents
+  end
+
+  # JOB-01: an approved quote becomes a job when the business has that on (the default). It
+  # runs once the approval has committed (a client's approval runs inside the link's
+  # transaction), so it can never undo the answer or hold its locks; if it fails, staff can
+  # still make the job from the quote page. Expected refusals (an archived client) aren't errors.
+  def create_job_after_approval(by)
+    return unless business.auto_create_jobs
+
+    ActiveRecord.after_all_transactions_commit do
+      Tenancy.with_business(business) { Job.from_quote!(self, by:) }
+    rescue ActiveRecord::RecordInvalid, Job::NotOpen => e
+      Rails.logger.info("No automatic job for quote #{id}: #{e.message}")
+    rescue StandardError => e
+      Rails.error.report(e, context: { quote_id: id })
+    end
   end
 
   def property_belongs_to_client

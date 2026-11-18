@@ -1,8 +1,10 @@
 <%# locals: (client:, selected: nil, name: "quote[property]") -%>
+<%# A job (JOB-01) needs a property once its client has one; quotes and requests may have none. %>
+<% optional = name != "job[property]" || client.nil? || client.properties.empty? %>
 <div class="field">
-  <label class="label" for="quote_property_select">Property <span class="label-optional">(optional)</span></label>
+  <label class="label" for="quote_property_select">Property<% if optional %> <span class="label-optional">(optional)</span><% end %></label>
   <select id="quote_property_select" name="<%= name %>" class="select" <%= "disabled" if client.nil? %>>
-    <option value="">No property</option>
+    <% if optional %><option value="">No property</option><% end %>
     <% client&.properties&.each do |property| %>
       <option value="<%= property.uid %>" <%= "selected" if property.uid == selected %>><%= property.label ? "#{property.label}: #{property.one_line}" : property.one_line %></option>
     <% end %>
