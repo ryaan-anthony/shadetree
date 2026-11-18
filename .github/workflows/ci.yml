@@ -82,15 +82,14 @@ jobs:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/shadetree_test
     steps:
       - uses: actions/checkout@v7
-      # libvips from cached packages (script/ci/install-libvips). The runner image's date keys
-      # the cache, so a new image (about weekly) caches its own; a run that had to download saves
-      # what it got under a new key, and the newest is restored.
-      - name: Runner image version
+      # libvips from cached packages (script/ci/install-libvips), keyed by Ubuntu release and
+      # week; a run that had to download saves what it got under a new key, and the newest of
+      # the week is restored.
+      - name: libvips cache key
         id: image
-        # The image's date ("20261111" of "20261111.127.1"): the rest differs from runner to runner.
-        run: |
-          image="${ImageVersion%%.*}"
-          echo "version=${image:-week-$(date +%G-%V)}" >> "$GITHUB_OUTPUT"
+        # The Ubuntu release (the packages are built for it, whatever the runner image) and the
+        # ISO week, so the cache refreshes weekly and picks up security updates.
+        run: echo "version=$(. /etc/os-release && echo "$VERSION_CODENAME")-$(date +%G-%V)" >> "$GITHUB_OUTPUT"
       - name: Restore libvips packages
         uses: actions/cache/restore@v6
         with:
@@ -152,15 +151,14 @@ jobs:
       COVERAGE: "false"
     steps:
       - uses: actions/checkout@v7
-      # libvips from cached packages (script/ci/install-libvips). The runner image's date keys
-      # the cache, so a new image (about weekly) caches its own; a run that had to download saves
-      # what it got under a new key, and the newest is restored.
-      - name: Runner image version
+      # libvips from cached packages (script/ci/install-libvips), keyed by Ubuntu release and
+      # week; a run that had to download saves what it got under a new key, and the newest of
+      # the week is restored.
+      - name: libvips cache key
         id: image
-        # The image's date ("20261111" of "20261111.127.1"): the rest differs from runner to runner.
-        run: |
-          image="${ImageVersion%%.*}"
-          echo "version=${image:-week-$(date +%G-%V)}" >> "$GITHUB_OUTPUT"
+        # The Ubuntu release (the packages are built for it, whatever the runner image) and the
+        # ISO week, so the cache refreshes weekly and picks up security updates.
+        run: echo "version=$(. /etc/os-release && echo "$VERSION_CODENAME")-$(date +%G-%V)" >> "$GITHUB_OUTPUT"
       - name: Restore libvips packages
         uses: actions/cache/restore@v6
         with:
