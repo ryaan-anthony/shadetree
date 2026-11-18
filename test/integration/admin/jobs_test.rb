@@ -33,7 +33,7 @@ class Admin::JobsTest < ActionDispatch::IntegrationTest
     post switch_admin_business_path, params: { business: @business.uid }
     theirs = as_business(businesses(:two)) do
       client = Client.create!(display_name: "Theirs", contact_methods_attributes: [ { kind: "phone", value: "5550100199" } ])
-      Job.create!(client:, title: "Theirs")
+      Job.create!(client:, title: "Theirs") # no properties, so none needed
     end
     assert_not_found_across_businesses { get admin_job_path(theirs) }
     assert_not_found_across_businesses { patch complete_admin_job_path(theirs) }
@@ -89,11 +89,28 @@ class Admin::JobsTest < ActionDispatch::IntegrationTest
     assert_redirected_to admin_job_path(job)
     assert_equal [ "Hedges", "Front only", "Cash", users(:one) ], [ job.title, job.instructions, job.internal_notes, job.created_by ]
 
-    patch admin_job_path(job), params: { job: { title: "Hedges and shrubs", property: "" } }
+    patch admin_job_path(job), params: { job: { title: "Hedges and shrubs", lock_version: job.lock_version } }
     assert_redirected_to admin_job_path(job)
-    assert_equal [ "Hedges and shrubs", nil ], as_business(@business) { job.reload.then { [ _1.title, _1.property ] } }
+    assert_equal "Hedges and shrubs", as_business(@business) { job.reload.title }
+    patch admin_job_path(job), params: { job: { title: "Stale tab", lock_version: 0 } }
+    assert_redirected_to edit_admin_job_path(job)
+    assert_match "changed in another tab", flash[:alert]
+    patch admin_job_path(job), params: { job: { property: "" } }
+    assert_response :unprocessable_content, "the client has a property, so the job needs one"
     patch admin_job_path(job), params: { job: { title: "" } }
     assert_response :unprocessable_content
+
+    as_business(@business) { job.reload.complete!(by: nil) }
+    get edit_admin_job_path(job)
+    assert_redirected_to admin_job_path(job)
+    assert_match "Reopen it to make changes", flash[:alert]
+  end
+
+  test "an archived client's quote says to restore them" do
+    quote = approved_quote
+    as_business(@business) { @maria.archive! }
+    post admin_quote_job_path(quote)
+    assert_match "Maria Lopez is archived. Restore them first.", flash[:alert]
   end
 
   test "complete, cancel with a reason, and reopen" do
@@ -113,7 +130,7 @@ class Admin::JobsTest < ActionDispatch::IntegrationTest
   end
 
   test "the list filters, searches and counts" do
-    done = as_business(@business) { Job.create!(client: @maria, title: "Patio").tap { _1.complete!(by: nil) } }
+    done = as_business(@business) { Job.create!(client: @maria, property: @maria.primary_property, title: "Patio").tap { _1.complete!(by: nil) } }
     get admin_jobs_path
     assert_select "tbody tr", 1
     assert_select "#job-#{@job.uid}", /Gutter clean.*Maria Lopez.*12 Elm St.*Unscheduled.*Added directly/m

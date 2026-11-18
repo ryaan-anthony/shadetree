@@ -413,14 +413,19 @@ class Quote < ApplicationRecord
   end
 
   # JOB-01: an approved quote becomes a job when the business has that on (the default). It
-  # runs after the approval is saved, and a failure here never undoes the client's answer:
-  # staff can still make the job from the quote page.
+  # runs once the approval has committed (a client's approval runs inside the link's
+  # transaction), so it can never undo the answer or hold its locks; if it fails, staff can
+  # still make the job from the quote page. Expected refusals (an archived client) aren't errors.
   def create_job_after_approval(by)
     return unless business.auto_create_jobs
 
-    Tenancy.with_business(business) { Job.from_quote!(self, by:) }
-  rescue StandardError => e
-    Rails.error.report(e, context: { quote_id: id })
+    ActiveRecord.after_all_transactions_commit do
+      Tenancy.with_business(business) { Job.from_quote!(self, by:) }
+    rescue ActiveRecord::RecordInvalid, Job::NotOpen => e
+      Rails.logger.info("No automatic job for quote #{id}: #{e.message}")
+    rescue StandardError => e
+      Rails.error.report(e, context: { quote_id: id })
+    end
   end
 
   def property_belongs_to_client

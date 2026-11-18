@@ -40,8 +40,8 @@ invoice. Jobs can also be created directly for work agreed by phone.
 - [ ] Completing a job prompts "Create invoice" (wired up in PAY-01).
 - [x] Jobs appear on the client page.
 - [ ] Technicians see a job only through visits assigned to them (JOB-04).
-- [x] Tests cover creation paths, status derivation, roles and tenancy. *Derivation from visits
-      is tested with JOB-02.*
+- [ ] Tests cover creation paths, status derivation, roles and tenancy. *Creation, manual
+      statuses, roles and tenancy are tested; derivation from visits comes with JOB-02.*
 
 ## Out of scope
 

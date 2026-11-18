@@ -3,6 +3,7 @@
 class Admin::JobsController < Admin::BaseController
   requires_permission :office
   before_action :set_job, only: %i[show edit update complete cancel reopen]
+  before_action :require_open, only: %i[edit update]
 
   PER_PAGE = 25
 
@@ -45,6 +46,8 @@ class Admin::JobsController < Admin::BaseController
     else
       render :edit, status: :unprocessable_content
     end
+  rescue ActiveRecord::StaleObjectError
+    redirect_to edit_admin_job_path(@job), alert: "#{@job.number} was changed in another tab or by someone else. Here's the latest version."
   end
 
   def complete
@@ -70,9 +73,15 @@ class Admin::JobsController < Admin::BaseController
 
   private
 
-  def set_job = @job = Job.includes(:client, :property, :quote, line_items: :catalog_item).find_by_param!(params[:id])
+  def set_job = @job = Job.includes(:client, :property, :quote, :line_items).find_by_param!(params[:id])
 
-  def job_params = params.fetch(:job, {}).permit(:title, :instructions, :internal_notes)
+  # A finished job is read-only until it's reopened.
+  def require_open
+    redirect_to admin_job_path(@job), alert: "#{@job.number} is #{@job.status_label.downcase}. Reopen it to make changes." unless @job.open?
+  end
+
+  # lock_version: a save from a tab opened before someone else's change is refused, not merged.
+  def job_params = params.fetch(:job, {}).permit(:title, :instructions, :internal_notes, :lock_version)
 
   def load_list
     @filter = params[:filter].presence_in(Job::FILTERS.keys) || "open"

@@ -7,6 +7,7 @@
   <% if other_errors.any? %>
     <div class="banner banner-danger" role="alert"><%= icon "alert-circle" %><p><%= other_errors.to_sentence %></p></div>
   <% end %>
+  <%= f.hidden_field :lock_version unless new_job %>
   <%= card do %>
     <div class="space-y-4">
       <% if new_job %>

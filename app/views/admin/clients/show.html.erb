@@ -57,7 +57,10 @@
     <% requests = @client.service_requests.recent.limit(5) %>
     <% jobs = @client.jobs.order(created_at: :desc, id: :desc).limit(5) %>
     <%= card title: "Work", flush: true,
-             actions: (button_to(admin_quotes_path, params: { "quote[client]" => @client.uid }, class: button_classes(:secondary, :sm)) { icon("plus") + " New quote" } unless @client.archived?) do %>
+             actions: (unless @client.archived?
+                         safe_join([ link_to(new_admin_job_path(client: @client.uid), class: button_classes(:ghost, :sm)) { icon("plus") + " New job" },
+                                     button_to(admin_quotes_path, params: { "quote[client]" => @client.uid }, class: button_classes(:secondary, :sm), form: { class: "contents" }) { icon("plus") + " New quote" } ], " ")
+                       end) do %>
       <ul class="list">
         <% if requests.any? %>
           <% requests.each do |request| %>

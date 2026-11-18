@@ -46,7 +46,7 @@
       </dl>
     <% end %>
 
-    <%= card title: "Work to do", subtitle: (job.quote ? "Copied from quote #{job.quote.number}. Changes here don't change the quote." : nil), flush: true do %>
+    <%= card title: "Work to do", subtitle: (job.quote ? "Copied from quote #{job.quote.number}." : nil), flush: true do %>
       <% lines = job.line_items.to_a %>
       <% if lines.empty? %>
         <p class="px-5 py-4 text-sm2 text-muted">No items. The instructions below say what the job is.</p>
@@ -111,7 +111,7 @@
         <p class="mt-1 text-sm2 text-muted">No property chosen.</p>
       <% end %>
       <ul class="mt-3 space-y-1 text-sm2">
-        <% if (phone = client.primary_phone) %><li><%= link_to "tel:#{phone.value}", class: "text-ink hover:underline" do %><%= icon "phone", class: "mr-1 inline size-4 text-faint" %><%= phone.value %><% end %></li><% end %>
+        <% if (phone = client.primary_phone) %><li><%= link_to "tel:#{phone.value.gsub(/[^\d+]/, "")}", class: "text-ink hover:underline" do %><%= icon "phone", class: "mr-1 inline size-4 text-faint" %><%= phone.value %><% end %></li><% end %>
         <% if (email = client.primary_email) %><li><%= mail_to email.value, class: "break-all text-ink hover:underline" do %><%= icon "mail", class: "mr-1 inline size-4 text-faint" %><%= email.value %><% end %></li><% end %>
       </ul>
     <% end %>

@@ -40,6 +40,8 @@ class Job < ApplicationRecord
   validates :instructions, :internal_notes, length: { maximum: 5_000 }
   validates :cancel_reason, length: { maximum: 200 }
   validate { errors.add(:property, "must be one of this client's properties") if property && client && property.client_id != client.id }
+  # Where the work happens: required once the client has a property (JOB-04 shows the crew the address).
+  validate { errors.add(:property, "is needed: choose where the work happens") if property.nil? && client&.properties&.any? }
   validate { errors.add(:client, "is archived") if client&.archived? && (new_record? || will_save_change_to_client_id?) }
 
   before_validation :assign_number_and_defaults, on: :create
@@ -86,8 +88,9 @@ class Job < ApplicationRecord
     return quote.job if quote.job
     raise NotOpen, "Only an approved quote becomes a job." unless quote.status == "approved"
 
-    job = new(client: quote.client, property: quote.property, quote:, created_by: by, currency: quote.currency,
-              title: quote.title.presence || quote.line_items.first&.name.presence || "Work for #{quote.client.display_name}",
+    title = quote.title.presence || quote.line_items.first&.name.presence || "Work for #{quote.client.display_name}"
+    job = new(client: quote.client, property: quote.property || quote.client.primary_property, quote:, created_by: by, currency: quote.currency,
+              title: title.truncate(120, separator: " "),
               internal_notes: quote.internal_notes, tax_rates: quote.tax_rates, prices_include_tax: quote.prices_include_tax,
               discount_kind: quote.discount_kind, discount_percent: quote.discount_percent, discount_amount_cents: quote.discount_amount_cents)
     quote.line_items.each { job.line_items.build(_1.attributes.slice(*JobLineItem::COPIED)) }
@@ -97,29 +100,37 @@ class Job < ApplicationRecord
     end
     job
   rescue ActiveRecord::RecordNotUnique
-    quote.reload.job
+    quote.reload.job || raise
   end
 
   def status_label = LABELS.fetch(status)
   def open? = OPEN_STATUSES.include?(status)
 
+  # Status changes take the row lock and look again, so two people pressing at once (or a visit
+  # changing it, JOB-02) can't both win.
   def complete!(by:)
-    raise NotOpen, "#{number} is already #{status_label.downcase}." unless open?
+    with_lock do
+      raise NotOpen, "#{number} is already #{status_label.downcase}." unless open?
 
-    update!(status: "completed", completed_at: Time.current, completed_by: by)
+      update!(status: "completed", completed_at: Time.current, completed_by: by)
+    end
   end
 
   def cancel!(by:, reason: nil)
-    raise NotOpen, "#{number} is already #{status_label.downcase}." unless open?
+    with_lock do
+      raise NotOpen, "#{number} is already #{status_label.downcase}." unless open?
 
-    update!(status: "cancelled", cancelled_at: Time.current, cancelled_by: by, cancel_reason: reason)
+      update!(status: "cancelled", cancelled_at: Time.current, cancelled_by: by, cancel_reason: reason)
+    end
   end
 
   # Back to the status its visits give it, undoing Complete or Cancel.
   def reopen!
-    raise NotOpen, "#{number} is already open." if open?
+    with_lock do
+      raise NotOpen, "#{number} is already open." if open?
 
-    update!(status: visit_status, completed_at: nil, completed_by: nil, cancelled_at: nil, cancelled_by: nil, cancel_reason: nil)
+      update!(status: visit_status, completed_at: nil, completed_by: nil, cancelled_at: nil, cancelled_by: nil, cancel_reason: nil)
+    end
   end
 
   # What the visits say (JOB-02 fills this in): a job without visits is unscheduled.

@@ -45,6 +45,20 @@ class JobTest < ActiveSupport::TestCase
     end
   end
 
+  test "a long first line or client name still makes a valid title, and a quote without a property uses the client's" do
+    quote = as_business(@business) do
+      q = Quote.start(client: @maria)
+      q.update_columns(property_id: nil)
+      q.sync_line_items([ { "key" => "a", "name" => "Remove and haul away " * 9, "quantity" => "1", "unit_price" => "10" } ])
+      q.save!
+      q.update_columns(status: "approved", property_id: nil)
+      q.reload
+    end
+    job = as_business(@business) { Job.from_quote!(quote) }
+    assert_operator job.title.length, :<=, 120
+    assert_equal @maria.primary_property, as_business(@business) { job.property }
+  end
+
   test "only an approved quote becomes a job" do
     as_business(@business) do
       draft = Quote.start(client: @maria)
@@ -78,7 +92,7 @@ class JobTest < ActiveSupport::TestCase
   end
 
   test "complete, cancel with a reason, and reopen" do
-    job = as_business(@business) { Job.create!(client: @maria, title: "Gutter clean") }
+    job = as_business(@business) { Job.create!(client: @maria, property: @maria.primary_property, title: "Gutter clean") }
     as_business(@business) do
       job.complete!(by: users(:one))
       assert_equal [ "completed", users(:one) ], [ job.status, job.completed_by ]
@@ -93,11 +107,14 @@ class JobTest < ActiveSupport::TestCase
 
   test "a job from scratch gets the client's default taxes, and its property must be theirs" do
     as_business(@business) do
-      job = Job.create!(client: @maria, title: "Gutter clean")
+      job = Job.create!(client: @maria, property: @maria.primary_property, title: "Gutter clean")
       assert_equal [ "State" ], job.tax_rate_list.map(&:name)
       other = Client.create!(display_name: "Sam", contact_methods_attributes: [ { kind: "phone", value: "5550100101" } ], properties_attributes: [ { address_line1: "9 Oak Ave" } ])
       assert_not Job.new(client: @maria, property: other.properties.first, title: "x").valid?
-      assert_not Job.new(client: @maria, title: " ").valid?
+      assert_not Job.new(client: @maria, property: @maria.primary_property, title: " ").valid?
+      assert_includes Job.new(client: @maria, title: "x").tap(&:validate).errors.full_messages, "Property is needed: choose where the work happens"
+      assert Job.new(client: Client.create!(display_name: "No place", contact_methods_attributes: [ { kind: "phone", value: "5550100102" } ]), title: "x").valid?,
+             "a client without a property can still have a job"
       @maria.archive!
       assert_includes Job.new(client: @maria, title: "x").tap(&:validate).errors[:client], "is archived"
     end
@@ -105,8 +122,8 @@ class JobTest < ActiveSupport::TestCase
 
   test "filters, counts and search" do
     as_business(@business) do
-      a = Job.create!(client: @maria, title: "Gutter clean")
-      b = Job.create!(client: @maria, title: "Hedges").tap { _1.complete!(by: nil) }
+      a = Job.create!(client: @maria, property: @maria.primary_property, title: "Gutter clean")
+      b = Job.create!(client: @maria, property: @maria.primary_property, title: "Hedges").tap { _1.complete!(by: nil) }
       sam = Client.create!(display_name: "Sam Ortiz", contact_methods_attributes: [ { kind: "email", value: "sam@example.com" } ])
       c = Job.create!(client: sam, title: "Patio").tap { _1.cancel!(by: nil) }
       assert_equal [ a ], Job.filtered("open").to_a
@@ -119,7 +136,7 @@ class JobTest < ActiveSupport::TestCase
   end
 
   test "jobs belong to one business and keep a client from being deleted" do
-    job = as_business(@business) { Job.create!(client: @maria, title: "Gutter clean") }
+    job = as_business(@business) { Job.create!(client: @maria, property: @maria.primary_property, title: "Gutter clean") }
     assert_equal 0, as_business(businesses(:two)) { Job.count }
     as_business(@business) { assert_not @maria.reload.deletable? }
     assert job.persisted?

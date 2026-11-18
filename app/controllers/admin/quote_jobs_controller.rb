@@ -9,6 +9,7 @@ class Admin::QuoteJobsController < Admin::BaseController
     job = Job.from_quote!(quote, by: current_user)
     redirect_to admin_job_path(job), notice: (existing ? nil : "Job #{job.number} created from quote #{quote.number}.")
   rescue Job::NotOpen, ActiveRecord::RecordInvalid => error
-    redirect_to admin_quote_path(quote), alert: "Couldn't make a job from quote #{quote.number}: #{error.message.delete_prefix("Validation failed: ")}"
+    reason = quote.client.archived? ? "#{quote.client.display_name} is archived. Restore them first." : error.message.delete_prefix("Validation failed: ")
+    redirect_to admin_quote_path(quote), alert: "Couldn't make a job from quote #{quote.number}: #{reason}"
   end
 end

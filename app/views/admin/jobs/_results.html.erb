@@ -25,7 +25,7 @@
             <%= link_to admin_job_path(job), class: "block min-w-0 flex-1 px-4 py-3", data: { turbo_frame: "_top" } do %>
               <span class="flex items-baseline justify-between gap-3">
                 <span class="min-w-0 truncate font-semibold text-ink"><%= job.title %></span>
-                <span class="money text-sm font-semibold text-ink"><%= money(job.total) %></span>
+                <span class="money text-sm font-semibold text-ink"><%= job.total_cents.zero? ? "—" : money(job.total) %></span>
               </span>
               <span class="mt-0.5 block truncate text-sm2 text-muted"><%= job.number %> · <%= job.client.display_name %><%= " · #{job.property.one_line}" if job.property %></span>
               <span class="mt-1.5 flex flex-wrap items-center gap-1.5 text-sm2 text-muted"><%= job_status_badge(job) %>
@@ -48,7 +48,7 @@
               <td><%= job.client.display_name %><% if job.property %><span class="sub"><%= job.property.one_line %></span><% end %></td>
               <td><%= job_status_badge(job) %></td>
               <td class="text-sm2 text-subtle"><%= job.quote ? link_to(job.quote.number, admin_quote_path(job.quote), class: "hover:underline", data: { turbo_frame: "_top" }) : "Added directly" %></td>
-              <td class="money num"><%= money(job.total) %></td>
+              <td class="money num"><%= job.total_cents.zero? ? "—" : money(job.total) %></td>
             </tr>
           <% end %>
         </tbody>
