@@ -81,7 +81,8 @@ class Admin::JobsController < Admin::BaseController
   end
 
   # lock_version: a save from a tab opened before someone else's change is refused, not merged.
-  def job_params = params.fetch(:job, {}).permit(:title, :instructions, :internal_notes, :lock_version)
+  def job_params = params.fetch(:job, {}).permit(:title, :instructions, :internal_notes, :lock_version,
+                                                  line_items_attributes: %i[id _destroy catalog_item_uid name description quantity unit unit_price taxable])
 
   def load_list
     @filter = params[:filter].presence_in(Job::FILTERS.keys) || "open"
