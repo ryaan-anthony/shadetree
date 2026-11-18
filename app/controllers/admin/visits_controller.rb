@@ -8,7 +8,8 @@ class Admin::VisitsController < Admin::BaseController
   before_action :require_open_job, only: %i[new create]
 
   def new
-    @visit = @job.visits.new(scheduled_on: current_business.today, timing: "window", start_time: "08:00", window_end_time: "10:00",
+    on = Visit.parse_date(params[:on]) # from the calendar's "Needs scheduling" (JOB-03); never a past day
+    @visit = @job.visits.new(scheduled_on: [ on, current_business.today ].compact.max, timing: "window", start_time: "08:00", window_end_time: "10:00",
                              duration_minutes: @job.suggested_visit_minutes)
   end
 
