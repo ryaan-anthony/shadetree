@@ -9,14 +9,12 @@ class Quote < ApplicationRecord
   include BusinessOwned
   include PricedDocument
   include BuiltDocument
+  include DocumentAttachments
   include HasPdf
 
   # QTE-04 sends (draft → sent); QTE-05 records the client's answer. "Viewed" comes from the
   # client link and "expired" from expires_on, so neither is stored.
   STATUSES = %w[draft sent approved declined changes_requested].freeze
-  MAX_ATTACHMENTS = 10
-  ATTACHMENT_MAX_BYTES = 10.megabytes
-  ATTACHMENT_TYPES = %w[image/png image/jpeg image/webp application/pdf].freeze
 
   belongs_to_business_record :client
   belongs_to_business_record :property, optional: true
@@ -34,10 +32,6 @@ class Quote < ApplicationRecord
   has_many :invoices, dependent: :restrict_with_exception # PAY-01: what it was billed as
   has_many :line_items, -> { order(:position, :id) }, class_name: "QuoteLineItem", inverse_of: :quote,
            dependent: :delete_all, autosave: true
-  # Photos get a page-sized version at upload, so the client's first view doesn't wait on it.
-  has_many_attached :attachments do |attachable|
-    attachable.variant :web, resize_to_limit: [ 640, 640 ], preprocessed: true
-  end
 
   normalizes :title, with: ->(value) { value.to_s.squish.presence }
   normalizes :message, :internal_notes, :terms, with: ->(value) { value.to_s.strip.presence }
@@ -48,7 +42,6 @@ class Quote < ApplicationRecord
   validates :message, :terms, length: { maximum: 5_000 }
   validates :internal_notes, length: { maximum: 5_000 }
   validate :property_belongs_to_client
-  validate :attachments_are_allowed
 
   before_validation :assign_number_and_defaults, on: :create
 
@@ -317,34 +310,6 @@ class Quote < ApplicationRecord
     create!(client:, property: property || client.billing_property || client.properties.first, created_by:)
   end
 
-  # Attaches uploaded files: photos are checked and re-encoded without their metadata (phone
-  # photos carry GPS), PDFs are kept as they are if they really are PDFs. Problems are added
-  # as errors on save.
-  def attach_files(files)
-    @attachment_errors = []
-    Array(files).compact_blank.each do |file|
-      name = file.respond_to?(:original_filename) ? file.original_filename : "file"
-      if pdf?(file)
-        next @attachment_errors << "#{name} must be smaller than #{ATTACHMENT_MAX_BYTES / 1.megabyte} MB" if file.size > ATTACHMENT_MAX_BYTES
-
-        attachments.attach(file)
-      else
-        result = LogoUpload.clean_photo(file, max_bytes: ATTACHMENT_MAX_BYTES)
-        next @attachment_errors << "#{name} #{result.error.sub("must be a PNG, JPEG or WebP image", "must be a photo (PNG, JPEG, WebP) or a PDF")}" if result.error
-
-        attachments.attach(result.attachable)
-      end
-    end
-  end
-
-  # A real PDF starts with "%PDF-"; the name or claimed type doesn't count. (PDFs are kept as
-  # uploaded, metadata included; only photos are re-encoded.)
-  def pdf?(file)
-    io = file.respond_to?(:tempfile) ? file.tempfile : file
-    header = io.read(5).tap { io.rewind }
-    header == "%PDF-"
-  end
-
   private
 
   def assign_number_and_defaults
@@ -375,10 +340,5 @@ class Quote < ApplicationRecord
 
   def property_belongs_to_client
     errors.add(:property, "must be one of this client's properties") if property && client && property.client_id != client.id
-  end
-
-  def attachments_are_allowed
-    Array(@attachment_errors).each { errors.add(:base, _1) }
-    errors.add(:base, "A quote can have at most #{MAX_ATTACHMENTS} files.") if attachments.size > MAX_ATTACHMENTS
   end
 end

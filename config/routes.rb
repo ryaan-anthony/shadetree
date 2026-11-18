@@ -121,7 +121,14 @@ Rails.application.routes.draw do
     end
 
     # Invoices (PAY-01)
-    resources :invoices, only: %i[new create show edit update destroy]
+    resources :invoices, only: %i[index new create show edit update destroy] do
+      post :search, on: :collection # POST keeps client names out of URLs
+      member do
+        post :revise
+        patch :void
+      end
+      resources :attachments, only: :destroy, controller: "invoice_attachments"
+    end
 
     # The team calendar (JOB-03)
     get "schedule", to: "schedule#show", as: :schedule

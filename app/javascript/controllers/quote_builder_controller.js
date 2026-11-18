@@ -49,11 +49,12 @@ export default class extends Controller {
     this.flush()
   }
 
-  // Any edit in the form, except the file field (uploads submit the form themselves) and
-  // the pickers' own search boxes, which aren't part of the quote.
+  // Any edit in the form, except the file field and the invoice's job-photo ticks (both are
+  // added by submitting the form, see upload) and the pickers' own search boxes, which aren't
+  // part of the document.
   changed(event) {
     const target = event.target
-    if (target.type === "file" || !target.name || target.closest("[data-controller~=catalog-picker]")) return
+    if (target.type === "file" || !target.name || target.name.endsWith("[job_photos][]") || target.closest("[data-controller~=catalog-picker]")) return
     this.schedule()
   }
 
@@ -167,7 +168,7 @@ export default class extends Controller {
     this.schedule()
   }
 
-  // A file was chosen: submit the whole form normally, so the upload and any pending edits
+  // A file was chosen (or "Add ticked photos" pressed): submit the whole form normally, so the upload and any pending edits
   // save together and the page reloads with the attachment listed.
   upload() {
     clearTimeout(this.timer)
@@ -193,6 +194,7 @@ export default class extends Controller {
     const formElement = this.formTarget
     const form = new FormData(formElement)
     form.delete(`${this.scopeValue}[attachments][]`)
+    form.delete(`${this.scopeValue}[job_photos][]`)
     form.delete("_method")
     const body = new URLSearchParams(form)
     const fits = new Blob([body.toString()]).size < KEEPALIVE_LIMIT
