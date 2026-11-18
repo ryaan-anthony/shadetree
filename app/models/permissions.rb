@@ -8,7 +8,7 @@ module Permissions
     manage_owners: "Grant or remove the Owner role",
     manage_team: "Invite people, change roles (except Owner), deactivate members",
     business_settings: "Business profile, branding, hours, catalog, taxes",
-    office: "Clients, requests, quotes, invoices and payments, for the whole business",
+    office: "Clients, requests, quotes, jobs, invoices and payments, for the whole business",
     schedule: "Schedule visits and assign them to people",
     field_work: "Own assigned visits: client contact, property, notes, photos, complete",
     export_data: "Export the business's data"

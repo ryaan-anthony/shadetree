@@ -1,0 +1,126 @@
+<%# JOB-01: everything about a job. Visits arrive with JOB-02; invoices with PAY-01. %>
+<% job = @job %>
+<% totals = job.totals %>
+<% content_for :title, "#{job.number} #{job.title}" %>
+<%= page_header job.title, lede: safe_join([ "#{job.number} for ", link_to(job.client.display_name, admin_client_path(job.client), class: "font-medium text-ink hover:underline"),
+                                              (safe_join([ " · from ", link_to("quote #{job.quote.number}", admin_quote_path(job.quote), class: "font-medium text-ink hover:underline") ]) if job.quote) ].compact) do %>
+  <% if job.open? %>
+    <%= link_to edit_admin_job_path(job), class: button_classes(:secondary) do %><%= icon "edit-2" %> Edit<% end %>
+    <%= button_to complete_admin_job_path(job), method: :patch, class: button_classes(:primary),
+                  form: { class: "contents", data: { turbo_confirm: "Mark #{job.number} completed?", turbo_confirm_button: "Complete job" } } do %><%= icon "check" %> Complete<% end %>
+    <div class="contents" data-controller="modal">
+      <button type="button" class="<%= button_classes(:ghost) %>" data-action="modal#open" data-modal-target="return" aria-haspopup="dialog">Cancel job</button>
+      <%= modal id: "job-cancel", title: "Cancel #{job.number}?", description: "It moves to Cancelled. You can reopen it later." do %>
+        <%= form_with url: cancel_admin_job_path(job), method: :patch, class: "space-y-4" do %>
+          <div class="field">
+            <label class="label" for="reason">Reason <span class="label-optional">(optional)</span></label>
+            <%= text_field_tag :reason, nil, class: "input", maxlength: 200, placeholder: "Client changed their mind" %>
+          </div>
+          <div class="flex justify-end gap-2">
+            <button type="button" class="<%= button_classes(:secondary) %>" data-action="modal#close">Keep job</button>
+            <%= submit_tag "Cancel job", class: button_classes(:danger), name: nil %>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  <% else %>
+    <%= button_to reopen_admin_job_path(job), method: :patch, class: button_classes(:secondary), form: { class: "contents" } do %><%= icon "rotate-ccw" %> Reopen<% end %>
+  <% end %>
+<% end %>
+
+<% if job.status == "completed" %>
+  <div class="banner banner-success mb-4"><%= icon "check-circle" %>
+    <p>Completed <%= local_time(job.completed_at) %><%= " by #{job.completed_by.full_name}" if job.completed_by %>. Ready to invoice.</p></div>
+<% elsif job.status == "cancelled" %>
+  <div class="banner banner-warning mb-4"><%= icon "x-circle" %>
+    <p>Cancelled <%= local_time(job.cancelled_at) %><%= " by #{job.cancelled_by.full_name}" if job.cancelled_by %><%= job.cancel_reason ? ": “#{job.cancel_reason}”" : "." %></p></div>
+<% end %>
+
+<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+  <div class="min-w-0 space-y-4">
+    <%= card do %>
+      <dl class="grid gap-4 text-sm sm:grid-cols-3">
+        <div><dt class="text-sm2 text-muted">Status</dt><dd class="mt-1"><%= job_status_badge(job) %></dd></div>
+        <div><dt class="text-sm2 text-muted">Created</dt><dd class="mt-1 text-ink"><%= local_date(job.created_at.in_time_zone(current_business.time_zone).to_date) %></dd></div>
+        <div><dt class="text-sm2 text-muted">Value</dt><dd class="money mt-1 font-semibold text-ink"><%= money(totals.total) %></dd></div>
+      </dl>
+    <% end %>
+
+    <%= card title: "Work to do", subtitle: (job.quote ? "Copied from quote #{job.quote.number}." : nil), flush: true,
+             actions: (link_to("Edit items", edit_admin_job_path(job, items: 1, anchor: "job-items"), class: button_classes(:secondary, :sm)) if job.open?) do %>
+      <% lines = job.line_items.to_a %>
+      <% if lines.empty? %>
+        <p class="px-5 py-4 text-sm2 text-muted">No items yet. Add them to invoice from this job, or let the instructions say what it is.</p>
+      <% else %>
+        <div class="table-wrap">
+          <table class="data-table" id="job-lines">
+            <thead><tr><th scope="col">Item</th><th scope="col" class="text-right">Qty</th><th scope="col" class="text-right">Amount</th></tr></thead>
+            <tbody>
+              <% lines.zip(totals.lines).each do |line, priced| %>
+                <tr>
+                  <td><span class="font-medium text-ink"><%= line.name.presence || "Item" %></span><% if line.description %><span class="sub whitespace-pre-line"><%= line.description %></span><% end %></td>
+                  <td class="num whitespace-nowrap"><%= line.quantity_label %></td>
+                  <td class="money num"><%= money(priced.subtotal) %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+        <div class="border-t border-line px-5 py-3"><%= render "admin/quotes/totals", quote: job, totals: %></div>
+      <% end %>
+    <% end %>
+
+    <%= card title: "Instructions for the crew" do %>
+      <% if job.instructions %>
+        <p class="whitespace-pre-line text-sm text-ink" id="job-instructions"><%= job.instructions %></p>
+      <% else %>
+        <p class="text-sm2 text-muted">None yet. <%= link_to("Add instructions", edit_admin_job_path(job), class: "font-medium text-ink underline-offset-2 hover:underline") if job.open? %></p>
+      <% end %>
+    <% end %>
+
+    <% files = job.attachments.includes(:blob).to_a %>
+    <% if files.any? %>
+      <%= card title: "Photos and files" do %>
+        <ul class="grid grid-cols-2 gap-3 sm:grid-cols-3" id="job-files">
+          <% files.each do |file| %>
+            <li class="min-w-0">
+              <%= link_to rails_blob_path(file, disposition: "inline"), target: "_blank", rel: "noopener", class: "block text-sm2 text-ink hover:underline" do %>
+                <% if file.image? %>
+                  <%= image_tag rails_representation_path(file.variant(:web)), alt: file.filename.to_s, loading: "lazy", class: "aspect-[4/3] w-full rounded-control bg-sunken object-cover" %>
+                <% else %>
+                  <span class="flex aspect-[4/3] items-center justify-center rounded-control bg-sunken"><%= icon "file-text", class: "size-6 text-faint" %></span>
+                <% end %>
+                <span class="mt-1 block truncate"><%= file.filename %></span>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    <% end %>
+  </div>
+
+  <aside class="space-y-4">
+    <%= card title: "Client and property" do %>
+      <% client = job.client %>
+      <p class="font-semibold text-ink"><%= link_to client.display_name, admin_client_path(client), class: "hover:underline" %></p>
+      <% if (property = job.property) %>
+        <p class="mt-1 text-sm2 text-ink"><%= property.one_line %></p>
+        <% if property.access_notes.present? %>
+          <div class="mt-3 rounded-control bg-sunken p-3 text-sm2"><p class="font-semibold text-ink">Access notes</p><p class="mt-1 whitespace-pre-line text-subtle"><%= property.access_notes %></p></div>
+        <% end %>
+      <% else %>
+        <p class="mt-1 text-sm2 text-muted">No property chosen.</p>
+      <% end %>
+      <ul class="mt-3 space-y-1 text-sm2">
+        <% if (phone = client.primary_phone) %><li><%= link_to "tel:#{phone.value.gsub(/[^\d+]/, "")}", class: "text-ink hover:underline" do %><%= icon "phone", class: "mr-1 inline size-4 text-faint" %><%= phone.value %><% end %></li><% end %>
+        <% if (email = client.primary_email) %><li><%= mail_to email.value, class: "break-all text-ink hover:underline" do %><%= icon "mail", class: "mr-1 inline size-4 text-faint" %><%= email.value %><% end %></li><% end %>
+      </ul>
+    <% end %>
+
+    <% if job.internal_notes %>
+      <%= card title: "Internal notes", subtitle: "Only your team sees these." do %>
+        <p class="whitespace-pre-line text-sm2 text-ink"><%= job.internal_notes %></p>
+      <% end %>
+    <% end %>
+  </aside>
+</div>

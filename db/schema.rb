@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_16_000800) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_17_000200) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -97,6 +97,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000800) do
     t.boolean "request_form_enabled", default: false, null: false
     t.text "request_form_intro"
     t.datetime "first_quote_sent_at"
+    t.boolean "auto_create_jobs", default: true, null: false
     t.index ["active"], name: "index_businesses_on_active"
     t.index ["handle"], name: "index_businesses_on_handle", unique: true
     t.index ["industry"], name: "index_businesses_on_industry"
@@ -303,6 +304,68 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000800) do
     t.index ["invited_by_id"], name: "index_invitations_on_invited_by_id"
     t.index ["token_digest"], name: "index_invitations_on_token_digest", unique: true
     t.index ["uid"], name: "index_invitations_on_uid", unique: true
+  end
+
+  create_table "job_line_items", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "job_id", null: false
+    t.bigint "catalog_item_id"
+    t.integer "position", default: 0, null: false
+    t.string "name", default: "", null: false
+    t.text "description"
+    t.decimal "quantity", precision: 12, scale: 4, default: "1.0", null: false
+    t.string "unit"
+    t.bigint "unit_price_cents", default: 0, null: false
+    t.boolean "taxable", default: true, null: false
+    t.string "discount_kind"
+    t.decimal "discount_percent", precision: 7, scale: 4
+    t.bigint "discount_amount_cents"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["catalog_item_id"], name: "index_job_line_items_on_catalog_item_id"
+    t.index ["job_id", "position"], name: "index_job_line_items_on_job_id_and_position"
+    t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying, 'amount'::character varying]::text[]))", name: "job_lines_discount_kind"
+  end
+
+  create_table "jobs", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.string "number", null: false
+    t.bigint "client_id", null: false
+    t.bigint "property_id"
+    t.bigint "quote_id"
+    t.bigint "created_by_id"
+    t.string "title", null: false
+    t.text "instructions"
+    t.text "internal_notes"
+    t.string "status", default: "unscheduled", null: false
+    t.string "currency", null: false
+    t.jsonb "tax_rates", default: [], null: false
+    t.boolean "prices_include_tax", default: false, null: false
+    t.string "discount_kind"
+    t.decimal "discount_percent", precision: 7, scale: 4
+    t.bigint "discount_amount_cents"
+    t.bigint "subtotal_cents", default: 0, null: false
+    t.bigint "discount_total_cents", default: 0, null: false
+    t.bigint "tax_cents", default: 0, null: false
+    t.bigint "total_cents", default: 0, null: false
+    t.datetime "completed_at"
+    t.bigint "completed_by_id"
+    t.datetime "cancelled_at"
+    t.bigint "cancelled_by_id"
+    t.string "cancel_reason"
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "number"], name: "index_jobs_on_business_id_and_number", unique: true
+    t.index ["business_id", "status", "created_at"], name: "index_jobs_on_business_id_and_status_and_created_at"
+    t.index ["client_id"], name: "index_jobs_on_client_id"
+    t.index ["created_by_id"], name: "index_jobs_on_created_by_id"
+    t.index ["property_id"], name: "index_jobs_on_property_id"
+    t.index ["quote_id"], name: "index_jobs_on_quote_id", unique: true
+    t.index ["uid"], name: "index_jobs_on_uid", unique: true
+    t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying, 'amount'::character varying]::text[]))", name: "jobs_discount_kind"
+    t.check_constraint "status::text = ANY (ARRAY['unscheduled'::character varying, 'scheduled'::character varying, 'in_progress'::character varying, 'completed'::character varying, 'cancelled'::character varying]::text[])", name: "jobs_status"
   end
 
   create_table "properties", force: :cascade do |t|
@@ -603,6 +666,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000800) do
   add_foreign_key "invitations", "businesses", on_delete: :cascade
   add_foreign_key "invitations", "users", column: "accepted_by_id", on_delete: :nullify
   add_foreign_key "invitations", "users", column: "invited_by_id", on_delete: :nullify
+  add_foreign_key "job_line_items", "businesses"
+  add_foreign_key "job_line_items", "catalog_items", on_delete: :nullify
+  add_foreign_key "job_line_items", "jobs", on_delete: :cascade
+  add_foreign_key "jobs", "businesses"
+  add_foreign_key "jobs", "clients"
+  add_foreign_key "jobs", "properties", on_delete: :nullify
+  add_foreign_key "jobs", "quotes", on_delete: :nullify
+  add_foreign_key "jobs", "users", column: "cancelled_by_id", on_delete: :nullify
+  add_foreign_key "jobs", "users", column: "completed_by_id", on_delete: :nullify
+  add_foreign_key "jobs", "users", column: "created_by_id", on_delete: :nullify
   add_foreign_key "properties", "businesses", on_delete: :cascade
   add_foreign_key "properties", "clients", on_delete: :cascade
   add_foreign_key "quote_events", "businesses"

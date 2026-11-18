@@ -69,11 +69,13 @@ class QuoteResponseConcurrencyTest < ActiveSupport::TestCase
     end.map(&:value)
     assert_equal %i[approved refused], results.sort
     assert_equal 1, as_business(business) { QuoteResponse.where(quote_id: quote.id).count }
+    assert_equal 1, as_business(business) { Job.where(quote_id: quote.id).count }, "and one job"
   ensure
     if quote
       as_business(business) do
         QuoteResponse.where(quote_id: quote.id).delete_all
         client_id = quote.client_id
+        Job.where(client_id:).delete_all # JOB-01: the approval made one
         Quote.where(id: quote.id).delete_all
         Client.find(client_id).destroy!
       end

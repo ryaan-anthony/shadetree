@@ -47,7 +47,7 @@ Owner, Admin, Technician (see vision glossary). Operators are covered in `10-ope
 | Billing, plan, delete business, transfer ownership | `billing`, `manage_owners` | ✔ | | |
 | Manage team & roles (except Owners) | `manage_team` | ✔ | ✔ | |
 | Business settings, catalog, taxes | `business_settings` | ✔ | ✔ | |
-| Clients, requests, quotes, invoices, payments (all) | `office` | ✔ | ✔ | |
+| Clients, requests, quotes, jobs, invoices, payments (all) | `office` | ✔ | ✔ | |
 | Schedule and assign visits | `schedule` | ✔ | ✔ | |
 | See own assigned visits, their client contact & property, add notes/photos, mark complete | `field_work` | ✔ | ✔ | ✔ |
 | Data export | `export_data` | ✔ | ✔ | |
