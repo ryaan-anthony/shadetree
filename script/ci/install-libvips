@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# CI: install libvips (image processing, ADR 0008) from .deb files cached between runs
+# (~/.cache/debs, restored by actions/cache), falling back to the Ubuntu mirror.
+#
+# Why: the runner's mirror is often slow. The same 9.5 MB download takes 10 s on a good run
+# and 2–3 minutes on a bad one, which made CI runs several times longer than the tests. A cache
+# hit installs in seconds with no apt-get update. The cache is keyed by the runner image, and
+# if the cached files ever don't install, it falls back to the mirror: a bad cache costs a slow
+# run, never a red one.
+set -euo pipefail
+
+cache="${DEB_CACHE:-$HOME/.cache/debs}"
+mkdir -p "$cache"
+shopt -s nullglob
+
+if ldconfig -p | grep 'libvips\.so\.42' > /dev/null; then # (not grep -q: with pipefail, an early exit fails the pipe)
+  echo "libvips is already installed"
+  exit 0
+fi
+
+if compgen -G "$cache/*.deb" > /dev/null; then
+  if sudo apt-get install -y -qq --no-install-recommends "$cache"/*.deb > /dev/null 2>&1; then
+    echo "libvips installed from the cache ($(ls "$cache" | wc -l) packages)"
+    exit 0
+  fi
+  echo "::warning::Cached libvips packages didn't install; downloading them again"
+  rm -f "$cache"/*.deb
+fi
+
+sudo apt-get update -qq -o Acquire::Retries=3
+sudo apt-get install -y -qq --no-install-recommends --download-only -o Acquire::Retries=3 libvips42
+debs=(/var/cache/apt/archives/*.deb)
+(( ${#debs[@]} )) && cp "${debs[@]}" "$cache"/
+sudo apt-get install -y -qq --no-install-recommends libvips42 # from the files just downloaded
+echo "libvips installed from the mirror; $(ls "$cache" | wc -l) packages cached for next time"
