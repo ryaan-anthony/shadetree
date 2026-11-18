@@ -4,13 +4,17 @@
 #
 # Why: the runner's mirror is often slow. The same 9.5 MB download takes 10 s on a good run
 # and 2–3 minutes on a bad one, which made CI runs several times longer than the tests. A cache
-# hit installs in seconds with no apt-get update. The cache is keyed by the runner image, and
-# if the cached files ever don't install, it falls back to the mirror: a bad cache costs a slow
-# run, never a red one.
+# hit installs in seconds with no apt-get update.
+#
+# When it downloads (no cache yet, or the cached files didn't install), it writes
+# refreshed=true to $GITHUB_OUTPUT so the workflow saves the new files: a bad cache costs one
+# slow run, never a red one. Cached files are trusted as they are (apt doesn't check signatures
+# on local .debs); only this repository's own runs can write the cache, and downloads come
+# through apt's signed index.
 set -euo pipefail
 
 cache="${DEB_CACHE:-$HOME/.cache/debs}"
-mkdir -p "$cache"
+mkdir -p "$cache/partial"
 shopt -s nullglob
 
 if ldconfig -p | grep 'libvips\.so\.42' > /dev/null; then # (not grep -q: with pipefail, an early exit fails the pipe)
@@ -18,18 +22,22 @@ if ldconfig -p | grep 'libvips\.so\.42' > /dev/null; then # (not grep -q: with p
   exit 0
 fi
 
-if compgen -G "$cache/*.deb" > /dev/null; then
-  if sudo apt-get install -y -qq --no-install-recommends "$cache"/*.deb > /dev/null 2>&1; then
-    echo "libvips installed from the cache ($(ls "$cache" | wc -l) packages)"
+cached=("$cache"/*.deb)
+if (( ${#cached[@]} )); then
+  if output=$(sudo apt-get install -y -qq --no-install-recommends "${cached[@]}" 2>&1); then
+    echo "libvips installed from the cache (${#cached[@]} packages)"
     exit 0
   fi
-  echo "::warning::Cached libvips packages didn't install; downloading them again"
-  rm -f "$cache"/*.deb
+  echo "::warning::The cached libvips packages didn't install, so they're being downloaded again"
+  echo "::group::apt-get output"; echo "$output"; echo "::endgroup::"
+  rm -f "${cached[@]}"
 fi
 
+# Download straight into the cache folder, so only these packages are cached.
 sudo apt-get update -qq -o Acquire::Retries=3
-sudo apt-get install -y -qq --no-install-recommends --download-only -o Acquire::Retries=3 libvips42
-debs=(/var/cache/apt/archives/*.deb)
-(( ${#debs[@]} )) && cp "${debs[@]}" "$cache"/
-sudo apt-get install -y -qq --no-install-recommends libvips42 # from the files just downloaded
-echo "libvips installed from the mirror; $(ls "$cache" | wc -l) packages cached for next time"
+sudo apt-get install -y -qq --no-install-recommends -o Acquire::Retries=3 -o Dir::Cache::Archives="$cache" libvips42
+sudo chown -R "$(id -u):$(id -g)" "$cache"
+rm -rf "$cache/partial" "$cache/lock"
+echo "libvips installed from the mirror; $(ls "$cache"/*.deb | wc -l) packages cached for next time"
+[[ -n "${GITHUB_OUTPUT:-}" ]] && echo "refreshed=true" >> "$GITHUB_OUTPUT"
+exit 0
