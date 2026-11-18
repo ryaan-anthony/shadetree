@@ -1,0 +1,16 @@
+<%# locals: (closure:) -%>
+<li id="closure-<%= closure.uid %>">
+  <div class="min-w-0 flex-1">
+    <p class="font-semibold text-ink"><%= link_to closure.reason, edit_admin_closure_path(closure), class: "hover:underline" %>
+      <% if closure.repeats_yearly %><%= badge "Every year", tone: :info, dot: false %><% end %></p>
+    <p class="text-sm2 text-muted"><%= closure.dates_label %><%= " · all day" if closure.all_day? %></p>
+  </div>
+  <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
+    <button type="button" class="<%= button_classes(:ghost, :sm, :icon) %>" data-menu-target="button" data-action="menu#toggle"
+            aria-haspopup="true" aria-expanded="false" aria-label="More actions for <%= closure.reason %>"><%= icon "more-horizontal" %></button>
+    <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
+      <%= link_to edit_admin_closure_path(closure), class: "menu-item" do %><%= icon "edit-2" %> Edit<% end %>
+      <%= button_to admin_closure_path(closure), method: :delete, class: "menu-item", form: { class: "contents", data: { turbo_confirm: "Remove #{closure.reason}?", turbo_confirm_button: "Remove" } } do %><%= icon "trash-2" %> Remove<% end %>
+    </div>
+  </div>
+</li>

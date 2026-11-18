@@ -129,6 +129,10 @@ Rails.application.routes.draw do
       end
     end
 
+    # Business hours and closures (CAT-06)
+    resource :hours, only: %i[show update], controller: "hours"
+    resources :closures, except: %i[index show]
+
     # Service catalog (CAT-03)
     resource :catalog_presets, path: "catalog/starter", only: %i[show create] # CAT-05
     resources :catalog_items, path: "catalog", except: %i[show destroy] do

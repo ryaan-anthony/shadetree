@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_16_000800) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_17_000100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -97,6 +97,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000800) do
     t.boolean "request_form_enabled", default: false, null: false
     t.text "request_form_intro"
     t.datetime "first_quote_sent_at"
+    t.jsonb "weekly_hours"
     t.index ["active"], name: "index_businesses_on_active"
     t.index ["handle"], name: "index_businesses_on_handle", unique: true
     t.index ["industry"], name: "index_businesses_on_industry"
@@ -212,6 +213,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000800) do
     t.index ["search_text"], name: "index_clients_on_search_text", opclass: :gin_trgm_ops, using: :gin
     t.index ["tags"], name: "index_clients_on_tags", using: :gin
     t.index ["uid"], name: "index_clients_on_uid", unique: true
+  end
+
+  create_table "closures", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.string "reason", null: false
+    t.date "starts_on", null: false
+    t.date "ends_on", null: false
+    t.integer "start_minute"
+    t.integer "end_minute"
+    t.boolean "repeats_yearly", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "ends_on"], name: "index_closures_on_business_id_and_ends_on"
+    t.index ["uid"], name: "index_closures_on_uid", unique: true
+    t.check_constraint "(start_minute IS NULL) = (end_minute IS NULL) AND (start_minute IS NULL OR start_minute < end_minute)", name: "closures_minutes"
+    t.check_constraint "ends_on >= starts_on", name: "closures_date_order"
   end
 
   create_table "document_sequences", force: :cascade do |t|
@@ -596,6 +614,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000800) do
   add_foreign_key "client_links", "users", column: "created_by_id", on_delete: :nullify
   add_foreign_key "client_links", "users", column: "revoked_by_id", on_delete: :nullify
   add_foreign_key "clients", "businesses", on_delete: :cascade
+  add_foreign_key "closures", "businesses"
   add_foreign_key "document_sequences", "businesses"
   add_foreign_key "email_messages", "businesses", on_delete: :cascade
   add_foreign_key "email_suppressions", "businesses", on_delete: :cascade

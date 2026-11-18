@@ -34,6 +34,12 @@ end
 end
 
 Tenancy.with_business(business) do
+  # Hours and closures (CAT-06): weekdays 8–5 and Saturday mornings, Christmas every year,
+  # and a half day on the next Christmas Eve.
+  business.update!(weekly_hours: WeeklyHours::WEEKDAYS_8_TO_5.merge("6" => { "opens" => "08:00", "closes" => "12:00" })) if business.weekly_hours.nil?
+  Closure.find_or_create_by!(reason: "Christmas Day") { _1.assign_attributes(starts_on: Date.new(2026, 12, 25), repeats_yearly: true) }
+  eve = Date.new(business.today.year, 12, 24)
+  Closure.find_or_create_by!(reason: "Christmas Eve, closing at noon") { _1.assign_attributes(starts_on: eve, part_of_day: true, start_time: "12:00", end_time: "") }
   # Tax rates (CAT-04): state and county, applied to new documents.
   TaxRate.find_or_create_by!(name: "State sales tax") { _1.percent = "6.25" }
   TaxRate.find_or_create_by!(name: "County") { _1.percent = "1" }

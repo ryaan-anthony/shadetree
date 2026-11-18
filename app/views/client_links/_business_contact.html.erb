@@ -1,3 +1,4 @@
+<% hours = @business.hours.summary %>
 <% if @business.phone.present? || @business.email.present? %>
   <div class="mt-5 flex flex-wrap justify-center gap-2">
     <% if @business.phone.present? %>
@@ -7,4 +8,8 @@
       <%= mail_to @business.email, class: button_classes(:secondary) do %><%= icon "mail" %> Email us<% end %>
     <% end %>
   </div>
+<% end %>
+<% if hours.any? %>
+  <%# CAT-06: the weekly hours, so clients know when they'll reach someone. %>
+  <p class="mt-3 text-center text-sm2 text-muted"><span class="sr-only">Hours: </span><%= icon "clock", class: "mr-1 inline size-3.5 align-text-bottom" %><%= hours.join(" · ") %></p>
 <% end %>

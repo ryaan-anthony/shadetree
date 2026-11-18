@@ -5,6 +5,7 @@
 
 <nav class="tabs mb-5" aria-label="Settings" data-controller="tabs">
   <%= link_to "Business", edit_admin_business_path, class: "tab", "aria-current": ("page" if current == "business") %>
+  <%= link_to "Hours", admin_hours_path, class: "tab", "aria-current": ("page" if current == "hours") %>
   <%= link_to "Documents", edit_admin_business_path(tab: "documents"), class: "tab", "aria-current": ("page" if current == "documents") %>
   <%= link_to "Taxes", admin_tax_rates_path, class: "tab", "aria-current": ("page" if current == "taxes") %>
   <%= link_to "Branding", edit_admin_business_path(tab: "branding"), class: "tab", "aria-current": ("page" if current == "branding") %>
