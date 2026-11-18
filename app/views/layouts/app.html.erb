@@ -17,7 +17,17 @@
             <%= icon "menu", class: "size-5" %>
           </button>
           <p class="min-w-0 truncate text-sm font-semibold text-ink"><%= content_for(:title) %></p>
-          <div class="ml-auto flex items-center gap-1.5"><%= yield :topbar_actions %></div>
+          <div class="ml-auto flex items-center gap-1.5"><%= yield :topbar_actions %>
+            <% if current_business && current_user %>
+              <%# NTF-02: the notification center, with this member's unread count in this business. %>
+              <% unread = Notification.for_user(current_user).unread.count %>
+              <%= link_to admin_notifications_path, class: "#{button_classes(:ghost, :icon)} relative", "aria-label": (unread.positive? ? "Notifications, #{unread} unread" : "Notifications"),
+                          "aria-current": ("page" if controller_name == "notifications" && action_name == "index") do %>
+                <%= icon "bell", class: "size-5" %>
+                <% if unread.positive? %><span class="notify-count" aria-hidden="true"><%= unread > 99 ? "99+" : unread %></span><% end %>
+              <% end %>
+            <% end %>
+          </div>
         </header>
 
         <main id="main" class="content">

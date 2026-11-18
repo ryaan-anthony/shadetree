@@ -1,0 +1,19 @@
+en:
+  activerecord:
+    attributes:
+      closure:
+        reason: "Reason"
+        starts_on: "First day"
+        ends_on: "Last day"
+        start_time: "From"
+        end_time: "Until"
+        repeats_yearly: "Every year"
+    errors:
+      models:
+        business:
+          attributes:
+            # CAT-06: whole sentences naming the day ("Tuesday needs a closing time.").
+            weekly_hours: { format: "%{message}" }
+        closure:
+          attributes:
+            repeats_yearly: { format: "%{message}" }

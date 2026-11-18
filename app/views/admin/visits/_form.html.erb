@@ -1,0 +1,94 @@
+<%# JOB-02: book or change a visit. Times are in the business's time zone. %>
+<% visit = @visit %>
+<%# Active members, plus anyone already going who has since been deactivated (kept unless unticked). %>
+<% members = current_business.business_users.includes(:user).select { _1.active? || visit.assignee_ids.include?(_1.user_id) }.sort_by { _1.user.full_name.downcase } %>
+<% zone = current_business.time_zone %>
+<% zone_name = ActiveSupport::TimeZone::MAPPING.key(zone.tzinfo.identifier) || zone.tzinfo.identifier.split("/").last.tr("_", " ") %>
+<%= form_with model: visit, url: (visit.new_record? ? admin_job_visits_path(@job) : admin_job_visit_path(@job, visit)), class: "max-w-2xl space-y-4" do |f| %>
+  <% problems = visit.errors.reject { _1.attribute.in?(%i[scheduled_on start_time window_end_time duration_minutes instructions]) }.map(&:full_message) %>
+  <% if problems.any? %><div class="banner banner-danger" role="alert"><%= icon "alert-circle" %><p><%= problems.to_sentence %></p></div><% end %>
+  <%= f.hidden_field :lock_version if visit.persisted? %>
+  <% if @warnings.present? %>
+    <div class="banner banner-warning" role="alert"><%= icon "alert-triangle" %>
+      <div><p class="font-semibold">Before you <%= visit.new_record? ? "book" : "save" %> this</p>
+        <ul class="mt-1 list-disc pl-5"><% @warnings.each do |warning| %><li><%= warning %></li><% end %></ul>
+        <p class="mt-1">You can still <%= visit.new_record? ? "schedule it" : "save it" %>, or change it below.</p></div>
+    </div>
+    <%= hidden_field_tag :confirm, confirm_digest %>
+  <% end %>
+
+  <%= card do %>
+    <div class="space-y-4">
+      <div class="w-48"><%= f.field :scheduled_on, as: :date, label: visit.new_record? ? "Date (or first day)" : "Date" %></div>
+      <% if visit.new_record? %>
+        <%# Work over several days: one visit per day, each its own to move or cancel later. %>
+        <details class="rounded-control border border-line p-3" <%= "open" if params[:through].present? || Array(params[:extra_dates]).any?(&:present?) %>>
+          <summary class="cursor-pointer text-sm font-medium text-ink">More than one day</summary>
+          <p class="mt-2 text-sm2 text-muted">Each day becomes its own visit, with the same time, crew and instructions.</p>
+          <div class="mt-3 flex flex-wrap items-end gap-x-4 gap-y-2">
+            <div class="field w-48">
+              <label class="label" for="through">Every day through <span class="label-optional">(optional)</span></label>
+              <%= date_field_tag :through, params[:through], class: "input" %>
+            </div>
+            <%= hidden_field_tag :skip_closed, "0", id: nil %>
+            <label class="check items-center pb-2"><%= check_box_tag :skip_closed, "1", params.key?(:skip_closed) ? params[:skip_closed] == "1" : true, id: "skip_closed" %>
+              <span class="text-ink">Skip days you're closed</span></label>
+          </div>
+          <div class="mt-3" data-controller="nested-fields">
+            <p class="label">Or these days too</p>
+            <div class="flex flex-wrap items-center gap-2">
+              <% Array(params[:extra_dates]).select(&:present?).each do |date| %>
+                <%= render "admin/visits/extra_day", date: %>
+              <% end %>
+              <template data-nested-fields-target="template" data-kind="day"><%= render "admin/visits/extra_day", date: nil %></template>
+              <span data-nested-fields-target="anchor">
+                <button type="button" class="<%= button_classes(:secondary, :sm) %>" data-action="nested-fields#add" data-nested-fields-kind-param="day"><%= icon "plus" %> Add a day</button>
+              </span>
+            </div>
+          </div>
+        </details>
+      <% end %>
+
+      <fieldset class="group">
+        <legend class="label">Arrival</legend>
+        <div class="flex flex-wrap gap-x-5 gap-y-2">
+          <% [ [ "window", "A window" ], [ "exact", "A start time" ], [ "anytime", "Anytime that day" ] ].each do |value, label| %>
+            <%# Hyphenated ids: Tailwind reads "_" in the classes below as a space. %>
+            <label class="check items-center"><%= f.radio_button :timing, value, id: "timing-#{value}" %><span class="text-ink"><%= label %></span></label>
+          <% end %>
+        </div>
+        <div class="mt-3 hidden flex-wrap items-end gap-2 group-has-[#timing-window:checked]:flex group-has-[#timing-exact:checked]:flex">
+          <div class="w-36"><%= f.field :start_time, as: :time, required: false, label: "Start", step: 300, "aria-describedby": "visit-zone" %></div>
+          <div class="hidden w-36 group-has-[#timing-window:checked]:block"><%= f.field :window_end_time, as: :time, required: false, label: "Latest arrival", step: 300, "aria-describedby": "visit-zone" %></div>
+        </div>
+        <p class="mt-2 text-sm2 text-muted" id="visit-zone">In <%= zone_name %> time.</p>
+      </fieldset>
+
+      <div class="w-44"><%= f.field :duration_hours, as: :number, label: "Estimated hours", step: "any", min: 0.1, max: 24,
+                                    value: (visit.errors[:duration_minutes].any? ? params.dig(:visit, :duration_hours) : visit.duration_hours),
+                                    help: (visit.new_record? && @job.visit_minutes_from_items.positive? ? "From the services on this job." : nil) %>
+        <% if (error = visit.errors.full_messages_for(:duration_minutes).first) %><p class="error-text"><%= icon "alert-circle" %><%= error.sub("Duration minutes", "Duration") %></p><% end %>
+      </div>
+
+      <fieldset>
+        <legend class="label">Who's going <span class="label-optional">(optional)</span></legend>
+        <%= hidden_field_tag "visit[assignee_ids][]", "", id: nil %>
+        <div class="grid gap-2 sm:grid-cols-2">
+          <% members.each do |member| %>
+            <label class="check items-center">
+              <%= check_box_tag "visit[assignee_ids][]", member.user_id, visit.assignee_ids.include?(member.user_id), id: "visit_assignee_#{member.user_id}" %>
+              <span><span class="text-ink"><%= member.user.full_name %></span> <span class="text-sm2 text-muted"><%= member.active? ? member.role.capitalize : "No longer on the team" %></span></span>
+            </label>
+          <% end %>
+        </div>
+      </fieldset>
+
+      <%= f.field :instructions, as: :textarea, optional: true, rows: 3, maxlength: 2_000, label: "Instructions for this visit",
+                  help: "Added to the job's instructions for the people going." %>
+    </div>
+  <% end %>
+  <div class="flex items-center justify-end gap-2">
+    <%= link_to "Cancel", admin_job_path(@job), class: button_classes(:ghost) %>
+    <%= f.submit_button "#{visit.new_record? ? "Schedule" : "Save"} #{@warnings.present? ? "anyway" : "visit"}" %>
+  </div>
+<% end %>

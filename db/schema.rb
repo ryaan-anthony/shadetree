@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_17_000200) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_17_000400) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -55,6 +55,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000200) do
     t.string "uid", null: false
     t.datetime "welcome_dismissed_at"
     t.datetime "setup_hidden_at"
+    t.jsonb "notification_emails", default: {}, null: false
     t.index ["business_id", "active"], name: "index_business_users_on_business_id_and_active"
     t.index ["business_id"], name: "index_business_users_on_business_id"
     t.index ["uid"], name: "index_business_users_on_uid", unique: true
@@ -97,6 +98,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000200) do
     t.boolean "request_form_enabled", default: false, null: false
     t.text "request_form_intro"
     t.datetime "first_quote_sent_at"
+    t.jsonb "weekly_hours"
     t.boolean "auto_create_jobs", default: true, null: false
     t.index ["active"], name: "index_businesses_on_active"
     t.index ["handle"], name: "index_businesses_on_handle", unique: true
@@ -213,6 +215,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000200) do
     t.index ["search_text"], name: "index_clients_on_search_text", opclass: :gin_trgm_ops, using: :gin
     t.index ["tags"], name: "index_clients_on_tags", using: :gin
     t.index ["uid"], name: "index_clients_on_uid", unique: true
+  end
+
+  create_table "closures", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.string "reason", null: false
+    t.date "starts_on", null: false
+    t.date "ends_on", null: false
+    t.integer "start_minute"
+    t.integer "end_minute"
+    t.boolean "repeats_yearly", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "ends_on"], name: "index_closures_on_business_id_and_ends_on"
+    t.index ["uid"], name: "index_closures_on_uid", unique: true
+    t.check_constraint "(start_minute IS NULL) = (end_minute IS NULL) AND (start_minute IS NULL OR start_minute >= 0 AND start_minute < end_minute AND end_minute <= 1440)", name: "closures_minutes"
+    t.check_constraint "ends_on >= starts_on", name: "closures_date_order"
   end
 
   create_table "document_sequences", force: :cascade do |t|
@@ -366,6 +385,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000200) do
     t.index ["uid"], name: "index_jobs_on_uid", unique: true
     t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying, 'amount'::character varying]::text[]))", name: "jobs_discount_kind"
     t.check_constraint "status::text = ANY (ARRAY['unscheduled'::character varying, 'scheduled'::character varying, 'in_progress'::character varying, 'completed'::character varying, 'cancelled'::character varying]::text[])", name: "jobs_status"
+  end
+
+  create_table "notifications", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "user_id", null: false
+    t.string "uid", null: false
+    t.string "kind", null: false
+    t.string "subject_type"
+    t.bigint "subject_id"
+    t.bigint "actor_id"
+    t.string "title", null: false
+    t.string "body"
+    t.string "path", null: false
+    t.datetime "read_at"
+    t.datetime "created_at", null: false
+    t.index ["business_id", "user_id", "created_at"], name: "index_notifications_on_business_id_and_user_id_and_created_at"
+    t.index ["business_id", "user_id"], name: "index_notifications_unread", where: "(read_at IS NULL)"
+    t.index ["created_at"], name: "index_notifications_on_created_at"
+    t.index ["uid"], name: "index_notifications_on_uid", unique: true
   end
 
   create_table "properties", force: :cascade do |t|
@@ -643,6 +681,55 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000200) do
     t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true
   end
 
+  create_table "visit_assignments", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "visit_id", null: false
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_visit_assignments_on_user_id"
+    t.index ["visit_id", "user_id"], name: "index_visit_assignments_on_visit_id_and_user_id", unique: true
+  end
+
+  create_table "visit_events", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "visit_id", null: false
+    t.bigint "user_id"
+    t.string "kind", null: false
+    t.jsonb "data", default: {}, null: false
+    t.datetime "occurred_at", null: false
+    t.index ["visit_id"], name: "index_visit_events_on_visit_id"
+    t.check_constraint "kind::text = ANY (ARRAY['scheduled'::character varying, 'rescheduled'::character varying, 'reassigned'::character varying, 'updated'::character varying, 'cancelled'::character varying, 'restored'::character varying, 'started'::character varying, 'completed'::character varying, 'reopened'::character varying]::text[])", name: "visit_events_kind"
+  end
+
+  create_table "visits", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.bigint "job_id", null: false
+    t.date "scheduled_on", null: false
+    t.string "timing", default: "anytime", null: false
+    t.datetime "starts_at"
+    t.datetime "window_ends_at"
+    t.integer "duration_minutes", default: 60, null: false
+    t.text "instructions"
+    t.string "status", default: "scheduled", null: false
+    t.datetime "started_at"
+    t.datetime "completed_at"
+    t.datetime "cancelled_at"
+    t.string "cancel_reason"
+    t.bigint "created_by_id"
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "scheduled_on"], name: "index_visits_on_business_id_and_scheduled_on"
+    t.index ["job_id", "scheduled_on"], name: "index_visits_on_job_id_and_scheduled_on"
+    t.index ["uid"], name: "index_visits_on_uid", unique: true
+    t.check_constraint "(timing::text = 'anytime'::text) = (starts_at IS NULL) AND (timing::text = 'window'::text) = (window_ends_at IS NOT NULL)", name: "visits_times"
+    t.check_constraint "duration_minutes >= 5 AND duration_minutes <= 1440", name: "visits_duration"
+    t.check_constraint "status::text = ANY (ARRAY['scheduled'::character varying, 'in_progress'::character varying, 'completed'::character varying, 'cancelled'::character varying]::text[])", name: "visits_status"
+    t.check_constraint "timing::text = ANY (ARRAY['exact'::character varying, 'window'::character varying, 'anytime'::character varying]::text[])", name: "visits_timing"
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "business_users", "businesses"
@@ -659,6 +746,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000200) do
   add_foreign_key "client_links", "users", column: "created_by_id", on_delete: :nullify
   add_foreign_key "client_links", "users", column: "revoked_by_id", on_delete: :nullify
   add_foreign_key "clients", "businesses", on_delete: :cascade
+  add_foreign_key "closures", "businesses", on_delete: :cascade
   add_foreign_key "document_sequences", "businesses"
   add_foreign_key "email_messages", "businesses", on_delete: :cascade
   add_foreign_key "email_suppressions", "businesses", on_delete: :cascade
@@ -676,6 +764,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000200) do
   add_foreign_key "jobs", "users", column: "cancelled_by_id", on_delete: :nullify
   add_foreign_key "jobs", "users", column: "completed_by_id", on_delete: :nullify
   add_foreign_key "jobs", "users", column: "created_by_id", on_delete: :nullify
+  add_foreign_key "notifications", "businesses", on_delete: :cascade
+  add_foreign_key "notifications", "users", column: "actor_id", on_delete: :nullify
+  add_foreign_key "notifications", "users", on_delete: :cascade
   add_foreign_key "properties", "businesses", on_delete: :cascade
   add_foreign_key "properties", "clients", on_delete: :cascade
   add_foreign_key "quote_events", "businesses"
@@ -716,4 +807,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000200) do
   add_foreign_key "tax_rates", "businesses", on_delete: :cascade
   add_foreign_key "usage_events", "businesses"
   add_foreign_key "users", "businesses", column: "last_business_id", on_delete: :nullify
+  add_foreign_key "visit_assignments", "businesses", on_delete: :cascade
+  add_foreign_key "visit_assignments", "users", on_delete: :cascade
+  add_foreign_key "visit_assignments", "visits", on_delete: :cascade
+  add_foreign_key "visit_events", "businesses", on_delete: :cascade
+  add_foreign_key "visit_events", "users", on_delete: :nullify
+  add_foreign_key "visit_events", "visits", on_delete: :cascade
+  add_foreign_key "visits", "businesses", on_delete: :cascade
+  add_foreign_key "visits", "jobs", on_delete: :cascade
+  add_foreign_key "visits", "users", column: "created_by_id", on_delete: :nullify
 end

@@ -1,0 +1,3 @@
+<% content_for :title, "Schedule a visit" %>
+<%= page_header "Schedule a visit", lede: "#{@job.number} #{@job.title} for #{@job.client.display_name}#{", #{@job.property.one_line}" if @job.property}" %>
+<%= render "form" %>
