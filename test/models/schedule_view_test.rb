@@ -27,6 +27,21 @@ class ScheduleViewTest < ActiveSupport::TestCase
     assert_equal ScheduleView::DEFAULT_HOURS.first...ScheduleView::DEFAULT_HOURS.last, view(monday + 7).hours, "no hours set: 7 am to 7 pm"
   end
 
+  test "a closure at the start of a day is shaded, not cut off the grid" do
+    monday = Date.new(2026, 11, 23)
+    Closure.create!(reason: "Staff meeting", starts_on: monday, start_time: "08:00", end_time: "12:00")
+    schedule = view(monday)
+    assert_equal 8...17, schedule.hours
+    assert_equal [ [ 0, 4 * ScheduleView::HOUR_PX ] ], schedule.shades_on(monday).map { [ _1.top, _1.height ] }
+  end
+
+  test "short visits one after another, drawn taller than they last, sit side by side" do
+    monday = Date.new(2026, 11, 23)
+    first, second = book(monday, "09:00", 10), book(monday, "09:10", 10)
+    placed = view(monday).placed_on(monday).index_by(&:visit)
+    assert_equal [ 0, 1 ], [ first, second ].map { placed[_1].column }
+  end
+
   test "visits are placed by time; overlapping ones share the width side by side" do
     monday = Date.new(2026, 11, 23)
     a = book(monday, "09:00", 120)

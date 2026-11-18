@@ -52,8 +52,9 @@ class Admin::ScheduleTest < ActionDispatch::IntegrationTest
     week
     assert_select "h1", "November 23 – 29"
     assert_select "#schedule-grid .cal-day", 7
-    assert_select "#cal-visit-#{@timed.uid}.cal-visit", text: /9 am Maria Lopez.*Spring cleanup, Asheville.*Technician/m
-    assert_select "#cal-visit-#{@anytime.uid}.cal-chip", text: /Maria Lopez · Spring cleanup/
+    assert_select "#cal-visit-#{@timed.uid}.cal-visit", text: /9 am Maria Lopez, Monday, November 23.*Spring cleanup, Asheville.*Technician/m
+    assert_select "#schedule-grid [role=group][aria-label='Monday, November 23']"
+    assert_select "#cal-visit-#{@anytime.uid}.cal-chip", text: /Maria Lopez.*anytime Wednesday, November 25.*Spring cleanup, Asheville · John/m
     assert_select "#cal-visit-#{@nobody.uid}", text: /1–3 pm.*Nobody yet/m
     assert_select "#cal-visit-#{@cancelled.uid}", 0
     assert_select "#schedule-agenda", text: /Monday, Nov 23.*9 am.*Maria Lopez/m
@@ -66,8 +67,13 @@ class Admin::ScheduleTest < ActionDispatch::IntegrationTest
     assert_select "#cal-visit-#{@timed.uid}"
     assert_select "#cal-visit-#{@anytime.uid}", 0
 
-    get admin_schedule_path(date: "not a date")
-    assert_response :success, "a bad date falls back to today"
+    get admin_schedule_path(date: "2026-W48-1")
+    assert_response :success, "a date that isn't YYYY-MM-DD falls back to today"
+    assert_select "h1", /#{@business.today.strftime("%B")}/
+
+    get admin_schedule_path(date: "2027-12-29")
+    assert_select "h1", "Dec 27, 2027 – Jan 2, 2028", "a week across the year says which"
+    assert_select "#schedule-agenda", text: /Nothing booked this week/
   end
 
   test "filter by member, or the visits nobody's on yet; colors by person or status" do
@@ -79,7 +85,12 @@ class Admin::ScheduleTest < ActionDispatch::IntegrationTest
     assert_select "#cal-visit-#{@nobody.uid}.cal-none"
     week(member: users(:two).id) # not in this business: ignored, everyone shown
     assert_select "#schedule-grid [id^=cal-visit-]", 3
-    assert_select "#schedule-members li", text: /Technician\s*2 h/
+    assert_select "#schedule-members li", text: /Technician\s*1.5 h/
+    as_business(@business) { BusinessUser.find_by!(user: @tech).update!(active: false) }
+    week(member: @tech.id)
+    assert_select "#schedule-grid [id^=cal-visit-]", 3, "someone no longer on the team isn't a filter"
+    assert_select "#cal-visit-#{@timed.uid}.cal-none", 1, "their visits aren't shown in someone else's color"
+    as_business(@business) { BusinessUser.find_by!(user: @tech).update!(active: true) }
 
     week(color: "status")
     assert_select "#cal-visit-#{@timed.uid}.cal-status-scheduled"
@@ -102,8 +113,12 @@ class Admin::ScheduleTest < ActionDispatch::IntegrationTest
     assert_select "#needs-scheduling", text: /Gutter cleaning/
     assert_select "#needs-scheduling", text: /Spring cleanup/, count: 0
     link = css_select("#needs-scheduling a[aria-label='Schedule #{@waiting.number}']").sole["href"]
-    get link
-    assert_select "input[name='visit[scheduled_on]'][value=?]", @monday.iso8601
+    travel_to @business.local_time(@monday - 1, "12:00") do
+      get link
+      assert_select "input[name='visit[scheduled_on]'][value=?]", @monday.iso8601
+      get new_admin_job_visit_path(@waiting, on: (@monday - 14).iso8601)
+      assert_equal (@monday - 1).iso8601, css_select("input[name='visit[scheduled_on]']").sole["value"], "a past week's Schedule starts today"
+    end
   end
 
   test "opening a visit shows its details beside the calendar, or on its own page on a phone" do
@@ -128,7 +143,7 @@ class Admin::ScheduleTest < ActionDispatch::IntegrationTest
       VisitAssignment.insert_all!(ids.each_with_index.map { |id, n| { visit_id: id, user_id: crew[n % 10].id, business_id: @business.id, created_at: Time.current, updated_at: Time.current } })
     end
     queries = 0
-    counter = ->(*, payload) { queries += 1 unless payload[:name].in?(%w[SCHEMA TRANSACTION]) || payload[:cached] }
+    counter = ->(*, payload) { queries += 1 unless payload[:name].in?(%w[SCHEMA TRANSACTION]) } # cached ones count too
     started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { week }
     elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started

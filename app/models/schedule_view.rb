@@ -4,6 +4,7 @@
 # many there are; a calendar week of 200 visits renders without any per-visit queries.
 class ScheduleView
   HOUR_PX = 56
+  MIN_PX = 22 # the shortest a visit is drawn, so its first line can be read
   DEFAULT_HOURS = 7..19
   COLORS = %w[sky violet amber rose teal lime indigo orange].freeze # tones in components.css (.cal-<color>)
 
@@ -28,10 +29,13 @@ class ScheduleView
   def today? = dates.include?(business.today)
 
   def title
-    return @date.strftime("%A, %B %-d") if @view == "day"
+    year = ->(date) { date.year == business.today.year ? "" : ", #{date.year}" }
+    return "#{@date.strftime("%A, %B %-d")}#{year.(@date)}" if @view == "day"
 
     first, last = dates.first, dates.last
-    first.month == last.month ? "#{first.strftime("%B %-d")} – #{last.day}" : "#{first.strftime("%b %-d")} – #{last.strftime("%b %-d")}"
+    return "#{first.strftime("%b %-d")}#{", #{first.year}" if first.year != last.year} – #{last.strftime("%b %-d")}#{year.(last)}" unless first.month == last.month
+
+    "#{first.strftime("%B %-d")} – #{last.day}#{year.(last)}"
   end
 
   # Visits in the period (not cancelled), filtered, with what the grid needs loaded.
@@ -41,7 +45,7 @@ class ScheduleView
                    .includes(:assignees, job: %i[client property]).in_order
       scope = scope.where.missing(:assignments) if @member == "unassigned"
       scope = scope.where(id: VisitAssignment.where(user_id: @member).select(:visit_id)) if @member && @member != "unassigned"
-      scope.to_a
+      scope.to_a.each { _1.association(:business).target = business } # labels need its time zone; not one query per visit
     end
   end
 
@@ -53,30 +57,35 @@ class ScheduleView
   def placed_on(date)
     timed = visits_on(date).reject(&:anytime?).sort_by { [ _1.starts_at, -_1.duration_minutes ] }
     groups = []
+    # Where each visit's drawn block ends: a short one is drawn MIN_PX tall, so it can cover the next.
+    drawn_end = ->(visit) { [ visit.ends_at, visit.starts_at + (MIN_PX * 60.0 / HOUR_PX).ceil.minutes ].max }
     timed.each do |visit|
       group = groups.last if groups.last && groups.last[:until] > visit.starts_at
       group ||= { visits: [], until: visit.starts_at }.tap { groups << _1 }
       group[:visits] << visit
-      group[:until] = [ group[:until], visit.ends_at ].max
+      group[:until] = [ group[:until], drawn_end.(visit) ].max
     end
     groups.flat_map do |group|
       lanes = []
       group[:visits].map do |visit|
         lane = lanes.index { _1 <= visit.starts_at } || lanes.size
-        lanes[lane] = visit.ends_at
+        lanes[lane] = drawn_end.(visit)
         [ visit, lane ]
-      end.map { |visit, lane| Placed.new(visit:, top: px_for(visit.starts_at, date), height: [ px_between(visit.starts_at, visit.ends_at, date), 22 ].max, column: lane, columns: lanes.size) }
+      end.map { |visit, lane| Placed.new(visit:, top: px_for(visit.starts_at, date), height: [ px_between(visit.starts_at, visit.ends_at, date), MIN_PX ].max, column: lane, columns: lanes.size) }
     end
   end
 
-  # The hours the grid shows: the business's hours (or 7 am–7 pm), stretched to fit visits.
+  # The hours the grid shows: the business's opening hours (or 7 am–7 pm), stretched to fit
+  # visits. From the weekly hours, not what's left after closures, so a closure is shaded on the
+  # grid rather than cut off it.
   def hours
     @hours ||= begin
-      opens = dates.filter_map { |d| opening.day(d).periods.first&.begin&.then { hour_on(d, _1) } }
-      closes = dates.filter_map { |d| opening.day(d).periods.last&.end&.then { hour_on(d, _1, round_up: true) } }
+      weekly = dates.filter_map { opening.day(_1).hours }
+      opens = weekly.map { clock_hour(_1[0]) }
+      closes = weekly.map { |(open, close)| WeeklyHours.end_of_day?(close) || close <= open ? 24 : clock_hour(close, round_up: true) }
       timed = visits.reject(&:anytime?)
-      from = [ *(opening.set? && opens.any? ? opens : [ DEFAULT_HOURS.first ]), *timed.map { hour_on(_1.scheduled_on, _1.starts_at) } ].min
-      to = [ *(opening.set? && closes.any? ? closes : [ DEFAULT_HOURS.last ]), *timed.map { hour_on(_1.scheduled_on, _1.ends_at, round_up: true) } ].max
+      from = [ *(opens.any? ? opens : [ DEFAULT_HOURS.first ]), *timed.map { hour_on(_1.scheduled_on, _1.starts_at) } ].min
+      to = [ *(closes.any? ? closes : [ DEFAULT_HOURS.last ]), *timed.map { hour_on(_1.scheduled_on, _1.ends_at, round_up: true) } ].max
       from = from.clamp(0, 23)
       to = to.clamp(from + 1, 24)
       from...to
@@ -109,7 +118,10 @@ class ScheduleView
     @members ||= business.business_users.active.includes(:user).map(&:user).sort_by { _1.full_name.downcase }
   end
 
-  def color_for(user) = COLORS[members.index(user).to_i % COLORS.size]
+  def color_for(user)
+    index = members.index(user)
+    index ? COLORS[index % COLORS.size] : "none" # someone no longer on the team
+  end
 
   def visit_color(visit)
     return "status-#{visit.status.dasherize}" if @color_by == "status"
@@ -127,7 +139,9 @@ class ScheduleView
   def unassigned_count = all_visits_in_period.count { _1.assignments.empty? }
 
   # Open jobs with no visit booked: the "Needs scheduling" panel.
-  def unscheduled_jobs = Job.where(status: "unscheduled").includes(:client, :property).order(created_at: :desc).limit(20)
+  UNSCHEDULED_SHOWN = 20
+  def unscheduled_jobs = Job.where(status: "unscheduled").includes(:client, :property).order(:created_at, :id).limit(UNSCHEDULED_SHOWN)
+  def unscheduled_count = @unscheduled_count ||= Job.where(status: "unscheduled").count
 
   private
 
@@ -141,6 +155,11 @@ class ScheduleView
   def opening = @opening ||= OpeningHours.new(business)
 
   def midnight(date) = business.local_time(date, "00:00")
+
+  def clock_hour(clock, round_up: false)
+    hour, minute = clock.split(":").map(&:to_i)
+    round_up && minute.positive? ? hour + 1 : hour
+  end
 
   # Wall-clock minutes into `date` (1440 for its next midnight), so a DST day still lines up
   # with the hour labels.

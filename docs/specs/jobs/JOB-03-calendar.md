@@ -44,8 +44,12 @@ or one person — spot gaps, and move work around quickly, on a desktop or a pho
   duration), the same span the JOB-02 overlap warnings use.
 - Visits that overlap share their day's width side by side; a short visit is drawn at least
   22 px tall so its text can be read.
+- The grid's hours come from the weekly hours, so a closure at the start or end of a day is
+  shaded on it. Short visits are drawn at least 22 px tall, and blocks that would touch sit side by side.
+- Someone no longer on the team isn't a filter, and their visits are drawn in the neutral color.
 - On phones the agenda comes first and this week's past days are folded into "Earlier this week".
-- Measured: a week of 200 visits for 10 people renders in about 0.6 s with 23 queries (test).
+- Measured: a week of 200 visits for 10 people renders in well under a second with 25 queries,
+  cached ones included (test).
 
 ## Out of scope
 
