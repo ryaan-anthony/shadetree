@@ -699,7 +699,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000400) do
     t.jsonb "data", default: {}, null: false
     t.datetime "occurred_at", null: false
     t.index ["visit_id"], name: "index_visit_events_on_visit_id"
-    t.check_constraint "kind::text = ANY (ARRAY['scheduled'::character varying, 'rescheduled'::character varying, 'reassigned'::character varying, 'cancelled'::character varying, 'restored'::character varying, 'started'::character varying, 'completed'::character varying, 'reopened'::character varying]::text[])", name: "visit_events_kind"
+    t.check_constraint "kind::text = ANY (ARRAY['scheduled'::character varying, 'rescheduled'::character varying, 'reassigned'::character varying, 'updated'::character varying, 'cancelled'::character varying, 'restored'::character varying, 'started'::character varying, 'completed'::character varying, 'reopened'::character varying]::text[])", name: "visit_events_kind"
   end
 
   create_table "visits", force: :cascade do |t|

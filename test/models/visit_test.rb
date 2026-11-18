@@ -51,7 +51,7 @@ class VisitTest < ActiveSupport::TestCase
       assert_equal 90, @job.visits.new(duration_hours: "1.5").duration_minutes
       outsider = User.create!(email: "x@example.com", password: "password123", confirmed_at: Time.current)
       assert_includes @job.visits.new(scheduled_on: Date.new(2026, 11, 24), assignee_ids: [ outsider.id ]).tap(&:validate).errors.full_messages,
-                      "Assignee ids must be members of your team"
+                      "Only people on your team can be assigned."
     end
   end
 
@@ -63,7 +63,9 @@ class VisitTest < ActiveSupport::TestCase
       v.restore!(by: @owner)
       assert_equal %w[scheduled rescheduled reassigned cancelled restored], v.events.map(&:kind)
       moved = v.events.find_by!(kind: "rescheduled")
-      assert_equal [ "Tue, Nov 24 · Arrive 8–10 am", "Wed, Nov 25 · Arrive 8–10 am" ], [ moved.data["from"], moved.data["to"] ]
+      assert_equal [ "Tue, Nov 24, 2026 · Arrive 8–10 am", "Wed, Nov 25, 2026 · Arrive 8–10 am" ], [ moved.data.dig("from", "when"), moved.data.dig("to", "when") ]
+      assert_equal [ "2026-11-24", "2026-11-25T13:00:00Z" ], [ moved.data.dig("from", "on"), moved.data.dig("to", "starts_at") ]
+      assert_equal [ [ @tech.id ], [ @owner.id ] ], v.events.find_by!(kind: "reassigned").data.values_at("added_ids", "removed_ids")
       assert_equal [ [ @tech.full_name ], [ @owner.full_name ] ], v.events.find_by!(kind: "reassigned").data.values_at("added", "removed")
       assert_equal [ @tech ], v.assignees.to_a
     end
@@ -95,6 +97,53 @@ class VisitTest < ActiveSupport::TestCase
       assert_equal "in_progress", @job.reload.status, "one visit done, one to come"
       @job.cancel!(by: @owner, reason: "Moved")
       assert_equal "cancelled", later.reload.status
+    end
+  end
+
+  test "a visit change only writes the job's status, so the job's own rules can't block it" do
+    as_business(@business) do
+      @job.client.properties.create!(address_line1: "12 Elm St") # the job has no property, which a new job would now need
+      assert_not @job.reload.valid?
+    end
+    v = visit
+    assert_equal "scheduled", @job.reload.status
+    lock = @job.lock_version
+    as_business(@business) { v.cancel!(by: @owner) }
+    assert_equal [ "unscheduled", lock ], [ @job.reload.status, @job.lock_version ], "and an open job form isn't made stale"
+  end
+
+  test "a finished job takes no visit changes, even ones started before it was finished" do
+    v = visit
+    stale = as_business(@business) { Visit.find(v.id) }
+    as_business(@business) { @job.reload.complete!(by: @owner) }
+    as_business(@business) do
+      assert_raises(Visit::NotOpen) { stale.reschedule!({ scheduled_on: Date.new(2026, 12, 2) }, by: @owner) }
+      assert_raises(Visit::NotOpen) { @job.visits.new(scheduled_on: Date.new(2026, 12, 2)).schedule!(by: @owner) }
+    end
+    assert_equal 1, as_business(@business) { @job.visits.count }
+  end
+
+  test "changing only the crew, the duration or the instructions is recorded, and a crew-only change bumps the lock" do
+    v = visit(assignee_ids: [ @owner.id ])
+    as_business(@business) do
+      version = v.lock_version
+      v.reschedule!({ assignee_ids: [ @owner.id, @tech.id ] }, by: @owner)
+      assert_operator v.lock_version, :>, version
+      v.reschedule!({ duration_hours: "3", instructions: "Bring the long ladder" }, by: @owner)
+      assert_equal %w[scheduled reassigned updated], v.events.map(&:kind)
+      assert_equal %w[duration_minutes instructions], v.events.last.data["changed"]
+    end
+  end
+
+  test "someone deactivated stays on a visit until unticked" do
+    v = visit(assignee_ids: [ @tech.id ])
+    BusinessUser.find_by(business: @business, user: @tech).update!(active: false)
+    as_business(@business) do
+      v.reschedule!({ assignee_ids: [ @tech.id ], instructions: "Gate code 4417" }, by: @owner)
+      assert_equal [ @tech ], v.assignees.to_a
+      newcomer = Visit.find(v.id)
+      assert_not @job.visits.new(scheduled_on: Date.new(2026, 12, 1), assignee_ids: [ @tech.id ]).valid?, "but can't be added to a new one"
+      assert newcomer
     end
   end
 

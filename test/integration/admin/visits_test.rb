@@ -54,6 +54,7 @@ class Admin::VisitsTest < ActionDispatch::IntegrationTest
     assert_equal "scheduled", @job.reload.status
     follow_redirect!
     assert_select "#visit-#{visit.uid}", /Tuesday, arrive 8–10 am.*About 2 h.*#{@tech.full_name}.*Gate code 4417/m
+    assert_select "#visit-cancel-#{visit.uid} input[name=reason]", 1, "cancelling asks for a reason"
   end
 
   test "mistakes are shown on the form" do
@@ -73,7 +74,7 @@ class Admin::VisitsTest < ActionDispatch::IntegrationTest
     assert_equal [ Date.new(2026, 11, 26), "exact", Time.utc(2026, 11, 26, 18) ], [ visit.scheduled_on, visit.timing, visit.starts_at ]
     assert_empty as_business(@business) { visit.assignees.to_a }
     get admin_job_path(@job)
-    assert_select "#visit-#{visit.uid} details", /Moved from Tue, Nov 24 · Arrive 8–10 am to Thu, Nov 26 · 1 pm.*Removed #{@tech.full_name}/m
+    assert_select "#visit-#{visit.uid} details", /Moved from Tue, Nov 24, 2026 · Arrive 8–10 am to Thu, Nov 26, 2026 · 1 pm.*Removed #{@tech.full_name}/m
 
     patch admin_job_visit_path(@job, visit), params: { visit: { scheduled_on: "2026-11-27", lock_version: 0 } }
     assert_redirected_to edit_admin_job_visit_path(@job, visit)
@@ -90,14 +91,17 @@ class Admin::VisitsTest < ActionDispatch::IntegrationTest
     patch complete_admin_job_visit_path(@job, visit)
     assert_equal [ "completed", "in_progress" ], [ visit.reload.status, @job.reload.status ]
     patch cancel_admin_job_visit_path(@job, visit)
-    assert_match "already done", flash[:alert]
+    assert_match "already completed", flash[:alert]
   end
 
   test "the job list offers to schedule jobs that need it" do
     get admin_jobs_path(filter: "unscheduled")
     assert_select "#job-#{@job.uid} a[href=?]", new_admin_job_visit_path(@job), "Schedule"
+    assert_select "#job-#{@job.uid}-row a[href=?][aria-label='Schedule #{@job.number}']", new_admin_job_visit_path(@job), 1, "on phones too"
     as_business(@business) { @job.complete!(by: nil) }
     post admin_job_visits_path(@job), params: { visit: { scheduled_on: "2026-11-24", timing: "anytime" } }
     assert_match "Reopen it to schedule visits", flash[:alert]
+    get new_admin_job_visit_path(@job)
+    assert_redirected_to admin_job_path(@job)
   end
 end

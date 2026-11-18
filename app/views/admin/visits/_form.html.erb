@@ -1,9 +1,11 @@
 <%# JOB-02: book or change a visit. Times are in the business's time zone. %>
 <% visit = @visit %>
-<% members = current_business.business_users.active.includes(:user).to_a.sort_by { _1.user.full_name.downcase } %>
+<%# Active members, plus anyone already going who has since been deactivated (kept unless unticked). %>
+<% members = current_business.business_users.includes(:user).select { _1.active? || visit.assignee_ids.include?(_1.user_id) }.sort_by { _1.user.full_name.downcase } %>
+<% zone = current_business.time_zone %>
+<% zone_name = ActiveSupport::TimeZone::MAPPING.key(zone.tzinfo.identifier) || zone.tzinfo.identifier.split("/").last.tr("_", " ") %>
 <%= form_with model: visit, url: (visit.new_record? ? admin_job_visits_path(@job) : admin_job_visit_path(@job, visit)), class: "max-w-2xl space-y-4" do |f| %>
-  <% problems = visit.errors.full_messages - visit.errors.full_messages_for(:scheduled_on) - visit.errors.full_messages_for(:start_time) -
-                visit.errors.full_messages_for(:window_end_time) - visit.errors.full_messages_for(:duration_minutes) %>
+  <% problems = visit.errors.reject { _1.attribute.in?(%i[scheduled_on start_time window_end_time duration_minutes instructions]) }.map(&:full_message) %>
   <% if problems.any? %><div class="banner banner-danger" role="alert"><%= icon "alert-circle" %><p><%= problems.to_sentence %></p></div><% end %>
   <%= f.hidden_field :lock_version if visit.persisted? %>
 
@@ -20,13 +22,14 @@
           <% end %>
         </div>
         <div class="mt-3 hidden flex-wrap items-end gap-2 group-has-[#timing-window:checked]:flex group-has-[#timing-exact:checked]:flex">
-          <div class="w-36"><%= f.field :start_time, as: :time, required: false, label: "From", step: 300 %></div>
-          <div class="hidden w-36 group-has-[#timing-window:checked]:block"><%= f.field :window_end_time, as: :time, required: false, label: "To", step: 300 %></div>
+          <div class="w-36"><%= f.field :start_time, as: :time, required: false, label: "Start", step: 300, "aria-describedby": "visit-zone" %></div>
+          <div class="hidden w-36 group-has-[#timing-window:checked]:block"><%= f.field :window_end_time, as: :time, required: false, label: "Latest arrival", step: 300, "aria-describedby": "visit-zone" %></div>
         </div>
-        <p class="mt-2 text-sm2 text-muted"><%= current_business.time_zone.tzinfo.identifier.split("/").last.tr("_", " ") %> time.</p>
+        <p class="mt-2 text-sm2 text-muted" id="visit-zone">In <%= zone_name %> time.</p>
       </fieldset>
 
-      <div class="w-44"><%= f.field :duration_hours, as: :number, label: "Estimated hours", step: 0.25, min: 0.25, max: 24,
+      <div class="w-44"><%= f.field :duration_hours, as: :number, label: "Estimated hours", step: "any", min: 0.1, max: 24,
+                                    value: (visit.errors[:duration_minutes].any? ? params.dig(:visit, :duration_hours) : visit.duration_hours),
                                     help: (visit.new_record? && @job.visit_minutes_from_items.positive? ? "From the services on this job." : nil) %>
         <% if (error = visit.errors.full_messages_for(:duration_minutes).first) %><p class="error-text"><%= icon "alert-circle" %><%= error.sub("Duration minutes", "Duration") %></p><% end %>
       </div>
@@ -38,7 +41,7 @@
           <% members.each do |member| %>
             <label class="check items-center">
               <%= check_box_tag "visit[assignee_ids][]", member.user_id, visit.assignee_ids.include?(member.user_id), id: "visit_assignee_#{member.user_id}" %>
-              <span><span class="text-ink"><%= member.user.full_name %></span> <span class="text-sm2 text-muted"><%= member.role.capitalize %></span></span>
+              <span><span class="text-ink"><%= member.user.full_name %></span> <span class="text-sm2 text-muted"><%= member.active? ? member.role.capitalize : "No longer on the team" %></span></span>
             </label>
           <% end %>
         </div>

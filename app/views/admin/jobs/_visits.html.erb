@@ -9,7 +9,7 @@
   <% else %>
     <ul class="list">
       <% visits.each do |visit| %>
-        <li id="visit-<%= visit.uid %>" class="items-start <%= "opacity-70" unless visit.open? %>">
+        <li id="visit-<%= visit.uid %>" class="items-start <%= "bg-sunken/50" unless visit.open? %>">
           <div class="w-12 shrink-0 text-center">
             <p class="text-xs font-semibold uppercase text-muted"><%= visit.scheduled_on.strftime("%b") %></p>
             <p class="text-lg font-semibold leading-tight text-ink"><%= visit.scheduled_on.day %></p>
@@ -25,25 +25,43 @@
                 <summary class="cursor-pointer text-muted">History</summary>
                 <ol class="mt-1 space-y-0.5 text-subtle">
                   <% visit.events.each do |event| %>
-                    <li><%= visit_event_text(event) %> · <%= event.user&.full_name || "Someone" %>, <%= local_time(event.occurred_at) %></li>
+                    <li><span class="text-ink"><%= visit_event_text(event) %></span>
+                      <span class="block text-muted"><%= event.user&.full_name || "Someone" %>, <%= local_time(event.occurred_at) %></span></li>
                   <% end %>
                 </ol>
               </details>
             <% end %>
           </div>
           <% if can_schedule %>
+            <div class="contents" data-controller="modal">
             <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
               <button type="button" class="<%= button_classes(:ghost, :sm, :icon) %>" data-menu-target="button" data-action="menu#toggle"
                       aria-haspopup="true" aria-expanded="false" aria-label="Actions for the visit on <%= visit.when_label %>"><%= icon "more-horizontal" %></button>
               <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
                 <% if visit.open? %>
                   <%= link_to edit_admin_job_visit_path(job, visit), class: "menu-item" do %><%= icon "calendar" %> Reschedule or reassign<% end %>
-                  <%= button_to complete_admin_job_visit_path(job, visit), method: :patch, class: "menu-item", form: { class: "contents" } do %><%= icon "check" %> Mark done<% end %>
-                  <%= button_to cancel_admin_job_visit_path(job, visit), method: :patch, class: "menu-item", form: { class: "contents", data: { turbo_confirm: "Cancel the visit on #{visit.when_label}?", turbo_confirm_button: "Cancel visit" } } do %><%= icon "x" %> Cancel visit<% end %>
+                  <%= button_to complete_admin_job_visit_path(job, visit), method: :patch, class: "menu-item",
+                                form: { class: "contents", data: { turbo_confirm: "Mark the visit on #{visit.when_label} completed?", turbo_confirm_button: "Mark completed" } } do %><%= icon "check" %> Mark completed<% end %>
+                  <button type="button" class="menu-item" data-action="modal#open menu#close" aria-haspopup="dialog"><%= icon "x" %> Cancel visit</button>
                 <% elsif visit.status == "cancelled" && job.open? %>
                   <%= button_to restore_admin_job_visit_path(job, visit), method: :patch, class: "menu-item", form: { class: "contents" } do %><%= icon "rotate-ccw" %> Restore<% end %>
                 <% end %>
               </div>
+            </div>
+            <% if visit.open? %>
+              <%= modal id: "visit-cancel-#{visit.uid}", title: "Cancel the visit on #{visit.when_label}?", description: "It stays in the job's history. You can restore it while the job is open." do %>
+                <%= form_with url: cancel_admin_job_visit_path(job, visit), method: :patch, class: "space-y-4" do %>
+                  <div class="field">
+                    <label class="label" for="reason-<%= visit.uid %>">Reason <span class="label-optional">(optional)</span></label>
+                    <%= text_field_tag :reason, nil, id: "reason-#{visit.uid}", class: "input", maxlength: 200, placeholder: "Rain" %>
+                  </div>
+                  <div class="flex justify-end gap-2">
+                    <button type="button" class="<%= button_classes(:secondary) %>" data-action="modal#close">Keep visit</button>
+                    <%= submit_tag "Cancel visit", class: button_classes(:danger), name: nil %>
+                  </div>
+                <% end %>
+              <% end %>
+            <% end %>
             </div>
           <% end %>
         </li>

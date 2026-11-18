@@ -9,9 +9,10 @@ module JobsHelper
     data = event.data
     case event.kind
     when "scheduled" then "Scheduled"
-    when "rescheduled" then "Moved from #{data["from"]} to #{data["to"]}"
+    when "rescheduled" then "Moved from #{data.dig("from", "when") || data["from"]} to #{data.dig("to", "when") || data["to"]}"
     when "reassigned"
       [ ("Added #{data["added"].to_sentence}" if data["added"].present?), ("removed #{data["removed"].to_sentence}" if data["removed"].present?) ].compact.join(", ").upcase_first
+    when "updated" then "Changed the #{data["changed"].map { { "duration_minutes" => "duration", "instructions" => "instructions" }.fetch(_1, _1) }.to_sentence}"
     when "cancelled" then data["reason"] ? "Cancelled: “#{data["reason"]}”" : "Cancelled"
     else event.kind.humanize
     end
