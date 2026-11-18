@@ -26,16 +26,16 @@ when, where and how to reach the business.
 
 - [x] When a visit is scheduled, rescheduled or cancelled, the client receives an email (if the
       client has an email) using the business-branded layout.
-- [ ] A reminder email is sent the day before the visit at a sensible local time (business time
+- [x] A reminder email is sent the day before the visit at a sensible local time (business time
       zone), only for visits still scheduled.
 - [x] Each email links to a client visit page (PLT-12 link) showing business, date, time or
       window, property address, visit instructions intended for the client, and business
       contact options. Cancelled visits show as cancelled.
-- [ ] Owners/Admins can turn each message type on/off in settings, and skip notification for an
+- [x] Owners/Admins can turn each message type on/off in settings, and skip notification for an
       individual change ("don't notify client").
 - [x] Rapid successive edits don't spam the client (changes within a short window are coalesced).
 - [x] Sent messages are recorded per NTF-01 and visible on the job.
-- [ ] Tests cover timing (time zones, DST), suppression settings, coalescing and link scope.
+- [x] Tests cover timing (time zones, DST), suppression settings, coalescing and link scope.
 
 ## Implementation notes
 
@@ -60,6 +60,14 @@ when, where and how to reach the business.
   their emails and on their page.
 - The visit page is the visit's client link (PLT-12), one per visit, lasting until a month after
   the visit's day however often it moves.
+- **Reminders** go out from 10 am the business's time the day before (`VisitRemindersJob`, hourly
+  at :07), for visits still booked, once each; a visit moved to another day (or restored) is
+  reminded again (a new time on the same day isn't). A client emailed about the visit since
+  midnight (booked or moved that morning) isn't also reminded, and one whose email about it is
+  still pending is looked at again the next hour. Runs missed for the rest of that day aren't
+  made up at night. Fixed lead time, as recommended.
+- **Settings:** Settings → Documents → "Visit emails to clients" turns booked, moved, cancelled
+  and reminder emails on or off; with a kind off, its changes still count as what the client knows.
 - The emails are recorded per NTF-01 against the job (`related: job`, kinds `visit_scheduled`,
   `visit_changed`, `visit_cancelled`, `visit_reminder`) and listed on the job page, with one
   about to go shown as pending.

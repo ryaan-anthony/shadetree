@@ -89,4 +89,27 @@ class ClientVisitEmailsTest < ActionDispatch::IntegrationTest
     get admin_job_path(@job)
     assert_select "#client-emails li", text: /Visit booked: .*To maria@example.com.*Sent/m
   end
+
+  test "settings turn each kind of visit email on or off" do
+    get edit_admin_business_path(tab: "documents")
+    assert_select "input[type=checkbox][name='business[client_visit_emails][reminder]'][checked]"
+    patch admin_business_path(tab: "documents"), params: { business: { client_visit_emails: { scheduled: "0", changed: "1", cancelled: "1", reminder: "0" } } }
+    assert_redirected_to edit_admin_business_path(tab: "documents")
+    assert_equal({ "scheduled" => false, "changed" => true, "cancelled" => true, "reminder" => false }, @business.reload.client_visit_emails)
+    @business.update!(client_visit_emails: { cancelled: "0" })
+    assert_equal({ "scheduled" => false, "changed" => true, "cancelled" => false, "reminder" => false }, @business.reload.client_visit_emails, "kinds not given keep their setting")
+
+    get new_admin_job_visit_path(@job)
+    assert_select "input[name=notify_client]", 0, "booking emails are off: nothing to skip"
+    schedule
+    settle
+    assert_empty ActionMailer::Base.deliveries
+    assert as_business(@business) { @job.visits.first.client_up_to_date? }, "and the client isn't told later, as if it were news"
+
+    sign_out :user
+    sign_in member_with_role(:technician)
+    post switch_admin_business_path, params: { business: @business.uid }
+    patch admin_business_path(tab: "documents"), params: { business: { client_visit_emails: { scheduled: "1" } } }
+    assert_response :forbidden
+  end
 end

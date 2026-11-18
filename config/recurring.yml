@@ -13,6 +13,9 @@ production:
   prune_notifications: # NTF-02
     class: PruneNotificationsJob
     schedule: every day at 4:20am
+  visit_reminders: # JOB-05: the day-before reminders, as each business's clock reaches the hour
+    class: VisitRemindersJob
+    schedule: every hour at minute 7
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12

@@ -36,7 +36,10 @@ class VisitClientNotice
       visits.each do |visit|
         next if visit.client_up_to_date? && !emailing.include?(visit)
 
-        visit.update_columns(client_told: visit.client_state)
+        # emailed_at: so tomorrow's reminder isn't sent hours after this email (VisitReminders).
+        state = visit.client_state
+        state["emailed_at"] = Time.current.iso8601 if emailing.include?(visit)
+        visit.update_columns(client_told: state)
       end
       @job.update_columns(client_notice_due_at: nil)
       send_email(changes)
