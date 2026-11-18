@@ -8,3 +8,4 @@
   <div style="margin:0 0 12px;padding:10px 12px;border-left:3px solid #e2e8f0;"><%= simple_format(h(@response.message), style: "margin:0 0 8px;") %></div>
 <% end %>
 <%= render "shared/mailer/button", label: "Open quote", url: @url %>
+<%= render "shared/mailer/notification_settings" %>

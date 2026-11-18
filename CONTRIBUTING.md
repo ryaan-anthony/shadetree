@@ -54,6 +54,20 @@ long branch ([ADR 0015](docs/adr/0015-release-flags.md)).
 
 Flags are for releasing code. What a plan pays for is a separate concept (entitlements, BIL-01).
 
+## Team notifications
+
+Anything that should tell team members something ("Maria approved Q-0042") goes through
+`NotificationType.deliver` (NTF-02). Each member gets an in-app notification; those who want that
+type by email also get the email. To add a type:
+
+1. Add a `Definition` to `NotificationType::ALL`. Give it a kind, the label and hint members see
+   in their email settings, the permission its recipients need, whether it's emailed by default,
+   and an icon.
+2. Call `NotificationType.deliver(kind, business:, title:, path:, subject:, actor:)` where it
+   happens. Pass `email: ->(user) { SomeMailer.with(...).some_email }` for a richer email than the
+   generic one. Pass `to: users` for events about one person's own work, such as their visits.
+3. Test who receives it, and that the person who acted doesn't.
+
 ## Pull requests
 
 - **Small and focused.** Aim for under ~400 changed lines excluding generated files. A spec that

@@ -91,11 +91,19 @@ class Invitation < ApplicationRecord
         membership.save!
         update!(accepted_at: Time.current, accepted_by: user)
         membership
-      end
+      end.tap { notify_accepted(user) }
     end
   end
 
   private
+
+  # NTF-02: the people who manage the team hear that someone joined.
+  def notify_accepted(user)
+    NotificationType.deliver("invitation_accepted", business:, subject: self, actor: user,
+                             title: "#{user.full_name} joined as #{role.capitalize}", path: Rails.application.routes.url_helpers.admin_team_path)
+  rescue StandardError => e
+    Rails.error.report(e, context: { invitation_id: id })
+  end
 
   def not_already_a_member
     member = business&.business_users&.joins(:user)&.find_by("lower(users.email) = ?", email)

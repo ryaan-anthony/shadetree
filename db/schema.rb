@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_16_000800) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_17_000300) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -55,6 +55,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000800) do
     t.string "uid", null: false
     t.datetime "welcome_dismissed_at"
     t.datetime "setup_hidden_at"
+    t.jsonb "notification_emails", default: {}, null: false
     t.index ["business_id", "active"], name: "index_business_users_on_business_id_and_active"
     t.index ["business_id"], name: "index_business_users_on_business_id"
     t.index ["uid"], name: "index_business_users_on_uid", unique: true
@@ -303,6 +304,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000800) do
     t.index ["invited_by_id"], name: "index_invitations_on_invited_by_id"
     t.index ["token_digest"], name: "index_invitations_on_token_digest", unique: true
     t.index ["uid"], name: "index_invitations_on_uid", unique: true
+  end
+
+  create_table "notifications", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "user_id", null: false
+    t.string "uid", null: false
+    t.string "kind", null: false
+    t.string "subject_type"
+    t.bigint "subject_id"
+    t.bigint "actor_id"
+    t.string "title", null: false
+    t.string "body"
+    t.string "path", null: false
+    t.datetime "read_at"
+    t.datetime "created_at", null: false
+    t.index ["business_id", "user_id", "created_at"], name: "index_notifications_on_business_id_and_user_id_and_created_at"
+    t.index ["business_id", "user_id"], name: "index_notifications_unread", where: "(read_at IS NULL)"
+    t.index ["created_at"], name: "index_notifications_on_created_at"
+    t.index ["uid"], name: "index_notifications_on_uid", unique: true
   end
 
   create_table "properties", force: :cascade do |t|
@@ -603,6 +623,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_000800) do
   add_foreign_key "invitations", "businesses", on_delete: :cascade
   add_foreign_key "invitations", "users", column: "accepted_by_id", on_delete: :nullify
   add_foreign_key "invitations", "users", column: "invited_by_id", on_delete: :nullify
+  add_foreign_key "notifications", "businesses", on_delete: :cascade
+  add_foreign_key "notifications", "users", column: "actor_id", on_delete: :nullify
+  add_foreign_key "notifications", "users", on_delete: :cascade
   add_foreign_key "properties", "businesses", on_delete: :cascade
   add_foreign_key "properties", "clients", on_delete: :cascade
   add_foreign_key "quote_events", "businesses"

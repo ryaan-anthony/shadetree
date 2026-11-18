@@ -14,3 +14,4 @@
   <p style="margin:0 0 12px;font-size:13px;color:#64748b;">Matched to your existing client <%= @request.client.display_name %>. Check the details above before you reply.</p>
 <% end %>
 <%= render "shared/mailer/button", label: "Open client", url: @url %>
+<%= render "shared/mailer/notification_settings" %>
