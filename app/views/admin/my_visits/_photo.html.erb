@@ -1,0 +1,10 @@
+<%# locals: (photo:, visit:, removable: true) -%>
+<li class="relative">
+  <%= link_to rails_blob_path(photo, disposition: "inline"), target: "_blank", rel: "noopener", class: "block" do %>
+    <%= image_tag rails_representation_path(photo.variant(:thumb)), alt: "Photo from the visit", loading: "lazy", class: "aspect-square w-full rounded-control bg-sunken object-cover" %>
+  <% end %>
+  <% if removable %>
+    <%= button_to admin_my_visit_photo_path(visit, photo), method: :delete, class: "absolute right-1 top-1 rounded-full bg-black/60 p-1.5 text-white", "aria-label": "Remove this photo",
+                  form: { data: { turbo_confirm: "Remove this photo?", turbo_confirm_button: "Remove" } } do %><%= icon "x", class: "size-4" %><% end %>
+  <% end %>
+</li>

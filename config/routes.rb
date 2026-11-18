@@ -132,6 +132,7 @@ Rails.application.routes.draw do
         patch :reopen
       end
       resources :notes, only: :create, controller: "my_visit_notes"
+      resources :photos, only: %i[create destroy], controller: "my_visit_photos"
     end
 
     # Jobs (JOB-01)
