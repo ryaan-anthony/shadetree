@@ -144,7 +144,7 @@ class Job < ApplicationRecord
   end
 
   def visit_minutes_from_items
-    @visit_minutes_from_items ||= line_items.includes(:catalog_item).sum { (_1.catalog_item&.duration_minutes || 0) * _1.quantity.to_d }.round
+    line_items.includes(:catalog_item).sum { (_1.catalog_item&.duration_minutes || 0) * _1.quantity.to_d }.round
   end
 
   # Visits it still has to happen: scheduled or under way.
