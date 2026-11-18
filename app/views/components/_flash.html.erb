@@ -1,10 +1,16 @@
 <%# locals: (messages:) %>
+<%# flash[:undo] ({ "path", "params" }) puts an Undo button on the notice (JOB-03's calendar moves). %>
+<% undo = messages.delete("undo") %>
 <div class="toast-stack" id="flash" aria-live="polite" role="status">
   <% messages.each do |key, message| %>
     <% tone = flash_tone(key) %>
-    <div class="toast <%= "toast-danger" if tone == :danger %>" data-controller="dismiss" data-dismiss-after-value="<%= tone == :danger ? 0 : 6000 %>">
+    <% with_undo = undo.is_a?(Hash) && tone == :success %>
+    <div class="toast <%= "toast-danger" if tone == :danger %>" data-controller="dismiss" data-dismiss-after-value="<%= tone == :danger || with_undo ? 0 : 6000 %>">
       <%= icon tone %>
       <span><%= message %></span>
+      <% if with_undo %>
+        <%= button_to "Undo", undo["path"], method: :patch, params: undo["params"], class: "font-semibold underline underline-offset-2", form: { class: "contents" } %>
+      <% end %>
       <button type="button" data-action="dismiss#close" aria-label="Dismiss"><%= icon "x" %></button>
     </div>
   <% end %>

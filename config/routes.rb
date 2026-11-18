@@ -122,6 +122,7 @@ Rails.application.routes.draw do
     # The team calendar (JOB-03)
     get "schedule", to: "schedule#show", as: :schedule
     get "schedule/visits/:id", to: "schedule#visit", as: :schedule_visit
+    patch "schedule/visits/:id", to: "schedule#move", as: :schedule_move
 
     # The day view for the people going on visits (JOB-04): only their own visits.
     get "my-day", to: "my_day#show", as: :my_day

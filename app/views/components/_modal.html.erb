@@ -1,5 +1,5 @@
-<%# locals: (id:, title:, description:, footer:, body:) %>
-<dialog id="<%= id %>" class="modal" aria-labelledby="<%= id %>-title" <%= %(aria-describedby="#{id}-description").html_safe if description %>
+<%# locals: (id:, title:, description:, footer:, body:, sheet: false) %>
+<dialog id="<%= id %>" class="modal<%= " modal-sheet" if sheet %>" aria-labelledby="<%= id %>-title" <%= %(aria-describedby="#{id}-description").html_safe if description %>
         data-modal-target="dialog" data-action="click->modal#backdropClose">
   <div class="modal-head">
     <div>

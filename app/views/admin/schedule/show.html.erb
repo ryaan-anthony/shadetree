@@ -109,23 +109,40 @@
       <% end %>
     </div>
 
-    <%# Desktop: the time grid, "anytime" visits in a row above it. %>
-    <div class="card hidden overflow-hidden md:block" id="schedule-grid" style="--cal-days: <%= s.dates.size %>">
-      <div class="cal-grid border-b border-line">
+    <%# Desktop: the time grid, "anytime" visits in a row above it. A day for everyone has a column
+        per person. Visits can be dragged to another day, time or person (schedule_drag_controller). %>
+    <% params_now = { view: s.view, member: s.member }.compact_blank %>
+    <div class="card hidden overflow-x-auto md:block" id="schedule-grid" style="--cal-days: <%= s.columns.size %>"
+         data-controller="schedule-drag" data-schedule-drag-first-hour-value="<%= s.hours.first %>" data-schedule-drag-hour-px-value="<%= ScheduleView::HOUR_PX %>"
+         data-schedule-drag-url-value="<%= admin_schedule_move_path("ID") %>" data-schedule-drag-context-value="<%= params_now.to_json %>">
+      <div class="cal-grid border-b border-line <%= "cal-wide" if s.columns.size > 7 %>">
         <div></div>
-        <% s.dates.each do |date| %>
-          <div class="border-l border-line-2 px-2 py-2 text-sm2 <%= date == s.business.today ? "font-semibold text-ink" : "text-muted" %>" <%= 'aria-current="date"'.html_safe if date == s.business.today %>>
-            <%= link_to admin_schedule_path(schedule_link_params(s, view: "day", date: date.iso8601)), class: "hover:underline" do %><%= date.strftime("%a") %> <span class="text-base font-semibold text-ink"><%= date.day %></span><% end %>
-            <% s.closures_on(date).each do |closure| %><span class="block truncate text-xs text-muted" title="<%= closure.reason %>">Closed: <%= closure.reason %></span><% end %>
+        <% s.columns.each do |column| %>
+          <% date = column.date %>
+          <% today = date == s.business.today && !s.by_person? %>
+          <div class="min-w-0 border-l border-line-2 px-2 py-2 text-sm2 <%= today ? "font-semibold text-ink" : "text-muted" %>" <%= 'aria-current="date"'.html_safe if today %>>
+            <% if column.member == :none %>
+              <%= link_to "Nobody yet", admin_schedule_path(schedule_link_params(s, member: "unassigned")), class: "block truncate font-medium text-ink hover:underline" %>
+            <% elsif column.member %>
+              <%= link_to admin_schedule_path(schedule_link_params(s, member: column.member.id)), class: "flex items-center gap-1.5 font-medium text-ink hover:underline" do %>
+                <span class="cal-dot cal-<%= s.color_for(column.member) %>" aria-hidden="true"></span><span class="truncate"><%= column.member.full_name %></span>
+              <% end %>
+            <% else %>
+              <%= link_to admin_schedule_path(schedule_link_params(s, view: "day", date: date.iso8601)), class: "hover:underline" do %><%= date.strftime("%a") %> <span class="text-base font-semibold text-ink"><%= date.day %></span><% end %>
+              <% s.closures_on(date).each do |closure| %><span class="block truncate text-xs text-muted" title="<%= closure.reason %>">Closed: <%= closure.reason %></span><% end %>
+            <% end %>
           </div>
         <% end %>
       </div>
-      <div class="cal-grid border-b border-line bg-sunken/40">
+      <div class="cal-grid border-b border-line bg-sunken/40 <%= "cal-wide" if s.columns.size > 7 %>">
         <div class="py-1.5 pr-2 text-right text-xs text-faint">Anytime</div>
-        <% s.dates.each do |date| %>
-          <div class="min-h-9 min-w-0 space-y-1 border-l border-line-2 p-1" role="group" aria-label="Anytime, <%= date.strftime("%A, %B %-d") %>">
-            <% s.anytime_on(date).each do |visit| %>
-              <%= link_to admin_schedule_visit_path(visit), class: "cal-chip cal-#{s.visit_color(visit)}", id: "cal-visit-#{visit.uid}", data: { turbo_frame: "schedule_visit" } do %>
+        <% s.columns.each do |column| %>
+          <% date = column.date %>
+          <div class="min-h-9 min-w-0 space-y-1 border-l border-line-2 p-1" role="group" aria-label="Anytime, <%= schedule_column_label(column) %>"
+               data-schedule-drag-target="column" data-kind="anytime" data-date="<%= date.iso8601 %>" data-member="<%= column.member_key %>">
+            <% s.anytime_in(column).each do |visit| %>
+              <%= link_to admin_schedule_visit_path(visit, params_now), class: "cal-chip cal-#{s.visit_color(visit)}", id: schedule_visit_id(visit, column, s),
+                          data: { turbo_frame: "schedule_visit", **schedule_drag_data(visit, column) } do %>
                 <span class="block truncate font-semibold"><%= visit.job.client.display_name %> <span class="sr-only">, anytime <%= date.strftime("%A, %B %-d") %></span></span>
                 <span class="block truncate"><%= visit.job.title %><%= ", #{visit.job.property.city}" if visit.job.property&.city.present? %> · <%= crew_first_names(visit) %></span>
               <% end %>
@@ -134,15 +151,18 @@
         <% end %>
       </div>
       <div class="max-h-[42rem] overflow-y-auto pt-2">
-        <div class="cal-grid" style="height: <%= s.grid_height %>px">
+        <div class="cal-grid <%= "cal-wide" if s.columns.size > 7 %>" style="height: <%= s.grid_height %>px">
           <div><% s.hours.each do |hour| %><div class="cal-hour"><%= hour_label(hour) %></div><% end %></div>
-          <% s.dates.each do |date| %>
-            <div class="cal-day" role="group" aria-label="<%= date.strftime("%A, %B %-d") %>">
+          <% s.columns.each do |column| %>
+            <% date = column.date %>
+            <div class="cal-day" role="group" aria-label="<%= schedule_column_label(column) %>"
+                 data-schedule-drag-target="column" data-kind="timed" data-date="<%= date.iso8601 %>" data-member="<%= column.member_key %>">
               <% s.shades_on(date).each do |shade| %><div class="cal-shade" style="top: <%= shade.top %>px; height: <%= shade.height %>px"></div><% end %>
-              <% s.placed_on(date).each do |placed| %>
+              <% s.placed_in(column).each do |placed| %>
                 <% visit = placed.visit %>
                 <% width = 100.0 / placed.columns %>
-                <%= link_to admin_schedule_visit_path(visit), class: "cal-visit cal-#{s.visit_color(visit)}", id: "cal-visit-#{visit.uid}", data: { turbo_frame: "schedule_visit" },
+                <%= link_to admin_schedule_visit_path(visit, params_now), class: "cal-visit cal-#{s.visit_color(visit)}", id: schedule_visit_id(visit, column, s),
+                            data: { turbo_frame: "schedule_visit", **schedule_drag_data(visit, column) },
                             style: "top: #{placed.top}px; height: #{placed.height}px; left: calc(#{(width * placed.column).round(3)}% + 2px); width: calc(#{width.round(3)}% - 4px)" do %>
                   <span class="block font-semibold"><%= visit.time_label.delete_prefix("Arrive ") %> <%= visit.job.client.display_name %><span class="sr-only">, <%= date.strftime("%A, %B %-d") %></span></span>
                   <span class="block truncate"><%= visit.job.title %><%= ", #{visit.job.property.city}" if visit.job.property&.city.present? %></span>
@@ -153,6 +173,7 @@
           <% end %>
         </div>
       </div>
+      <p class="sr-only" role="status" data-schedule-drag-target="status"></p>
     </div>
   </div>
 </div>
