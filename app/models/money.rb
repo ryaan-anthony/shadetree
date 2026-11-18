@@ -41,6 +41,8 @@ class Money
     raise ArgumentError, "Use a String, Integer, Rational or BigDecimal for money, not Float" if amount.is_a?(Float)
 
     decimal = amount.is_a?(String) ? BigDecimal(amount.strip.delete(",").delete_prefix("$")) : self.decimal(amount)
+    raise ArgumentError, "Not finite" unless decimal.finite? # "Infinity", "NaN"
+
     currency = self.currency(currency_code)
     new((decimal * (10**currency.exponent)).round(0, ROUNDING).to_i, currency.code)
   rescue ArgumentError, TypeError => error
