@@ -34,6 +34,7 @@ class Invoice < ApplicationRecord
            dependent: :delete_all, autosave: true
   has_many :events, -> { order(:occurred_at, :id) }, class_name: "InvoiceEvent", inverse_of: :invoice, dependent: :delete_all
   has_many :revisions, -> { order(:number) }, class_name: "InvoiceRevision", inverse_of: :invoice, dependent: :delete_all
+  has_many :payments, -> { chronological }, inverse_of: :invoice, dependent: :restrict_with_exception # PAY-05
   has_many :sends, -> { recent }, class_name: "InvoiceSend", inverse_of: :invoice, dependent: :delete_all
   has_many :email_messages, as: :related, dependent: :nullify
 
@@ -232,6 +233,66 @@ class Invoice < ApplicationRecord
   # A draft that was never sent can be deleted; anything sent is voided instead (part 2).
   def deletable? = draft? && sent_at.nil?
 
+  # PAY-05: payments. One can be recorded on a sent invoice with a balance, or on a draft (paid
+  # on the spot: recording marks it sent too), but not on a revision being prepared.
+  def payable? = (status.in?(OUTSTANDING) || (draft? && !revising?)) && total_cents.positive? && line_items.any?
+
+  # Records a cash, check, transfer or other payment. Returns the Payment; if it isn't valid
+  # (or is more than the balance) nothing changes and the errors are on it.
+  def record_payment!(by:, **attributes)
+    transaction do
+      lock!
+      payment = payments.new(business:, currency:, source: "recorded", recorded_by: by)
+      payment.assign_attributes(attributes)
+      raise ArgumentError, "Invoice #{number} can't take a payment now." unless payable?
+      return payment unless payment_fits?(payment, available: balance.cents)
+
+      if draft?
+        issued, due = dates_when_sent
+        update!(status: "sent", sent_at: Time.current, sent_by: by, issued_on: issued, due_on: due)
+        record!(:sent, by:, channel: "payment", revision:)
+      end
+      payment.save!
+      record!(:payment_recorded, by:, payment: payment.uid, **payment.summary)
+      apply_payments!(by:)
+      payment
+    end
+  end
+
+  # Corrects a recorded payment, with a reason; the history keeps what it was.
+  def change_payment!(payment, by:, reason:, **attributes)
+    adjust_payment(payment, by:, reason:) do
+      before = payment.summary
+      payment.assign_attributes(attributes)
+      next payment unless payment_fits?(payment, available: balance.cents + payment.amount_cents_was.to_i)
+
+      payment.save!
+      record!(:payment_changed, by:, payment: payment.uid, reason: reason.to_s.squish.first(200), before:, after: payment.summary)
+      payment
+    end
+  end
+
+  def delete_payment!(payment, by:, reason:)
+    adjust_payment(payment, by:, reason:) do
+      payment.destroy!
+      record!(:payment_deleted, by:, payment: payment.uid, reason: reason.to_s.squish.first(200), **payment.summary)
+      payment
+    end
+  end
+
+  # The amount paid, status and paid time from the payments: Paid once they cover the total
+  # (paid_at: then), Partly paid, or back to Sent. Active client links follow (PLT-12): a year
+  # after payment once it's paid, no end while it isn't.
+  def apply_payments!(by: nil)
+    paid_cents = payments.unscope(:order).sum(:amount_cents)
+    status = if paid_cents >= total_cents then "paid" elsif paid_cents.positive? then "partially_paid" else "sent" end
+    changed = status != self.status
+    assign_attributes(amount_paid_cents: paid_cents, status:, paid_at: (status == "paid" ? (paid_at || Time.current) : nil))
+    save!(validate: false)
+    record!({ "paid" => :paid, "partially_paid" => :partially_paid, "sent" => :reopened }.fetch(status), by:) if changed
+    ClientLink.active.where(linkable: self).update_all(expires_at: client_link_expires_at)
+  end
+
   def record!(kind, by: nil, **data) = InvoiceEvent.record!(self, kind, by:, **data)
 
   # The list's tabs. Overdue and awaiting payment depend on the business's today.
@@ -275,10 +336,9 @@ class Invoice < ApplicationRecord
     ClientLink.active.where(linkable: self).order(created_at: :desc).first || ClientLink.issue!(self)
   end
 
-  # (Measured from the last change until PAY-05 records when the payment that settled it came.)
   def client_link_expires_at
     case status
-    when "paid" then updated_at + CLIENT_LINK_AFTER_PAID
+    when "paid" then (paid_at || updated_at) + CLIENT_LINK_AFTER_PAID
     when "void" then (voided_at || updated_at) + CLIENT_LINK_AFTER_PAID
     end
   end
@@ -320,6 +380,33 @@ class Invoice < ApplicationRecord
   end
 
   private
+
+  # A payment can't be more than what's owed on the invoice.
+  def payment_fits?(payment, available:)
+    return false unless payment.valid?
+
+    if payment.amount_cents > available
+      payment.errors.add(:amount, "is more than the #{payments? ? "balance" : "amount due"} (#{Money.new(available, currency).format})")
+      return false
+    end
+    true
+  end
+
+  # Changing or deleting a payment: only recorded ones, only on a sent invoice, with a reason.
+  def adjust_payment(payment, by:, reason:)
+    raise ArgumentError, "Say why." if reason.to_s.squish.empty?
+
+    transaction do
+      lock!
+      payment.lock!
+      raise ArgumentError, "Online payments can't be changed here." if payment.online?
+      raise ArgumentError, "Invoice #{number} is void." if void?
+
+      result = yield
+      apply_payments!(by:) if result.errors.empty?
+      result
+    end
+  end
 
   # Puts back what a revision recorded (Invoice#snapshot), for discard_revision!.
   def restore_snapshot(data)

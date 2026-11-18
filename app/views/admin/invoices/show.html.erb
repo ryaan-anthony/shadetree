@@ -1,8 +1,11 @@
-<%# PAY-01: an invoice that's no longer a draft, with the client's view and its PDF (PAY-02). Payments are PAY-04/PAY-05. %>
+<%# PAY-01: an invoice that's no longer a draft, with the client's view and its PDF (PAY-02), and its payments (PAY-05). %>
 <% invoice = @invoice %>
 <% totals = invoice.totals %>
 <% content_for :title, "Invoice #{invoice.number}" %>
 <%= page_header "Invoice #{invoice.number}", lede: safe_join([ "For ", link_to(invoice.client.display_name, admin_client_path(invoice.client), class: "font-medium text-ink hover:underline") ]) do %>
+  <% if invoice.payable? %>
+    <%= link_to new_admin_invoice_payment_path(invoice), class: button_classes(:primary) do %><%= icon "dollar-sign" %> Record payment<% end %>
+  <% end %>
   <% if invoice.revisable? %>
     <%= button_to revise_admin_invoice_path(invoice), class: button_classes(:secondary),
                   form: { class: "contents", data: { turbo_confirm: "This reopens #{invoice.number} as a draft to correct. Until you send the new version it isn't counted as awaiting payment, and #{invoice.client.display_name}'s link says the invoice is being updated.", turbo_confirm_button: "Revise" } } do %><%= icon "edit-3" %> Revise<% end %>
@@ -61,6 +64,7 @@
   </div>
 
   <aside class="space-y-4">
+    <% unless invoice.void? && invoice.payments.none? %><%= render "payments", invoice: %><% end %>
     <% if invoice.revisions.any? %>
       <%= card title: "Revisions", flush: true do %>
         <ol class="list"><% invoice.revisions.each do |revision| %>

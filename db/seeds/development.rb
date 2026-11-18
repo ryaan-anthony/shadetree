@@ -169,7 +169,8 @@ Tenancy.with_business(business) do
   end
 end
 
-# PAY-01/PAY-02: the approved quote billed and sent by link, and a draft for the gutter job.
+# PAY-01/PAY-02: the approved quote billed and sent by link (half paid, PAY-05), and a draft
+# for the gutter job.
 Tenancy.with_business(business) do
   owner = User.find_by!(email: "owner@example.com")
   approved = Quote.find_by(status: "approved")
@@ -177,6 +178,11 @@ Tenancy.with_business(business) do
     invoice = Invoice.from_quote!(approved, by: owner)
     invoice.mark_sent!(by: owner, channel: "link")
     invoice.client_link!
+  end
+  # PAY-05: part of it paid by check.
+  if invoice && invoice.payments.none?
+    invoice.record_payment!(by: owner, amount: Money.new(invoice.total_cents / 2, invoice.currency), received_on: business.today, payment_method: "check",
+                            reference: "1042", note: "Half now, the rest when the job's done.")
   end
   gutters = Job.find_by(title: "Gutter cleaning")
   Invoice.from_job!(gutters, by: owner) if gutters && Invoice.where(job: gutters).none?

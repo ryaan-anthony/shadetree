@@ -12,14 +12,24 @@ module InvoicesHelper
   end
 
   EVENT_LABELS = { "created" => "Created", "sent" => "Sent", "revised" => "Revised", "revision_discarded" => "Changes discarded", "partially_paid" => "Partly paid",
-                   "paid" => "Paid", "voided" => "Voided", "reopened" => "Reopened" }.freeze
+                   "paid" => "Paid", "voided" => "Voided", "reopened" => "Awaiting payment again",
+                   "payment_recorded" => "Payment recorded", "payment_changed" => "Payment changed", "payment_deleted" => "Payment deleted" }.freeze
+
+  # "$50.00 by check #1042 on Nov 18, 2026", from Payment#summary.
+  def payment_summary_text(summary)
+    method = Payment::METHODS.fetch(summary["method"], summary["method"]).downcase
+    method = "#{method} #{summary["reference"]}" if summary["reference"]
+    "#{money(Money.new(summary["amount_cents"].to_i, summary["currency"]))} by #{method} on #{l(Date.iso8601(summary["received_on"]))}"
+  end
 
   # One line of its history: "Created from job J-0004 by Maria".
   def invoice_event_text(event)
     from = " from #{event.data["from"]} #{event.data["number"]}" if event.kind == "created" && event.data["from"]
     reason = ": “#{event.data["reason"]}”" if event.data["reason"].present?
     by = " by #{event.user.full_name}" if event.user
-    how = { "email" => " by email", "link" => " as a link" }[event.data["channel"]] if event.kind == "sent"
+    how = { "email" => " by email", "link" => " as a link", "payment" => " with a payment" }[event.data["channel"]] if event.kind == "sent"
+    how = ": #{payment_summary_text(event.data["after"] || event.data)}" if event.kind.start_with?("payment_")
+    how = ": #{payment_summary_text(event.data["before"])} → #{payment_summary_text(event.data["after"])}" if event.kind == "payment_changed"
     revision = " (revision #{event.data["revision"]})" if event.kind == "sent" && event.data["revision"].to_i > 1
     "#{EVENT_LABELS.fetch(event.kind)}#{how}#{revision}#{from}#{by}#{reason}"
   end

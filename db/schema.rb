@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_19_000100) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_19_000200) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -437,6 +437,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_000100) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "revision", default: 1, null: false
+    t.datetime "paid_at"
     t.index ["business_id", "number"], name: "index_invoices_on_business_id_and_number", unique: true
     t.index ["business_id", "status", "due_on"], name: "index_invoices_on_business_id_and_status_and_due_on"
     t.index ["business_id"], name: "index_invoices_on_business_id"
@@ -539,6 +540,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_000100) do
     t.index ["business_id", "user_id"], name: "index_notifications_unread", where: "(read_at IS NULL)"
     t.index ["created_at"], name: "index_notifications_on_created_at"
     t.index ["uid"], name: "index_notifications_on_uid", unique: true
+  end
+
+  create_table "payments", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.bigint "invoice_id", null: false
+    t.string "source", default: "recorded", null: false
+    t.string "payment_method", null: false
+    t.bigint "amount_cents", null: false
+    t.string "currency", null: false
+    t.date "received_on", null: false
+    t.string "reference"
+    t.text "note"
+    t.bigint "recorded_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "invoice_id"], name: "index_payments_on_business_id_and_invoice_id"
+    t.index ["business_id", "uid"], name: "index_payments_on_business_id_and_uid", unique: true
+    t.index ["invoice_id"], name: "index_payments_on_invoice_id"
+    t.index ["recorded_by_id"], name: "index_payments_on_recorded_by_id"
+    t.check_constraint "amount_cents > 0", name: "payments_amount_positive"
+    t.check_constraint "payment_method::text = ANY (ARRAY['cash'::character varying, 'check'::character varying, 'bank_transfer'::character varying, 'other'::character varying, 'card'::character varying]::text[])", name: "payments_payment_method"
+    t.check_constraint "source::text = ANY (ARRAY['recorded'::character varying, 'online'::character varying]::text[])", name: "payments_source"
   end
 
   create_table "properties", force: :cascade do |t|
@@ -939,6 +963,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_000100) do
   add_foreign_key "notifications", "businesses", on_delete: :cascade
   add_foreign_key "notifications", "users", column: "actor_id", on_delete: :nullify
   add_foreign_key "notifications", "users", on_delete: :cascade
+  add_foreign_key "payments", "businesses"
+  add_foreign_key "payments", "invoices"
+  add_foreign_key "payments", "users", column: "recorded_by_id"
   add_foreign_key "properties", "businesses", on_delete: :cascade
   add_foreign_key "properties", "clients", on_delete: :cascade
   add_foreign_key "quote_events", "businesses"

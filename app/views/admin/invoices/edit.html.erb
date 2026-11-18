@@ -18,6 +18,9 @@
             aria-haspopup="true" aria-expanded="false" aria-label="More actions"><%= icon "more-horizontal" %></button>
     <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
       <%= link_to pdf_admin_invoice_path(@invoice), class: "menu-item", data: { turbo: false, action: "quote-builder#download" } do %><%= icon "download" %> Download PDF<% end %>
+      <% if @invoice.payable? %>
+        <%= link_to new_admin_invoice_payment_path(@invoice), class: "menu-item", data: { action: "quote-builder#saveAndGo" } do %><%= icon "dollar-sign" %> Record a payment<% end %>
+      <% end %>
       <% if @invoice.revising? %>
         <%= button_to discard_revision_admin_invoice_path(@invoice), class: "menu-item",
                       form: { class: "contents", data: { turbo_confirm: "Discard your changes to #{@invoice.number}? It goes back to what #{@invoice.client.display_name} was sent.", turbo_confirm_button: "Discard changes" } } do %>
