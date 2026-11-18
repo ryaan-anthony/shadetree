@@ -39,6 +39,7 @@ class Admin::JobsController < Admin::BaseController
   def edit; end
 
   def update
+    stale = params.dig(:job, :lock_version).present? && params.dig(:job, :lock_version).to_i != @job.lock_version
     @job.assign_attributes(job_params)
     @job.property = @job.client.properties.find_by(uid: params.dig(:job, :property).to_s) if params[:job]&.key?(:property)
     if @job.save
@@ -47,6 +48,10 @@ class Admin::JobsController < Admin::BaseController
       render :edit, status: :unprocessable_content
     end
   rescue ActiveRecord::StaleObjectError
+    redirect_to edit_admin_job_path(@job), alert: "#{@job.number} was changed in another tab or by someone else. Here's the latest version."
+  rescue ActiveRecord::RecordNotFound
+    raise unless stale # a line removed in the other tab
+
     redirect_to edit_admin_job_path(@job), alert: "#{@job.number} was changed in another tab or by someone else. Here's the latest version."
   end
 
@@ -73,7 +78,7 @@ class Admin::JobsController < Admin::BaseController
 
   private
 
-  def set_job = @job = Job.includes(:client, :property, :quote, :line_items).find_by_param!(params[:id])
+  def set_job = @job = Job.includes(:client, :property, :quote, line_items: :catalog_item).find_by_param!(params[:id])
 
   # A finished job is read-only until it's reopened.
   def require_open

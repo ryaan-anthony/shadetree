@@ -12,6 +12,10 @@ module DocumentLine
 
     money :unit_price, currency: -> { document_currency }
 
+    # A blank price is zero on every kind of line (the column can't be empty).
+    alias_method :assign_unit_price, :unit_price=
+    define_method(:unit_price=) { |value| assign_unit_price(value.nil? || (value.is_a?(String) && value.strip.empty?) ? "0" : value) }
+
     normalizes :name, with: ->(value) { value.to_s.squish }
     normalizes :description, with: ->(value) { value.to_s.strip.presence }
     normalizes :unit, with: ->(value) { value.to_s.squish.presence }

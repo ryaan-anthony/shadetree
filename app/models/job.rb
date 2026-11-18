@@ -43,7 +43,10 @@ class Job < ApplicationRecord
   validates :title, presence: true, length: { maximum: 120 }
   validates :instructions, :internal_notes, length: { maximum: 5_000 }
   validates :cancel_reason, length: { maximum: 200 }
-  validate { errors.add(:base, "A job can have at most #{MAX_LINES} items.") if line_items.reject(&:marked_for_destruction?).size > MAX_LINES }
+  validate(if: -> { @lines_assigned }) { errors.add(:base, "A job can have at most #{MAX_LINES} items.") if line_items.reject(&:marked_for_destruction?).size > MAX_LINES }
+  # A change to the lines alone still changes the job's row, so its lock_version is checked
+  # (and the lines saved) only if nobody else saved the job since the form was opened.
+  before_save { self.updated_at = Time.current if !new_record? && line_items.any? { _1.changed_for_autosave? } && !changed? }
   validate { errors.add(:property, "must be one of this client's properties") if property && client && property.client_id != client.id }
   # Where the work happens: required once the client has a property (JOB-04 shows the crew the address).
   validate { errors.add(:property, "is needed: choose where the work happens") if property.nil? && client&.properties&.any? }
@@ -181,8 +184,12 @@ class Job < ApplicationRecord
 
   # The rows in the form, in the order they were sent.
   def line_items_attributes=(rows)
+    @lines_assigned = true
     rows = rows.respond_to?(:values) ? rows.values : Array(rows)
-    super(rows.each_with_index.map { |row, index| row.to_h.merge("position" => index) })
+    rows = rows.map(&:to_h)
+    kept, removed = rows.partition { !ActiveModel::Type::Boolean.new.cast(_1["_destroy"]) }
+    kept = kept.first(MAX_LINES + 1) # one over, so the limit is reported rather than silently applied
+    super(kept.each_with_index.map { |row, index| row.merge("position" => index) } + removed)
   end
 
   def tax_rate_list = tax_rates.map { Pricing::TaxRate.new(name: _1["name"], percent: _1["percent"]) }
@@ -197,7 +204,9 @@ class Job < ApplicationRecord
   private
 
   # An added row left empty is ignored rather than an error.
-  def blank_new_line?(row) = row["id"].blank? && %w[name description unit_price catalog_item_uid].all? { row[_1].blank? }
+  def blank_new_line?(row)
+    row["id"].blank? && %w[name description catalog_item_uid].all? { row[_1].blank? } && row["unit_price"].to_s.delete("^1-9").empty?
+  end
 
   def assign_number_and_defaults
     return unless business
