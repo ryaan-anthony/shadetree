@@ -1,6 +1,6 @@
 # PAY-05: money received against an invoice. Recorded by staff (cash, check, bank transfer,
 # other) or, from PAY-04, taken online. An invoice's amount_paid_cents is the sum of its
-# payments, and paid_at is when the payment that settled it arrived (its link's end, PLT-12).
+# payments, and paid_at is when the payment that settled it was recorded (its link's end, PLT-12).
 class CreatePayments < ActiveRecord::Migration[8.1]
   def change
     create_table :payments do |t|

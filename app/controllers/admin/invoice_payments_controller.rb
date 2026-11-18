@@ -18,7 +18,7 @@ class Admin::InvoicePaymentsController < Admin::BaseController
     @payment = @invoice.record_payment!(by: current_user, **payment_params)
     return render(:new, status: :unprocessable_content) if @payment.errors.any?
 
-    redirect_to admin_invoice_path(@invoice), notice: "#{helpers.money(@payment.amount)} recorded. #{balance_notice}#{send_receipt}"
+    redirect_to admin_invoice_path(@invoice), notice: "#{helpers.money(@payment.amount)} recorded. #{balance_notice}#{send_receipt}#{send_nudge}"
   rescue ArgumentError
     redirect_to helpers.staff_invoice_path(@invoice), alert: cannot_pay_message
   end
@@ -30,6 +30,8 @@ class Admin::InvoicePaymentsController < Admin::BaseController
     return render(:edit, status: :unprocessable_content) if @payment.errors.any?
 
     redirect_to admin_invoice_path(@invoice), notice: "Payment changed. #{balance_notice}"
+  rescue ActiveRecord::RecordNotFound # deleted by someone else just now
+    redirect_to admin_invoice_path(@invoice), alert: "That payment isn't there any more."
   rescue ArgumentError => error
     @payment.assign_attributes(payment_params)
     @reason_error = error.message
@@ -39,8 +41,10 @@ class Admin::InvoicePaymentsController < Admin::BaseController
   def destroy
     @invoice.delete_payment!(@payment, by: current_user, reason: params[:reason])
     redirect_to admin_invoice_path(@invoice), notice: "Payment deleted. #{balance_notice}"
+  rescue ActiveRecord::RecordNotFound # deleted by someone else just now
+    redirect_to admin_invoice_path(@invoice), alert: "That payment isn't there any more."
   rescue ArgumentError => error
-    @reason_error = error.message
+    @delete_reason_error = error.message
     render :edit, status: :unprocessable_content
   end
 
@@ -51,7 +55,9 @@ class Admin::InvoicePaymentsController < Admin::BaseController
   # Only recorded payments are changed here.
   def set_payment
     @payment = @invoice.payments.find_by_param!(params[:id])
-    redirect_to admin_invoice_path(@invoice), alert: "Online payments can't be changed here." if @payment.online?
+    if @payment.online? then redirect_to admin_invoice_path(@invoice), alert: "Online payments can't be changed here."
+    elsif @invoice.void? then redirect_to admin_invoice_path(@invoice), alert: "Invoice #{@invoice.number} is void, so its payments can't change."
+    end
   end
 
   def payment_params = params.expect(payment: %i[amount received_on payment_method reference note]).to_h.symbolize_keys
@@ -70,6 +76,9 @@ class Admin::InvoicePaymentsController < Admin::BaseController
       " Receipt on its way to #{to}."
     end
   end
+
+  # A part payment on an invoice the client hasn't been sent yet (paid on the spot).
+  def send_nudge = @invoice.sends.none? && !@invoice.paid? ? " Send the invoice so the client sees what's left." : ""
 
   def balance_notice
     @invoice.reload

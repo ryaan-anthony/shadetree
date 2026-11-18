@@ -47,7 +47,7 @@ class Admin::InvoicePaymentsTest < ActionDispatch::IntegrationTest
     assert fresh.paid_at
     follow_redirect!
     assert_select "#payment-#{payment.uid}", /Check 1042.*Recorded by .*\$50\.00/m
-    assert_select "li", /Payment recorded: \$50\.00 by check 1042 on/
+    assert_select "li", /Payment recorded: \$50\.00, check \(1042\), received/
     assert_select "li", /Paid by/
     assert_select "a[href=?]", new_admin_invoice_payment_path(@invoice), 0, "nothing left to pay"
   end
@@ -60,6 +60,10 @@ class Admin::InvoicePaymentsTest < ActionDispatch::IntegrationTest
     assert_select ".field", /must be more than zero/
     record("abc")
     assert_select ".field", /not a valid amount/
+    %w[Infinity NaN -Infinity].each do |amount|
+      record(amount)
+      assert_select ".field", /not a valid amount/
+    end
     record("10", received_on: (@today + 1).iso8601)
     assert_select ".field", /can't be in the future/
     assert_equal [ "sent", 0 ], [ fresh.status, fresh.amount_paid_cents ]
@@ -81,6 +85,8 @@ class Admin::InvoicePaymentsTest < ActionDispatch::IntegrationTest
     record("200")
     assert_equal [ "paid", @owner ], [ fresh.status, fresh.sent_by ]
     assert_equal %w[created sent payment_recorded paid], as_business(@business) { fresh.events.map(&:kind) }
+    follow_redirect!
+    assert_select "li", /Marked sent \(paid on the spot\)/
 
     as_business(@business) { @invoice.update_columns(status: "draft", revision: 2, amount_paid_cents: 0) }
     get new_admin_invoice_payment_path(@invoice)
@@ -105,14 +111,18 @@ class Admin::InvoicePaymentsTest < ActionDispatch::IntegrationTest
     assert_redirected_to admin_invoice_path(@invoice)
     assert_equal [ "partially_paid", 12_000, nil ], [ fresh.status, fresh.amount_paid_cents, fresh.paid_at ]
     follow_redirect!
-    assert_select "li", /Payment changed: \$200\.00 by check 1042 on .* → \$120\.00 by check 1042 on .*“Typed the wrong amount”/
+    assert_select "li", /Payment changed: \$200\.00, check \(1042\), received .* → \$120\.00, check \(1042\), received .*“Typed the wrong amount”/
     assert_select "li", /Partly paid/
 
+    delete admin_invoice_payment_path(@invoice, payment), params: { reason: "  " }
+    assert_select "#payment_delete_reason[aria-invalid=true]"
+    assert_select "#payment_delete_reason_error", /Say why/
+    assert_select "#payment_change_reason_error", 0
     delete admin_invoice_payment_path(@invoice, payment), params: { reason: "Check bounced" }
     assert_equal [ "sent", 0 ], [ fresh.status, fresh.amount_paid_cents ]
     assert_empty as_business(@business) { fresh.payments.to_a }
     follow_redirect!
-    assert_select "li", /Payment deleted: \$120\.00 by check 1042 .*“Check bounced”/
+    assert_select "li", /Payment deleted: \$120\.00, check \(1042\), .*“Check bounced”/
     assert_select "li", /Awaiting payment again/
   end
 
@@ -145,6 +155,8 @@ class Admin::InvoicePaymentsTest < ActionDispatch::IntegrationTest
     assert_permission_matrix(owner: true, admin: true, technician: false) { get new_admin_invoice_payment_path(@invoice) }
     assert_permission_matrix(technician: false) { record("1") }
     assert_permission_matrix(technician: false) { delete admin_invoice_payment_path(@invoice, payment), params: { reason: "x" } }
+    assert_permission_matrix(technician: false) { get edit_admin_invoice_payment_path(@invoice, payment) }
+    assert_permission_matrix(technician: false) { patch admin_invoice_payment_path(@invoice, payment), params: { payment: { amount: "1" }, reason: "x" } }
 
     sign_in @owner
     post switch_admin_business_path, params: { business: @business.uid }
@@ -160,5 +172,18 @@ class Admin::InvoicePaymentsTest < ActionDispatch::IntegrationTest
     assert_not_found_across_businesses { post admin_invoice_payments_path(theirs), params: { payment: { amount: "1" } } }
     assert_not_found_across_businesses { get edit_admin_invoice_payment_path(@invoice, their_payment) }
     assert_not_found_across_businesses { delete admin_invoice_payment_path(@invoice, their_payment), params: { reason: "x" } }
+
+    # Another invoice's payment, in the same business.
+    other = as_business(@business) do
+      Invoice.start(client: @invoice.client).tap do |invoice|
+        invoice.sync_line_items([ { "key" => "a", "name" => "Work", "quantity" => "1", "unit_price" => "10" } ])
+        invoice.save!
+      end
+    end
+    get edit_admin_invoice_payment_path(other, payment)
+    assert_response :not_found
+    delete admin_invoice_payment_path(other, payment), params: { reason: "x" }
+    assert_response :not_found
+    assert_equal 5_000, fresh.amount_paid_cents
   end
 end
