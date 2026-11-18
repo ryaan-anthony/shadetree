@@ -74,6 +74,7 @@ class QuoteResponseConcurrencyTest < ActiveSupport::TestCase
     if quote
       as_business(business) do
         QuoteResponse.where(quote_id: quote.id).delete_all
+        Notification.where(subject: quote).delete_all # NTF-02: the approval told the team
         client_id = quote.client_id
         Job.where(client_id:).delete_all # JOB-01: the approval made one
         Quote.where(id: quote.id).delete_all
