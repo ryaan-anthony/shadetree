@@ -46,10 +46,11 @@
       </dl>
     <% end %>
 
-    <%= card title: "Work to do", subtitle: (job.quote ? "Copied from quote #{job.quote.number}." : nil), flush: true do %>
+    <%= card title: "Work to do", subtitle: (job.quote ? "Copied from quote #{job.quote.number}." : nil), flush: true,
+             actions: (link_to("Edit items", edit_admin_job_path(job, items: 1, anchor: "job-items"), class: button_classes(:secondary, :sm)) if job.open?) do %>
       <% lines = job.line_items.to_a %>
       <% if lines.empty? %>
-        <p class="px-5 py-4 text-sm2 text-muted">No items. The instructions below say what the job is.</p>
+        <p class="px-5 py-4 text-sm2 text-muted">No items yet. Add them to invoice from this job, or let the instructions say what it is.</p>
       <% else %>
         <div class="table-wrap">
           <table class="data-table" id="job-lines">

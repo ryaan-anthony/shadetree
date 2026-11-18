@@ -1,9 +1,9 @@
 # One line of work on a job (JOB-01): copied from the approved quote, or added to the job.
-# The job's copy can change on site; the quote keeps what the client agreed to.
+# The job's copy can change on site; the quote keeps what the client agreed to, and the
+# invoice will use these. Shared with quote lines through DocumentLine.
 class JobLineItem < ApplicationRecord
   include BusinessOwned
-  include HasMoney
-  include HasDiscount
+  include DocumentLine
 
   COPIED = %w[catalog_item_id position name description quantity unit unit_price_cents taxable
               discount_kind discount_percent discount_amount_cents].freeze
@@ -11,30 +11,17 @@ class JobLineItem < ApplicationRecord
   belongs_to :job, inverse_of: :line_items
   belongs_to_business_record :catalog_item, optional: true
 
-  money :unit_price, currency: -> { job.currency }
-
-  def discount_currency = job.currency
-
-  normalizes :name, with: ->(value) { value.to_s.squish }
-  normalizes :description, with: ->(value) { value.to_s.strip.presence }
-  normalizes :unit, with: ->(value) { value.to_s.squish.presence }
+  # A nested new line gets its price before its job is attached.
+  def document_currency = job&.currency || business&.currency_code || Current.business.currency_code
 
   before_validation { self.business ||= job&.business }
 
-  validates :name, length: { maximum: 200 }
-  validates :description, length: { maximum: 2_000 }
-  validates :unit, length: { maximum: 20 }
-  validates :quantity, numericality: { greater_than_or_equal_to: 0, less_than: 1_000_000 }
-  validate { errors.add(:unit_price, "is too large") if unit_price_cents.to_i.abs >= 10_000_000_000 }
-  validate { errors.add(:discount_amount, "can't be more than the line") if discount_kind == "amount" && discount_amount_cents.to_i > line_amount_cents }
+  validates :name, presence: { message: "is needed for each item" }
 
-  def to_pricing(rates)
-    Pricing::Line.new(quantity: quantity.to_d, unit_price: unit_price || Money.zero(job.currency),
-                      discount: pricing_discount, tax_rates: taxable ? rates : [])
+  # From the job form: the catalog item by uid (blank for a custom line).
+  def catalog_item_uid = catalog_item&.uid
+
+  def catalog_item_uid=(uid)
+    self.catalog_item_id = catalog_item_id_for(uid.to_s)
   end
-
-  def line_amount_cents = ((unit_price_cents || 0) * (quantity || 0)).round
-
-  # "2.5 hour", "6 cu yd", or just "3" without a unit.
-  def quantity_label = [ quantity.to_d.round(4).to_s("F").sub(/\.?0+\z/, ""), unit ].compact.join(" ")
 end

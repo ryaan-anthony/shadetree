@@ -24,6 +24,9 @@ class Job < ApplicationRecord
   belongs_to :completed_by, class_name: "User", optional: true
   belongs_to :cancelled_by, class_name: "User", optional: true
   has_many :line_items, -> { order(:position, :id) }, class_name: "JobLineItem", inverse_of: :job, dependent: :delete_all
+  accepts_nested_attributes_for :line_items, allow_destroy: true, reject_if: :blank_new_line?
+
+  MAX_LINES = 100
   has_many_attached :attachments do |attachable|
     attachable.variant :web, resize_to_limit: [ 640, 640 ], preprocessed: true
   end
@@ -39,12 +42,18 @@ class Job < ApplicationRecord
   validates :title, presence: true, length: { maximum: 120 }
   validates :instructions, :internal_notes, length: { maximum: 5_000 }
   validates :cancel_reason, length: { maximum: 200 }
+  validate(if: -> { @lines_assigned }) { errors.add(:base, "A job can have at most #{MAX_LINES} items.") if line_items.reject(&:marked_for_destruction?).size > MAX_LINES }
+  # A change to the lines alone still changes the job's row, so its lock_version is checked
+  # (and the lines saved) only if nobody else saved the job since the form was opened.
+  before_save { self.updated_at = Time.current if !new_record? && line_items.any? { _1.changed_for_autosave? } && !changed? }
   validate { errors.add(:property, "must be one of this client's properties") if property && client && property.client_id != client.id }
   # Where the work happens: required once the client has a property (JOB-04 shows the crew the address).
   validate { errors.add(:property, "is needed: choose where the work happens") if property.nil? && client&.properties&.any? }
   validate { errors.add(:client, "is archived") if client&.archived? && (new_record? || will_save_change_to_client_id?) }
 
   before_validation :assign_number_and_defaults, on: :create
+  # Prices typed into a new job's lines need its currency before it's saved.
+  after_initialize { self.currency ||= (business || Current.business)&.currency_code if new_record? }
   before_save :cache_totals
 
   scope :unfinished, -> { where(status: OPEN_STATUSES) }
@@ -93,7 +102,7 @@ class Job < ApplicationRecord
               title: title.truncate(120, separator: " "),
               internal_notes: quote.internal_notes, tax_rates: quote.tax_rates, prices_include_tax: quote.prices_include_tax,
               discount_kind: quote.discount_kind, discount_percent: quote.discount_percent, discount_amount_cents: quote.discount_amount_cents)
-    quote.line_items.each { job.line_items.build(_1.attributes.slice(*JobLineItem::COPIED)) }
+    quote.line_items.each { job.line_items.build(_1.attributes.slice(*JobLineItem::COPIED)).tap { |line| line.name = "Item" if line.name.blank? } }
     transaction(requires_new: true) do # a savepoint: a failure here can't spoil a surrounding approval
       job.save!
       quote.attachments.each { job.attachments.attach(_1.blob) }
@@ -136,6 +145,16 @@ class Job < ApplicationRecord
   # What the visits say (JOB-02 fills this in): a job without visits is unscheduled.
   def visit_status = "unscheduled"
 
+  # The rows in the form, in the order they were sent.
+  def line_items_attributes=(rows)
+    @lines_assigned = true
+    rows = rows.respond_to?(:values) ? rows.values : Array(rows)
+    rows = rows.map(&:to_h)
+    kept, removed = rows.partition { !ActiveModel::Type::Boolean.new.cast(_1["_destroy"]) }
+    kept = kept.first(MAX_LINES + 1) # one over, so the limit is reported rather than silently applied
+    super(kept.each_with_index.map { |row, index| row.merge("position" => index) } + removed)
+  end
+
   def tax_rate_list = tax_rates.map { Pricing::TaxRate.new(name: _1["name"], percent: _1["percent"]) }
 
   def totals
@@ -146,6 +165,11 @@ class Job < ApplicationRecord
   def total = Money.new(total_cents, currency)
 
   private
+
+  # An added row left empty is ignored rather than an error.
+  def blank_new_line?(row)
+    row["id"].blank? && %w[name description catalog_item_uid].all? { row[_1].blank? } && row["unit_price"].to_s.delete("^1-9").empty?
+  end
 
   def assign_number_and_defaults
     return unless business

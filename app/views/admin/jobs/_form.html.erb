@@ -3,7 +3,9 @@
 <%= form_with model: @job, url: (new_job ? admin_jobs_path : admin_job_path(@job)), class: "max-w-2xl space-y-4",
               data: { controller: "property-loader", property_loader_url_value: property_options_admin_quotes_path,
                       property_loader_name_value: "job[property]", action: "client-picker:change->property-loader#load" } do |f| %>
-  <% other_errors = @job.errors.full_messages - @job.errors.full_messages_for(:title) - @job.errors.full_messages_for(:client) %>
+  <% line_errors = @job.errors.attribute_names.any? { _1.to_s.start_with?("line_items") } %>
+  <% other_errors = @job.errors.reject { _1.attribute.in?(%i[title client]) || _1.attribute.to_s.start_with?("line_items") }.map(&:full_message) %>
+  <% other_errors << "Some items need fixing; they're marked below." if line_errors %>
   <% if other_errors.any? %>
     <div class="banner banner-danger" role="alert"><%= icon "alert-circle" %><p><%= other_errors.to_sentence %></p></div>
   <% end %>
@@ -18,14 +20,39 @@
       <% else %>
         <div><p class="label">Client</p><p class="text-sm text-ink"><%= @job.client.display_name %></p></div>
       <% end %>
-      <%= turbo_frame_tag "quote_property", data: { property_loader_target: "frame" } do %>
+      <%= turbo_frame_tag "quote_property", class: "block", data: { property_loader_target: "frame" } do %>
         <%= render "admin/quotes/property_select", client: @job.client, selected: @job.property&.uid, name: "job[property]" %>
       <% end %>
-      <%= f.field :title, maxlength: 120, placeholder: "Spring cleanup", autofocus: !new_job %>
+      <%= f.field :title, maxlength: 120, placeholder: "Spring cleanup", autofocus: !new_job && params[:items].nil? %>
       <%= f.field :instructions, as: :textarea, optional: true, rows: 4, maxlength: 5_000, label: "Instructions for the crew",
                   placeholder: "Park on the street. Leave bagged debris by the side gate.", help: "Everyone assigned to this job's visits sees these." %>
       <%= f.field :internal_notes, as: :textarea, optional: true, rows: 3, maxlength: 5_000, help: "Only Owners and Admins see these." %>
     </div>
+  <% end %>
+
+  <%# The work to do: the job's own copy of the items (the quote it came from doesn't change). %>
+  <% currency = Money.currency(@job.currency).symbol %>
+  <%= card title: "Work to do", subtitle: (@job.quote ? "Changes here don't change quote #{@job.quote.number}; the invoice will use these items." : "Optional. The invoice will use these items.") do %>
+    <div class="space-y-3" id="job-items" data-controller="nested-fields job-lines" data-action="catalog-picker:pick->job-lines#addFromCatalog">
+      <%= f.fields_for :line_items do |line| %>
+        <%= render "admin/jobs/line_fields", f: line, currency:, number: line.index + 1 %>
+      <% end %>
+      <template data-nested-fields-target="template" data-kind="line">
+        <%= f.fields_for :line_items, JobLineItem.new(job: @job, quantity: 1, taxable: true, unit_price_cents: nil), child_index: "NEW_RECORD" do |line| %>
+          <%= render "admin/jobs/line_fields", f: line, currency: %>
+        <% end %>
+      </template>
+      <div class="flex flex-wrap items-end gap-3" data-nested-fields-target="anchor">
+        <div class="min-w-0 flex-1 sm:max-w-sm"><%= render "admin/catalog_items/picker" %></div>
+        <button type="button" class="<%= button_classes(:secondary) %>" data-action="nested-fields#add" data-nested-fields-kind-param="line"><%= icon "plus" %> Add a custom item</button>
+      </div>
+    </div>
+    <% if @job.discount_kind || @job.tax_rates.any? %>
+      <p class="mt-3 text-sm2 text-muted">
+        <%= safe_join([ ("The quote's #{@job.discount_kind == "percent" ? "#{@job.discount_value}%" : money(@job.discount_amount)} discount still applies." if @job.discount_kind),
+                        ("Taxable items are taxed at #{@job.tax_rate_list.map(&:name).to_sentence}." if @job.tax_rates.any?) ].compact, " ") %>
+      </p>
+    <% end %>
   <% end %>
   <div class="flex items-center justify-end gap-2">
     <%= link_to "Cancel", (new_job ? admin_jobs_path : admin_job_path(@job)), class: button_classes(:ghost) %>

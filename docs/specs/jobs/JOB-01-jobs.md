@@ -24,9 +24,11 @@ invoice. Jobs can also be created directly for work agreed by phone.
 
 ## Acceptance criteria
 
-- [ ] Owners/Admins create a job from an approved quote (client, property, line items, notes and
+- [x] Owners/Admins create a job from an approved quote (client, property, line items, notes and
       attachments copied; quote ↔ job linked) or from scratch (client, property, title, line
       items optional, instructions).
+      *Line items can be changed, added and removed on the job form; the quote doesn't change.
+      Job lines need a name and a quantity; a blank price is zero on every kind of line.*
 - [x] Optionally, approving a quote can auto-create the job (business setting, default on;
       may later become an automation recipe, NTF-04). *Settings → Documents → Jobs. It runs after
       the approval is saved, so a failure never undoes the client's answer.*
