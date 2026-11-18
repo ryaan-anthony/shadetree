@@ -22,9 +22,9 @@
             <% if visit.cancel_reason %><p class="mt-1 text-sm2 text-subtle">Cancelled: “<%= visit.cancel_reason %>”</p><% end %>
             <% if (photos = visit.photos.to_a).any? %>
               <ul class="mt-2 flex flex-wrap gap-1.5">
-                <% photos.each do |photo| %>
-                  <li><%= link_to rails_blob_path(photo, disposition: "inline"), target: "_blank", rel: "noopener" do %>
-                    <%= image_tag rails_representation_path(photo.variant(:thumb)), alt: "Photo from the visit", loading: "lazy", class: "size-14 rounded-control bg-sunken object-cover" %><% end %></li>
+                <% photos.each.with_index(1) do |photo, number| %>
+                  <li><%= link_to rails_representation_path(photo.variant(:web)), target: "_blank", rel: "noopener" do %>
+                    <%= image_tag rails_representation_path(photo.variant(:thumb)), alt: "Photo #{number} of #{photos.size} from the #{visit.when_label} visit", loading: "lazy", class: "size-14 rounded-control bg-sunken object-cover" %><% end %></li>
                 <% end %>
               </ul>
             <% end %>

@@ -223,14 +223,21 @@ class Visit < ApplicationRecord
   end
 
   # Adds one photo from site, cleaned like quote photos. Returns an error sentence, or nil.
+  # The count is checked again under the visit's lock, so two phones uploading at once can't
+  # go past the limit; the slow part (re-encoding) happens before taking it.
   def add_photo(file, by:)
-    return "This visit already has #{MAX_PHOTOS} photos." if photos.count >= MAX_PHOTOS
+    full = "This visit already has the most photos it can (#{MAX_PHOTOS})."
+    return full if photos.count >= MAX_PHOTOS
 
     result = LogoUpload.clean_photo(file, max_bytes: PHOTO_MAX_BYTES)
     return "#{file.respond_to?(:original_filename) ? file.original_filename : "That file"} #{result.error.sub("must be a PNG, JPEG or WebP image", "isn't a photo we can use (PNG, JPEG or WebP)")}." if result.error
 
-    photos.attach(result.attachable.merge(metadata: { "uploaded_by" => by&.id }))
-    nil
+    with_lock do
+      next full if photos.count >= MAX_PHOTOS
+
+      photos.attach(result.attachable.merge(metadata: { "uploaded_by" => by&.id }))
+      nil
+    end
   end
 
   # On site (JOB-04): the person going starts the visit.

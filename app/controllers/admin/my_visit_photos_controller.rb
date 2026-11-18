@@ -15,7 +15,7 @@ class Admin::MyVisitPhotosController < Admin::BaseController
     elsif errors.any?
       respond_with_error(errors.first)
     else
-      render partial: "admin/my_visits/photo", locals: { photo: @visit.photos.reload.last, visit: @visit }, status: :created
+      render partial: "admin/my_visits/photo", locals: { photo: @visit.photos.reload.last, visit: @visit, number: @visit.photos.size }, status: :created
     end
   end
 
