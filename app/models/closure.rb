@@ -18,12 +18,13 @@ class Closure < ApplicationRecord
   validate :within_limit, on: :create
 
   before_validation { self.ends_on ||= starts_on }
+  before_validation { self.start_minute = self.end_minute = nil unless part_of_day } # all day: no times
 
   scope :ordered, -> { order(:starts_on, :start_minute, :id) }
 
   # Form fields: part of the day only, and its times as "HH:MM".
   attribute :part_of_day, :boolean
-  after_initialize { self.part_of_day = !start_minute.nil? if part_of_day.nil? }
+  after_initialize { self.part_of_day = !start_minute.nil? if part_of_day.nil? && has_attribute?(:start_minute) }
 
   def start_time = clock(start_minute)
   def end_time = (clock(end_minute) unless end_minute == END_OF_DAY)
@@ -32,9 +33,10 @@ class Closure < ApplicationRecord
     self.start_minute = minutes(value)
   end
 
-  # Left empty: closed for the rest of the day.
+  # Left empty, or midnight: closed for the rest of the day.
   def end_time=(value)
-    self.end_minute = value.to_s.strip.empty? ? END_OF_DAY : minutes(value)
+    minutes = value.to_s.strip.empty? ? END_OF_DAY : minutes(value)
+    self.end_minute = minutes&.zero? ? END_OF_DAY : minutes
   end
 
   def all_day? = start_minute.nil?
@@ -51,6 +53,15 @@ class Closure < ApplicationRecord
 
   # Whether it can still affect a day from `date` on.
   def current?(date) = repeats_yearly || ends_on >= date
+
+  # The first day on or after `date` that it starts or is under way, for listing in order.
+  def next_on(date)
+    return [ starts_on, date ].max unless repeats_yearly
+    return starts_on if date <= starts_on
+
+    years = date.year - starts_on.year
+    [ years - 1, years, years + 1 ].map { starts_on.next_year(_1) }.find { (_1 + (ends_on - starts_on)) >= date }
+  end
 
   # The closed time on a covered date, in the business's zone (ends at the next midnight when
   # all day). A wall-clock time a DST change skips moves ahead, as Business#local_time does.
@@ -75,9 +86,10 @@ class Closure < ApplicationRecord
   def clock(minutes) = minutes && format("%02d:%02d", *minutes.divmod(60))
 
   def minutes(value)
-    return nil unless WeeklyHours::CLOCK.match?(value.to_s.strip)
+    value = WeeklyHours.normalize_clock(value)
+    return nil unless WeeklyHours::CLOCK.match?(value)
 
-    hour, minute = value.to_s.strip.split(":").map { Integer(_1, 10) }
+    hour, minute = value.split(":").map { Integer(_1, 10) }
     (hour * 60) + minute
   end
 
@@ -91,10 +103,7 @@ class Closure < ApplicationRecord
 
   # Part of a day needs both times, on the same day (closures can't run past midnight).
   def times_in_order
-    unless part_of_day
-      self.start_minute = self.end_minute = nil
-      return
-    end
+    return unless part_of_day
 
     errors.add(:start_time, "needs a time") if start_minute.nil?
     errors.add(:end_time, "needs a time") if end_minute.nil?

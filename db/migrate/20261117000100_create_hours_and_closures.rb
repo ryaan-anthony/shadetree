@@ -12,7 +12,7 @@ class CreateHoursAndClosures < ActiveRecord::Migration[8.1]
     add_column :businesses, :weekly_hours, :jsonb
 
     create_table :closures do |t|
-      t.references :business, null: false, foreign_key: true, index: false
+      t.references :business, null: false, foreign_key: { on_delete: :cascade }, index: false
       t.string :uid, null: false
       t.string :reason, null: false
       t.date :starts_on, null: false
@@ -22,7 +22,7 @@ class CreateHoursAndClosures < ActiveRecord::Migration[8.1]
       t.boolean :repeats_yearly, null: false, default: false
       t.timestamps
       t.check_constraint "ends_on >= starts_on", name: "closures_date_order"
-      t.check_constraint "(start_minute IS NULL) = (end_minute IS NULL) AND (start_minute IS NULL OR start_minute < end_minute)", name: "closures_minutes"
+      t.check_constraint "(start_minute IS NULL) = (end_minute IS NULL) AND (start_minute IS NULL OR (start_minute >= 0 AND start_minute < end_minute AND end_minute <= 1440))", name: "closures_minutes"
     end
     add_index :closures, :uid, unique: true
     add_index :closures, %i[business_id ends_on]

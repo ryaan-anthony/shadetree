@@ -30,22 +30,28 @@ class OpeningHours
 
   def day(date)
     date = date.to_date
-    closures = closures_on(date)
-    hours = @weekly.set? ? @weekly.for(date.wday) : nil
-    periods = if !@weekly.set? then [ @business.local_time(date, "00:00")...@business.local_time(date + 1, "00:00") ]
-    elsif hours then [ @business.local_time(date, hours[0])...@business.local_time(date, hours[1]) ]
-    else []
-    end
-    closures.each { |closure| periods = periods.flat_map { subtract(_1, closure.period_on(date)) } }
-    Day.new(date:, hours:, closures:, periods: periods.reject { _1.begin >= _1.end })
+    (@days ||= {})[date] ||= build_day(date) # a calendar asks about the same days many times
   end
 
   def closures_on(date) = all_closures.select { _1.covers?(date) }
 
   private
 
+  def build_day(date)
+    closures = closures_on(date)
+    hours = @weekly.set? ? @weekly.for(date.wday) : nil
+    periods = if !@weekly.set? then [ @business.local_time(date, "00:00")...@business.local_time(date + 1, "00:00") ]
+    elsif hours then [ @business.local_time(date, hours[0])...@business.local_time(WeeklyHours.end_of_day?(hours[1]) ? date + 1 : date, hours[1]) ]
+    else []
+    end
+    closures.each { |closure| periods = periods.flat_map { subtract(_1, closure.period_on(date)) } }
+    Day.new(date:, hours:, closures:, periods: periods.reject { _1.begin >= _1.end })
+  end
+
   def all_closures
-    @all_closures ||= Tenancy.with_business(@business) { Closure.ordered.to_a }.each { _1.association(:business).target = @business } # no query per closure
+    # Through the association, so even inside Tenancy.across_businesses only this business's
+    # closures load; the business is set on each so none queries for it.
+    @all_closures ||= Tenancy.with_business(@business) { @business.closures.ordered.to_a }.each { _1.association(:business).target = @business }
   end
 
   # An open period with a closed one taken out: zero, one or two periods.

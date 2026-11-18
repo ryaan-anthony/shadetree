@@ -116,10 +116,33 @@ class OpeningHoursTest < ActiveSupport::TestCase
     end
   end
 
+  test "a day can close at midnight, and times may carry seconds" do
+    @business.update!(weekly_hours: { "5" => { "opens" => "18:00", "closes" => "00:00" } })
+    assert_equal at("2026-11-21", "00:00"), hours.day(Date.new(2026, 11, 20)).periods.sole.end
+    assert hours.open_at?(at("2026-11-20", "23:59"))
+    assert_equal [ "Fri 6 pm–midnight" ], @business.hours.summary
+    assert_equal({ "1" => { "opens" => "08:00", "closes" => "17:00" } }, WeeklyHours.from_form({ "1" => { "open" => "1", "opens" => "08:00:00", "closes" => "17:00" } }))
+    late = closure(starts_on: Date.new(2026, 11, 20), part_of_day: true, start_time: "20:00:00", end_time: "00:00")
+    assert_equal [ 1200, Closure::END_OF_DAY ], [ late.start_minute, late.end_minute ]
+  end
+
+  test "yearly closures list by their next occurrence, and partial selects load" do
+    as_business(@business) do
+      christmas = Closure.create!(reason: "Christmas", starts_on: Date.new(2024, 12, 25), repeats_yearly: true)
+      winter = Closure.create!(reason: "Winter break", starts_on: Date.new(2024, 12, 30), ends_on: Date.new(2025, 1, 2), repeats_yearly: true)
+      assert_equal Date.new(2026, 12, 25), christmas.next_on(Date.new(2026, 11, 17))
+      assert_equal Date.new(2025, 12, 30), winter.next_on(Date.new(2026, 1, 1)), "still under way on Jan 1"
+      assert_equal Date.new(2026, 12, 30), winter.next_on(Date.new(2026, 1, 3))
+      assert_equal 2, Closure.select(:id).to_a.size
+    end
+  end
+
   test "closures belong to one business" do
     closure(starts_on: Date.new(2026, 11, 18))
     other = businesses(:two)
     assert_equal 0, as_business(other) { Closure.count }
     assert OpeningHours.new(other).open_on?(Date.new(2026, 11, 18))
+    assert Tenancy.across_businesses(reason: "test") { OpeningHours.new(other).open_on?(Date.new(2026, 11, 18)) },
+           "even outside the tenant scope, only the business's own closures count"
   end
 end

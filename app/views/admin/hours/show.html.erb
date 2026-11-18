@@ -2,6 +2,9 @@
 <%= render "admin/businesses/settings_header", current: "hours" %>
 <% hours = @business.hours %>
 <% problems = @business.errors.full_messages_for(:weekly_hours) %>
+<% problem_days = problems.any? ? hours.problems_by_day : {} %>
+<% zone = @business.time_zone %>
+<% zone_name = ActiveSupport::TimeZone::MAPPING.key(zone.tzinfo.identifier) || zone.tzinfo.identifier.split("/").last.tr("_", " ") %>
 
 <div class="max-w-3xl space-y-4">
   <% unless @business.weekly_hours_was || problems.any? %>
@@ -9,7 +12,7 @@
       <p>Your hours aren't set yet. Once they are, the schedule shades the times you're closed and warns you about visits booked then.</p></div>
   <% end %>
 
-  <%= card title: "Weekly hours", subtitle: "In #{@business.time_zone.name.tr("_", " ")} time. One opening time and one closing time per day.",
+  <%= card title: "Weekly hours", subtitle: "In #{zone_name} time. One opening and one closing time per day; close at 12:00 AM to stay open until midnight.",
            actions: button_to("Use weekdays 8–5", admin_hours_path, method: :patch, params: { preset: "weekdays" }, class: button_classes(:secondary, :sm),
                               form: { data: ({ turbo_confirm: "Replace your hours with Monday to Friday, 8 am to 5 pm?", turbo_confirm_button: "Replace" } if @business.weekly_hours_was) }) do %>
     <%= form_with url: admin_hours_path, method: :patch, id: "weekly-hours" do %>
@@ -23,20 +26,22 @@
         <% WeeklyHours::DAYS.each do |wday| %>
           <% name = Date::DAYNAMES[wday] %>
           <% opens, closes = hours.for(wday) %>
-          <li class="group flex min-h-14 flex-wrap items-center gap-x-4 gap-y-2 py-2" role="group" aria-label="<%= name %>">
+          <% open = hours.open?(wday) %>
+          <% invalid = problem_days.key?(wday) || nil %>
+          <li><div class="group flex min-h-14 flex-wrap items-center gap-x-4 gap-y-2 py-2" role="group" aria-label="<%= name %>">
             <label class="check w-32 items-center">
-              <%= check_box_tag "hours[#{wday}][open]", "1", opens.present?, id: "hours_#{wday}_open" %>
-              <span class="font-medium text-ink"><%= name %></span>
+              <%= check_box_tag "hours[#{wday}][open]", "1", open, id: "hours_#{wday}_open" %>
+              <span class="font-medium text-ink"><%= name %><span class="sr-only">, open</span></span>
             </label>
             <div class="hidden flex-wrap items-center gap-2 group-has-checked:flex">
               <label class="sr-only" for="hours_<%= wday %>_opens"><%= name %> opens</label>
-              <%= time_field_tag "hours[#{wday}][opens]", opens || "08:00", id: "hours_#{wday}_opens", class: "input w-32", step: 300 %>
+              <%= time_field_tag "hours[#{wday}][opens]", open ? opens : "08:00", id: "hours_#{wday}_opens", class: "input w-32", step: 300, "aria-invalid": invalid %>
               <span class="text-sm2 text-muted">to</span>
               <label class="sr-only" for="hours_<%= wday %>_closes"><%= name %> closes</label>
-              <%= time_field_tag "hours[#{wday}][closes]", closes || "17:00", id: "hours_#{wday}_closes", class: "input w-32", step: 300 %>
+              <%= time_field_tag "hours[#{wday}][closes]", open ? closes : "17:00", id: "hours_#{wday}_closes", class: "input w-32", step: 300, "aria-invalid": invalid %>
             </div>
             <span class="text-sm2 text-muted group-has-checked:hidden">Closed</span>
-          </li>
+          </div></li>
         <% end %>
       </ul>
       <div class="mt-4 flex justify-end"><%= submit_tag "Save hours", class: button_classes(:primary), name: nil %></div>

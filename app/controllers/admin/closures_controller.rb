@@ -10,7 +10,7 @@ class Admin::ClosuresController < Admin::BaseController
   def create
     @closure = Closure.new(closure_params)
     if @closure.save
-      redirect_to admin_hours_path, notice: "#{@closure.reason} added."
+      redirect_to admin_hours_path, notice: "Closure added: #{@closure.reason}."
     else
       render :new, status: :unprocessable_content
     end
@@ -20,7 +20,7 @@ class Admin::ClosuresController < Admin::BaseController
 
   def update
     if @closure.update(closure_params)
-      redirect_to admin_hours_path, notice: "#{@closure.reason} saved."
+      redirect_to admin_hours_path, notice: "Closure saved: #{@closure.reason}."
     else
       render :edit, status: :unprocessable_content
     end
@@ -28,7 +28,7 @@ class Admin::ClosuresController < Admin::BaseController
 
   def destroy
     @closure.destroy!
-    redirect_to admin_hours_path, notice: "#{@closure.reason} removed."
+    redirect_to admin_hours_path, notice: "Closure removed: #{@closure.reason}."
   end
 
   private

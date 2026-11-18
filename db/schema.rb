@@ -228,7 +228,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000100) do
     t.datetime "updated_at", null: false
     t.index ["business_id", "ends_on"], name: "index_closures_on_business_id_and_ends_on"
     t.index ["uid"], name: "index_closures_on_uid", unique: true
-    t.check_constraint "(start_minute IS NULL) = (end_minute IS NULL) AND (start_minute IS NULL OR start_minute < end_minute)", name: "closures_minutes"
+    t.check_constraint "(start_minute IS NULL) = (end_minute IS NULL) AND (start_minute IS NULL OR start_minute >= 0 AND start_minute < end_minute AND end_minute <= 1440)", name: "closures_minutes"
     t.check_constraint "ends_on >= starts_on", name: "closures_date_order"
   end
 
@@ -614,7 +614,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000100) do
   add_foreign_key "client_links", "users", column: "created_by_id", on_delete: :nullify
   add_foreign_key "client_links", "users", column: "revoked_by_id", on_delete: :nullify
   add_foreign_key "clients", "businesses", on_delete: :cascade
-  add_foreign_key "closures", "businesses"
+  add_foreign_key "closures", "businesses", on_delete: :cascade
   add_foreign_key "document_sequences", "businesses"
   add_foreign_key "email_messages", "businesses", on_delete: :cascade
   add_foreign_key "email_suppressions", "businesses", on_delete: :cascade

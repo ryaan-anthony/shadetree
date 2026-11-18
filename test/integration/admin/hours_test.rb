@@ -47,6 +47,18 @@ class Admin::HoursTest < ActionDispatch::IntegrationTest
     assert_select ".banner-danger li", "Wednesday closes before it opens. Hours that run past midnight aren't supported."
     assert_select "input[name='hours[3][opens]'][value='18:00']", 1, "what they typed is kept"
     assert_nil @business.reload.weekly_hours
+
+    patch admin_hours_path, params: { hours: { "2" => { open: "1", opens: "", closes: "17:00" } } }
+    assert_select ".banner-danger li", "Tuesday needs an opening time."
+    assert_select "input[name='hours[2][open]'][checked]", 1, "the day stays open, so its fields show"
+    assert_select "input[name='hours[2][opens]'][aria-invalid=true]:not([value='08:00'])", 1, "what they cleared stays cleared"
+    assert_select "input[name='hours[1][opens]']:not([aria-invalid])"
+  end
+
+  test "only the weekdays preset exists" do
+    patch admin_hours_path, params: { preset: "everyday" }
+    assert_redirected_to admin_hours_path
+    assert_nil @business.reload.weekly_hours
   end
 
   test "the weekdays preset" do
@@ -66,6 +78,7 @@ class Admin::HoursTest < ActionDispatch::IntegrationTest
     travel_to Time.utc(2026, 11, 17, 15) do
       get admin_hours_path
       assert_select "#closure-#{eve.uid}", /Christmas Eve.*Thu, Dec 24, 12 pm–5 pm/m
+      assert_select "li[role=group]", 0, "list items keep their role"
     end
 
     patch admin_closure_path(eve), params: { closure: { reason: "Christmas", starts_on: "2026-12-25", ends_on: "", part_of_day: "0", repeats_yearly: "1" } }

@@ -54,7 +54,7 @@ Rails.application.routes.draw do
       post :search, on: :collection # list results and the client picker (CLI-02); POST keeps search terms out of URLs
     end
 
-    # Business management (with tabs for profile, hours, branding)
+    # Business settings (tabs for profile, documents, branding, request form; hours and taxes have their own)
     resource :business, only: [ :new, :create, :edit, :update ] do
       post :switch, on: :collection
       get :request_form_qr # CLI-03
