@@ -3,6 +3,8 @@
 class CreateVisitNotes < ActiveRecord::Migration[8.1]
   def change
     add_column :businesses, :technicians_see_prices, :boolean, null: false, default: false
+    # When the office was last told the job is ready to invoice; cleared when a visit opens again.
+    add_column :jobs, :ready_to_invoice_notified_at, :datetime
 
     create_table :visit_notes do |t|
       t.references :business, null: false, foreign_key: { on_delete: :cascade }, index: false

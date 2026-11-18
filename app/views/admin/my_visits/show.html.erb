@@ -13,15 +13,16 @@
   <div id="visit-action">
     <% case visit.status %>
     <% when "scheduled" %>
-      <%= button_to start_admin_my_visit_path(visit), method: :patch, class: "#{button_classes(:primary)} w-full justify-center py-3.5 text-base" do %><%= icon "play" %> Start visit<% end %>
+      <%= button_to start_admin_my_visit_path(visit), method: :patch, class: "#{button_classes(:primary)} h-auto min-h-14 w-full justify-center text-base",
+                    form: { data: ({ turbo_confirm: "This visit is on #{visit.scheduled_on.strftime("%A, %b %-d")}, not today. Start it anyway?", turbo_confirm_button: "Start visit" } unless visit.scheduled_on == current_business.today) } do %><%= icon "play" %> Start visit<% end %>
     <% when "in_progress" %>
-      <%= button_to complete_admin_my_visit_path(visit), method: :patch, class: "#{button_classes(:primary)} w-full justify-center py-3.5 text-base",
+      <%= button_to complete_admin_my_visit_path(visit), method: :patch, class: "#{button_classes(:primary)} h-auto min-h-14 w-full justify-center text-base",
                     form: { data: { turbo_confirm: "Mark this visit completed?", turbo_confirm_button: "Complete visit" } } do %><%= icon "check" %> Complete visit<% end %>
-      <p class="mt-2 text-center text-sm2 text-muted">Started <%= local_time(visit.started_at) %></p>
+      <p class="mt-2 text-center text-sm2 text-muted">Started at <%= visit.started_at.in_time_zone(current_business.time_zone).strftime("%-l:%M %p").downcase %></p>
     <% when "completed" %>
       <div class="banner banner-success"><%= icon "check-circle" %><p>Completed <%= local_time(visit.completed_at) %>.</p></div>
       <% if visit.reopenable? %>
-        <%= button_to "Reopen it", reopen_admin_my_visit_path(visit), method: :patch, class: "btn-link mt-2 text-sm2", form: { data: { turbo_confirm: "Reopen this visit?", turbo_confirm_button: "Reopen" } } %>
+        <%= button_to "Reopen it", reopen_admin_my_visit_path(visit), method: :patch, class: "#{button_classes(:secondary)} mt-2 min-h-11", form: { data: { turbo_confirm: "Reopen this visit?", turbo_confirm_button: "Reopen" } } %>
       <% end %>
     <% else %>
       <div class="banner banner-warning"><%= icon "x-circle" %><p>This visit was cancelled<%= ": “#{visit.cancel_reason}”" if visit.cancel_reason %>.</p></div>
@@ -31,7 +32,7 @@
   <%= card do %>
     <% if property %>
       <p class="font-semibold text-ink"><%= property.one_line %></p>
-      <%= link_to "https://www.google.com/maps/search/?api=1&query=#{ERB::Util.url_encode(property.one_line)}", class: "#{button_classes(:secondary)} mt-3", target: "_blank", rel: "noopener" do %><%= icon "navigation" %> Directions<% end %>
+      <%= link_to "https://www.google.com/maps/dir/?api=1&destination=#{ERB::Util.url_encode(property.one_line)}", class: "#{button_classes(:secondary)} mt-3 h-auto min-h-11", target: "_blank", rel: "noopener" do %><%= icon "navigation" %> Directions<% end %>
       <% if property.access_notes.present? %>
         <div class="mt-4 rounded-control bg-warning-50 p-3 text-sm"><p class="font-semibold text-ink">Getting in</p><p class="mt-1 whitespace-pre-line text-body"><%= property.access_notes %></p></div>
       <% end %>
@@ -42,8 +43,8 @@
     <% if phone %>
       <% digits = phone.value.gsub(/[^\d+]/, "") %>
       <div class="mt-4 grid grid-cols-2 gap-2">
-        <%= link_to "tel:#{digits}", class: "#{button_classes(:secondary)} justify-center" do %><%= icon "phone" %> Call<% end %>
-        <%= link_to "sms:#{digits}", class: "#{button_classes(:secondary)} justify-center" do %><%= icon "message-square" %> Text<% end %>
+        <%= link_to "tel:#{digits}", class: "#{button_classes(:secondary)} h-auto min-h-11 justify-center" do %><%= icon "phone" %> Call<% end %>
+        <%= link_to "sms:#{digits}", class: "#{button_classes(:secondary)} h-auto min-h-11 justify-center" do %><%= icon "message-square" %> Text<% end %>
       </div>
     <% end %>
   <% end %>
@@ -85,7 +86,7 @@
     <% end %>
     <%= form_with model: @note, url: admin_my_visit_notes_path(visit), class: "border-t border-line p-4 first:border-t-0" do |f| %>
       <%= f.field :body, as: :textarea, label: "Add a note", rows: 2, maxlength: 2_000, placeholder: "Side gate was locked; came back at 2." %>
-      <div class="mt-2 flex justify-end"><%= f.submit_button "Add note", variant: :secondary %></div>
+      <div class="mt-2 flex justify-end"><%= f.submit_button "Add note", variant: :secondary, class: "h-auto min-h-11" %></div>
     <% end %>
   <% end %>
 

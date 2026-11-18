@@ -55,7 +55,7 @@ class Admin::MyDayTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "#notes li", 0, "no notes yet, and the blank one for the form isn't listed"
     directions = css_select("a").find { _1.text.include?("Directions") }
-    assert_match %r{\Ahttps://www\.google\.com/maps/search/\?api=1&query=12%20Elm%20St}, directions["href"]
+    assert_match %r{\Ahttps://www\.google\.com/maps/dir/\?api=1&destination=12%20Elm%20St}, directions["href"]
     assert_select "main", /Gate code 4417/
     assert_select "a[href='tel:5550100100']", /Call/
     assert_select "a[href='sms:5550100100']", /Text/
@@ -83,13 +83,34 @@ class Admin::MyDayTest < ActionDispatch::IntegrationTest
     patch start_admin_my_visit_path(@tomorrow)
     patch complete_admin_my_visit_path(@tomorrow)
     assert_empty as_business(@business) { Notification.where(kind: "job_ready_to_invoice").to_a }, "the owner's visit is still open"
-    as_business(@business) { @not_mine.cancel!(by: @owner) }
+    office = member_with_role(:admin)
+    as_business(@business) { @not_mine.cancel!(by: office) }
+    ready = as_business(@business) { Notification.where(kind: "job_ready_to_invoice").to_a }
+    assert_equal [ @owner ], ready.map(&:user), "cancelling the last open visit, with work done, means it's ready (not told: whoever cancelled)"
+    assert_equal "Spring cleanup (#{@job.number}) is ready to invoice", ready.sole.title
     patch reopen_admin_my_visit_path(@tomorrow)
     patch complete_admin_my_visit_path(@tomorrow)
-    ready = as_business(@business) { Notification.where(kind: "job_ready_to_invoice").to_a }
-    assert_equal [ @owner ], ready.map(&:user)
-    assert_equal "Spring cleanup (#{@job.number}) is ready to invoice", ready.sole.title
+    assert_equal 2, as_business(@business) { Notification.where(kind: "job_ready_to_invoice", user: @owner).count }, "reopened, then done again: told again"
+    patch complete_admin_my_visit_path(@tomorrow)
+    assert_equal 2, as_business(@business) { Notification.where(kind: "job_ready_to_invoice", user: @owner).count }, "never twice for the same finish"
     assert_equal "in_progress", @job.reload.status, "staff complete the job"
+  end
+
+  test "reopening goes by the business's day, and not once the job is completed" do
+    patch start_admin_my_visit_path(@morning)
+    travel_to @business.local_time(@today, "23:58") do
+      patch complete_admin_my_visit_path(@morning)
+    end
+    travel_to @business.local_time(@today + 1, "00:01") do
+      patch reopen_admin_my_visit_path(@morning)
+      assert_match "Only a visit completed today", flash[:alert], "a new day in New York, though not in UTC"
+    end
+    patch reopen_admin_my_visit_path(@morning)
+    assert_equal "in_progress", @morning.reload.status
+    patch complete_admin_my_visit_path(@morning)
+    as_business(@business) { @job.reload.complete!(by: @owner) }
+    get admin_my_visit_path(@morning)
+    assert_select "form[action=?]", reopen_admin_my_visit_path(@morning), 0
   end
 
   test "a visit completed on an earlier day can't be reopened" do

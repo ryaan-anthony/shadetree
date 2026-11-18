@@ -34,6 +34,7 @@ I mark it done. Build a fast, phone-first "My day" that works with gloves on and
       photos from the camera (count/size limited; uploads tolerate poor connections with clear
       progress and retry).
 - [x] Completing the last visit of a job notifies Owners/Admins that the job is ready to invoice.
+      *Whoever completes it (crew or office), or cancels the last open visit after work was done; once until a visit opens again.*
 - [x] Technicians can only see visits assigned to them and the client/property info for those
       visits; direct URLs to anything else are denied.
 - [ ] The view is fast (< 1 s on 4G), large-tap-target friendly, and installable to the home

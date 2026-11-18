@@ -16,7 +16,7 @@ class Admin::MyVisitsController < Admin::BaseController
 
   def set_visit
     @visit = Visit.joins(:assignments).where(visit_assignments: { user_id: current_user.id })
-                  .includes(:assignees, :notes, job: [ :client, :property, { line_items: :catalog_item } ]).find_by_param!(params[:id])
+                  .includes(:business, :assignees, :notes, job: [ :client, :property, { line_items: :catalog_item } ]).find_by_param!(params[:id])
     @job = @visit.job
   end
 

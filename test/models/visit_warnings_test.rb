@@ -109,7 +109,7 @@ class VisitWarningsTest < ActiveSupport::TestCase
     mine = "/admin/my-day/visits/#{visit.uid}"
     assert_equal [ [ "visit_assigned", "You're on Spring cleanup (#{@job.number}): Tue, Nov 24 · 9 am", mine ],
                    [ "visit_changed", "Moved: Spring cleanup (#{@job.number}) is now Wed, Nov 25 · 9 am", mine ],
-                   [ "visit_changed", "You're no longer on Spring cleanup (#{@job.number}) on Wed, Nov 25 · 9 am", mine ] ], titles.(@tech)
+                   [ "visit_changed", "You're no longer on Spring cleanup (#{@job.number}) on Wed, Nov 25 · 9 am", "/admin/my-day" ] ], titles.(@tech)
     assert_equal [ [ "visit_assigned", "You're on Spring cleanup (#{@job.number}): Wed, Nov 25 · 9 am", job_path ] ], titles.(admin),
                  "an admin opens the job; the one who cancelled isn't told"
     assert_empty titles.(@owner), "the person making changes isn't notified"

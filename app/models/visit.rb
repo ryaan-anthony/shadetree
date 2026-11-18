@@ -103,6 +103,12 @@ class Visit < ApplicationRecord
   # A new visit with its assignees, recorded and reflected in the job's status.
   def schedule!(by:) = self.class.schedule_all!([ self ], by:).first
 
+  # After a visit opens again (booked, restored, reopened), finishing the job's visits tells the
+  # office again; until then it's told once.
+  def reset_ready_to_invoice
+    job.update_columns(ready_to_invoice_notified_at: nil) if job.ready_to_invoice_notified_at
+  end
+
   # Several visits for one job at once (multi-day work: one visit per date), under one lock on
   # the job; the people going hear about them in one notification each.
   def self.schedule_all!(visits, by:)
@@ -115,6 +121,7 @@ class Visit < ApplicationRecord
         visit.sync_assignments
         VisitEvent.record!(visit, :scheduled, by:, to: visit.snapshot, crew: visit.crew_names, crew_ids: visit.assignees.map(&:id))
       end
+      visits.first.reset_ready_to_invoice
       job.refresh_status!
     end
     crew = visits.flat_map { _1.assignees.to_a }.uniq
@@ -170,7 +177,8 @@ class Visit < ApplicationRecord
       VisitEvent.record!(self, :updated, by:, changed: details, duration_from: before_duration, duration_to: duration_minutes) if details.any?
 
       notify_crew("visit_assigned", added, "You're on #{job.title} (#{job.number}): #{when_label}", by:)
-      notify_crew("visit_changed", removed, "You're no longer on #{job.title} (#{job.number}) on #{before["when"].sub(/, #{business.today.year} ·/, " ·")}", by:)
+      notify_crew("visit_changed", removed, "You're no longer on #{job.title} (#{job.number}) on #{before["when"].sub(/, #{business.today.year} ·/, " ·")}", by:,
+                  path: Rails.application.routes.url_helpers.admin_my_day_path) # the visit isn't theirs to open any more
       if moved || details.any?
         what = details.map { { "duration_minutes" => "duration", "instructions" => "instructions" }.fetch(_1) }.to_sentence
         title = moved ? "Moved: #{job.title} (#{job.number}) is now #{when_label}" : "New #{what}: #{job.title} (#{job.number}), #{when_label}"
@@ -179,10 +187,13 @@ class Visit < ApplicationRecord
     end
   end
 
+  # Cancelling the last open visit of a job whose other visits were done also means it's ready
+  # to invoice.
   def cancel!(by:, reason: nil)
     under_job_lock do
       lock!
       finish!("cancelled", by:, reason:)
+      notify_ready_to_invoice(by:) if !job.visits.open.exists? && job.visits.where(status: "completed").exists?
     end
   end
 
@@ -193,6 +204,7 @@ class Visit < ApplicationRecord
 
       update!(status: "scheduled", cancelled_at: nil, cancel_reason: nil)
       VisitEvent.record!(self, :restored, by:)
+      reset_ready_to_invoice
       notify_crew("visit_assigned", assignees.to_a, "Back on: #{job.title} (#{job.number}), #{when_label}", by:)
     end
   end
@@ -219,7 +231,7 @@ class Visit < ApplicationRecord
   end
 
   # A visit completed by mistake can be reopened the same day (by the business's clock).
-  def reopenable? = status == "completed" && completed_at && completed_at.in_time_zone(business.time_zone).to_date == business.today
+  def reopenable? = status == "completed" && job.open? && completed_at && completed_at.in_time_zone(business.time_zone).to_date == business.today
 
   def reopen!(by:)
     under_job_lock do
@@ -228,6 +240,7 @@ class Visit < ApplicationRecord
 
       update!(status: started_at ? "in_progress" : "scheduled", completed_at: nil)
       VisitEvent.record!(self, :reopened, by:)
+      reset_ready_to_invoice
     end
   end
 
@@ -249,19 +262,22 @@ class Visit < ApplicationRecord
 
   # NTF-02: tells the people going (not whoever made the change). The notification opens the
   # job for those who can see jobs, and the visit in their day view (JOB-04) for everyone else.
-  def notify_crew(kind, users, title, by:, body: nil)
+  def notify_crew(kind, users, title, by:, body: nil, path: nil)
     users = Array(users).reject { _1.id == by&.id }
     return if users.empty?
 
     paths = Rails.application.routes.url_helpers
     office = business.business_users.active.where(user: users).select { _1.can?(:office) }.map(&:user_id)
-    users.partition { office.include?(_1.id) }.zip([ paths.admin_job_path(job), paths.admin_my_visit_path(self) ]).each do |group, path|
+    users.partition { office.include?(_1.id) }.zip([ paths.admin_job_path(job), path || paths.admin_my_visit_path(self) ]).each do |group, path|
       NotificationType.deliver(kind, business:, subject: self, actor: by, to: group, title:, body:, path:) if group.any?
     end
   end
 
-  # JOB-04: the office hears that a job's visits are all done.
+  # JOB-04: the office hears that a job's visits are all done, once until a visit opens again.
   def notify_ready_to_invoice(by:)
+    return if job.ready_to_invoice_notified_at
+
+    job.update_columns(ready_to_invoice_notified_at: Time.current)
     NotificationType.deliver("job_ready_to_invoice", business:, subject: job, actor: by,
                              title: "#{job.title} (#{job.number}) is ready to invoice", body: "#{by&.full_name || "The crew"} completed the last visit.",
                              path: Rails.application.routes.url_helpers.admin_job_path(job))

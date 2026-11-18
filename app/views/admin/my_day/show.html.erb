@@ -1,6 +1,6 @@
 <%# JOB-04: the signed-in member's visits. Large tap targets; one tap opens everything about a visit. %>
 <% content_for :title, "My day" %>
-<%= page_header "My day", lede: local_date(current_business.today) %>
+<%= page_header "My day", lede: current_business.today.strftime("%A, %B %-d") %>
 
 <div class="max-w-2xl space-y-4">
   <%# ACC-05: a technician's one-screen welcome. %>
