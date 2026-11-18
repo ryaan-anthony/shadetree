@@ -138,9 +138,7 @@ class ClientLink < ApplicationRecord
     false
   end
 
-  # Client requests already run as the link's business; this keeps model calls safe from jobs
-  # and the console too.
-  # NTF-02: the office team hears when a client first opens a quote. A view never fails over it.
+  # NTF-02: the office team hears when a client first opens a quote (deliver never raises).
   def notify_first_view
     Tenancy.with_business(business) do
       return unless linkable.is_a?(Quote)
@@ -148,9 +146,10 @@ class ClientLink < ApplicationRecord
       NotificationType.deliver("quote_viewed", business:, subject: linkable, title: "#{linkable.client.display_name} opened quote #{linkable.number}",
                                body: linkable.title, path: Rails.application.routes.url_helpers.admin_quote_path(linkable))
     end
-  rescue StandardError => e
-    Rails.error.report(e, context: { client_link_id: id })
   end
+
+  # Client requests already run as the link's business; this keeps model calls safe from jobs
+  # and the console too.
 
   def as_own_business(requires_new: false, &block)
     Tenancy.with_business(business) { transaction(requires_new:, &block) }

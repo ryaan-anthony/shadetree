@@ -16,6 +16,7 @@ class Notification < ApplicationRecord
   validates :body, length: { maximum: 300 }
   validates :path, presence: true, format: { with: %r{\A/admin(/[^\s\\]*)?\z} } # only a page in the staff app (it is redirected to)
 
+  normalizes :title, with: ->(title) { title.to_s.squish.truncate(200) } # names can be long
   normalizes :body, with: ->(body) { body.to_s.squish.truncate(300).presence }
 
   scope :for_user, ->(user) { where(user:) }

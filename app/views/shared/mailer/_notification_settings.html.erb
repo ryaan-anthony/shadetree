@@ -1,1 +1,1 @@
-<p style="margin:16px 0 0;font-size:12px;color:#64748b;">Choose which emails you get in <a href="<%= settings_admin_notifications_url %>" style="color:#64748b;">your notification settings</a>.</p>
+<p style="margin:16px 0 0;font-size:12px;color:#64748b;">Choose which emails you get in <a href="<%= settings_admin_notifications_url(business: @business&.uid || @notification&.business&.uid) %>" style="color:#64748b;">your notification settings</a>.</p>

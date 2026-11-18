@@ -97,7 +97,7 @@ class QuoteResponse < ApplicationRecord
   def notify
     who = on_behalf? ? recorded_by&.full_name || "A teammate" : quote.client.display_name
     NotificationType.deliver("quote_#{kind}", business:, subject: quote, actor: recorded_by,
-                             title: QuoteActivityMailer.subject_for(self, who), body: message.presence&.then { "“#{_1}”" },
+                             title: QuoteActivityMailer.subject_for(self, who), body: message.presence&.then { "“#{_1.squish.truncate(280)}”" },
                              path: Rails.application.routes.url_helpers.admin_quote_path(quote),
                              email: ->(user) { QuoteActivityMailer.with(response_id: id, business_id:, user_id: user.id).responded })
     return unless approved? && !on_behalf? && (to = confirmation_email)

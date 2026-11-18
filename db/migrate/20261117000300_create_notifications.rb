@@ -3,8 +3,7 @@
 # A notification is one member's copy of an event ("Maria approved Q-0042"): its text and the
 # path it opens are stored when it's raised, so the list needs no other table and still reads
 # right after the record changes. Email choices are per membership (a member of two businesses
-# chooses for each), as { "quote_viewed" => true }; a type not listed uses its default for the
-# member's role.
+# chooses for each), as { "quote_viewed" => true }; a type not listed uses the type's default.
 class CreateNotifications < ActiveRecord::Migration[8.1]
   def change
     create_table :notifications do |t|

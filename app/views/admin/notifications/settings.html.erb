@@ -1,11 +1,11 @@
 <%# NTF-02: which notifications this member also gets by email, in this business. %>
-<% content_for :title, "Notification settings" %>
-<%= page_header "Notification settings", lede: "Everything shows in Notifications. Choose what you also get by email from #{current_business.name}." %>
+<% content_for :title, "Email settings" %>
+<%= page_header "Email settings", lede: "Everything shows in Notifications. Choose what you also get by email from #{current_business.name}." %>
 
 <%= form_with url: settings_admin_notifications_path, method: :patch, class: "max-w-2xl space-y-4" do %>
   <%= card title: "Email me when" do %>
     <% if @types.empty? %>
-      <p class="text-sm2 text-muted">Nothing to choose yet. Notifications about your own work will appear here as they arrive.</p>
+      <p class="text-sm2 text-muted">Nothing to choose yet.</p>
     <% else %>
       <div class="space-y-3">
         <% @types.each do |type| %>

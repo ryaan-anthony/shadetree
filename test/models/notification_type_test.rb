@@ -57,16 +57,30 @@ class NotificationTypeTest < ActiveSupport::TestCase
     assert_match %r{/admin/notifications/settings}, mail.html_part.body.to_s
   end
 
-  test "to: limits a notification to named people (for their own visits, JOB-02)" do
-    deliver("quote_viewed", to: [ @tech ])
-    assert_equal [ @tech ], notified
+  test "named and permission audiences can't be mixed up" do
+    assert_raises(ArgumentError) { deliver("quote_viewed", to: [ @tech ]) }
   end
 
-  test "unknown kinds and paths outside the staff app are refused" do
+  test "a title that's too long is shortened, and a problem with one recipient never raises" do
+    deliver("quote_approved", title: "Quote Q-1 marked approved by #{"x" * 300}")
+    assert_equal [ 200 ], as_business(@business) { Notification.pluck(:title).map(&:length).uniq }
+    assert_nothing_raised { deliver("quote_declined", path: "https://evil.example/") }
+    assert_equal 0, as_business(@business) { Notification.where(kind: "quote_declined").count }
+  end
+
+  test "nothing is delivered for a change that's rolled back" do
+    Business.transaction do
+      deliver("quote_approved")
+      raise ActiveRecord::Rollback
+    end
+    assert_equal 0, as_business(@business) { Notification.count }
+  end
+
+  test "unknown kinds raise; paths outside the staff app are refused" do
     assert_raises(NotificationType::UnknownKind) { deliver("nope") }
-    assert_raises(ActiveRecord::RecordInvalid) { deliver(path: "https://evil.example/") }
-    assert_raises(ActiveRecord::RecordInvalid) { deliver(path: "/admin/x\nLocation: https://evil.example") }
-    assert_raises(ActiveRecord::RecordInvalid) { deliver(path: "/administrator") }
+    [ "https://evil.example/", "/admin/x\nLocation: https://evil.example", "/administrator" ].each { deliver(path: _1) }
+    assert_equal 0, as_business(@business) { Notification.count }, "refused (and reported), never raised"
+    assert_not as_business(@business) { Notification.new(path: "//evil.example").tap(&:validate).errors[:path].empty? }
   end
 
   test "members of two businesses see each business's notifications there" do

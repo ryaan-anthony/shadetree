@@ -23,7 +23,12 @@ class Admin::NotificationsController < Admin::BaseController
     redirect_to admin_notifications_path, notice: "All caught up."
   end
 
+  # From an email's footer, ?business=<uid> opens that business's settings (when a member of it).
   def settings
+    if params[:business].present? && params[:business] != current_business.uid
+      membership = current_user.business_users.active.joins(:business).find_by(businesses: { uid: params[:business].to_s })
+      switch_business_to(membership.business) if membership
+    end
     @membership = current_membership
     @types = NotificationType.for(@membership)
   end

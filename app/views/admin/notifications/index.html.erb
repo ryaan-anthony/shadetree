@@ -9,7 +9,8 @@
 
 <div class="max-w-3xl">
   <% if @notifications.empty? %>
-    <div class="card"><%= empty_state title: "Nothing yet", text: "New requests, clients opening and answering quotes, and teammates joining show up here.", icon: "bell" %></div>
+    <% kinds = NotificationType.for(current_membership).map { _1.label.downcase } %>
+    <div class="card"><%= empty_state title: "Nothing yet", text: (kinds.any? ? "You'll see #{kinds.to_sentence} here." : "Things that need you will show up here."), icon: "bell" %></div>
   <% else %>
     <%= card flush: true do %>
       <ul class="list" id="notifications">

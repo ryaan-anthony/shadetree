@@ -97,12 +97,10 @@ class Invitation < ApplicationRecord
 
   private
 
-  # NTF-02: the people who manage the team hear that someone joined.
+  # NTF-02: the people who manage the team hear that someone joined (deliver never raises).
   def notify_accepted(user)
     NotificationType.deliver("invitation_accepted", business:, subject: self, actor: user,
                              title: "#{user.full_name} joined as #{role.capitalize}", path: Rails.application.routes.url_helpers.admin_team_path)
-  rescue StandardError => e
-    Rails.error.report(e, context: { invitation_id: id })
   end
 
   def not_already_a_member

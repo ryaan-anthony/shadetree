@@ -11,12 +11,20 @@
 # person who did it is left out. Without `email:`, the email is a short NotificationMailer
 # notice with the title and a link.
 #
+# Delivery happens once the surrounding transaction commits (so a change that's rolled back
+# notifies nobody, and emails never go out before their notification exists), and it never
+# raises: a notification problem is reported, but can't break or undo what was done.
+#
 # Adding a type: add a Definition below (kind, the label and hint shown in each member's email
 # settings, the permission its recipients need, and the email default), then call deliver
 # where it happens. For events about one person's work, like a visit assigned to them (JOB-02),
-# pass `to:` with the users instead of using the permission.
+# define the type with `audience: :named` and pass `to:` with the users; the permission then
+# only decides whose settings list it.
 class NotificationType
-  Definition = Data.define(:kind, :label, :hint, :permission, :email_by_default, :icon)
+  Definition = Data.define(:kind, :label, :hint, :permission, :email_by_default, :icon, :audience) do
+    def initialize(audience: :permission, **) = super
+    def named? = audience == :named
+  end
 
   ALL = [
     Definition.new(kind: "new_request", label: "New requests", hint: "Someone sends your request form.",
@@ -43,17 +51,32 @@ class NotificationType
 
   def self.deliver(kind, business:, title:, path:, subject: nil, body: nil, actor: nil, to: nil, email: nil)
     type = fetch(kind)
-    memberships = business.business_users.active.includes(:user).to_a
-    memberships = to ? memberships.select { |m| Array(to).map(&:id).include?(m.user_id) } : memberships.select { _1.can?(type.permission) }
-    memberships.reject! { _1.user_id == actor&.id }
+    raise ArgumentError, "#{kind} is for named people: pass to:" if type.named? && to.nil?
+    raise ArgumentError, "#{kind} goes by permission: don't pass to:" if !type.named? && to
 
-    Tenancy.with_business(business) do
-      memberships.each do |membership|
-        notification = Notification.create!(user: membership.user, kind: type.kind, subject:, actor:, title:, body:, path:)
-        next unless membership.email_notification?(type.kind) && membership.user.confirmed?
-
-        (email ? email.call(membership.user) : NotificationMailer.with(notification_id: notification.id, business_id: business.id).notice).deliver_later
+    ActiveRecord.after_all_transactions_commit do
+      recipients(type, business, to:, actor:).each do |membership|
+        deliver_to(membership, type, business, email:, subject:, actor:, title:, body:, path:)
       end
     end
   end
+
+  def self.recipients(type, business, to:, actor:)
+    memberships = business.business_users.active.includes(:user).to_a
+    named = to && Array(to).to_set(&:id)
+    memberships = named ? memberships.select { named.include?(_1.user_id) && _1.can?(type.permission) } : memberships.select { _1.can?(type.permission) }
+    memberships.reject { _1.user_id == actor&.id }
+  end
+
+  def self.deliver_to(membership, type, business, email:, **attributes)
+    Tenancy.with_business(business) do
+      notification = Notification.create!(user: membership.user, kind: type.kind, **attributes)
+      next unless membership.email_notification?(type.kind) && membership.user.confirmed?
+
+      (email ? email.call(membership.user) : NotificationMailer.with(notification_id: notification.id, business_id: business.id).notice).deliver_later
+    end
+  rescue StandardError => e
+    Rails.error.report(e, context: { notification_kind: type.kind, user_id: membership.user_id })
+  end
+  private_class_method :recipients, :deliver_to
 end

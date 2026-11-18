@@ -65,8 +65,12 @@ type by email also get the email. To add a type:
    and an icon.
 2. Call `NotificationType.deliver(kind, business:, title:, path:, subject:, actor:)` where it
    happens. Pass `email: ->(user) { SomeMailer.with(...).some_email }` for a richer email than the
-   generic one. Pass `to: users` for events about one person's own work, such as their visits.
+   generic one. For events about one person's own work, such as their visits, define the type
+   with `audience: :named` and pass `to: users`.
 3. Test who receives it, and that the person who acted doesn't.
+
+`deliver` waits for the surrounding transaction to commit, so a change that's rolled back
+notifies nobody. It never raises: problems are reported and can't break the action.
 
 ## Pull requests
 

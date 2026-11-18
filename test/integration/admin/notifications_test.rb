@@ -64,12 +64,27 @@ class Admin::NotificationsTest < ActionDispatch::IntegrationTest
     assert_select ".notify-count", 0
   end
 
-  test "another member's notification isn't found" do
+  test "another member's notification isn't found, nor one from another business" do
     notify
     theirs = mine.first
     sign_in member_with_role(:admin)
     get open_admin_notification_path(theirs)
     assert_response :not_found
+
+    sign_in @owner
+    post switch_admin_business_path, params: { business: businesses(:two).uid } # the owner is a technician there
+    assert_not_found_across_businesses { get open_admin_notification_path(theirs) }
+    assert_not_found_across_businesses { patch read_admin_notification_path(theirs) }
+  end
+
+  test "an email's settings link opens that business's settings" do
+    sign_in @owner
+    post switch_admin_business_path, params: { business: businesses(:two).uid }
+    get settings_admin_notifications_path(business: @business.uid)
+    assert_select "main", /from #{Regexp.escape(@business.name)}/
+    assert_select "input[name='email[]'][value=quote_approved]"
+    get settings_admin_notifications_path(business: "not-mine")
+    assert_response :success
   end
 
   test "email settings per member: office types for Owners and Admins, nothing for Technicians yet" do
