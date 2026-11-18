@@ -1,0 +1,66 @@
+<%# The job list (JOB-01): on the page and as #search's frame response. %>
+<%= turbo_frame_tag "job_results" do %>
+  <% if @jobs.empty? %>
+    <div class="card">
+      <% if !@any_jobs %>
+        <%= empty_state title: "No jobs yet", text: "When a client approves a quote, it becomes a job here. You can also add a job for work agreed by phone.", icon: "job" do %>
+          <%= link_to new_admin_job_path, class: button_classes, data: { turbo_frame: "_top" } do %><%= icon "plus" %> New job<% end %>
+        <% end %>
+      <% elsif @query.present? %>
+        <%= empty_state title: "No jobs match", text: "Try the job number, its title, or part of the client's name.", icon: "search" do %>
+          <%= link_to "Clear search", admin_jobs_path(filter: @filter), class: button_classes(:secondary), data: { turbo_frame: "_top" } %>
+        <% end %>
+      <% else %>
+        <%= empty_state title: "Nothing here", text: (@filter == "unscheduled" ? "Every open job has a visit booked." : "No jobs are #{Job::FILTERS.fetch(@filter).downcase} right now."), icon: "job" %>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="mb-2 text-sm2 text-muted" role="status"><%= pluralize(@total_count, "job") %></p>
+
+    <%# Phones: a list with tap-to-open rows. %>
+    <%= card flush: true, class: "md:hidden" do %>
+      <ul class="list">
+        <% @jobs.each do |job| %>
+          <li id="job-<%= job.uid %>-row" class="p-0">
+            <%= link_to admin_job_path(job), class: "block min-w-0 flex-1 px-4 py-3", data: { turbo_frame: "_top" } do %>
+              <span class="flex items-baseline justify-between gap-3">
+                <span class="min-w-0 truncate font-semibold text-ink"><%= job.title %></span>
+                <span class="money text-sm font-semibold text-ink"><%= money(job.total) %></span>
+              </span>
+              <span class="mt-0.5 block truncate text-sm2 text-muted"><%= job.number %> · <%= job.client.display_name %><%= " · #{job.property.one_line}" if job.property %></span>
+              <span class="mt-1.5 flex flex-wrap items-center gap-1.5 text-sm2 text-muted"><%= job_status_badge(job) %>
+                <% if job.quote %><span class="ml-auto">From <%= job.quote.number %></span><% end %></span>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+
+    <div class="card table-wrap hidden md:block">
+      <table class="data-table">
+        <thead>
+          <tr><th scope="col">Job</th><th scope="col">Client and property</th><th scope="col">Status</th><th scope="col">From</th><th scope="col" class="text-right">Value</th></tr>
+        </thead>
+        <tbody>
+          <% @jobs.each do |job| %>
+            <tr id="job-<%= job.uid %>">
+              <td><%= link_to job.title, admin_job_path(job), class: "primary hover:underline", data: { turbo_frame: "_top" } %><span class="sub"><%= job.number %></span></td>
+              <td><%= job.client.display_name %><% if job.property %><span class="sub"><%= job.property.one_line %></span><% end %></td>
+              <td><%= job_status_badge(job) %></td>
+              <td class="text-sm2 text-subtle"><%= job.quote ? link_to(job.quote.number, admin_quote_path(job.quote), class: "hover:underline", data: { turbo_frame: "_top" }) : "Added directly" %></td>
+              <td class="money num"><%= money(job.total) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <nav class="pagination mt-4" aria-label="Pagination">
+      <p>Showing <span class="tabular font-semibold text-ink"><%= ((@page - 1) * Admin::JobsController::PER_PAGE) + 1 %>–<%= [ @page * Admin::JobsController::PER_PAGE, @total_count ].min %></span> of <span class="tabular"><%= @total_count %></span></p>
+      <div class="pagination-links">
+        <button type="submit" form="job-filters" name="page" value="<%= @page - 1 %>" class="<%= button_classes(:secondary, :sm) %>" <%= "disabled" if @page <= 1 %>><%= icon "chevron-left" %> Previous</button>
+        <button type="submit" form="job-filters" name="page" value="<%= @page + 1 %>" class="<%= button_classes(:secondary, :sm) %>" <%= "disabled" if @page >= @total_pages %>>Next <%= icon "chevron-right" %></button>
+      </div>
+    </nav>
+  <% end %>
+<% end %>

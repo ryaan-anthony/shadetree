@@ -52,9 +52,10 @@
       <% end %>
     <% end %>
 
-    <%# Filled in by later specs: jobs (JOB-01), invoices (INV-01). %>
+    <%# Filled in by later specs: invoices (INV-01). %>
     <% quotes = @client.quotes.order(created_at: :desc).limit(5) %>
     <% requests = @client.service_requests.recent.limit(5) %>
+    <% jobs = @client.jobs.order(created_at: :desc, id: :desc).limit(5) %>
     <%= card title: "Work", flush: true,
              actions: (button_to(admin_quotes_path, params: { "quote[client]" => @client.uid }, class: button_classes(:secondary, :sm)) { icon("plus") + " New quote" } unless @client.archived?) do %>
       <ul class="list">
@@ -77,9 +78,16 @@
         <% else %>
           <li><%= icon "quote", class: "size-4 text-faint" %><span class="flex-1 font-medium text-ink">Quotes</span><span class="text-sm2 text-muted">None yet</span></li>
         <% end %>
-        <% [ [ "Jobs", "job" ], [ "Invoices", "invoice" ] ].each do |name, icon_name| %>
-          <li><%= icon icon_name, class: "size-4 text-faint" %><span class="flex-1 font-medium text-ink"><%= name %></span><span class="text-sm2 text-muted">None yet</span></li>
+        <% if jobs.any? %>
+          <% jobs.each do |job| %>
+            <li><%= icon "job", class: "size-4 text-faint" %>
+              <%= link_to "#{job.number} · #{job.title}", admin_job_path(job), class: "min-w-0 flex-1 truncate font-medium text-ink hover:underline" %>
+              <%= job_status_badge(job) %><span class="money text-sm2 text-subtle"><%= money(job.total) %></span></li>
+          <% end %>
+        <% else %>
+          <li><%= icon "job", class: "size-4 text-faint" %><span class="flex-1 font-medium text-ink">Jobs</span><span class="text-sm2 text-muted">None yet</span></li>
         <% end %>
+        <li><%= icon "invoice", class: "size-4 text-faint" %><span class="flex-1 font-medium text-ink">Invoices</span><span class="text-sm2 text-muted">None yet</span></li>
       </ul>
     <% end %>
   </div>

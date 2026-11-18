@@ -1,0 +1,35 @@
+<%# JOB-01: a job from scratch, or a job's details. The client is chosen once, when it's created. %>
+<% new_job = @job.new_record? %>
+<%= form_with model: @job, url: (new_job ? admin_jobs_path : admin_job_path(@job)), class: "max-w-2xl space-y-4",
+              data: { controller: "property-loader", property_loader_url_value: property_options_admin_quotes_path,
+                      property_loader_name_value: "job[property]", action: "client-picker:change->property-loader#load" } do |f| %>
+  <% other_errors = @job.errors.full_messages - @job.errors.full_messages_for(:title) - @job.errors.full_messages_for(:client) %>
+  <% if other_errors.any? %>
+    <div class="banner banner-danger" role="alert"><%= icon "alert-circle" %><p><%= other_errors.to_sentence %></p></div>
+  <% end %>
+  <%= card do %>
+    <div class="space-y-4">
+      <% if new_job %>
+        <% if @job.errors[:client].any? %>
+          <p class="error-text" role="alert"><%= icon "alert-circle" %><%= @job.errors[:client].first %></p>
+        <% end %>
+        <%= render "admin/clients/picker", name: "job[client]", selected: @job.client %>
+      <% else %>
+        <div><p class="label">Client</p><p class="text-sm text-ink"><%= @job.client.display_name %></p></div>
+      <% end %>
+      <%= turbo_frame_tag "quote_property", data: { property_loader_target: "frame" } do %>
+        <%= render "admin/quotes/property_select", client: @job.client, selected: @job.property&.uid, name: "job[property]" %>
+      <% end %>
+      <%= f.field :title, maxlength: 120, placeholder: "Spring cleanup", autofocus: !new_job %>
+      <%= f.field :instructions, as: :textarea, optional: true, rows: 4, maxlength: 5_000, label: "Instructions for the crew",
+                  placeholder: "Park on the street. Leave bagged debris by the side gate.", help: "Everyone assigned to this job's visits sees these." %>
+      <%= f.field :internal_notes, as: :textarea, optional: true, rows: 3, maxlength: 5_000, help: "Only Owners and Admins see these." %>
+    </div>
+  <% end %>
+  <div class="flex items-center justify-end gap-2">
+    <%= link_to "Cancel", (new_job ? admin_jobs_path : admin_job_path(@job)), class: button_classes(:ghost) %>
+    <%= f.submit_button new_job ? "Create job" : "Save job" %>
+  </div>
+<% end %>
+
+<%= render "admin/clients/quick_create", button: false if new_job %>

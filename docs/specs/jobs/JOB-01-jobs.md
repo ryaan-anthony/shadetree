@@ -27,19 +27,21 @@ invoice. Jobs can also be created directly for work agreed by phone.
 - [ ] Owners/Admins create a job from an approved quote (client, property, line items, notes and
       attachments copied; quote ↔ job linked) or from scratch (client, property, title, line
       items optional, instructions).
-- [ ] Optionally, approving a quote can auto-create the job (business setting, default on;
-      may later become an automation recipe, NTF-04).
+- [x] Optionally, approving a quote can auto-create the job (business setting, default on;
+      may later become an automation recipe, NTF-04). *Settings → Documents → Jobs. It runs after
+      the approval is saved, so a failure never undoes the client's answer.*
 - [ ] Job statuses: Unscheduled, Scheduled, In progress, Completed, Cancelled — derived from
       visits where possible, with manual Complete/Cancel (with reason) available.
 - [ ] The job page shows client & property (with access notes), line items, instructions for
       the crew, internal notes, attachments/photos, visits (from JOB-02), and links to the
       originating quote and any invoices.
-- [ ] A job list filters by status (with an "approved but unscheduled" shortcut), searches by
-      client/title/number, and is usable on mobile.
+- [x] A job list filters by status (with an "approved but unscheduled" shortcut), searches by
+      client/title/number, and is usable on mobile. *"Needs scheduling" is the shortcut.*
 - [ ] Completing a job prompts "Create invoice" (wired up in PAY-01).
-- [ ] Jobs appear on the client page.
+- [x] Jobs appear on the client page.
 - [ ] Technicians see a job only through visits assigned to them (JOB-04).
-- [ ] Tests cover creation paths, status derivation, roles and tenancy.
+- [x] Tests cover creation paths, status derivation, roles and tenancy. *Derivation from visits
+      is tested with JOB-02.*
 
 ## Out of scope
 
@@ -47,6 +49,6 @@ invoice. Jobs can also be created directly for work agreed by phone.
 
 ## Open questions
 
-- Should editing job line items after creation be allowed? Recommend yes (scope changes on
-  site), with the quote unchanged; the invoice uses the job's items.
-- Job numbering: sequential per business like quotes? Recommend yes.
+- ~~Should editing job line items after creation be allowed?~~ *Decided: yes. The approved quote
+  stays unchanged; the invoice uses the job's items.*
+- ~~Job numbering: sequential per business like quotes?~~ *Decided: yes, J-0001, J-0002…*

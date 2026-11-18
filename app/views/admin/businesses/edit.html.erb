@@ -33,6 +33,11 @@
                     help: "What happens next, shown on the confirmation and in the approval email. Leave blank for the text shown here." %>
       <% end %>
 
+      <%= card title: "Jobs" do %>
+        <%= f.check :auto_create_jobs, label: "Make a job when a client approves a quote",
+                    hint: "The job copies the quote's client, property, items, notes and files. When this is off, make the job from the quote's page." %>
+      <% end %>
+
       <%= card title: "Invoices" do %>
         <div class="grid gap-4 sm:grid-cols-2">
           <%= f.field :invoice_due_days, as: :number, label: "Payment due (days after sending)", min: 0, max: 365,
