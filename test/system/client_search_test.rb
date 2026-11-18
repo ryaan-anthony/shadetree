@@ -42,14 +42,17 @@ class ClientSearchSystemTest < ApplicationSystemTestCase
     assert_nil find("#picker-demo")["data-submitted"], "an empty required picker blocks the submit"
     within("#picker-demo") do
       input = find("input[type=search]")
-      # The blocked submit shows the browser's validation bubble and moves focus; typing that
-      # races it can be lost in headless Chrome. Wait for it, then type into the field.
-      assert_equal "Choose a client, or add a new one.", evaluate_script("arguments[0].validationMessage", input)
+      assert_equal "Choose a client, or add a new one.", evaluate_script("arguments[0].validationMessage", input), "the picker says why"
+      # The blocked submit shows the browser's validation bubble; on a slow headless Chrome,
+      # keys typed while it's up can be lost. Click into the field (which closes the bubble)
+      # and type again until the text has landed, so a dropped keystroke is retried, not failed.
       input.click
-      input.fill_in(with: "maria")
-      assert_equal "maria", input.value
+      page.document.synchronize(5) do
+        input.fill_in(with: "maria")
+        raise Capybara::ExpectationNotMet, "the typing was lost" unless input.value == "maria"
+      end
       assert_selector "[role=option]", text: "Maria Lopez"
-      find("input[type=search]").send_keys(:down, :enter)
+      input.send_keys(:down, :enter)
       assert_text "Maria Lopez"
       maria = as_business(@business) { Client.find_by!(display_name: "Maria Lopez") }
       assert_equal maria.uid, find("input[type=hidden][name='demo[client]']", visible: :all).value
