@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_17_000700) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_18_000100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -325,6 +325,101 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000700) do
     t.index ["invited_by_id"], name: "index_invitations_on_invited_by_id"
     t.index ["token_digest"], name: "index_invitations_on_token_digest", unique: true
     t.index ["uid"], name: "index_invitations_on_uid", unique: true
+  end
+
+  create_table "invoice_events", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "invoice_id", null: false
+    t.bigint "user_id"
+    t.string "kind", null: false
+    t.jsonb "data", default: {}, null: false
+    t.datetime "occurred_at", null: false
+    t.index ["business_id"], name: "index_invoice_events_on_business_id"
+    t.index ["invoice_id", "occurred_at"], name: "index_invoice_events_on_invoice_id_and_occurred_at"
+    t.index ["user_id"], name: "index_invoice_events_on_user_id"
+  end
+
+  create_table "invoice_line_items", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "invoice_id", null: false
+    t.bigint "catalog_item_id"
+    t.string "key", null: false
+    t.integer "position", default: 0, null: false
+    t.string "name", default: "", null: false
+    t.text "description"
+    t.decimal "quantity", precision: 12, scale: 4, default: "1.0", null: false
+    t.string "unit"
+    t.bigint "unit_price_cents", default: 0, null: false
+    t.boolean "taxable", default: true, null: false
+    t.string "discount_kind"
+    t.decimal "discount_percent", precision: 7, scale: 4
+    t.bigint "discount_amount_cents"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id"], name: "index_invoice_line_items_on_business_id"
+    t.index ["catalog_item_id"], name: "index_invoice_line_items_on_catalog_item_id"
+    t.index ["invoice_id", "key"], name: "index_invoice_line_items_on_invoice_id_and_key", unique: true
+    t.index ["invoice_id", "position"], name: "index_invoice_line_items_on_invoice_id_and_position"
+    t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying, 'amount'::character varying]::text[]))", name: "invoice_lines_discount_kind"
+    t.check_constraint "quantity >= 0::numeric", name: "invoice_lines_quantity_nonnegative"
+  end
+
+  create_table "invoices", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.string "number", null: false
+    t.bigint "client_id", null: false
+    t.bigint "property_id"
+    t.bigint "job_id"
+    t.bigint "quote_id"
+    t.bigint "created_by_id"
+    t.string "status", default: "draft", null: false
+    t.string "currency", null: false
+    t.string "title"
+    t.date "issued_on", null: false
+    t.string "payment_terms", default: "due_on_receipt", null: false
+    t.date "due_on", null: false
+    t.text "message"
+    t.text "terms"
+    t.text "internal_notes"
+    t.jsonb "tax_rates", default: [], null: false
+    t.boolean "prices_include_tax", default: false, null: false
+    t.string "discount_kind"
+    t.decimal "discount_percent", precision: 7, scale: 4
+    t.bigint "discount_amount_cents"
+    t.bigint "subtotal_cents", default: 0, null: false
+    t.bigint "discount_total_cents", default: 0, null: false
+    t.bigint "tax_cents", default: 0, null: false
+    t.bigint "total_cents", default: 0, null: false
+    t.bigint "amount_paid_cents", default: 0, null: false
+    t.datetime "sent_at"
+    t.bigint "sent_by_id"
+    t.datetime "voided_at"
+    t.bigint "voided_by_id"
+    t.string "void_reason"
+    t.bigint "pdf_blob_id"
+    t.string "pdf_digest"
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "number"], name: "index_invoices_on_business_id_and_number", unique: true
+    t.index ["business_id", "status", "due_on"], name: "index_invoices_on_business_id_and_status_and_due_on"
+    t.index ["business_id"], name: "index_invoices_on_business_id"
+    t.index ["client_id"], name: "index_invoices_on_client_id"
+    t.index ["created_by_id"], name: "index_invoices_on_created_by_id"
+    t.index ["job_id"], name: "index_invoices_on_job_id"
+    t.index ["property_id"], name: "index_invoices_on_property_id"
+    t.index ["quote_id"], name: "index_invoices_on_quote_id"
+    t.index ["sent_by_id"], name: "index_invoices_on_sent_by_id"
+    t.index ["uid"], name: "index_invoices_on_uid", unique: true
+    t.index ["voided_by_id"], name: "index_invoices_on_voided_by_id"
+    t.check_constraint "amount_paid_cents >= 0", name: "invoices_amount_paid_nonnegative"
+    t.check_constraint "discount_amount_cents IS NULL OR discount_amount_cents >= 0", name: "invoices_discount_amount_nonnegative"
+    t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying, 'amount'::character varying]::text[]))", name: "invoices_discount_kind"
+    t.check_constraint "discount_percent IS NULL OR discount_percent >= 0::numeric AND discount_percent <= 100::numeric", name: "invoices_discount_percent_range"
+    t.check_constraint "due_on >= issued_on", name: "invoices_due_after_issue"
+    t.check_constraint "payment_terms::text = ANY (ARRAY['due_on_receipt'::character varying, 'net_7'::character varying, 'net_15'::character varying, 'net_30'::character varying, 'custom'::character varying]::text[])", name: "invoices_payment_terms"
+    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying, 'sent'::character varying, 'partially_paid'::character varying, 'paid'::character varying, 'void'::character varying]::text[])", name: "invoices_status"
   end
 
   create_table "job_line_items", force: :cascade do |t|
@@ -773,6 +868,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000700) do
   add_foreign_key "invitations", "businesses", on_delete: :cascade
   add_foreign_key "invitations", "users", column: "accepted_by_id", on_delete: :nullify
   add_foreign_key "invitations", "users", column: "invited_by_id", on_delete: :nullify
+  add_foreign_key "invoice_events", "businesses"
+  add_foreign_key "invoice_events", "invoices"
+  add_foreign_key "invoice_events", "users"
+  add_foreign_key "invoice_line_items", "businesses"
+  add_foreign_key "invoice_line_items", "catalog_items"
+  add_foreign_key "invoice_line_items", "invoices"
+  add_foreign_key "invoices", "businesses"
+  add_foreign_key "invoices", "clients"
+  add_foreign_key "invoices", "jobs"
+  add_foreign_key "invoices", "properties"
+  add_foreign_key "invoices", "quotes"
+  add_foreign_key "invoices", "users", column: "created_by_id"
+  add_foreign_key "invoices", "users", column: "sent_by_id"
+  add_foreign_key "invoices", "users", column: "voided_by_id"
   add_foreign_key "job_line_items", "businesses"
   add_foreign_key "job_line_items", "catalog_items", on_delete: :nullify
   add_foreign_key "job_line_items", "jobs", on_delete: :cascade

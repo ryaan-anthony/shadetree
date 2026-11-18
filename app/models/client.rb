@@ -12,6 +12,7 @@ class Client < ApplicationRecord
            inverse_of: :client, dependent: :delete_all
   has_many :quotes, dependent: :restrict_with_exception
   has_many :jobs, dependent: :restrict_with_exception
+  has_many :invoices, dependent: :restrict_with_exception # PAY-01
   has_many :service_requests, dependent: :restrict_with_exception # CLI-03
   has_many :properties, -> { order(billing: :desc, position: :asc, id: :asc) }, inverse_of: :client, dependent: :delete_all
 

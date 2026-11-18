@@ -44,6 +44,17 @@ module DocumentLine
     quantity.to_d.round(4).to_s("F").sub(/\.?0+\z/, "")
   end
 
+  # Fills this line from one row of a builder form (BuiltDocument#sync_line_items).
+  def assign_row(row, position:)
+    self.position = position
+    self.catalog_item_id = catalog_item_id_for(row["catalog_item"].to_s) if row.key?("catalog_item")
+    %w[name description unit].each { public_send("#{_1}=", row[_1]) if row.key?(_1) }
+    self.quantity = row["quantity"].to_s.strip.presence || "0" if row.key?("quantity")
+    self.unit_price = row["unit_price"].to_s.strip.presence || "0" if row.key?("unit_price")
+    self.taxable = ActiveModel::Type::Boolean.new.cast(row["taxable"]) if row.key?("taxable")
+    set_discount(row["discount_kind"], row["discount_value"]) if row.key?("discount_kind")
+  end
+
   # "2.5 hour", "6 cu yd", or just "3" without a unit.
   def quantity_label = [ quantity.to_d.round(4).to_s("F").sub(/\.?0+\z/, ""), unit ].compact.join(" ")
 

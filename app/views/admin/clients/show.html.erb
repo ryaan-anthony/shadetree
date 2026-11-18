@@ -52,13 +52,14 @@
       <% end %>
     <% end %>
 
-    <%# Filled in by later specs: invoices (INV-01). %>
     <% quotes = @client.quotes.order(created_at: :desc).limit(5) %>
+    <% invoices = @client.invoices.order(created_at: :desc, id: :desc).limit(5) %>
     <% requests = @client.service_requests.recent.limit(5) %>
     <% jobs = @client.jobs.order(created_at: :desc, id: :desc).limit(5) %>
     <%= card title: "Work", flush: true,
              actions: (unless @client.archived?
-                         safe_join([ link_to(new_admin_job_path(client: @client.uid), class: button_classes(:ghost, :sm)) { icon("plus") + " New job" },
+                         safe_join([ link_to(new_admin_invoice_path(client: @client.uid), class: button_classes(:ghost, :sm)) { icon("plus") + " New invoice" },
+                                     link_to(new_admin_job_path(client: @client.uid), class: button_classes(:ghost, :sm)) { icon("plus") + " New job" },
                                      button_to(admin_quotes_path, params: { "quote[client]" => @client.uid }, class: button_classes(:secondary, :sm), form: { class: "contents" }) { icon("plus") + " New quote" } ], " ")
                        end) do %>
       <ul class="list">
@@ -90,7 +91,15 @@
         <% else %>
           <li><%= icon "job", class: "size-4 text-faint" %><span class="flex-1 font-medium text-ink">Jobs</span><span class="text-sm2 text-muted">None yet</span></li>
         <% end %>
-        <li><%= icon "invoice", class: "size-4 text-faint" %><span class="flex-1 font-medium text-ink">Invoices</span><span class="text-sm2 text-muted">None yet</span></li>
+        <% if invoices.any? %>
+          <% invoices.each do |invoice| %>
+            <li><%= icon "invoice", class: "size-4 text-faint" %>
+              <%= link_to "#{invoice.number}#{" · #{invoice.title}" if invoice.title}", staff_invoice_path(invoice), class: "min-w-0 flex-1 truncate font-medium text-ink hover:underline" %>
+              <%= invoice_status_badge(invoice) %><span class="money text-sm2 text-subtle"><%= money(invoice.total) %></span></li>
+          <% end %>
+        <% else %>
+          <li><%= icon "invoice", class: "size-4 text-faint" %><span class="flex-1 font-medium text-ink">Invoices</span><span class="text-sm2 text-muted">None yet</span></li>
+        <% end %>
       </ul>
     <% end %>
   </div>
@@ -134,7 +143,14 @@
     <% end %>
 
     <%= card title: "Balance" do %>
-      <p class="text-sm text-muted">Nothing owed.</p>
+      <%# PAY-01: what's owed on invoices that are out (sent or partly paid), per currency. %>
+      <% owed = @client.invoices.where(status: Invoice::OUTSTANDING).group(:currency).sum(Arel.sql("total_cents - amount_paid_cents")).transform_values(&:to_i).reject { |_, cents| cents <= 0 } %>
+      <% if owed.any? %>
+        <p class="money text-lg font-semibold text-ink"><%= safe_join(owed.map { |currency, cents| money(Money.new(cents, currency)) }, " + ") %></p>
+        <p class="text-sm2 text-muted">Owed on invoices that are out.</p>
+      <% else %>
+        <p class="text-sm text-muted">Nothing owed.</p>
+      <% end %>
     <% end %>
 
     <% if @client.tags.any? || @client.tax_exempt || @client.notes.present? %>

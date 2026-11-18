@@ -22,10 +22,12 @@ and tax behavior, carry payment terms and a due date, and track their status thr
 
 ## Acceptance criteria
 
-- [ ] Owners/Admins create an invoice from a job (items from the job), from an approved quote,
+- [x] Owners/Admins create an invoice from a job (items from the job), from an approved quote,
       or from scratch for a client/property; sources are linked both ways.
-- [ ] Line items, discounts and taxes behave exactly as in the quote builder (shared behavior,
-      not a copy).
+      *A job or quote can be invoiced more than once (progress billing, no special screen).*
+- [x] Line items, discounts and taxes behave exactly as in the quote builder (shared behavior,
+      not a copy). *`PricedDocument`, `BuiltDocument` and `DocumentLine` (models), `DocumentBuilder`
+      (controllers), and the quote builder's partials and script with `scope: "invoice"`.*
 - [ ] Invoice fields: number (sequential per business, prefix from settings), issue date, payment
       terms (due on receipt, net 7/15/30, custom date) and computed due date, message, terms,
       internal notes, attachments (e.g. completion photos selectable from the job).
@@ -35,10 +37,21 @@ and tax behavior, carry payment terms and a due date, and track their status thr
       invoices with any payment cannot change line items; Void requires a reason.
 - [ ] Invoice list: filter by status/overdue, search by client/number, totals outstanding and
       overdue for the filtered set.
-- [ ] Invoices appear on the client and job pages; the job's "Create invoice" prompt (JOB-01)
+- [x] Invoices appear on the client and job pages; the job's "Create invoice" prompt (JOB-01)
       works.
 - [ ] Technicians have no access; tests cover creation paths, totals, status rules, roles and
       tenancy.
+
+## Implementation notes
+
+- Part 1: invoices from a job, an approved quote or scratch; the builder; the invoice's page;
+  invoices on job, quote and client pages (with what's owed). Part 2: the list (filters, search,
+  totals), revising and voiding sent invoices, attachments from the job's photos.
+- Payment terms: due on receipt, net 7/15/30, or a custom date. New invoices take the business's
+  "invoice due days" setting: one of the terms when it matches, else a custom date that many days
+  out. Overdue isn't stored: a sent or partly paid invoice past its due date, for the business's today.
+- An invoice from a quote bills the quote's lines as agreed; one from a job bills the job's lines
+  as they are now (with changes made on site). Either way it stays with that client.
 
 ## Out of scope
 

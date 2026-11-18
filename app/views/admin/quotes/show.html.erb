@@ -8,6 +8,9 @@
   <% elsif quote.approved? %>
     <%= button_to admin_quote_job_path(quote), class: button_classes(:primary), form: { class: "contents" } do %><%= icon "job" %> Create job<% end %>
   <% end %>
+  <% if quote.approved? %>
+    <%= button_to admin_quote_invoices_path(quote), class: button_classes(:secondary), form: { class: "contents" } do %><%= icon "invoice" %> Create invoice<% end %>
+  <% end %>
   <% if quote.revisable? %>
     <%= button_to revise_admin_quote_path(quote), class: button_classes(:secondary),
                   form: { class: "contents", data: { turbo_confirm: "Until you send the new version, #{quote.client.display_name}'s link says the quote is being updated, and they can't answer it. Sending it again unchanged also restores it.", turbo_confirm_button: "Revise" } } do %><%= icon "edit-3" %> Revise<% end %>
@@ -109,6 +112,9 @@
           <% end %>
         </ul>
       <% end %>
+    <% end %>
+    <% if (invoices = quote.invoices.order(:created_at, :id).to_a).any? %>
+      <%= card title: "Invoices", id: "invoices", flush: true do %><%= render "admin/invoices/list", invoices: %><% end %>
     <% end %>
     <%= card title: "Activity" do %>
       <ol class="space-y-3 text-sm2" id="quote-activity">

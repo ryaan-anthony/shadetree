@@ -1,4 +1,4 @@
-<%# JOB-01: everything about a job. Visits arrive with JOB-02; invoices with PAY-01. %>
+<%# JOB-01: everything about a job: its visits (JOB-02) and its invoices (PAY-01). %>
 <% job = @job %>
 <% totals = job.totals %>
 <% content_for :title, "#{job.number} #{job.title}" %>
@@ -33,7 +33,10 @@
 
 <% if job.status == "completed" %>
   <div class="banner banner-success mb-4"><%= icon "check-circle" %>
-    <p>Completed <%= local_time(job.completed_at) %><%= " by #{job.completed_by.full_name}" if job.completed_by %>. Ready to invoice.</p></div>
+    <p class="flex-1">Completed <%= local_time(job.completed_at) %><%= " by #{job.completed_by.full_name}" if job.completed_by %>.<%= " Ready to invoice." if job.invoices.none? %></p>
+    <% if job.invoices.none? %>
+      <%= button_to admin_job_invoices_path(job), class: button_classes(:primary, :sm), form: { class: "contents" } do %><%= icon "invoice" %> Create invoice<% end %>
+    <% end %></div>
 <% elsif job.status == "cancelled" %>
   <div class="banner banner-warning mb-4"><%= icon "x-circle" %>
     <p>Cancelled <%= local_time(job.cancelled_at) %><%= " by #{job.cancelled_by.full_name}" if job.cancelled_by %><%= job.cancel_reason ? ": “#{job.cancel_reason}”" : "." %></p></div>
@@ -50,6 +53,13 @@
     <% end %>
 
     <%= render "admin/jobs/visits", job: %>
+
+    <%# PAY-01: a job can be billed more than once (progress billing). %>
+    <% invoices = job.invoices.order(:created_at, :id).to_a %>
+    <%= card title: "Invoices", id: "invoices", flush: true,
+             actions: button_to(admin_job_invoices_path(job), class: button_classes(invoices.any? ? :ghost : :secondary, :sm), form: { class: "contents" }) { icon("plus") + " Create invoice" } do %>
+      <%= render "admin/invoices/list", invoices:, empty: "Not invoiced yet. Create invoice copies this job's items, discount and taxes." %>
+    <% end %>
 
     <%= card title: "Work to do", subtitle: (job.quote ? "Copied from quote #{job.quote.number}." : nil), flush: true,
              actions: (link_to("Edit items", edit_admin_job_path(job, items: 1, anchor: "job-items"), class: button_classes(:secondary, :sm)) if job.open?) do %>
