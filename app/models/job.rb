@@ -24,6 +24,7 @@ class Job < ApplicationRecord
   belongs_to :completed_by, class_name: "User", optional: true
   belongs_to :cancelled_by, class_name: "User", optional: true
   has_many :line_items, -> { order(:position, :id) }, class_name: "JobLineItem", inverse_of: :job, dependent: :delete_all
+  has_many :visits, inverse_of: :job, dependent: :restrict_with_exception # JOB-02
   accepts_nested_attributes_for :line_items, allow_destroy: true, reject_if: :blank_new_line?
 
   MAX_LINES = 100
@@ -114,11 +115,14 @@ class Job < ApplicationRecord
 
   # Status changes take the row lock and look again, so two people pressing at once (or a visit
   # changing it, JOB-02) can't both win.
+  # Finishing a job finishes its visits too (JOB-02): a visit under way is done, and ones not
+  # started are cancelled. Cancelling a job cancels all its open visits.
   def complete!(by:)
     with_lock do
       raise NotOpen, "#{number} is already #{status_label.downcase}." unless open?
 
       update!(status: "completed", completed_at: Time.current, completed_by: by)
+      visits.open.each { _1.status == "in_progress" ? _1.complete!(by:, refresh_job: false) : _1.cancel!(by:, reason: "Job completed", refresh_job: false) }
     end
   end
 
@@ -127,6 +131,31 @@ class Job < ApplicationRecord
       raise NotOpen, "#{number} is already #{status_label.downcase}." unless open?
 
       update!(status: "cancelled", cancelled_at: Time.current, cancelled_by: by, cancel_reason: reason)
+      visits.open.each { _1.cancel!(by:, reason: "Job cancelled", refresh_job: false) }
+    end
+  end
+
+  # JOB-02: how long a visit should take, to start the form with: the catalog durations of its
+  # items (times their quantities), else the business's industry default, else an hour.
+  def suggested_visit_minutes
+    from_items = visit_minutes_from_items
+    minutes = from_items.positive? ? from_items : IndustryPreset.for(business.industry)&.default_visit_minutes || 60
+    minutes.clamp(15, Visit::MAX_DURATION)
+  end
+
+  def visit_minutes_from_items
+    @visit_minutes_from_items ||= line_items.includes(:catalog_item).sum { (_1.catalog_item&.duration_minutes || 0) * _1.quantity.to_d }.round
+  end
+
+  # Visits it still has to happen: scheduled or under way.
+  def open_visit_count = visits.open.count
+
+  # JOB-02: the status its visits give an open job. Called by every visit change, under the job's
+  # row lock, so concurrent changes settle on the right status. Completed and cancelled jobs
+  # stay as they are until reopened.
+  def refresh_status!
+    with_lock do
+      update!(status: visit_status) if open? && status != visit_status
     end
   end
 
@@ -139,8 +168,16 @@ class Job < ApplicationRecord
     end
   end
 
-  # What the visits say (JOB-02 fills this in): a job without visits is unscheduled.
-  def visit_status = "unscheduled"
+  # What the visits say: one under way, or work done with more to come, is In progress; visits
+  # booked and none done yet is Scheduled; nothing booked is Unscheduled (needs scheduling).
+  # Work done with nothing more booked stays In progress until staff complete the job.
+  def visit_status
+    statuses = visits.distinct.pluck(:status)
+    if statuses.include?("in_progress") || statuses.include?("completed") then "in_progress"
+    elsif statuses.include?("scheduled") then "scheduled"
+    else "unscheduled"
+    end
+  end
 
   # The rows in the form, in the order they were sent.
   def line_items_attributes=(rows)

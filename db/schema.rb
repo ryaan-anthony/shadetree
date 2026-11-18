@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_17_000200) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_17_000400) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -643,6 +643,55 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000200) do
     t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true
   end
 
+  create_table "visit_assignments", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "visit_id", null: false
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_visit_assignments_on_user_id"
+    t.index ["visit_id", "user_id"], name: "index_visit_assignments_on_visit_id_and_user_id", unique: true
+  end
+
+  create_table "visit_events", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "visit_id", null: false
+    t.bigint "user_id"
+    t.string "kind", null: false
+    t.jsonb "data", default: {}, null: false
+    t.datetime "occurred_at", null: false
+    t.index ["visit_id"], name: "index_visit_events_on_visit_id"
+    t.check_constraint "kind::text = ANY (ARRAY['scheduled'::character varying, 'rescheduled'::character varying, 'reassigned'::character varying, 'cancelled'::character varying, 'restored'::character varying, 'started'::character varying, 'completed'::character varying, 'reopened'::character varying]::text[])", name: "visit_events_kind"
+  end
+
+  create_table "visits", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.bigint "job_id", null: false
+    t.date "scheduled_on", null: false
+    t.string "timing", default: "anytime", null: false
+    t.datetime "starts_at"
+    t.datetime "window_ends_at"
+    t.integer "duration_minutes", default: 60, null: false
+    t.text "instructions"
+    t.string "status", default: "scheduled", null: false
+    t.datetime "started_at"
+    t.datetime "completed_at"
+    t.datetime "cancelled_at"
+    t.string "cancel_reason"
+    t.bigint "created_by_id"
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "scheduled_on"], name: "index_visits_on_business_id_and_scheduled_on"
+    t.index ["job_id", "scheduled_on"], name: "index_visits_on_job_id_and_scheduled_on"
+    t.index ["uid"], name: "index_visits_on_uid", unique: true
+    t.check_constraint "(timing::text = 'anytime'::text) = (starts_at IS NULL) AND (timing::text = 'window'::text) = (window_ends_at IS NOT NULL)", name: "visits_times"
+    t.check_constraint "duration_minutes >= 5 AND duration_minutes <= 1440", name: "visits_duration"
+    t.check_constraint "status::text = ANY (ARRAY['scheduled'::character varying, 'in_progress'::character varying, 'completed'::character varying, 'cancelled'::character varying]::text[])", name: "visits_status"
+    t.check_constraint "timing::text = ANY (ARRAY['exact'::character varying, 'window'::character varying, 'anytime'::character varying]::text[])", name: "visits_timing"
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "business_users", "businesses"
@@ -716,4 +765,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000200) do
   add_foreign_key "tax_rates", "businesses", on_delete: :cascade
   add_foreign_key "usage_events", "businesses"
   add_foreign_key "users", "businesses", column: "last_business_id", on_delete: :nullify
+  add_foreign_key "visit_assignments", "businesses", on_delete: :cascade
+  add_foreign_key "visit_assignments", "users", on_delete: :cascade
+  add_foreign_key "visit_assignments", "visits", on_delete: :cascade
+  add_foreign_key "visit_events", "businesses", on_delete: :cascade
+  add_foreign_key "visit_events", "users", on_delete: :nullify
+  add_foreign_key "visit_events", "visits", on_delete: :cascade
+  add_foreign_key "visits", "businesses", on_delete: :cascade
+  add_foreign_key "visits", "jobs", on_delete: :cascade
+  add_foreign_key "visits", "users", column: "created_by_id", on_delete: :nullify
 end

@@ -127,6 +127,14 @@ Rails.application.routes.draw do
         patch :cancel
         patch :reopen
       end
+      # Visits (JOB-02)
+      resources :visits, only: %i[new create edit update] do
+        member do
+          patch :cancel
+          patch :restore
+          patch :complete
+        end
+      end
     end
 
     # "Send me a test email" from branding settings (NTF-01)

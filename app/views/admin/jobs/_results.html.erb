@@ -46,7 +46,10 @@
             <tr id="job-<%= job.uid %>">
               <td><%= link_to job.title, admin_job_path(job), class: "primary hover:underline", data: { turbo_frame: "_top" } %><span class="sub"><%= job.number %></span></td>
               <td><%= job.client.display_name %><% if job.property %><span class="sub"><%= job.property.one_line %></span><% end %></td>
-              <td><%= job_status_badge(job) %></td>
+              <td><%= job_status_badge(job) %>
+                <% if job.status == "unscheduled" && can?(:schedule) %>
+                  <%= link_to "Schedule", new_admin_job_visit_path(job), class: "sub font-medium text-ink underline-offset-2 hover:underline", data: { turbo_frame: "_top" } %>
+                <% end %></td>
               <td class="text-sm2 text-subtle"><%= job.quote ? link_to(job.quote.number, admin_quote_path(job.quote), class: "hover:underline", data: { turbo_frame: "_top" }) : "Added directly" %></td>
               <td class="money num"><%= job.total_cents.zero? ? "—" : money(job.total) %></td>
             </tr>

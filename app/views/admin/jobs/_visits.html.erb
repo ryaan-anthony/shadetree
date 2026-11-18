@@ -1,0 +1,53 @@
+<%# locals: (job:) -%>
+<%# JOB-02: the job's visits, in date order, with what changed and who changed it. %>
+<% visits = job.visits.includes(:assignees, events: :user).in_order.to_a %>
+<% can_schedule = can?(:schedule) %>
+<%= card title: "Visits", flush: true, id: "visits",
+         actions: (link_to(new_admin_job_visit_path(job), class: button_classes(:secondary, :sm)) { icon("plus") + " Schedule visit" } if can_schedule && job.open?) do %>
+  <% if visits.empty? %>
+    <p class="px-5 py-4 text-sm2 text-muted"><%= job.open? ? "Nothing booked yet. Schedule a visit to put this job on the calendar." : "No visits." %></p>
+  <% else %>
+    <ul class="list">
+      <% visits.each do |visit| %>
+        <li id="visit-<%= visit.uid %>" class="items-start <%= "opacity-70" unless visit.open? %>">
+          <div class="w-12 shrink-0 text-center">
+            <p class="text-xs font-semibold uppercase text-muted"><%= visit.scheduled_on.strftime("%b") %></p>
+            <p class="text-lg font-semibold leading-tight text-ink"><%= visit.scheduled_on.day %></p>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="font-medium text-ink"><%= visit.scheduled_on.strftime("%A") %>, <%= visit.time_label.sub(/\AArrive/, "arrive").sub("Anytime", "anytime") %>
+              <% unless visit.status == "scheduled" %><%= badge visit.status_label, tone: { "in_progress" => :info, "completed" => :success, "cancelled" => :neutral }.fetch(visit.status) %><% end %></p>
+            <p class="text-sm2 text-muted">About <%= visit.duration_label %> · <%= visit.assignees.any? ? visit.assignees.map(&:full_name).to_sentence : "Nobody assigned yet" %></p>
+            <% if visit.instructions %><p class="mt-1 whitespace-pre-line text-sm2 text-subtle"><%= visit.instructions %></p><% end %>
+            <% if visit.cancel_reason %><p class="mt-1 text-sm2 text-subtle">Cancelled: “<%= visit.cancel_reason %>”</p><% end %>
+            <% if visit.events.size > 1 %>
+              <details class="mt-1 text-sm2">
+                <summary class="cursor-pointer text-muted">History</summary>
+                <ol class="mt-1 space-y-0.5 text-subtle">
+                  <% visit.events.each do |event| %>
+                    <li><%= visit_event_text(event) %> · <%= event.user&.full_name || "Someone" %>, <%= local_time(event.occurred_at) %></li>
+                  <% end %>
+                </ol>
+              </details>
+            <% end %>
+          </div>
+          <% if can_schedule %>
+            <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
+              <button type="button" class="<%= button_classes(:ghost, :sm, :icon) %>" data-menu-target="button" data-action="menu#toggle"
+                      aria-haspopup="true" aria-expanded="false" aria-label="Actions for the visit on <%= visit.when_label %>"><%= icon "more-horizontal" %></button>
+              <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
+                <% if visit.open? %>
+                  <%= link_to edit_admin_job_visit_path(job, visit), class: "menu-item" do %><%= icon "calendar" %> Reschedule or reassign<% end %>
+                  <%= button_to complete_admin_job_visit_path(job, visit), method: :patch, class: "menu-item", form: { class: "contents" } do %><%= icon "check" %> Mark done<% end %>
+                  <%= button_to cancel_admin_job_visit_path(job, visit), method: :patch, class: "menu-item", form: { class: "contents", data: { turbo_confirm: "Cancel the visit on #{visit.when_label}?", turbo_confirm_button: "Cancel visit" } } do %><%= icon "x" %> Cancel visit<% end %>
+                <% elsif visit.status == "cancelled" && job.open? %>
+                  <%= button_to restore_admin_job_visit_path(job, visit), method: :patch, class: "menu-item", form: { class: "contents" } do %><%= icon "rotate-ccw" %> Restore<% end %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+<% end %>

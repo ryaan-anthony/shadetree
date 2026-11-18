@@ -127,6 +127,18 @@ Tenancy.with_business(business) do
                 instructions: "Ladder goes on the left side of the house. Bag the debris and leave it by the curb.")
     Job.create!(client: first_client, property: first_client.primary_property, created_by: owner, title: "Spring aeration").complete!(by: owner)
   end
+
+  # JOB-02: the job from the approved quote booked over two days with the technician, one in
+  # an arrival window and one at a start time.
+  from_quote = Job.where.not(quote_id: nil).first
+  if from_quote && from_quote.visits.none?
+    tech = User.find_by(email: "tech@example.com")
+    monday = business.today.next_occurring(:monday)
+    from_quote.visits.new(scheduled_on: monday, timing: "window", start_time: "08:00", window_end_time: "10:00", duration_minutes: 180,
+                          assignee_ids: [ tech&.id ].compact, instructions: "Start with the front hedges.", created_by: owner).schedule!(by: owner)
+    from_quote.visits.new(scheduled_on: monday + 1, timing: "exact", start_time: "13:00", duration_minutes: 120,
+                          assignee_ids: [ tech&.id, owner.id ].compact, created_by: owner).schedule!(by: owner)
+  end
 end
 
 # CLI-03: the request form, on, with a request from someone new.

@@ -7,10 +7,10 @@
   <% if job.open? %>
     <%= link_to edit_admin_job_path(job), class: button_classes(:secondary) do %><%= icon "edit-2" %> Edit<% end %>
     <%= button_to complete_admin_job_path(job), method: :patch, class: button_classes(:primary),
-                  form: { class: "contents", data: { turbo_confirm: "Mark #{job.number} completed?", turbo_confirm_button: "Complete job" } } do %><%= icon "check" %> Complete<% end %>
+                  form: { class: "contents", data: { turbo_confirm: ["Mark #{job.number} completed?", (" Visits not started yet are cancelled." if job.visits.scheduled.exists?)].join, turbo_confirm_button: "Complete job" } } do %><%= icon "check" %> Complete<% end %>
     <div class="contents" data-controller="modal">
       <button type="button" class="<%= button_classes(:ghost) %>" data-action="modal#open" data-modal-target="return" aria-haspopup="dialog">Cancel job</button>
-      <%= modal id: "job-cancel", title: "Cancel #{job.number}?", description: "It moves to Cancelled. You can reopen it later." do %>
+      <%= modal id: "job-cancel", title: "Cancel #{job.number}?", description: "It moves to Cancelled, with any open visits. You can reopen it later." do %>
         <%= form_with url: cancel_admin_job_path(job), method: :patch, class: "space-y-4" do %>
           <div class="field">
             <label class="label" for="reason">Reason <span class="label-optional">(optional)</span></label>
@@ -45,6 +45,8 @@
         <div><dt class="text-sm2 text-muted">Value</dt><dd class="money mt-1 font-semibold text-ink"><%= money(totals.total) %></dd></div>
       </dl>
     <% end %>
+
+    <%= render "admin/jobs/visits", job: %>
 
     <%= card title: "Work to do", subtitle: (job.quote ? "Copied from quote #{job.quote.number}." : nil), flush: true,
              actions: (link_to("Edit items", edit_admin_job_path(job, anchor: "job-items"), class: button_classes(:secondary, :sm)) if job.open?) do %>
