@@ -5,6 +5,7 @@ class Admin::VisitsController < Admin::BaseController
   requires_permission :schedule
   before_action :set_job
   before_action :set_visit, only: %i[edit update cancel restore complete]
+  before_action :require_open_job, only: %i[new create]
 
   def new
     @visit = @job.visits.new(scheduled_on: current_business.today, timing: "window", start_time: "08:00", window_end_time: "10:00",
@@ -12,13 +13,13 @@ class Admin::VisitsController < Admin::BaseController
   end
 
   def create
-    return redirect_to(admin_job_path(@job), alert: "#{@job.number} is #{@job.status_label.downcase}. Reopen it to schedule visits.") unless @job.open?
-
     @visit = @job.visits.new(visit_params.merge(created_by: current_user))
     @visit.schedule!(by: current_user)
     redirect_to admin_job_path(@job), notice: "Visit scheduled for #{@visit.when_label}."
   rescue ActiveRecord::RecordInvalid
     render :new, status: :unprocessable_content
+  rescue Visit::NotOpen => error # the job was finished meanwhile
+    redirect_to admin_job_path(@job), alert: error.message
   end
 
   def edit; end
@@ -41,6 +42,10 @@ class Admin::VisitsController < Admin::BaseController
   private
 
   def set_job = @job = Job.includes(:client, :property).find_by_param!(params[:job_id])
+
+  def require_open_job
+    redirect_to admin_job_path(@job), alert: "#{@job.number} is #{@job.status_label.downcase}. Reopen it to schedule visits." unless @job.open?
+  end
   def set_visit
     @visit = @job.visits.includes(:assignees).find_by_param!(params[:id])
     @visit_label = @visit.when_label # before any change, for the page title

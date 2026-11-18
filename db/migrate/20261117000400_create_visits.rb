@@ -46,7 +46,7 @@ class CreateVisits < ActiveRecord::Migration[8.1]
       t.string :kind, null: false
       t.jsonb :data, null: false, default: {}
       t.datetime :occurred_at, null: false
-      t.check_constraint "kind IN ('scheduled', 'rescheduled', 'reassigned', 'cancelled', 'restored', 'started', 'completed', 'reopened')", name: "visit_events_kind"
+      t.check_constraint "kind IN ('scheduled', 'rescheduled', 'reassigned', 'updated', 'cancelled', 'restored', 'started', 'completed', 'reopened')", name: "visit_events_kind"
     end
   end
 end

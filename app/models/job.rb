@@ -125,7 +125,7 @@ class Job < ApplicationRecord
       raise NotOpen, "#{number} is already #{status_label.downcase}." unless open?
 
       update!(status: "completed", completed_at: Time.current, completed_by: by)
-      visits.open.each { _1.status == "in_progress" ? _1.complete!(by:, refresh_job: false) : _1.cancel!(by:, reason: "Job completed", refresh_job: false) }
+      visits.open.lock.each { _1.finish!(_1.status == "in_progress" ? "completed" : "cancelled", by:, reason: "Job completed") }
     end
   end
 
@@ -134,7 +134,7 @@ class Job < ApplicationRecord
       raise NotOpen, "#{number} is already #{status_label.downcase}." unless open?
 
       update!(status: "cancelled", cancelled_at: Time.current, cancelled_by: by, cancel_reason: reason)
-      visits.open.each { _1.cancel!(by:, reason: "Job cancelled", refresh_job: false) }
+      visits.open.lock.each { _1.finish!("cancelled", by:, reason: "Job cancelled") }
     end
   end
 
@@ -143,7 +143,7 @@ class Job < ApplicationRecord
   def suggested_visit_minutes
     from_items = visit_minutes_from_items
     minutes = from_items.positive? ? from_items : IndustryPreset.for(business.industry)&.default_visit_minutes || 60
-    minutes.clamp(15, Visit::MAX_DURATION)
+    minutes.clamp(15, 8 * 60) # a starting point; a long job is usually more than one visit
   end
 
   def visit_minutes_from_items
@@ -153,13 +153,14 @@ class Job < ApplicationRecord
   # Visits it still has to happen: scheduled or under way.
   def open_visit_count = visits.open.count
 
-  # JOB-02: the status its visits give an open job. Called by every visit change, under the job's
-  # row lock, so concurrent changes settle on the right status. Completed and cancelled jobs
-  # stay as they are until reopened.
+  # JOB-02: the status its visits give an open job. Visits call it under the job's row lock, with
+  # their change. Only the status is written: a visit change mustn't fail on (or re-save) the
+  # job's other fields, or count as an edit to the job form open in another tab.
   def refresh_status!
-    with_lock do
-      update!(status: visit_status) if open? && status != visit_status
-    end
+    return unless open?
+
+    new_status = visit_status
+    update_columns(status: new_status, updated_at: Time.current) if new_status != status
   end
 
   # Back to the status its visits give it, undoing Complete or Cancel.

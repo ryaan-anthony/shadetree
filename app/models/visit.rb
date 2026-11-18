@@ -11,7 +11,7 @@ class Visit < ApplicationRecord
   TIMINGS = %w[exact window anytime].freeze
   STATUSES = %w[scheduled in_progress completed cancelled].freeze
   OPEN_STATUSES = %w[scheduled in_progress].freeze
-  LABELS = { "scheduled" => "Scheduled", "in_progress" => "In progress", "completed" => "Done", "cancelled" => "Cancelled" }.freeze
+  LABELS = { "scheduled" => "Scheduled", "in_progress" => "In progress", "completed" => "Completed", "cancelled" => "Cancelled" }.freeze
   MAX_DURATION = 24 * 60
   CLOCK = /\A([01]\d|2[0-3]):[0-5]\d(:00)?\z/ # "HH:MM" from a time field (browsers may add ":00")
 
@@ -75,13 +75,15 @@ class Visit < ApplicationRecord
   def time_label
     case timing
     when "exact" then clock_label(starts_at)
-    when "window" then "Arrive #{clock_label(starts_at, ampm: starts_at.strftime("%p") != window_ends_at.strftime("%p"))}–#{clock_label(window_ends_at)}"
+    when "window"
+      same_half = starts_at.in_time_zone(business.time_zone).hour < 12 == window_ends_at.in_time_zone(business.time_zone).hour < 12
+      "Arrive #{clock_label(starts_at, ampm: !same_half)}–#{clock_label(window_ends_at)}"
     else "Anytime"
     end
   end
 
   # "Tue, Nov 17 · Arrive 8–10 am"
-  def when_label = "#{scheduled_on.strftime("%a, %b %-d")}#{", #{scheduled_on.year}" if scheduled_on.year != business.today.year} · #{time_label}"
+  def when_label(with_year: false) = "#{scheduled_on.strftime("%a, %b %-d")}#{", #{scheduled_on.year}" if with_year || scheduled_on.year != business.today.year} · #{time_label}"
 
   def duration_label
     hours, minutes = duration_minutes.divmod(60)
@@ -90,69 +92,99 @@ class Visit < ApplicationRecord
 
   # A new visit with its assignees, recorded and reflected in the job's status.
   def schedule!(by:)
-    transaction do
+    under_job_lock do
       save!
       sync_assignments
-      VisitEvent.record!(self, :scheduled, by:, when: when_label, crew: assignees.map(&:full_name))
-      job.refresh_status!
+      VisitEvent.record!(self, :scheduled, by:, to: snapshot, crew: crew_names, crew_ids: assignees.map(&:id))
     end
-    self
   end
 
-  # Date, time, duration, crew or instructions changed; records what moved and who changed.
+  # Date, time, duration, crew or instructions changed; records what changed and who changed it.
+  # A change to the crew alone still changes the visit's row, so lock_version catches a stale form.
   def reschedule!(attributes, by:)
-    with_lock do
+    under_job_lock do
+      lock!
       raise NotOpen, "This visit is #{status_label.downcase}." unless open?
 
-      before_when = when_label
-      before_crew = assignees.to_a
+      before, before_crew, before_duration = snapshot, assignees.to_a, duration_minutes
       assign_attributes(attributes)
+      crew_changed = !@assignee_ids.nil? && @assignee_ids.sort != before_crew.map(&:id).sort
+      self.updated_at = Time.current if crew_changed && !changed?
+      details = (changes.keys & %w[duration_minutes instructions])
       save!
       sync_assignments
       after_crew = assignees.reload.to_a
-      VisitEvent.record!(self, :rescheduled, by:, from: before_when, to: when_label) if when_label != before_when
+      VisitEvent.record!(self, :rescheduled, by:, from: before, to: snapshot) if snapshot.except("when") != before.except("when")
       added, removed = after_crew - before_crew, before_crew - after_crew
-      VisitEvent.record!(self, :reassigned, by:, added: added.map(&:full_name), removed: removed.map(&:full_name)) if added.any? || removed.any?
+      if added.any? || removed.any?
+        VisitEvent.record!(self, :reassigned, by:, added: added.map(&:full_name), removed: removed.map(&:full_name),
+                                               added_ids: added.map(&:id), removed_ids: removed.map(&:id))
+      end
+      VisitEvent.record!(self, :updated, by:, changed: details, duration_from: before_duration, duration_to: duration_minutes) if details.any?
     end
-    self
   end
 
-  def cancel!(by:, reason: nil, refresh_job: true)
-    with_lock do
-      raise NotOpen, "This visit is already #{status_label.downcase}." unless open?
-
-      update!(status: "cancelled", cancelled_at: Time.current, cancel_reason: reason)
-      VisitEvent.record!(self, :cancelled, by:, reason:)
+  def cancel!(by:, reason: nil)
+    under_job_lock do
+      lock!
+      finish!("cancelled", by:, reason:)
     end
-    job.refresh_status! if refresh_job
-    self
   end
 
   def restore!(by:)
-    with_lock do
+    under_job_lock do
+      lock!
       raise NotOpen, "This visit isn't cancelled." unless status == "cancelled"
-      raise NotOpen, "Reopen the job first." unless job.open?
 
       update!(status: "scheduled", cancelled_at: nil, cancel_reason: nil)
       VisitEvent.record!(self, :restored, by:)
     end
-    job.refresh_status!
-    self
   end
 
   # Done (staff here; technicians from their day view, JOB-04).
-  def complete!(by:, refresh_job: true)
-    with_lock do
-      raise NotOpen, "This visit is #{status_label.downcase}." unless open?
-
-      update!(status: "completed", completed_at: Time.current)
-      VisitEvent.record!(self, :completed, by:)
+  def complete!(by:)
+    under_job_lock do
+      lock!
+      finish!("completed", by:)
     end
-    job.refresh_status! if refresh_job
-    self
   end
 
+  # Ends an open visit as completed or cancelled. Callers hold the job's and the visit's locks
+  # (Job#complete! and #cancel! lock their open visits up front).
+  def finish!(status, by:, reason: nil)
+    raise NotOpen, "This visit is already #{status_label.downcase}." unless open?
+
+    if status == "completed"
+      update!(status:, completed_at: Time.current)
+      VisitEvent.record!(self, :completed, by:)
+    else
+      update!(status:, cancelled_at: Time.current, cancel_reason: reason)
+      VisitEvent.record!(self, :cancelled, by:, reason: cancel_reason)
+    end
+  end
+
+  # When it is, as shown ("when") and as values, for the history and for later notices.
+  def snapshot
+    { "when" => when_label(with_year: true), "on" => scheduled_on&.iso8601, "timing" => timing,
+      "starts_at" => starts_at&.utc&.iso8601, "window_ends_at" => window_ends_at&.utc&.iso8601 }
+  end
+
+  def crew_names = assignees.map(&:full_name)
+
   private
+
+  # Every change takes the job's lock, then the visit's (the order Job#complete! uses, so the two
+  # can't deadlock), checks the job is still open, and saves the change, its history and the
+  # job's status together.
+  def under_job_lock
+    job.with_lock do
+      raise NotOpen, "#{job.number} is #{job.status_label.downcase}. Reopen it to change its visits." unless job.open?
+
+      yield
+      job.refresh_status!
+    end
+    self
+  end
 
   def clock(time) = time&.in_time_zone(business.time_zone)&.strftime("%H:%M")
 
@@ -183,11 +215,12 @@ class Visit < ApplicationRecord
     end
   end
 
+  # Active members, or someone already on this visit (kept even after they're deactivated).
   def assignees_are_members
     return if @assignee_ids.nil? || @assignee_ids.empty?
 
-    members = business.business_users.active.where(user_id: @assignee_ids).count
-    errors.add(:assignee_ids, "must be members of your team") if members != @assignee_ids.size
+    allowed = business.business_users.active.where(user_id: @assignee_ids).pluck(:user_id) + (persisted? ? assignments.pluck(:user_id) : [])
+    errors.add(:base, "Only people on your team can be assigned.") unless (@assignee_ids - allowed).empty?
   end
 
   def sync_assignments
