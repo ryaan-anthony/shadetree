@@ -16,6 +16,9 @@
             <label class="label" for="reason">Reason <span class="label-optional">(optional)</span></label>
             <%= text_field_tag :reason, nil, class: "input", maxlength: 200, placeholder: "Client changed their mind" %>
           </div>
+          <% if job.visits.scheduled.where(scheduled_on: current_business.today..).exists? %>
+            <%= render "admin/visits/notify_client", job:, kind: "cancelled", id: "notify-client-job" %>
+          <% end %>
           <div class="flex justify-end gap-2">
             <button type="button" class="<%= button_classes(:secondary) %>" data-action="modal#close">Keep job</button>
             <%= submit_tag "Cancel job", class: button_classes(:danger), name: nil %>
@@ -118,6 +121,8 @@
         <% if (email = client.primary_email) %><li><%= mail_to email.value, class: "break-all text-ink hover:underline" do %><%= icon "mail", class: "mr-1 inline size-4 text-faint" %><%= email.value %><% end %></li><% end %>
       </ul>
     <% end %>
+
+    <%= render "admin/jobs/client_emails", job: %>
 
     <% if job.internal_notes %>
       <%= card title: "Internal notes", subtitle: "Only your team sees these." do %>

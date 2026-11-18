@@ -174,6 +174,11 @@ class Business < ApplicationRecord
   # Weekly opening hours (CAT-06); OpeningHours combines them with closures.
   def hours = WeeklyHours.new(weekly_hours)
 
+  # JOB-05: which visit emails clients get (each on unless turned off in settings).
+  CLIENT_VISIT_EMAILS = { "scheduled" => "Visit booked", "changed" => "Visit moved", "cancelled" => "Visit cancelled",
+                          "reminder" => "Reminder the day before" }.freeze
+  def client_visit_email?(kind) = client_visit_emails.fetch(kind.to_s, true) != false
+
   # Every logo goes through LogoUpload: decoded, size-checked and stripped of metadata. A
   # rejected file leaves the current logo in place and adds an error on save; a blank
   # value (no file chosen) changes nothing.

@@ -1,0 +1,21 @@
+<%# locals: (job:) -%>
+<%# JOB-05: the visit emails the client was sent (NTF-01's record), and one about to go. %>
+<% messages = job.email_messages.recent.limit(10).to_a %>
+<% if messages.any? || job.client_notice_due_at %>
+  <%= card title: "Emails to the client", id: "client-emails", flush: true do %>
+    <ul class="list">
+      <% if job.client_notice_due_at %>
+        <li class="text-sm2"><span class="flex-1 text-ink">Your latest changes go out at <%= local_time(job.client_notice_due_at, format: :time) %></span><%= badge "Pending", tone: :info %></li>
+      <% end %>
+      <% messages.each do |message| %>
+        <li class="items-start text-sm2">
+          <div class="min-w-0 flex-1">
+            <p class="font-medium text-ink"><%= message.subject.presence || EmailCatalog.find(message.kind).name %></p>
+            <p class="truncate text-muted">To <%= message.to %> · <%= local_time(message.sent_at || message.created_at) %></p>
+          </div>
+          <%= badge message.status_label, tone: (message.problem? ? :danger : (message.status == "sent" ? :success : :neutral)) %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+<% end %>

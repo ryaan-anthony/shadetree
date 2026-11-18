@@ -24,6 +24,7 @@ class Job < ApplicationRecord
   belongs_to :completed_by, class_name: "User", optional: true
   belongs_to :cancelled_by, class_name: "User", optional: true
   has_many :line_items, -> { order(:position, :id) }, class_name: "JobLineItem", inverse_of: :job, dependent: :delete_all
+  has_many :email_messages, as: :related, dependent: :nullify # JOB-05: what the client was sent
   has_many :visits, inverse_of: :job, dependent: :restrict_with_exception # JOB-02
   accepts_nested_attributes_for :line_items, allow_destroy: true, reject_if: :blank_new_line?
 
@@ -120,24 +121,37 @@ class Job < ApplicationRecord
   # changing it, JOB-02) can't both win.
   # Finishing a job finishes its visits too (JOB-02): a visit under way is done, and ones not
   # started are cancelled. Cancelling a job cancels all its open visits.
-  def complete!(by:)
+  def complete!(by:, notify_client: true)
     with_lock do
       raise NotOpen, "#{number} is already #{status_label.downcase}." unless open?
 
       update!(status: "completed", completed_at: Time.current, completed_by: by)
       ended = visits.open.lock.to_a.each { _1.finish!(_1.status == "in_progress" ? "completed" : "cancelled", by:, reason: "Job completed", notify: false) }
       tell_crew_job_ended(ended, "completed", by:)
+      ended.find { _1.status == "cancelled" }&.tell_client(notify_client, ended)
     end
   end
 
-  def cancel!(by:, reason: nil)
+  def cancel!(by:, reason: nil, notify_client: true)
     with_lock do
       raise NotOpen, "#{number} is already #{status_label.downcase}." unless open?
 
       update!(status: "cancelled", cancelled_at: Time.current, cancelled_by: by, cancel_reason: reason)
       ended = visits.open.lock.to_a.each { _1.finish!("cancelled", by:, reason: "Job cancelled", notify: false) }
       tell_crew_job_ended(ended, "cancelled", by:)
+      ended.first&.tell_client(notify_client, ended)
     end
+  end
+
+  # JOB-05: changes to a job's visits reach the client as one email, a few minutes after the
+  # last of them, so a burst of edits (or a booking moved straight away) doesn't become several.
+  CLIENT_NOTICE_DELAY = 3.minutes
+
+  def queue_client_notice!
+    due = CLIENT_NOTICE_DELAY.from_now
+    update_columns(client_notice_due_at: due)
+    ids = [ business_id, id ]
+    ActiveRecord.after_all_transactions_commit { VisitClientNoticeJob.set(wait_until: due).perform_later(*ids) }
   end
 
   # JOB-02: how long a visit should take, to start the form with: the catalog durations of its

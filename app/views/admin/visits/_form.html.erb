@@ -84,9 +84,12 @@
       </fieldset>
 
       <%= f.field :instructions, as: :textarea, optional: true, rows: 3, maxlength: 2_000, label: "Instructions for this visit",
-                  help: "Added to the job's instructions for the people going." %>
+                  help: "Added to the job's instructions for the people going. The client doesn't see these." %>
+      <%= f.field :client_note, as: :textarea, optional: true, rows: 2, maxlength: 1_000, label: "Note for the client",
+                  help: "Shown in their visit emails and on their visit page, such as \"Please leave the side gate unlocked.\"" %>
     </div>
   <% end %>
+  <%= render "admin/visits/notify_client", job: @job, kind: visit.new_record? ? "scheduled" : "changed", id: "notify-client" %>
   <div class="flex items-center justify-end gap-2">
     <%= link_to "Cancel", admin_job_path(@job), class: button_classes(:ghost) %>
     <%= f.submit_button "#{visit.new_record? ? "Schedule" : "Save"} #{@warnings.present? ? "anyway" : "visit"}" %>

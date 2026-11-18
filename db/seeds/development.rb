@@ -143,9 +143,10 @@ Tenancy.with_business(business) do
     tech = User.find_by(email: "tech@example.com")
     monday = business.today.next_occurring(:monday)
     from_quote.visits.new(scheduled_on: monday, timing: "window", start_time: "08:00", window_end_time: "10:00", duration_minutes: 180,
-                          assignee_ids: [ tech&.id ].compact, instructions: "Start with the front hedges.", created_by: owner).schedule!(by: owner)
+                          assignee_ids: [ tech&.id ].compact, instructions: "Start with the front hedges.", created_by: owner,
+                          client_note: "Please leave the side gate unlocked.").schedule!(by: owner, notify_client: false) # JOB-05
     from_quote.visits.new(scheduled_on: monday + 1, timing: "exact", start_time: "13:00", duration_minutes: 120,
-                          assignee_ids: [ tech&.id, owner.id ].compact, created_by: owner).schedule!(by: owner)
+                          assignee_ids: [ tech&.id, owner.id ].compact, created_by: owner).schedule!(by: owner, notify_client: false)
     from_quote.visits.first.notes.create!(user: tech, body: "Side gate was locked; the client let us in at 9.") if tech # JOB-04
   end
 
@@ -163,7 +164,7 @@ Tenancy.with_business(business) do
       client = clients[index % clients.size] # fewer clients than visits: some get two
       job = Job.create!(client:, property: client.primary_property, created_by: owner, title: "Weekly mowing")
       job.visits.new(scheduled_on: week + day, timing:, start_time: at, window_end_time: (timing == "window" ? (Time.zone.parse(at) + 2.hours).strftime("%H:%M") : nil),
-                     duration_minutes: minutes, assignee_ids: people.filter_map { crew[_1]&.id }, created_by: owner).schedule!(by: owner)
+                     duration_minutes: minutes, assignee_ids: people.filter_map { crew[_1]&.id }, created_by: owner).schedule!(by: owner, notify_client: false)
     end
   end
 end

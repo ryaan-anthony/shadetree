@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_17_000500) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_17_000600) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -101,6 +101,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000500) do
     t.jsonb "weekly_hours"
     t.boolean "auto_create_jobs", default: true, null: false
     t.boolean "technicians_see_prices", default: false, null: false
+    t.jsonb "client_visit_emails", default: {}, null: false
     t.index ["active"], name: "index_businesses_on_active"
     t.index ["handle"], name: "index_businesses_on_handle", unique: true
     t.index ["industry"], name: "index_businesses_on_industry"
@@ -378,9 +379,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000500) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "ready_to_invoice_notified_at"
+    t.datetime "client_notice_due_at"
     t.index ["business_id", "number"], name: "index_jobs_on_business_id_and_number", unique: true
     t.index ["business_id", "status", "created_at"], name: "index_jobs_on_business_id_and_status_and_created_at"
     t.index ["client_id"], name: "index_jobs_on_client_id"
+    t.index ["client_notice_due_at"], name: "index_jobs_on_client_notice_due_at", where: "(client_notice_due_at IS NOT NULL)"
     t.index ["created_by_id"], name: "index_jobs_on_created_by_id"
     t.index ["property_id"], name: "index_jobs_on_property_id"
     t.index ["quote_id"], name: "index_jobs_on_quote_id", unique: true
@@ -733,6 +736,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_000500) do
     t.integer "lock_version", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "client_note"
+    t.jsonb "client_told"
+    t.datetime "reminder_sent_at"
     t.index ["business_id", "scheduled_on"], name: "index_visits_on_business_id_and_scheduled_on"
     t.index ["job_id", "scheduled_on"], name: "index_visits_on_job_id_and_scheduled_on"
     t.index ["uid"], name: "index_visits_on_uid", unique: true

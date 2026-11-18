@@ -32,7 +32,7 @@ class Admin::VisitsController < Admin::BaseController
     end
     return render(:new, status: :unprocessable_content) if warn?(visits) # Turbo only shows a form's non-redirect response with an error status
 
-    Visit.schedule_all!(visits, by: current_user)
+    Visit.schedule_all!(visits, by: current_user, notify_client: notify_client?)
     notice = visits.one? ? "Visit scheduled for #{@visit.when_label}." : "#{visits.size} visits scheduled, #{visits.first.scheduled_on.strftime("%b %-d")} to #{visits.last.scheduled_on.strftime("%b %-d")}."
     redirect_to admin_job_path(@job), notice:
   rescue Visit::BadDates => error
@@ -52,7 +52,7 @@ class Admin::VisitsController < Admin::BaseController
     return render(:edit, status: :unprocessable_content) unless @visit.valid?
     return render(:edit, status: :unprocessable_content) if @visit.when_or_crew_changed? && warn?([ @visit ])
 
-    @visit.reload.reschedule!(visit_params, by: current_user)
+    @visit.reload.reschedule!(visit_params, by: current_user, notify_client: notify_client?)
     redirect_to admin_job_path(@job), notice: "Visit saved: #{@visit.when_label}."
   rescue ActiveRecord::RecordInvalid
     render :edit, status: :unprocessable_content
@@ -62,8 +62,8 @@ class Admin::VisitsController < Admin::BaseController
     redirect_to admin_job_path(@job), alert: error.message
   end
 
-  def cancel = transition { @visit.cancel!(by: current_user, reason: params[:reason]) && "Visit on #{@visit.when_label} cancelled." }
-  def restore = transition { @visit.restore!(by: current_user) && "Visit on #{@visit.when_label} restored." }
+  def cancel = transition { @visit.cancel!(by: current_user, reason: params[:reason], notify_client: notify_client?) && "Visit on #{@visit.when_label} cancelled." }
+  def restore = transition { @visit.restore!(by: current_user, notify_client: notify_client?) && "Visit on #{@visit.when_label} restored." }
   def complete = transition { @visit.complete!(by: current_user) && "Visit on #{@visit.when_label} marked done." }
 
   private
@@ -94,7 +94,10 @@ class Admin::VisitsController < Admin::BaseController
     redirect_to admin_job_path(@job, anchor: "visits"), alert: error.message.delete_prefix("Validation failed: ")
   end
 
+  # JOB-05: "Email the client about this" unticked means they aren't told about this change.
+  def notify_client? = params[:notify_client] != "0"
+
   def visit_params
-    params.require(:visit).permit(:scheduled_on, :timing, :start_time, :window_end_time, :duration_hours, :instructions, :lock_version, assignee_ids: [])
+    params.require(:visit).permit(:scheduled_on, :timing, :start_time, :window_end_time, :duration_hours, :instructions, :client_note, :lock_version, assignee_ids: [])
   end
 end

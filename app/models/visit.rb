@@ -35,6 +35,7 @@ class Visit < ApplicationRecord
   validates :status, inclusion: { in: STATUSES }
   validates :duration_minutes, numericality: { only_integer: true, in: 5..MAX_DURATION, message: "must be between 5 minutes and 24 hours" }
   validates :instructions, length: { maximum: 2_000 }
+  validates :client_note, length: { maximum: 1_000 } # JOB-05: for the client, in their emails and on their page
   validates :cancel_reason, length: { maximum: 200 }
   validate :times_make_sense
   validate :assignees_are_members
@@ -101,7 +102,7 @@ class Visit < ApplicationRecord
   end
 
   # A new visit with its assignees, recorded and reflected in the job's status.
-  def schedule!(by:) = self.class.schedule_all!([ self ], by:).first
+  def schedule!(by:, notify_client: true) = self.class.schedule_all!([ self ], by:, notify_client:).first
 
   # After a visit opens again (booked, restored, reopened), finishing the job's visits tells the
   # office again; until then it's told once.
@@ -111,7 +112,7 @@ class Visit < ApplicationRecord
 
   # Several visits for one job at once (multi-day work: one visit per date), under one lock on
   # the job; the people going hear about them in one notification each.
-  def self.schedule_all!(visits, by:)
+  def self.schedule_all!(visits, by:, notify_client: true)
     job = visits.first.job
     job.with_lock do
       raise NotOpen, "#{job.number} is #{job.status_label.downcase}. Reopen it to change its visits." unless job.open?
@@ -123,6 +124,7 @@ class Visit < ApplicationRecord
       end
       visits.first.reset_ready_to_invoice
       job.refresh_status!
+      visits.first.tell_client(notify_client, visits)
     end
     crew = visits.flat_map { _1.assignees.to_a }.uniq
     dates = visits.size == 1 ? visits.first.when_label : "#{visits.size} days (#{visits.map { _1.scheduled_on.strftime("%b %-d") }.to_sentence}), #{visits.first.time_label}"
@@ -154,7 +156,7 @@ class Visit < ApplicationRecord
 
   # Date, time, duration, crew or instructions changed; records what changed and who changed it.
   # A change to the crew alone still changes the visit's row, so lock_version catches a stale form.
-  def reschedule!(attributes, by:)
+  def reschedule!(attributes, by:, notify_client: true)
     under_job_lock do
       lock!
       raise NotOpen, "This visit is #{status_label.downcase}." unless open?
@@ -169,6 +171,7 @@ class Visit < ApplicationRecord
       after_crew = assignees.reload.to_a
       moved = snapshot.except("when") != before.except("when")
       VisitEvent.record!(self, :rescheduled, by:, from: before, to: snapshot) if moved
+      tell_client(notify_client) if moved
       added, removed = after_crew - before_crew, before_crew - after_crew
       if added.any? || removed.any?
         VisitEvent.record!(self, :reassigned, by:, added: added.map(&:full_name), removed: removed.map(&:full_name),
@@ -189,15 +192,16 @@ class Visit < ApplicationRecord
 
   # Cancelling the last open visit of a job whose other visits were done also means it's ready
   # to invoice.
-  def cancel!(by:, reason: nil)
+  def cancel!(by:, reason: nil, notify_client: true)
     under_job_lock do
       lock!
       finish!("cancelled", by:, reason:)
       notify_ready_to_invoice(by:) if !job.visits.open.exists? && job.visits.where(status: "completed").exists?
+      tell_client(notify_client)
     end
   end
 
-  def restore!(by:)
+  def restore!(by:, notify_client: true)
     under_job_lock do
       lock!
       raise NotOpen, "This visit isn't cancelled." unless status == "cancelled"
@@ -205,6 +209,7 @@ class Visit < ApplicationRecord
       update!(status: "scheduled", cancelled_at: nil, cancel_reason: nil)
       VisitEvent.record!(self, :restored, by:)
       reset_ready_to_invoice
+      tell_client(notify_client)
       notify_crew("visit_assigned", assignees.to_a, "Back on: #{job.title} (#{job.number}), #{when_label}", by:)
     end
   end
@@ -284,6 +289,39 @@ class Visit < ApplicationRecord
   end
 
   # When it is, as shown ("when") and as values, for the history and for later notices.
+  # JOB-05: what the client would be told about this visit: booked (and when) or cancelled.
+  def client_state
+    { "state" => status == "cancelled" ? "cancelled" : "booked", "when" => when_label(with_year: true), "on" => scheduled_on.iso8601,
+      "timing" => timing, "starts_at" => starts_at&.utc&.iso8601, "window_ends_at" => window_ends_at&.utc&.iso8601 }
+  end
+
+  # Whether the client has been told about the visit as it is now ("when" is only the label).
+  def client_up_to_date? = client_told&.except("when") == client_state.except("when")
+
+  # After a change the client should hear about: their email goes out shortly, with the job's
+  # other changes, unless staff chose not to tell them, in which case this is what they know.
+  def tell_client(notify_client, visits = [ self ])
+    if notify_client
+      job.queue_client_notice!
+    else
+      visits.each { _1.update_columns(client_told: _1.client_state) }
+    end
+  end
+
+  # The client's page for this visit (PLT-12): one link per visit, kept alive until a month
+  # after the visit's day, wherever it moves.
+  def client_link!
+    expires_at = business.local_time(scheduled_on + 30, "23:59")
+    link = ClientLink.active.where(linkable: self).order(:id).last
+    return ClientLink.issue!(self, expires_at:) unless link
+
+    link.update!(expires_at:) if link.expires_at && link.expires_at < expires_at
+    link
+  end
+
+  def client_page_visible? = true
+  def client_link_partial = "client/visits/visit"
+
   def snapshot
     { "when" => when_label(with_year: true), "on" => scheduled_on&.iso8601, "timing" => timing,
       "starts_at" => starts_at&.utc&.iso8601, "window_ends_at" => window_ends_at&.utc&.iso8601 }
