@@ -28,12 +28,14 @@ class Admin::JobLineItemsTest < ActionDispatch::IntegrationTest
   test "change, add from the catalog, and remove lines; the quote keeps what was approved" do
     first = as_business(@business) { @job.line_items.first }
     get edit_admin_job_path(@job)
-    assert_select "#job-items select option[value=?][data-price='78.00'][data-unit='cu yd']", @mulch.uid
-    assert_select "#job-items template[data-kind=line]"
+    assert_select "#job-items [data-controller=catalog-picker]"
+    assert_select "#job-items template[data-kind=line] input[name$='[name]']:not([required])"
+    assert_select "#job-items template[data-kind=line] input[name$='[unit_price]']:not([value])", 1, "a new row's price starts empty"
 
     save({ "0" => { id: first.id, name: "Leaf cleanup", quantity: "3", unit: "hour", unit_price: "90", taxable: "0" },
            "1" => { catalog_item_uid: @mulch.uid, name: "Mulch", description: "Hardwood", quantity: "6", unit: "cu yd", unit_price: "78", taxable: "0" },
-           "2" => { name: "", description: "", unit_price: "", quantity: "1" } }) # an added row left empty
+           "2" => { name: "", description: "", unit_price: "", quantity: "1", taxable: "1", catalog_item_uid: "" }, # added, left empty
+           "3" => { name: "", description: "", unit_price: "0.00", quantity: "1", taxable: "1" } })
     assert_redirected_to admin_job_path(@job)
     assert_equal [ [ "Leaf cleanup", "3 hour", 9_000 ], [ "Mulch", "6 cu yd", 7_800 ] ], lines
     assert_equal 27_000 + 46_800, as_business(@business) { @job.reload.total_cents }
@@ -70,6 +72,34 @@ class Admin::JobLineItemsTest < ActionDispatch::IntegrationTest
     save({ "0" => { catalog_item_uid: their_item.uid, name: "Borrowed", quantity: "1", unit_price: "1" } })
     assert_nil as_business(@business) { @job.reload.line_items.find_by(name: "Borrowed") }.catalog_item_id
     assert_equal "Theirs", as_business(businesses(:two)) { theirs.reload.name }
+  end
+
+  test "a stale tab can't overwrite lines, even when only the lines changed" do
+    first = as_business(@business) { @job.line_items.first }
+    opened_at = as_business(@business) { @job.reload.lock_version }
+    save({ "0" => { id: first.id, name: "Leaf cleanup (front only)", quantity: "2", unit_price: "90" } })
+    assert_operator as_business(@business) { @job.reload.lock_version }, :>, opened_at
+
+    patch admin_job_path(@job), params: { job: { lock_version: opened_at, line_items_attributes: { "0" => { id: first.id, name: "Old name", quantity: "2", unit_price: "90" } } } }
+    assert_redirected_to edit_admin_job_path(@job)
+    assert_equal "Leaf cleanup (front only)", lines.first.first
+
+    save({ "0" => { id: first.id, _destroy: "1" } })
+    patch admin_job_path(@job), params: { job: { lock_version: opened_at, line_items_attributes: { "0" => { id: first.id, name: "Gone" } } } }
+    assert_redirected_to edit_admin_job_path(@job), "a line removed in another tab is a stale save, not a 404"
+  end
+
+  test "a line keeps its catalog item when the item is archived, and a fixed discount problem shows on its row" do
+    save({ "0" => { catalog_item_uid: @mulch.uid, name: "Mulch", quantity: "1", unit_price: "78" } })
+    line = as_business(@business) { @job.reload.line_items.find_by!(name: "Mulch") }
+    as_business(@business) { @mulch.archive! }
+    save({ "0" => { id: line.id, catalog_item_uid: @mulch.uid, name: "Mulch", quantity: "2", unit_price: "78" } })
+    assert_equal @mulch.id, line.reload.catalog_item_id
+
+    as_business(@business) { line.update!(discount_kind: "amount", discount_amount: "50") }
+    save({ "0" => { id: line.id, catalog_item_uid: @mulch.uid, name: "Mulch", quantity: "1", unit_price: "20" } })
+    assert_response :unprocessable_content
+    assert_select "#job-items .error-text[role=alert]", /can't be more than the line/
   end
 
   test "a job from scratch can start with items" do

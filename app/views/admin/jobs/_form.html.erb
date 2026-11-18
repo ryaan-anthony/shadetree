@@ -23,7 +23,7 @@
       <%= turbo_frame_tag "quote_property", class: "block", data: { property_loader_target: "frame" } do %>
         <%= render "admin/quotes/property_select", client: @job.client, selected: @job.property&.uid, name: "job[property]" %>
       <% end %>
-      <%= f.field :title, maxlength: 120, placeholder: "Spring cleanup", autofocus: !new_job %>
+      <%= f.field :title, maxlength: 120, placeholder: "Spring cleanup", autofocus: !new_job && params[:items].nil? %>
       <%= f.field :instructions, as: :textarea, optional: true, rows: 4, maxlength: 5_000, label: "Instructions for the crew",
                   placeholder: "Park on the street. Leave bagged debris by the side gate.", help: "Everyone assigned to this job's visits sees these." %>
       <%= f.field :internal_notes, as: :textarea, optional: true, rows: 3, maxlength: 5_000, help: "Only Owners and Admins see these." %>
@@ -31,20 +31,20 @@
   <% end %>
 
   <%# The work to do: the job's own copy of the items (the quote it came from doesn't change). %>
-  <% catalog = CatalogItem.active.ordered.to_a %>
   <% currency = Money.currency(@job.currency).symbol %>
   <%= card title: "Work to do", subtitle: (@job.quote ? "Changes here don't change quote #{@job.quote.number}; the invoice will use these items." : "Optional. The invoice will use these items.") do %>
-    <div class="space-y-3" id="job-items" data-controller="nested-fields">
+    <div class="space-y-3" id="job-items" data-controller="nested-fields job-lines" data-action="catalog-picker:pick->job-lines#addFromCatalog">
       <%= f.fields_for :line_items do |line| %>
-        <%= render "admin/jobs/line_fields", f: line, catalog:, currency: %>
+        <%= render "admin/jobs/line_fields", f: line, currency:, number: line.index + 1 %>
       <% end %>
       <template data-nested-fields-target="template" data-kind="line">
-        <%= f.fields_for :line_items, JobLineItem.new(job: @job, quantity: 1, taxable: true), child_index: "NEW_RECORD" do |line| %>
-          <%= render "admin/jobs/line_fields", f: line, catalog:, currency: %>
+        <%= f.fields_for :line_items, JobLineItem.new(job: @job, quantity: 1, taxable: true, unit_price_cents: nil), child_index: "NEW_RECORD" do |line| %>
+          <%= render "admin/jobs/line_fields", f: line, currency: %>
         <% end %>
       </template>
-      <div data-nested-fields-target="anchor">
-        <button type="button" class="<%= button_classes(:secondary, :sm) %>" data-action="nested-fields#add" data-nested-fields-kind-param="line"><%= icon "plus" %> Add item</button>
+      <div class="flex flex-wrap items-end gap-3" data-nested-fields-target="anchor">
+        <div class="min-w-0 flex-1 sm:max-w-sm"><%= render "admin/catalog_items/picker" %></div>
+        <button type="button" class="<%= button_classes(:secondary) %>" data-action="nested-fields#add" data-nested-fields-kind-param="line"><%= icon "plus" %> Add a custom item</button>
       </div>
     </div>
     <% if @job.discount_kind || @job.tax_rates.any? %>

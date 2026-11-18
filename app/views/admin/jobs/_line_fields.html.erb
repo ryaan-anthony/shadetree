@@ -1,38 +1,30 @@
-<%# locals: (f:, catalog:, currency:) -%>
-<%# JOB-01: one line of work on the job form. A catalog item fills the row; everything stays editable. %>
+<%# locals: (f:, currency:, number: nil) -%>
+<%# JOB-01: one line of work on the job form. Lines picked from the catalog keep their link to it
+    (a hidden field), even if the item is archived later; everything else is editable. %>
 <% line = f.object %>
-<% row_id = "line-#{f.index}" %>
-<fieldset class="nested-row rounded-control border border-line p-3" data-nested-fields-target="row" data-controller="line-fill" <%= "hidden" if line.marked_for_destruction? %>
-          aria-labelledby="<%= row_id %>-legend">
-  <legend class="sr-only" id="<%= row_id %>-legend"><%= line.name.presence || "New item" %></legend>
+<% removed = line.marked_for_destruction? %>
+<fieldset class="nested-row rounded-control border border-line p-3" data-nested-fields-target="row" <%= "hidden" if removed %>>
+  <legend class="sr-only"><%= number ? "Item #{number}" : "New item" %><%= ": #{line.name}" if line.name.present? %></legend>
   <%= f.hidden_field :id if line.persisted? %>
-  <%= f.hidden_field :_destroy, value: line.marked_for_destruction? ? "1" : "0", data: { nested_fields_target: "destroy" } %>
+  <%= f.hidden_field :_destroy, value: removed ? "1" : "0", data: { nested_fields_target: "destroy" } %>
+  <%= f.hidden_field :catalog_item_uid, data: { line_field: "catalog" }, disabled: removed %>
   <div class="flex items-start gap-2">
     <div class="grid min-w-0 flex-1 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-      <% if catalog.any? %>
-        <div class="field sm:col-span-2">
-          <label class="label" for="<%= row_id %>-catalog">From your catalog <span class="label-optional">(optional)</span></label>
-          <select id="<%= row_id %>-catalog" name="<%= f.object_name %>[catalog_item_uid]" class="select" data-action="line-fill#fill">
-            <option value="">A custom item</option>
-            <% catalog.each do |item| %>
-              <option value="<%= item.uid %>" <%= "selected" if item.uid == line.catalog_item_uid %>
-                      data-name="<%= item.name %>" data-description="<%= item.description %>" data-unit="<%= item.unit_label %>"
-                      data-price="<%= item.unit_price&.to_s %>" data-taxable="<%= item.taxable %>"><%= item.name %></option>
-            <% end %>
-          </select>
-        </div>
-      <% end %>
-      <div class="sm:col-span-2"><%= f.field :name, label: "Item", maxlength: 200, data: { line_fill_target: "name" } %></div>
-      <div class="sm:col-span-2"><%= f.field :description, as: :textarea, optional: true, rows: 2, maxlength: 2_000, data: { line_fill_target: "description" } %></div>
+      <div class="sm:col-span-2"><%= f.field :name, label: "Item", maxlength: 200, required: false, disabled: removed, data: { line_field: "name" } %></div>
+      <div class="sm:col-span-2"><%= f.field :description, as: :textarea, optional: true, rows: 2, maxlength: 2_000, disabled: removed, data: { line_field: "description" } %></div>
       <div class="grid grid-cols-2 gap-3">
-        <%= f.field :quantity, value: line.quantity_for_form, inputmode: "decimal", label: "Qty", data: { line_fill_target: "quantity" } %>
-        <%= f.field :unit, optional: true, maxlength: 20, placeholder: "hour", data: { line_fill_target: "unit" } %>
+        <%= f.field :quantity, value: line.quantity_for_form, inputmode: "decimal", label: "Qty", required: false, disabled: removed, data: { line_field: "quantity" } %>
+        <%= f.field :unit, optional: true, maxlength: 20, placeholder: "hour", disabled: removed, data: { line_field: "unit" } %>
       </div>
-      <div><%= f.field :unit_price, as: :money, currency:, label: "Price each", value: line.unit_price_before_type_cast, placeholder: "0.00", data: { line_fill_target: "price" } %></div>
+      <div><%= f.field :unit_price, as: :money, currency:, label: "Price each", required: false, disabled: removed, placeholder: "0.00",
+                       value: (line.new_record? && line.unit_price_cents.to_i.zero? && line.errors.empty? ? nil : line.unit_price_before_type_cast), data: { line_field: "price" } %></div>
       <div class="sm:col-span-2 flex flex-wrap items-center gap-x-4 gap-y-1">
-        <%= f.check :taxable, label: "Taxable", data: { line_fill_target: "taxable" } %>
+        <%= f.check :taxable, label: "Taxable", disabled: removed, data: { line_field: "taxable" } %>
         <% if line.discount_kind %><span class="text-sm2 text-muted">Keeps its <%= line.discount_kind == "percent" ? "#{line.discount_value}%" : money(line.discount_amount) %> discount from the quote.</span><% end %>
       </div>
+      <% if (error = line.errors.full_messages_for(:discount_amount).first) %>
+        <p class="error-text sm:col-span-2" role="alert"><%= icon "alert-circle" %><%= error %>. Raise the price, or remove this item and add it again without the discount.</p>
+      <% end %>
     </div>
     <button type="button" class="<%= button_classes(:ghost, :sm, :icon) %> shrink-0" data-action="nested-fields#remove"
             aria-label="Remove <%= line.name.presence || "this item" %>"><%= icon "x" %></button>

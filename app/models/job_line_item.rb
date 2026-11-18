@@ -11,13 +11,8 @@ class JobLineItem < ApplicationRecord
   belongs_to :job, inverse_of: :line_items
   belongs_to_business_record :catalog_item, optional: true
 
-  def document_currency = job&.currency || Current.business.currency_code # a nested new line gets its price before its job
-
-  # A blank price is zero, as in the quote builder.
-  alias_method :assign_unit_price, :unit_price=
-  def unit_price=(value)
-    assign_unit_price(value.is_a?(String) && value.strip.empty? ? "0" : value)
-  end
+  # A nested new line gets its price before its job is attached.
+  def document_currency = job&.currency || business&.currency_code || Current.business.currency_code
 
   before_validation { self.business ||= job&.business }
 
