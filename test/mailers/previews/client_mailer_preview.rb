@@ -90,3 +90,11 @@ class InvoiceMailerPreview < ActionMailer::Preview
     end
   end
 end
+
+# PAY-05: a receipt for the newest recorded payment (bin/rails db:seed makes one).
+class PaymentMailerPreview < ActionMailer::Preview
+  def receipt
+    payment = Tenancy.across_businesses(reason: "mailer preview") { Payment.order(:id).last }
+    PaymentMailer.with(business_id: payment.business_id, to: "maria@example.com", payment_id: payment.id).receipt
+  end
+end

@@ -18,7 +18,7 @@ module EmailCatalog
     [ "visit_reminder", "Visit reminder", "Client", "The day before a visit", "JOB-05", true ],
     [ "visit_assigned", "Visit assigned / changed", "Technician", "A visit is assigned or changed", "JOB-02", false ],
     [ "invoice_sent", "Invoice sent", "Client", "Staff send an invoice", "PAY-02", true ],
-    [ "payment_receipt", "Payment receipt", "Client", "A payment succeeds", "PAY-04", true ],
+    [ "payment_receipt", "Payment receipt", "Client", "A payment succeeds, or staff record one and choose to send it", "PAY-04, PAY-05", true ],
     [ "invoice_paid", "Invoice paid", "Team", "An invoice is paid", "PAY-04, PAY-05", false ],
     [ "team_invitation", "Team invitation", "Invitee", "An owner or admin invites someone", "ACC-03", false ]
   ].map { Entry.new(*_1) }.freeze

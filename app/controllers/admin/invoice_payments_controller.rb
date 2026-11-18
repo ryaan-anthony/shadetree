@@ -18,7 +18,7 @@ class Admin::InvoicePaymentsController < Admin::BaseController
     @payment = @invoice.record_payment!(by: current_user, **payment_params)
     return render(:new, status: :unprocessable_content) if @payment.errors.any?
 
-    redirect_to admin_invoice_path(@invoice), notice: "#{helpers.money(@payment.amount)} recorded. #{balance_notice}"
+    redirect_to admin_invoice_path(@invoice), notice: "#{helpers.money(@payment.amount)} recorded. #{balance_notice}#{send_receipt}"
   rescue ArgumentError
     redirect_to helpers.staff_invoice_path(@invoice), alert: cannot_pay_message
   end
@@ -55,6 +55,21 @@ class Admin::InvoicePaymentsController < Admin::BaseController
   end
 
   def payment_params = params.expect(payment: %i[amount received_on payment_method reference note]).to_h.symbolize_keys
+
+  # The optional receipt (to the client's email on file), only from accounts that may email
+  # clients (ACC-01) and within the hourly cap. Returns the notice's last sentence.
+  def send_receipt
+    return "" unless params[:send_receipt] == "1"
+
+    to = @invoice.client.primary_email&.value
+    if to.nil? || !current_user.can_send_to_clients? then ""
+    elsif EmailSuppression.suppressed?(to) then " No receipt sent: the mail server refused #{to} before."
+    elsif EmailMessage.hourly_limit_reached? then " No receipt sent: that's a lot of emails in an hour. Try again later."
+    else
+      PaymentMailer.send_later(:receipt, business: current_business, to:, kind: "payment_receipt", related: @payment, payment_id: @payment.id)
+      " Receipt on its way to #{to}."
+    end
+  end
 
   def balance_notice
     @invoice.reload

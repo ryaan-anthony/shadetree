@@ -7,6 +7,13 @@
 <%= form_with model: @payment, scope: :payment, url: admin_invoice_payments_path(@invoice), method: :post, class: "max-w-2xl" do |f| %>
   <%= card title: @invoice.client.display_name, subtitle: "Invoice #{@invoice.number}: #{money(@invoice.total)} total#{", #{money(@invoice.amount_paid)} paid so far" if @invoice.payments?}" do %>
     <%= render "fields", f:, payment: @payment %>
+    <% if (email = @invoice.client.primary_email&.value) && current_user.can_send_to_clients? %>
+      <label class="check mt-4">
+        <%= check_box_tag :send_receipt, "1", params[:send_receipt] == "1", id: "send_receipt" %>
+        <span><span class="font-medium text-ink">Email a receipt to <%= email %></span>
+          <span class="check-hint">What was received and what's left to pay, with a link to the invoice.</span></span>
+      </label>
+    <% end %>
     <%= f.submit_button "Record payment", class: "mt-4 w-full sm:w-auto" %>
   <% end %>
 <% end %>
