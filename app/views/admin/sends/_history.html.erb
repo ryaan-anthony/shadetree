@@ -1,6 +1,7 @@
-<%# Each send of a quote and what became of its email (QTE-04). %>
+<%# locals: (sends:) -%>
+<%# Each send of a quote (QTE-04) or invoice (PAY-02) and what became of its email. %>
 <ul class="space-y-2 text-sm2">
-  <% quote.sends.includes(:user, :email_message).each do |send| %>
+  <% sends.includes(:user, :email_message).each do |send| %>
     <li class="flex flex-wrap items-baseline justify-between gap-x-3">
       <span class="min-w-0 text-ink"><%= send.channel_label %><%= ", cc #{send.cc}" if send.cc %></span>
       <span class="text-muted">

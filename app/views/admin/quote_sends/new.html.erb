@@ -42,7 +42,7 @@
 
     <% if @quote.sends.any? %>
       <%= card title: "Sent so far" do %>
-        <%= render "admin/quote_sends/history", quote: @quote %>
+        <%= render "admin/sends/history", sends: @quote.sends %>
       <% end %>
     <% end %>
   </div>

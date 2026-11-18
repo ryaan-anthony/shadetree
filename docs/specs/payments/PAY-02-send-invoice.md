@@ -23,10 +23,10 @@ connected — lets the client pay.
 
 ## Acceptance criteria
 
-- [ ] From a draft, Owners/Admins send by email (recipient, CC, subject, personal message
+- [x] From a draft, Owners/Admins send by email (recipient, CC, subject, personal message
       editable) or copy link; sending freezes the revision and sets status Sent (records who,
       when, channel). Sending requires a confirmed account.
-- [ ] The email uses the business-branded layout with amount due, due date, a "View & pay" (or
+- [x] The email uses the business-branded layout with amount due, due date, a "View & pay" (or
       "View invoice") button and the PDF attached.
 - [x] The client invoice page shows business identity, invoice number and dates, client and
       property, line items, discounts, taxes, total, payments received, balance due, terms and a
@@ -36,9 +36,9 @@ connected — lets the client pay.
       record-keeping. (Links don't expire while unpaid; the year after payment is set once PAY-05
       records payments.)
 - [x] The invoice PDF reuses the QTE-02 rendering approach and shows payments and balance.
-- [ ] Client views are recorded (first view notifies staff in-app via NTF-02 when available).
-- [ ] Bounced emails surface on the invoice.
-- [ ] Tests cover send paths, page states, PDF content and link isolation.
+- [x] Client views are recorded (first view notifies staff in-app via NTF-02 when available).
+- [x] Bounced emails surface on the invoice.
+- [x] Tests cover send paths, page states, PDF content and link isolation.
 
 ## Out of scope
 
@@ -68,4 +68,14 @@ connected — lets the client pay.
   a revising invoice discards them first, so a client never sees unfinished edits.
 - A document's `client_link_expires_at` of nil now means its links don't expire (an unpaid
   invoice), including links staff reissue; documents without a policy still get 90 days.
+- Part 2 (sending): `Admin::InvoiceSendsController` and `InvoiceSend` follow quotes' sending
+  (QTE-04): the same form (`QuoteSendForm`), confirmed-sender check, suppression checks and
+  limits (the business's hourly email cap, five emails per invoice a day). The first send of a
+  draft or a revision marks it sent (who, when) and logs a "sent" event with the channel; an
+  unpaid sent invoice can be sent again; paid and void ones can't. The email's button says
+  "View invoice" until PAY-04 adds paying.
+- The send history and delivery problems (a bounce) show on the invoice, as on quotes; the
+  history partial is now shared (`admin/sends/_history`).
+- A client's first view notifies the office in-app (NTF-02 type `invoice_viewed`, email off
+  by default, like quotes).
 - The payment area arrives with PAY-03/PAY-04.

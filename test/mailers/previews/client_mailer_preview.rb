@@ -77,3 +77,15 @@ class VisitMailerPreview < ActionMailer::Preview
     VisitMailer.with(business_id: visits.first.business_id, to: "maria@example.com", job_id: visits.first.job_id, changes:).update
   end
 end
+
+# PAY-02: the invoice email, for the newest invoice with lines.
+class InvoiceMailerPreview < ActionMailer::Preview
+  def sent
+    invoice = Tenancy.across_businesses(reason: "mailer preview") { Invoice.joins(:line_items).order(:id).last }
+    Tenancy.with_business(invoice.business) do
+      link = invoice.client_link!
+      InvoiceMailer.with(business_id: invoice.business_id, to: "maria@example.com", invoice_id: invoice.id, link_id: link.id,
+                         subject: InvoiceMailer.default_subject(invoice), message: "Hi Maria,\n\nThanks again. Here's the invoice for the work.").sent
+    end
+  end
+end

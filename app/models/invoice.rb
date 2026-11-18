@@ -34,6 +34,8 @@ class Invoice < ApplicationRecord
            dependent: :delete_all, autosave: true
   has_many :events, -> { order(:occurred_at, :id) }, class_name: "InvoiceEvent", inverse_of: :invoice, dependent: :delete_all
   has_many :revisions, -> { order(:number) }, class_name: "InvoiceRevision", inverse_of: :invoice, dependent: :delete_all
+  has_many :sends, -> { recent }, class_name: "InvoiceSend", inverse_of: :invoice, dependent: :delete_all
+  has_many :email_messages, as: :related, dependent: :nullify
 
   normalizes :title, with: ->(value) { value.to_s.squish.presence }
   normalizes :message, :internal_notes, :terms, with: ->(value) { value.to_s.strip.presence }
@@ -106,6 +108,25 @@ class Invoice < ApplicationRecord
   def revising? = draft? && revision > 1
 
   def revisable? = status == "sent" && !payments?
+
+  # PAY-02: a draft (or a revision being prepared) goes out once it has something to bill;
+  # an unpaid sent invoice can be sent again. Paid and void ones aren't sent.
+  def sendable? = status.in?(%w[draft sent partially_paid]) && line_items.any?
+
+  # Records a send by email or link. The first send of a draft, or of a revision, marks it
+  # sent (who and when; the revision is now what the client has). Returns the InvoiceSend.
+  def mark_sent!(by:, channel:, recipient: nil, cc: nil)
+    transaction do
+      lock!
+      raise ArgumentError, "Invoice #{number} can't be sent." unless sendable?
+
+      if draft?
+        update!(status: "sent", sent_at: Time.current, sent_by: by)
+      end
+      record!(:sent, by:, channel:, revision:)
+      sends.create!(business:, user: by, channel:, recipient:, cc:, revision:)
+    end
+  end
 
   # Keeps what the client was sent as revision N and reopens the invoice as the draft of
   # revision N+1. Its link keeps working; PAY-02's client page says it's being updated.

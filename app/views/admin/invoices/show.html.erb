@@ -21,6 +21,7 @@
 
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
   <div class="min-w-0 space-y-4">
+    <% if invoice.sends.any? %><%= render "sent_panel", invoice: %><% end %>
     <%= card do %>
       <dl class="grid gap-4 text-sm sm:grid-cols-4">
         <div><dt class="text-sm2 text-muted">Status</dt><dd class="mt-1"><%= invoice_status_badge(invoice) %></dd></div>

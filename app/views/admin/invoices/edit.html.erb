@@ -10,6 +10,8 @@
   <%= render "void", invoice: @invoice if @invoice.voidable? %>
   <%= link_to preview_admin_invoice_path(@invoice), class: button_classes(:secondary), target: "_blank", rel: "noopener",
               data: { action: "quote-builder#preview" } do %><%= icon "eye" %> Preview as client<% end %>
+  <%= link_to new_admin_invoice_send_path(@invoice), class: button_classes(:primary),
+              data: { action: "quote-builder#saveAndGo" } do %><%= icon "send" %> <%= @invoice.revising? ? "Send revision" : "Send" %><% end %>
   <span class="save-status" id="save_status" role="status" data-quote-builder-target="status">Saved</span>
   <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
     <button type="button" class="<%= button_classes(:ghost, :icon) %>" data-menu-target="button" data-action="menu#toggle"
@@ -118,7 +120,7 @@
     <% end %>
     <div class="flex flex-col gap-2">
       <%= f.submit_button "Save draft" %>
-      <p class="text-center text-sm2 text-muted">Sending comes next: this draft is saved and can be finished later.</p>
+      <p class="text-center text-sm2 text-muted">This draft is saved as you go and can be finished later.</p>
     </div>
   </aside>
 <% end %>

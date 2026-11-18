@@ -1,0 +1,50 @@
+<%# PAY-02: send an invoice by email or by link, as quotes are sent (QTE-04). %>
+<% content_for :title, "Send invoice #{@invoice.number}" %>
+<%= page_header "Send invoice #{@invoice.number}", lede: "To #{@invoice.client.display_name}: #{money(@invoice.balance)}, due #{l(@invoice.due_on)}" do %>
+  <%= link_to "Back", staff_invoice_path(@invoice), class: button_classes(:ghost) %>
+<% end %>
+
+<% unless current_user.can_send_to_clients? %>
+  <div class="banner banner-warning mb-4" role="status"><%= icon "alert-triangle" %>
+    <p class="flex-1">Confirm your email address before sending anything to clients. Check your inbox for the link.</p>
+  </div>
+<% end %>
+
+<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+  <%= card title: "Email it", subtitle: "Your message, a button to the invoice page, and the PDF attached. Replies come to you." do %>
+    <%= form_with model: @form, scope: :invoice_send, url: admin_invoice_send_path(@invoice), method: :post do |f| %>
+      <% @form.errors[:base].each do |error| %>
+        <p class="mb-3 text-sm2 font-medium text-danger" role="alert"><%= error %></p>
+      <% end %>
+      <%= f.field :to, as: :email, label: "To", required: true, autocomplete: "off",
+                  help: ("#{@invoice.client.display_name} has no email address yet." if @invoice.client.primary_email.nil?) %>
+      <%= f.field :cc, label: "CC", optional: true, help: "Up to #{QuoteSendForm::MAX_CC} addresses, separated by commas." %>
+      <%= f.field :subject, required: true %>
+      <%= f.field :message, as: :textarea, optional: true, rows: 8 %>
+      <%= f.submit_button(@invoice.draft? ? "Send invoice" : "Send again", class: "mt-4 w-full sm:w-auto", disabled: !current_user.can_send_to_clients?) %>
+    <% end %>
+  <% end %>
+
+  <div class="space-y-4">
+    <%= card title: "Send the link yourself", subtitle: "Text or WhatsApp it from your phone. Getting the link marks the invoice as sent." do %>
+      <% if @link %>
+        <div data-controller="clipboard" class="space-y-2">
+          <input type="text" readonly value="<%= client_link_url(@link.token) %>" class="input text-sm2" aria-label="Link to the invoice" data-clipboard-target="source">
+          <button type="button" class="<%= button_classes(:secondary, extra: "w-full") %>" data-action="clipboard#copy" data-clipboard-target="button"><%= icon "link" %> Copy link</button>
+        </div>
+      <% else %>
+        <%= button_to admin_invoice_send_path(@invoice), params: { channel: "link" }, class: button_classes(:secondary, extra: "w-full"),
+                      disabled: !current_user.can_send_to_clients? do %><%= icon "link" %> Get the link<% end %>
+        <% unless current_user.can_send_to_clients? %>
+          <p class="mt-2 text-sm2 text-muted">Confirm your email address to see the link.</p>
+        <% end %>
+      <% end %>
+    <% end %>
+
+    <% if @invoice.sends.any? %>
+      <%= card title: "Sent so far" do %>
+        <%= render "admin/sends/history", sends: @invoice.sends %>
+      <% end %>
+    <% end %>
+  </div>
+</div>
