@@ -5,6 +5,7 @@ module DocumentLine
   extend ActiveSupport::Concern
 
   MAX_UNIT_PRICE_CENTS = 10_000_000_000
+  LONG_DESCRIPTION = 400 # characters; a line with a longer one may split across PDF pages
 
   included do
     include HasMoney

@@ -11,6 +11,7 @@ class Invoice < ApplicationRecord
   include PricedDocument
   include BuiltDocument
   include DocumentAttachments
+  include HasPdf
 
   STATUSES = %w[draft sent partially_paid paid void].freeze
   STATUS_LABELS = { "draft" => "Draft", "sent" => "Sent", "partially_paid" => "Partly paid", "paid" => "Paid", "void" => "Void" }.freeze
@@ -209,6 +210,49 @@ class Invoice < ApplicationRecord
     outstanding = where(status: OUTSTANDING)
     sum_by = ->(scope) { scope.group(:currency).sum(Arel.sql("GREATEST(invoices.total_cents - invoices.amount_paid_cents, 0)")).map { |currency, cents| Money.new(cents.to_i, currency) } }
     { outstanding: sum_by.(outstanding), overdue: sum_by.(outstanding.where(due_on: ...today)) }
+  end
+
+  # PAY-02: what the client sees. A draft never (QTE-03's rule); a sent invoice being revised
+  # shows "being updated" on its page, without the unfinished edits.
+  def client_visible? = !draft?
+  def client_page_visible? = client_visible? || revising?
+  def client_link_partial = "client/invoices/invoice"
+
+  # The link the client opens: one that doesn't expire while the invoice is unpaid, so a client
+  # can always find what they owe; it's given an end a year after payment (PAY-04/PAY-05).
+  CLIENT_LINK_AFTER_PAID = 1.year
+  def client_link!
+    ClientLink.active.where(linkable: self).order(created_at: :desc).first || ClientLink.issue!(self, expires_at: client_link_expires_at)
+  end
+
+  def client_link_expires_at = paid? ? updated_at + CLIENT_LINK_AFTER_PAID : nil
+
+  # PAY-02: the PDF (QTE-02's approach): sent invoices keep theirs until something on it
+  # changes, including a payment (its balance); drafts are rendered fresh.
+  def pdf_html = PdfDocument.render("pdfs/invoice", invoice: self, business:)
+  def pdf_filename = "Invoice #{number}.pdf"
+  def pdf_paper = PdfRenderer.paper_for(business.country)
+  def store_pdf? = !draft?
+  PDF_VERSION = 1
+  def pdf_fingerprint
+    [ PDF_VERSION, id, lock_version, status, amount_paid_cents, client.updated_at.to_f, property&.updated_at.to_f ].join(":")
+  end
+
+  def pdf_footer
+    %(<div style="width:100%;margin:0 0.55in;display:flex;justify-content:space-between;font:7.5pt sans-serif;color:#64748b">) +
+      %(<span>#{ERB::Util.h(business.name)}, invoice #{ERB::Util.h(number)}</span>) +
+      %(<span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span></div>)
+  end
+
+  # The status in words, for the client: from the status and balance alone, so a stored PDF
+  # doesn't change when the due date passes (the page shows overdue separately).
+  def client_state_label
+    case status
+    when "paid" then "Paid"
+    when "void" then "Void"
+    when "partially_paid" then "Partly paid"
+    else "Due"
+    end
   end
 
   # By invoice number, or by client (name, phone, email or address, as CLI-02 searches).

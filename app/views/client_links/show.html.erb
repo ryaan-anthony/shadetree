@@ -9,7 +9,8 @@
   <div class="banner banner-info mb-4" role="status">
     <%= icon "eye" %>
     <p class="flex-1"><span class="font-semibold">Preview.</span> This is what your client sees. Previews aren't counted as views.
-      <% if @document.is_a?(Quote) && !@document.editable? %><%= link_to "Back to the quote", admin_quote_path(@document), class: "font-semibold underline-offset-2 hover:underline" %><% end %></p>
+      <% if @document.is_a?(Quote) && !@document.editable? %><%= link_to "Back to the quote", admin_quote_path(@document), class: "font-semibold underline-offset-2 hover:underline" %>
+      <% elsif @document.is_a?(Invoice) %><%= link_to "Back to the invoice", @document.editable? ? edit_admin_invoice_path(@document) : admin_invoice_path(@document), class: "font-semibold underline-offset-2 hover:underline" %><% end %></p>
   </div>
 <% end %>
 <%= render ClientLink.partial_for(@document), document: @document, client_link: @client_link, preview: @preview %>

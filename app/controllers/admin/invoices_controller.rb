@@ -4,8 +4,9 @@
 # invoice is revised (reopened as a draft of its next revision) or voided; sending is PAY-02.
 class Admin::InvoicesController < Admin::BaseController
   include DocumentBuilder
+  include SendsPdf
   requires_permission :office
-  before_action :set_invoice, only: %i[show edit update destroy revise void]
+  before_action :set_invoice, only: %i[show edit update destroy revise void preview pdf]
   before_action :require_editable, only: %i[edit update]
 
   PER_PAGE = 50
@@ -78,6 +79,17 @@ class Admin::InvoicesController < Admin::BaseController
   rescue ArgumentError => error
     redirect_to admin_invoice_path(@invoice), alert: error.message
   end
+
+  # PAY-02: the client's page, as staff see it before or after sending. Not counted as a view.
+  def preview
+    @business = current_business
+    @document = @invoice
+    @preview = true
+    render "client_links/show", layout: "client"
+  end
+
+  # PAY-02: the PDF. A draft is rendered fresh; a sent invoice's stored file is reused.
+  def pdf = send_pdf(@invoice, back: @invoice.editable? ? edit_admin_invoice_path(@invoice) : admin_invoice_path(@invoice))
 
   def destroy
     return redirect_to(admin_invoice_path(@invoice), alert: "Only invoices that were never sent can be deleted.") unless @invoice.deletable?

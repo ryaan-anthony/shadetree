@@ -1,0 +1,38 @@
+<%# locals: (invoice:, totals: invoice.totals, pdf: false) -%>
+<%# The invoice as a document (PAY-02): header, lines, totals, what's been paid and the balance,
+    terms. Shared by the client page and the PDF, so the two never drift. Never shows internal
+    notes. %>
+<% business = invoice.business %>
+<header class="quote-doc-head">
+  <div class="min-w-0">
+    <p class="quote-doc-kicker">Invoice <%= invoice.number %></p>
+    <h1 class="quote-doc-title"><%= invoice.title || "Invoice for #{invoice.client.display_name}" %></h1>
+  </div>
+  <dl class="quote-doc-meta">
+    <div><dt>Billed to</dt><dd><%= invoice.client.display_name %><% if invoice.client.company_name %><br><%= invoice.client.company_name %><% end %></dd></div>
+    <% if invoice.property %><div><dt>Property</dt><dd><%= safe_join(invoice.property.address_lines, tag.br) %></dd></div><% end %>
+    <div><dt>Issued</dt><dd><%= local_date(invoice.issued_on) %></dd></div>
+    <div><dt>Due</dt><dd><%= local_date(invoice.due_on) %><% unless invoice.payment_terms == "custom" %><br><span class="quote-doc-unit"><%= invoice.terms_label %></span><% end %></dd></div>
+    <div><dt>Status</dt><dd><%= invoice.client_state_label %></dd></div>
+  </dl>
+</header>
+
+<% if invoice.message %>
+  <p class="quote-doc-message"><%= invoice.message %></p>
+<% end %>
+
+<%= render "client/documents/lines", document: invoice, totals: %>
+
+<div class="quote-doc-totals"><dl class="quote-totals invoice-doc-balance">
+  <% if invoice.payments? %>
+    <div><dt>Paid</dt><dd class="money">−<%= money(invoice.amount_paid) %></dd></div>
+  <% end %>
+  <div class="quote-totals-total"><dt><%= invoice.void? ? "Nothing due (void)" : "Balance due" %></dt><dd class="money"><%= money(invoice.void? ? Money.zero(invoice.currency) : invoice.balance) %></dd></div>
+</dl></div>
+
+<% if invoice.terms %>
+  <section class="quote-doc-terms">
+    <h2>Terms</h2>
+    <p><%= invoice.terms %></p>
+  </section>
+<% end %>

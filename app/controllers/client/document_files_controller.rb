@@ -1,14 +1,14 @@
-# A quote's photos and files on the client page (QTE-03), served through the link so that
+# A quote's or invoice's photos and files on the client page (QTE-03, PAY-02), served through the link so that
 # revoking or expiring it also cuts off the files: each request is checked, then redirected
 # to a short-lived storage URL.
-class Client::QuoteFilesController < ApplicationController
+class Client::DocumentFilesController < ApplicationController
   include ClientLinkAccess
   include ActiveStorage::SetCurrent
 
   URL_LIFETIME = 5.minutes
 
   def show
-    return render_link_not_found unless @document.is_a?(Quote) && @document.client_visible?
+    return render_link_not_found unless @document.is_a?(DocumentAttachments) && @document.client_visible?
 
     attachment = @document.attachments_attachments.find_by(id: params[:id]) or return render_link_not_found
     file = params[:size] == "web" && attachment.image? ? attachment.variant(:web).processed : attachment
