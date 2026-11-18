@@ -34,6 +34,8 @@ class Admin::ScheduleTest < ActionDispatch::IntegrationTest
     sign_in @tech
     post switch_admin_business_path, params: { business: @business.uid }
     get admin_root_path
+    assert_redirected_to admin_my_day_path
+    follow_redirect!
     assert_response :success
     assert_select "a[href=?]", admin_schedule_path, 0
   end
