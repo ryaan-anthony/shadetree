@@ -123,8 +123,9 @@ class Admin::QuotesController < Admin::BaseController
 
   # CAT-08: the draft's location's catalog prices and default taxes, when staff accept the offer.
   def reprice
-    @quote.reprice_for_location!
-    redirect_to edit_admin_quote_path(@quote), notice: "Prices and taxes now match #{@quote.location.name}."
+    apply_location_repricing(@quote, edit_admin_quote_path(@quote)) do |changed|
+      QuoteEvent.record!(@quote, :repriced, by: current_user, location: @quote.location.name, changed:)
+    end
   end
 
   def destroy

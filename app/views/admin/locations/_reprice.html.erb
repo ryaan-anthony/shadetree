@@ -1,12 +1,21 @@
-<%# locals: (document:, path:) -%>
-<%# CAT-08: after a draft moves to another location, offer that location's prices and taxes. %>
+<%# locals: (document:) -%>
+<%# CAT-08: a draft priced for another location: offer this one's prices and taxes. The buttons
+    belong to #location-reprice-form, outside the builder, and save pending edits first. %>
 <% if document.repricing_offer? %>
-  <% prices = document.location_price_changes.size %>
-  <% what = [ (prices.positive? ? "prices" : nil), (document.location_taxes_differ? ? "taxes" : nil) ].compact %>
+  <% prices = document.location_price_changes %>
+  <% taxes = document.location_tax_change %>
+  <% what = [ ("prices" if prices.any?), ("taxes" if taxes) ].compact.join(" and ") %>
   <div class="banner banner-info mt-3" role="status"><%= icon "tag" %>
     <div class="min-w-0 flex-1">
-      <p><%= document.location.name %> has <%= [ (pluralize(prices, "different price") if prices.positive?), ("different default taxes" if what.include?("taxes")) ].compact.to_sentence %> for this <%= document.model_name.human.downcase %>.</p>
-      <%= button_to "Use #{document.location.name}'s #{what.join(" and ")}", path, method: :patch, class: "#{button_classes(:secondary, :sm)} mt-2", form: { data: { turbo: false } } %>
+      <p>This <%= document.model_name.human.downcase %> was priced for <%= document.pricing_location.name %>. <%= document.location.name %> has different <%= what %>:</p>
+      <ul class="mt-1 list-disc pl-5">
+        <% prices.each do |line, price| %><li><%= line.name %> <%= money(line.unit_price) %> → <%= money(price) %></li><% end %>
+        <% if taxes %><li>Taxes: <%= taxes.first.map(&:name).to_sentence.presence || "none" %> → <%= taxes.last.map(&:name).to_sentence.presence || "none" %></li><% end %>
+      </ul>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <button type="submit" form="location-reprice-form" class="<%= button_classes(:secondary, :sm) %>" data-action="quote-builder#saveAndSubmit">Use <%= document.location.name %>'s <%= what %></button>
+        <button type="submit" form="location-reprice-form" name="keep" value="1" class="<%= button_classes(:ghost, :sm) %>" data-action="quote-builder#saveAndSubmit">Keep these</button>
+      </div>
     </div>
   </div>
 <% end %>

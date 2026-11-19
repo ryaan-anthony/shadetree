@@ -13,7 +13,7 @@ module InvoicesHelper
 
   EVENT_LABELS = { "created" => "Created", "sent" => "Sent", "revised" => "Revised", "revision_discarded" => "Changes discarded", "partially_paid" => "Partly paid",
                    "paid" => "Paid", "voided" => "Voided", "reopened" => "Awaiting payment again",
-                   "payment_recorded" => "Payment recorded", "payment_changed" => "Payment changed", "payment_deleted" => "Payment deleted" }.freeze
+                   "payment_recorded" => "Payment recorded", "payment_changed" => "Payment changed", "payment_deleted" => "Payment deleted", "repriced" => "Re-priced" }.freeze
 
   # "$50.00, check (1042), received Nov 18, 2026", from Payment#summary.
   def payment_summary_text(summary)
@@ -31,6 +31,7 @@ module InvoicesHelper
     how = ": #{payment_summary_text(event.data["after"] || event.data)}" if event.kind.start_with?("payment_")
     how = ": #{payment_summary_text(event.data["before"])} → #{payment_summary_text(event.data["after"])}" if event.kind == "payment_changed"
     revision = " (revision #{event.data["revision"]})" if event.kind == "sent" && event.data["revision"].to_i > 1
+    how = " for #{event.data["location"]} (#{Array(event.data["changed"]).join(" and ")})" if event.kind == "repriced"
     label = event.kind == "sent" && event.data["channel"] == "payment" ? "Marked sent" : EVENT_LABELS.fetch(event.kind)
     "#{label}#{how}#{revision}#{from}#{by}#{reason}"
   end

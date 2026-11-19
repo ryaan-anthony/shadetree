@@ -175,6 +175,7 @@ class Quote < ApplicationRecord
     transaction do
       copy = Quote.start(client:, property: (property if same_client), created_by: by, location: (location unless location.archived?))
       copy.assign_attributes(title:, terms:, prices_include_tax:, discount_kind:, discount_percent:, discount_amount_cents:)
+      copy.priced_for_location = pricing_location # CAT-08: copied prices; a different location offers its own
       copy.assign_attributes(message:, internal_notes:) if same_client
       copy.sync_line_items(BuiltDocument.rows_from(current_line_items))
       attachments.each { copy.attachments.attach(_1.blob) } if same_client

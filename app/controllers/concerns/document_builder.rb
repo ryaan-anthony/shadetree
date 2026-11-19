@@ -38,5 +38,25 @@ module DocumentBuilder
     available.select { wanted.include?(tax_rate_key(_1)) }
   end
 
+  # CAT-08: the re-price offer for a draft moved to another location, accepted, or declined with
+  # ?keep=1. Refused from a stale tab; the block records what changed in the document's history.
+  def apply_location_repricing(document, edit_path)
+    kind = document.model_name.human.downcase
+    if params[:lock_version].to_s != document.lock_version.to_s
+      return redirect_to(edit_path, alert: "This #{kind} was changed in another tab or by someone else. Here's the latest version.")
+    end
+    if params[:keep].present?
+      document.keep_prices_for_location!
+      return redirect_to(edit_path, notice: "Kept this #{kind}'s prices and taxes.")
+    end
+
+    changed = document.class.transaction do # the change and its history together
+      document.reprice_for_location!.tap { yield _1.map(&:to_s) if _1.any? }
+    end
+    return redirect_to(edit_path, notice: "Nothing to change for #{document.location.name}.") if changed.empty?
+
+    redirect_to edit_path, notice: "#{changed.map(&:to_s).join(" and ").capitalize} now match #{document.location.name}."
+  end
+
   def tax_rate_key(rate) = "#{rate.name}|#{rate.percent.to_d.to_s("F")}"
 end

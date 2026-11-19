@@ -1,10 +1,10 @@
 # Staff actions on a quote that nothing else records (QTE-06), for its activity history:
 # archived, unarchived, expiry_extended ({ "from", "to" }), duplicated ({ "from" => number }),
-# revised ({ "revision" }). Sends, views and client responses have their own records.
+# revised ({ "revision" }), repriced ({ "location", "changed" }, CAT-08). Sends, views and client responses have their own records.
 class QuoteEvent < ApplicationRecord
   include BusinessOwned
 
-  KINDS = %w[archived unarchived expiry_extended duplicated revised].freeze
+  KINDS = %w[archived unarchived expiry_extended duplicated revised repriced].freeze
 
   belongs_to_business_record :quote
   belongs_to :user, optional: true

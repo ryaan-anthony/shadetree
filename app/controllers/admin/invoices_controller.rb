@@ -104,8 +104,9 @@ class Admin::InvoicesController < Admin::BaseController
 
   # CAT-08: the draft's location's catalog prices and default taxes, when staff accept the offer.
   def reprice
-    @invoice.reprice_for_location!
-    redirect_to edit_admin_invoice_path(@invoice), notice: "Prices and taxes now match #{@invoice.location.name}."
+    apply_location_repricing(@invoice, edit_admin_invoice_path(@invoice)) do |changed|
+      @invoice.record!(:repriced, by: current_user, location: @invoice.location.name, changed:)
+    end
   end
 
   def destroy

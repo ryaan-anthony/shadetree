@@ -41,8 +41,10 @@ right numbers automatically.
 - **Overrides cover price only** (recommendation accepted), not descriptions or units.
 - The main location always uses the business prices and the Taxes tab defaults; other locations
   use those too until given their own.
-- Re-pricing is offered, never automatic: it updates catalog lines and the default taxes, and
-  leaves lines typed by hand alone. Jobs and request quotes use location prices when lines are
+- Re-pricing is offered, never automatic, and only for what wasn't changed by hand: a catalog
+  line still at the price of the location it was priced for, whose item has an override at the
+  old or new location, and default taxes the draft still has. Each change is listed; staff use
+  the new prices or keep theirs. Jobs and request quotes use location prices when lines are
   added; they don't offer re-pricing.
 
 ## Implementation notes
@@ -53,8 +55,11 @@ right numbers automatically.
 - The catalog picker sends the form's location (`catalog_items#search?location=`); quotes from
   requests take the location's prices. The item form has "Prices by location"; the list shows a
   badge per override; the location form has "Default taxes".
-- `LocationRepricing` (quotes, invoices): after a location change the builder shows the offer
-  (`admin/locations/_reprice`); `PATCH reprice` applies it to the draft.
+- `LocationRepricing` (quotes, invoices) with `priced_for_location_id`: while it differs from the
+  location, the builder shows the offer (`admin/locations/_reprice`, buttons for a form outside
+  the builder that save pending edits first). `PATCH reprice` (lock_version checked; `keep=1`
+  keeps the prices) records a "repriced" event. Duplicates keep their pricing location, so a copy
+  from an archived location is offered its new prices; duplicated catalog items keep overrides.
 - Dev seeds: North yard charges $55 for lawn mowing and applies only the state tax.
 
 ## Open questions

@@ -73,7 +73,7 @@
         <%= f.field :issued_on, as: :date, label: "Issue date" %>
       </div>
       <div class="mt-4 empty:hidden"><%= render "admin/locations/field", f:, document: @invoice, help: "The client sees this location's contact details." %></div>
-      <div id="location_reprice"></div>
+      <div id="location_reprice"><%= render "admin/locations/reprice", document: @invoice %></div>
       <div class="mt-4"><%= render "due", invoice: @invoice %></div>
     <% end %>
 
@@ -134,4 +134,6 @@
 <% @invoice.saved_attachments.each do |file| %>
   <%= form_with url: admin_invoice_attachment_path(@invoice, file), method: :delete, id: "remove-attachment-#{file.id}", class: "hidden" do %><% end %>
 <% end %>
+<%# CAT-08: the re-price offer's form, outside the builder (its buttons use form=). %>
+<%= form_with url: reprice_admin_invoice_path(@invoice), method: :patch, id: "location-reprice-form", class: "hidden", data: { turbo: false } do %><%= hidden_field_tag :lock_version, @invoice.lock_version, id: nil %><% end %>
 <%= render "admin/clients/quick_create", button: false %>

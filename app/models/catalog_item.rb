@@ -76,6 +76,7 @@ class CatalogItem < ApplicationRecord
       copy.uid = nil
       copy.name = "#{name} (copy)"
       copy.archived_at = nil
+      copy.location_price_inputs = location_prices.includes(:location).to_h { [ _1.location.uid, _1.unit_price.to_s ] } # CAT-08
     end
   end
 
@@ -111,7 +112,9 @@ class CatalogItem < ApplicationRecord
     @location_price_inputs.each do |uid, value|
       location = locations[uid] or next
       if value.empty? then location_prices.where(location:).delete_all
-      else location_prices.find_or_initialize_by(location:).update!(unit_price_cents: Money.parse(value, business.currency_code).cents)
+      else # an upsert, so a double submit can't trip the unique index
+        LocationPrice.upsert({ business_id:, location_id: location.id, catalog_item_id: id, unit_price_cents: Money.parse(value, business.currency_code).cents },
+                             unique_by: %i[location_id catalog_item_id], record_timestamps: true)
       end
     end
     @location_price_inputs = nil

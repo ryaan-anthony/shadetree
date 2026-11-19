@@ -2,12 +2,13 @@
 # "number" }), and each change of status: sent, partially_paid, paid, voided ({ "reason" }),
 # revised ({ "revision" }), revision_discarded ({ "revision" }, back to what was sent) and reopened
 # (no longer paid); PAY-05's payment_recorded, payment_changed ({ "before", "after", "reason" })
-# and payment_deleted ({ "reason" }), each with the payment's summary.
+# and payment_deleted ({ "reason" }), each with the payment's summary; CAT-08's repriced
+# ({ "location", "changed" }).
 class InvoiceEvent < ApplicationRecord
   include BusinessOwned
 
   KINDS = %w[created sent revised revision_discarded partially_paid paid voided reopened
-             payment_recorded payment_changed payment_deleted].freeze
+             payment_recorded payment_changed payment_deleted repriced].freeze
 
   belongs_to_business_record :invoice
   belongs_to :user, optional: true
