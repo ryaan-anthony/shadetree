@@ -1,17 +1,65 @@
+<%# INS-01: what needs the office now, today's visits, and how the month is going. %>
+<% dashboard = @dashboard %>
 <%= page_header "Good #{day_period}, #{current_user.first_name.presence || "there"}",
                 lede: "Here's where #{current_business.name} stands." %>
 
-<div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
-  <% if can?(:business_settings) && @checklist.visible? %>
-    <%= render "setup_checklist", checklist: @checklist %>
-  <% end %>
-  <% if can?(:business_settings) && @checklist.hidden_by_member? %>
-    <div class="lg:col-span-2 lg:row-start-2"><%= button_to "Show setup checklist", admin_show_setup_path, method: :patch, class: "btn-link text-sm2" %></div>
-  <% end %>
+<%# How the month is going. %>
+<dl class="mb-4 grid grid-cols-3 gap-3" id="month-summary" aria-label="This month">
+  <div class="card card-body py-3"><dt class="text-sm2 text-muted">Quotes sent this month</dt><dd class="mt-1 text-lg font-semibold text-ink"><%= dashboard.quotes_sent_this_month %></dd></div>
+  <div class="card card-body py-3"><dt class="text-sm2 text-muted">Approval rate</dt><dd class="mt-1 text-lg font-semibold text-ink"><%= dashboard.approval_rate ? "#{dashboard.approval_rate}%" : "–" %></dd></div>
+  <div class="card card-body py-3"><dt class="text-sm2 text-muted">Payments received</dt><dd class="money mt-1 text-lg font-semibold text-ink"><%= dashboard.payments_this_month.any? ? safe_join(dashboard.payments_this_month.map { money(_1) }, " + ") : money(Money.zero(current_business.currency_code)) %></dd></div>
+</dl>
 
-  <%= card title: "Quotes and jobs" do %>
-    <%= empty_state title: "Nothing to follow up yet",
-                    text: "Quotes, jobs and invoices you create will show up here with what needs your attention.",
-                    icon: "inbox" %>
-  <% end %>
+<div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+  <div class="min-w-0 space-y-4">
+    <% if can?(:business_settings) && @checklist.visible? %>
+      <%= render "setup_checklist", checklist: @checklist %>
+    <% end %>
+    <% if can?(:business_settings) && @checklist.hidden_by_member? %>
+      <div><%= button_to "Show setup checklist", admin_show_setup_path, method: :patch, class: "btn-link text-sm2" %></div>
+    <% end %>
+
+    <% if dashboard.empty? %>
+      <%= card do %>
+        <%= empty_state title: "You're all caught up",
+                        text: "New requests, quotes waiting on clients, jobs to book and money owed will show up here when they need you.",
+                        icon: "check-circle" do %>
+          <%= button_to admin_quotes_path, class: button_classes, form: { class: "contents" } do %><%= icon "plus" %> New quote<% end %>
+        <% end %>
+      <% end %>
+    <% else %>
+      <% dashboard.groups.reject(&:empty?).each do |group| %>
+        <% path_name, options = group.path %>
+        <%= card title: "#{group.title} (#{group.count})", id: "group-#{group.key}", flush: true,
+                 actions: link_to((group.count > group.items.size ? "See all #{group.count}" : "See all"), public_send(path_name, **options), class: button_classes(:ghost, :sm)) do %>
+          <ul class="list" aria-label="<%= group.title %>: <%= group.count %>">
+            <% group.items.each do |item| %><%= render "group_item", key: group.key, item:, today: dashboard.today %><% end %>
+          </ul>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <aside>
+    <%= card title: "Today's visits", subtitle: pluralize(dashboard.visits_today_count, "visit"), id: "todays-visits", flush: true,
+             actions: link_to("Schedule", admin_schedule_path, class: button_classes(:ghost, :sm)) do %>
+      <% if dashboard.todays_visits.empty? %>
+        <p class="px-5 py-4 text-sm text-muted">Nothing booked today.</p>
+      <% else %>
+        <% dashboard.todays_visits.each do |person, visits| %>
+          <section class="border-b border-line px-5 py-3 last:border-b-0">
+            <h3 class="text-sm2 font-semibold text-ink"><%= person&.full_name || "Not assigned" %></h3>
+            <ul class="mt-1 space-y-1">
+              <% visits.each do |visit| %>
+                <li class="flex items-baseline justify-between gap-2 text-sm">
+                  <%= link_to visit.job.client.display_name, admin_job_path(visit.job), class: "min-w-0 truncate text-ink hover:underline" %>
+                  <span class="shrink-0 text-sm2 <%= visit.status == "completed" ? "text-success" : "text-muted" %>"><%= visit.status == "completed" ? "Done" : visit.time_label %></span>
+                </li>
+              <% end %>
+            </ul>
+          </section>
+        <% end %>
+      <% end %>
+    <% end %>
+  </aside>
 </div>

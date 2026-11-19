@@ -22,24 +22,40 @@ money overdue — plus a tiny summary of how the month is going.
 
 ## Acceptance criteria
 
-- [ ] Owners/Admins land on a dashboard with action groups, each showing a count and the top few
+- [x] Owners/Admins land on a dashboard with action groups, each showing a count and the top few
       items linking to the record: new requests; quotes with changes requested; quotes awaiting
       response (oldest first); approved but unscheduled jobs; today's visits (by member);
       completed jobs not invoiced; overdue invoices (oldest first).
-- [ ] Empty groups collapse; when everything is empty, guidance points to the next step
+- [x] Empty groups collapse; when everything is empty, guidance points to the next step
       (onboarding checklist from ACC-05 while incomplete).
-- [ ] A summary strip shows, for the current month: quotes sent (with plan usage once BIL-02
+- [x] A summary strip shows, for the current month: quotes sent (with plan usage once BIL-02
       exists), quote approval rate, and payments received.
-- [ ] Technicians land on their day view (JOB-04) instead.
-- [ ] The dashboard loads quickly for a busy business (measured with seeded data) and works on
+- [x] Technicians land on their day view (JOB-04) instead.
+- [x] The dashboard loads quickly for a busy business (measured with seeded data) and works on
       mobile as a stacked list.
-- [ ] Tests cover each group's inclusion rules, role routing and tenancy.
+- [x] Tests cover each group's inclusion rules, role routing and tenancy.
 
 ## Out of scope
 
 - Charts and reports (backlog). Customizable widgets (not planned).
 
-## Open questions
+## Decisions
 
-- "Quotes awaiting response" — include only quotes older than N days to reduce noise?
-  Recommend all, sorted oldest first, with age shown.
+- Quotes awaiting response: all of them, oldest first, with how long ago each was sent.
+
+## Implementation notes
+
+- `ActionDashboard` builds each group (a count and the top five, each linking to its record,
+  with "See all" opening the matching list tab): new requests; quotes with changes asked for;
+  quotes awaiting an answer (oldest sent first, archived ones left out); jobs with nothing
+  booked; completed jobs with no invoice (a void one doesn't count); overdue invoices (oldest
+  due first, with the balance and days late). Today's visits are grouped by the people on them,
+  "Not assigned" last.
+- Empty groups don't show; with nothing at all, "You're all caught up" with a New quote button.
+  The setup checklist (ACC-05) stays above while it's showing.
+- The month strip: quotes sent (the billable "quote_sent" usage events, which BIL-02's plan
+  limits will count), the approval rate of quotes answered this month (approved ÷ approved or
+  declined), and payments received (by date received, recorded and online).
+- Speed: a fixed number of queries however busy the business is (a test checks that adding
+  thirty records adds no queries beyond a small margin). On phones the groups stack, with
+  today's visits last.
