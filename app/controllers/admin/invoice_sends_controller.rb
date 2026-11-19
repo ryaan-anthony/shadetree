@@ -75,9 +75,11 @@ class Admin::InvoiceSendsController < Admin::BaseController
   def too_many_today? = @invoice.sends.unscope(:order).where(channel: "email", created_at: 1.day.ago..).count >= EMAILS_PER_INVOICE_PER_DAY
 
   def templated_wording
+    return if @invoice.revising? # a revised invoice says it's an updated version (the standard note)
+
     template = MessageTemplate.for_kind("invoice_sent") or return
     values = MessageTemplate::Values.invoice(@invoice).merge(MessageTemplate::Values.sender(current_user, current_business))
-    [ MessageTemplate.render(template.subject, values), MessageTemplate.render(template.body, values) ]
+    [ MessageTemplate.render_subject(template.subject, values), MessageTemplate.render(template.body, values) ]
   end
 
   def default_message

@@ -90,9 +90,10 @@ class Admin::MessageTemplatesTest < ActionDispatch::IntegrationTest
     assert_includes mail.text_part.body.to_s, "is coming tomorrow"
   end
 
-  test "visit emails use the wording for their kind; mixed changes use the moved wording" do
+  test "visit emails use the wording for their kind; mixed changes keep the standard wording" do
     save("visit_reminder", subject: "Tomorrow: {{visit_window}}", body: "Hi {{client_first_name}}, see you tomorrow.")
     save("visit_changed", subject: "New time for {{client_first_name}}", body: "We moved things around.")
+    save("visit_cancelled", subject: "Cancelled", body: "Cancelled.")
     visits = as_business(@business) do
       job = Job.create!(client: @maria, title: "Mowing")
       2.times.map { |i| job.visits.new(scheduled_on: @business.today + 1 + i, timing: "anytime").tap { _1.schedule!(by: @owner, notify_client: false) } }
@@ -102,9 +103,75 @@ class Admin::MessageTemplatesTest < ActionDispatch::IntegrationTest
     assert_includes reminder.text_part.body.to_s, "Hi Maria, see you tomorrow."
     changes = [ { "visit_id" => visits.first.id, "kind" => "changed", "before" => "Mon" }, { "visit_id" => visits.last.id, "kind" => "cancelled" } ]
     update = VisitMailer.with(business_id: @business.id, to: "maria@example.com", job_id: visits.first.job_id, changes:).update
+    assert_equal "Changes to your visits", update.subject, "mixed changes keep the standard wording"
+    assert_includes update.text_part.body.to_s, "Your visits have changed"
+    changes = [ { "visit_id" => visits.first.id, "kind" => "changed", "before" => "Mon" } ]
+    update = VisitMailer.with(business_id: @business.id, to: "maria@example.com", job_id: visits.first.job_id, changes:).update
     assert_equal "New time for Maria", update.subject
     assert_includes update.html_part.body.to_s, "We moved things around."
-    assert_no_match(/Your visits have changed/, update.text_part.body.to_s)
+  end
+
+  # The defaults are the product's own words: saving one unchanged sends the same email.
+  def with_default_saved(kind)
+    without = yield
+    definition = MessageTemplate.definition(kind)
+    as_business(@business) { MessageTemplate.create!(kind:, subject: definition.subject, body: definition.body) }
+    with = yield
+    as_business(@business) { MessageTemplate.for_kind(kind).destroy! }
+    [ without, with ]
+  end
+
+  def normalized(mail) = [ mail.subject, mail.text_part.body.to_s.gsub(/\s+/, " ").strip ]
+
+  test "a template saved with the default wording sends what the product sends without one" do
+    request = as_business(@business) { ServiceRequest.create!(client: @maria, source: "form", description: "Leaves", contact_name: "Maria Lopez") }
+    without, with = with_default_saved("request_received") { normalized(RequestMailer.with(business_id: @business.id, to: "maria@example.com", request_id: request.id).received) }
+    assert_equal without, with
+
+    quote = as_business(@business) do
+      Quote.start(client: @maria).tap do
+        _1.update!(title: "Spring cleanup")
+        _1.sync_line_items([ { "key" => "a", "name" => "Cleanup", "quantity" => "1", "unit_price" => "200", "taxable" => "0" } ])
+        _1.save!
+      end
+    end
+    without, with = with_default_saved("quote_sent") do
+      get new_admin_quote_send_path(quote)
+      [ css_select("input[name='quote_send[subject]']").first["value"], css_select("textarea[name='quote_send[message]']").first.text.strip ]
+    end
+    assert_equal without, with
+    assert_includes with.first, ": Spring cleanup", "the title stays in the subject"
+
+    as_business(@business) do
+      quote.mark_sent!(by: @owner, channel: "link")
+      quote.reload.record_response!(:approve, by: @owner, signer_name: "Maria Lopez", message: "On the phone")
+    end
+    without, with = with_default_saved("quote_approved") { normalized(QuoteMailer.with(business_id: @business.id, to: "maria@example.com", quote_id: quote.id).approved) }
+    assert_equal without, with
+
+    visit = as_business(@business) do
+      job = Job.create!(client: @maria, title: "Mowing")
+      job.visits.new(scheduled_on: @business.today + 1, timing: "anytime").tap { _1.schedule!(by: @owner, notify_client: false) }
+    end
+    without, with = with_default_saved("visit_reminder") { normalized(VisitMailer.with(business_id: @business.id, to: "maria@example.com", job_id: visit.job_id, visit_id: visit.id).reminder) }
+    assert_equal without, with
+    %w[scheduled changed cancelled].each do |change|
+      changes = [ { "visit_id" => visit.id, "kind" => change, "before" => ("Mon" if change == "changed") } ]
+      without, with = with_default_saved("visit_#{change}") { normalized(VisitMailer.with(business_id: @business.id, to: "maria@example.com", job_id: visit.job_id, changes:).update) }
+      assert_equal without, with, change
+    end
+  end
+
+  test "several visits in one email keep the standard wording, which counts them" do
+    save("visit_scheduled", subject: "Booked: {{visit_window}}", body: "Your visit is booked.")
+    visits = as_business(@business) do
+      job = Job.create!(client: @maria, title: "Mowing")
+      2.times.map { |i| job.visits.new(scheduled_on: @business.today + 1 + i, timing: "anytime").tap { _1.schedule!(by: @owner, notify_client: false) } }
+    end
+    changes = visits.map { { "visit_id" => _1.id, "kind" => "scheduled" } }
+    mail = VisitMailer.with(business_id: @business.id, to: "maria@example.com", job_id: visits.first.job_id, changes:).update
+    assert_match(/\A2 visits booked/, mail.subject)
+    assert_includes mail.text_part.body.to_s, "Your visits are booked."
   end
 
   test "on a plan without the feature, messages are read-only and customized ones keep sending" do

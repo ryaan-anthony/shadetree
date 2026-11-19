@@ -12,9 +12,9 @@ class VisitMailer < ClientMailer
       visit = visits[change["visit_id"]] or next
       Item.new(visit, change["kind"], change["before"], change["when"] || visit.when_label, visit.client_link!)
     end
-    kinds = @items.map(&:kind).uniq
-    kind = kinds.one? ? "visit_#{kinds.first}" : "visit_changed" # mixed changes use the "moved" wording
-    subject = custom_subject(kind, MessageTemplate::Values.visit(@job, @items.first&.when)) if @items.any?
+    # A business's wording is about one visit; several in one email keep the standard wording,
+    # which counts them and says what happened to each.
+    subject = custom_subject("visit_#{@items.first.kind}", MessageTemplate::Values.visit(@job, @items.first.when)) if @items.one?
     client_mail subject: subject || self.class.update_subject(@items)
   end
 

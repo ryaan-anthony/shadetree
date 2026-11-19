@@ -51,6 +51,13 @@ with a live preview. Automations (NTF-04) send these same templates.
   page, attachments and footer are fixed, so the link can't be removed and the details always
   match the document. For quote and invoice emails, the template is the note the send form
   starts with (still editable per send), since those already carry a personal message.
+- **The "test email" isn't editable**: it exists to show the branding as Shadetree sends it.
+- **`{{link}}` is offered only where the email is about one link known when it's built** (quote
+  approved, payment receipt). Elsewhere the button is the link: send-form notes are written
+  before the link exists, and a visit email can cover several visits.
+- **A business's wording is about one visit.** An email about several visits, or a mix of
+  booked, moved and cancelled, keeps the standard wording, which counts them and says what
+  happened to each. A revised invoice's send form keeps the standard "updated version" note.
 
 ## Implementation notes
 
@@ -65,8 +72,10 @@ Part 1 (editing the catalog's client emails):
   placeholder buttons that insert at the cursor and a live preview (server-rendered as you
   type, with sample details and the business's own name), and "Go back to the default wording".
 - Mailers ask `custom_subject(kind, values)`: request received, quote approved, visit booked /
-  moved / cancelled / reminder (mixed changes use "moved"), payment receipt. Quote and invoice
-  send forms start from the template's subject and note.
+  moved / cancelled (one visit) and reminder, payment receipt. Quote and invoice send forms start
+  from the template's subject and note. Subjects are one line, and drop a separator an empty
+  placeholder leaves (no title, no ": "). A test sends each email with and without a template
+  saved with the default wording and expects the same subject and text.
 - Plan feature `message_templates`: without it the pages are read-only (with a link to plans),
   and saved templates keep sending.
 

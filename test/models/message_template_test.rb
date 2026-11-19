@@ -17,7 +17,8 @@ class MessageTemplateTest < ActiveSupport::TestCase
     record = template(body: "Hi <script>alert(1)</script>")
     assert_not record.valid?
     assert_match(/plain text/, record.errors[:base].to_sentence)
-    assert template(body: "Prices < $50 and 3 > 2").valid?, "a lone < isn't markup"
+    assert template(body: "Prices < $50 and 3 > 2, call me <soon").valid?, "a lone < isn't markup"
+    assert_not template(body: "Hi <!-- x -->").valid?
   end
 
   test "every editable message is a client-facing catalog entry, and its default uses only its own placeholders" do
@@ -27,6 +28,11 @@ class MessageTemplateTest < ActiveSupport::TestCase
       assert record.valid?, "#{definition.kind}: #{record.errors.full_messages.to_sentence}"
       assert (definition.placeholders - MessageTemplate::PLACEHOLDERS.keys).empty?
     end
+  end
+
+  test "subjects are one line and lose a separator left by an empty placeholder" do
+    assert_equal "Quote Q-1 from Oakline", MessageTemplate.render_subject("Quote {{n}} from {{b}}: {{t}}", { "n" => "Q-1", "b" => "Oakline" })
+    assert_equal "Thanks Next steps here", MessageTemplate.render_subject("Thanks {{s}}", { "s" => "Next\nsteps here" })
   end
 
   test "one template per message per business" do

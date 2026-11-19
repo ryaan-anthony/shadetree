@@ -5,6 +5,7 @@ class Admin::MessageTemplatesController < Admin::BaseController
   requires_permission :business_settings
   before_action :set_template, only: %i[edit update destroy preview]
   before_action :require_feature, only: %i[update destroy]
+  rate_limit to: 120, within: 1.minute, only: :preview, with: -> { head :too_many_requests }
 
   def index
     @templates = MessageTemplate.all.index_by(&:kind)
@@ -17,7 +18,7 @@ class Admin::MessageTemplatesController < Admin::BaseController
 
   def update
     @template.assign_attributes(template_params.merge(updated_by: current_user))
-    if @template.save
+    if save_template
       redirect_to admin_message_templates_path, notice: "Saved. #{EmailCatalog.find(@template.kind).name} emails now use your wording."
     else
       @editable = true
@@ -39,6 +40,14 @@ class Admin::MessageTemplatesController < Admin::BaseController
   end
 
   private
+
+  # Two first saves at once: the second finds the first's record and updates it.
+  def save_template
+    @template.save
+  rescue ActiveRecord::RecordNotUnique
+    existing = MessageTemplate.for_kind(@template.kind)
+    existing.update(@template.attributes.slice("subject", "body", "updated_by_id")).tap { @template = existing }
+  end
 
   def set_template
     kind = params[:kind].to_s

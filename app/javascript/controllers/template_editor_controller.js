@@ -35,7 +35,10 @@ export default class extends Controller {
     const body = new FormData(this.element)
     body.delete("_method")
     const token = document.querySelector("meta[name=csrf-token]")?.content
+    const request = (this.request = (this.request || 0) + 1)
     const response = await fetch(this.urlValue, { method: "POST", body, headers: { "X-CSRF-Token": token, Accept: "text/html" } })
-    if (response.ok) this.previewTarget.innerHTML = await response.text()
+    // Only the newest answer counts, and never a sign-in page after the session ended.
+    if (request !== this.request || !response.ok || response.redirected) return
+    this.previewTarget.innerHTML = await response.text()
   }
 }

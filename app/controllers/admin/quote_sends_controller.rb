@@ -98,7 +98,7 @@ class Admin::QuoteSendsController < Admin::BaseController
   def templated_wording
     template = MessageTemplate.for_kind("quote_sent") or return
     values = MessageTemplate::Values.quote(@quote).merge(MessageTemplate::Values.sender(current_user, current_business))
-    [ MessageTemplate.render(template.subject, values), MessageTemplate.render(template.body, values) ]
+    [ MessageTemplate.render_subject(template.subject, values), MessageTemplate.render(template.body, values) ]
   end
 
   def default_message

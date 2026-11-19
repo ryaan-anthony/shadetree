@@ -37,7 +37,7 @@ class ClientMailer < ApplicationMailer
   def custom_subject(kind, values)
     template = MessageTemplate.for_kind(kind) or return
     @intro = MessageTemplate.render(template.body, values)
-    MessageTemplate.render(template.subject, values)
+    MessageTemplate.render_subject(template.subject, values)
   end
 
   def within_business(&)
