@@ -34,6 +34,13 @@ class MarketingSeoTest < ActionDispatch::IntegrationTest
     businesses(:two).update!(request_form_enabled: true, request_form_indexable: true, active: false)
     get "/sitemap.xml"
     assert_not_includes response.body, "/request/"
+    assert_includes response.body, "http://example.com/legal/security</loc>", "the legal pages are listed (MKT-03)"
+  end
+
+  test "a legal document's current version is indexed, with its description (MKT-03)" do
+    get legal_document_path("security")
+    assert_select "meta[name=robots][content=noindex]", false
+    assert_select "meta[name=description][content=?]", "Security & Trust: How we protect your data."
   end
 
   test "pages without their own description aren't indexed" do
