@@ -1,0 +1,16 @@
+<% content_for :title, "Operator console" %>
+<h1 class="page-title">Operator console</h1>
+<p class="page-lede">Everything you do here is recorded in the audit log.</p>
+<div class="mt-6 grid gap-4 md:grid-cols-2">
+  <%= card title: "Recent activity", flush: true, actions: link_to("Audit log", ops_audit_entries_path, class: button_classes(:ghost, :sm)) do %>
+    <% if @recent.any? %>
+      <ul class="list"><%= render partial: "ops/audit_entries/entry", collection: @recent, as: :entry %></ul>
+    <% else %>
+      <p class="px-5 py-4 text-sm text-muted">Nothing yet.</p>
+    <% end %>
+  <% end %>
+  <%= card title: "Access" do %>
+    <p class="text-sm text-subtle">Operators reach every business. Grant access only to people who run Shadetree.</p>
+    <%= link_to "Operators", ops_operators_path, class: "#{button_classes(:secondary)} mt-3" %>
+  <% end %>
+</div>

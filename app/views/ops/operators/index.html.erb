@@ -1,0 +1,25 @@
+<% content_for :title, "Operators" %>
+<h1 class="page-title">Operators</h1>
+<p class="page-lede">People who run Shadetree. Granting or revoking access asks for a fresh code.</p>
+<div class="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+  <%= card flush: true do %>
+    <ul class="list" id="operators">
+      <% @operators.each do |operator| %>
+        <li id="operator-<%= operator.id %>">
+          <div class="min-w-0 flex-1">
+            <p class="font-medium text-ink"><%= operator.user.email %><%= " (you)" if operator.user == current_user %></p>
+            <p class="text-sm2 text-muted"><%= operator.two_factor? ? "Two-factor on" : "Hasn't set up two-factor yet" %> · since <%= local_date(operator.created_at) %><%= " · granted by #{operator.granted_by.email}" if operator.granted_by %></p>
+          </div>
+          <%= button_to "Revoke", ops_operator_path(operator), method: :delete, class: button_classes(:ghost, :sm),
+                        form: { class: "contents", data: { turbo_confirm: "Revoke #{operator.user.email}'s operator access?", turbo_confirm_button: "Revoke" } } %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+  <%= card title: "Grant access" do %>
+    <%= form_with url: ops_operators_path, method: :post do %>
+      <div class="field"><label class="label" for="email">Their Shadetree email</label><%= email_field_tag :email, nil, class: "input", id: "email", required: true %></div>
+      <%= submit_tag "Grant operator access", class: "#{button_classes} mt-3 w-full", name: nil %>
+    <% end %>
+  <% end %>
+</div>

@@ -1,0 +1,9 @@
+<% content_for :title, "Recovery codes" %>
+<div class="mx-auto max-w-md">
+  <%= card title: "Save your recovery codes", subtitle: "Each works once if you lose your phone. They won't be shown again." do %>
+    <ul class="grid grid-cols-2 gap-2 font-mono text-sm text-ink" id="recovery-codes">
+      <% @recovery_codes.each do |code| %><li class="rounded-control bg-sunken px-3 py-2 text-center"><%= code %></li><% end %>
+    </ul>
+    <%= link_to "I've saved them", ops_root_path, class: "#{button_classes} mt-4 w-full" %>
+  <% end %>
+</div>

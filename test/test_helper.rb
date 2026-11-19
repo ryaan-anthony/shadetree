@@ -30,6 +30,8 @@ module ActiveSupport
   class TestCase
     # Run tests in parallel with specified workers
     parallelize(workers: :number_of_processors)
+    # OPS-01: worker databases are copies made without rake, so add the audit log's trigger.
+    parallelize_setup { |_worker| AuditEntry.install_append_only_trigger! }
 
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
@@ -37,3 +39,6 @@ module ActiveSupport
     # Add more helper methods to be used by all tests here...
   end
 end
+
+# OPS-01: and for a single-process run (the trigger is idempotent).
+AuditEntry.install_append_only_trigger!

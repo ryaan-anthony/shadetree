@@ -1,0 +1,12 @@
+<% content_for :title, "Enter a code" %>
+<div class="mx-auto max-w-md">
+  <%= card title: "Enter a code", subtitle: (params[:recent] ? "Changes to access need a fresh code." : "From your authenticator app, or one of your recovery codes.") do %>
+    <%= form_with url: ops_two_factor_verification_path, method: :post do %>
+      <div class="field">
+        <label class="label" for="code">Code</label>
+        <%= text_field_tag :code, nil, id: "code", class: "input tabular", autocomplete: "one-time-code", required: true, maxlength: 20, autofocus: true %>
+      </div>
+      <%= submit_tag "Continue", class: "#{button_classes} mt-4 w-full", name: nil %>
+    <% end %>
+  <% end %>
+</div>

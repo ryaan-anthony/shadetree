@@ -43,6 +43,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "audit_entries", force: :cascade do |t|
+    t.bigint "operator_user_id"
+    t.string "operator_email", null: false
+    t.string "action", null: false
+    t.bigint "business_id"
+    t.bigint "target_user_id"
+    t.text "reason"
+    t.jsonb "data", default: {}, null: false
+    t.string "ip_address"
+    t.string "user_agent"
+    t.string "request_id"
+    t.datetime "created_at", null: false
+    t.index ["action"], name: "index_audit_entries_on_action"
+    t.index ["business_id"], name: "index_audit_entries_on_business_id"
+    t.index ["created_at"], name: "index_audit_entries_on_created_at"
+    t.index ["operator_user_id"], name: "index_audit_entries_on_operator_user_id"
+    t.index ["target_user_id"], name: "index_audit_entries_on_target_user_id"
+  end
+
   create_table "automation_deliveries", force: :cascade do |t|
     t.bigint "business_id", null: false
     t.bigint "message_template_id", null: false
@@ -713,6 +732,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
     t.index ["uid"], name: "index_notifications_on_uid", unique: true
   end
 
+  create_table "operators", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "granted_by_id"
+    t.datetime "revoked_at"
+    t.bigint "revoked_by_id"
+    t.text "otp_secret_ciphertext"
+    t.datetime "otp_enabled_at"
+    t.bigint "otp_last_step"
+    t.jsonb "recovery_code_digests", default: [], null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["granted_by_id"], name: "index_operators_on_granted_by_id"
+    t.index ["revoked_by_id"], name: "index_operators_on_revoked_by_id"
+    t.index ["user_id"], name: "index_operators_on_user_id", unique: true
+  end
+
   create_table "payments", force: :cascade do |t|
     t.bigint "business_id", null: false
     t.string "uid", null: false
@@ -1114,6 +1149,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "audit_entries", "businesses", on_delete: :nullify
+  add_foreign_key "audit_entries", "users", column: "operator_user_id", on_delete: :nullify
+  add_foreign_key "audit_entries", "users", column: "target_user_id", on_delete: :nullify
   add_foreign_key "automation_deliveries", "businesses", on_delete: :cascade
   add_foreign_key "automation_deliveries", "message_templates", on_delete: :cascade
   add_foreign_key "automation_rules", "businesses", on_delete: :cascade
@@ -1192,6 +1230,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
   add_foreign_key "notifications", "businesses", on_delete: :cascade
   add_foreign_key "notifications", "users", column: "actor_id", on_delete: :nullify
   add_foreign_key "notifications", "users", on_delete: :cascade
+  add_foreign_key "operators", "users"
+  add_foreign_key "operators", "users", column: "granted_by_id", on_delete: :nullify
+  add_foreign_key "operators", "users", column: "revoked_by_id", on_delete: :nullify
   add_foreign_key "payments", "businesses"
   add_foreign_key "payments", "invoices"
   add_foreign_key "payments", "users", column: "recorded_by_id"

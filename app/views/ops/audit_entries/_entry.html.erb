@@ -1,0 +1,10 @@
+<%# locals: (entry:) -%>
+<li class="items-start text-sm" id="audit-<%= entry.id %>">
+  <div class="min-w-0 flex-1">
+    <p class="text-ink"><span class="font-medium"><%= entry.action_label %></span>
+      <% if entry.business %>· <%= entry.business.name %><% end %>
+      <% if entry.target_user %>· <%= entry.target_user.email %><% end %></p>
+    <% if entry.reason.present? %><p class="text-sm2 text-subtle">“<%= entry.reason %>”</p><% end %>
+    <p class="text-sm2 text-muted"><%= entry.operator_email %> · <%= local_time(entry.created_at) %><%= " · #{entry.ip_address}" if entry.ip_address %></p>
+  </div>
+</li>

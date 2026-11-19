@@ -45,6 +45,16 @@ Rails.application.routes.draw do
   post "c/:token/quote/changes", to: "client/quotes#request_changes", as: :request_changes_client_quote
 
   # Admin routes
+  # OPS-01: the operator console (ADR 0019). Non-operators get "not found".
+  namespace :ops do
+    root "dashboard#index"
+    get "two-factor/setup", to: "two_factor#setup", as: :two_factor_setup
+    post "two-factor/setup", to: "two_factor#enable"
+    resource :two_factor_verification, only: %i[new create], controller: "two_factor", path: "two-factor"
+    resources :operators, only: %i[index create destroy]
+    resources :audit_entries, only: :index, path: "audit-log"
+  end
+
   namespace :admin do
     # Clients (CLI-01)
     # Your data (INS-02): CSV downloads and the export log
