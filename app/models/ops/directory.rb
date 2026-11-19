@@ -22,7 +22,7 @@ class Ops::Directory
   def filtered? = query.present? || plan_id || status || from || to
 
   def businesses
-    scope = Business.includes(:plan, :owner).select("businesses.*", "#{LAST_ACTIVE_SQL} AS last_active_at")
+    scope = Business.includes(:plan, business_users: :user).select("businesses.*", "#{LAST_ACTIVE_SQL} AS last_active_at")
     scope = search(scope) if query.present?
     scope = scope.where(plan_id:) if plan_id
     scope = scope.where(active: status == "active") if status
@@ -32,6 +32,9 @@ class Ops::Directory
   end
 
   # The status shown beside a business. Trial and past due come with subscriptions (BIL-04/05).
+  # The first active Owner (the creator may have left, or deleted their account).
+  def self.owner_of(business) = business.business_users.select { _1.active? && _1.owner? }.min_by(&:created_at)&.user
+
   def self.status_of(business) = business.active? ? "active" : "closed"
 
   private

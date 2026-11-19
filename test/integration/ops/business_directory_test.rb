@@ -4,7 +4,9 @@ require "test_helper"
 class Ops::BusinessDirectoryTest < ActionDispatch::IntegrationTest
   setup { @one, @two = businesses(:one), businesses(:two) }
 
-  test "non-operators get not found" do
+  test "non-operators, and operators who haven't entered a code, can't open the directory" do
+    get ops_businesses_path
+    assert_response :not_found, "signed out"
     sign_in users(:two)
     get ops_businesses_path
     assert_response :not_found
@@ -69,6 +71,7 @@ class Ops::BusinessDirectoryTest < ActionDispatch::IntegrationTest
     assert_equal users(:one).email, AuditEntry.last.operator_email
     assert_select "#members li", @one.business_users.count
     assert_select "#member-#{business_users(:one).uid}", /Owner/
+    assert_select "#former-members", 0
     assert_select "#usage-quotes_sent", /0 of/
     assert_select "#count-clients", /1/
     assert_select "#setup-progress", /of 4 steps/
@@ -79,6 +82,32 @@ class Ops::BusinessDirectoryTest < ActionDispatch::IntegrationTest
 
     get ops_business_path("nope")
     assert_response :not_found
+  end
+
+  test "an operator who hasn't set up or entered a code is sent to do that first" do
+    Operator.grant!(users(:one))
+    sign_in users(:one)
+    get ops_business_path(@one)
+    assert_redirected_to ops_two_factor_setup_path
+    assert_not AuditEntry.exists?(action: "business.viewed")
+  end
+
+  test "the console never prefetches pages on hover, since opening a business is audited" do
+    sign_in_operator
+    get ops_businesses_path
+    assert_select "meta[name=turbo-prefetch][content=false]"
+  end
+
+  test "the list names an active owner and counts results; former members are tucked away" do
+    sign_in_operator
+    business_users(:one_member_of_two).update_columns(role: "owner")
+    business_users(:two).update_columns(active: false, role: "technician")
+    get ops_businesses_path(q: "business two")
+    assert_select "#directory-count", "1 business match"
+    assert_select "#business-#{@two.uid}", /user1@example.com/
+    assert_select "#business-#{@two.uid}", text: /user2@example.com/, count: 0
+    get ops_business_path(@two)
+    assert_select "#former-members summary", "Former members (1)"
   end
 
   private

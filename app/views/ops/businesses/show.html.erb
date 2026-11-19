@@ -13,17 +13,15 @@
 </p>
 <div class="mt-6 grid gap-4 lg:grid-cols-2">
   <%= card title: "Members", subtitle: (pluralize(@summary.pending_invitations, "pending invitation") if @summary.pending_invitations.positive?), flush: true, id: "members" do %>
-    <ul class="list">
-      <% @summary.members.each do |membership| %>
-        <li class="text-sm" id="member-<%= membership.uid %>">
-          <div class="min-w-0 flex-1">
-            <p class="font-medium text-ink"><%= membership.user.full_name %> <span class="font-normal text-muted">· <%= membership.role_name %><%= " (deactivated)" unless membership.active? %></span></p>
-            <p class="break-all text-sm2 text-muted"><%= membership.user.email %></p>
-          </div>
-          <p class="shrink-0 text-sm2 text-muted"><%= membership.last_active_at ? local_time_ago(membership.last_active_at) : "Never" %></p>
-        </li>
-      <% end %>
-    </ul>
+    <% members = @summary.members.to_a %>
+    <% current, former = members.partition(&:active?) %>
+    <ul class="list"><%= render partial: "member", collection: current, as: :membership %></ul>
+    <% if former.any? %>
+      <details class="border-t border-line" id="former-members">
+        <summary class="cursor-pointer px-5 py-3 text-sm2 text-muted">Former members (<%= former.size %>)</summary>
+        <ul class="list"><%= render partial: "member", collection: former, as: :membership %></ul>
+      </details>
+    <% end %>
   <% end %>
   <%= card title: "Plan and usage", id: "plan" do %>
     <dl class="space-y-2 text-sm">
@@ -46,7 +44,7 @@
   <%= card title: "Setup and payments", id: "setup" do %>
     <% done, required = @summary.setup_progress %>
     <dl class="space-y-2 text-sm">
-      <div class="flex justify-between gap-3"><dt class="text-subtle">Setup checklist</dt><dd class="text-ink" id="setup-progress"><%= done == required ? "Complete" : "#{done} of #{required} steps" %><%= ", finished #{l(@business.onboarded_at.to_date)}" if @business.onboarded_at %></dd></div>
+      <div class="flex justify-between gap-3"><dt class="text-subtle">Setup checklist</dt><dd class="text-ink" id="setup-progress"><%= done == required ? "Complete" : "#{done} of #{required} steps" %><% if @business.onboarded_at %>, finished <%= local_date(@business.onboarded_at) %><% end %></dd></div>
       <div class="flex justify-between gap-3"><dt class="text-subtle">First quote sent</dt><dd class="text-ink"><%= @business.first_quote_sent_at ? local_date(@business.first_quote_sent_at) : "Not yet" %></dd></div>
       <div class="flex justify-between gap-3"><dt class="text-subtle">Online payments account</dt><dd class="text-ink" id="payments-account">Not connected</dd></div>
     </dl>

@@ -4,6 +4,8 @@
   <head>
     <%= render "layouts/head" %>
     <meta name="robots" content="noindex, nofollow">
+    <%# Hovering a link mustn't open the page: opening a business is audited (OPS-02). %>
+    <meta name="turbo-prefetch" content="false">
   </head>
   <body class="bg-canvas text-sm text-body">
     <a href="#main" class="btn btn-secondary sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50">Skip to content</a>
