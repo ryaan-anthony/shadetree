@@ -1,13 +1,15 @@
-<% content_for :title, "About · Shadetree" %>
+<% content_for :title, "About" %>
 <% content_for :head, tag.meta(name: "description", content: "Why Shadetree exists, who it's for, and the promises it keeps to small service businesses.") %>
 
 <section class="border-b border-line">
-  <div class="mx-auto max-w-3xl px-5 py-16 sm:px-8 sm:py-20">
+  <div class="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
+    <div class="max-w-3xl">
     <h1 class="text-4xl font-extrabold tracking-[-0.04em] text-ink sm:text-5xl">Software for the crews who keep neighborhoods running.</h1>
     <div class="mt-8 space-y-5 text-lg leading-relaxed text-subtle">
       <p>Most small service businesses still quote by text message, paper or a word-processor template. Approvals get lost, the schedule lives on a whiteboard, and invoices go out late, often on a Sunday night.</p>
-      <p>The tools that fix this were built for bigger companies. They charge for every person on the team, take an afternoon to set up, and assume an office.</p>
+      <p>The tools that fix this were built for bigger companies. They mostly charge by the seat, take an afternoon to set up, and assume an office.</p>
       <p>Shadetree is built for the owner who also does the work: one to ten people, running the day from a phone. It does the part of the day that makes money, from the first request to getting paid, and tries to do that part very well.</p>
+    </div>
     </div>
   </div>
 </section>
@@ -29,12 +31,14 @@
 </section>
 
 <section aria-labelledby="who-heading">
-  <div class="mx-auto max-w-3xl px-5 py-16 sm:px-8 sm:py-20">
+  <div class="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
+    <div class="max-w-3xl">
     <h2 id="who-heading" class="text-3xl font-extrabold tracking-[-0.035em] text-ink">Who builds it</h2>
     <p class="mt-5 text-lg leading-relaxed text-subtle">Shadetree is made by a small, independent team. Write to us and a person will answer.</p>
     <div class="mt-8 flex flex-wrap gap-3">
       <%= link_to "Get in touch", contact_path, class: button_classes(:secondary, :lg) %>
       <%= link_to "Start free", new_user_registration_path, class: button_classes(:primary, :lg) %>
+    </div>
     </div>
   </div>
 </section>

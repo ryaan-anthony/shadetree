@@ -1,4 +1,4 @@
-<% content_for :title, "Features · Shadetree" %>
+<% content_for :title, "Features" %>
 <% content_for :head, tag.meta(name: "description", content: "Quotes clients approve from their phone, a schedule your crew can follow, and invoices that get paid. See Shadetree's features.") %>
 
 <section class="border-b border-line bg-[radial-gradient(ellipse_at_top,var(--color-canopy-50),transparent_65%)]">
@@ -13,7 +13,7 @@
   </div>
 </section>
 
-<%= render "features/section", id: "quoting", image: "marketing/builder.webp", width: 1600, height: 1129,
+<%= render "features/section", id: "quoting", image: "marketing/builder.webp", width: 1600, height: 1181,
            alt: "The quote builder: a client, a title and valid-until date, line items with quantities, prices and discounts, and the totals with two tax rates.",
            title: "Build a quote in a few minutes",
            text: "Start from your own services and prices, then change anything for this job. Shadetree adds up the discounts and taxes, saves as you go, and tells you how many quotes your plan has left.",
@@ -22,7 +22,7 @@
                      "A valid-until date, your terms, and a PDF with your logo",
                      "Revise a sent quote; the client always sees the latest, and earlier versions are kept" ] %>
 
-<%= render "features/section", id: "approval", image: "marketing/client-quote.webp", width: 780, height: 1500, phone: true, flip: true,
+<%= render "features/section", id: "approval", image: "marketing/client-quote.webp", width: 780, height: 1960, phone: true, flip: true,
            alt: "A quote as the client sees it on a phone: the business's name, the work, the total, and buttons to approve, decline or ask for changes.",
            title: "Clients approve from their phone",
            text: "Your client opens a link, with no account and nothing to install. They see your quote with your name and colors, and approve it with a typed signature, decline it, or ask for changes.",
@@ -30,7 +30,7 @@
                      "Every approval keeps a record of exactly what was agreed",
                      "New clients can ask for a quote from your own request page, with photos" ] %>
 
-<%= render "features/section", id: "scheduling", image: "marketing/schedule.webp", width: 1600, height: 1129,
+<%= render "features/section", id: "scheduling", image: "marketing/schedule.webp", width: 1600, height: 1076,
            alt: "The week's schedule: visits on a calendar colored by crew member, the crew's hours this week, and jobs that still need scheduling.",
            title: "A schedule the whole crew can follow",
            text: "Put approved work on the calendar, by the day or the week. Drag a visit to move it, give it an exact time or an arrival window, and see who's busy at a glance.",
@@ -46,7 +46,7 @@
                      "Each person sees only what their role allows",
                      "Photos from the job land on the visit, ready for the invoice" ] %>
 
-<%= render "features/section", id: "invoicing", image: "marketing/invoice.webp", width: 1600, height: 1129,
+<%= render "features/section", id: "invoicing", image: "marketing/invoice.webp", width: 1600, height: 1181,
            alt: "An invoice that's partly paid: its items and total, a check payment recorded against it, the balance, and its history.",
            title: "Invoice when the work is done",
            text: "Turn an approved quote or a finished job into an invoice in one step, and send it as a link or a PDF. Record payments as they arrive, in full or in part, and always know what's still owed.",
