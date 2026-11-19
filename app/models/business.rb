@@ -35,7 +35,13 @@ class Business < ApplicationRecord
   # business, with a cap on free businesses per user).
   FREE_BUSINESSES_PER_OWNER = 3
 
-  def entitlements = Entitlements.for(self)
+  # One per loaded business, so a page counts usage once (reload starts afresh).
+  def entitlements = @entitlements ||= Entitlements.for(self)
+
+  def reload(...)
+    @entitlements = nil
+    super
+  end
 
   validate :plan_overrides_are_valid
   validate :within_free_businesses_per_owner, on: :create

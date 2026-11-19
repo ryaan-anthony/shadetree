@@ -14,6 +14,7 @@ class Admin::QuoteSendsController < Admin::BaseController
   before_action :set_quote
   before_action :require_sendable
   before_action :require_confirmed_sender, only: :create
+  before_action :require_quote_allowance, only: :create
 
   def new
     @form = QuoteSendForm.new(to: @quote.client.primary_email&.value, subject: QuoteMailer.default_subject(@quote),
@@ -24,9 +25,32 @@ class Admin::QuoteSendsController < Admin::BaseController
 
   def create
     params[:channel] == "link" ? send_link : send_email
+  rescue QuoteLimitReached
+    redirect_to new_admin_quote_send_path(@quote, from: ("setup" if from_setup?)), alert: quote_limit_message
   end
 
   private
+
+  # BIL-03: a quote's first send counts toward the plan's quotes; over the limit (and its one
+  # extra), new quotes wait. Resends of quotes already sent never count.
+  def require_quote_allowance
+    return if !@quote.counts_toward_usage? || current_business.entitlements.can_send_new_quote?
+
+    redirect_to new_admin_quote_send_path(@quote, from: ("setup" if from_setup?)), alert: quote_limit_message
+  end
+
+  class QuoteLimitReached < StandardError; end
+
+  # Re-checked inside the send's transaction with the business row locked, so two first sends
+  # at the boundary can't both take the last allowance.
+  def claim_quote_allowance!
+    return unless @quote.counts_toward_usage?
+
+    current_business.lock!
+    raise QuoteLimitReached unless Entitlements.for(current_business).can_send_new_quote?
+  end
+
+  def quote_limit_message = "You've used this period's quotes. New quotes can be sent again on #{l(current_business.entitlements.period.resets_on)}."
 
   def set_quote = @quote = Quote.includes(:client, :line_items).find_by_param!(params[:quote_id])
 
@@ -42,6 +66,7 @@ class Admin::QuoteSendsController < Admin::BaseController
 
   def send_link
     Quote.transaction do
+      claim_quote_allowance!
       @quote.mark_sent!(by: current_user, channel: "link")
       @quote.client_link!
     end
@@ -57,6 +82,7 @@ class Admin::QuoteSendsController < Admin::BaseController
     # One transaction: the send, the usage event and the email record commit together, and the
     # email job is enqueued only after commit, so a quote is never "sent" without its email.
     Quote.transaction do
+      claim_quote_allowance!
       quote_send = @quote.mark_sent!(by: current_user, channel: "email", recipient: @form.to, cc: @form.cc_header)
       link = @quote.client_link!
       email = QuoteMailer.send_later(:sent, business: current_business, to: @form.to, kind: "quote_sent", related: @quote,
