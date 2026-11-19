@@ -1,0 +1,23 @@
+<%# OPS-05: the business's support tickets with Shadetree. %>
+<%= page_header "Help", lede: "Ask the Shadetree team anything about using Shadetree. We reply here and by email." do %>
+  <%= link_to new_admin_support_ticket_path, class: button_classes do %><%= icon "plus" %> Ask for help<% end %>
+<% end %>
+<%= card flush: true do %>
+  <% if @tickets.any? %>
+    <ul class="list" id="support-tickets">
+      <% @tickets.each do |ticket| %>
+        <li class="p-0" id="ticket-<%= ticket.uid %>">
+          <%= link_to admin_support_ticket_path(ticket), class: "flex min-w-0 flex-1 flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:gap-4" do %>
+            <span class="min-w-0 flex-1">
+              <span class="block truncate font-semibold text-ink"><%= ticket.subject %></span>
+              <span class="block truncate text-sm2 text-muted"><%= ticket.category_label %> · opened by <%= ticket.opened_by&.full_name || "a former member" %></span>
+            </span>
+            <span class="flex items-center gap-2 text-sm2 text-muted"><%= render "status", ticket: %><%= local_time_ago(ticket.last_message_at) %></span>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <%= empty_state title: "No questions yet", text: "Stuck on something, found a bug, or have an idea? Ask us.", icon: "life-buoy" %>
+  <% end %>
+<% end %>

@@ -266,6 +266,10 @@ Rails.application.routes.draw do
     # Business hours and closures (CAT-06)
     resource :hours, only: %i[show update], controller: "hours"
     resource :plan, only: :show, controller: "plans" # BIL-01
+    # OPS-05: asking Shadetree for help
+    resources :support_tickets, only: %i[index new create show], path: "help" do
+      post :reply, on: :member
+    end
     resources :closures, except: %i[index show]
 
     # Locations (CAT-07)

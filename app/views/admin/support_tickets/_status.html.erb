@@ -1,0 +1,2 @@
+<%# locals: (ticket:) -%>
+<%= badge ticket.status_label, tone: { "open" => :info, "waiting" => :warning, "resolved" => :success }.fetch(ticket.status) %>
