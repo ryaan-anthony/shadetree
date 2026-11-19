@@ -268,4 +268,5 @@ Rails.application.routes.draw do
   # Contact page
   get "contact", to: "contact#index"
   post "contact", to: "contact#create"
+  get "contact/sent", to: "contact#sent", as: :contact_sent # MKT-02
 end

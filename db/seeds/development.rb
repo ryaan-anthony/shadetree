@@ -217,6 +217,13 @@ Tenancy.with_business(business) do
   puts "Request form: http://localhost:3000/request/#{business.handle}"
 end
 
+# MKT-02: a couple of contact-form messages, one flagged as spam.
+unless ContactMessage.exists?
+  ContactMessage.create!(name: "Dana Whitfield", email: "dana@example.com", business_name: "Whitfield Cleaning", industry: "cleaning",
+                         body: "We're a crew of four. Can each cleaner see only their own visits?", notified_at: Time.current)
+  ContactMessage.create!(name: "SEO Pro", email: "seo@example.com", body: "Cheap backlinks for your site", spam_reason: "spam words")
+end
+
 puts "Demo data ready. Sign in as owner@example.com, admin@example.com or tech@example.com " \
      "with password #{demo_password}."
 

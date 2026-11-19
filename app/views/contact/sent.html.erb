@@ -1,0 +1,7 @@
+<%= render layout: "devise/shared/card", locals: { title: "Message sent" } do %>
+  <div class="text-center">
+    <span class="empty-icon bg-success-50 text-success"><%= icon "check" %></span>
+    <p class="mx-auto max-w-sm text-sm text-subtle" role="status">Thanks for writing. We'll reply to the address you gave.<%= " We've emailed you a confirmation." if flash[:emailed] %></p>
+    <%= link_to "Back to the home page", root_path, class: "#{button_classes(:secondary)} mt-5" %>
+  </div>
+<% end %>
