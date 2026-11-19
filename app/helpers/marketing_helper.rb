@@ -7,6 +7,12 @@ module MarketingHelper
     quotes.nil? ? "Unlimited quotes" : "#{number_with_delimiter(quotes)} #{"quote".pluralize(quotes)} a month"
   end
 
+  # "2 team members", "Unlimited team members".
+  def plan_team(plan)
+    members = plan.limits["team_members"]
+    members.nil? ? "Unlimited team members" : "#{members} team #{"member".pluralize(members)}"
+  end
+
   # Whole dollars when there are no cents: "$19", "$0".
   def plan_price(money) = money.format.delete_suffix(".00")
 end

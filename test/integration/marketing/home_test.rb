@@ -18,7 +18,7 @@ class MarketingHomeTest < ActionDispatch::IntegrationTest
   test "the pricing teaser comes from the plans, and hidden plans aren't shown" do
     get root_path
     Plan.listed.each do |plan|
-      assert_select "li", /#{Regexp.escape(plan.name)}.*#{Regexp.escape(plan.monthly_price.format.delete_suffix(".00"))}/m
+      assert_select "li", /#{Regexp.escape(plan.name)}.*#{Regexp.escape(plan.monthly_price.format.delete_suffix(".00"))}.*team member/m
     end
     assert_select "a[href=?]", pricing_path, text: "Compare plans"
     hidden = Plan.listed.first
@@ -29,7 +29,7 @@ class MarketingHomeTest < ActionDispatch::IntegrationTest
 
   test "no fabricated metrics, logos or testimonials, and no promises the app doesn't keep" do
     get root_path
-    assert_no_match(/testimonial|trusted by|\d+% |customers love|14-day|trial|per seat|contact sales/i, response.body)
+    assert_no_match(/testimonial|trusted by|\d+% |customers love|14-day|trial|per seat|contact sales|card payment|pay by card|approve it in one tap/i, response.body)
   end
 
   test "the bottom box carries the email into sign-up" do
