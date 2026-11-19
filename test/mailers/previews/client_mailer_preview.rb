@@ -99,3 +99,15 @@ class PaymentMailerPreview < ActionMailer::Preview
     PaymentMailer.with(business_id: payment.business_id, to: "maria@example.com", payment_id: payment.id).receipt
   end
 end
+
+# NTF-04: an automated message: the business's first template of its own, about its newest quote.
+class AutomationMailerPreview < ActionMailer::Preview
+  def template_email
+    quote = Tenancy.across_businesses(reason: "mailer preview") { Quote.where.not(status: "draft").order(:id).last }
+    Tenancy.with_business(quote.business) do
+      template = MessageTemplate.custom.first || MessageTemplate.create!(name: "Quote follow-up", subject: "Any questions about {{document_number}}?",
+                                                                        body: "Hi {{client_first_name}},\n\nJust checking in on the quote.")
+      AutomationMailer.with(business_id: quote.business_id, to: "maria@example.com", template_id: template.id, subject_type: "Quote", subject_id: quote.id).template_email
+    end
+  end
+end

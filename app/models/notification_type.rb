@@ -49,7 +49,9 @@ class NotificationType
     Definition.new(kind: "job_ready_to_invoice", label: "A job is ready to invoice", hint: "The last visit on a job is completed.",
                    permission: :office, email_by_default: true, icon: "check-circle"),
     Definition.new(kind: "visit_cancelled", label: "A visit you're on is cancelled", hint: "With the reason, if one was given.",
-                   permission: :field_work, email_by_default: true, icon: "x-circle", audience: :named)
+                   permission: :field_work, email_by_default: true, icon: "x-circle", audience: :named),
+    Definition.new(kind: "automation", label: "Automation notices", hint: "An automation's “notify the team” step.", # NTF-04
+                   permission: :field_work, email_by_default: true, icon: "zap", audience: :named)
   ].index_by(&:kind).freeze
 
   class UnknownKind < ArgumentError; end

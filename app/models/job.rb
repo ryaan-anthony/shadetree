@@ -136,6 +136,7 @@ class Job < ApplicationRecord
       raise NotOpen, "#{number} is already #{status_label.downcase}." unless open?
 
       update!(status: "completed", completed_at: Time.current, completed_by: by)
+      ActiveRecord.after_all_transactions_commit { Automation.trigger("job_completed", self) } # NTF-04
       ended = visits.open.lock.to_a.each { _1.finish!(_1.status == "in_progress" ? "completed" : "cancelled", by:, reason: "Job completed", notify: false) }
       tell_crew_job_ended(ended, "completed", by:)
       ended.find { _1.status == "cancelled" }&.tell_client(notify_client, ended, by:)

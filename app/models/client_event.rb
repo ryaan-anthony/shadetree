@@ -20,6 +20,9 @@ class ClientEvent < ApplicationRecord
 
   validates :kind, inclusion: { in: KINDS }
 
+  # NTF-04: core-flow events start automations, once the change is saved.
+  after_create_commit { Automation.trigger(Automation::EVENTS[kind], subject) if Automation::EVENTS.key?(kind) }
+
   # Newest first, a page at a time: `before` is the last event of the previous page.
   scope :timeline, -> { order(occurred_at: :desc, id: :desc) }
 
