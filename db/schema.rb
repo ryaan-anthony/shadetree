@@ -108,8 +108,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
     t.datetime "welcome_dismissed_at"
     t.datetime "setup_hidden_at"
     t.jsonb "notification_emails", default: {}, null: false
+    t.bigint "role_id"
     t.index ["business_id", "active"], name: "index_business_users_on_business_id_and_active"
     t.index ["business_id"], name: "index_business_users_on_business_id"
+    t.index ["role_id"], name: "index_business_users_on_role_id"
     t.index ["uid"], name: "index_business_users_on_uid", unique: true
     t.index ["user_id", "active"], name: "index_business_users_on_user_id_and_active"
     t.index ["user_id", "business_id"], name: "index_business_users_on_user_id_and_business_id", unique: true
@@ -473,10 +475,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
     t.datetime "revoked_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "role_id"
     t.index "business_id, lower((email)::text)", name: "index_invitations_one_pending_per_email", unique: true, where: "((accepted_at IS NULL) AND (revoked_at IS NULL))"
     t.index ["accepted_by_id"], name: "index_invitations_on_accepted_by_id"
     t.index ["business_id"], name: "index_invitations_on_business_id"
     t.index ["invited_by_id"], name: "index_invitations_on_invited_by_id"
+    t.index ["role_id"], name: "index_invitations_on_role_id"
     t.index ["token_digest"], name: "index_invitations_on_token_digest", unique: true
     t.index ["uid"], name: "index_invitations_on_uid", unique: true
   end
@@ -930,6 +934,30 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
     t.check_constraint "discount_percent IS NULL OR discount_percent >= 0::numeric AND discount_percent <= 100::numeric", name: "quotes_discount_percent_range"
   end
 
+  create_table "role_events", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "role_id"
+    t.bigint "user_id"
+    t.string "kind", null: false
+    t.jsonb "data", default: {}, null: false
+    t.datetime "occurred_at", null: false
+    t.index ["business_id"], name: "index_role_events_on_business_id"
+    t.index ["role_id"], name: "index_role_events_on_role_id"
+    t.index ["user_id"], name: "index_role_events_on_user_id"
+  end
+
+  create_table "roles", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.string "name", null: false
+    t.string "permissions", default: [], null: false, array: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "business_id, lower((name)::text)", name: "index_roles_on_business_and_name", unique: true
+    t.index ["business_id"], name: "index_roles_on_business_id"
+    t.index ["uid"], name: "index_roles_on_uid", unique: true
+  end
+
   create_table "service_request_notes", force: :cascade do |t|
     t.bigint "business_id", null: false
     t.bigint "service_request_id", null: false
@@ -1121,6 +1149,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
   add_foreign_key "automation_runs", "automation_rules", column: "rule_id", on_delete: :nullify
   add_foreign_key "automation_runs", "businesses", on_delete: :cascade
   add_foreign_key "business_users", "businesses"
+  add_foreign_key "business_users", "roles", on_delete: :restrict
   add_foreign_key "business_users", "users"
   add_foreign_key "businesses", "plans"
   add_foreign_key "businesses", "users", column: "owner_id"
@@ -1152,6 +1181,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
   add_foreign_key "email_suppressions", "businesses", on_delete: :cascade
   add_foreign_key "email_suppressions", "email_messages", on_delete: :nullify
   add_foreign_key "invitations", "businesses", on_delete: :cascade
+  add_foreign_key "invitations", "roles", on_delete: :restrict
   add_foreign_key "invitations", "users", column: "accepted_by_id", on_delete: :nullify
   add_foreign_key "invitations", "users", column: "invited_by_id", on_delete: :nullify
   add_foreign_key "invoice_events", "businesses"
@@ -1222,6 +1252,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
   add_foreign_key "quotes", "service_requests", on_delete: :nullify
   add_foreign_key "quotes", "users", column: "created_by_id", on_delete: :nullify
   add_foreign_key "quotes", "users", column: "sent_by_id", on_delete: :nullify
+  add_foreign_key "role_events", "businesses"
+  add_foreign_key "role_events", "roles", on_delete: :nullify
+  add_foreign_key "role_events", "users", on_delete: :nullify
+  add_foreign_key "roles", "businesses"
   add_foreign_key "service_request_notes", "businesses"
   add_foreign_key "service_request_notes", "service_requests", on_delete: :cascade
   add_foreign_key "service_request_notes", "users", on_delete: :nullify

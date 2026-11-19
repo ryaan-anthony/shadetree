@@ -8,5 +8,6 @@ class Admin::TeamController < Admin::BaseController
     @deactivated = memberships.deactivated
     @invitations = Invitation.where(accepted_at: nil, revoked_at: nil).includes(:invited_by).order(created_at: :desc)
     @invitation = Invitation.new(role: "technician")
+    @custom_roles = Role.ordered.to_a # ACC-07
   end
 end

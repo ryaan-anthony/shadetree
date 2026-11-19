@@ -96,6 +96,9 @@ Rails.application.routes.draw do
 
     # Team (ACC-03)
     resource :team, only: :show, controller: "team"
+    resources :roles, only: %i[index new create edit update destroy] do # ACC-07
+      get :delete, on: :member
+    end
     resources :invitations, only: :create do
       member do
         post :resend

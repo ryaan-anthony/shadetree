@@ -1,0 +1,22 @@
+<% content_for :title, "Delete #{@role.name}" %>
+<%= page_header "Delete #{@role.name}" %>
+<div class="max-w-xl">
+  <%= card do %>
+    <%= form_with url: admin_role_path(@role), method: :delete, class: "space-y-4" do %>
+      <% if @members.any? %>
+        <p class="text-sm text-subtle"><%= pluralize(@members.size, "person has", plural: "people have") %> this role: <%= @members.map { _1.user.full_name }.to_sentence %>. Choose their new role. Pending invitations with it change too.</p>
+        <div class="field">
+          <label class="label" for="replacement">New role</label>
+          <%= select_tag :replacement, options_for_select(@replacements, "technician"), id: "replacement", class: "select" %>
+        </div>
+      <% else %>
+        <p class="text-sm text-subtle">Nobody has this role. Pending invitations with it become Technician invitations.</p>
+        <%= hidden_field_tag :replacement, "technician", id: nil %>
+      <% end %>
+      <div class="flex gap-2">
+        <%= submit_tag "Delete role", class: button_classes(:danger), name: nil %>
+        <%= link_to "Cancel", admin_roles_path, class: button_classes(:ghost) %>
+      </div>
+    <% end %>
+  <% end %>
+</div>
