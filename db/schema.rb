@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_19_000300) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_19_000400) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -211,6 +211,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_000300) do
     t.index ["revoked_by_id"], name: "index_client_links_on_revoked_by_id"
     t.index ["token_digest"], name: "index_client_links_on_token_digest", unique: true
     t.index ["uid"], name: "index_client_links_on_uid", unique: true
+  end
+
+  create_table "client_notes", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.bigint "client_id", null: false
+    t.bigint "user_id"
+    t.text "body", null: false
+    t.datetime "edited_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "uid"], name: "index_client_notes_on_business_id_and_uid", unique: true
+    t.index ["client_id"], name: "index_client_notes_on_client_id"
+    t.index ["user_id"], name: "index_client_notes_on_user_id"
   end
 
   create_table "clients", force: :cascade do |t|
@@ -937,6 +951,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_000300) do
   add_foreign_key "client_links", "businesses", on_delete: :cascade
   add_foreign_key "client_links", "users", column: "created_by_id", on_delete: :nullify
   add_foreign_key "client_links", "users", column: "revoked_by_id", on_delete: :nullify
+  add_foreign_key "client_notes", "businesses", on_delete: :cascade
+  add_foreign_key "client_notes", "clients", on_delete: :cascade
+  add_foreign_key "client_notes", "users", on_delete: :nullify
   add_foreign_key "clients", "businesses", on_delete: :cascade
   add_foreign_key "closures", "businesses", on_delete: :cascade
   add_foreign_key "document_sequences", "businesses"
