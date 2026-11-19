@@ -1,6 +1,7 @@
 # OPS-05: asking Shadetree for help. Any member opens a ticket (the page they came from and their
 # browser go with it) and sees the business's tickets and their replies.
 class Admin::SupportTicketsController < Admin::BaseController
+  impersonation :read_only # OPS-03: support sees the member's tickets; replies go through the console
   PER_PAGE = 25
   # A person, and a whole business, can only send so much: each message can carry 50 MB of
   # screenshots, and an account doesn't need confirming to ask for help.

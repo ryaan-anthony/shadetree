@@ -2,6 +2,7 @@
 # every request, then redirected to a short-lived storage URL, so the link in the page isn't a
 # permanent public one. Internal notes never have files a member can reach.
 class Admin::SupportTicketFilesController < Admin::BaseController
+  impersonation :blocked # OPS-03: downloads are off while viewing as a member (the console has its own)
   include ActiveStorage::SetCurrent
 
   URL_LIFETIME = 5.minutes
