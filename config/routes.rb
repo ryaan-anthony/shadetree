@@ -54,6 +54,7 @@ Rails.application.routes.draw do
     resource :two_factor_verification, only: %i[new create], controller: "two_factor", path: "two-factor"
     resources :operators, only: %i[index create destroy]
     resources :audit_entries, only: :index, path: "audit-log"
+    resources :businesses, only: %i[index show] # OPS-02
   end
 
   namespace :admin do

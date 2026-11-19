@@ -1,0 +1,3 @@
+<%# locals: (business:) -%>
+<% status = Ops::Directory.status_of(business) %>
+<%= badge Ops::Directory::STATUSES.fetch(status), tone: { "active" => :success, "closed" => :neutral, "suspended" => :danger }.fetch(status, :neutral) %>

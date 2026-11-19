@@ -11,7 +11,8 @@ class AuditEntry < ApplicationRecord
     "operator.locked_out" => "Locked out after too many wrong codes",
     "operator.recovery_code_used" => "Used a recovery code",
     "operator.recovery_codes_regenerated" => "Made new recovery codes",
-    "console.signed_in" => "Entered the console"
+    "console.signed_in" => "Entered the console",
+    "business.viewed" => "Opened a business"
   }.freeze
 
   belongs_to :operator_user, class_name: "User", optional: true
