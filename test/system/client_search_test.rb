@@ -52,7 +52,9 @@ class ClientSearchSystemTest < ApplicationSystemTestCase
       input = find("input[type=search]")
       # The blocked submit shows the browser's validation bubble and moves focus; typing that
       # races it can be lost in headless Chrome. Wait for it, then type into the field.
-      assert_equal "Choose a client, or add a new one.", evaluate_script("arguments[0].validationMessage", input)
+      message = -> { evaluate_script("arguments[0].validationMessage", input) }
+      page.document.synchronize(5) { raise Capybara::ExpectationNotMet, "no validation message yet" if message.call.empty? }
+      assert_equal "Choose a client, or add a new one.", message.call
       input.click
       input.fill_in(with: "maria")
       assert_equal "maria", input.value
