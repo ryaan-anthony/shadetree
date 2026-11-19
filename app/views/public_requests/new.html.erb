@@ -1,5 +1,6 @@
 <% content_for :title, "Request a quote · #{@business.name}" %>
 <% content_for :head, tag.meta(name: "description", content: "Ask #{@business.name} for a quote.") %>
+<% content_for :indexable, "yes" if @business.request_form_enabled? && @business.request_form_indexable? %>
 <% if @business.request_form_enabled? %>
   <div class="client-card p-5 sm:p-8">
     <h1 class="text-xl font-bold text-ink">Request a quote</h1>

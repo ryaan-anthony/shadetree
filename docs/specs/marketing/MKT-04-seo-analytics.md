@@ -22,9 +22,9 @@ cookie banner.
 
 ## Acceptance criteria
 
-- [ ] Every marketing page has a unique title, meta description, canonical URL, and social share
+- [x] Every marketing page has a unique title, meta description, canonical URL, and social share
       (Open Graph/Twitter) metadata with a share image.
-- [ ] A sitemap lists public marketing pages; robots rules and page metadata keep the staff app,
+- [x] A sitemap lists public marketing pages; robots rules and page metadata keep the staff app,
       operator console and client links out of search engines. Business request pages are
       indexable only if the business opts in (see open question).
 - [ ] Marketing pages score ≥ 90 on mobile Lighthouse in performance, accessibility, best
@@ -33,11 +33,33 @@ cookie banner.
       and key events: sign-up started, sign-up completed, business created, first quote sent.
 - [ ] Analytics are disabled in development/test and never load on client-facing pages.
 - [ ] A simple funnel view (in the analytics tool) shows visit → sign-up → first quote sent.
-- [ ] Structured data for the organization/software product is present.
+- [x] Structured data for the organization/software product is present.
 
 ## Out of scope
 
 - Content marketing, ads tracking pixels, A/B testing (not planned).
+
+## Decisions
+
+- **Analytics: Plausible, self-hosted** (owner's choice, M5 planning): cookieless, no personal
+  data, so no banner.
+- **Business request pages are indexable only by choice**, per business, default off
+  (recommendation accepted).
+
+## Implementation notes
+
+Part 1 (search engines):
+- `page_meta description:` in each public view; the marketing layout adds the description,
+  canonical address (public host from the mailer's URL options, no query string), Open Graph
+  and Twitter cards with `marketing/share.png` (1200×630, rendered from the brand). Titles and
+  descriptions are unique per page (tested).
+- `/robots.txt` and `/sitemap.xml` come from `SeoController`: robots disallow the staff app,
+  operator console, account pages and client links; the sitemap lists the marketing and legal
+  pages and request pages whose business ticked "Let search engines find this page"
+  (Settings → Request form). The staff app also sends `X-Robots-Tag: noindex`; client pages are
+  noindex; account pages other than sign-in and sign-up are noindex.
+- The home page carries Organization and SoftwareApplication structured data, its offers from
+  the listed plans.
 
 ## Open questions
 
