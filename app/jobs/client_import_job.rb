@@ -7,7 +7,7 @@ class ClientImportJob < ApplicationJob
     business = Business.find(business_id)
     Tenancy.with_business(business) do
       import = ClientImport.find(import_id)
-      import.run! if import.queued?
+      import.run! if import.queued? || import.importing? # importing: picked up again after a stop
     end
   end
 end

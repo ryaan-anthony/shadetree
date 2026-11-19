@@ -75,13 +75,19 @@ Part 2 (running, summary, report, undo):
 - "Import N rows" (confirmed) queues `ClientImportJob`, which makes a client per row inside the
   business: rows that can't be saved fail with the reason; with "Skip them", rows matching an
   existing client by email or phone (including one added earlier in the same file) are
-  skipped. Progress is saved every 25 rows; the page shows a progress bar and refreshes itself.
+  skipped. Each row and the progress it makes are saved together, so a job stopped partway (a
+  deploy) carries on from the next row when it runs again, never adding a client twice. The page
+  shows a progress bar in a frame that reloads itself (`poll` controller; the rest of the page
+  and the live region stay put), then shows the summary once.
 - When it finishes (or breaks partway), the person who started it gets a notification and email
   (`client_import_finished`, theirs alone) with the counts; the uploaded file is deleted; the
   summary page shows added / skipped / couldn't add, the first rows not added, and a report CSV
   (line, why, then the row as uploaded; up to 1,000 rows; cells a spreadsheet would run as a
-  formula are prefixed with ').
-- Undo for 7 days (`ClientImportUndoJob`) removes the clients it added, except ones that
-  already have quotes, requests, jobs or invoices, and says how many were kept.
-- `PruneClientImportsJob` (daily) deletes uploads left at the mapping step for 2 days, and the
-  rows kept for the report once undo is over.
+  formula are prefixed with ', except phone numbers, and that ' is dropped again if the report
+  is fixed and uploaded). The preview rows and examples are cleared too.
+- Undo for 7 days, also after an import that stopped partway (`ClientImportUndoJob`), removes
+  the clients it added (with their notes), except ones that already have quotes, requests, jobs
+  or invoices, checked under a lock per client; it always finishes, and says how many were kept.
+- `PruneClientImportsJob` (daily) deletes uploads left at the mapping step for 2 days and the
+  rows kept for the report once undo is over, and starts again any import or undo whose job was
+  lost (no progress for an hour).

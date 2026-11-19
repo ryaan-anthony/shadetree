@@ -1,31 +1,41 @@
 <% content_for :title, "Import clients" %>
-<% if @import.running? %><% content_for :head, tag.meta("http-equiv": "refresh", content: "3") %><% end %>
-<%= page_header @import.filename, lede: "#{pluralize(number_with_delimiter(@import.total_rows), "row")} · started #{time_ago_in_words(@import.created_at)} ago" do %>
+<%= page_header @import.filename, lede: "#{pluralize(number_with_delimiter(@import.total_rows), "row")} · uploaded #{time_ago_in_words(@import.created_at)} ago" do %>
   <%= link_to "Clients", admin_clients_path, class: button_classes(:secondary) %>
 <% end %>
 
-<% if @import.running? %>
-  <%= card title: (@import.undoing? ? "Undoing…" : "Importing…") do %>
-    <% unless @import.undoing? %>
-      <progress class="w-full" max="<%= @import.total_rows %>" value="<%= @import.processed_rows %>" aria-label="Import progress"></progress>
-      <p class="mt-2 text-sm text-subtle" role="status"><%= number_with_delimiter(@import.processed_rows) %> of <%= number_with_delimiter(@import.total_rows) %> rows. You can leave this page; we'll let you know when it's done.</p>
-    <% else %>
-      <p class="text-sm text-subtle" role="status">Removing the clients this import added. This page updates by itself.</p>
+<%# While it runs, the frame below reloads itself (poll_controller); when it's done, the page
+    reloads once to show the summary. The status line is a live region that stays put. %>
+<% if @import.running? || turbo_frame_request? %>
+  <div aria-live="polite">
+    <%= turbo_frame_tag "import-progress", src: (admin_client_import_path(@import) unless turbo_frame_request?), data: (@import.running? ? { controller: "poll" } : {}) do %>
+      <% if @import.running? %>
+        <%= card title: (@import.undoing? ? "Undoing…" : "Importing…") do %>
+          <% unless @import.undoing? %>
+            <progress class="h-2 w-full accent-canopy" max="<%= @import.total_rows %>" value="<%= @import.processed_rows %>" aria-label="Import progress"></progress>
+            <p class="mt-2 text-sm text-subtle"><%= number_with_delimiter(@import.processed_rows) %> of <%= number_with_delimiter(@import.total_rows) %> rows. You can leave this page; we'll let you know when it's done.</p>
+          <% else %>
+            <p class="text-sm text-subtle">Removing the clients this import added.</p>
+          <% end %>
+        <% end %>
+      <% else %>
+        <span data-poll-done></span>
+      <% end %>
     <% end %>
-  <% end %>
+  </div>
 <% else %>
   <%= card title: @import.undone? ? "Undone" : (@import.failed? ? "Stopped partway" : "Done"), id: "import-summary" do %>
     <% if @import.undone? %>
-      <p class="text-sm text-subtle"><%= pluralize(@import.undone_count, "client") %> removed<%= ". #{pluralize(@import.created_count - @import.undone_count, "client")} kept because they already have quotes, requests, jobs or invoices" if @import.created_count > @import.undone_count %>.</p>
+      <% kept = @import.clients.count %>
+      <p class="text-sm text-subtle"><%= pluralize(@import.undone_count, "client") %> removed<%= ". #{pluralize(kept, "client")} kept because they already have quotes, requests, jobs or invoices" if kept.positive? %>.</p>
     <% else %>
-      <% if @import.failed? %><p class="mb-3 text-sm text-danger">Something went wrong partway through. The clients added so far are listed below; you can undo them and try again.</p><% end %>
+      <% if @import.failed? %><p class="mb-3 text-sm text-danger">Something went wrong partway through. You can undo the clients added so far and try again.</p><% end %>
       <dl class="grid grid-cols-3 gap-3 text-center">
         <div class="rounded-control bg-sunken p-3"><dt class="text-sm2 text-muted">Added</dt><dd class="text-xl font-bold text-ink tabular"><%= number_with_delimiter(@import.created_count) %></dd></div>
         <div class="rounded-control bg-sunken p-3"><dt class="text-sm2 text-muted">Skipped</dt><dd class="text-xl font-bold text-ink tabular"><%= number_with_delimiter(@import.skipped_count) %></dd></div>
         <div class="rounded-control bg-sunken p-3"><dt class="text-sm2 text-muted">Couldn't add</dt><dd class="text-xl font-bold text-ink tabular"><%= number_with_delimiter(@import.failed_count) %></dd></div>
       </dl>
       <% if @import.problems.any? %>
-        <p class="mt-4 text-sm text-subtle">Skipped rows matched clients you already have. Rows that couldn't be added are in the report with the reason, ready to fix and upload again<%= " (the first #{ClientImport::MAX_PROBLEMS})" if @import.skipped_count + @import.failed_count > ClientImport::MAX_PROBLEMS %>.</p>
+        <p class="mt-4 text-sm text-subtle">The report lists every row not added and why<%= " (the first #{ClientImport::MAX_PROBLEMS})" if @import.skipped_count + @import.failed_count > ClientImport::MAX_PROBLEMS %>. Fix the ones that couldn't be added and upload it again; delete skipped rows first if you'll choose "Add them anyway".</p>
         <%= link_to "Download the report", report_admin_client_import_path(@import), class: "#{button_classes(:secondary)} mt-3" %>
       <% end %>
     <% end %>
@@ -45,9 +55,9 @@
   <% if @import.undoable? %>
     <%= card title: "Undo this import", class: "mt-4" do %>
       <div class="flex flex-wrap items-center justify-between gap-3">
-        <p class="text-sm text-subtle">Removes the clients it added, unless they already have quotes, requests, jobs or invoices. Available until <%= local_date(@import.undo_until) %>.</p>
+        <p class="text-sm text-subtle">Removes the clients it added, unless they already have quotes, requests, jobs or invoices. Clients edited since are removed too, with their notes. Available until <%= local_date(@import.undo_until) %>.</p>
         <%= button_to "Undo import", undo_admin_client_import_path(@import), class: button_classes(:danger),
-                      form: { data: { turbo_confirm: "Remove the #{pluralize(@import.created_count, "client")} this import added?", turbo_confirm_button: "Undo import" } } %>
+                      form: { data: { turbo_confirm: "Remove the clients this import added (#{@import.clients.count}), including any notes added since?", turbo_confirm_button: "Undo import" } } %>
       </div>
     <% end %>
   <% end %>
