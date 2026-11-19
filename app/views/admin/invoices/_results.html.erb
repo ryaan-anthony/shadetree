@@ -1,0 +1,79 @@
+<%# The invoice list (PAY-01): on the page and as #search's frame response. %>
+<%= turbo_frame_tag "invoice_results" do %>
+  <% if @invoices.empty? %>
+    <div class="card">
+      <% if !@any_invoices %>
+        <%= empty_state title: "No invoices yet", text: "Bill a finished job in one tap from its page, or start one here for a walk-in job.", icon: "invoice" do %>
+          <%= link_to admin_jobs_path(filter: "completed"), class: button_classes(:secondary), data: { turbo_frame: "_top" } do %><%= icon "job" %> Completed jobs<% end %>
+          <%= link_to new_admin_invoice_path, class: button_classes, data: { turbo_frame: "_top" } do %><%= icon "plus" %> New invoice<% end %>
+        <% end %>
+      <% elsif @query.present? %>
+        <%= empty_state title: "No invoices match", text: "Try the invoice number, or part of the client's name.", icon: "search" do %>
+          <%= link_to "Clear search", admin_invoices_path(filter: @filter), class: button_classes(:secondary), data: { turbo_frame: "_top" } %>
+        <% end %>
+      <% else %>
+        <% empty = { "outstanding" => "No invoices are awaiting payment.", "overdue" => "No invoices are overdue.", "draft" => "No draft invoices.", "paid" => "No paid invoices yet.", "void" => "No void invoices." } %>
+        <%= empty_state title: "Nothing here", text: empty.fetch(@filter, "No invoices yet."), icon: "invoice" %>
+      <% end %>
+    </div>
+  <% else %>
+    <%# What's owed on the invoices shown (sent or partly paid), and how much of it is overdue. %>
+    <p class="mb-2 text-sm2 text-muted" role="status" id="invoice-totals">
+      <%= pluralize(@total_count, "invoice") %>.
+      <% if @owed[:outstanding].any? %>
+        Awaiting payment <span class="money font-semibold text-ink"><%= safe_join(@owed[:outstanding].map { money(_1) }, " + ") %></span><% if @owed[:overdue].any? %>,
+        overdue <span class="money font-semibold text-danger"><%= safe_join(@owed[:overdue].map { money(_1) }, " + ") %></span><% end %>.
+      <% else %>
+        Nothing outstanding.
+      <% end %>
+    </p>
+
+    <%# Phones: a list with tap-to-open rows. %>
+    <%= card flush: true, class: "md:hidden" do %>
+      <ul class="list">
+        <% @invoices.each do |invoice| %>
+          <li id="invoice-<%= invoice.uid %>-row" class="p-0">
+            <%= link_to staff_invoice_path(invoice), class: "block min-w-0 flex-1 px-4 py-3", data: { turbo_frame: "_top" } do %>
+              <span class="flex items-baseline justify-between gap-3">
+                <span class="min-w-0 truncate font-semibold text-ink"><%= invoice.client.display_name %></span>
+                <span class="text-right text-sm"><span class="money font-semibold text-ink"><%= money(invoice.outstanding? ? invoice.balance : invoice.total) %></span><span class="block text-xs text-muted"><%= invoice.outstanding? ? "due" : "total" %></span></span>
+              </span>
+              <span class="mt-0.5 block truncate text-sm2 text-muted"><%= invoice.number %><%= " · #{invoice.title}" if invoice.title %></span>
+              <span class="mt-1.5 flex flex-wrap items-center gap-1.5 text-sm2 text-muted"><%= invoice_status_badge(invoice) %>
+                <span class="ml-auto">Due <%= local_date(invoice.due_on) %></span></span>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+
+    <div class="card table-wrap hidden md:block">
+      <table class="data-table">
+        <thead>
+          <tr><th scope="col">Invoice</th><th scope="col">Client</th><th scope="col">Status</th><th scope="col">Due</th>
+            <th scope="col" class="text-right">Total</th><th scope="col" class="text-right">Balance</th></tr>
+        </thead>
+        <tbody>
+          <% @invoices.each do |invoice| %>
+            <tr id="invoice-<%= invoice.uid %>">
+              <td><%= link_to invoice.number, staff_invoice_path(invoice), class: "primary hover:underline", data: { turbo_frame: "_top" } %><% if invoice.title %><span class="sub"><%= invoice.title %></span><% end %></td>
+              <td><%= invoice.client.display_name %></td>
+              <td><%= invoice_status_badge(invoice) %></td>
+              <td class="whitespace-nowrap text-sm2 text-subtle"><%= local_date(invoice.due_on) %></td>
+              <td class="money num"><%= money(invoice.total) %></td>
+              <td class="money num"><%= invoice.outstanding? ? money(invoice.balance) : "—" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <nav class="pagination mt-4" aria-label="Pagination">
+      <p>Showing <span class="tabular font-semibold text-ink"><%= ((@page - 1) * Admin::InvoicesController::PER_PAGE) + 1 %>–<%= [ @page * Admin::InvoicesController::PER_PAGE, @total_count ].min %></span> of <span class="tabular"><%= @total_count %></span></p>
+      <div class="pagination-links">
+        <button type="submit" form="invoice-filters" name="page" value="<%= @page - 1 %>" class="<%= button_classes(:secondary, :sm) %>" <%= "disabled" if @page <= 1 %>><%= icon "chevron-left" %> Previous</button>
+        <button type="submit" form="invoice-filters" name="page" value="<%= @page + 1 %>" class="<%= button_classes(:secondary, :sm) %>" <%= "disabled" if @page >= @total_pages %>>Next <%= icon "chevron-right" %></button>
+      </div>
+    </nav>
+  <% end %>
+<% end %>

@@ -10,6 +10,7 @@ class Invoice < ApplicationRecord
   include BusinessOwned
   include PricedDocument
   include BuiltDocument
+  include DocumentAttachments
 
   STATUSES = %w[draft sent partially_paid paid void].freeze
   STATUS_LABELS = { "draft" => "Draft", "sent" => "Sent", "partially_paid" => "Partly paid", "paid" => "Paid", "void" => "Void" }.freeze
@@ -31,6 +32,7 @@ class Invoice < ApplicationRecord
   has_many :line_items, -> { order(:position, :id) }, class_name: "InvoiceLineItem", inverse_of: :invoice,
            dependent: :delete_all, autosave: true
   has_many :events, -> { order(:occurred_at, :id) }, class_name: "InvoiceEvent", inverse_of: :invoice, dependent: :delete_all
+  has_many :revisions, -> { order(:number) }, class_name: "InvoiceRevision", inverse_of: :invoice, dependent: :delete_all
 
   normalizes :title, with: ->(value) { value.to_s.squish.presence }
   normalizes :message, :internal_notes, :terms, with: ->(value) { value.to_s.strip.presence }
@@ -40,6 +42,7 @@ class Invoice < ApplicationRecord
   validates :payment_terms, inclusion: { in: TERMS.keys }
   validates :issued_on, :due_on, presence: true
   validates :title, length: { maximum: 120 }
+  validates :void_reason, length: { maximum: 200 }
   validates :message, :terms, :internal_notes, length: { maximum: 5_000 }
   validate { errors.add(:due_on, "can't be before the issue date") if due_on && issued_on && due_on < issued_on }
   validate :belongs_with_client
@@ -92,13 +95,78 @@ class Invoice < ApplicationRecord
   def draft? = status == "draft"
   def void? = status == "void"
   def paid? = status == "paid"
-  def status_label = STATUS_LABELS.fetch(status)
+  def status_label = revising? ? "Revising" : STATUS_LABELS.fetch(status)
   def terms_label = TERM_LABELS.fetch(payment_terms)
 
-  # Drafts are edited freely. A sent invoice changes only by revision (part 2); once anything
-  # is paid, its items can't change at all.
+  # Drafts are edited freely, including a sent invoice reopened as its next revision. Once
+  # anything is paid, an invoice can't be revised or voided (its items can't change).
   def editable? = draft?
   def payments? = amount_paid_cents.positive?
+
+  # A sent invoice being revised: a draft again, as revision N+1, until it's sent again (PAY-02).
+  def revising? = draft? && revision > 1
+
+  def revisable? = status == "sent" && !payments?
+
+  # Keeps what the client was sent as revision N and reopens the invoice as the draft of
+  # revision N+1. Its link keeps working; PAY-02's client page says it's being updated.
+  def revise!(by:)
+    transaction do
+      lock!
+      raise ArgumentError, "Invoice #{number} can't be revised: #{payments? ? "it has payments" : "only a sent invoice can"}." unless revisable?
+
+      revisions.create!(business:, number: revision, snapshot:, status:, sent_at:, pdf_blob_id:, revised_by: by, created_at: Time.current)
+      assign_attributes(status: "draft", revision: revision + 1, pdf_blob_id: nil, pdf_digest: nil)
+      save!(validate: false)
+      record!(:revised, by:, revision:)
+    end
+  end
+
+  # Cancels an invoice that went out, with a reason; it stays on record, numbered, as Void. A
+  # draft that never went out is deleted instead, and one with payments can't be voided (record
+  # the money back first, PAY-05). Void and reissue is how a sent invoice is corrected at launch.
+  def voidable? = !void? && sent_at.present? && !payments?
+
+  def void!(reason:, by:)
+    reason = reason.to_s.squish
+    raise ArgumentError, "Say why it's being voided." if reason.empty?
+
+    transaction do
+      lock!
+      raise ArgumentError, "Invoice #{number} can't be voided#{" while it has payments" if payments?}." unless voidable?
+
+      # Skips validation, as revise! does: an old row that no longer validates can still be voided.
+      assign_attributes(status: "void", voided_at: Time.current, voided_by: by, void_reason: reason.first(200))
+      save!(validate: false)
+      record!(:voided, by:, reason: void_reason)
+    end
+  end
+
+  # What the client was sent, for the revision record.
+  def snapshot
+    {
+      "title" => title, "issued_on" => issued_on.iso8601, "due_on" => due_on.iso8601, "payment_terms" => payment_terms,
+      "message" => message, "terms" => terms, "currency" => currency, "tax_rates" => tax_rates, "prices_include_tax" => prices_include_tax,
+      "discount" => discount_value&.to_s, "discount_kind" => discount_kind, "subtotal_cents" => subtotal_cents, "tax_cents" => tax_cents,
+      "total_cents" => total_cents,
+      "lines" => current_line_items.map { _1.attributes.slice(*%w[name description quantity unit unit_price_cents taxable discount_kind]).merge("discount" => _1.discount_value&.to_s) },
+      "files" => attachments_attachments.includes(:blob).map { { "blob_id" => _1.blob_id, "filename" => _1.filename.to_s } }
+    }
+  end
+
+  # PAY-01: completion photos from the job's visits (JOB-04), by attachment id. Only the job's
+  # own photos, and each once; the invoice shares the stored file.
+  def job_photos = job ? ActiveStorage::Attachment.where(record_type: "Visit", name: "photos", record_id: job.visits.select(:id)).includes(:blob).order(:created_at) : ActiveStorage::Attachment.none
+
+  def attach_job_photos(ids)
+    attached = attachments_attachments.map(&:blob_id)
+    job_photos.where(id: Array(ids).compact_blank).each do |photo|
+      next if attached.include?(photo.blob_id)
+
+      attachments.attach(photo.blob)
+      attached << photo.blob_id
+    end
+  end
 
   def outstanding? = OUTSTANDING.include?(status)
   def overdue?(today = business.today) = outstanding? && due_on < today
@@ -116,6 +184,34 @@ class Invoice < ApplicationRecord
   def deletable? = draft? && sent_at.nil?
 
   def record!(kind, by: nil, **data) = InvoiceEvent.record!(self, kind, by:, **data)
+
+  # The list's tabs. Overdue and awaiting payment depend on the business's today.
+  FILTERS = { "all" => "All", "outstanding" => "Awaiting payment", "overdue" => "Overdue", "draft" => "Drafts", "paid" => "Paid",
+              "void" => "Void" }.freeze
+  def self.filtered(filter, today:)
+    case filter
+    when "all" then all
+    when "outstanding" then where(status: OUTSTANDING)
+    when "overdue" then where(status: OUTSTANDING).where(due_on: ...today)
+    else where(status: filter)
+    end
+  end
+
+  # How many invoices each tab holds, in one query.
+  def self.filter_counts(today:)
+    counts = group(:status).group(Arel.sql(sanitize_sql_array([ "invoices.due_on < ?", today ]))).count
+    by_status = counts.each_with_object(Hash.new(0)) { |((status, _), count), sums| sums[status] += count }
+    overdue = counts.sum { |(status, late), count| OUTSTANDING.include?(status) && late ? count : 0 }
+    { "all" => by_status.values.sum, "outstanding" => OUTSTANDING.sum { by_status[_1] }, "overdue" => overdue,
+      "draft" => by_status["draft"], "paid" => by_status["paid"], "void" => by_status["void"] }
+  end
+
+  # What's owed on the outstanding invoices in a scope, per currency, and how much of it is overdue.
+  def self.owed(today:)
+    outstanding = where(status: OUTSTANDING)
+    sum_by = ->(scope) { scope.group(:currency).sum(Arel.sql("GREATEST(invoices.total_cents - invoices.amount_paid_cents, 0)")).map { |currency, cents| Money.new(cents.to_i, currency) } }
+    { outstanding: sum_by.(outstanding), overdue: sum_by.(outstanding.where(due_on: ...today)) }
+  end
 
   # By invoice number, or by client (name, phone, email or address, as CLI-02 searches).
   def self.search(query)

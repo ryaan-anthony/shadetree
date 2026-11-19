@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_18_000100) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_18_000200) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -364,6 +364,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_18_000100) do
     t.check_constraint "quantity >= 0::numeric", name: "invoice_lines_quantity_nonnegative"
   end
 
+  create_table "invoice_revisions", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "invoice_id", null: false
+    t.integer "number", null: false
+    t.jsonb "snapshot", default: {}, null: false
+    t.string "status", null: false
+    t.datetime "sent_at"
+    t.bigint "pdf_blob_id"
+    t.bigint "revised_by_id"
+    t.datetime "created_at", null: false
+    t.index ["business_id"], name: "index_invoice_revisions_on_business_id"
+    t.index ["invoice_id", "number"], name: "index_invoice_revisions_on_invoice_id_and_number", unique: true
+    t.index ["pdf_blob_id"], name: "index_invoice_revisions_on_pdf_blob_id"
+    t.index ["revised_by_id"], name: "index_invoice_revisions_on_revised_by_id"
+  end
+
   create_table "invoices", force: :cascade do |t|
     t.bigint "business_id", null: false
     t.string "uid", null: false
@@ -402,6 +418,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_18_000100) do
     t.integer "lock_version", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "revision", default: 1, null: false
     t.index ["business_id", "number"], name: "index_invoices_on_business_id_and_number", unique: true
     t.index ["business_id", "status", "due_on"], name: "index_invoices_on_business_id_and_status_and_due_on"
     t.index ["business_id"], name: "index_invoices_on_business_id"
@@ -874,6 +891,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_18_000100) do
   add_foreign_key "invoice_line_items", "businesses"
   add_foreign_key "invoice_line_items", "catalog_items"
   add_foreign_key "invoice_line_items", "invoices"
+  add_foreign_key "invoice_revisions", "active_storage_blobs", column: "pdf_blob_id", on_delete: :nullify
+  add_foreign_key "invoice_revisions", "businesses"
+  add_foreign_key "invoice_revisions", "invoices"
+  add_foreign_key "invoice_revisions", "users", column: "revised_by_id"
+  add_foreign_key "invoices", "active_storage_blobs", column: "pdf_blob_id", on_delete: :nullify
   add_foreign_key "invoices", "businesses"
   add_foreign_key "invoices", "clients"
   add_foreign_key "invoices", "jobs"

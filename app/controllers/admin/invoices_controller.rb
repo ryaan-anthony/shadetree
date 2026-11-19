@@ -1,12 +1,21 @@
-# Invoices (PAY-01): one from scratch for a client, its page, and the builder, which autosaves
-# drafts exactly like the quote builder (the same form, partials and script). Invoices from a
-# job or a quote start in JobInvoicesController and QuoteInvoicesController. The list, revising
-# and voiding sent invoices come with part 2; sending with PAY-02.
+# Invoices (PAY-01): the list, one from scratch for a client, its page, and the builder, which
+# autosaves drafts exactly like the quote builder (the same form, partials and script). Invoices
+# from a job or a quote start in JobInvoicesController and QuoteInvoicesController. A sent
+# invoice is revised (reopened as a draft of its next revision) or voided; sending is PAY-02.
 class Admin::InvoicesController < Admin::BaseController
   include DocumentBuilder
   requires_permission :office
-  before_action :set_invoice, only: %i[show edit update destroy]
+  before_action :set_invoice, only: %i[show edit update destroy revise void]
   before_action :require_editable, only: %i[edit update]
+
+  PER_PAGE = 50
+
+  def index = load_list
+
+  def search
+    load_list
+    render partial: "results", layout: false
+  end
 
   # From scratch, e.g. a walk-in job (?client=<uid> preselects the client).
   def new
@@ -56,6 +65,20 @@ class Admin::InvoicesController < Admin::BaseController
     end
   end
 
+  def revise
+    @invoice.revise!(by: current_user)
+    redirect_to edit_admin_invoice_path(@invoice), notice: "Invoice #{@invoice.number} reopened as revision #{@invoice.revision}."
+  rescue ArgumentError => error
+    redirect_to admin_invoice_path(@invoice), alert: error.message
+  end
+
+  def void
+    @invoice.void!(reason: params[:reason], by: current_user)
+    redirect_to admin_invoice_path(@invoice), notice: "Invoice #{@invoice.number} voided."
+  rescue ArgumentError => error
+    redirect_to admin_invoice_path(@invoice), alert: error.message
+  end
+
   def destroy
     return redirect_to(admin_invoice_path(@invoice), alert: "Only invoices that were never sent can be deleted.") unless @invoice.deletable?
 
@@ -66,6 +89,20 @@ class Admin::InvoicesController < Admin::BaseController
 
   private
 
+  def load_list
+    today = current_business.today
+    @filter = params[:filter].presence_in(Invoice::FILTERS.keys) || "all"
+    @query = params[:q].to_s.strip.first(100)
+    scope = Invoice.filtered(@filter, today:).search(@query)
+    @total_count = scope.count
+    @owed = scope.owed(today:)
+    @total_pages = [ (@total_count.to_f / PER_PAGE).ceil, 1 ].max
+    @page = params[:page].to_i.clamp(1, @total_pages)
+    @invoices = scope.includes(:business, :client).order(created_at: :desc, id: :desc).offset((@page - 1) * PER_PAGE).limit(PER_PAGE).to_a
+    @counts = Invoice.filter_counts(today:) unless request.post? # the tabs (and their counts) are outside the results
+    @any_invoices = @total_count.positive? || Invoice.exists?
+  end
+
   def set_invoice = @invoice = Invoice.includes(:client, :property, :job, :quote, line_items: :catalog_item).find_by_param!(params[:id])
 
   def require_editable
@@ -75,7 +112,7 @@ class Admin::InvoicesController < Admin::BaseController
   def builder_params
     params.require(:invoice).permit(
       :lock_version, :lines_present, :client, :property, :title, :message, :internal_notes, :terms, :issued_on, :payment_terms, :due_on,
-      :prices_include_tax, :discount_kind, :discount_value, tax_rates: [],
+      :prices_include_tax, :discount_kind, :discount_value, tax_rates: [], attachments: [], job_photos: [],
       lines: [ %i[key catalog_item name description quantity unit unit_price taxable discount_kind discount_value] ]
     )
   end
@@ -91,6 +128,8 @@ class Admin::InvoicesController < Admin::BaseController
     @invoice.set_discount(attrs[:discount_kind], attrs[:discount_value]) if attrs.key?(:discount_kind)
     @invoice.tax_rate_list = chosen_tax_rates(attrs[:tax_rates]) if attrs.key?(:tax_rates) && !@client_changed
     @invoice.sync_line_items((attrs[:lines] || {}).values) if attrs.key?(:lines) || attrs[:lines_present]
+    @invoice.attach_files(attrs[:attachments]) if attrs[:attachments].present?
+    @invoice.attach_job_photos(attrs[:job_photos]) if attrs[:job_photos].present?
   end
 
   def builder_document = @invoice

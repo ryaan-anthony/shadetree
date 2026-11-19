@@ -1,0 +1,39 @@
+<%# locals: (invoice:, f:) -%>
+<%# PAY-01: files the client sees with the invoice: completion photos from the job's visits
+    (JOB-04), ticked and added (or added by Save draft), or uploaded. Either way the page reloads with them listed. %>
+<% attached = invoice.saved_attachments %>
+<% job_photos = invoice.job_photos.reject { |photo| attached.any? { _1.blob_id == photo.blob_id } } %>
+<%= card title: "Attachments", subtitle: "Photos or PDFs the client sees with the invoice. Up to #{Invoice::MAX_ATTACHMENTS}, #{Invoice::ATTACHMENT_MAX_BYTES / 1.megabyte} MB each." do %>
+  <% if attached.any? %>
+    <ul class="mb-3 space-y-2">
+      <% attached.each do |file| %>
+        <li class="flex items-center gap-2 text-sm" id="attachment-<%= file.id %>">
+          <%= icon(file.image? ? "image" : "file-text", class: "size-4 text-faint") %>
+          <%= link_to file.filename, rails_blob_path(file, disposition: "inline"), class: "min-w-0 flex-1 truncate hover:underline", target: "_blank", rel: "noopener" %>
+          <span class="text-sm2 text-muted"><%= number_to_human_size(file.byte_size) %></span>
+          <button type="submit" form="remove-attachment-<%= file.id %>" class="<%= button_classes(:ghost, :sm) %>" aria-label="Remove <%= file.filename %>"><%= icon "x" %></button>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+  <% if job_photos.any? %>
+    <fieldset class="mb-4">
+      <legend class="label">Photos from job <%= invoice.job.number %></legend>
+      <ul class="grid grid-cols-3 gap-2 sm:grid-cols-5">
+        <% job_photos.each.with_index(1) do |photo, number| %>
+          <li><label class="relative block cursor-pointer">
+            <input type="checkbox" class="checkbox peer absolute left-1.5 top-1.5" name="invoice[job_photos][]" value="<%= photo.id %>" aria-label="Photo <%= number %> from the job">
+            <%= image_tag rails_representation_path(photo.variant(:thumb)), alt: "", loading: "lazy",
+                          class: "aspect-square w-full rounded-control bg-sunken object-cover peer-checked:ring-2 peer-checked:ring-brand" %>
+          </label></li>
+        <% end %>
+      </ul>
+      <button type="button" class="<%= button_classes(:secondary, :sm) %> mt-2" data-action="quote-builder#upload" data-photos-add disabled>Add ticked photos</button>
+    </fieldset>
+  <% end %>
+  <div class="field">
+    <label class="label" for="invoice_attachments">Add files</label>
+    <%= f.file_field :attachments, multiple: true, accept: Invoice::ATTACHMENT_TYPES.join(","), class: "input py-1.5",
+                     data: { action: "change->quote-builder#upload" } %>
+  </div>
+<% end %>

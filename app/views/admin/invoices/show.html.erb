@@ -2,7 +2,20 @@
 <% invoice = @invoice %>
 <% totals = invoice.totals %>
 <% content_for :title, "Invoice #{invoice.number}" %>
-<%= page_header "Invoice #{invoice.number}", lede: safe_join([ "For ", link_to(invoice.client.display_name, admin_client_path(invoice.client), class: "font-medium text-ink hover:underline") ]) %>
+<%= page_header "Invoice #{invoice.number}", lede: safe_join([ "For ", link_to(invoice.client.display_name, admin_client_path(invoice.client), class: "font-medium text-ink hover:underline") ]) do %>
+  <% if invoice.revisable? %>
+    <%= button_to revise_admin_invoice_path(invoice), class: button_classes(:secondary),
+                  form: { class: "contents", data: { turbo_confirm: "This reopens #{invoice.number} as a draft to correct. Until you send the new version it isn't counted as awaiting payment, and #{invoice.client.display_name}'s link says the invoice is being updated.", turbo_confirm_button: "Revise" } } do %><%= icon "edit-3" %> Revise<% end %>
+  <% end %>
+  <%= render "void", invoice: invoice if invoice.voidable? %>
+<% end %>
+
+<% if invoice.void? %>
+  <div class="banner banner-warning mb-4"><%= icon "x-circle" %>
+    <p>Voided <%= local_time(invoice.voided_at) %><%= " by #{invoice.voided_by.full_name}" if invoice.voided_by %>: “<%= invoice.void_reason %>”</p></div>
+<% elsif invoice.payments? && !invoice.paid? %>
+  <div class="banner banner-info mb-4"><%= icon "info" %><p>It has payments, so its items can't change and it can't be voided.</p></div>
+<% end %>
 
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
   <div class="min-w-0 space-y-4">
@@ -30,12 +43,28 @@
       <div class="border-t border-line px-5 py-3"><%= render "admin/quotes/totals", quote: invoice, totals: %></div>
     <% end %>
 
+    <% if (files = invoice.saved_attachments).any? %>
+      <%= card title: "Attachments", flush: true do %>
+        <ul class="list"><% files.each do |file| %>
+          <li class="text-sm"><%= icon(file.image? ? "image" : "file-text", class: "size-4 text-faint") %>
+            <%= link_to file.filename, rails_blob_path(file, disposition: "inline"), class: "min-w-0 flex-1 truncate hover:underline", target: "_blank", rel: "noopener" %></li>
+        <% end %></ul>
+      <% end %>
+    <% end %>
+
     <% if invoice.internal_notes %>
       <%= card title: "Internal notes", subtitle: "Only your team sees these." do %><p class="whitespace-pre-line text-sm text-subtle"><%= invoice.internal_notes %></p><% end %>
     <% end %>
   </div>
 
   <aside class="space-y-4">
+    <% if invoice.revisions.any? %>
+      <%= card title: "Revisions", flush: true do %>
+        <ol class="list"><% invoice.revisions.each do |revision| %>
+          <li class="text-sm2"><span class="flex-1 text-ink">Revision <%= revision.number %></span><span class="money text-subtle"><%= money(revision.total) %></span></li>
+        <% end %></ol>
+      <% end %>
+    <% end %>
     <%= card title: "History", flush: true do %>
       <ol class="list">
         <% invoice.events.includes(:user).each do |event| %>

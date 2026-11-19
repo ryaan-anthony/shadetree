@@ -1,0 +1,28 @@
+<%= page_header "Invoices", lede: "What you've billed, and what's still owed." do %>
+  <%= link_to new_admin_invoice_path, class: button_classes do %><%= icon "plus" %> New invoice<% end %>
+<% end %>
+
+<%# As for quotes (QTE-06): one filter form posted to #search (POST keeps client names out of
+    URLs); the tabs are its submit buttons, outside the results frame. Counts are for all
+    invoices, whatever the search. %>
+<%= form_with url: search_admin_invoices_path, method: :post, id: "invoice-filters", class: "mb-4",
+              data: { controller: "search-form tabs", turbo_frame: "invoice_results" } do %>
+  <input type="hidden" name="filter" value="<%= @filter %>" data-tabs-target="field">
+  <div class="relative max-w-md">
+    <label class="sr-only" for="q">Search invoices</label>
+    <%= icon "search", class: "pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-faint" %>
+    <%= search_field_tag :q, @query, class: "input pl-9", placeholder: "Invoice number or client", autocomplete: "off",
+                         data: { action: "input->search-form#queue keydown.enter->search-form#submit:prevent" } %>
+  </div>
+  <noscript><%= submit_tag "Search", class: button_classes(:secondary), name: nil %></noscript>
+  <nav class="tabs mt-4" aria-label="Show invoices" data-tabs-target="row">
+    <% Invoice::FILTERS.each do |key, label| %>
+      <button type="submit" name="filter" value="<%= key %>" class="tab" aria-pressed="<%= key == @filter %>" data-action="tabs#press"><%= label %>
+        <span class="tabular text-sm2 font-normal text-muted"><%= @counts[key] %></span></button>
+    <% end %>
+  </nav>
+<% end %>
+
+<%= turbo_frame_tag "invoice_results" do %>
+  <%= render "results" %>
+<% end %>

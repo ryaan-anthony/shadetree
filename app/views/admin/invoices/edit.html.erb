@@ -5,7 +5,10 @@
 <%# The quote builder's form, partials and script, for an invoice (scope "invoice"). %>
 <div data-controller="quote-builder" data-quote-builder-scope-value="invoice"
      data-quote-builder-property-url-value="<%= property_options_admin_quotes_path(name: "invoice[property]") %>">
-<%= page_header "Invoice #{@invoice.number}", lede: "Draft for #{@invoice.client.display_name}. Changes save as you go." do %>
+<% lede = @invoice.revising? ? "Revision #{@invoice.revision} for #{@invoice.client.display_name}. Changes save as you go." : "Draft for #{@invoice.client.display_name}. Changes save as you go." %>
+<%= page_header "Invoice #{@invoice.number}", lede: do %>
+  <%# A sent invoice being revised can still be voided instead of re-sent. %>
+  <%= render "void", invoice: @invoice if @invoice.voidable? %>
   <span class="save-status" id="save_status" role="status" data-quote-builder-target="status">Saved</span>
   <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
     <button type="button" class="<%= button_classes(:ghost, :icon) %>" data-menu-target="button" data-action="menu#toggle"
@@ -22,8 +25,13 @@
 <% end %>
 
 <div id="builder_banner"></div>
+<% if @invoice.revising? && (previous = @invoice.revisions.last) %>
+  <div class="banner banner-info mb-4"><%= icon "edit-3" %>
+    <p class="flex-1">Revising what was sent as revision <%= previous.number %> (<%= money(previous.total) %>). Until it's sent again, the client's link says it's being updated.</p>
+  </div>
+<% end %>
 
-<%= form_with model: @invoice, url: admin_invoice_path(@invoice), method: :patch, id: "invoice-builder",
+<%= form_with model: @invoice, url: admin_invoice_path(@invoice), method: :patch, id: "invoice-builder", multipart: true,
               class: "grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]",
               data: { quote_builder_target: "form",
                       action: "submit->quote-builder#submit catalog-picker:pick->quote-builder#addFromCatalog client-picker:change->quote-builder#clientChanged input->quote-builder#changed change->quote-builder#changed" } do |f| %>
@@ -79,6 +87,8 @@
                     help: "Only your team sees these. Never shown to the client." %>
       </div>
     <% end %>
+
+    <%= render "attachments", invoice: @invoice, f: %>
   </div>
 
   <aside class="space-y-4 lg:sticky lg:top-6 lg:self-start">
@@ -105,4 +115,7 @@
   </aside>
 <% end %>
 </div>
+<% @invoice.saved_attachments.each do |file| %>
+  <%= form_with url: admin_invoice_attachment_path(@invoice, file), method: :delete, id: "remove-attachment-#{file.id}", class: "hidden" do %><% end %>
+<% end %>
 <%= render "admin/clients/quick_create", button: false %>

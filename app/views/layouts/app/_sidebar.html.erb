@@ -44,6 +44,7 @@
         <%= side_link "Clients", admin_clients_path, icon: "users", active: controller_name == "clients" %>
         <%= side_link "Quotes", admin_quotes_path, icon: "quote", active: controller_name.in?(%w[quotes quote_attachments]) %>
         <%= side_link "Jobs", admin_jobs_path, icon: "job", active: controller_name.in?(%w[jobs quote_jobs]) %>
+        <%= side_link "Invoices", admin_invoices_path, icon: "invoice", active: controller_name.in?(%w[invoices job_invoices quote_invoices invoice_attachments]) %>
         <% if can?(:schedule) %>
           <%= side_link "Schedule", admin_schedule_path, icon: "calendar", active: controller_name == "schedule" %>
         <% end %>
