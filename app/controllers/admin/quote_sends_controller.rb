@@ -71,6 +71,7 @@ class Admin::QuoteSendsController < Admin::BaseController
       @quote.mark_sent!(by: current_user, channel: "link")
       @quote.client_link!
     end
+    track_first_quote
     redirect_to new_admin_quote_send_path(@quote), notice: "Quote #{@quote.number} is marked as sent. Copy the link and send it from your phone."
   end
 
@@ -91,7 +92,16 @@ class Admin::QuoteSendsController < Admin::BaseController
                                             quote_id: @quote.id, revision: @quote.revision, link_id: link.id, subject: @form.subject, message: @form.message, cc: @form.cc_header)
       quote_send.update!(email_message: email)
     end
+    track_first_quote
     redirect_after_setup_step admin_quote_path(@quote), notice: "Quote #{@quote.number} is on its way to #{@form.to}."
+  end
+
+  # MKT-04: the funnel's last step, when this send was the business's first.
+  def track_first_quote
+    return unless Analytics.enabled?
+    return unless @quote.sends.unscope(:order).count == 1 && Quote.where.not(id: @quote.id).where.not(sent_at: nil).none?
+
+    Analytics.track("First Quote Sent", request:)
   end
 
   def too_many_today? = @quote.sends.unscope(:order).where(channel: "email", created_at: 1.day.ago..).count >= EMAILS_PER_QUOTE_PER_DAY
