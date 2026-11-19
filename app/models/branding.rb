@@ -76,7 +76,9 @@ class Branding
   # Up to two initials, for the name-based wordmark.
   def initials = name.split.filter_map { _1[0] }.first(2).join.upcase
 
-  def show_powered_by? = !Entitlements.for(business).remove_powered_by?
+  # Shown unless the business's plan removes it (BIL-01); always on pages with no business, and
+  # on stand-in businesses (samples, the styleguide) that aren't on a plan.
+  def show_powered_by? = !(business.is_a?(Business) && business.plan && Entitlements.for(business).remove_powered_by?)
 
   # WCAG contrast ratio between two #rrggbb colors.
   def self.contrast(a, b)

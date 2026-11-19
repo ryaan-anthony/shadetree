@@ -6,6 +6,8 @@ class Admin::TeamTest < ActionDispatch::IntegrationTest
 
   setup do
     @business = businesses(:one)
+    # These tests are about invitations and roles, not plan limits (BIL-01 tests those).
+    [ @business, businesses(:two) ].each { _1.update!(plan_overrides: { "limits" => { "team_members" => nil } }) }
     @owner = users(:one)
   end
 

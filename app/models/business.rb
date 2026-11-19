@@ -22,12 +22,23 @@ class Business < ApplicationRecord
 
   # Relationships
   belongs_to :owner, class_name: "User"
+  belongs_to :plan # BIL-01: new businesses start on the default plan (Free)
   has_many :business_users, dependent: :destroy
   has_many :users, through: :business_users
   has_many :closures # CAT-06; the database removes them with the business
 
   # Callbacks
   before_validation { self.uid ||= SecureRandom.base58(BusinessOwned::UID_LENGTH) if new_record? }
+  before_validation(if: :new_record?) { self.plan ||= Plan.default! }
+
+  # BIL-01: how many businesses on a free plan one person may own (09-billing: limits are per
+  # business, with a cap on free businesses per user).
+  FREE_BUSINESSES_PER_OWNER = 3
+
+  def entitlements = Entitlements.for(self)
+
+  validate :plan_overrides_are_valid
+  validate :within_free_businesses_per_owner, on: :create
   before_save :set_default_brand_color
   after_create :add_owner_to_business_users
 
@@ -204,6 +215,24 @@ class Business < ApplicationRecord
   end
 
   private
+
+  # BIL-01: comped limits are whole numbers or nil (unlimited); comped features true or false.
+  def plan_overrides_are_valid
+    problems = Plan.override_problems(plan_overrides)
+    errors.add(:plan_overrides, problems.to_sentence) if problems.any?
+  end
+
+  # BIL-01: one person may own FREE_BUSINESSES_PER_OWNER businesses on a free plan. The owner's
+  # row is locked while counting, so two at once can't both slip under the cap.
+  def within_free_businesses_per_owner
+    return unless owner && plan&.free?
+
+    owner.lock! if owner.persisted? && self.class.connection.transaction_open?
+    count = Business.where(owner:, plan_id: Plan.free.select(:id)).count
+    return if count < FREE_BUSINESSES_PER_OWNER
+
+    errors.add(:base, "You already own #{FREE_BUSINESSES_PER_OWNER} businesses on the free plan. A paid plan on one of them makes room for another.")
+  end
 
   def default_currency_from_country
     self.currency = Country.currency_for(country) if currency.blank? || (currency == "USD" && country != "US" && !currency_changed?)

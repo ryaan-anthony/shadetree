@@ -14,7 +14,7 @@ class Admin::BusinessesController < Admin::BaseController
     @business.owner = current_user
     @business.timezone = nil unless ActiveSupport::TimeZone[@business.timezone.to_s] # browser guess only
 
-    if @business.save(context: :setup)
+    if Business.transaction { @business.save(context: %i[setup create]) }
       switch_business_to(@business)
       redirect_to admin_root_path, notice: "#{@business.name} is ready."
     else

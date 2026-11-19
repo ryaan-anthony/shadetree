@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_19_000500) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_19_000600) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -102,10 +102,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_000500) do
     t.boolean "auto_create_jobs", default: true, null: false
     t.boolean "technicians_see_prices", default: false, null: false
     t.jsonb "client_visit_emails", default: {}, null: false
+    t.bigint "plan_id", null: false
+    t.jsonb "plan_overrides", default: {}, null: false
     t.index ["active"], name: "index_businesses_on_active"
     t.index ["handle"], name: "index_businesses_on_handle", unique: true
     t.index ["industry"], name: "index_businesses_on_industry"
     t.index ["owner_id"], name: "index_businesses_on_owner_id"
+    t.index ["plan_id"], name: "index_businesses_on_plan_id"
     t.index ["uid"], name: "index_businesses_on_uid", unique: true
   end
 
@@ -596,6 +599,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_000500) do
     t.check_constraint "source::text = ANY (ARRAY['recorded'::character varying, 'online'::character varying]::text[])", name: "payments_source"
   end
 
+  create_table "plans", force: :cascade do |t|
+    t.string "key", null: false
+    t.string "name", null: false
+    t.text "description"
+    t.boolean "public", default: true, null: false
+    t.boolean "default", default: false, null: false
+    t.integer "position", default: 0, null: false
+    t.string "currency", default: "USD", null: false
+    t.bigint "monthly_price_cents", default: 0, null: false
+    t.bigint "annual_price_cents", default: 0, null: false
+    t.string "provider_monthly_price"
+    t.string "provider_annual_price"
+    t.jsonb "limits", default: {}, null: false
+    t.jsonb "features", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["default"], name: "index_plans_one_default", unique: true, where: "\"default\""
+    t.index ["key"], name: "index_plans_on_key", unique: true
+  end
+
   create_table "properties", force: :cascade do |t|
     t.bigint "business_id", null: false
     t.bigint "client_id", null: false
@@ -938,6 +961,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_000500) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "business_users", "businesses"
   add_foreign_key "business_users", "users"
+  add_foreign_key "businesses", "plans"
   add_foreign_key "businesses", "users", column: "owner_id"
   add_foreign_key "catalog_categories", "businesses", on_delete: :cascade
   add_foreign_key "catalog_items", "businesses", on_delete: :cascade

@@ -7,4 +7,7 @@
 # Industry starter services (CAT-05): adds missing industries, never overwrites operator edits.
 IndustryPreset.sync!
 
+# Plans (BIL-01): adds missing plans, never overwrites operator edits.
+Plan.sync!
+
 load Rails.root.join("db/seeds/development.rb") if Rails.env.development?

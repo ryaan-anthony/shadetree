@@ -68,9 +68,9 @@ class Admin::BusinessSettingsTest < ActionDispatch::IntegrationTest
     post admin_business_path, params: { business: { name: "Bad Zone Co", industry: "cleaning", timezone: "Nowhere/Land" } }
     assert_nil Business.find_by!(name: "Bad Zone Co").timezone
 
-    assert_equal "CAD", Business.create!(name: "Maple", owner: users(:one), country: "CA").currency
-    assert_equal "EUR", Business.create!(name: "Dublin", owner: users(:one), country: "IE").currency
-    assert_equal "USD", Business.create!(name: "Texas", owner: users(:one)).currency
+    assert_equal "CAD", Business.create!(name: "Maple", owner: users(:one), country: "CA", plan: plans(:starter)).currency
+    assert_equal "EUR", Business.create!(name: "Dublin", owner: users(:one), country: "IE", plan: plans(:starter)).currency
+    assert_equal "USD", Business.create!(name: "Texas", owner: users(:one), plan: plans(:starter)).currency
   end
 
   test "industries come from data" do

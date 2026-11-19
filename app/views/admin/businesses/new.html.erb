@@ -11,6 +11,7 @@
   <%= form_with model: @business, url: admin_business_path, method: :post, data: { controller: "browser-timezone" } do |f| %>
     <%= f.hidden_field :timezone, data: { browser_timezone_target: "field" } %>
     <%= card do %>
+      <% @business.errors[:base].each do |message| %><p class="mb-4 text-sm2 font-medium text-danger" role="alert"><%= message %></p><% end %>
       <%= f.field :name, label: "Business name", autofocus: true, required: true,
                   placeholder: "Oakline Lawn & Landscape", help: "Clients see this on quotes and invoices." %>
       <%= f.field :industry, as: :select, label: "What kind of work do you do?", required: true,

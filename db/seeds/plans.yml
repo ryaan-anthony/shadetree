@@ -1,0 +1,38 @@
+# BIL-01: the plans every environment starts with (09-billing R3). Prices and limits are
+# placeholders until launch pricing is decided; `bin/rails db:seed` adds missing plans and
+# never overwrites operator edits (see bin/rails plans:show and plans:set).
+#
+# limits: a missing key or ~ means unlimited. features: true to include.
+free:
+  name: Free
+  description: Everything you need to quote, schedule and get paid.
+  default: true
+  position: 0
+  monthly_price: "0"
+  annual_price: "0"
+  limits: { quotes_sent: 5, team_members: 2 }
+  features: {}
+starter:
+  name: Starter
+  description: For a growing crew sending quotes every week.
+  position: 1
+  monthly_price: "19"
+  annual_price: "190"
+  limits: { quotes_sent: 30, team_members: 3 }
+  features: { remove_powered_by: true }
+pro:
+  name: Pro
+  description: Templates, automations and custom roles for a busy office.
+  position: 2
+  monthly_price: "49"
+  annual_price: "490"
+  limits: { quotes_sent: 150, team_members: 10 }
+  features: { remove_powered_by: true, message_templates: true, automations: true, custom_roles: true }
+business:
+  name: Business
+  description: Unlimited quotes and people, and more than one location.
+  position: 3
+  monthly_price: "99"
+  annual_price: "990"
+  limits: { quotes_sent: ~, team_members: ~ }
+  features: { remove_powered_by: true, message_templates: true, automations: true, custom_roles: true, locations: true, priority_support: true }
