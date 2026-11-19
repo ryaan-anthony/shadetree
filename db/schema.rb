@@ -326,6 +326,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
     t.text "search_text", default: "", null: false
     t.datetime "last_activity_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
     t.bigint "client_import_id"
+    t.datetime "erased_at"
     t.index "business_id, lower((display_name)::text), id", name: "index_clients_on_business_and_name"
     t.index ["business_id", "created_at"], name: "index_clients_on_business_id_and_created_at"
     t.index ["business_id", "last_activity_at"], name: "index_clients_on_business_id_and_last_activity_at"

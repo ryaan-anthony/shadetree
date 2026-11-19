@@ -30,11 +30,11 @@ the business's financial records.
       archive, generated in the background; the requester receives an email/in-app link that
       expires (e.g. 7 days).
 - [x] Exports are available on every plan and are logged (who, what, when).
-- [ ] Owners/Admins can erase a client: personal data (names, contacts, addresses, notes,
+- [x] Owners/Admins can erase a client: personal data (names, contacts, addresses, notes,
       photos of the property) is removed or anonymized; documents remain with totals intact and
       a neutral "erased client" label; the action requires typed confirmation and is logged.
-- [ ] Erased clients no longer match duplicate detection or search.
-- [ ] Exports respect tenancy; tests verify a business's export contains only its data and that
+- [x] Erased clients no longer match duplicate detection or search.
+- [x] Exports respect tenancy; tests verify a business's export contains only its data and that
       erasure leaves no personal data in exports or search.
 
 ## Out of scope
@@ -82,3 +82,17 @@ Part 2 (everything in one zip):
   The page shows building, ready (with parts) or why the last one failed. A build that stops
   moving for 30 minutes (a deploy) is marked failed, so it can't block a new one.
   `PruneDataExportsJob` (daily) removes zips once their link expires and marks stopped builds.
+
+Part 3 (erasing a client):
+- "Erase their details…" on a client (`export_data`) explains what goes and what stays and needs
+  the client's name typed. `ClientErasure` removes their name, company, contacts, notes, tags,
+  timeline and timeline notes; blanks their addresses ("Erased address") and access notes; on
+  their quotes, invoices and jobs removes messages, instructions, internal notes, attachments and
+  stored PDFs, scrubs their details from document histories, and revokes client links; on
+  requests removes contact details, description, address, photos and notes; on visits removes
+  instructions, client notes, photos and notes; replaces their address on email logs. Signed
+  approvals keep what was agreed (line items and totals) without who signed or from where, and
+  are signed again as they now are, so they still verify.
+- Numbers, line items, totals and payments stay, under "Erased client" (archived; can't be
+  edited; never found by search or duplicate matching). Ready full exports are removed, and the
+  erasure is in the data log (who, when).

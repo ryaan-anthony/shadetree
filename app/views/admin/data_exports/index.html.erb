@@ -46,7 +46,7 @@
         <li>Spreadsheet apps drop leading zeros from postal codes like 02134. Import that column as text to keep them.</li>
       </ul>
     <% end %>
-    <%= card title: "Recent exports", flush: true do %>
+    <%= card title: "Data log", subtitle: "Exports, downloads and erased clients.", flush: true do %>
       <% if @exports.any? %>
         <ul class="list" id="export-log">
           <% @exports.each do |export| %>

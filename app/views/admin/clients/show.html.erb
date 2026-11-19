@@ -1,5 +1,5 @@
 <%= page_header @client.display_name, lede: @client.company_name do %>
-  <%= link_to edit_admin_client_path(@client), class: button_classes(:secondary) do %><%= icon "edit-2" %> Edit<% end %>
+  <% unless @client.erased? %><%= link_to edit_admin_client_path(@client), class: button_classes(:secondary) do %><%= icon "edit-2" %> Edit<% end %><% end %>
   <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
     <button type="button" class="<%= button_classes(:ghost, :icon) %>" data-menu-target="button" data-action="menu#toggle"
             aria-haspopup="true" aria-expanded="false" aria-label="More actions"><%= icon "more-horizontal" %></button>
@@ -8,6 +8,10 @@
         <%= button_to restore_admin_client_path(@client), method: :patch, class: "menu-item", form: { class: "contents" } do %><%= icon "archive" %> Restore<% end %>
       <% else %>
         <%= button_to archive_admin_client_path(@client), method: :patch, class: "menu-item", form: { class: "contents" } do %><%= icon "archive" %> Archive<% end %>
+      <% end %>
+      <% if can?(:export_data) && !@client.erased? %>
+        <div class="menu-sep"></div>
+        <%= link_to new_admin_client_erasure_path(@client), class: "menu-item text-danger" do %><%= icon "user-x" %> Erase their details…<% end %>
       <% end %>
       <% if @client.deletable? %>
         <div class="menu-sep"></div>
@@ -20,7 +24,10 @@
   </div>
 <% end %>
 
-<% if @client.archived? %>
+<% if @client.erased? %>
+  <div class="banner banner-info mb-4" role="status" id="erased-banner"><%= icon "user-x" %>
+    <p>Their details were erased on <%= local_date(@client.erased_at.to_date) %>, at their request. Documents and payments are kept.</p></div>
+<% elsif @client.archived? %>
   <div class="banner banner-warning mb-4" role="status"><%= icon "archive" %>
     <p>Archived on <%= local_date(@client.archived_at.to_date) %>. Hidden from pickers; history is kept.</p>
   </div>

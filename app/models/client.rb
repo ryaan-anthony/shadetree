@@ -65,7 +65,7 @@ class Client < ApplicationRecord
   # formatting doesn't matter while "12-14" or "28801-1234" still match addresses as typed.
   # Uses the trigram index on search_text.
   def self.search(query)
-    search_terms(query).reduce(all) do |scope, term|
+    search_terms(query).reduce(where(erased_at: nil)) do |scope, term| # INS-02: erased clients are never found
       variants = search_variants(term)
       scope.where(variants.map { "clients.search_text LIKE ?" }.join(" OR "), *variants.map { "%#{sanitize_sql_like(_1)}%" })
     end
@@ -147,6 +147,7 @@ class Client < ApplicationRecord
 
   def documents? = DOCUMENT_ASSOCIATIONS.any? { public_send(_1).exists? }
   def deletable? = !documents?
+  def erased? = erased_at.present? # INS-02
 
   # Tags as typed in the form: "commercial, weekly".
   def tag_list = tags.join(", ")

@@ -12,7 +12,7 @@ class DataExport < ApplicationRecord
   STALE_AFTER = 30.minutes # a build that hasn't moved this long was stopped (a deploy) and won't finish
 
   validates :status, inclusion: { in: STATUSES }
-  validates :kind, inclusion: { in: ->(_) { TABLES.keys + %w[full full_download] } }
+  validates :kind, inclusion: { in: ->(_) { TABLES.keys + %w[full full_download client_erased] } }
 
   scope :newest_first, -> { order(created_at: :desc, id: :desc) }
 
@@ -199,7 +199,7 @@ class DataExport < ApplicationRecord
     [ csv, "#{Current.business.handle.presence || "shadetree"}-#{key}-#{Current.business.today.iso8601}.csv" ]
   end
 
-  def label = { "full" => "Everything (zip)", "full_download" => "Downloaded everything (zip)" }[kind] || self.class.table(kind).label
+  def label = { "full" => "Everything (zip)", "full_download" => "Downloaded everything (zip)", "client_erased" => "Erased a client's details" }[kind] || self.class.table(kind).label
 
   STATUSES.each { |status| define_method(:"#{status}?") { self.status == status } }
 
