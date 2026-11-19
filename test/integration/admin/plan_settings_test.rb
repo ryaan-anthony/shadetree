@@ -47,4 +47,26 @@ class Admin::PlanSettingsTest < ActionDispatch::IntegrationTest
     post admin_business_path, params: { business: { name: "Fourth", industry: "landscaping", timezone: "America/New_York" } }
     assert_redirected_to admin_root_path
   end
+
+  test "usage shows on the plan page with the reset date, by the send action, and on the dashboard" do
+    travel_to Time.utc(2026, 11, 18, 15) do
+      get admin_plan_path
+      assert_select "#usage-resets", /reset on Dec 1, 2026/
+      quote = as_business(@business) do
+        client = Client.create!(display_name: "Maria", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ])
+        Quote.start(client:).tap { _1.sync_line_items([ { "key" => "a", "name" => "Work", "quantity" => "1", "unit_price" => "100" } ]) && _1.save! }
+      end
+      as_business(@business) { quote.mark_sent!(by: @owner, channel: "link") }
+      draft = as_business(@business) { Quote.start(client: quote.client).tap { _1.sync_line_items([ { "key" => "a", "name" => "Work", "quantity" => "1", "unit_price" => "100" } ]) && _1.save! } }
+      get edit_admin_quote_path(draft)
+      assert_select "#quote-usage", /1 of 5 quotes sent/
+      get new_admin_quote_send_path(draft)
+      assert_select "#quote-usage", /1 of 5 quotes sent/
+      get admin_root_path
+      assert_select "#quotes-sent-usage", /1\s*of 5/
+      @business.update!(plan: plans(:business))
+      get edit_admin_quote_path(draft)
+      assert_select "#quote-usage", 0, "no limit, no indicator"
+    end
+  end
 end

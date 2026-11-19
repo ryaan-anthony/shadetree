@@ -23,16 +23,16 @@ the number they're charged on.
 
 ## Acceptance criteria
 
-- [ ] Each billable event (first send of a quote, per QTE-04) is counted exactly once per
+- [x] Each billable event (first send of a quote, per QTE-04) is counted exactly once per
       business, even with retries, resends and concurrent requests.
-- [ ] Usage periods: calendar month (business time zone) for Free; the subscription's billing
+- [x] Usage periods: calendar month (business time zone) for Free; the subscription's billing
       cycle for paid plans; the current period's usage and reset date are queryable.
-- [ ] Owners/Admins see current usage vs limit in Settings → Plan and in a compact indicator
+- [x] Owners/Admins see current usage vs limit in Settings → Plan and in a compact indicator
       near the quote send action and on the dashboard summary (INS-01).
-- [ ] Historical usage per period is retained (at least 24 months) and visible to operators.
-- [ ] Changing plans mid-period keeps the period's usage and applies the new limit.
-- [ ] Usage counting does not slow down sending (measured).
-- [ ] Tests cover idempotency, period boundaries (time zones, month lengths), plan changes and
+- [x] Historical usage per period is retained (at least 24 months) and visible to operators.
+- [x] Changing plans mid-period keeps the period's usage and applies the new limit.
+- [x] Usage counting does not slow down sending (measured).
+- [x] Tests cover idempotency, period boundaries (time zones, month lengths), plan changes and
       tenancy.
 
 ## Out of scope
@@ -40,7 +40,22 @@ the number they're charged on.
 - Blocking at the limit (BIL-03). Reporting usage to the billing provider for metered charges
   (backlog — only needed if overage pricing is adopted).
 
-## Open questions
+## Decisions
 
-- **(blocking)** Confirm the billable metric is "quotes sent" (G3).
-- Is there overage pricing (pay per extra quote) or only plan upgrades? Recommend upgrades only.
+- The billable metric is quotes sent: a quote's first send (QTE-04), once per quote however
+  often it's resent or revised.
+- No overage pricing: plan upgrades only.
+
+## Implementation notes
+
+- `UsageEvent` already records each quote's first send exactly once (a unique index on the
+  subject). `UsagePeriod.for(business)` gives the period: the calendar month in the business's
+  time zone on a free plan, or monthly from `businesses.billing_cycle_anchor` on a paid plan
+  (BIL-04 sets it; an anchor on the 31st renews on the last day of shorter months). It answers
+  `range`, `resets_on`, `used` (one count on the `(business, kind, occurred_at)` index) and
+  `history` (as many periods back as asked; events are never deleted).
+- `Entitlements#used(:quotes_sent)` counts the current period, so changing plan mid-period
+  keeps the usage and applies the new limit.
+- Shown on Settings → Plan (with the reset date), beside Send in the quote builder and on the
+  send page, and in the dashboard's summary ("3 of 5"); only when the plan has a limit.
+- Operators: `bin/rails usage:history BUSINESS=<uid>` (24 periods).

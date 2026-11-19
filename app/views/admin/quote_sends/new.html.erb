@@ -1,4 +1,5 @@
 <%= page_header "Send quote #{@quote.number}", lede: "To #{@quote.client.display_name}: #{money(@quote.totals.total)}#{", valid until #{l(@quote.expires_on)}" if @quote.expires_on}" do %>
+  <%= render "admin/usage/quotes" if @quote.draft? %>
   <%= link_to "Back", staff_quote_path(@quote), class: button_classes(:ghost) %>
 <% end %>
 
