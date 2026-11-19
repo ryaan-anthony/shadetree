@@ -24,8 +24,9 @@ class Ops::PresetsController < Ops::BaseController
         "category" => row["category"].to_s.strip.presence }.compact
     end
     @preset.assign_attributes(default_visit_minutes: params[:default_visit_minutes].to_i, items:)
+    changes = @preset.changes_to_save.slice("default_visit_minutes", "items").transform_values { |from, to| { "from" => from, "to" => to } }
     if @preset.save
-      audit!("preset.updated", industry: @preset.industry, items: items.size)
+      audit!("preset.updated", industry: @preset.industry, items: items.size, changes:) # from and to, so a bad edit can be put back
       redirect_to ops_presets_path, notice: "#{@preset.name} saved. New businesses in it get these services."
     else
       render :edit, status: :unprocessable_content

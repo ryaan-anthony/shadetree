@@ -11,6 +11,7 @@ class Ops::PresetsAndFlagsTest < ActionDispatch::IntegrationTest
 
   test "operators edit a preset's visit length and starter services" do
     preset = IndustryPreset.for("cleaning") || IndustryPreset.create!(industry: "cleaning", items: [ { "name" => "Deep clean", "unit" => "visit" } ])
+    preset.update_columns(default_visit_minutes: 90)
     sign_in_operator
     get ops_presets_path
     assert_select "#preset-cleaning"
@@ -25,7 +26,10 @@ class Ops::PresetsAndFlagsTest < ActionDispatch::IntegrationTest
     assert_equal 120, preset.default_visit_minutes
     assert_equal [ { "name" => "Deep clean", "unit" => "visit", "taxable" => true, "duration_minutes" => 180, "category" => "Cleaning" },
                    { "name" => "Window wash", "unit" => "custom", "custom_unit" => "pane", "taxable" => false } ], preset.items
-    assert_equal({ "industry" => "cleaning", "items" => 2 }, AuditEntry.find_by!(action: "preset.updated").data)
+    entry = AuditEntry.find_by!(action: "preset.updated")
+    assert_equal [ "cleaning", 2 ], entry.data.values_at("industry", "items")
+    assert_equal({ "from" => 90, "to" => 120 }, entry.data["changes"]["default_visit_minutes"])
+    assert_equal "Window wash", entry.data["changes"]["items"]["to"].last["name"]
 
     patch ops_preset_path(preset), params: { default_visit_minutes: "120", items: { "0" => { name: "Odd", unit: "custom" } } }
     assert_response :unprocessable_content
@@ -49,6 +53,10 @@ class Ops::PresetsAndFlagsTest < ActionDispatch::IntegrationTest
     assert_equal "off", flag.reload.state
     patch ops_feature_flag_path("undeclared"), params: { state: "on" }
     assert_match "no flag called", flash[:alert]
-    assert_equal %w[percentage businesses on off], AuditEntry.where(action: "feature_flag.changed").order(:id).map { _1.data["state"] }
+    patch ops_feature_flag_path("beta_editor"), params: { state: "businesses", businesses: "" }
+    assert_equal "off", flag.reload.state, "an empty list is off"
+    changes = AuditEntry.where(action: "feature_flag.changed").order(:id).map { [ _1.data["from"]["state"], _1.data["to"]["state"] ] }
+    assert_equal [ %w[off percentage], %w[percentage businesses], %w[businesses on], %w[on off], %w[off off] ], changes
+    assert_equal [ businesses(:one).uid, businesses(:two).uid ].sort, AuditEntry.where(action: "feature_flag.changed").order(:id).second.data["to"]["businesses"]
   end
 end

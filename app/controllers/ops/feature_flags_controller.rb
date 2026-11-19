@@ -13,21 +13,31 @@ class Ops::FeatureFlagsController < Ops::BaseController
     return redirect_to(ops_feature_flags_path, alert: "There's no flag called #{name}.") unless Feature.defined?(name)
 
     by = current_user.email
+    before = flag_state(name)
     case params[:state]
     when "on" then Feature.enable!(name, by:)
     when "off" then Feature.disable!(name, by:)
     when "percentage" then Feature.enable_percentage!(name, params[:percentage].to_i.clamp(0, 100), by:)
     when "businesses"
-      uids = params[:businesses].to_s.split(/[\s,]+/).compact_blank
+      uids = params[:businesses].to_s.split(/[\s,]+/).compact_blank.uniq
       businesses = Business.where(uid: uids).to_a
-      return redirect_to(ops_feature_flags_path, alert: "Unknown business IDs: #{(uids - businesses.map(&:uid)).join(", ")}") if businesses.size != uids.uniq.size
+      return redirect_to(ops_feature_flags_path, alert: "Unknown business IDs: #{(uids - businesses.map(&:uid)).join(", ")}") if businesses.size != uids.size
 
-      Feature.disable!(name, by:)
-      businesses.each { Feature.enable_for!(name, _1, by:) }
+      # One change: never off for everyone in between. An empty list is off.
+      FeatureFlag.transaction do
+        Feature.disable!(name, by:)
+        businesses.each { Feature.enable_for!(name, _1, by:) }
+      end
     else return redirect_to(ops_feature_flags_path, alert: "Pick a setting.")
     end
-    audit!("feature_flag.changed", flag: name, state: params[:state], percentage: (params[:percentage].to_i if params[:state] == "percentage"),
-                                   businesses: (params[:businesses].to_s.split(/[\s,]+/).compact_blank if params[:state] == "businesses"))
+    audit!("feature_flag.changed", flag: name, from: before, to: flag_state(name))
     redirect_to ops_feature_flags_path, notice: "#{name} updated."
+  end
+
+  private
+
+  def flag_state(name)
+    flag = FeatureFlag.find_by(name:) || FeatureFlag.new(name:)
+    { "state" => flag.state, "percentage" => flag.percentage, "businesses" => Business.where(id: flag.business_ids).pluck(:uid).sort }
   end
 end
