@@ -1,5 +1,7 @@
 # Erasing a client's personal data at their request (INS-02), with their name typed to confirm.
 class Admin::ClientErasuresController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :read_only # permanent; the business does it itself
   requires_permission :export_data
   before_action :set_client
   layout "app"

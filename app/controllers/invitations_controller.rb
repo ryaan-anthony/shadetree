@@ -4,6 +4,8 @@
 #  - signed out, existing account: sign in, then come back here
 #  - signed out, new person: set name and password; accepting confirms the email
 class InvitationsController < ApplicationController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :blocked # accepting would give lasting access
   layout "marketing"
   rate_limit to: 30, within: 10.minutes, by: -> { request.remote_ip }, with: -> { too_many_requests(retry_after: 10.minutes) } # before the lookup, so guessing tokens counts
   before_action :load_invitation

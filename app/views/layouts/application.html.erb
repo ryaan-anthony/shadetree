@@ -5,6 +5,7 @@
     <meta name="robots" content="noindex"><%# signed-in pages are never indexed (MKT-04) %>
   </head>
   <body class="bg-canvas">
+    <%= render "layouts/impersonation_banner" %>
     <%= yield %>
     <%= flash_toasts %>
     <%= render "components/confirm_dialog" %>

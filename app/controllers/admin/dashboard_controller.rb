@@ -1,4 +1,6 @@
 class Admin::DashboardController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   allow_any_member
   filters_by_location ServiceRequest, Quote, Job, Invoice, Visit, Payment, QuoteResponse, only: :index # CAT-07
 

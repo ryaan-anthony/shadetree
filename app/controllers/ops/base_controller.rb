@@ -20,6 +20,9 @@ class Ops::BaseController < ApplicationController
 
   def current_operator = @current_operator
 
+  # Always the operator, even while they view the app as a member (OPS-03).
+  def current_user = true_user
+
   # Console state lives in the signed-in user's own session data, which signing out clears.
   def ops_session = warden.session(:user)
 

@@ -2,6 +2,8 @@
 # client-facing email, with a live preview, or go back to the default. Editing is a plan
 # feature; on a plan without it, customized messages keep sending and are shown read-only.
 class Admin::MessageTemplatesController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed, reads: %i[preview]
   include MessageTemplatePreviews
   requires_permission :business_settings
   before_action :set_template, only: %i[edit update destroy preview]

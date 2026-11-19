@@ -2,6 +2,8 @@
 # taxes, opened in the builder. A job can be invoiced again (progress billing); each press makes
 # a new draft, so the page says when one is already open.
 class Admin::JobInvoicesController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :office
 
   def create

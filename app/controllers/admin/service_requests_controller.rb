@@ -2,6 +2,8 @@
 # call or a visit, by status; opening one records who saw it; "Create quote" turns it into a
 # draft. Office work: technicians can't see requests.
 class Admin::ServiceRequestsController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   PER_PAGE = 50
 
   requires_permission :office

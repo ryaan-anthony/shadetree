@@ -1,5 +1,7 @@
 # Removing a file from a draft quote (QTE-01).
 class Admin::QuoteAttachmentsController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :office
 
   def destroy

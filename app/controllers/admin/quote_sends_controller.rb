@@ -2,6 +2,8 @@
 # attached), or by getting the link to send from the owner's own phone. The first send of
 # either kind marks the quote sent and counts toward plan usage (BIL-02); resends don't.
 class Admin::QuoteSendsController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   include ConfirmedSender
 
   requires_permission :office

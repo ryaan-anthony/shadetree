@@ -3,6 +3,8 @@
 # from a job or a quote start in JobInvoicesController and QuoteInvoicesController. A sent
 # invoice is revised (reopened as a draft of its next revision) or voided; sending is PAY-02.
 class Admin::InvoicesController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed, reads: %i[search]
   include DocumentBuilder
   include SendsPdf
   requires_permission :office

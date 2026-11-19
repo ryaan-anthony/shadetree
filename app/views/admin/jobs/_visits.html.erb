@@ -37,7 +37,7 @@
                 <ol class="mt-1 space-y-0.5 text-subtle">
                   <% visit.events.each do |event| %>
                     <li><span class="text-ink"><%= visit_event_text(event) %></span>
-                      <span class="block text-muted"><%= event.user&.full_name || "Someone" %>, <%= local_time(event.occurred_at) %></span></li>
+                      <span class="block text-muted"><%= event.actor_label("Someone") %>, <%= local_time(event.occurred_at) %></span></li>
                   <% end %>
                 </ol>
               </details>

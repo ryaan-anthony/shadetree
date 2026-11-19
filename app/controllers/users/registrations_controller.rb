@@ -1,4 +1,7 @@
 class Users::RegistrationsController < Devise::RegistrationsController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :read_only, only: %i[edit] # the account page, without its sign-ins
+  impersonation :blocked # password, email, deleting the account
   layout -> { %w[edit update].include?(action_name) ? "application" : "marketing" } # the account page is for signed-in people
   before_action :configure_sign_up_params, only: :create
   before_action :configure_account_update_params, only: :update

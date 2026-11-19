@@ -3,6 +3,8 @@
 # own phone. The first send of a draft or a revision marks the invoice sent; resends of an
 # unpaid invoice are recorded the same way.
 class Admin::InvoiceSendsController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   include ConfirmedSender
 
   requires_permission :office

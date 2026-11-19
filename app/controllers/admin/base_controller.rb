@@ -13,7 +13,7 @@ class Admin::BaseController < ApplicationController
   private
 
   def require_current_legal_terms
-    return if current_user.legal_documents_to_accept.none?
+    return if impersonation || current_user.legal_documents_to_accept.none? # OPS-03: support can't accept for them
 
     # Lookups and frames get a plain refusal (and no session write); only a full page is worth
     # returning to after accepting.

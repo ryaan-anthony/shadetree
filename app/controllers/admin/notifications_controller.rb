@@ -1,5 +1,7 @@
 # NTF-02: a member's notifications in the current business, and which ones they get by email.
 class Admin::NotificationsController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   allow_any_member
   before_action :set_notification, only: %i[open read]
 
@@ -9,7 +11,7 @@ class Admin::NotificationsController < Admin::BaseController
 
   # Opening one marks it read. Turbo's hover prefetch is skipped so hovering doesn't count.
   def open
-    @notification.mark_read! unless request.headers["X-Sec-Purpose"] == "prefetch"
+    @notification.mark_read! unless request.headers["X-Sec-Purpose"] == "prefetch" || impersonation # OPS-03: support looking isn't the member reading
     redirect_to @notification.path
   end
 

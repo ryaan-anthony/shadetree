@@ -3,6 +3,7 @@
 # revised ({ "revision" }), repriced ({ "location", "changed" }, CAT-08). Sends, views and client responses have their own records.
 class QuoteEvent < ApplicationRecord
   include BusinessOwned
+  include SupportAttribution # OPS-03
 
   KINDS = %w[archived unarchived expiry_extended duplicated revised repriced].freeze
 

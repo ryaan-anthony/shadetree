@@ -1,4 +1,6 @@
 class Users::ConfirmationsController < Devise::ConfirmationsController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :blocked # account settings
   layout "marketing"
   rate_limit to: 5, within: 10.minutes, only: %i[create resend], with: -> { redirect_to new_user_confirmation_path, alert: "Too many requests. Try again in a few minutes." }
 

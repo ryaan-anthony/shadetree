@@ -3,6 +3,7 @@
 # ApplicationJob for background work. See docs/adr/0014-tenant-scoping-enforcement.md.
 class Current < ActiveSupport::CurrentAttributes
   attribute :user, :business, :membership
+  attribute :impersonator # OPS-03: the operator viewing the app as Current.user, if any
   attribute :automation_run # NTF-04: set while an automation acts, so its effects trigger no others
 
   # Changing the business also moves Time.zone, so times render in the business's zone.

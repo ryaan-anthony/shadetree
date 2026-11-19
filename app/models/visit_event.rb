@@ -4,6 +4,7 @@
 # ({ "reason" }), restored, started, completed, reopened.
 class VisitEvent < ApplicationRecord
   include BusinessOwned
+  include SupportAttribution # OPS-03
 
   KINDS = %w[scheduled rescheduled reassigned updated cancelled restored started completed reopened].freeze
 

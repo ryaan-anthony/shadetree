@@ -2,6 +2,8 @@
 # triggers, conditions and actions; every run is listed with what it did. A plan feature: without
 # it, rules are shown (and keep their history) but nothing runs and nothing can be changed.
 class Admin::AutomationsController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :business_settings
   before_action :require_feature, except: :index
   # Automations can email clients, so setting one up (or turning one on) needs a confirmed sender.

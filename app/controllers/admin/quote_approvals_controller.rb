@@ -1,6 +1,8 @@
 # QTE-05: Owners and Admins record an approval the client gave another way (on the phone, in
 # person), with who approved and a required note. Recorded with who did it; no client email.
 class Admin::QuoteApprovalsController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :office
 
   def create

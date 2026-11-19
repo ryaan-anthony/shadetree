@@ -56,7 +56,7 @@ class QuoteActivity
 
   def events
     quote.events.includes(:user).filter_map do |event|
-      by = " by #{event.user.full_name}" if event.user
+      by = " by #{event.actor_label}" if event.user
       case event.kind
       when "archived" then Entry.new(at: event.occurred_at, icon: "archive", title: "Archived#{by}")
       when "unarchived" then Entry.new(at: event.occurred_at, icon: "rotate-ccw", title: "Restored from the archive#{by}")

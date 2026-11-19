@@ -2,6 +2,8 @@
 # including part payments; and correcting or deleting one, with a reason the history keeps.
 # Online payments (PAY-04) are listed on the invoice but can't be changed here.
 class Admin::InvoicePaymentsController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :office
 
   RECEIPTS_PER_CLIENT_PER_DAY = 5

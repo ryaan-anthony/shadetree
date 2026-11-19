@@ -23,6 +23,22 @@
       </details>
     <% end %>
   <% end %>
+  <%= card title: "View as a member", subtitle: "Read-only to start. Account, billing and payment settings are always blocked.", id: "view-as" do %>
+    <% operator_ids = Operator.active.pluck(:user_id).to_set %>
+    <% candidates = @summary.members.select { Impersonation.refusal_for(_1, operator: current_user, operator_ids:).nil? } %>
+    <% if impersonation %>
+      <p class="text-sm text-subtle">You're viewing the app as <%= impersonation.user.full_name %>. Stop that first.</p>
+    <% elsif candidates.empty? %>
+      <p class="text-sm text-muted">Nobody here can be viewed as.</p>
+    <% else %>
+      <%= form_with url: ops_business_impersonation_path(@business), class: "space-y-3" do %>
+        <div class="field"><label class="label" for="member">Member</label><%= select_tag :member, options_for_select(candidates.map { [ "#{_1.user.full_name} (#{_1.role_name})", _1.uid ] }), class: "select", id: "member" %></div>
+        <div class="field"><label class="label" for="reason">Reason</label><%= text_field_tag :reason, nil, class: "input", id: "reason", required: true, maxlength: 500, placeholder: "e.g. Ticket: can't find the invoice button" %></div>
+        <p class="text-sm2 text-muted">Recorded in the audit log, and the business's Owners see that support viewed their account.</p>
+        <%= submit_tag "Start read-only view", class: button_classes(:secondary), name: nil %>
+      <% end %>
+    <% end %>
+  <% end %>
   <%= card title: "Plan and usage", id: "plan" do %>
     <dl class="space-y-2 text-sm">
       <div class="flex justify-between gap-3"><dt class="text-subtle">Plan</dt><dd class="font-semibold text-ink"><%= entitlements.plan.name %><%= " (with overrides)" if @business.plan_overrides.present? %></dd></div>

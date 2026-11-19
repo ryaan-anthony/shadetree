@@ -1,6 +1,8 @@
 # JOB-04: "My day": the visits the signed-in member is going on, today first (in time order),
 # then anything still open from earlier, then the next two weeks. Technicians land here.
 class Admin::MyDayController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :field_work
 
   UPCOMING_DAYS = 14

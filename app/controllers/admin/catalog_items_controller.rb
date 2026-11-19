@@ -1,5 +1,7 @@
 # The service catalog: what a business sells, with default prices (CAT-03).
 class Admin::CatalogItemsController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :business_settings
   requires_permission :office, only: :search # the picker on quotes, invoices and jobs
   SEARCH_LIMIT = 50

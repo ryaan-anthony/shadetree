@@ -1,6 +1,8 @@
 # Removing a file from a draft invoice (PAY-01). A file a past revision was sent with stays
 # stored for that record, as for quotes (QTE-06).
 class Admin::InvoiceAttachmentsController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :office
 
   def destroy

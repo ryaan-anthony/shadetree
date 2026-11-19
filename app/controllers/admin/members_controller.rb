@@ -1,5 +1,7 @@
 # Change a member's role, deactivate or reactivate them (ACC-03, ACC-04 rules).
 class Admin::MembersController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed # never Owners' roles (ImpersonationSupport)
   requires_permission :manage_team
   before_action :set_member
 

@@ -1,6 +1,8 @@
 # What a client can do with a quote through its link: download it and ask for an update to an
 # expired one (QTE-03), and approve, decline or ask for changes (QTE-05).
 class Client::QuotesController < ApplicationController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :read_only
   include ClientLinkAccess
   include SendsPdf
 

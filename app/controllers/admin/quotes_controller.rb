@@ -3,6 +3,8 @@
 # quote page with its activity, and archiving, duplicating and extending expiry. Sending is
 # QTE-04. Technicians can't see quotes (office permission).
 class Admin::QuotesController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed, reads: %i[search]
   include DocumentBuilder
   PER_PAGE = 50
 

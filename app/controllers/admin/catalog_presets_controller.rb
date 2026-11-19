@@ -1,5 +1,7 @@
 # Add an industry's starter services to the catalog (CAT-05).
 class Admin::CatalogPresetsController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :business_settings
 
   def show

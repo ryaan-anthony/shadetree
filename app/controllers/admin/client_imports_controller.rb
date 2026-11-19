@@ -2,6 +2,8 @@ require "csv"
 
 # Client CSV import (CLI-06): upload, map columns with a preview, then import in the background.
 class Admin::ClientImportsController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :office
   before_action :set_import, only: %i[show edit update report undo]
   layout "app"

@@ -39,7 +39,7 @@ module ClientEventsHelper
   def client_event_actor(event)
     return event.client.display_name if event.data["via"] == "client"
 
-    event.user&.full_name
+    event.actor_label
   end
 
   RESPONSE_ICONS = { "quote_approved" => "check-circle", "quote_declined" => "x-circle", "quote_changes_requested" => "edit-3" }.freeze

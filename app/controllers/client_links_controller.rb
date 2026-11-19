@@ -1,5 +1,7 @@
 # The page a client lands on from a link: /c/:token (PLT-12).
 class ClientLinksController < ApplicationController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :read_only
   include ClientLinkAccess
   skip_before_action :load_client_link, only: :request_fresh
   before_action :load_link_for_request, only: :request_fresh
@@ -10,7 +12,8 @@ class ClientLinksController < ApplicationController
     return render_link_unavailable unless visible
 
     # A page saying the quote is being revised isn't a view of the quote.
-    @client_link.record_view!(device: client_device) unless @document.try(:revising?)
+    # Nor is support viewing the app as a member (OPS-03).
+    @client_link.record_view!(device: client_device) unless @document.try(:revising?) || impersonation
   end
 
   # From the "no longer active" page: tell the business the client wants a new link.

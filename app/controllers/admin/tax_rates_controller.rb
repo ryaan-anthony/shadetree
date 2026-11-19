@@ -1,5 +1,7 @@
 # Tax rates (CAT-04), a tab of business settings.
 class Admin::TaxRatesController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :business_settings
   before_action :set_rate, only: %i[edit update archive restore]
 

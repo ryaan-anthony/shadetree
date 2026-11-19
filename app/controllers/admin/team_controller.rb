@@ -1,5 +1,7 @@
 # The team page: members, pending invitations and deactivated people (ACC-03).
 class Admin::TeamController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :manage_team
 
   def show
@@ -9,5 +11,6 @@ class Admin::TeamController < Admin::BaseController
     @invitations = Invitation.where(accepted_at: nil, revoked_at: nil).includes(:invited_by).order(created_at: :desc)
     @invitation = Invitation.new(role: "technician")
     @custom_roles = Role.ordered.to_a # ACC-07
+    @support_visits = AuditEntry.support_visits(current_business) if current_membership.owner? # OPS-03
   end
 end

@@ -1,4 +1,6 @@
 class Users::SessionsController < Devise::SessionsController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :blocked # signing out ends the impersonation first (ImpersonationSupport)
   layout "marketing"
   rate_limit to: 20, within: 10.minutes, only: :create, with: -> { redirect_to new_user_session_path, alert: "Too many sign-in attempts. Try again in a few minutes." }
   # Devise skips authenticate_user! inside its own controllers unless forced.

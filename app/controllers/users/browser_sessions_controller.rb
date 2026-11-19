@@ -2,6 +2,8 @@
 # (its next request goes to sign-in), and remember-me stops working on every browser, so the
 # signed-out one can't come back on its own.
 class Users::BrowserSessionsController < ApplicationController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :blocked # account settings
   before_action :authenticate_user!
 
   def destroy

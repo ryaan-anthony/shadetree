@@ -1,6 +1,8 @@
 # Closures (CAT-06): holidays, vacation and part-days, listed on the hours tab. CAT-07: a new
 # closure is for the location the hours tab was showing (?location=<uid>), else the main one.
 class Admin::ClosuresController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :business_settings
   before_action :set_closure, only: %i[edit update destroy]
 

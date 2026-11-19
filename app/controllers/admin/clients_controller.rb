@@ -1,6 +1,8 @@
 # Client records and properties (CLI-01), and the searchable list (CLI-02). Technicians see
 # clients only through their visits (field_work).
 class Admin::ClientsController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed, reads: %i[search matches] # POSTs only to keep search terms out of URLs
   PER_PAGE = 50
   PICKER_LIMIT = 8
 
