@@ -57,5 +57,8 @@ the number they're charged on.
 - `Entitlements#used(:quotes_sent)` counts the current period, so changing plan mid-period
   keeps the usage and applies the new limit.
 - Shown on Settings → Plan (with the reset date), beside Send in the quote builder and on the
-  send page, and in the dashboard's summary ("3 of 5"); only when the plan has a limit.
+  send page for a quote's first send (not a revision's), and in the dashboard's summary ("3 of
+  5", labelled month or billing period); only when the plan has a limit.
+- Speed: the send path doesn't change (the usage event was already one insert in `mark_sent!`,
+  QTE-04); the count is read only on pages, as one index-only query (a test checks one query).
 - Operators: `bin/rails usage:history BUSINESS=<uid>` (24 periods).

@@ -27,16 +27,34 @@ class UsagePeriodTest < ActiveSupport::TestCase
     assert_equal [ Date.new(2027, 2, 1), Date.new(2027, 3, 1) ], [ feb.starts_at.to_date, feb.resets_on ]
   end
 
-  test "paid plans count their billing cycle from the anchor, the 31st renewing at month end" do
-    @business.update!(plan: plans(:starter), billing_cycle_anchor: Time.find_zone("America/New_York").local(2026, 1, 31, 10))
-    feb = UsagePeriod.for(@business, at: Time.utc(2026, 2, 15))
-    assert_equal [ Date.new(2026, 1, 31), Date.new(2026, 2, 28) ], [ feb.starts_at.to_date, feb.resets_on ]
-    mar = UsagePeriod.for(@business, at: Time.utc(2026, 3, 30))
-    assert_equal [ Date.new(2026, 2, 28), Date.new(2026, 3, 31) ], [ mar.starts_at.to_date, mar.resets_on ], "back to the 31st when the month has one"
-    assert_equal Date.new(2026, 4, 30), UsagePeriod.for(@business, at: Time.utc(2026, 4, 15)).resets_on
-    assert_equal [ Date.new(2026, 4, 30), Date.new(2026, 5, 31) ], UsagePeriod.for(@business, at: Time.utc(2026, 5, 2)).then { [ _1.starts_at.to_date, _1.resets_on ] }
+  test "paid plans count their billing cycle in UTC from the anchor, the 31st renewing at month end" do
+    anchor = Time.utc(2026, 1, 31, 15)
+    @business.update!(plan: plans(:starter), billing_cycle_anchor: anchor)
+    span = ->(at) { UsagePeriod.for(@business, at:).then { [ _1.starts_at.utc, _1.ends_at.utc ] } }
+    assert_equal [ anchor, Time.utc(2026, 2, 28, 15) ], span.(Time.utc(2026, 2, 15))
+    assert_equal [ Time.utc(2026, 2, 28, 15), Time.utc(2026, 3, 31, 15) ], span.(Time.utc(2026, 3, 30))
+    assert_equal [ Time.utc(2026, 4, 30, 15), Time.utc(2026, 5, 31, 15) ], span.(Time.utc(2026, 5, 2))
+    assert UsagePeriod.for(@business, at: Time.utc(2026, 5, 2)).billing_cycle?
+    # Daylight saving and a change of time zone don't move it.
+    assert_equal [ Time.utc(2026, 6, 30, 15), Time.utc(2026, 7, 31, 15) ], span.(Time.utc(2026, 7, 15))
+    @business.update!(timezone: "UTC")
+    assert_equal [ Time.utc(2026, 6, 30, 15), Time.utc(2026, 7, 31, 15) ], span.(Time.utc(2026, 7, 15))
     @business.update!(plan: plans(:free))
+    assert_not UsagePeriod.for(@business, at: Time.utc(2026, 4, 15)).billing_cycle?
     assert_equal Date.new(2026, 5, 1), UsagePeriod.for(@business, at: Time.utc(2026, 4, 15)).resets_on, "back on Free: calendar months"
+  end
+
+  test "before the anchor, calendar months; the month the cycles start in ends at the anchor" do
+    anchor = Time.find_zone("America/New_York").local(2026, 3, 10, 9)
+    @business.update!(plan: plans(:starter), billing_cycle_anchor: anchor)
+    feb = UsagePeriod.for(@business, at: Time.utc(2026, 2, 10))
+    assert_equal [ Date.new(2026, 2, 1), Date.new(2026, 3, 1), false ], [ feb.starts_at.to_date, feb.resets_on, feb.billing_cycle? ]
+    march = UsagePeriod.for(@business, at: Time.utc(2026, 3, 5))
+    assert_equal [ Date.new(2026, 3, 1), anchor ], [ march.starts_at.to_date, march.ends_at ]
+    history = UsagePeriod.for(@business, at: Time.utc(2026, 5, 20)).history(count: 5)
+    assert_equal [ true, true, true, false, false ], history.map(&:billing_cycle?)
+    assert_equal anchor, history[2].starts_at
+    assert_equal anchor, history[3].ends_at
   end
 
   test "a quote counts once however often it's sent; a plan change keeps the period's usage" do

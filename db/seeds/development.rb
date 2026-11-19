@@ -31,7 +31,7 @@ end
 
 # BIL-01: the demo business is on Starter (three people; "Powered by Shadetree" off). Run
 # `bin/rails plans:comp` or change it in the console to see other plans.
-business.update!(plan: Plan.find_by!(key: "starter")) if business.plan.key == "free"
+business.update!(plan: Plan.find_by!(key: "starter"), billing_cycle_anchor: 40.days.ago.change(hour: 15)) if business.plan.key == "free" # BIL-02: a billing cycle
 
 { admin => "admin", technician => "technician" }.each do |user, role|
   BusinessUser.find_or_create_by!(business: business, user: user) { |m| m.role = role }

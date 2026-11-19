@@ -28,7 +28,7 @@ invoice generation, dunning, payment-method storage, proration and financial rep
 | Business | ~$99 | Unlimited | Unlimited | Multiple locations, priority support |
 
 ### Usage metering
-- **R4** Billable usage (quotes sent, pending G3) is counted per business per billing period,
+- **R4** Billable usage (quotes sent, decided G3) is counted per business per billing period,
   exactly once per event, and is visible to the business ("3 of 5 quotes sent this month").
 - **R5** Free plans reset on calendar month; paid plans reset on their billing cycle.
 
@@ -81,8 +81,8 @@ invoice generation, dunning, payment-method storage, proration and financial rep
 
 ## Open questions
 
-1. **Usage metric (G3):** quotes sent vs jobs booked vs invoices paid. Recommend quotes sent.
-   **(blocking for BIL-02)**
+1. ~~**Usage metric (G3):** quotes sent vs jobs booked vs invoices paid.~~ Decided: quotes sent
+   (a quote's first send), with upgrades only and no overage pricing.
 2. Exact prices and limits, especially Free (3 vs 5 vs 10 quotes/month)? Decide before MKT-01.
 3. Platform fee on client card payments (e.g. 0.5–1% on Free only) as a revenue line instead of
    or in addition to subscriptions?

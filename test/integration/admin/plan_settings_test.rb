@@ -52,7 +52,7 @@ class Admin::PlanSettingsTest < ActionDispatch::IntegrationTest
   test "usage shows on the plan page with the reset date, by the send action, and on the dashboard" do
     travel_to Time.utc(2026, 11, 18, 15) do
       get admin_plan_path
-      assert_select "#usage-resets", /reset on Dec 1, 2026/
+      assert_select "#usage-resets", /resets on Dec 1, 2026/
       quote = as_business(@business) do
         client = Client.create!(display_name: "Maria", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ])
         Quote.start(client:).tap { _1.sync_line_items([ { "key" => "a", "name" => "Work", "quantity" => "1", "unit_price" => "100" } ]) && _1.save! }
@@ -65,6 +65,9 @@ class Admin::PlanSettingsTest < ActionDispatch::IntegrationTest
       assert_select "#quote-usage", /1 of 5 quotes sent/
       get admin_root_path
       assert_select "#quotes-sent-usage", /1\s*of 5/
+      as_business(@business) { quote.reload.revise!(by: @owner) }
+      get edit_admin_quote_path(quote)
+      assert_select "#quote-usage", 0, "a revision's send doesn't count"
       @business.update!(plan: plans(:business))
       get edit_admin_quote_path(draft)
       assert_select "#quote-usage", 0, "no limit, no indicator"

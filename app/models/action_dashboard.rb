@@ -44,7 +44,7 @@ class ActionDashboard
   def month = today.beginning_of_month..today
 
   # BIL-02: quotes sent in the usage period, and the plan's limit (nil when unlimited).
-  def quotes_sent_this_month = entitlements.used(:quotes_sent)
+  def quotes_sent_this_period = entitlements.used(:quotes_sent)
   def quote_limit = entitlements.limit(:quotes_sent)
   def entitlements = @entitlements ||= business.entitlements
 
