@@ -276,8 +276,12 @@ Rails.application.routes.draw do
   get "pricing", to: "pricing#index"
   get "about", to: "about#index"
   get "features", to: "features#index" # MKT-01
-  get "terms", to: "legal#terms"
-  get "privacy", to: "legal#privacy"
+  # Legal and trust pages (MKT-03); /terms and /privacy are the short links sign-up uses.
+  get "terms", to: "legal#show", defaults: { slug: "terms" }
+  get "privacy", to: "legal#show", defaults: { slug: "privacy" }
+  get "legal", to: "legal#index", as: :legal
+  resource :legal_acceptance, only: %i[show create], path: "legal/accept", controller: "users/legal_acceptances"
+  get "legal/:slug(/:version)", to: "legal#show", as: :legal_document, constraints: { slug: /[a-z-]+/, version: /\d{4}-\d{2}-\d{2}/ }
 
   # Contact page
   get "contact", to: "contact#index"

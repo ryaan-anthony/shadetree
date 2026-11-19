@@ -1,4 +1,4 @@
-<%# MKT-01: the public footer. Legal pages are MKT-03's. %>
+<%# MKT-01: the public footer; its Legal column links MKT-03's pages. %>
 <footer class="bg-side text-side-text">
   <div class="mx-auto max-w-6xl px-5 py-14 sm:px-8">
     <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]">
@@ -8,7 +8,7 @@
       </div>
       <% { "Product" => [ [ "How it works", root_path(anchor: "how-it-works") ], [ "Features", features_path ], [ "Pricing", pricing_path ], [ "Sign in", new_user_session_path ] ],
            "Company" => [ [ "About", about_path ], [ "Contact", contact_path ] ],
-           "Legal" => [ [ "Terms", terms_path ], [ "Privacy", privacy_path ] ] }.each do |heading, items| %>
+           "Legal" => [ [ "Terms", terms_path ], [ "Privacy", privacy_path ], [ "Security", legal_document_path("security") ], [ "All legal documents", legal_path ] ] }.each do |heading, items| %>
         <div>
           <h2 class="text-sm font-semibold text-white"><%= heading %></h2>
           <ul class="mt-4 space-y-3 text-sm" <%= "id=legal-links" if heading == "Legal" %>>

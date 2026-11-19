@@ -29,14 +29,16 @@
     <main id="main" class="client-wrap py-6">
       <%= yield %>
     </main>
-    <% if branding.show_powered_by? %>
-      <footer class="client-powered">
+    <footer class="client-powered flex-wrap gap-x-4">
+      <% if branding.show_powered_by? %>
         <%= link_to root_url, class: "logo text-[0.8125rem] text-subtle", target: "_blank", rel: "noopener" do %>
           <span class="logo-mark size-4 rounded-sm [&_svg]:size-3"><%= logo_mark %></span>
           <span>Powered by Shadetree</span>
         <% end %>
-      </footer>
-    <% end %>
+      <% end %>
+      <%# MKT-03: how the client's details are handled, shown even without "Powered by". %>
+      <%= link_to "Privacy (Shadetree)", privacy_url(anchor: "clients"), class: "text-[0.8125rem] text-subtle underline-offset-2 hover:underline", target: "_blank", rel: "noopener" %>
+    </footer>
     <%= flash_toasts %>
     <%= render "components/confirm_dialog" %>
     <%= inline_styles_tag %>

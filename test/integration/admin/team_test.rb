@@ -118,6 +118,7 @@ class Admin::TeamTest < ActionDispatch::IntegrationTest
 
     user = User.find_by!(email: "newbie@example.com")
     assert user.confirmed?
+    assert_equal [ LegalDocument.terms.current.version, LegalDocument.privacy.current.version ], [ user.terms_version, user.privacy_version ] # MKT-03
     assert_equal "technician", @business.business_users.find_by!(user:).role
     assert_equal @business.id, user.last_business_id
     assert invitation.reload.accepted_at

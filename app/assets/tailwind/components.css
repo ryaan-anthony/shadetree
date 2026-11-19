@@ -598,3 +598,16 @@
   .cal-status-completed { background: #dcfce7; border-color: #16a34a; color: #14532d; }
   .cal-dot { display: inline-block; width: 0.625rem; height: 0.625rem; border-radius: 999px; border: 2px solid; }
 }
+
+/* MKT-03: the legal pages' text. */
+@layer components {
+  .legal-text { color: var(--color-body); font-size: 0.9375rem; line-height: 1.7; }
+  .legal-text h2 { margin-top: 2rem; font-size: 1.125rem; font-weight: 700; color: var(--color-ink); }
+  .legal-text h3 { margin-top: 1.25rem; font-weight: 600; color: var(--color-ink); }
+  .legal-text p, .legal-text ul, .legal-text table { margin-top: 0.75rem; }
+  .legal-text ul { padding-left: 1.25rem; list-style: disc; }
+  .legal-text li + li { margin-top: 0.25rem; }
+  .legal-text a { text-decoration: underline; }
+  .legal-text table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  .legal-text th, .legal-text td { border-bottom: 1px solid var(--color-line); padding: 0.5rem; text-align: left; vertical-align: top; }
+}

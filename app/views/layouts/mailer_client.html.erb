@@ -45,6 +45,7 @@
               <td style="padding:10px 4px;font-size:12px;line-height:1.5;color:#64748b;">
                 Reply to this email to reach <%= @business.name %>.
                 <% if branding.show_powered_by? %><br>Sent with <a href="<%= root_url %>" style="color:#64748b;">Shadetree</a><% end %>
+                <br><a href="<%= privacy_url(anchor: "clients") %>" style="color:#64748b;">How your details are handled</a><%# MKT-03: always, even without "Sent with Shadetree" %>
               </td>
             </tr>
           </table>

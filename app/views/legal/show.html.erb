@@ -1,0 +1,30 @@
+<% content_for :title, @document.title %>
+<% current = @version == @document.current %>
+<%# MKT-04: the current version is indexed, with analytics; earlier ones aren't (no page_meta). %>
+<% if current %>
+  <% page_meta description: { "privacy" => "Shadetree's privacy policy: what we collect about the people who use it, why, how long we keep it and the choices you have.",
+                              "terms" => "The terms of service for Shadetree: what you can expect from us, what we expect from you, billing and how either of us can end the agreement." }
+                              .fetch(@document.slug, "#{@document.title}: #{@document.description}") %>
+  <% content_for :analytics, "on" %>
+<% end %>
+<div class="mx-auto max-w-3xl px-4 py-12">
+  <p class="text-sm"><%= link_to "Legal and trust", legal_path, class: "text-gray-500 hover:underline" %></p>
+  <h1 class="mt-2 text-3xl font-bold tracking-tight text-enterprise-navy"><%= @document.title %></h1>
+  <p class="mt-2 text-sm text-gray-600" id="effective-date">Effective <%= @version.effective_on.to_fs(:long) %><%= " · an earlier version" unless current %></p>
+  <% unless current %>
+    <div class="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900" role="note">This version was replaced. <%= link_to "Read the current version", legal_document_path(@document.slug), class: "font-semibold underline" %>.</div>
+  <% end %>
+  <% if @version.draft %>
+    <div class="mt-4 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900" role="note" id="draft-notice">This is a draft, published so you can see how we intend to work. It's being reviewed by a lawyer and may change before we take payments.</div>
+  <% end %>
+  <article class="legal-text mt-8"><%= render template: @document.template(@version) %></article>
+
+  <section class="mt-12 border-t border-gray-200 pt-6" aria-labelledby="history-h" id="change-history">
+    <h2 id="history-h" class="text-lg font-semibold text-enterprise-navy">Change history</h2>
+    <ul class="mt-3 space-y-2 text-sm text-gray-700">
+      <% @document.versions.each do |version| %>
+        <li><%= link_to version.effective_on.to_fs(:long), legal_document_path(@document.slug, version.version), class: "font-medium underline", "aria-current": ("page" if version == @version) %>: <%= version.summary %></li>
+      <% end %>
+    </ul>
+  </section>
+</div>

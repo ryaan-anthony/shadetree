@@ -1,0 +1,21 @@
+<% content_for :title, "We've updated our terms" %>
+<main id="main" class="mx-auto max-w-lg px-4 py-12">
+  <%= card title: "We've updated our terms" do %>
+    <p class="text-sm text-subtle">Before you carry on, please read and accept:</p>
+    <ul class="mt-3 space-y-2 text-sm">
+      <% @documents.each do |document| %>
+        <% version = document.required_version %>
+        <li><%= link_to document.title, legal_document_path(document.slug), class: "font-semibold text-canopy hover:underline", target: "_blank" %>,
+          effective <%= version.effective_on.to_fs(:long) %>: <%= version.summary %></li>
+      <% end %>
+    </ul>
+    <%= form_with url: legal_acceptance_path, method: :post, class: "mt-5 space-y-4" do %>
+      <% if flash.now[:alert] %><div class="banner banner-warning" role="alert"><%= icon "alert-circle" %><p><%= flash.now[:alert] %></p></div><% end %>
+      <label class="flex items-start gap-2 text-sm"><%= check_box_tag :accept, "1", false, class: "mt-0.5" %> I've read and accept the updated <%= @documents.map(&:title).to_sentence %>.</label>
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <%= link_to "Sign out instead", destroy_user_session_path, data: { turbo_method: :delete }, class: "text-sm text-muted hover:underline" %>
+        <%= submit_tag "Accept and continue", class: button_classes, name: nil %>
+      </div>
+    <% end %>
+  <% end %>
+</main>

@@ -1,5 +1,6 @@
 class Admin::BaseController < ApplicationController
   before_action :authenticate_user!
+  before_action :require_current_legal_terms # MKT-03: a material change to the Terms or Privacy is accepted first
   include BusinessContext
   include ConfirmedSender
   before_action :require_business_setup
@@ -9,6 +10,17 @@ class Admin::BaseController < ApplicationController
   rescue_from(ClientLink::ClientErased) { redirect_back_or_to admin_root_path, alert: "This client's details were erased, so nothing more can be sent to them." }
 
   private
+
+  def require_current_legal_terms
+    return if current_user.legal_documents_to_accept.none?
+
+    # Lookups and frames get a plain refusal (and no session write); only a full page is worth
+    # returning to after accepting.
+    return head(:forbidden) unless request.format.html? && !turbo_frame_request? && !request.xhr?
+
+    session[:after_legal_acceptance] = request.fullpath if request.get? || request.head?
+    redirect_to legal_acceptance_path, status: :see_other
+  end
 
   # ACC-05: a page opened from the setup checklist (from=setup) goes back to it when done.
   helper_method def from_setup? = params[:from] == "setup"
