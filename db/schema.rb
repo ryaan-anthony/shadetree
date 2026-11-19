@@ -379,6 +379,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
     t.string "kind", null: false
     t.string "status", default: "ready", null: false
     t.integer "rows_count"
+    t.string "failure_reason"
     t.datetime "expires_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false

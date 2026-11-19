@@ -22,13 +22,20 @@
     <%= card title: "Everything in one download", id: "full-export" do %>
       <p class="text-sm2 text-subtle">A zip of all the spreadsheets, every quote and invoice as a PDF, and every file and photo. It's made in the background; we'll tell you when it's ready, and the link lasts <%= DataExport::LINK_LASTS.in_days.to_i %> days.</p>
       <% if @full&.building? %>
-        <p class="mt-3 text-sm font-medium text-ink" role="status">Being put together… started <%= time_ago_in_words(@full.created_at) %> ago.</p>
+        <p class="mt-3 text-sm font-medium text-ink" role="status">Being put together… started <%= time_ago_in_words(@full.created_at) %> ago. Reload this page later, or wait for our email.</p>
       <% elsif @full&.downloadable? %>
-        <%= link_to "Download the zip", admin_data_export_path(@full), class: "#{button_classes} mt-3 w-full", data: { turbo: false } %>
+        <% parts = @full.parts %>
+        <% parts.each_with_index do |part, index| %>
+          <%= link_to (parts.one? ? "Download the zip" : "Download part #{index + 1} of #{parts.size}"), admin_data_export_path(@full, part: index + 1),
+                      class: "#{button_classes(index.zero? ? :primary : :secondary)} mt-3 w-full", data: { turbo: false } %>
+        <% end %>
         <p class="mt-2 text-xs text-muted">Made <%= local_time(@full.updated_at) %>; available until <%= local_date(@full.expires_at) %>.</p>
+      <% elsif @full&.failed? %>
+        <p class="mt-3 text-sm text-danger" role="alert" id="full-export-failed">The last one couldn't be made: <%= @full.failure_reason || "something went wrong." %></p>
       <% end %>
       <% unless @full&.building? %>
-        <%= button_to (@full&.downloadable? ? "Make a new one" : "Export everything"), admin_data_exports_path, class: "#{button_classes(@full&.downloadable? ? :ghost : :primary)} mt-3 w-full" %>
+        <%= button_to (@full&.downloadable? ? "Make a new one" : "Export everything"), admin_data_exports_path, class: "#{button_classes(@full&.downloadable? ? :ghost : :primary)} mt-3 w-full",
+                      form: (@full&.downloadable? ? { data: { turbo_confirm: "Make a new export? We'll let you know when it's ready.", turbo_confirm_button: "Make a new one" } } : {}) %>
       <% end %>
     <% end %>
     <%= card title: "About these files" do %>

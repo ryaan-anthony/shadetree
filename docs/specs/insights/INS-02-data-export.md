@@ -50,8 +50,8 @@ the business's financial records.
   export before erasing. The legal text (MKT-03) still has to confirm this.
 - **Technicians' visit photos are included in the full export** (recommendation accepted).
 - **The zip is written by a small in-app writer** (`ZipWriter`, on Ruby's zlib) rather than a new
-  gem: entries are stored or deflated, names are UTF-8, and the archive is capped at 2 GB (well
-  under the 4 GB a ZIP without ZIP64 allows).
+  gem: entries are stored or deflated, names are UTF-8. A big export comes in 1 GB parts, so no
+  part needs ZIP64; more than 25 GB of files is refused up front.
 
 ## Implementation notes
 
@@ -70,10 +70,15 @@ Part 1 (CSV downloads, the log):
 - Every download is a `DataExport` row (who, what, when, row count), listed as "Recent exports".
 
 Part 2 (everything in one zip):
-- "Export everything" (one at a time per business) queues `DataExportJob`, which writes a zip
-  with every CSV, each quote's and invoice's PDF (as clients see it), every attached file and
-  photo (quotes, invoices, jobs, visits, requests) and the logo, plus a README explaining the
-  layout and listing anything that couldn't be included.
-- The requester gets a notification and email (`data_export_ready`, theirs alone); the zip is
-  downloadable by Owners and Admins for 7 days, streamed from storage; `PruneDataExportsJob`
-  (daily) removes it afterwards. The export stays in the log.
+- "Export everything" (one at a time per business; queued after the request is saved) runs
+  `DataExportJob`, which writes zips of 1 GB parts with every CSV, each quote's and invoice's PDF
+  as clients see it (drafts in `drafts/`; a busy renderer is retried), every attached file and
+  photo (quotes, invoices, jobs, visits, requests) with its own date, and the logo. The last part
+  has a README: the layout, what's never in an export (catalog, team, settings, billing,
+  timelines), and anything that couldn't be included. File names are made safe for any unzip
+  tool ("..", leading dots, separators; extensions kept; unique ignoring case).
+- The requester gets a notification and email (`data_export_ready`, theirs alone). Owners and
+  Admins download each part for 7 days, streamed from storage, and every download is logged.
+  The page shows building, ready (with parts) or why the last one failed. A build that stops
+  moving for 30 minutes (a deploy) is marked failed, so it can't block a new one.
+  `PruneDataExportsJob` (daily) removes zips once their link expires and marks stopped builds.

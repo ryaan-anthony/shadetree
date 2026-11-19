@@ -6,12 +6,13 @@ class DataExport < ApplicationRecord
   STATUSES = %w[building ready failed expired].freeze
 
   belongs_to :requested_by, class_name: "User", optional: true
-  has_one_attached :file # the full export's zip, until it expires
+  has_many_attached :files # the full export's zip (in parts if it's big), until it expires
 
   LINK_LASTS = 7.days
+  STALE_AFTER = 30.minutes # a build that hasn't moved this long was stopped (a deploy) and won't finish
 
   validates :status, inclusion: { in: STATUSES }
-  validates :kind, inclusion: { in: ->(_) { TABLES.keys + %w[full] } }
+  validates :kind, inclusion: { in: ->(_) { TABLES.keys + %w[full full_download] } }
 
   scope :newest_first, -> { order(created_at: :desc, id: :desc) }
 
@@ -198,45 +199,62 @@ class DataExport < ApplicationRecord
     [ csv, "#{Current.business.handle.presence || "shadetree"}-#{key}-#{Current.business.today.iso8601}.csv" ]
   end
 
-  def label = kind == "full" ? "Everything (zip)" : self.class.table(kind).label
+  def label = { "full" => "Everything (zip)", "full_download" => "Downloaded everything (zip)" }[kind] || self.class.table(kind).label
 
   STATUSES.each { |status| define_method(:"#{status}?") { self.status == status } }
 
-  # Starts a full export in the background, or returns the one already being built.
+  # Starts a full export in the background, or returns the one already being built. A build that
+  # stopped moving (its worker was stopped) is marked failed, so it can't block a new one.
   def self.request_full!(by:)
-    transaction do
+    export = transaction do
       Current.business.lock!
+      where(kind: "full", status: "building").find_each { _1.give_up_if_stale! }
       where(kind: "full", status: "building").first ||
-        create!(kind: "full", status: "building", requested_by: by, requested_by_email: by.email).tap do |export|
-          DataExportJob.perform_later(export.id, export.business_id)
-        end
+        create!(kind: "full", status: "building", requested_by: by, requested_by_email: by.email).tap { _1.instance_variable_set(:@new, true) }
     end
+    DataExportJob.perform_later(export.id, export.business_id) if export.instance_variable_get(:@new) # after commit, so the job finds it
+    export
   end
 
-  def downloadable? = ready? && file.attached? && expires_at&.future?
+  def stale? = building? && updated_at < STALE_AFTER.ago
 
-  # Builds the zip (DataExportJob, inside the business) and tells whoever asked.
+  def give_up_if_stale!
+    update!(status: "failed", failure_reason: "It stopped partway. Make a new one.") if stale?
+  end
+
+  def downloadable? = ready? && files.attached? && expires_at&.future?
+
+  def parts = files.attachments.sort_by { _1.blob.filename.to_s }
+
+  # Builds the zip, in parts if it's big (DataExportJob, inside the business), and tells whoever
+  # asked. It touches the export as it goes, so a stopped build is noticed (stale?).
   def build!
-    Tempfile.create([ "export", ".zip" ], binmode: true) do |tempfile|
-      count = Archive.new(business).write(tempfile)
-      tempfile.rewind
-      file.attach(io: tempfile, filename: "#{business.handle.presence || "shadetree"}-everything-#{business.today.iso8601}.zip", content_type: "application/zip")
-      update!(status: "ready", rows_count: count, expires_at: LINK_LASTS.from_now)
+    base = "#{business.handle.presence || "shadetree"}-everything-#{business.today.iso8601}"
+    count = Archive.new(business, heartbeat: -> { touch }).write_parts do |number, io|
+      files.attach(io:, filename: "#{base}-part-#{number}.zip", content_type: "application/zip")
     end
+    update!(status: "ready", rows_count: count, expires_at: LINK_LASTS.from_now, failure_reason: nil)
     notify("Your data export is ready to download, until #{expires_at.in_time_zone(business.time_zone).to_date.to_fs(:long)}.")
   rescue Archive::TooLarge, ZipWriter::TooLarge => error
-    update!(status: "failed")
-    notify("Your data export couldn't be made: #{error.message} Download the spreadsheets one at a time instead.")
+    fail_with("#{error.message} Download the spreadsheets one at a time instead.")
   rescue StandardError => error
     Rails.error.report(error, context: { data_export: id })
-    update!(status: "failed")
-    notify("Your data export couldn't be made. Try again in a while; we've been told about the problem.")
+    fail_with("Something went wrong. Try again in a while; we've been told about the problem.")
   end
 
+  # Records that someone downloaded a full export (who, when).
+  def log_download!(by:) = self.class.create!(kind: "full_download", requested_by: by, requested_by_email: by.email, rows_count: nil)
+
   # The zip is removed once the link expires (PruneDataExportsJob).
-  def expire! = (file.purge_later; update!(status: "expired"))
+  def expire! = (files.purge_later; update!(status: "expired"))
 
   private
+
+  def fail_with(reason)
+    files.purge_later if files.attached?
+    update!(status: "failed", failure_reason: reason)
+    notify("Your data export couldn't be made: #{reason}")
+  end
 
   def notify(title)
     return unless requested_by

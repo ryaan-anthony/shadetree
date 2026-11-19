@@ -36,7 +36,8 @@ class ZipWriter
     data = data.to_s.b
     body = compress ? deflate(data) : data
     method = compress ? 8 : 0
-    raise TooLarge, "The archive would be larger than 4 GB" if @offset + body.bytesize + 1024 > LIMIT || @entries.size >= 0xFFFF
+    raise TooLarge, "The archive would be larger than 4 GB." if @offset + body.bytesize + 1024 > LIMIT
+    raise TooLarge, "The archive would hold more than 65,535 files." if @entries.size >= 0xFFFF
 
     time, date = dos_time(at)
     entry = Entry.new(name:, method:, crc: Zlib.crc32(data), compressed_size: body.bytesize, size: data.bytesize, offset: @offset, time:, date:)
@@ -72,11 +73,11 @@ class ZipWriter
   # Two files can't share a name: "photo.jpg", then "photo (2).jpg".
   def unique_name(name)
     candidate, number = name, 1
-    while @names.include?(candidate)
+    while @names.include?(candidate.downcase) # "Dup.jpg" and "dup.jpg" collide on Mac and Windows
       number += 1
       candidate = name.sub(/(\.[^.\/]+)?\z/) { " (#{number})#{_1}" }
     end
-    @names << candidate
+    @names << candidate.downcase
     candidate
   end
 
