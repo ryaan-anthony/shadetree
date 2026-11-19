@@ -40,8 +40,13 @@
     <div class="space-y-3">
       <% AutomationRule::CONDITIONS.each do |key, definition| %>
         <% value = rule.conditions[key] %>
+        <% next if key == "location" && !current_business.multiple_locations? && value.blank? %><%# CAT-07 %>
         <div class="flex flex-wrap items-center gap-x-3 gap-y-2" data-automation-form-target="option" data-subjects="<%= definition[:subjects].join(" ") %>">
-          <% if %w[still_open paid_in_full].include?(key) %>
+          <% if key == "location" %>
+            <label class="text-sm text-ink" for="condition-location"><%= definition[:label] %></label>
+            <%= select_tag "automation_rule[conditions][location]", options_for_select(current_business.active_locations.map { [ _1.name, _1.uid ] }, value),
+                           include_blank: "Any location", id: "condition-location", class: "select h-8 !w-48 py-0" %>
+          <% elsif %w[still_open paid_in_full].include?(key) %>
             <label class="flex items-center gap-2 text-sm text-ink">
               <input type="checkbox" class="checkbox" name="automation_rule[conditions][<%= key %>]" value="1" <%= "checked" unless AutomationConditions.off?(value) %>
                      data-action="automation-form#refresh">

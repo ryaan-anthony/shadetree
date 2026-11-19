@@ -1,5 +1,5 @@
 # JOB-02: what's worth a second look before booking or moving visits: a time outside the
-# business's hours, a day it's closed, a closure (CAT-06), or someone going who's already on
+# location's hours (CAT-07), a day it's closed, a closure (CAT-06), or someone going who's already on
 # another visit then. Warnings never stop the booking; staff can schedule anyway.
 #
 #   VisitWarnings.for([ visit ])   # => ["Marcus Reyes is on J-0003 Gutter cleaning then (9–11 am)."]
@@ -18,15 +18,19 @@ class VisitWarnings
   def messages
     return [] if @visits.empty?
 
-    hours = @hours || OpeningHours.new(@business)
     several = @visits.size > 1
     @visits.flat_map do |visit|
-      found = hours.problems(visit.scheduled_on, visit.starts_at, visit.ends_at).map(&:message) + overlaps(visit)
+      found = hours_for(visit).problems(visit.scheduled_on, visit.starts_at, visit.ends_at).map(&:message) + overlaps(visit)
       several ? found.map { "#{visit.scheduled_on.strftime("%a, %b %-d")}: #{_1}" } : found
     end.uniq
   end
 
   private
+
+  # CAT-07: each visit is checked against its job's location's hours, closures and zone.
+  def hours_for(visit)
+    @hours || ((@by_location ||= {})[visit.job.location_id] ||= OpeningHours.new(visit.job.location.primary? ? visit.business : visit.job.location))
+  end
 
   # Visits on the same date only: a visit running past midnight from the day before isn't seen.
   def overlaps(visit)

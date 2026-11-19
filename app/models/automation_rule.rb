@@ -29,7 +29,8 @@ class AutomationRule < ApplicationRecord
     "still_open" => { label: "It's still open: the quote isn't answered, the invoice isn't paid, the job isn't done", subjects: %w[Quote Job Invoice] },
     "paid_in_full" => { label: "The invoice is paid in full", subjects: %w[Invoice Payment] },
     "total_at_least" => { label: "The total is at least", subjects: %w[Quote Invoice Payment] },
-    "client_tag" => { label: "The client has the tag", subjects: %w[ServiceRequest Quote Job Visit Invoice Payment] }
+    "client_tag" => { label: "The client has the tag", subjects: %w[ServiceRequest Quote Job Visit Invoice Payment] },
+    "location" => { label: "It's for the location", subjects: %w[ServiceRequest Quote Job Visit Invoice Payment] } # CAT-07
   }.freeze
 
   # Each action, and the subjects (by trigger subject) it makes sense for.
@@ -77,6 +78,7 @@ class AutomationRule < ApplicationRecord
       errors.add(:conditions, "need an amount like 250 or 250.00")
     end
     errors.add(:conditions, "need a tag") if conditions.key?("client_tag") && conditions["client_tag"].to_s.squish.empty?
+    errors.add(:conditions, "need one of your locations") if conditions.key?("location") && !Location.exists?(uid: conditions["location"].to_s)
   end
 
   def valid_actions

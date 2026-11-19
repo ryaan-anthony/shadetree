@@ -25,23 +25,23 @@ businesses never see any of it.
 
 ## Acceptance criteria
 
-- [ ] Every business has a primary location, created automatically from its profile. Location
+- [x] Every business has a primary location, created automatically from its profile. Location
       settings stay hidden until a second location is added.
-- [ ] Owners/Admins can add, edit and archive locations: name, address, phone, email, time
+- [x] Owners/Admins can add, edit and archive locations: name, address, phone, email, time
       zone, business hours and closures (the CAT-06 settings, per location).
-- [ ] Members can be assigned to one or more locations; a member's default location sets the
+- [x] Members can be assigned to one or more locations; a member's default location sets the
       default for documents they create.
-- [ ] Requests, quotes, jobs and invoices belong to a location. The request form can be
+- [x] Requests, quotes, jobs and invoices belong to a location. The request form can be
       per-location or ask the client to choose.
-- [ ] Client-facing pages, PDFs and emails show that location's contact details.
-- [ ] Lists, the calendar and the dashboard can be filtered by location. The filter is
+- [x] Client-facing pages, PDFs and emails show that location's contact details.
+- [x] Lists, the calendar and the dashboard can be filtered by location. The filter is
       remembered per member.
-- [ ] Scheduling warnings and reminders use the location's hours and time zone.
-- [ ] Document numbering stays sequential per business (an optional per-location prefix is
-      allowed).
-- [ ] Multiple locations are a plan feature (BIL-01). On downgrade, existing locations stay
+- [x] Scheduling warnings and reminders use the location's hours and time zone.
+- [x] Document numbering stays sequential per business (an optional per-location prefix is
+      allowed). *Unchanged; no per-location prefix was added.*
+- [x] Multiple locations are a plan feature (BIL-01). On downgrade, existing locations stay
       readable but no new ones can be added.
-- [ ] Tests cover the hidden single-location experience, per-location hours and time zones,
+- [x] Tests cover the hidden single-location experience, per-location hours and time zones,
       filtering and tenancy.
 
 ## Out of scope
@@ -49,9 +49,33 @@ businesses never see any of it.
 - Per-location prices and taxes (CAT-08). Separate payment accounts per location. Restricting
   members to only their own location's data.
 
+## Decisions
+
+- **Visibility filters only** (recommendation accepted): no location-scoped permissions, and
+  ACC-07 roles are unchanged.
+- **One payment account per business** for now (the current model); see the open question.
+- The main location's address, contact details, time zone, hours and closures stay on the
+  business profile (Settings → Business and Hours), so single-location businesses see no change.
+- A member's filter starts at their default location; visits keep their location's time zone.
+- NTF-04's deferred "location" condition is added to automations.
+
+## Implementation notes
+
+- `Location` (`primary`, address, phone, email, timezone, weekly_hours, archived_at) and
+  `LocationMember`; `business_users.default_location_id` and `location_filter`. `Business#primary_location`,
+  `#multiple_locations?` (archived count), `BusinessUser#document_location`. Plan feature `locations`.
+- `OpeningHours.new(location)`; closures without a location are the main location's. Settings →
+  Locations (`Admin::LocationsController`); the Hours tab takes `?location=`.
+- `AtLocation` on `ServiceRequest`, `Quote`, `Job`, `Invoice`: from the source document, else the
+  member's default, else main. `#contact` (location or business) feeds the client layout, contact
+  block, PDF letterhead and email footer and reply-to. Request links take `?location=<uid>`.
+- `LocationFilter` (`filters_by_location Model, only:`) scopes lists, the schedule (its grid in
+  that location's zone) and the dashboard. `Visit#place`, `VisitWarnings` and `VisitReminders`
+  use the job's location. `MarketingHelper::COMING_SOON` no longer lists locations.
+- Dev seeds: the feature comped for the demo business, a "North yard" location (Priya works
+  there) with a logged request.
+
 ## Open questions
 
-- Should members be restricted to their own location's data (location-scoped permissions)?
-  This interacts with ACC-07. Recommend visibility filters first, restrictions later.
 - Is one payment account per business enough, or does each branch need its own payouts?
-  **(blocking for franchise-style customers)**
+  **(blocking for franchise-style customers)** Built with one per business for now.

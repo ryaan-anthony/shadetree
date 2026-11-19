@@ -128,7 +128,7 @@ class Visit < ApplicationRecord
     case timing
     when "exact" then clock_label(starts_at)
     when "window"
-      same_half = starts_at.in_time_zone(business.time_zone).hour < 12 == window_ends_at.in_time_zone(business.time_zone).hour < 12
+      same_half = starts_at.in_time_zone(place.time_zone).hour < 12 == window_ends_at.in_time_zone(place.time_zone).hour < 12
       "Arrive #{clock_label(starts_at, ampm: !same_half)}–#{clock_label(window_ends_at)}"
     else "Anytime"
     end
@@ -298,7 +298,7 @@ class Visit < ApplicationRecord
   end
 
   # A visit completed by mistake can be reopened the same day (by the business's clock).
-  def reopenable? = status == "completed" && job.open? && completed_at && completed_at.in_time_zone(business.time_zone).to_date == business.today
+  def reopenable? = status == "completed" && job.open? && completed_at && completed_at.in_time_zone(place.time_zone).to_date == place.today
 
   def reopen!(by:)
     under_job_lock do
@@ -425,20 +425,26 @@ class Visit < ApplicationRecord
     self
   end
 
-  def clock(time) = time&.in_time_zone(business.time_zone)&.strftime("%H:%M")
+  def clock(time) = time&.in_time_zone(place.time_zone)&.strftime("%H:%M")
 
   def clock_label(time, ampm: true)
-    local = time.in_time_zone(business.time_zone)
+    local = time.in_time_zone(place.time_zone)
     label = "#{(local.hour % 12).nonzero? || 12}#{":%02d" % local.min if local.min.positive?}"
     ampm ? "#{label} #{local.hour < 12 ? "am" : "pm"}" : label
   end
 
-  # The form's wall-clock times on the visit's date, in the business's zone (so moving a visit to
+  # CAT-07: visits keep the time of their job's location (its zone; the business's for the main one).
+  def place
+    location = Tenancy.with_business(business) { job&.location } if business
+    location.nil? || location.primary? ? business : location
+  end
+
+  # The form's wall-clock times on the visit's date, in the location's zone (so moving a visit to
   # another day keeps its clock time). A time that can't be read leaves none, and validation says so.
   def place_times
     return unless scheduled_on && business
 
-    read = ->(value) { CLOCK.match?(value.to_s.strip) ? business.local_time(scheduled_on, value.to_s.strip.first(5)) : nil }
+    read = ->(value) { CLOCK.match?(value.to_s.strip) ? place.local_time(scheduled_on, value.to_s.strip.first(5)) : nil }
     self.starts_at = anytime? ? nil : read.(start_time)
     self.window_ends_at = window? ? read.(window_end_time) : nil
   end
