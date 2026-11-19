@@ -1,0 +1,66 @@
+<% content_for :title, "Features · Shadetree" %>
+<% content_for :head, tag.meta(name: "description", content: "Quotes clients approve from their phone, a schedule your crew can follow, and invoices that get paid. See Shadetree's features.") %>
+
+<section class="border-b border-line bg-[radial-gradient(ellipse_at_top,var(--color-canopy-50),transparent_65%)]">
+  <div class="mx-auto max-w-3xl px-5 py-16 text-center sm:px-8 sm:py-20">
+    <h1 class="text-4xl font-extrabold tracking-[-0.04em] text-ink sm:text-5xl">Everything between the first call and getting paid.</h1>
+    <p class="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-subtle">Shadetree does one job well: requests, quotes, scheduling, invoices and payments for crews of one to ten. These are real screens from the product.</p>
+    <nav class="mt-8 flex flex-wrap justify-center gap-2" aria-label="On this page">
+      <% [ [ "Quoting", "quoting" ], [ "Client approval", "approval" ], [ "Scheduling", "scheduling" ], [ "Your crew", "crew" ], [ "Invoices and payments", "invoicing" ] ].each do |label, anchor| %>
+        <%= link_to label, "##{anchor}", class: "rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm font-medium text-subtle hover:border-control hover:text-ink" %>
+      <% end %>
+    </nav>
+  </div>
+</section>
+
+<%= render "features/section", id: "quoting", image: "marketing/builder.webp", width: 1600, height: 1129,
+           alt: "The quote builder: a client, a title and valid-until date, line items with quantities, prices and discounts, and the totals with two tax rates.",
+           title: "Build a quote in a few minutes",
+           text: "Start from your own services and prices, then change anything for this job. Shadetree adds up the discounts and taxes, saves as you go, and tells you how many quotes your plan has left.",
+           points: [ "Your catalog of services, with units and prices you set once",
+                     "Discounts per line or on the whole quote, and more than one tax rate",
+                     "A valid-until date, your terms, and a PDF with your logo",
+                     "Revise a sent quote; the client always sees the latest, and earlier versions are kept" ] %>
+
+<%= render "features/section", id: "approval", image: "marketing/client-quote.webp", width: 780, height: 1500, phone: true, flip: true,
+           alt: "A quote as the client sees it on a phone: the business's name, the work, the total, and buttons to approve, decline or ask for changes.",
+           title: "Clients approve from their phone",
+           text: "Your client opens a link, with no account and nothing to install. They see your quote with your name and colors, and approve it with a typed signature, decline it, or ask for changes.",
+           points: [ "You're told when they open it and when they answer",
+                     "Every approval keeps a record of exactly what was agreed",
+                     "New clients can ask for a quote from your own request page, with photos" ] %>
+
+<%= render "features/section", id: "scheduling", image: "marketing/schedule.webp", width: 1600, height: 1129,
+           alt: "The week's schedule: visits on a calendar colored by crew member, the crew's hours this week, and jobs that still need scheduling.",
+           title: "A schedule the whole crew can follow",
+           text: "Put approved work on the calendar, by the day or the week. Drag a visit to move it, give it an exact time or an arrival window, and see who's busy at a glance.",
+           points: [ "Jobs waiting to be scheduled are listed beside the calendar",
+                     "Clients get a confirmation, and a reminder the day before",
+                     "Days you're closed show on the calendar" ] %>
+
+<%= render "features/section", id: "crew", image: "marketing/visit.webp", width: 780, height: 1500, phone: true, flip: true,
+           alt: "A technician's visit on a phone: the client, the time, a Start visit button, the address with directions, call and text buttons, photos and notes.",
+           title: "Your crew sees their day, and nothing else",
+           text: "Technicians sign in on their phone to today's visits: the address with directions, the client's number, how to get in and what to do. They start and finish the work, and add photos and notes for the office.",
+           points: [ "Prices stay private unless you choose to show them",
+                     "Each person sees only what their role allows",
+                     "Photos from the job land on the visit, ready for the invoice" ] %>
+
+<%= render "features/section", id: "invoicing", image: "marketing/invoice.webp", width: 1600, height: 1129,
+           alt: "An invoice that's partly paid: its items and total, a check payment recorded against it, the balance, and its history.",
+           title: "Invoice when the work is done",
+           text: "Turn an approved quote or a finished job into an invoice in one step, and send it as a link or a PDF. Record payments as they arrive, in full or in part, and always know what's still owed.",
+           points: [ "Cash, check or bank transfer, with the date and a reference",
+                     "Bill a big job in stages, with more than one invoice",
+                     "Your clients can always find what they owe from their link" ] %>
+
+<section class="border-t border-line bg-canvas">
+  <div class="mx-auto max-w-3xl px-5 py-16 text-center sm:px-8">
+    <h2 class="text-3xl font-extrabold tracking-[-0.035em] text-ink">Try it with your own services.</h2>
+    <p class="mt-3 text-lg text-subtle">The Free plan has every feature on this page. No card needed.</p>
+    <div class="mt-7 flex flex-wrap justify-center gap-3">
+      <%= link_to "Start free", new_user_registration_path, class: button_classes(:primary, :lg) %>
+      <%= link_to "See pricing", pricing_path, class: button_classes(:secondary, :lg) %>
+    </div>
+  </div>
+</section>

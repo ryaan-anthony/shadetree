@@ -6,7 +6,7 @@
         <%= link_to root_path, class: "logo logo-light" do %><span class="logo-mark"><%= logo_mark %></span><span>Shadetree</span><% end %>
         <p class="mt-4 max-w-xs text-sm">Quotes, scheduling and payments for small service businesses.</p>
       </div>
-      <% { "Product" => [ [ "How it works", root_path(anchor: "how-it-works") ], [ "Features", root_path(anchor: "features") ], [ "Pricing", pricing_path ], [ "Sign in", new_user_session_path ] ],
+      <% { "Product" => [ [ "How it works", root_path(anchor: "how-it-works") ], [ "Features", features_path ], [ "Pricing", pricing_path ], [ "Sign in", new_user_session_path ] ],
            "Company" => [ [ "About", about_path ], [ "Contact", contact_path ] ],
            "Legal" => [ [ "Terms", terms_path ], [ "Privacy", privacy_path ] ] }.each do |heading, items| %>
         <div>
