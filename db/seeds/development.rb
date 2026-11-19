@@ -44,6 +44,12 @@ Tenancy.with_business(business) do
   Closure.find_or_create_by!(reason: "Christmas Day") { _1.assign_attributes(starts_on: Date.new(2026, 12, 25), repeats_yearly: true) }
   eve = Date.new(business.today.year, 12, 24)
   Closure.find_or_create_by!(reason: "Christmas Eve, closing at noon") { _1.assign_attributes(starts_on: eve, part_of_day: true, start_time: "12:00", end_time: "") }
+  # CAT-07: a second location (the locations feature is comped for the demo), where Priya works.
+  business.update!(plan_overrides: business.plan_overrides.deep_merge("features" => { "locations" => true }))
+  north = Location.find_or_create_by!(name: "North yard") do |location|
+    location.assign_attributes(phone: "(555) 380-4499", email: "north@example.com", address_line1: "88 Ridge Road", city: "Brookfield", region: "CT", postal_code: "06804")
+  end
+  LocationMember.find_or_create_by!(location: north, user: admin)
   # Tax rates (CAT-04): state and county, applied to new documents.
   TaxRate.find_or_create_by!(name: "State sales tax") { _1.percent = "6.25" }
   TaxRate.find_or_create_by!(name: "County") { _1.percent = "1" }

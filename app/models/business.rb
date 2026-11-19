@@ -26,6 +26,7 @@ class Business < ApplicationRecord
   has_many :business_users, dependent: :destroy
   has_many :users, through: :business_users
   has_many :closures # CAT-06; the database removes them with the business
+  has_many :locations # CAT-07; likewise
 
   # Callbacks
   before_validation { self.uid ||= SecureRandom.base58(BusinessOwned::UID_LENGTH) if new_record? }
@@ -39,7 +40,8 @@ class Business < ApplicationRecord
   def entitlements = @entitlements ||= Entitlements.for(self)
 
   def reload(...)
-    @entitlements = nil
+    @entitlements = @primary_location = nil
+    remove_instance_variable(:@multiple_locations) if defined?(@multiple_locations)
     super
   end
 
@@ -47,6 +49,7 @@ class Business < ApplicationRecord
   validate :within_free_businesses_per_owner, on: :create
   before_save :set_default_brand_color
   after_create :add_owner_to_business_users
+  after_create :create_primary_location # CAT-07
 
   # Validations
   validates :name, presence: true, length: { maximum: 120 }
@@ -125,10 +128,23 @@ class Business < ApplicationRecord
   def country_entry = Country.find(country)
 
   # Address lines as they appear on documents, skipping blanks.
-  def address_lines
-    city_line = [ city, [ region, postal_code ].compact_blank.join(" ") ].compact_blank.join(", ")
-    [ address_line1, address_line2, city_line, (country_entry&.name if country != "US") ].compact_blank
+  def address_lines = AddressLines.for(self)
+
+  # CAT-07: the location the profile describes, made with the business.
+  def primary_location
+    @primary_location ||= Tenancy.with_business(self) { Location.find_by(primary: true) }&.tap { _1.association(:business).target = self }
   end
+
+  # Whether the business has ever added a second location (archived ones count): until then
+  # nothing about locations shows anywhere.
+  def multiple_locations?
+    return @multiple_locations if defined?(@multiple_locations)
+
+    @multiple_locations = Tenancy.with_business(self) { Location.count > 1 }
+  end
+
+  # Locations new work can go to, main first.
+  def active_locations = Tenancy.with_business(self) { Location.active.ordered.to_a }
 
   # What a quote or invoice copies when it's created, so later profile changes never alter it
   # (CAT-01). QTE-01 and INV-01 store this on the document.
@@ -252,6 +268,10 @@ class Business < ApplicationRecord
 
   def set_default_brand_color
     self.brand_color = Branding::DEFAULT_COLOR if brand_color.blank?
+  end
+
+  def create_primary_location
+    Tenancy.with_business(self) { Location.create!(primary: true, name: city.to_s.strip.presence&.first(60) || Location::PRIMARY_NAME, country:) }
   end
 
   def add_owner_to_business_users

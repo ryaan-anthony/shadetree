@@ -1,21 +1,29 @@
 <%# CAT-06: weekly hours and closures. Scheduling shades the time outside them and warns about visits then. %>
 <%= render "admin/businesses/settings_header", current: "hours" %>
-<% hours = @business.hours %>
-<% problems = @business.errors.full_messages_for(:weekly_hours) %>
+<% hours = @place.hours %>
+<% problems = @place.errors.full_messages_for(:weekly_hours) %>
 <% problem_days = problems.any? ? hours.problems_by_day : {} %>
-<% zone = @business.time_zone %>
+<% zone = @place.time_zone %>
 <% zone_name = ActiveSupport::TimeZone::MAPPING.key(zone.tzinfo.identifier) || zone.tzinfo.identifier.split("/").last.tr("_", " ") %>
 
 <div class="max-w-3xl space-y-4">
-  <% unless @business.weekly_hours_was || problems.any? %>
+  <% if @business.multiple_locations? %><%# CAT-07: each location has its own hours and closures %>
+    <nav class="flex flex-wrap gap-2" aria-label="Location">
+      <% @business.active_locations.then { @location && !_1.include?(@location) ? _1 + [ @location ] : _1 }.each do |location| %>
+        <% current = location.primary? ? @location.nil? : location == @location %>
+        <%= link_to location.name, admin_hours_path(location: (location unless location.primary?)), class: button_classes(current ? :secondary : :ghost, :sm), "aria-current": ("page" if current) %>
+      <% end %>
+    </nav>
+  <% end %>
+  <% unless @place.weekly_hours_was || problems.any? %>
     <div class="banner banner-info"><%= icon "clock" %>
       <p>Your hours aren't set yet. Once they are, the schedule shades the times you're closed and warns you about visits booked then.</p></div>
   <% end %>
 
   <%= card title: "Weekly hours", subtitle: "In #{zone_name} time. One opening and one closing time per day; close at 12:00 AM to stay open until midnight.",
-           actions: button_to("Use weekdays 8–5", admin_hours_path, method: :patch, params: { preset: "weekdays" }, class: button_classes(:secondary, :sm),
-                              form: { data: ({ turbo_confirm: "Replace your hours with Monday to Friday, 8 am to 5 pm?", turbo_confirm_button: "Replace" } if @business.weekly_hours_was) }) do %>
-    <%= form_with url: admin_hours_path, method: :patch, id: "weekly-hours" do %>
+           actions: button_to("Use weekdays 8–5", hours_path, method: :patch, params: { preset: "weekdays" }, class: button_classes(:secondary, :sm),
+                              form: { data: ({ turbo_confirm: "Replace your hours with Monday to Friday, 8 am to 5 pm?", turbo_confirm_button: "Replace" } if @place.weekly_hours_was) }) do %>
+    <%= form_with url: hours_path, method: :patch, id: "weekly-hours" do %>
       <% if problems.any? %>
         <div class="banner banner-danger mb-4" role="alert"><%= icon "alert-circle" %>
           <div><p>Not saved yet. Fix <%= problems.size == 1 ? "this" : "these" %> and save again:</p>
@@ -49,7 +57,7 @@
   <% end %>
 
   <%= card title: "Closures", subtitle: "Holidays, vacation and half days. The schedule warns about visits booked then.", flush: true,
-           actions: link_to(new_admin_closure_path, class: button_classes(:secondary, :sm)) { icon("plus") + " Add closure" } do %>
+           actions: link_to(new_admin_closure_path(location: @location), class: button_classes(:secondary, :sm)) { icon("plus") + " Add closure" } do %>
     <% if @closures.empty? %>
       <%= empty_state title: "No closures coming up", text: "Add the holidays and days off you know about, like Thanksgiving or a week's vacation.", icon: "calendar" %>
     <% else %>

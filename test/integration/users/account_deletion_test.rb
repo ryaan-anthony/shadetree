@@ -60,8 +60,14 @@ class Users::AccountDeletionTest < ActionDispatch::IntegrationTest
 
     as_business(businesses(:one)) { Client.delete_all }
     business_users(:one_member_of_two).destroy! # leave business two out of it
+    businesses(:one).update!(plan_overrides: { "features" => { "locations" => true } })
+    branch = as_business(businesses(:one)) { Location.create!(name: "North yard", phone: "555-0177", email: "north@example.com", city: "Yonkers") }
     assert owner.reload.delete_account!
     assert_not businesses(:one).reload.active?
+    as_business(businesses(:one)) do # CAT-07: the locations' details go too
+      assert_equal [ nil, nil, nil ], branch.reload.values_at(:phone, :email, :city)
+      assert_equal Location::PRIMARY_NAME, businesses(:one).primary_location.name
+    end
   end
 
   test "past work shows Former member; the team can't reactivate a deleted account" do

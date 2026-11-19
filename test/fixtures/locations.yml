@@ -1,0 +1,12 @@
+# CAT-07: every business has a main location (made with the business; fixtures skip callbacks).
+one_main:
+  business: one
+  uid: locOneMain01
+  name: New York
+  primary: true
+
+two_main:
+  business: two
+  uid: locTwoMain02
+  name: Los Angeles
+  primary: true

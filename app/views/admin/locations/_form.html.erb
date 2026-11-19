@@ -1,0 +1,51 @@
+<%# CAT-07: a location's details and team. The main location's details are the business profile's. %>
+<% country = Country.find(@location.country) || Country.find("US") %>
+<% members = current_business.business_users.active.includes(:user).sort_by { _1.user.full_name.downcase } %>
+<% sent = params.dig(:location, :member_ids) %>
+<% working = sent ? members.select { Array(sent).include?(_1.uid) }.map(&:user_id) : @location.location_members.map(&:user_id) %>
+<%= form_with model: @location, url: (@location.persisted? ? admin_location_path(@location) : admin_locations_path), class: "max-w-3xl space-y-4" do |f| %>
+  <% if @location.errors[:base].any? %>
+    <div class="banner banner-danger" role="alert"><%= icon "alert-circle" %><p><%= @location.errors[:base].to_sentence %></p></div>
+  <% end %>
+  <%= card title: "Location" do %>
+    <%= f.field :name, autofocus: @location.new_record?, maxlength: 60, placeholder: "North yard", help: "Clients see it beside your business name." %>
+    <% if @location.primary? %>
+      <p class="mt-3 text-sm2 text-muted">The main location's address, contact details and time zone are your business's, on the <%= link_to "Business", edit_admin_business_path, class: "font-medium text-ink underline-offset-2 hover:underline" %> tab, and its hours are on <%= link_to "Hours", admin_hours_path, class: "font-medium text-ink underline-offset-2 hover:underline" %>.</p>
+    <% end %>
+  <% end %>
+  <% unless @location.primary? %>
+    <%= card title: "Contact details", subtitle: "Shown to clients on this location's quotes, invoices and emails." do %>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <%= f.field :phone, as: :phone, optional: true, placeholder: "(555) 123-4567" %>
+        <%= f.field :email, as: :email, optional: true, placeholder: "north@example.com", help: "Replies go here. Empty: your business email." %>
+      </div>
+    <% end %>
+    <%= card title: "Address" do %>
+      <%= f.field :address_line1, label: "Street address", optional: true %>
+      <%= f.field :address_line2, label: "Unit, suite or floor", optional: true %>
+      <div class="grid gap-4 sm:grid-cols-3">
+        <%= f.field :city, optional: true %>
+        <%= f.field :region, label: country.region_label, optional: true %>
+        <%= f.field :postal_code, label: country.postal_label, optional: true %>
+      </div>
+      <%= f.field :country, as: :select, choices: Country.options %>
+    <% end %>
+    <%= card title: "Time zone", subtitle: "Its visits, hours and reminders use this zone." do %>
+      <%= f.field :timezone, as: :select, label: "Time zone", include_blank: "Same as the business",
+                  choices: grouped_options_for_select(time_zone_options(@location.timezone), time_zone_identifier(@location.timezone)) %>
+    <% end %>
+  <% end %>
+  <%= card title: "Team", subtitle: "Who works here. Someone who works at only one location starts their new documents there." do %>
+    <%= hidden_field_tag "location[member_ids][]", "", id: nil %>
+    <div class="grid gap-2 sm:grid-cols-2">
+      <% members.each do |member| %>
+        <label class="check"><%= check_box_tag "location[member_ids][]", member.uid, working.include?(member.user_id), id: "member_#{member.uid}" %>
+          <span><%= member.user.full_name %></span></label>
+      <% end %>
+    </div>
+  <% end %>
+  <div class="flex items-center justify-end gap-2">
+    <%= link_to "Cancel", (current_business.multiple_locations? ? admin_locations_path : edit_admin_business_path), class: button_classes(:ghost) %>
+    <%= f.submit_button @location.persisted? ? "Save location" : "Add location" %>
+  </div>
+<% end %>

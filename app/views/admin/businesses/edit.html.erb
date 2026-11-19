@@ -94,6 +94,12 @@
           <%= f.field :postal_code, label: country.postal_label, optional: true, autocomplete: "postal-code" %>
         </div>
         <%= f.field :country, as: :select, choices: Country.options, autocomplete: "country" %>
+        <%# CAT-07: nothing about locations until a second one exists, and the way in only on plans that include them %>
+        <% if @business.multiple_locations? %>
+          <p class="mt-3 text-sm2 text-muted">These are your main location's details. Other locations have their own, under <%= link_to "Locations", admin_locations_path, class: "font-medium text-ink underline-offset-2 hover:underline" %>.</p>
+        <% elsif @business.entitlements.feature?(:locations) %>
+          <p class="mt-3 text-sm2 text-muted">Work from more than one base? <%= link_to "Add a location", new_admin_location_path, class: "font-medium text-ink underline-offset-2 hover:underline" %></p>
+        <% end %>
       <% end %>
 
       <%= card title: "Time zone and currency", subtitle: "Used for scheduling, due dates and every price." do %>
