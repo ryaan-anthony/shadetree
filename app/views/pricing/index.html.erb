@@ -1,455 +1,112 @@
-<!-- Pricing Hero Section -->
-<section class="relative bg-linear-to-b from-slate-50 to-white py-16">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <div class="mb-8">
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-shadetree-green">
-                <%= icon "zap", class: "mr-2 h-4 w-4" %>
-                No setup fees • Cancel anytime
-            </span>
-        </div>
+<% content_for :title, "Pricing" %>
+<% content_for :head, tag.meta(name: "description", content: "Free to start, with the whole workflow. Paid plans by how many quotes you send each month. No contracts, no setup fees.") %>
+<% yearly = @plans.any? { plan_yearly?(_1) } %>
+<% savings = @plans.select { plan_yearly?(_1) }.map { plan_annual_saving(_1) }.uniq %>
 
-        <h1 class="text-4xl lg:text-5xl font-bold text-enterprise-navy mb-6 leading-tight">
-            Simple Pricing That
-            <span class="text-shadetree-blue">Grows With You</span>
-        </h1>
+<%# MKT-01: every price, limit and feature here comes from the plans (BIL-01). The monthly/yearly
+    switch is two radio buttons and CSS, so it works without script. %>
+<div class="group/billing">
+  <section class="mx-auto max-w-6xl px-5 pb-10 pt-14 text-center sm:px-8 sm:pt-20">
+    <h1 class="text-4xl font-extrabold tracking-[-0.04em] text-ink sm:text-6xl">Free until it’s paying for itself.</h1>
+    <p class="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-subtle">Every plan has the whole workflow, from request to payment. Paid plans are about how many quotes you send each month and how many people are on your team.</p>
+    <% if yearly %>
+      <fieldset class="mx-auto mt-8 inline-flex rounded-control border border-line bg-sunken p-1 text-sm">
+        <legend class="sr-only">Billing</legend>
+        <label class="cursor-pointer rounded-[4px] px-3.5 py-1.5 font-medium text-subtle has-[:checked]:bg-surface has-[:checked]:text-ink has-[:checked]:shadow-card has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-canopy">
+          <input type="radio" name="billing" value="monthly" class="sr-only" checked> Monthly
+        </label>
+        <label class="cursor-pointer rounded-[4px] px-3.5 py-1.5 font-medium text-subtle has-[:checked]:bg-surface has-[:checked]:text-ink has-[:checked]:shadow-card has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-canopy">
+          <input type="radio" name="billing" value="yearly" class="sr-only" id="billing-yearly"> Yearly<%= ", #{savings.first}" if savings.one? && savings.first %>
+        </label>
+      </fieldset>
+    <% end %>
+  </section>
 
-        <p class="text-xl text-enterprise-gray mb-12 max-w-3xl mx-auto">
-            Start free, pay only for what you use. No hidden fees, no long-term contracts.
-            Just simple pricing that makes sense for service businesses.
-        </p>
-
-        <!-- Billing Toggle -->
-        <div class="flex items-center justify-center">
-            <span id="monthly-label" class="text-sm font-medium text-gray-900 mr-3">Monthly</span>
-            <button id="billing-toggle" class="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200 transition-colors focus:outline-hidden focus:ring-2 focus:ring-shadetree-blue focus:ring-offset-2">
-                <span id="toggle-switch" class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1"></span>
-            </button>
-            <span id="annual-label" class="text-sm font-medium text-gray-900 ml-3">
-                Annual
-                <span class="text-shadetree-green font-semibold">(Save 20%)</span>
-            </span>
-        </div>
-    </div>
-</section>
-
-<!-- Pricing Plans Section -->
-<section class="bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-
-            <!-- Solo Plan -->
-            <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
-                <div class="text-center mb-8">
-                    <h3 class="text-2xl font-bold text-enterprise-navy mb-2">Solo</h3>
-                    <p class="text-enterprise-gray mb-6">Perfect for solo operators and small teams</p>
-                    <div class="mb-6">
-                        <span id="solo-price" class="text-4xl font-bold text-enterprise-navy">$9.99</span>
-                        <span class="text-lg text-gray-500">/month</span>
-                        <div id="solo-annual-savings" class="text-sm text-shadetree-green font-medium mt-1 hidden">
-                            Save $24/year
-                        </div>
-                    </div>
-                    <%= link_to new_user_registration_path(tier: 'solo'), class: "w-full bg-shadetree-blue text-white px-6 py-3 text-lg font-medium rounded-md hover:bg-blue-800 block text-center" do %>
-                        Get Started
-                    <% end %>
-                </div>
-
-                <div class="space-y-4">
-                    <h4 class="font-semibold text-enterprise-navy">What's included:</h4>
-                    <ul class="space-y-3">
-                        <li class="flex items-center">
-                            <%= icon "check", class: "w-5 h-5 text-shadetree-green mr-3" %>
-                            <span class="text-sm text-gray-700">Up to 50 quotes per month</span>
-                        </li>
-                        <li class="flex items-center">
-                            <%= icon "check", class: "w-5 h-5 text-shadetree-green mr-3" %>
-                            <span class="text-sm text-gray-700">Basic scheduling</span>
-                        </li>
-                        <li class="flex items-center">
-                            <%= icon "check", class: "w-5 h-5 text-shadetree-green mr-3" %>
-                            <span class="text-sm text-gray-700">Email notifications</span>
-                        </li>
-                        <li class="flex items-center">
-                            <%= icon "check", class: "w-5 h-5 text-shadetree-green mr-3" %>
-                            <span class="text-sm text-gray-700">Mobile app access</span>
-                        </li>
-                        <li class="flex items-center">
-                            <%= icon "check", class: "w-5 h-5 text-shadetree-green mr-3" %>
-                            <span class="text-sm text-gray-700">Community support</span>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Crew Plan (Popular) -->
-            <div class="bg-white rounded-lg shadow-xl border-2 border-shadetree-blue p-8 relative">
-                <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span class="bg-shadetree-blue text-white px-4 py-1 text-sm font-medium rounded-full">
-                        Most Popular
-                    </span>
-                </div>
-
-                <div class="text-center mb-8">
-                    <h3 class="text-2xl font-bold text-enterprise-navy mb-2">Crew</h3>
-                    <p class="text-enterprise-gray mb-6">For growing service businesses</p>
-                    <div class="mb-6">
-                        <span id="crew-price" class="text-4xl font-bold text-enterprise-navy">$39.99</span>
-                        <span class="text-lg text-gray-500">/month</span>
-                        <div id="crew-annual-savings" class="text-sm text-shadetree-green font-medium mt-1 hidden">
-                            Save $96/year
-                        </div>
-                    </div>
-                    <%= link_to new_user_registration_path(tier: 'crew'), class: "w-full bg-shadetree-blue text-white px-6 py-3 text-lg font-medium rounded-md hover:bg-blue-800 block text-center" do %>
-                        Get Started
-                    <% end %>
-                </div>
-
-                <div class="space-y-4">
-                    <h4 class="font-semibold text-enterprise-navy">Everything in Solo, plus:</h4>
-                    <ul class="space-y-3">
-                        <li class="flex items-center">
-                            <%= icon "check", class: "w-5 h-5 text-shadetree-green mr-3" %>
-                            <span class="text-sm text-gray-700">Unlimited quotes & appointments</span>
-                        </li>
-                        <li class="flex items-center">
-                            <%= icon "check", class: "w-5 h-5 text-shadetree-green mr-3" %>
-                            <span class="text-sm text-gray-700">Online payments & invoicing</span>
-                        </li>
-                        <li class="flex items-center">
-                            <%= icon "check", class: "w-5 h-5 text-shadetree-green mr-3" %>
-                            <span class="text-sm text-gray-700">Custom quote templates</span>
-                        </li>
-                        <li class="flex items-center">
-                            <%= icon "check", class: "w-5 h-5 text-shadetree-green mr-3" %>
-                            <span class="text-sm text-gray-700">Digital signatures</span>
-                        </li>
-                        <li class="flex items-center">
-                            <%= icon "check", class: "w-5 h-5 text-shadetree-green mr-3" %>
-                            <span class="text-sm text-gray-700">SMS notifications</span>
-                        </li>
-                        <li class="flex items-center">
-                            <%= icon "check", class: "w-5 h-5 text-shadetree-green mr-3" %>
-                            <span class="text-sm text-gray-700">Customer portal</span>
-                        </li>
-                        <li class="flex items-center">
-                            <%= icon "check", class: "w-5 h-5 text-shadetree-green mr-3" %>
-                            <span class="text-sm text-gray-700">Priority email support</span>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Fleet Plan -->
-            <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
-                <div class="text-center mb-8">
-                    <h3 class="text-2xl font-bold text-enterprise-navy mb-2">Fleet</h3>
-                    <p class="text-enterprise-gray mb-6">For multi-location operations</p>
-                    <div class="mb-6">
-                        <span id="fleet-price" class="text-4xl font-bold text-enterprise-navy">$79.99</span>
-                        <span class="text-lg text-gray-500">/month</span>
-                        <div id="fleet-annual-savings" class="text-sm text-shadetree-green font-medium mt-1 hidden">
-                            Save $192/year
-                        </div>
-                    </div>
-                    <%= link_to new_user_registration_path(tier: 'fleet'), class: "w-full bg-shadetree-green text-white px-6 py-3 text-lg font-medium rounded-md hover:bg-green-700 block text-center" do %>
-                        Get Started
-                    <% end %>
-                </div>
-
-                <div class="space-y-4">
-                    <h4 class="font-semibold text-enterprise-navy">Everything in Crew, plus:</h4>
-                    <ul class="space-y-3">
-                        <li class="flex items-center">
-                            <%= icon "check", class: "w-5 h-5 text-shadetree-green mr-3" %>
-                            <span class="text-sm text-gray-700">Multi-location management</span>
-                        </li>
-                        <li class="flex items-center">
-                            <%= icon "check", class: "w-5 h-5 text-shadetree-green mr-3" %>
-                            <span class="text-sm text-gray-700">Team management & roles</span>
-                        </li>
-                        <li class="flex items-center">
-                            <%= icon "check", class: "w-5 h-5 text-shadetree-green mr-3" %>
-                            <span class="text-sm text-gray-700">Advanced reporting</span>
-                        </li>
-                        <li class="flex items-center">
-                            <%= icon "check", class: "w-5 h-5 text-shadetree-green mr-3" %>
-                            <span class="text-sm text-gray-700">Workflow automation</span>
-                        </li>
-                        <li class="flex items-center">
-                            <%= icon "check", class: "w-5 h-5 text-shadetree-green mr-3" %>
-                            <span class="text-sm text-gray-700">API access</span>
-                        </li>
-                        <li class="flex items-center">
-                            <%= icon "check", class: "w-5 h-5 text-shadetree-green mr-3" %>
-                            <span class="text-sm text-gray-700">Phone support</span>
-                        </li>
-                        <li class="flex items-center">
-                            <%= icon "check", class: "w-5 h-5 text-shadetree-green mr-3" %>
-                            <span class="text-sm text-gray-700">Dedicated success manager</span>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Feature Comparison Table -->
-<section class="py-16 bg-gray-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-12">
-            <h2 class="text-3xl font-bold text-enterprise-navy mb-4">
-                Compare All Features
-            </h2>
-            <p class="text-xl text-enterprise-gray">
-                See exactly what's included in each plan
-            </p>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="min-w-full">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-4 text-left text-sm font-medium text-gray-900">Features</th>
-                            <th class="px-6 py-4 text-center text-sm font-medium text-gray-900">Solo</th>
-                            <th class="px-6 py-4 text-center text-sm font-medium text-gray-900">Crew</th>
-                            <th class="px-6 py-4 text-center text-sm font-medium text-gray-900">Fleet</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        <tr>
-                            <td class="px-6 py-4 text-sm text-gray-900">Monthly quotes</td>
-                            <td class="px-6 py-4 text-center text-sm text-gray-600">Up to 50</td>
-                            <td class="px-6 py-4 text-center">
-                                <%= icon "check", class: "w-5 h-5 text-shadetree-green mx-auto" %>
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <%= icon "check", class: "w-5 h-5 text-shadetree-green mx-auto" %>
-                            </td>
-                        </tr>
-                        <tr class="bg-gray-50">
-                            <td class="px-6 py-4 text-sm text-gray-900">Online payments</td>
-                            <td class="px-6 py-4 text-center">
-                                <%= icon "x", class: "w-5 h-5 text-gray-400 mx-auto" %>
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <%= icon "check", class: "w-5 h-5 text-shadetree-green mx-auto" %>
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <%= icon "check", class: "w-5 h-5 text-shadetree-green mx-auto" %>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="px-6 py-4 text-sm text-gray-900">Custom templates</td>
-                            <td class="px-6 py-4 text-center">
-                                <%= icon "x", class: "w-5 h-5 text-gray-400 mx-auto" %>
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <%= icon "check", class: "w-5 h-5 text-shadetree-green mx-auto" %>
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <%= icon "check", class: "w-5 h-5 text-shadetree-green mx-auto" %>
-                            </td>
-                        </tr>
-                        <tr class="bg-gray-50">
-                            <td class="px-6 py-4 text-sm text-gray-900">Multi-location support</td>
-                            <td class="px-6 py-4 text-center">
-                                <%= icon "x", class: "w-5 h-5 text-gray-400 mx-auto" %>
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <%= icon "x", class: "w-5 h-5 text-gray-400 mx-auto" %>
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <%= icon "check", class: "w-5 h-5 text-shadetree-green mx-auto" %>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="px-6 py-4 text-sm text-gray-900">API access</td>
-                            <td class="px-6 py-4 text-center">
-                                <%= icon "x", class: "w-5 h-5 text-gray-400 mx-auto" %>
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <%= icon "x", class: "w-5 h-5 text-gray-400 mx-auto" %>
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <%= icon "check", class: "w-5 h-5 text-shadetree-green mx-auto" %>
-                            </td>
-                        </tr>
-                        <tr class="bg-gray-50">
-                            <td class="px-6 py-4 text-sm text-gray-900">Phone support</td>
-                            <td class="px-6 py-4 text-center">
-                                <%= icon "x", class: "w-5 h-5 text-gray-400 mx-auto" %>
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <%= icon "x", class: "w-5 h-5 text-gray-400 mx-auto" %>
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <%= icon "check", class: "w-5 h-5 text-shadetree-green mx-auto" %>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- FAQ Section -->
-<section class="py-16 bg-white">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-12">
-            <h2 class="text-3xl font-bold text-enterprise-navy mb-4">
-                Frequently Asked Questions
-            </h2>
-            <p class="text-xl text-enterprise-gray">
-                Everything you need to know about Shadetree pricing
-            </p>
-        </div>
-
-        <div class="space-y-8">
-            <div class="bg-gray-50 rounded-lg p-6">
-                <h3 class="text-lg font-semibold text-enterprise-navy mb-3">
-                    Do you offer a free trial?
-                </h3>
-                <p class="text-enterprise-gray">
-                    Yes! All plans come with a 14-day free trial. No credit card required to start.
-                    You can cancel anytime during your trial period.
-                </p>
-            </div>
-
-            <div class="bg-gray-50 rounded-lg p-6">
-                <h3 class="text-lg font-semibold text-enterprise-navy mb-3">
-                    Can I change plans anytime?
-                </h3>
-                <p class="text-enterprise-gray">
-                    Absolutely! You can upgrade or downgrade your plan at any time. Changes take effect immediately,
-                    and we'll prorate any billing adjustments.
-                </p>
-            </div>
-
-            <div class="bg-gray-50 rounded-lg p-6">
-                <h3 class="text-lg font-semibold text-enterprise-navy mb-3">
-                    Are there any setup fees or contracts?
-                </h3>
-                <p class="text-enterprise-gray">
-                    No setup fees, no contracts, no hidden costs. Pay month-to-month or save 20% with annual billing.
-                    Cancel anytime with no penalties.
-                </p>
-            </div>
-
-            <div class="bg-gray-50 rounded-lg p-6">
-                <h3 class="text-lg font-semibold text-enterprise-navy mb-3">
-                    What payment methods do you accept?
-                </h3>
-                <p class="text-enterprise-gray">
-                    We accept all major credit cards (Visa, MasterCard, American Express, Discover) and ACH bank transfers
-                    for annual plans. All payments are processed securely through Stripe.
-                </p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Final CTA Section -->
-<section class="py-20 bg-enterprise-navy">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 class="text-3xl font-bold text-white mb-6">
-            Ready to Get Started?
-        </h2>
-
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <%= link_to new_user_registration_path, class: "bg-shadetree-green text-white px-8 py-4 text-lg font-medium rounded-md hover:bg-green-700 shadow-lg" do %>
-                Start Free Trial
+  <section class="mx-auto max-w-6xl px-5 sm:px-8" aria-label="Plans">
+    <ul class="grid gap-4 sm:grid-cols-2 <%= { 1 => "sm:grid-cols-1 lg:grid-cols-1", 2 => "lg:grid-cols-2", 3 => "lg:grid-cols-3" }.fetch(@plans.size, "lg:grid-cols-4") %>">
+      <% @plans.each_with_index do |plan, index| %>
+        <% previous = index.positive? ? @plans[index - 1] : nil %>
+        <li class="flex flex-col rounded-card border border-line bg-surface p-6" id="plan-<%= plan.key %>">
+          <h2 class="text-lg font-bold text-ink"><%= plan.name %></h2>
+          <p class="mt-1 min-h-10 text-sm2 text-muted"><%= plan.description %></p>
+          <p class="mt-6 flex items-baseline gap-1.5">
+            <% if plan.free? %>
+              <span class="text-5xl font-extrabold tracking-tight text-ink lg:text-[2.5rem]"><%= plan_price(plan.monthly_price) %></span><span class="text-sm text-muted">forever</span>
+            <% elsif plan_yearly?(plan) %>
+              <span class="text-5xl font-extrabold tracking-tight text-ink lg:text-[2.5rem] group-has-[#billing-yearly:checked]/billing:hidden"><%= plan_price(plan.monthly_price) %></span>
+              <span class="hidden text-5xl font-extrabold tracking-tight text-ink lg:text-[2.5rem] group-has-[#billing-yearly:checked]/billing:inline"><%= plan_annual_monthly(plan) %></span>
+              <span class="whitespace-nowrap text-sm text-muted">/ month</span>
+            <% else %>
+              <span class="text-5xl font-extrabold tracking-tight text-ink lg:text-[2.5rem]"><%= plan_price(plan.monthly_price) %></span>
+              <span class="whitespace-nowrap text-sm text-muted">/ month</span>
             <% end %>
-            <%= link_to contact_path, class: "border-2 border-white text-white px-8 py-4 text-lg font-medium rounded-md hover:bg-white hover:text-enterprise-navy" do %>
-                Contact Sales
+          </p>
+          <p class="mt-1 text-sm2 text-muted">
+            <% if plan.free? %>No card needed
+            <% elsif plan_yearly?(plan) %>
+              <span class="group-has-[#billing-yearly:checked]/billing:hidden">billed monthly</span>
+              <span class="hidden group-has-[#billing-yearly:checked]/billing:inline"><%= plan_price(plan.annual_price) %> billed yearly<%= ", #{plan_annual_saving(plan)}" if plan_annual_saving(plan) && !savings.one? %></span>
+            <% else %>billed monthly<% end %>
+          </p>
+          <p class="mt-5 rounded-control bg-sunken px-3.5 py-2.5 text-sm font-semibold text-ink"><%= plan_quota(plan) %></p>
+          <ul class="mt-5 flex-1 space-y-2.5 text-sm text-subtle">
+            <li class="flex gap-2.5"><%= icon "check", class: "mt-0.5 size-4 shrink-0 text-canopy" %><%= plan_team(plan) %></li>
+            <% if previous %><li class="flex gap-2.5"><%= icon "check", class: "mt-0.5 size-4 shrink-0 text-canopy" %>Everything in <%= previous.name %></li><% end %>
+            <% plan_new_features(plan, previous).each do |label, coming_soon| %>
+              <li class="flex gap-2.5"><%= icon "check", class: "mt-0.5 size-4 shrink-0 text-canopy" %>
+                <span><%= label %><% if coming_soon %> <span class="badge badge-plain ml-1 align-middle">Coming soon</span><% end %></span></li>
             <% end %>
-        </div>
+            <% if index.zero? && !plan.features["remove_powered_by"] %>
+              <li class="flex gap-2.5"><%= icon "info", class: "mt-0.5 size-4 shrink-0 text-faint" %>Shows “Powered by Shadetree” on client pages and emails</li>
+            <% end %>
+          </ul>
+          <%= link_to "Start free", new_user_registration_path, class: "#{button_classes(index.zero? ? :primary : :secondary)} mt-6 w-full" %>
+        </li>
+      <% end %>
+    </ul>
+    <p class="mt-4 text-center text-sm2 text-muted">Every account starts on Free. Choosing a paid plan from Settings is coming soon; until then, <%= link_to "ask us", contact_path, class: "underline" %>. Prices in <%= @plans.map(&:currency).uniq.to_sentence %>.</p>
+  </section>
 
-        <p class="text-blue-200 text-sm mt-6">
-            No credit card required • 14-day free trial • Cancel anytime
-        </p>
+  <section class="mx-auto max-w-6xl px-5 pt-14 sm:px-8" aria-labelledby="every-plan">
+    <div class="grid gap-6 rounded-card border border-line bg-canvas p-6 sm:p-8 lg:grid-cols-[14rem_1fr]">
+      <div>
+        <h2 id="every-plan" class="text-lg font-bold text-ink">Included on every plan</h2>
+        <p class="mt-1 text-sm2 text-muted">Free included.</p>
+      </div>
+      <ul class="grid gap-x-8 gap-y-2.5 text-sm text-subtle sm:grid-cols-2 lg:grid-cols-3">
+        <% [ "Unlimited clients", "Your own request page", "Online approval with a signature", "Scheduling and calendar",
+             "Technicians’ phone view", "Invoices and recorded payments", "PDFs with your logo", "Starter services for your industry",
+             "Export all your data", "Email support" ].each do |item| %>
+          <li class="flex gap-2.5"><%= icon "check", class: "mt-0.5 size-4 shrink-0 text-canopy" %><%= item %></li>
+        <% end %>
+      </ul>
     </div>
+  </section>
+</div>
+
+<section class="mx-auto max-w-3xl px-5 py-20 sm:px-8" aria-labelledby="faq">
+  <h2 id="faq" class="text-center text-3xl font-extrabold tracking-[-0.035em] text-ink sm:text-4xl">Questions, answered</h2>
+  <% free = @plans.find(&:free?) %>
+  <div class="mt-10 divide-y divide-line border-y border-line">
+    <% [
+         [ "What counts as a quote?",
+           "A quote counts once, the first time you send it, by email or by copying its link. Drafts, revisions and sending it again don’t count. Jobs, invoices and requests never count." ],
+         [ "What happens when I reach my limit?",
+           "We let you know as you get close. At the limit you can send one more; after that you can still create and edit drafts, but new quotes wait until your count resets at the start of your next period: the 1st of the month (in your time zone) on Free, your billing date on a paid plan. Quotes you’ve already sent keep working: clients can still open and approve them, and your request page keeps taking requests." ],
+         [ "Do you charge per person?",
+           "No. Each plan includes a number of team members#{" (#{plan_team(free).downcase} on #{free.name})" if free}. If you move to a plan with fewer, nobody is removed; you just can’t invite more until there’s room." ],
+         [ "Can I cancel any time?",
+           "Yes. There’s no contract and no setup fee." ],
+         [ "Can I take my data with me?",
+           "Yes, on every plan. Download your clients, quotes, jobs, invoices and payments as spreadsheets, or everything at once with your PDFs and photos." ]
+       ].each_with_index do |(question, answer), index| %>
+      <details class="group py-1" <%= "open" if index.zero? %>>
+        <summary class="flex cursor-pointer list-none items-center justify-between gap-4 py-4 font-semibold text-ink">
+          <%= question %><%= icon "plus", class: "size-4 shrink-0 text-muted transition-transform group-open:rotate-45" %>
+        </summary>
+        <p class="pb-5 text-[0.9375rem] leading-relaxed text-subtle"><%= answer %></p>
+      </details>
+    <% end %>
+  </div>
+  <p class="mt-8 text-center text-sm text-subtle">Something else? <%= link_to "Ask us", contact_path, class: "font-semibold text-canopy hover:underline" %>.</p>
 </section>
-
-<!-- Pricing Toggle JavaScript -->
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const toggle = document.getElementById('billing-toggle');
-        const toggleSwitch = document.getElementById('toggle-switch');
-        const monthlyLabel = document.getElementById('monthly-label');
-        const annualLabel = document.getElementById('annual-label');
-
-        const soloPriceEl = document.getElementById('solo-price');
-        const crewPriceEl = document.getElementById('crew-price');
-        const fleetPriceEl = document.getElementById('fleet-price');
-
-        const soloSavingsEl = document.getElementById('solo-annual-savings');
-        const crewSavingsEl = document.getElementById('crew-annual-savings');
-        const fleetSavingsEl = document.getElementById('fleet-annual-savings');
-
-        const monthlyPrices = {
-            solo: '$9.99',
-            crew: '$39.99',
-            fleet: '$79.99'
-        };
-
-        const annualPrices = {
-            solo: '$7.99',  // 20% off $9.99
-            crew: '$31.99', // 20% off $39.99
-            fleet: '$63.99' // 20% off $79.99
-        };
-
-        let isAnnual = false;
-
-        toggle.addEventListener('click', function() {
-            isAnnual = !isAnnual;
-
-            if (isAnnual) {
-                // Switch to annual
-                toggleSwitch.classList.remove('translate-x-1');
-                toggleSwitch.classList.add('translate-x-6');
-                toggle.classList.remove('bg-gray-200');
-                toggle.classList.add('bg-shadetree-blue');
-
-                monthlyLabel.classList.remove('text-gray-900');
-                monthlyLabel.classList.add('text-gray-500');
-                annualLabel.classList.remove('text-gray-900');
-                annualLabel.classList.add('text-gray-900');
-
-                // Update prices
-                soloPriceEl.textContent = annualPrices.solo;
-                crewPriceEl.textContent = annualPrices.crew;
-                fleetPriceEl.textContent = annualPrices.fleet;
-
-                // Show savings
-                soloSavingsEl.classList.remove('hidden');
-                crewSavingsEl.classList.remove('hidden');
-                fleetSavingsEl.classList.remove('hidden');
-
-            } else {
-                // Switch to monthly
-                toggleSwitch.classList.remove('translate-x-6');
-                toggleSwitch.classList.add('translate-x-1');
-                toggle.classList.remove('bg-shadetree-blue');
-                toggle.classList.add('bg-gray-200');
-
-                monthlyLabel.classList.remove('text-gray-500');
-                monthlyLabel.classList.add('text-gray-900');
-                annualLabel.classList.remove('text-gray-900');
-                annualLabel.classList.add('text-gray-500');
-
-                // Update prices
-                soloPriceEl.textContent = monthlyPrices.solo;
-                crewPriceEl.textContent = monthlyPrices.crew;
-                fleetPriceEl.textContent = monthlyPrices.fleet;
-
-                // Hide savings
-                soloSavingsEl.classList.add('hidden');
-                crewSavingsEl.classList.add('hidden');
-                fleetSavingsEl.classList.add('hidden');
-            }
-        });
-    });
-</script>

@@ -29,6 +29,17 @@ class MarketingTest < ApplicationSystemTestCase
     assert_selector "#invoicing img"
   end
 
+  test "the pricing switch shows yearly prices without any script" do
+    visit pricing_path
+    within("#plan-starter") { assert_text "$19"; assert_text "billed monthly" }
+    find("label", text: /Yearly/).click
+    within("#plan-starter") do
+      assert_text "$15.83"
+      assert_text "$190 billed yearly"
+      assert_no_text "billed monthly"
+    end
+  end
+
   test "on a phone the links fold into a menu" do
     page.current_window.resize_to(390, 800)
     visit root_path
