@@ -33,6 +33,8 @@ class Payment < ApplicationRecord
 
   before_validation { self.currency ||= invoice&.currency }
 
+  delegate :client, to: :invoice
+
   def recorded? = source == "recorded"
   def online? = source == "online"
   def method_label = METHODS.fetch(payment_method)

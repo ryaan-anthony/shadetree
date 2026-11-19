@@ -1,0 +1,14 @@
+<%# locals: (events:) -%>
+<%# CLI-05: timeline lines, newest first. %>
+<% events.each do |event| %>
+  <% icon_name, text, path = client_event_parts(event) %>
+  <li class="items-start text-sm" id="client-event-<%= event.uid %>">
+    <%= icon icon_name, class: "mt-0.5 size-4 shrink-0 #{event.kind == "email_bounced" ? "text-warning" : "text-faint"}" %>
+    <div class="min-w-0 flex-1">
+      <p class="<%= "whitespace-pre-line" if event.kind == "note_added" %> text-ink">
+        <% if path %><%= link_to text, path, class: "hover:underline" %><% else %><%= text %><% end %>
+      </p>
+      <p class="text-sm2 text-muted"><%= local_time(event.occurred_at) %><% if (actor = client_event_actor(event)) %> · <%= actor %><% end %></p>
+    </div>
+  </li>
+<% end %>

@@ -150,9 +150,21 @@ class ClientLink < ApplicationRecord
       when Invoice then [ "invoice", Rails.application.routes.url_helpers.admin_invoice_path(linkable) ]
       else return
       end
+      record_first_view_event(linkable)
       NotificationType.deliver("#{kind}_viewed", business:, subject: linkable, title: "#{linkable.client.display_name} opened #{kind} #{linkable.number}",
                                body: linkable.title, path:)
     end
+  end
+
+  # CLI-05: the timeline's "opened" line, once per document (a reissued link isn't a new first
+  # view). A failure here mustn't break the client's page.
+  def record_first_view_event(document)
+    kind = "#{document.model_name.element}_viewed"
+    return if ClientEvent.exists?(kind:, subject: document)
+
+    ClientEvent.record!(document.client, kind, subject: document)
+  rescue ActiveRecord::ActiveRecordError => error
+    Rails.error.report(error, handled: true)
   end
 
   # Client requests already run as the link's business; this keeps model calls safe from jobs

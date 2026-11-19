@@ -1,0 +1,7 @@
+<%# locals: (client:, last: nil) -%>
+<%# CLI-05: loads the next page of the timeline (a turbo stream appends it and replaces this). %>
+<div id="client-timeline-more" class="<%= "border-t border-line px-5 py-3" if last %>">
+  <% if last %>
+    <%= link_to "Show older", timeline_admin_client_path(client, before: last.uid), class: button_classes(:ghost, :sm), data: { turbo_stream: true } %>
+  <% end %>
+</div>

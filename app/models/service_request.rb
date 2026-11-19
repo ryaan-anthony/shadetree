@@ -35,6 +35,7 @@ class ServiceRequest < ApplicationRecord
   validate { errors.add(:photos, "can be at most #{MAX_PHOTOS}") if photos.size > MAX_PHOTOS }
 
   after_create_commit :notify, if: -> { source == "form" }
+  after_create { ClientEvent.record!(client, :request_received, subject: self, by: created_by, source:) } # CLI-05
 
   scope :recent, -> { order(created_at: :desc, id: :desc) }
 

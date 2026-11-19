@@ -14,6 +14,7 @@ class Client < ApplicationRecord
   has_many :jobs, dependent: :restrict_with_exception
   has_many :invoices, dependent: :restrict_with_exception # PAY-01
   has_many :service_requests, dependent: :restrict_with_exception # CLI-03
+  has_many :events, class_name: "ClientEvent", dependent: :delete_all # CLI-05: the timeline
   has_many :properties, -> { order(billing: :desc, position: :asc, id: :asc) }, inverse_of: :client, dependent: :delete_all
 
   accepts_nested_attributes_for :contact_methods, allow_destroy: true,

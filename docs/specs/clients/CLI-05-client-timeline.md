@@ -30,15 +30,32 @@ related documents, balance and a chronological timeline.
       declined, visit scheduled/completed, invoice sent/paid, payments recorded, notes added —
       with who/when.
 - [ ] Staff can add a free-text note to the timeline; notes are editable by their author.
-- [ ] The timeline is paginated and fast for long-standing clients.
-- [ ] Events are recorded by the owning features at the time they happen (a shared way to record
+- [x] The timeline is paginated and fast for long-standing clients.
+- [x] Events are recorded by the owning features at the time they happen (a shared way to record
       an event exists for later specs to reuse).
-- [ ] Role and tenancy tests exist.
+- [x] Role and tenancy tests exist.
 
 ## Out of scope
 
 - Business-wide activity/audit log (backlog). Client hub for clients themselves (backlog).
 
-## Open questions
+## Decisions
 
-- Should email delivery events (bounced, opened) appear in the timeline? Recommend bounces only.
+- Email delivery on the timeline: bounces only.
+
+## Implementation notes
+
+- Part 1: `ClientEvent.record!(client, kind, subject:, by:, **data)` is the shared recorder,
+  called in the same transaction as what it records: request received (any source), quote
+  sent, first opened, approved, declined or changes requested; visit booked and done; invoice
+  sent, first opened and paid in full; payment recorded; an email to the client refused by the
+  mail server. The client page shows them newest first, 25 at a time ("Show older" appends the
+  next page with a turbo stream), with one query for the page plus preloads, on an index of
+  (business, client, time, id).
+- Corrections show too: a payment changed or deleted, an invoice no longer paid in full, a visit
+  reopened or cancelled (a booked visit that has moved says where it is now). A client's own
+  answer to a quote names them; one staff recorded says so. Bounces don't copy the address.
+  "Opened" is once per document, however many links. The page cursor is the event's uid.
+- Events start when this ships: history from before isn't backfilled (pre-launch data only).
+- Part 2: notes (added by staff, editable by their author), the lists' next visits and
+  lifetime paid.
