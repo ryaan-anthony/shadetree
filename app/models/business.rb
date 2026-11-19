@@ -27,6 +27,7 @@ class Business < ApplicationRecord
   has_many :users, through: :business_users
   has_many :closures # CAT-06; the database removes them with the business
   has_many :locations # CAT-07; likewise
+  has_many :operator_notes # OPS-02; internal, and the database removes them with the business
 
   # Callbacks
   before_validation { self.uid ||= SecureRandom.base58(BusinessOwned::UID_LENGTH) if new_record? }

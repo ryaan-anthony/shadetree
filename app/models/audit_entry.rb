@@ -12,7 +12,10 @@ class AuditEntry < ApplicationRecord
     "operator.recovery_code_used" => "Used a recovery code",
     "operator.recovery_codes_regenerated" => "Made new recovery codes",
     "console.signed_in" => "Entered the console",
-    "business.viewed" => "Opened a business"
+    "business.viewed" => "Opened a business",
+    "business.note_added" => "Added a note",
+    "business.note_edited" => "Edited a note",
+    "business.note_deleted" => "Deleted a note"
   }.freeze
 
   belongs_to :operator_user, class_name: "User", optional: true

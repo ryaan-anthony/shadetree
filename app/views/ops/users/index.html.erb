@@ -1,0 +1,37 @@
+<%# OPS-02: a person by email, and the businesses they belong to. %>
+<% content_for :title, "People" %>
+<h1 class="page-title">People</h1>
+<p class="page-lede">Find someone by email to see which businesses they belong to.</p>
+<%= form_with url: ops_users_path, method: :get, class: "mt-4 flex max-w-xl items-end gap-2" do %>
+  <div class="field flex-1"><label class="label" for="email">Email</label><%= search_field_tag :email, @query, class: "input", id: "email", autocomplete: "off", required: true %></div>
+  <%= submit_tag "Find", class: button_classes(:secondary), name: nil %>
+<% end %>
+<% if @query.present? %>
+  <% if @users.empty? %>
+    <p class="mt-4 text-sm text-muted" id="no-users">Nobody's email contains “<%= @query %>”.</p>
+  <% else %>
+    <div class="mt-4 space-y-4" id="users">
+      <% @users.each do |user| %>
+        <%= card title: user.full_name, subtitle: user.email, flush: true, id: "user-#{user.id}" do %>
+          <p class="px-5 pt-3 text-sm2 text-muted">
+            Signed up <%= local_date(user.created_at) %> ·
+            <%= user.confirmed? ? "email confirmed" : "email not confirmed" %><%= " · locked" if user.access_locked? %><%= " · account deleted" if user.deleted? %>
+          </p>
+          <% if user.business_users.any? %>
+            <ul class="list">
+              <% user.business_users.sort_by(&:created_at).each do |membership| %>
+                <li class="text-sm">
+                  <%= link_to membership.business.name, ops_business_path(membership.business), class: "min-w-0 flex-1 truncate font-medium text-ink hover:underline" %>
+                  <span class="shrink-0 text-sm2 text-muted"><%= membership.role_name %><%= " (deactivated)" unless membership.active? %></span>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <p class="px-5 py-3 text-sm text-muted">No businesses.</p>
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
+    <% if @users.size == Ops::UsersController::LIMIT %><p class="mt-3 text-sm2 text-muted">Showing the first <%= Ops::UsersController::LIMIT %>. Type more of the email to narrow it down.</p><% end %>
+  <% end %>
+<% end %>
