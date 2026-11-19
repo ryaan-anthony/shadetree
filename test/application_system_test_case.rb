@@ -46,4 +46,18 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     failed = page.evaluate_script("document.documentElement.dataset.controllersFailed")
     flunk "Controllers failed to load: #{failed}" if failed # fail here, at the cause, not on a later assertion
   end
+
+  # Signs in through the form. Signing in loads the next page in full (no Turbo: a new session
+  # brings a new CSP nonce, PLT-13); ChromeDriver can report the click as failing because the
+  # page it clicked on is already gone, which is fine here.
+  def sign_in_with_form(email, password = "password123")
+    fill_in "Email", with: email
+    fill_in "Password", with: password
+    begin
+      click_button "Sign in" # the navigation has a "Sign in" link too (MKT-01)
+    rescue Selenium::WebDriver::Error::UnknownError => error
+      raise unless error.message.include?("does not belong to the document")
+    end
+    assert_selector "html[data-controllers-loaded]", visible: :all, wait: 10
+  end
 end

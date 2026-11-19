@@ -1,5 +1,5 @@
 <%= render layout: "devise/shared/card", locals: { title: "Choose a new password" } do %>
-  <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :put }) do |f| %>
+  <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :put }, data: { turbo: false }) do |f| %><%# signs in: see sessions/new (PLT-13) %>
     <%= render "devise/shared/error_messages", resource: resource %>
     <%= f.hidden_field :reset_password_token %>
     <% if resource.errors[:reset_password_token].any? %>

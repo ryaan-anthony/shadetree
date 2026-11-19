@@ -23,7 +23,7 @@
              %w[canvas #f6f7f9], %w[canopy #047857], %w[canopy-50 #ecfdf5], %w[leaf #34d399], %w[side #0b1221], %w[success #047857],
              %w[info #1d4ed8], %w[warning #b45309], %w[danger #b91c1c], %w[violet #6d28d9] ].each do |name, hex| %>
           <div class="card overflow-hidden">
-            <div class="h-12 border-b border-line" style="background: var(--color-<%= name %>)"></div>
+            <div class="h-12 border-b border-line <%= inline_style("background: var(--color-#{name})") %>"></div>
             <div class="px-2.5 py-2"><p class="font-semibold text-ink"><%= name %></p><p class="text-xs text-muted tabular"><%= hex %></p></div>
           </div>
         <% end %>
@@ -91,6 +91,7 @@
           <% end %>
         <% end %>
       </div>
+      <%= inline_styles_tag %>
     </section>
 
     <section id="badges" aria-labelledby="badges-h">
@@ -234,7 +235,7 @@
     <section id="pickers" aria-labelledby="pickers-h">
       <h2 id="pickers-h" class="mb-3 text-base font-bold text-ink">Client picker</h2>
       <p class="mb-3 text-sm text-muted">Searches the signed-in business's clients (CLI-02). "New client" opens the page's quick-create modal, rendered once outside any form.</p>
-      <form id="picker-demo" class="card card-body max-w-md space-y-3" onsubmit="event.preventDefault(); this.dataset.submitted = 'yes'">
+      <form id="picker-demo" class="card card-body max-w-md space-y-3" data-controller="styleguide-demo" data-action="styleguide-demo#submit">
         <%= render "admin/clients/picker", name: "demo[client]" %>
         <button type="submit" class="<%= button_classes(:secondary, :sm) %>">Submit</button>
       </form>

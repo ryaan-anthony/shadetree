@@ -2,10 +2,12 @@
 <html lang="en">
   <head>
     <%= render "layouts/head" %>
+    <meta name="robots" content="noindex"><%# signed-in pages are never indexed (MKT-04) %>
   </head>
   <body class="bg-canvas">
     <%= yield %>
     <%= flash_toasts %>
     <%= render "components/confirm_dialog" %>
+    <%= inline_styles_tag %>
   </body>
 </html>

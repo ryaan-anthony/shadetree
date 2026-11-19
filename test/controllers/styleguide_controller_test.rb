@@ -19,14 +19,14 @@ class StyleguideControllerTest < ActionDispatch::IntegrationTest
   test "client layout applies the business brand without staff chrome" do
     get styleguide_client_path(brand: "#facc15")
     assert_response :success
-    assert_select "body.client[style*='--color-brand: #facc15'][style*='--color-brand-ink: #0f172a']"
+    assert_select "head style[nonce]", /body\.client\{--color-brand: #facc15; --color-brand-ink: #0f172a;/
     assert_select ".client-head", /Oakline Lawn/
     assert_select ".side, .topbar", count: 0
   end
 
   test "rejects a malformed brand colour" do
     get styleguide_client_path(brand: "red;}")
-    assert_select "body.client[style*='--color-brand: #047857']"
+    assert_select "head style[nonce]", /body\.client\{--color-brand: #047857;/
   end
 
   test "pages load no runtime CDN scripts or styles" do

@@ -9,9 +9,7 @@ class ClientsSystemTest < ApplicationSystemTestCase
       Client.create!(display_name: "Maria Lopez", contact_methods_attributes: [ { kind: "phone", value: "(555) 010-0100" } ])
     end
     visit new_user_session_path
-    fill_in "Email", with: users(:one).email
-    fill_in "Password", with: "password123"
-    click_button "Sign in"
+    sign_in_with_form(users(:one).email, "password123")
     assert_text "Home"
   end
 

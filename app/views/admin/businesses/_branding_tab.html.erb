@@ -49,8 +49,8 @@
         <legend class="label">Presets</legend>
         <div class="flex flex-wrap gap-2">
           <% Branding::PRESETS.each do |name, hex| %>
-            <button type="button" class="size-9 rounded-full border-2 border-white shadow-[0_0_0_1px_var(--color-line)] outline-offset-2 aria-pressed:shadow-[0_0_0_2px_var(--color-ink)]"
-                    style="background: <%= hex %>" title="<%= name %>" aria-label="<%= name %> (<%= hex %>)" aria-pressed="<%= branding.color == hex %>"
+            <button type="button" class="<%= inline_style("background: #{hex}") %> size-9 rounded-full border-2 border-white shadow-[0_0_0_1px_var(--color-line)] outline-offset-2 aria-pressed:shadow-[0_0_0_2px_var(--color-ink)]"
+                    title="<%= name %>" aria-label="<%= name %> (<%= hex %>)" aria-pressed="<%= branding.color == hex %>"
                     data-brand-preview-target="swatch" data-color="<%= hex %>" data-action="brand-preview#pick"></button>
           <% end %>
         </div>
@@ -82,7 +82,7 @@
 
   <aside class="lg:sticky lg:top-6 lg:self-start" aria-label="Preview">
     <p class="label">Preview</p>
-    <div class="overflow-hidden rounded-xl border border-line bg-[#f4f5f7] shadow-sm" data-brand-preview-target="preview" style="<%= branding.css_variables %>">
+    <div class="overflow-hidden rounded-xl border border-line bg-[#f4f5f7] shadow-sm <%= inline_style(branding.css_variables) %>" data-brand-preview-target="preview">
       <div class="flex h-14 items-center gap-2.5 border-b border-line bg-white px-4">
         <img alt="" class="client-logo-image h-8" data-brand-preview-target="previewLogo" <% if branding.logo? %>src="<%= url_for(branding.logo(:web)) %>"<% else %>hidden<% end %>>
         <span class="client-logo size-8 text-[0.8125rem]" data-brand-preview-target="previewMark" <%= "hidden" if branding.logo? %>><%= branding.initials %></span>
@@ -93,13 +93,14 @@
           <p class="text-xs text-muted">Quote Q-0042</p>
           <p class="mt-0.5 font-semibold text-ink">Spring cleanup</p>
           <p class="mt-2 text-sm2 text-subtle">Total <span class="money font-semibold text-ink">$240.00</span></p>
-          <button type="button" tabindex="-1" class="mt-3 w-full rounded-md px-3 py-2 text-sm font-semibold" style="background: var(--color-brand); color: var(--color-brand-ink)">Approve quote</button>
-          <p class="mt-2 text-center text-sm2"><span class="font-medium underline" style="color: var(--color-brand)">Ask a question</span></p>
+          <button type="button" tabindex="-1" class="mt-3 w-full rounded-md px-3 py-2 text-sm font-semibold bg-brand text-brand-ink">Approve quote</button>
+          <p class="mt-2 text-center text-sm2"><span class="font-medium text-brand underline">Ask a question</span></p>
         </div>
         <% if branding.show_powered_by? %><p class="text-center text-[0.6875rem] text-muted">Powered by Shadetree</p><% end %>
       </div>
     </div>
     <p class="help mt-2">How clients see your quotes and invoices.</p>
+    <%= inline_styles_tag %>
   </aside>
 <% end %>
 

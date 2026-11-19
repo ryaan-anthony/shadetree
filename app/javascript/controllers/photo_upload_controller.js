@@ -158,7 +158,7 @@ export default class extends Controller {
     row.innerHTML = `<div class="flex items-center gap-2"><div class="min-w-0 flex-1"><span class="block truncate font-medium text-ink"></span>
       <span class="status block text-muted"></span></div>
       <button type="button" class="btn btn-secondary btn-sm h-auto min-h-11 shrink-0" data-action="photo-upload#retry" hidden>Retry</button></div>
-      <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-sunken" aria-hidden="true"><div class="bar h-full bg-brand" style="width: 0%"></div></div>`
+      <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-sunken" aria-hidden="true"><div class="bar h-full w-0 bg-brand"></div></div>`
     row.querySelector("span").textContent = file.name
     this.show(row, "waiting", "Waiting…", 0)
     return row
