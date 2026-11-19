@@ -42,7 +42,7 @@ class LegalPagesTest < ActionDispatch::IntegrationTest
   end
 
   test "signing up records the versions accepted, and when" do
-    post user_registration_path, params: { user: { first_name: "Ana", last_name: "Silva", email: "ana@example.com", password: "long enough phrase", terms_of_service: "1" } }
+    post user_registration_path, params: { user: { first_name: "Ana", last_name: "Silva", email: "ana@example.com", password: "long enough phrase", terms_of_service: "1" }, **form_guard_params("sign-up") }
     user = User.find_by!(email: "ana@example.com")
     assert_equal [ "2026-11-18", "2026-11-18" ], [ user.terms_version, user.privacy_version ]
     assert user.terms_accepted_at
@@ -90,7 +90,9 @@ class LegalPagesTest < ActionDispatch::IntegrationTest
 
   test "legal links in the marketing footer, the app, client pages and client emails" do
     get root_path
-    assert_select "#legal-links a", LegalDocument::ALL.size
+    assert_select "#legal-links a[href=?]", terms_path
+    assert_select "#legal-links a[href=?]", privacy_path
+    assert_select "#legal-links a[href=?]", legal_path, text: "All legal documents"
     sign_in users(:one)
     get admin_root_path
     assert_select ".side-foot a[href=?]", privacy_path
