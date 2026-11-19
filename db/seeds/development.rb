@@ -267,3 +267,6 @@ end
 
 # OPS-01: the demo owner is an operator too (open /ops and set up two-factor).
 Operator.grant!(owner) unless Operator.for(owner)
+
+# OPS-02: an internal note on the demo business, seen in the console's business page.
+business.operator_notes.create!(author: owner, body: "Beta customer since spring. Asked about a second location.", created_at: 2.weeks.ago, updated_at: 2.weeks.ago) unless business.operator_notes.exists?

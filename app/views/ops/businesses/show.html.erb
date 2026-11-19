@@ -49,6 +49,15 @@
       <div class="flex justify-between gap-3"><dt class="text-subtle">Online payments account</dt><dd class="text-ink" id="payments-account">Not connected</dd></div>
     </dl>
   <% end %>
+  <%= card title: "Internal notes", subtitle: "Only operators see these.", flush: true, id: "notes" do %>
+    <%= form_with model: [ :ops, @business, OperatorNote.new ], url: ops_business_notes_path(@business), class: "border-b border-line px-5 py-4" do |f| %>
+      <%= f.label :body, "Add a note", class: "label" %>
+      <%= f.text_area :body, rows: 2, class: "textarea", required: true, maxlength: 5000, "aria-describedby": "note-help" %>
+      <p class="help" id="note-help">Don't include client details.</p>
+      <%= f.submit "Add note", class: "#{button_classes(:secondary, :sm)} mt-2" %>
+    <% end %>
+    <ul class="list"><%= render partial: "ops/notes/note", collection: @notes, as: :note %></ul>
+  <% end %>
   <%= card title: "Billing history", flush: true, id: "billing-history" do %>
     <p class="px-5 pt-4 text-sm2 text-muted">No subscription payments yet. Quotes sent in each usage period:</p>
     <ul class="list">

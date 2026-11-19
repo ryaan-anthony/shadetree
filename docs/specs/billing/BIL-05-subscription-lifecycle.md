@@ -38,6 +38,11 @@ nobody loses data because a card expired.
 - [ ] Tests cover trial expiry, grace, downgrade at period end, reactivation and duplicate
       events.
 
+## Follow-ups
+
+- Add Trial / Past due / Suspended / payment-account status and billing history to the OPS-02
+  directory and business page (OPS-02 shows Active and Closed only until then).
+
 ## Out of scope
 
 - Dunning emails (provider handles retries and payment-failure emails).

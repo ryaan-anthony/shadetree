@@ -14,6 +14,7 @@ class Ops::BusinessesController < Ops::BaseController
   def show
     @business = Business.find_by!(uid: params[:id].to_s)
     @summary = Ops::BusinessSummary.new(@business)
+    @notes = @business.operator_notes.includes(:author).newest_first
     audit!("business.viewed", business: @business)
   end
 end

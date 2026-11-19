@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_19_002300) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_19_002500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -796,6 +796,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002300) do
     t.index ["uid"], name: "index_notifications_on_uid", unique: true
   end
 
+  create_table "operator_notes", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "author_id"
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["author_id"], name: "index_operator_notes_on_author_id"
+    t.index ["business_id"], name: "index_operator_notes_on_business_id"
+  end
+
   create_table "operators", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "granted_by_id"
@@ -1337,6 +1347,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002300) do
   add_foreign_key "notifications", "businesses", on_delete: :cascade
   add_foreign_key "notifications", "users", column: "actor_id", on_delete: :nullify
   add_foreign_key "notifications", "users", on_delete: :cascade
+  add_foreign_key "operator_notes", "businesses", on_delete: :cascade
+  add_foreign_key "operator_notes", "users", column: "author_id", on_delete: :nullify
   add_foreign_key "operators", "users"
   add_foreign_key "operators", "users", column: "granted_by_id", on_delete: :nullify
   add_foreign_key "operators", "users", column: "revoked_by_id", on_delete: :nullify
