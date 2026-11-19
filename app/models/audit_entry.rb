@@ -33,7 +33,9 @@ class AuditEntry < ApplicationRecord
     "feature_flag.changed" => "Changed a release flag",
     "user.confirmation_resent" => "Resent a confirmation email",
     "user.password_reset_sent" => "Sent a password reset",
-    "user.unlocked" => "Unlocked an account"
+    "user.unlocked" => "Unlocked an account",
+    "contact_message.deleted" => "Deleted a contact message",
+    "contact_message.erased" => "Deleted everything from a contact-form sender"
   }.freeze
 
   belongs_to :operator_user, class_name: "User", optional: true

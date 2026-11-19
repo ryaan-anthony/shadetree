@@ -1,5 +1,6 @@
 # MKT-02: a message sent through the marketing site's contact form. Platform-level: it belongs
-# to no business, and staff app users never see it (operators do, OPS-01).
+# to no business, and staff app users never see it; operators do, in the console
+# (Ops::ContactMessagesController), where they mark it handled once answered.
 #
 # Saved, then the team is emailed (reply goes straight to the sender) and the sender gets a
 # confirmation with nothing they typed in it, so the form can't carry a message to anyone else. One that looks like spam is kept with its reason, for review, and nobody is
@@ -26,6 +27,8 @@ class ContactMessage < ApplicationRecord
   scope :recent, -> { order(created_at: :desc, id: :desc) }
   scope :spam, -> { where.not(spam_reason: nil) }
   scope :not_spam, -> { where(spam_reason: nil) }
+  scope :unhandled, -> { where(handled_at: nil) }
+  scope :handled, -> { where.not(handled_at: nil) }
 
   def to_param = uid
   def self.find_by_param!(param) = find_by!(uid: param.to_s)

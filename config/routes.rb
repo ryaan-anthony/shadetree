@@ -72,6 +72,9 @@ Rails.application.routes.draw do
         post :unlock, to: "user_actions#unlock"
       end
     end
+    resources :contact_messages, only: %i[index show update destroy], path: "messages" do # MKT-02
+      delete :erase, on: :member
+    end
   end
 
   namespace :admin do

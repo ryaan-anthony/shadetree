@@ -166,6 +166,8 @@ class ContactFormTest < ActionDispatch::IntegrationTest
     ENV["EMAIL"] = " KEPT@example.com "
     assert_output(/Deleted 1 message/) { Rake::Task["contact:erase"].tap(&:reenable).invoke }
     assert_empty ContactMessage.all
+    entry = AuditEntry.find_by!(action: "contact_message.erased")
+    assert_equal [ "command line", { "count" => 1 } ], [ entry.operator_email, entry.data ], "logged without the address"
   ensure
     ENV.delete("EMAIL")
   end
