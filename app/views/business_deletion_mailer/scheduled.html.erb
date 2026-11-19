@@ -1,3 +1,7 @@
-<p style="margin:0 0 12px;font-size:14px;color:#334155;">Hi <%= @owner.first_name.presence || "there" %>,</p>
-<p style="margin:0 0 12px;font-size:14px;color:#334155;"><%= @business.name %> is scheduled to be permanently deleted on <strong><%= @business.deletion_due_at.to_date.to_fs(:long) %></strong>, as asked. Its clients, quotes, jobs, invoices, payments, files and settings will be removed and can't be recovered.</p>
-<p style="margin:0 0 12px;font-size:14px;color:#334155;">To keep anything, download it from Settings → Your data before then. To cancel, reply to <a href="mailto:<%= @support %>"><%= @support %></a> before that date.</p>
+<p style="margin:0 0 12px;font-size:14px;color:#334155;">Hi <%= @first_name.presence || "there" %>,</p>
+<p style="margin:0 0 12px;font-size:14px;color:#334155;"><%= @business_name %> is scheduled to be permanently deleted on <strong><%= @due_on.to_fs(:long) %></strong>, as asked. Its clients, quotes, jobs, invoices, payments, files and settings will be removed and can't be recovered.</p>
+<% if @suspended %>
+<p style="margin:0 0 12px;font-size:14px;color:#334155;">To get a copy of your data first, or to cancel, write to <a href="mailto:<%= @support %>"><%= @support %></a> before that date.</p>
+<% else %>
+<p style="margin:0 0 12px;font-size:14px;color:#334155;">To keep anything, download it from Settings → Your data before then. To cancel, write to <a href="mailto:<%= @support %>"><%= @support %></a> before that date.</p>
+<% end %>

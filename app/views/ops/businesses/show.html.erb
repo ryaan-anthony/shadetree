@@ -59,7 +59,7 @@
   <%= card title: "Delete the business", subtitle: "Permanently removes all its data and files after #{Ops::DeletionsController::WAITING_PERIOD.in_days.to_i} days. The owner is emailed.", id: "deletion" do %>
     <% if @business.deletion_due_at %>
       <div class="banner banner-warning mb-3" role="status"><p>Scheduled for deletion on <%= local_date(@business.deletion_due_at) %>.</p></div>
-      <%= form_with url: ops_business_deletion_path(@business), method: :delete, class: "space-y-2" do %>
+      <%= form_with url: ops_business_deletion_path(@business), method: :delete, class: "space-y-2", data: { turbo_confirm: "Cancel the deletion of #{@business.name}? The owner is emailed." } do %>
         <div class="field"><label class="label" for="cancel_reason">Reason for cancelling</label><%= text_field_tag :reason, nil, class: "input", id: "cancel_reason", required: true, maxlength: 500 %></div>
         <%= submit_tag "Cancel deletion", class: button_classes(:secondary), name: nil %>
       <% end %>

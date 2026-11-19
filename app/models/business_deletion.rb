@@ -2,7 +2,8 @@
 # (logo, photos, attachments, PDFs and their variants). The operator audit log keeps its
 # entries, as written (they have no foreign keys and can't be deleted).
 #
-#   BusinessDeletion.run!(business)  # => the business's name, for the completion email
+#   blob_ids = BusinessDeletion.run!(business)  # the rows are gone once this returns
+#   PurgeDeletedFilesJob.perform_later(blob_ids)  # then the files, in the background
 class BusinessDeletion
   KEPT_TABLES = %w[audit_entries].freeze
 
@@ -26,8 +27,23 @@ class BusinessDeletion
         Business.where(id: @business.id).delete_all
       end
     end
-    purge_blobs(blob_ids)
-    @business.name
+    blob_ids
+  end
+
+  # Each file and its variants, unless something else still uses it. A file that can't be
+  # removed is reported and the rest go on.
+  def self.purge_blobs(ids)
+    ActiveStorage::Blob.where(id: ids).find_each do |blob|
+      next if blob.attachments.exists?
+
+      ActiveStorage::VariantRecord.where(blob_id: blob.id).find_each do |variant|
+        variant.image.purge if variant.image.attached?
+        variant.delete
+      end
+      blob.purge
+    rescue StandardError => error
+      Rails.error.report(error, context: { blob_id: blob.id })
+    end
   end
 
   private
@@ -73,19 +89,6 @@ class BusinessDeletion
       connection.columns(table).map(&:name).grep(/_blob_id\z/).flat_map do |column|
         connection.select_values(rows.project(rows[column]).where(rows[:business_id].eq(@business.id).and(rows[column].not_eq(nil))))
       end
-    end
-  end
-
-  # Each file and its variants, unless something else still uses it.
-  def purge_blobs(ids)
-    ActiveStorage::Blob.where(id: ids).find_each do |blob|
-      next if blob.attachments.exists?
-
-      ActiveStorage::VariantRecord.where(blob_id: blob.id).find_each do |variant|
-        variant.image.purge if variant.image.attached?
-        variant.delete
-      end
-      blob.purge
     end
   end
 end

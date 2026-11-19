@@ -13,7 +13,7 @@ class Ops::OperatorNotesTest < ActionDispatch::IntegrationTest
     assert_equal "Beta customer, comp until spring.", note.body
     assert_equal users(:one), note.author
     entry = AuditEntry.find_by!(action: "business.note_added")
-    assert_equal [ @business, { "note" => note.id } ], [ entry.business, entry.data ]
+    assert_equal [ @business, note.id ], [ entry.business, entry.data["note"] ]
     assert_no_match "comp until spring", entry.to_json, "the note's text stays out of the log"
 
     post ops_business_notes_path(@business), params: { operator_note: { body: " " } }

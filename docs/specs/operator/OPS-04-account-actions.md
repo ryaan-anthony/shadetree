@@ -63,14 +63,20 @@ feature flags — each one audited and hard to do by accident.
 - Suspending sets `active: false` with `suspended_at` and the reason, so everything keyed on
   `active?` stops (client links "unavailable", request form, automations, reminders); queued
   client email isn't sent; members get a contact-support page (403) and can switch business.
-  There's no provider payment flow yet, so nothing in flight can be blocked.
+  There's no provider payment flow yet, so nothing in flight can be blocked; re-check that
+  provider payments still settle for a suspended business when BIL-05/PAY-04 land.
 - People: resend confirmation, password reset, unlock. Plans: name, description, listing, order,
   prices, limits, features (not key, default or provider prices). Per-business overrides need a
   reason. Presets: visit length and starter services. Flags: off, on, percentage or business IDs.
 - Deletion: typed name and a reason; `DeleteScheduledBusinessesJob` (daily, or at once when
   expedited) runs `BusinessDeletion`: every table with `business_id` (children first, from the
   foreign keys), attached files with their variants and stored PDFs, flag lists; the audit log
-  keeps its entries. The owner is emailed at schedule and completion.
+  keeps its entries (each keeps the business's name and id, so it still reads and filters).
+  Rows go in one transaction; then the audit entry, the email, and files in the background
+  (`PurgeDeletedFilesJob`); one failing business doesn't stop the rest; jobs queued for a deleted
+  business are dropped. Operators' notes go with it (current behaviour); people keep their
+  accounts, even if it was their only business. The owner is emailed at schedule (with plain
+  values, skipped if it's no longer due then), on cancelling and on completion.
 - Suspend, reactivate, deletion, plan, override and flag changes need a code from the last 5
   minutes; every action is confirmed and audited. Tests: `test/integration/ops/account_actions_test.rb`,
   `plans_test.rb`, `presets_and_flags_test.rb`, `test/models/business_deletion_test.rb`.

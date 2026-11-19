@@ -13,7 +13,7 @@ class Ops::DeletionsController < Ops::BaseController
 
     @business.update_columns(deletion_scheduled_at: Time.current, deletion_due_at: WAITING_PERIOD.from_now, updated_at: Time.current)
     audit!("business.deletion_scheduled", business: @business, reason:, due: @business.deletion_due_at.iso8601)
-    BusinessDeletionMailer.with(business: @business).scheduled.deliver_later unless @business.owner.deleted?
+    BusinessDeletionMailer.with(**BusinessDeletionMailer.params_for(@business)).scheduled.deliver_later unless @business.owner.deleted?
     back(notice: "#{@business.name} will be deleted on #{@business.deletion_due_at.to_date.to_fs(:long)}. The owner has been emailed.")
   end
 
@@ -34,6 +34,7 @@ class Ops::DeletionsController < Ops::BaseController
 
     @business.update_columns(deletion_scheduled_at: nil, deletion_due_at: nil, updated_at: Time.current)
     audit!("business.deletion_cancelled", business: @business, reason:)
+    BusinessDeletionMailer.with(**BusinessDeletionMailer.params_for(@business)).cancelled.deliver_later unless @business.owner.deleted?
     back(notice: "Deletion cancelled. #{@business.name} stays.")
   end
 

@@ -21,7 +21,10 @@ class BusinessDeletionTest < ActiveSupport::TestCase
     tables = rows_of(business)
     assert tables.values.sum > 30, "the demo business has data in many tables"
 
-    assert_equal "Oakline Lawn & Landscape", BusinessDeletion.run!(business)
+    blob_ids = BusinessDeletion.run!(business)
+    assert_empty blobs.first(2).map(&:id) - blob_ids, "the logo and the job's file (the variant goes with the logo)"
+    assert ActiveStorage::Blob.exists?(blobs.first.id), "files go afterwards, in the background"
+    BusinessDeletion.purge_blobs(blob_ids)
 
     assert_not Business.exists?(business.id)
     assert_equal({}, rows_of(business).select { _2.positive? }, "rows left behind")
@@ -46,7 +49,39 @@ class BusinessDeletionTest < ActiveSupport::TestCase
     end
     assert_not Business.exists?(due.id)
     assert Business.exists?(later.id)
-    assert_equal [ "system", due.id ], AuditEntry.find_by!(action: "business.deleted").values_at(:operator_email, :business_id)
+    entry = AuditEntry.find_by!(action: "business.deleted")
+    assert_equal [ "system", due.id, "Test Business One", due.uid ], [ entry.operator_email, entry.business_id, *entry.data.values_at("business_name", "business_uid") ]
+    assert_equal "Test Business One (deleted)", entry.business_label
+  end
+
+  test "one business that can't be deleted is reported and the others still go" do
+    first, second = businesses(:one), businesses(:two)
+    [ first, second ].each { _1.update_columns(deletion_scheduled_at: 31.days.ago, deletion_due_at: 1.day.ago) }
+    original = BusinessDeletion.method(:run!)
+    BusinessDeletion.define_singleton_method(:run!) { |business| business.id == first.id ? raise("storage down") : original.call(business) }
+    DeleteScheduledBusinessesJob.perform_now
+    assert Business.exists?(first.id)
+    assert_not Business.exists?(second.id)
+  ensure
+    BusinessDeletion.define_singleton_method(:run!, original) if original
+  end
+
+  test "work queued for a business that's since been deleted is dropped, not failed" do
+    business = businesses(:one)
+    job = Class.new(ApplicationJob) { def perform = raise("should not run") }
+    instance = job.new.tap { _1.business_id = business.id }
+    business.update_columns(deletion_due_at: 1.day.ago, deletion_scheduled_at: 31.days.ago)
+    DeleteScheduledBusinessesJob.perform_now
+    assert_nothing_raised { instance.perform_now }
+  end
+
+  test "every foreign key into a business's data comes from its own data or says what happens on delete" do
+    connection = ActiveRecord::Base.connection
+    owned = connection.tables.select { connection.column_exists?(_1, :business_id) } + %w[businesses]
+    loose = connection.tables.flat_map do |table|
+      connection.foreign_keys(table).select { owned.include?(_1.to_table) && !owned.include?(table) && _1.on_delete.nil? }.map { "#{table}.#{_1.column}" }
+    end
+    assert_empty loose, "A table outside a business's data points into it without on_delete; BusinessDeletion would fail"
   end
 
   private

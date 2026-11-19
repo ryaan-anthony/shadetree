@@ -13,7 +13,10 @@ class ApplicationJob < ActiveJob::Base
 
   around_perform do |job, block|
     if job.business_id
-      business = Business.find(job.business_id)
+      business = Business.find_by(id: job.business_id)
+      # OPS-04: the business was deleted since; its work has nothing left to act on.
+      next Rails.logger.info("Discarded #{job.class.name} #{job.job_id}: business #{job.business_id} no longer exists") unless business
+
       Tenancy.with_business(business) { block.call }
     else
       block.call

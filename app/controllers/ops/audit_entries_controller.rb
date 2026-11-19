@@ -8,8 +8,10 @@ class Ops::AuditEntriesController < Ops::BaseController
     scope = scope.where(operator_email: params[:operator]) if params[:operator].present?
     scope = scope.where(action: params[:action_name]) if params[:action_name].present?
     if params[:business].present?
-      @business = Business.find_by(uid: params[:business].to_s.strip)
-      scope = @business ? scope.where(business: @business) : scope.none # a mistyped id shows nothing, not everything
+      uid = params[:business].to_s.strip
+      @business = Business.find_by(uid:)
+      # A deleted business is found by the id kept on its entries; a mistyped id shows nothing, not everything.
+      scope = @business ? scope.where(business: @business) : scope.where("audit_entries.data->>'business_uid' = ?", uid)
     end
     from = parse_date(params[:from])
     to = parse_date(params[:to])

@@ -48,6 +48,9 @@ class AuditEntry < ApplicationRecord
 
   # operator: the user acting, or nil with operator_email naming who did (e.g. "command line").
   def self.record!(operator:, action:, business: nil, user: nil, reason: nil, request: nil, operator_email: operator&.email, **data)
+    # The business's name and id are kept on the entry too (OPS-04), so it still reads, and can be
+    # filtered, after the business is deleted.
+    data = data.merge(business_name: business.name, business_uid: business.uid) if business
     create!(operator_user: operator, operator_email:, action:, business:, target_user: user, reason:, data:,
             ip_address: request&.remote_ip, user_agent: request&.user_agent.to_s.first(300).presence, request_id: request&.request_id)
   end
@@ -71,6 +74,8 @@ class AuditEntry < ApplicationRecord
                        changes: later.count { _1.action == "impersonation.change" }, minutes: ended&.data&.dig("minutes"))
     end
   end
+  # The business's name, from the entry if the business has since been deleted.
+  def business_label = business&.name || (data["business_name"] && "#{data["business_name"]} (deleted)")
 
   # The database refuses to change, delete or truncate entries. schema.rb can't hold triggers,
   # so the migration adds this, and so does every schema load, db:prepare and test database
