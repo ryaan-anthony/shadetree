@@ -30,6 +30,7 @@ class Admin::MembersController < Admin::BaseController
     # BIL-01: a reactivated member counts toward the plan's team size again.
     entitlements = current_business.entitlements
     return redirect_to(admin_team_path, alert: entitlements.team_limit_message) unless entitlements.within?(:team_members)
+    return redirect_to(admin_team_path, alert: "That person deleted their Shadetree account.") if @member.user.deleted? # ACC-06
 
     @member.reactivate!
     redirect_to admin_team_path, notice: "#{@member.user.full_name} has access again as #{@member.role}."

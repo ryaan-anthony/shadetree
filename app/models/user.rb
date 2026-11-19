@@ -22,9 +22,8 @@ class User < ApplicationRecord
   validates :terms_of_service, acceptance: { message: "must be accepted to create an account", allow_nil: false }, on: :create, if: :new_record_from_sign_up?
   before_create { self.terms_accepted_at ||= Time.current if terms_of_service }
 
-  # Relationships
-  # Owned businesses go first, so deleting an account removes its own businesses before its other
-  # memberships; a membership that is the last Owner of someone else's business blocks deletion.
+  # Relationships. Accounts aren't destroyed (delete_account! anonymizes them), so these
+  # dependents only matter for a user removed outright, e.g. in the console.
   has_many :owned_businesses, class_name: "Business", foreign_key: "owner_id", dependent: :destroy
   has_many :business_users, dependent: :destroy
   has_many :user_sessions, dependent: :delete_all
@@ -39,6 +38,45 @@ class User < ApplicationRecord
   alias new_record_from_sign_up? new_record_from_sign_up
 
   # Instance methods
+
+  # Account deletion (ACC-06) -------------------------------------------------------------------
+
+  FORMER_MEMBER = "Former member"
+  DELETED_EMAIL_DOMAIN = "deleted.invalid"
+  # A business with any of these is someone's work, so its only Owner can't just walk away.
+  BUSINESS_RECORDS = %w[Client ServiceRequest Quote Job Invoice].freeze
+
+  def deleted? = deleted_at.present?
+
+  # A deleted account can't sign in (Devise asks this on every request).
+  def active_for_authentication? = super && !deleted?
+
+  # Businesses this person is the only active Owner of, that others depend on: other active
+  # members, or any clients, requests, quotes, jobs or invoices. Deletion waits until another
+  # member is made an Owner (or Shadetree closes the business).
+  def businesses_blocking_deletion
+    sole_owner_memberships.filter_map { |membership| membership.business if business_in_use?(membership.business) }
+  end
+
+  # Removes everything personal and ends every membership; the row stays so records it made
+  # still point somewhere ("Former member"). Empty businesses it alone owned are closed.
+  # Returns false (deleting nothing) if a business blocks it.
+  def delete_account!
+    transaction do
+      lock!
+      return false if businesses_blocking_deletion.any?
+
+      sole_owner_memberships.each { |membership| membership.business.update_columns(active: false, updated_at: Time.current) }
+      business_users.active.update_all(active: false, deactivated_at: Time.current, updated_at: Time.current)
+      user_sessions.delete_all
+      Tenancy.across_businesses(reason: "deleting an account's notifications") { Notification.where(user_id: id).delete_all }
+      update_columns(email: "deleted-user-#{id}@#{DELETED_EMAIL_DOMAIN}", unconfirmed_email: nil, first_name: nil, last_name: nil,
+                     encrypted_password: Devise::Encryptor.digest(self.class, SecureRandom.base58(32)), session_token: SecureRandom.base58(24),
+                     reset_password_token: nil, reset_password_sent_at: nil, confirmation_token: nil, unlock_token: nil, locked_at: nil,
+                     remember_created_at: nil, last_business_id: nil, deleted_at: Time.current, updated_at: Time.current)
+    end
+    true
+  end
 
   # Devise stores this in the session and the remember-me cookie. Mixing in session_token means
   # rotating it signs the user out everywhere (sign_out_everywhere!).
@@ -60,6 +98,7 @@ class User < ApplicationRecord
 
   def can_send_to_clients? = confirmed?
   def full_name
+    return FORMER_MEMBER if deleted?
     return email if first_name.blank? && last_name.blank?
     [ first_name, last_name ].compact.join(" ")
   end
@@ -83,5 +122,17 @@ class User < ApplicationRecord
 
   def role_in(business)
     business_users.find_by(business: business)&.role
+  end
+
+  private
+
+  def sole_owner_memberships
+    business_users.active.owners.includes(:business).select { |membership| membership.last_active_owner? }
+  end
+
+  def business_in_use?(business)
+    return true if business.business_users.active.where.not(user_id: id).exists?
+
+    Tenancy.with_business(business) { BUSINESS_RECORDS.any? { |name| name.constantize.exists? } }
   end
 end

@@ -27,13 +27,13 @@ business that others depend on.
       required).
 - [x] Notification preferences for team emails (NTF-02) are linked from here once available.
 - [x] Users can see active sessions (device/browser, last active) and sign out of others.
-- [ ] Account deletion requires password re-entry and explains consequences.
-- [ ] Deletion is blocked while the user is the sole Owner of any business that has other
+- [x] Account deletion requires password re-entry and explains consequences.
+- [x] Deletion is blocked while the user is the sole Owner of any business that has other
       members or data; the user is told how to transfer ownership or delete the business first.
-- [ ] On deletion, memberships end, the user's personal data is removed or anonymized, and
+- [x] On deletion, memberships end, the user's personal data is removed or anonymized, and
       historic records show a neutral "former member" label.
-- [ ] Email change and deletion send confirmation emails to the relevant addresses.
-- [ ] Tests cover the sole-owner rule and anonymization.
+- [x] Email change and deletion send confirmation emails to the relevant addresses.
+- [x] Tests cover the sole-owner rule and anonymization.
 
 ## Out of scope
 
@@ -70,3 +70,16 @@ Part 1 (settings page, sessions):
   ("signed out from another device"); "Sign out of all other browsers", a new password and a
   password reset end every other session too (and any session Devise turns away is ended in
   the list).
+
+Part 2 (deletion):
+- "Delete your account" on the account page lists what happens, needs the password, and confirms.
+  `User#delete_account!` keeps the row (so quotes, visits and notes still point somewhere) but
+  removes the name, email (becomes `deleted-user-<id>@deleted.invalid`), password, tokens,
+  sessions and notifications; ends every membership; closes a business only they owned that has
+  nothing in it. A deleted account can't sign in, and shows everywhere as "Former member"; the
+  team page says "deleted their account" and won't reactivate it.
+- Blocked while they're the only active Owner of a business with other active members or any
+  clients, requests, quotes, jobs or invoices; the page names the business and says to make
+  another member an Owner (Team page) or contact Shadetree to close it.
+- `AccountMailer#deleted` goes to the address the account had. Email changes already sent a
+  confirmation to the new address and a notice to the old one (Devise); now tested.

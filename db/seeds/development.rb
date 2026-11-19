@@ -226,3 +226,10 @@ unless owner.user_sessions.active.where("user_agent LIKE ?", "%iPhone%").exists?
   owner.user_sessions.create!(secret_digest: UserSession.digest(SecureRandom.base58(32)), last_active_at: 3.hours.ago, ip_address: "203.0.113.24",
                               user_agent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1")
 end
+
+# ACC-06: a former member who deleted their account, so the team page and past work show it.
+unless User.where.not(deleted_at: nil).exists?
+  former = User.create!(email: "former@example.com", password: demo_password, first_name: "Jordan", last_name: "Lee", confirmed_at: 1.year.ago)
+  BusinessUser.create!(user: former, business:, role: "technician")
+  former.delete_account!
+end

@@ -12,6 +12,23 @@ class Users::RegistrationsController < Devise::RegistrationsController
     end
   end
 
+  # ACC-06: deleting your own account, with your password. Blocked while you're the only Owner
+  # of a business others depend on.
+  def destroy
+    unless resource.valid_password?(params[:current_password].to_s)
+      return redirect_to(edit_user_registration_path(anchor: "delete-account"), alert: "That password didn't match. Your account wasn't deleted.")
+    end
+
+    email, first_name = resource.email, resource.first_name
+    unless resource.delete_account!
+      return redirect_to(edit_user_registration_path(anchor: "delete-account"), alert: "Your account wasn't deleted: you're the only Owner of a business others depend on.")
+    end
+
+    AccountMailer.with(email:, first_name:).deleted.deliver_later
+    sign_out(resource_name)
+    redirect_to root_path, notice: "Your account is deleted. We've sent a confirmation to #{email}."
+  end
+
   protected
 
   def build_resource(hash = {})

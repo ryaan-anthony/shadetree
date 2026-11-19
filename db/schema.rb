@@ -971,6 +971,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
     t.datetime "terms_accepted_at"
     t.string "session_token"
     t.bigint "last_business_id"
+    t.datetime "deleted_at"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["last_business_id"], name: "index_users_on_last_business_id"
