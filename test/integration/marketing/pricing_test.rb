@@ -38,9 +38,9 @@ class MarketingPricingTest < ActionDispatch::IntegrationTest
 
   test "features not built yet are marked coming soon, never promised" do
     plan = Plan.listed.last
-    plan.update!(features: plan.features.merge("automations" => true, "remove_powered_by" => true))
+    plan.update!(features: plan.features.merge("sms" => true, "remove_powered_by" => true))
     get pricing_path
-    assert_select "#plan-#{plan.key} li", text: /Automations\s*Coming soon/
+    assert_select "#plan-#{plan.key} li", text: /Text messages\s*Coming soon/
     assert_select "#plan-starter li", text: /No “Powered by Shadetree”/ do |items|
       items.each { assert_no_match(/Coming soon/, _1.text, "a built feature is just listed") }
     end

@@ -2,9 +2,8 @@
 # what the app enforces.
 module MarketingHelper
   # Plan features that a plan can list before the feature itself ships: shown as "coming soon"
-  # rather than promised. Remove a key here when its spec merges (NTF-03, NTF-04, ACC-07,
-  # CAT-07, SMS).
-  COMING_SOON = %w[message_templates automations custom_roles locations sms].freeze
+  # rather than promised. Remove a key here when its spec merges (ACC-07, CAT-07, SMS).
+  COMING_SOON = %w[custom_roles locations sms].freeze
 
   # "5 quotes a month", "Unlimited quotes".
   def plan_quota(plan)
