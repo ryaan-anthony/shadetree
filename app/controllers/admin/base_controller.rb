@@ -6,6 +6,7 @@ class Admin::BaseController < ApplicationController
   include Authorization # after setup, so users without a business are sent to create one
   layout "app"
   before_action { response.set_header("X-Robots-Tag", "noindex, nofollow") } # MKT-04: never in search results
+  rescue_from(ClientLink::ClientErased) { redirect_back_or_to admin_root_path, alert: "This client's details were erased, so nothing more can be sent to them." }
 
   private
 

@@ -62,9 +62,15 @@ class Admin::ClientsController < Admin::BaseController
     end
   end
 
-  def edit = build_blank_rows
+  def edit
+    return redirect_to(admin_client_path(@client), alert: "Their details were erased, so there's nothing to edit.") if @client.erased? # INS-02
+
+    build_blank_rows
+  end
 
   def update
+    return redirect_to(admin_client_path(@client), alert: "Their details were erased, so there's nothing to edit.") if @client.erased? # INS-02
+
     if @client.update(client_params)
       redirect_to admin_client_path(@client), notice: "#{@client.display_name} saved."
     else
@@ -79,6 +85,8 @@ class Admin::ClientsController < Admin::BaseController
   end
 
   def restore
+    return redirect_to(admin_client_path(@client), alert: "Their details were erased, so they stay archived.") if @client.erased?
+
     @client.restore!
     redirect_to admin_client_path(@client), notice: "#{@client.display_name} restored."
   end

@@ -1,0 +1,30 @@
+<% content_for :title, "Erase #{@client.display_name}" %>
+<%= page_header "Erase #{@client.display_name}'s details", lede: "For when a client asks you to forget them." %>
+<div class="max-w-2xl">
+  <%= card do %>
+    <p class="text-sm font-medium text-ink">This removes:</p>
+    <ul class="mt-1 list-disc space-y-1 pl-5 text-sm text-subtle">
+      <li>Their name, company, emails, phones and addresses, and your notes and timeline about them.</li>
+      <li>Photos and files from their requests, visits, quotes, invoices and jobs.</li>
+      <li>Messages, instructions and internal notes on their documents, jobs and visits, and who signed their approvals.</li>
+      <li>Their name, emails, phones and address wherever else they appear: titles, line items, payment notes, PDFs, history, and your other clients' notes.</li>
+      <li>Any full export you've made (it may hold their details). Make a new one afterwards if you need it.</li>
+    </ul>
+    <p class="mt-3 text-sm font-medium text-ink">This keeps:</p>
+    <ul class="mt-1 list-disc space-y-1 pl-5 text-sm text-subtle">
+      <li>Quotes, jobs, invoices and payments, with their numbers, line items and totals, under “Erased client”.</li>
+    </ul>
+    <p class="mt-3 text-sm text-subtle">Open requests are archived and upcoming visits cancelled, without telling anyone. Links you sent them stop working, and nothing more can be sent to them. This can't be undone. If you need their details for your records (taxes, for example), <%= link_to "export your data", admin_data_exports_path, class: "font-medium text-canopy hover:underline" %> first.</p>
+    <%= form_with url: admin_client_erasure_path(@client), method: :post, class: "mt-5 space-y-3" do %>
+      <% if @error %><div class="banner banner-warning" role="alert"><%= icon "alert-circle" %><p><%= @error %></p></div><% end %>
+      <div class="field">
+        <label class="label" for="confirmation">Type <strong><%= @client.display_name %></strong> to confirm</label>
+        <%= text_field_tag :confirmation, nil, id: "confirmation", class: "input", autocomplete: "off", required: true, spellcheck: false %>
+      </div>
+      <div class="flex flex-wrap justify-end gap-2">
+        <%= link_to "Cancel", admin_client_path(@client), class: button_classes(:ghost) %>
+        <%= submit_tag "Erase their details", class: button_classes(:danger), name: nil %>
+      </div>
+    <% end %>
+  <% end %>
+</div>

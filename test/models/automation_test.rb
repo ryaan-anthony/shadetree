@@ -176,6 +176,16 @@ class AutomationTest < ActiveSupport::TestCase
     assert_equal [ "skipped", "The automation now starts on something else." ], [ run.status, run.log.first["detail"] ]
   end
 
+  test "a run for a client whose details were erased (INS-02) is skipped" do
+    rule
+    q = quote
+    q.mark_sent!(by: @owner, channel: "link")
+    ClientErasure.new(@maria, by: @owner).erase!
+    run_due
+    run = AutomationRun.find_by!(subject: q)
+    assert_equal [ "skipped", "The client's details were erased." ], [ run.status, run.log.first["detail"] ]
+  end
+
   test "runs wait while a business is suspended, and go ahead once it's active again" do
     rule
     q = quote

@@ -31,10 +31,14 @@ class ClientLink < ApplicationRecord
 
   scope :active, -> { where(revoked_at: nil).where("expires_at IS NULL OR expires_at > ?", Time.current) }
 
+  class ClientErased < StandardError; end
+
   class << self
     # Expiry for a new link: the document's own policy (client_link_expires_at, where nil means
     # it doesn't expire, as for an unpaid invoice) or 90 days.
     def issue!(linkable, actions: [], expires_at: :default, by: nil)
+      # INS-02: nothing new reaches a client whose details were erased.
+      raise ClientErased, "This client's details were erased." if (linkable.try(:client) || linkable.try(:job)&.client)&.erased?
       if expires_at == :default
         expires_at = linkable.respond_to?(:client_link_expires_at) ? linkable.client_link_expires_at : DEFAULT_LIFETIME.from_now
       end

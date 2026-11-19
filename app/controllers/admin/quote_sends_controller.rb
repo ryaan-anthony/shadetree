@@ -58,7 +58,8 @@ class Admin::QuoteSendsController < Admin::BaseController
   def require_sendable
     return if @quote.sendable?
 
-    message = if @quote.line_items.empty? then "Add at least one line before sending."
+    message = if @quote.client.erased? then "This client's details were erased, so nothing more can be sent to them."
+    elsif @quote.line_items.empty? then "Add at least one line before sending."
     elsif @quote.past_expiry? then "Quote #{@quote.number} expired on #{l(@quote.expires_on)}. Change its valid-until date before sending."
     else "Quote #{@quote.number} can't be sent now."
     end

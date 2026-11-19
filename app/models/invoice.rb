@@ -114,7 +114,7 @@ class Invoice < ApplicationRecord
 
   # PAY-02: a draft (or a revision being prepared) goes out once it has something to bill;
   # an unpaid sent invoice can be sent again. Paid and void ones aren't sent.
-  def sendable? = status.in?(%w[draft sent partially_paid]) && line_items.any?
+  def sendable? = status.in?(%w[draft sent partially_paid]) && line_items.any? && !client.erased?
 
   # The issue and due dates it goes out with. A draft first sent after its issue date is issued
   # today, its due date following its terms (a custom date keeps its distance from the issue
@@ -132,7 +132,7 @@ class Invoice < ApplicationRecord
   def mark_sent!(by:, channel:, recipient: nil, cc: nil)
     transaction do
       lock!
-      raise ArgumentError, "Invoice #{number} can't be sent." unless sendable?
+      raise ArgumentError, "Invoice #{number} can't be sent." unless sendable? && !client.erased? # INS-02
 
       if draft?
         issued, due = dates_when_sent

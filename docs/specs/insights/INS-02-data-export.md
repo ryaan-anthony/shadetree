@@ -30,11 +30,11 @@ the business's financial records.
       archive, generated in the background; the requester receives an email/in-app link that
       expires (e.g. 7 days).
 - [x] Exports are available on every plan and are logged (who, what, when).
-- [ ] Owners/Admins can erase a client: personal data (names, contacts, addresses, notes,
+- [x] Owners/Admins can erase a client: personal data (names, contacts, addresses, notes,
       photos of the property) is removed or anonymized; documents remain with totals intact and
       a neutral "erased client" label; the action requires typed confirmation and is logged.
-- [ ] Erased clients no longer match duplicate detection or search.
-- [ ] Exports respect tenancy; tests verify a business's export contains only its data and that
+- [x] Erased clients no longer match duplicate detection or search.
+- [x] Exports respect tenancy; tests verify a business's export contains only its data and that
       erasure leaves no personal data in exports or search.
 
 ## Out of scope
@@ -82,3 +82,18 @@ Part 2 (everything in one zip):
   The page shows building, ready (with parts) or why the last one failed. A build that stops
   moving for 30 minutes (a deploy) is marked failed, so it can't block a new one.
   `PruneDataExportsJob` (daily) removes zips once their link expires and marks stopped builds.
+
+Part 3 (erasing a client):
+- "Erase their details…" on a client (`export_data`) says what goes and what stays and needs the
+  client's name typed. `ClientErasure` (its header lists everything it touches) removes their
+  contacts, notes, timeline, request details, photos and files, messages and instructions,
+  approval signers (approvals are re-signed and still verify) and every stored PDF, revisions'
+  included (deleted after commit); scrubs their name, company, emails, phones and address to
+  "[erased]" in titles, lines, snapshots, histories, payment notes, notifications, email
+  subjects and, by strong identifiers only, other clients' notes; blanks send recipients;
+  archives open requests and quietly cancels upcoming visits.
+- Afterwards nothing reaches the client: `sendable?` is false, sending and answering refuse, and
+  `ClientLink.issue!` raises `ClientErased` (staff get a message; queued client emails are
+  skipped). The client stays archived as "Erased client", never found by search or duplicate
+  matching. Ready full exports are removed; the erasure is in the data log. Email suppressions
+  are kept (a legitimate interest, stated in MKT-03's privacy notice).
