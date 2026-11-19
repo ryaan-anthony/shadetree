@@ -269,6 +269,7 @@ Rails.application.routes.draw do
     # OPS-05: asking Shadetree for help
     resources :support_tickets, only: %i[index new create show], path: "help" do
       post :reply, on: :member
+      resources :files, only: :show, controller: "support_ticket_files" # screenshots, checked then redirected
     end
     resources :closures, except: %i[index show]
 

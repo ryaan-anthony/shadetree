@@ -59,7 +59,9 @@ class SupportTicket < ApplicationRecord
 
   def status_changes(status)
     status = STATUSES.key?(status) ? status : self.status
-    { status:, waiting_since: (status == "waiting" ? Time.current : nil), resolved_at: (status == "resolved" ? Time.current : nil) }
+    # The clocks start when a status is entered; setting the same status again doesn't restart them.
+    { status:, waiting_since: (status == "waiting" ? (self.status == "waiting" && waiting_since) || Time.current : nil),
+      resolved_at: (status == "resolved" ? (self.status == "resolved" && resolved_at) || Time.current : nil) }
   end
 
   # Returns the saved message, or one with errors.

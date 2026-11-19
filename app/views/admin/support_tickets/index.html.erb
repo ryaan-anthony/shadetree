@@ -21,3 +21,4 @@
     <%= empty_state title: "No questions yet", text: "Stuck on something, found a bug, or have an idea? Ask us.", icon: "life-buoy" %>
   <% end %>
 <% end %>
+<% if @total > Admin::SupportTicketsController::PER_PAGE %><div class="mt-3"><%= pagination(page: @page, per_page: Admin::SupportTicketsController::PER_PAGE, total_count: @total) %></div><% end %>

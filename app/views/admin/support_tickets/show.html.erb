@@ -10,7 +10,10 @@
   <%= form_with model: @reply, url: reply_admin_support_ticket_path(@ticket), multipart: true do |f| %>
     <% if @reply.errors.any? %><div class="banner banner-warning mb-3" role="alert"><p><%= @reply.errors.full_messages.to_sentence %></p></div><% end %>
     <%= f.text_area :body, rows: 4, class: "textarea", required: true, maxlength: 20_000, "aria-label": "Your reply" %>
-    <%= f.file_field :files, multiple: true, accept: "image/png,image/jpeg,image/webp", class: "input mt-2", "aria-label": "Screenshots" %>
+    <div class="field mt-2">
+      <%= f.label :files, class: "label" do %>Screenshots <span class="font-normal text-muted">(optional, up to <%= SupportMessage::MAX_FILES %>)</span><% end %>
+      <%= f.file_field :files, multiple: true, accept: "image/png,image/jpeg,image/webp", class: "input" %>
+    </div>
     <%= f.submit_button "Send reply", class: "mt-3" %>
   <% end %>
 <% end %>
