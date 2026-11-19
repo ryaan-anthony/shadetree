@@ -45,7 +45,8 @@ and trust pages a small SaaS needs, wire acceptance into sign-up, and make updat
   shows a notice that it's pending legal review until a reviewed version replaces it. The
   open questions below still block public launch.
 - **No cookie notice**: Shadetree sets only cookies it needs to work (session, remember-me,
-  this browser's id), and analytics are cookieless (MKT-04), so the notice never appears.
+  this browser's id), and MKT-04's analytics will be cookieless, so the notice never appears.
+  The policy doesn't mention analytics until MKT-04 ships.
 - **The first version isn't "material"**: people who signed up earlier accepted the placeholder
   terms and aren't asked again; later material versions are.
 
@@ -60,14 +61,33 @@ and trust pages a small SaaS needs, wire acceptance into sign-up, and make updat
   with `terms_accepted_at`. A material version in force sends people who accepted an older
   one to "We've updated our terms" on their next visit to the app; accepting records the new
   versions and carries on where they were going.
+  The prompt is the staff app's (`Admin::BaseController`) gate: a JSON lookup, frame or XHR gets
+  a 403 and nothing is saved; a form post goes to the prompt without a return path. The account,
+  sessions and sign-out pages stay reachable on purpose (someone who won't accept can still
+  delete their account); the operator console has its own sign-in.
 - Footers: a Legal column on the marketing site; Terms · Privacy · Legal under the user in the
-  app; a Privacy link on client pages and a "How your details are handled" link in client
-  emails, shown even when "Powered by Shadetree" is hidden.
+  app; "Privacy (Shadetree)" on client pages and "How your details are handled" in client
+  emails, both to the Privacy Policy's section for clients of a business (`#clients`), shown
+  even when "Powered by Shadetree" is hidden.
+- Requests go to mailboxes, not the contact form (which doesn't deliver yet):
+  privacy@getshadetree.com, legal@getshadetree.com and security@getshadetree.com must exist
+  before launch.
+- Retention as written assumes PLT-09's backups: daily for 30 days, monthly for 12 months. Its
+  file backup must also stop keeping deleted files beyond that (open question below).
+- Promises are limited to what's built: no analytics until MKT-04; staff access is logged and
+  needs two-factor through the support tools (OPS-01); a sole owner closes a business by
+  contacting us.
 - The sub-processor list names Stripe; hosting and email delivery are "to be named before
   launch". The text describes how Shadetree works once the in-flight M5 work (security
   baseline, sessions list, data export and erasure, operator audit log) is merged.
 
 ## Open questions
+
+- PLT-09 (#134) syncs files to the backup bucket without `--delete`, so deleted photos and
+  attachments would stay forever, against the 12-month promise. Add `--delete` with a
+  12-month noncurrent-version expiry on the bucket, or change the text?
+- The sub-processor list must name the email provider, which the codebase doesn't. Allow the
+  name on this page, or render the list from configuration?
 
 - **(blocking for public launch)** Source and legal review of the policy text
   (11-marketing open question 2).

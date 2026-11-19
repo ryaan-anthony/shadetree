@@ -37,7 +37,7 @@
         <% end %>
       <% end %>
       <%# MKT-03: how the client's details are handled, shown even without "Powered by". %>
-      <%= link_to "Privacy", privacy_url, class: "text-[0.8125rem] text-subtle underline-offset-2 hover:underline", target: "_blank", rel: "noopener" %>
+      <%= link_to "Privacy (Shadetree)", privacy_url(anchor: "clients"), class: "text-[0.8125rem] text-subtle underline-offset-2 hover:underline", target: "_blank", rel: "noopener" %>
     </footer>
     <%= flash_toasts %>
     <%= render "components/confirm_dialog" %>

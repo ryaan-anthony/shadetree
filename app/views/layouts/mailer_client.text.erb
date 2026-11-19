@@ -9,4 +9,4 @@
 
 Reply to this email to reach <%= @business.name %>.
 <% if @branding.show_powered_by? %>Sent with Shadetree: <%= root_url %>
-<% end %>How your details are handled: <%= privacy_url %>
+<% end %>How your details are handled: <%= privacy_url(anchor: "clients") %>
