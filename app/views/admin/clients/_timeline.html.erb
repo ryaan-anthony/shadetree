@@ -12,6 +12,6 @@
     <ol class="list" id="client-timeline"><%= render "admin/clients/timeline_events", events:, client: %></ol>
     <%= render "admin/clients/timeline_more", client:, last: (events.last if more) %>
   <% else %>
-    <p class="px-5 py-4 text-sm text-muted" id="client-timeline">Requests, quotes, visits, invoices and payments for <%= client.display_name %> will show here.</p>
+    <p class="px-5 py-4 text-sm text-muted" id="client-timeline"><% if client.erased? %>The timeline was removed with their details.<% else %>Requests, quotes, visits, invoices and payments for <%= client.display_name %> will show here.<% end %></p>
   <% end %>
 <% end %>

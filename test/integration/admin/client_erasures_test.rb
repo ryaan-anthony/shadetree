@@ -88,6 +88,63 @@ class Admin::ClientErasuresTest < ActionDispatch::IntegrationTest
     assert_no_match(/Maria|Elm St/, response.snapshot.to_json)
   end
 
+  test "their name is scrubbed from titles, lines, payments, sends, histories and other clients' notes; PDFs and revisions go" do
+    other = nil
+    as_business(@business) do
+      @quote.reload.update!(title: "Cleanup for maria lopez")
+      @quote.sync_line_items([ { "key" => "a", "name" => "Trim Maria's hedge", "description" => "Call (555) 010-0100 first", "quantity" => "1", "unit_price" => "300" } ])
+      @quote.update!(tax_rates: [])
+      @quote.mark_sent!(by: @owner, channel: "email", recipient: "maria@example.com", cc: "maria@example.com")
+      @quote.current_pdf
+      @quote.reload.revise!(by: @owner)
+      @quote.reload.current_pdf
+      @invoice.mark_sent!(by: @owner, channel: "link")
+      @invoice.reload.record_payment!(by: @owner, amount: "10", received_on: @business.today, payment_method: "check", reference: "Lopez check", note: "From Maria")
+      other = Client.create!(display_name: "Neighbor", notes: "Lives next to Maria Lopez at 12 Elm St",
+                             contact_methods_attributes: [ { kind: "phone", value: "5550100777" } ])
+      ClientNote.create!(client: other, user: @owner, body: "Text 555-010-0100 if gate locked; Maria is unrelated")
+    end
+    blob_ids = as_business(@business) { [ @quote.reload.pdf_blob_id, *@quote.revisions.map(&:pdf_blob_id) ].compact }
+    assert_not_empty blob_ids
+
+    perform_enqueued_jobs(only: ActiveStorage::PurgeJob) { as_business(@business) { ClientErasure.new(@client, by: @owner).erase! } }
+
+    as_business(@business) do
+      @quote.reload
+      assert_equal "Cleanup for [erased]", @quote.title
+      assert_equal [ "Trim [erased]'s hedge", "Call [erased] first" ], @quote.line_items.first.slice(:name, :description).values
+      assert_nil @quote.pdf_blob_id
+      assert_empty ActiveStorage::Blob.where(id: blob_ids)
+      @quote.revisions.each { |revision| assert_nil revision.pdf_blob_id; assert_no_match(/Maria|Lopez|Elm St|maria@/i, revision.snapshot.to_json) }
+      @quote.sends.each { |send| assert_equal [ nil, nil ], [ send.recipient, send.cc ] }
+      assert_no_match(/Maria|Lopez|maria@|0100/i, (@quote.events + @invoice.reload.events).map(&:data).to_json)
+      @invoice.payments.each { |payment| assert_no_match(/Maria|Lopez/i, [ payment.note, payment.reference ].join) }
+      assert_equal "Lives next to [erased] at [erased]", other.reload.notes
+      assert_match(/Text \[erased\] if gate locked; Maria is unrelated/, other.timeline_notes.first.body, "a first name alone isn't scrubbed from other clients")
+      assert_equal "cancelled", @visit.reload.status
+    end
+  end
+
+  test "an erased client's documents can't be sent, answered or linked again" do
+    as_business(@business) do
+      @quote.reload.sync_line_items([ { "key" => "a", "name" => "Cleanup", "quantity" => "1", "unit_price" => "300" } ])
+      @quote.update!(tax_rates: [])
+      @quote.mark_sent!(by: @owner, channel: "link")
+      ClientErasure.new(@client, by: @owner).erase!
+      @quote.reload
+      assert_not @quote.sendable?
+      assert_not @invoice.reload.sendable?
+      assert_raises(Quote::NotOpen) { @quote.record_response!(:approve, link: @link, signer_name: "X", terms_accepted: "1") }
+      assert_raises(ArgumentError) { @quote.mark_sent!(by: @owner, channel: "link") }
+      assert_raises(ClientLink::ClientErased) { @quote.client_link! }
+      assert_raises(ClientLink::ClientErased) { @visit.reload.client_link! }
+      assert_not ClientErasure.new(@client.reload, by: @owner).erase!, "a second erasure does nothing"
+    end
+    post admin_quote_send_path(@quote), params: { channel: "link" }
+    assert_redirected_to admin_quote_path(@quote)
+    assert_equal "This client's details were erased, so nothing more can be sent to them.", flash[:alert]
+  end
+
   test "another business's client isn't found" do
     theirs = as_business(businesses(:two)) { Client.create!(display_name: "Theirs", contact_methods_attributes: [ { kind: "phone", value: "5550100199" } ]) }
     assert_not_found_across_businesses { post admin_client_erasure_path(theirs), params: { confirmation: "Theirs" } }

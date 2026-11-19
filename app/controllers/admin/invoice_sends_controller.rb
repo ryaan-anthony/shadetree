@@ -40,7 +40,8 @@ class Admin::InvoiceSendsController < Admin::BaseController
   def require_sendable
     return if @invoice.sendable?
 
-    message = if @invoice.line_items.empty? then "Add at least one line before sending."
+    message = if @invoice.client.erased? then "This client's details were erased, so nothing more can be sent to them."
+    elsif @invoice.line_items.empty? then "Add at least one line before sending."
     else "Invoice #{@invoice.number} is #{@invoice.status_label.downcase}, so it isn't sent again."
     end
     redirect_to(@invoice.editable? ? edit_admin_invoice_path(@invoice) : admin_invoice_path(@invoice), alert: message)

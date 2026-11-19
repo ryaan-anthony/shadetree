@@ -4,7 +4,8 @@
     <button type="button" class="<%= button_classes(:ghost, :icon) %>" data-menu-target="button" data-action="menu#toggle"
             aria-haspopup="true" aria-expanded="false" aria-label="More actions"><%= icon "more-horizontal" %></button>
     <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
-      <% if @client.archived? %>
+      <% if @client.erased? %>
+      <% elsif @client.archived? %>
         <%= button_to restore_admin_client_path(@client), method: :patch, class: "menu-item", form: { class: "contents" } do %><%= icon "archive" %> Restore<% end %>
       <% else %>
         <%= button_to archive_admin_client_path(@client), method: :patch, class: "menu-item", form: { class: "contents" } do %><%= icon "archive" %> Archive<% end %>
@@ -122,6 +123,7 @@
   </div>
 
   <div class="space-y-4">
+    <% if @client.contact_methods.any? %>
     <%= card title: "Contact" do %>
       <ul class="space-y-2.5">
         <% @client.contact_methods.each do |method| %>
@@ -140,6 +142,7 @@
           <% end %>
         <% end %>
       </ul>
+    <% end %>
     <% end %>
 
     <% emails = EmailMessage.where(to: @client.emails.map(&:normalized)).recent.limit(5) %>

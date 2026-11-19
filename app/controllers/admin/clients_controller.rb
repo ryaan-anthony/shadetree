@@ -85,6 +85,8 @@ class Admin::ClientsController < Admin::BaseController
   end
 
   def restore
+    return redirect_to(admin_client_path(@client), alert: "Their details were erased, so they stay archived.") if @client.erased?
+
     @client.restore!
     redirect_to admin_client_path(@client), notice: "#{@client.display_name} restored."
   end

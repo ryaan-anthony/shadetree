@@ -201,7 +201,7 @@ class Quote < ApplicationRecord
     transaction do
       lock!
       staff_approval = by && kind == "approved" && staff_can_approve?
-      raise NotOpen, "This quote isn't open for a response." unless open_for_response? || staff_approval
+      raise NotOpen, "This quote isn't open for a response." unless (open_for_response? || staff_approval) && !client.erased?
       raise Changed, "This quote was updated after you opened it." if version && version.to_i != lock_version
 
       response = responses.create!(business:, kind:, client_link: link, recorded_by: by, quote_version: lock_version, revision:, **attributes)
@@ -224,6 +224,7 @@ class Quote < ApplicationRecord
     transaction do
       lock!
       raise ArgumentError, "a #{status} quote can't be sent" unless draft? || sent?
+      raise ArgumentError, "the client's details were erased" if client.erased? # INS-02
 
       update!(status: "sent", sent_at: Time.current, sent_by: by) if draft?
       # ACC-05: when the business sent its first quote, for time-to-first-quote (no PII).
@@ -245,7 +246,7 @@ class Quote < ApplicationRecord
 
   # Whether it can go out: it needs something to quote, and a valid-until date that hasn't
   # passed (an expired quote is renewed with a revision, QTE-06).
-  def sendable? = (draft? || sent?) && line_items.any? && !past_expiry?
+  def sendable? = (draft? || sent?) && line_items.any? && !past_expiry? && !client.erased?
 
   # BIL-02/03: whether sending it now counts toward the plan's quotes: its first send only
   # (resends and revisions of a quote that went out never count).

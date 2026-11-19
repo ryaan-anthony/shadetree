@@ -10,7 +10,7 @@ class Admin::ClientErasuresController < Admin::BaseController
 
   def create
     unless params[:confirmation].to_s.squish.casecmp?(@client.display_name.squish)
-      flash.now[:alert] = "Type #{@client.display_name} exactly to confirm."
+      @error = "Type #{@client.display_name} exactly to confirm."
       return render(:new, status: :unprocessable_content)
     end
 

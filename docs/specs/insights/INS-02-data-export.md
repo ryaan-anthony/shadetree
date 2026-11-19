@@ -87,12 +87,24 @@ Part 3 (erasing a client):
 - "Erase their details…" on a client (`export_data`) explains what goes and what stays and needs
   the client's name typed. `ClientErasure` removes their name, company, contacts, notes, tags,
   timeline and timeline notes; blanks their addresses ("Erased address") and access notes; on
-  their quotes, invoices and jobs removes messages, instructions, internal notes, attachments and
-  stored PDFs, scrubs their details from document histories, and revokes client links; on
-  requests removes contact details, description, address, photos and notes; on visits removes
-  instructions, client notes, photos and notes; replaces their address on email logs. Signed
-  approvals keep what was agreed (line items and totals) without who signed or from where, and
-  are signed again as they now are, so they still verify.
-- Numbers, line items, totals and payments stay, under "Erased client" (archived; can't be
-  edited; never found by search or duplicate matching). Ready full exports are removed, and the
-  erasure is in the data log (who, when).
+  their quotes, invoices and jobs removes messages, instructions, internal notes and attachments,
+  and every stored PDF (current and each revision's; files are deleted after the change commits);
+  on requests removes contact details, description, address, photos and notes; on visits removes
+  instructions, client notes, photos and notes. Signed approvals keep what was agreed (line items
+  and totals) without who signed or from where, and are signed again as they now are, so they
+  still verify.
+- Their name (full, and first and last on their own), company, emails, phones (however
+  punctuated) and address lines are replaced with "[erased]" in titles, line items, terms,
+  revision snapshots, document and visit histories, payment notes and references, notifications
+  and email subjects about them. Other clients' notes are scrubbed of the strong identifiers only
+  (full name, company, emails, phones, address), so a shared first name isn't touched. Who
+  documents were sent to (and cc) is blanked, client-link activity removed and every link revoked.
+- Open requests are archived and upcoming visits cancelled, directly (nobody is notified).
+- Afterwards nothing reaches the client: `sendable?` is false, `mark_sent!` and
+  `record_response!` refuse, and `ClientLink.issue!` raises `ClientErased` (staff pages redirect
+  with a message; a queued client email is skipped). The client can't be restored or edited.
+- Numbers, line items, totals and payments stay, under "Erased client" (archived; never found by
+  search or duplicate matching). Ready full exports are removed, and the erasure is in the data
+  log (who, when).
+- Kept on purpose: email suppressions (an address that bounced or complained stays blocked, a
+  legitimate interest to state in MKT-03's privacy notice).
