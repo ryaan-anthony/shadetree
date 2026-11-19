@@ -14,7 +14,10 @@ class Admin::DataExportsTest < ActionDispatch::IntegrationTest
     get download_admin_data_exports_path(table)
     assert_response :success
     assert_equal "text/csv", response.media_type
-    CSV.parse(response.body, headers: true)
+    assert_equal "utf-8", response.charset
+    assert_equal "private, no-store", response.headers["Cache-Control"]
+    assert response.body.start_with?("\uFEFF"), "a byte-order mark, so Excel reads UTF-8"
+    CSV.parse(response.body.delete_prefix("\uFEFF"), headers: true)
   end
 
   test "Owners and Admins export; technicians can't" do
@@ -65,6 +68,34 @@ class Admin::DataExportsTest < ActionDispatch::IntegrationTest
   end
 
   test "money formatting handles negatives and small amounts" do
-    assert_equal [ "0.05", "-12.30", "1240.00", nil ], [ 5, -1230, 124_000, nil ].map { DataExport::Table.money(_1) }
+    assert_equal [ "0.05", "-12.30", "1240.00", nil ], [ 5, -1230, 124_000, nil ].map { DataExport::Table.money(_1, "USD") }
+  end
+
+  test "negative prices and phone numbers stay usable; formulas don't; rows come out in date order; taxes are broken down" do
+    as_business(@business) do
+      client = Client.create!(display_name: " =cmd", contact_methods_attributes: [ { kind: "phone", value: "+44 20 7946 0958" } ])
+      invoice = Invoice.start(client:)
+      invoice.sync_line_items([ { "key" => "a", "name" => "Credit", "quantity" => "1", "unit_price" => "-25" }, { "key" => "b", "name" => "Mowing", "quantity" => "1", "unit_price" => "100", "taxable" => "1" } ])
+      invoice.update!(tax_rates: [ { "name" => "State", "percent" => "6.25" }, { "name" => "County", "percent" => "1" } ])
+      job = Job.create!(client:, title: "Mowing")
+      [ Date.new(2026, 11, 23), Date.new(2026, 11, 16) ].each { |on| job.visits.new(scheduled_on: on, timing: "anytime", duration_minutes: 60).schedule!(by: @owner) }
+    end
+    client = download("clients").first
+    assert_equal [ "'=cmd", "+44 20 7946 0958" ], client.values_at("Name", "Phones")
+    lines = download("invoice_lines")
+    assert_equal [ "-25.00", "-25.00" ], lines.first.values_at("Unit price", "Line total")
+    invoice = download("invoices").first
+    assert_match(/State 6.25%: \d+\.\d\d; County 1%: \d+\.\d\d/, invoice["Taxes"])
+    assert_equal %w[2026-11-16 2026-11-23], download("visits").map { _1["Date"] }
+  end
+
+  test "every table holds only this business's data" do
+    as_business(businesses(:two)) do
+      client = Client.create!(display_name: "Zed Other", contact_methods_attributes: [ { kind: "phone", value: "5550100199" } ])
+      quote = Quote.create!(client:, created_by: users(:two), title: "Theirs")
+      ClientNote.create!(client:, user: users(:two), body: "Zed's note")
+      assert quote
+    end
+    DataExport::TABLES.each_key { assert_no_match(/Zed|Theirs/, download(_1).to_s, _1) }
   end
 end

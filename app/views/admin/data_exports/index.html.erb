@@ -23,7 +23,8 @@
       <ul class="list-disc space-y-1 pl-5 text-sm2 text-subtle">
         <li>Money is a plain number in the document's currency, like 1240.00.</li>
         <li>Dates are YYYY-MM-DD; times are in <%= current_business.time_zone.name %>.</li>
-        <li>Columns stay the same over time, so a spreadsheet you build on them keeps working.</li>
+        <li>Columns stay the same over time (new ones are added at the end), so a spreadsheet you build on them keeps working.</li>
+        <li>Spreadsheet apps drop leading zeros from postal codes like 02134. Import that column as text to keep them.</li>
       </ul>
     <% end %>
     <%= card title: "Recent exports", flush: true do %>
@@ -31,7 +32,7 @@
         <ul class="list" id="export-log">
           <% @exports.each do |export| %>
             <li><div class="min-w-0 flex-1"><p class="text-sm text-ink"><%= export.label %></p>
-              <p class="break-all text-sm2 text-muted"><%= export.requested_by&.full_name || export.requested_by_email %> · <%= local_time(export.created_at) %></p></div></li>
+              <p class="break-all text-sm2 text-muted"><%= export.requested_by&.full_name || export.requested_by_email %> · <%= local_time(export.created_at) %><%= " · #{pluralize(number_with_delimiter(export.rows_count), "row")}" if export.rows_count && export.kind != "full" %></p></div></li>
           <% end %>
         </ul>
       <% else %>

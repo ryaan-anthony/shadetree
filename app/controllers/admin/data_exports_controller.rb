@@ -11,6 +11,7 @@ class Admin::DataExportsController < Admin::BaseController
     return head(:not_found) unless DataExport::TABLES.key?(params[:table])
 
     csv, filename = DataExport.download!(params[:table], by: current_user)
-    send_data csv, filename:, type: "text/csv"
+    response.headers["Cache-Control"] = "private, no-store" # client data shouldn't sit in a browser cache
+    send_data csv, filename:, type: "text/csv; charset=utf-8"
   end
 end
