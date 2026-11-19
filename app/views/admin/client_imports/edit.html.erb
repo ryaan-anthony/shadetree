@@ -1,0 +1,71 @@
+<% content_for :title, "Import clients" %>
+<%= page_header "Match your columns", lede: "#{@import.filename} · #{pluralize(number_with_delimiter(@import.total_rows), "row")}" %>
+<%= form_with model: @import, url: admin_client_import_path(@import), method: :patch, class: "space-y-4" do |f| %>
+  <% if @import.errors.any? %>
+    <div class="banner banner-warning" role="alert"><%= icon "alert-circle" %><p><%= @import.errors.full_messages.to_sentence %></p></div>
+  <% end %>
+  <%= card title: "Columns", subtitle: "We guessed from the column names. Change any that are wrong, or leave a column out.", flush: true do %>
+    <div class="table-wrap relative">
+      <table class="data-table" id="column-mapping">
+        <thead><tr><th scope="col">Your column</th><th scope="col" class="hidden sm:table-cell">Example</th><th scope="col">Goes to</th></tr></thead>
+        <tbody>
+          <% empty = 0 %>
+          <% @import.headers.each_with_index do |header, index| %>
+            <% example = @import.examples[index] %>
+            <% if example.blank? && @import.field_for(index).blank? %><% empty += 1 %><% next %><% end %>
+            <tr>
+              <th scope="row" class="primary break-words"><label for="column_<%= index %>"><%= header.truncate(60) %></label><span class="sub sm:hidden"><%= example.to_s.truncate(30) %></span></th>
+              <td class="hidden max-w-56 truncate text-muted sm:table-cell"><%= example.presence || "—" %></td>
+              <td><%= select_tag "client_import[columns][#{index}]", options_for_select([ [ "Don't import", "" ] ] + ClientImport::FIELDS.invert.to_a, @import.field_for(index)),
+                                 id: "column_#{index}", class: "select min-w-40" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <% if empty.positive? %><p class="border-t border-line px-5 py-3 text-sm2 text-muted" id="empty-columns"><%= pluralize(empty, "column") %> with nothing in <%= empty == 1 ? "it" : "them" %> aren't shown.</p><% end %>
+  <% end %>
+
+  <%= card title: "Clients you already have", subtitle: "Rows with the same email or phone as an existing client." do %>
+    <fieldset class="space-y-2">
+      <legend class="sr-only">Clients you already have</legend>
+      <% ClientImport::DUPLICATES.each do |value, label| %>
+        <label class="flex items-center gap-2 text-sm"><%= f.radio_button :duplicates, value %> <%= label %><%= " (nothing is merged)" if value == "create" %></label>
+      <% end %>
+    </fieldset>
+  <% end %>
+
+  <% preview = @import.errors.any? ? [] : @import.preview %>
+  <% shown = @import.preview_rows.size %>
+  <%= card title: "Preview", subtitle: shown == 1 ? "The first row as it'll be added." : "The first #{shown} rows as they'll be added.", flush: true do %>
+    <% if preview.empty? %>
+      <p class="px-5 py-4 text-sm text-muted">Fix the columns above to see a preview.</p>
+    <% else %>
+      <div class="table-wrap relative">
+        <table class="data-table data-table-stack" id="import-preview">
+          <thead><tr><th scope="col">Line</th><th scope="col">Client</th><th scope="col">Contact</th><th scope="col">Address</th><th scope="col"><span class="sr-only">Status</span></th></tr></thead>
+          <tbody>
+            <% preview.each do |number, client, problems, duplicates| %>
+              <tr>
+                <td class="tabular text-muted"><span class="sm:hidden">Line </span><%= number %></td>
+                <td class="primary"><%= client.display_name.to_s.truncate(80).presence || "—" %><% if client.company_name.present? %><span class="sub"><%= client.company_name.truncate(80) %></span><% end %></td>
+                <td class="text-sm2"><%= safe_join(client.contact_methods.map { _1.value.truncate(60) }, tag.br) %></td>
+                <td class="text-sm2"><% if (property = client.properties.first) %><%= [ property.address_line1, property.city, property.region, property.postal_code ].compact_blank.join(", ").truncate(120) %><% end %></td>
+                <td>
+                  <% if problems.any? %><span class="badge badge-danger" title="<%= problems.to_sentence %>">Won't import</span><p class="mt-1 text-xs text-danger"><%= problems.to_sentence %></p>
+                  <% elsif duplicates.any? %><span class="badge badge-warning">Matches <%= duplicates.first.display_name %></span>
+                  <% else %><span class="badge badge-success">New</span><% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+  <% end %>
+
+  <div class="flex flex-wrap items-center justify-end gap-2">
+    <%= link_to "Cancel", new_admin_client_import_path, class: button_classes(:ghost) %>
+    <%= f.submit "Update preview", class: button_classes(:secondary), name: nil %>
+  </div>
+<% end %>

@@ -42,6 +42,9 @@ gem "thruster", require: false
 # PDFs from the client-page HTML with headless Chrome (ADR 0010, QTE-02)
 gem "ferrum", "~> 0.17"
 gem "image_processing", "~> 1.2"
+
+# Reading client CSV imports (CLI-06); a bundled gem since Ruby 3.4, so it must be listed.
+gem "csv"
 # QR codes for the request form link (CLI-03); pure Ruby.
 gem "rqrcode", "~> 3.1"
 

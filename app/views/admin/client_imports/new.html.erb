@@ -1,0 +1,28 @@
+<% content_for :title, "Import clients" %>
+<%= page_header "Import clients", lede: "Bring your list over from a spreadsheet or another tool." %>
+<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+  <%= card title: "Upload a CSV file" do %>
+    <ol class="list-decimal space-y-1.5 pl-5 text-sm text-subtle">
+      <li>Export your clients as CSV from your spreadsheet or old tool, or fill in <%= link_to "our template", template_admin_client_imports_path, class: "font-medium text-canopy hover:underline" %>.</li>
+      <li>Upload it here. Next you'll match its columns and see a preview before anything is added.</li>
+    </ol>
+    <%= form_with url: admin_client_imports_path, method: :post, multipart: true, class: "mt-4 space-y-3" do %>
+      <div class="field">
+        <label class="label" for="file">CSV file</label>
+        <%= file_field_tag :file, id: "file", accept: ".csv,.txt,text/csv", required: true, class: "input" %>
+        <p class="help">Up to <%= ClientImport::CsvFile::MAX_BYTES / 1.megabyte %> MB and <%= number_with_delimiter(ClientImport::CsvFile::MAX_ROWS) %> clients. The first row should be column names.</p>
+      </div>
+      <%= submit_tag "Upload and preview", class: button_classes, name: nil %>
+    <% end %>
+  <% end %>
+  <% if @recent.any? %>
+    <%= card title: "Recent imports", flush: true do %>
+      <ul class="list" id="recent-imports">
+        <% @recent.each do |import| %>
+          <li><%= link_to import.filename, (import.mapping? ? edit_admin_client_import_path(import) : admin_client_import_path(import)), class: "min-w-0 flex-1 truncate font-medium text-ink hover:underline" %>
+            <span class="text-sm2 text-muted"><%= import.mapping? ? "Not imported yet" : import.status.humanize %></span></li>
+        <% end %>
+      </ul>
+    <% end %>
+  <% end %>
+</div>
