@@ -28,13 +28,13 @@ product screenshots, and pricing that can never drift from what the app enforces
       repeated at natural points.
 - [x] Features page covers quoting, client approval, scheduling and technician view, invoicing
       and payments, with real screenshots from the product (not mockups).
-- [ ] Pricing page renders plans, prices, limits and features from plan data (BIL-01) and
+- [x] Pricing page renders plans, prices, limits and features from plan data (BIL-01) and
       includes an FAQ (limits, what happens at the limit, cancellation, data export).
 - [ ] About page tells the real story of who builds Shadetree; contact page is kept (MKT-02).
 - [x] Navigation and footer are consistent; footer links to legal pages (MKT-03).
-- [ ] No fabricated metrics, logos or testimonials; placeholders are removed.
-- [ ] All pages use the marketing layout (PLT-05) and work at 360 px.
-- [ ] Copy is reviewed for plain language; system tests cover page rendering and CTA paths.
+- [x] No fabricated metrics, logos or testimonials; placeholders are removed.
+- [x] All pages use the marketing layout (PLT-05) and work at 360 px.
+- [x] Copy is reviewed for plain language; system tests cover page rendering and CTA paths.
 
 ## Out of scope
 
@@ -70,6 +70,18 @@ Part 2 (Features and About):
 - About: why Shadetree exists and the six promises it keeps (from `docs/plans/00-vision.md`),
   with no stock photos. The founder's own story is still to come (open question), so its
   criterion stays open.
+
+Part 3 (Pricing):
+- Every listed plan from `Plan.listed`, in order: price (monthly, or a year's price shown per
+  month with what it saves, through a script-free Monthly/Yearly switch), quotes a month, team
+  members, and the features it adds over the plan before ("Everything in Starter"). Features a
+  plan can list before they're built are marked "Coming soon" (`MarketingHelper::COMING_SOON`;
+  remove a key when its spec merges). No "most popular" badge or trial: neither exists.
+- Every plan's button is "Start free": accounts start on Free and move up from Settings (BIL-04
+  will add checkout). "Included on every plan" lists the shared workflow.
+- FAQ: what counts as a quote, what happens at the limit (BIL-03's behavior, including the
+  reset on the 1st), people per plan, cancelling, and taking your data. The old pricing page's
+  invented tiers, toggle script and comparison table are gone, as is its test.
 
 ## Open questions
 
