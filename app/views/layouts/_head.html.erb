@@ -6,6 +6,9 @@
 <meta name="theme-color" content="#0b1221">
 <%= csrf_meta_tags %>
 <%= csp_meta_tag %>
+<%# PLT-13: the nonce changes when the session does (signing in or out). Turbo can't move a page's
+    nonced <style> blocks into a document with the old policy, so a changed nonce means a full load. %>
+<meta name="csp-nonce-check" content="<%= Digest::SHA256.hexdigest(content_security_policy_nonce.to_s)[0, 16] %>" data-turbo-track="reload">
 <link rel="icon" href="/icon.png" type="image/png">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">

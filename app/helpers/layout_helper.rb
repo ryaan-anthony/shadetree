@@ -32,7 +32,7 @@ module LayoutHelper
     if branding.logo?
       tag.span(image_tag(branding.logo(:web), alt: "", class: "size-full object-contain"), class: "#{classes} bg-white")
     else
-      tag.span(branding.initials, class: classes, style: business_mark_style(business))
+      tag.span(branding.initials, class: "#{classes} #{inline_style(business_mark_style(business))}")
     end
   end
 

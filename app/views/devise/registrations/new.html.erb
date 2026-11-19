@@ -3,7 +3,7 @@
       title: "Create your account",
       lede: "Free to start. No card needed.",
       footer: safe_join([ "Already have an account? ", link_to("Sign in", new_session_path(resource_name), class: "font-semibold text-canopy hover:underline") ]) } do %>
-  <%= form_for(resource, as: resource_name, url: registration_path(resource_name)) do |f| %>
+  <%= form_for(resource, as: resource_name, url: registration_path(resource_name), data: { turbo: false }) do |f| %><%# signs in: see sessions/new (PLT-13) %>
     <%= render "devise/shared/error_messages", resource: resource %>
     <div class="grid gap-4 sm:grid-cols-2">
       <%= f.field :first_name, autocomplete: "given-name", autofocus: true, required: true %>

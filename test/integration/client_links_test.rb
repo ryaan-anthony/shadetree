@@ -15,7 +15,8 @@ class ClientLinksTest < ActionDispatch::IntegrationTest
     get client_link_path(@link.token)
     assert_response :success
     assert_select "#document-title", "Spring cleanup"
-    assert_select "body.client[style*='#9a3412']"
+    assert_select "body.client"
+    assert_select "head style[nonce]", /body\.client\{--color-brand: #9a3412;/
     assert_select ".side, .topbar", count: 0
     assert_select "meta[name=robots][content=noindex]"
     assert_equal "noindex, nofollow", response.headers["X-Robots-Tag"]

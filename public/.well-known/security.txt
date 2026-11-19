@@ -1,0 +1,7 @@
+# Found a security problem in Shadetree? Thank you. Please email us with the details and how to
+# reproduce it; we'll reply within three business days. Please don't access other people's data,
+# disrupt the service or run automated scans against it while testing.
+Contact: mailto:security@getshadetree.com
+Expires: 2027-11-18T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://getshadetree.com/.well-known/security.txt

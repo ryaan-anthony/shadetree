@@ -24,7 +24,7 @@ public endpoints. Run a focused review and fix what it finds.
 
 ## Acceptance criteria
 
-- [ ] A strict content security policy is enforced (no inline scripts/styles except via
+- [x] A strict content security policy is enforced (no inline scripts/styles except via
       nonces), along with secure headers (HSTS, frame protections, referrer policy).
 - [ ] Rate limiting applies to sign-in, password reset, sign-up, client-link lookup, request
       form and contact form, with sensible limits and friendly error pages.
@@ -32,16 +32,44 @@ public endpoints. Run a focused review and fix what it finds.
       option if abuse is detected.
 - [ ] Uploaded files are validated by content type and size, served safely (no execution, no
       inline rendering of risky types), and stripped of location metadata for photos.
-- [ ] Session cookies are secure, HTTP-only and same-site; session fixation is prevented.
+- [x] Session cookies are secure, HTTP-only and same-site; session fixation is prevented.
 - [ ] A security review checklist (authentication, authorization, tenancy, uploads, links,
       payments webhooks, mass assignment, SSRF) is completed and findings resolved or ticketed.
-- [ ] A responsible disclosure page/contact exists (security.txt).
+- [x] A responsible disclosure page/contact exists (security.txt).
 
 ## Out of scope
 
 - External penetration test (recommended after launch). 2FA for business users (backlog).
 
-## Open questions
+## Decisions
 
-- Is a third-party bot challenge acceptable on the public request form if abuse appears?
-  Privacy and UX trade-off.
+- **No third-party bot challenge for now** (owner accepted the recommendation, M5 planning):
+  honeypot and timing first; a challenge is revisited only if abuse gets past them.
+- **Style attributes are gone, not allowed.** `style-src` has no `'unsafe-inline'`; values known
+  only at render time become classes backed by one nonced `<style>` (`InlineStyleHelper`).
+  JavaScript still sets styles through the CSSOM (`el.style.x = …`), which CSP allows.
+- **The nonce is the session id** (random per request when there's no session), so `<style>`
+  blocks in Turbo navigations and frames match the page they land in. Signing in or out changes
+  it: those forms skip Turbo, and a `csp-nonce-check` meta tracked by Turbo forces a full load if
+  the nonce changes some other way.
+- **Third parties are added one at a time** in the policy when a feature needs them: Stripe's
+  hosted checkout (BIL-04) will need `form-action` once we post to it; self-hosted Plausible
+  (MKT-04) its script and connect origin.
+
+## Implementation notes
+
+Part 1 (headers, policy, cookies, disclosure):
+- `config/initializers/content_security_policy.rb`: `default-src 'self'`, scripts and styles
+  `'self'` plus nonce, `frame-ancestors 'none'`, `form-action 'self'`, `object-src 'none'`,
+  `base-uri 'self'`, reports to `/csp-reports` (`CspReportsController`: logged, truncated, rate
+  limited, never stored).
+- `config/initializers/secure_headers.rb`: `Cross-Origin-Opener-Policy: same-origin`,
+  `Permissions-Policy` turning off camera, microphone, geolocation, USB, payment and sensors,
+  referrer policy; the session cookie is HTTP-only, `SameSite=Lax`, secure in production. HSTS
+  comes from `force_ssl`; Devise renews the session id at sign-in (tested).
+- Inline scripts on the old marketing nav and pricing page became Stimulus controllers
+  (`menu`, `billing_toggle`); the style guide's demo form uses `styleguide_demo`.
+- `public/.well-known/security.txt` (security@getshadetree.com, expires 2027-11-18; a test
+  fails 60 days before so it gets renewed).
+- `SecurityHeadersTest` renders public, signed-in and client pages and fails on any style
+  attribute, inline handler, `javascript:` link, or inline script/style without the nonce.
