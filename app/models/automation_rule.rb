@@ -50,8 +50,10 @@ class AutomationRule < ApplicationRecord
 
   validates :name, presence: true, length: { maximum: 80 }
   validates :trigger, inclusion: { in: TRIGGERS.keys }
-  validates :delay_minutes, numericality: { only_integer: true, greater_than_or_equal_to: 0, less_than_or_equal_to: MAX_DELAY_MINUTES }
-  validate :valid_conditions, :valid_actions
+  validates :delay_minutes, numericality: { only_integer: true, greater_than_or_equal_to: 0, less_than_or_equal_to: MAX_DELAY_MINUTES, message: "can be up to 90 days" }
+  # Checked when they change or the rule is turned on, so a rule whose template was deleted can
+  # still be turned off.
+  validate :valid_conditions, :valid_actions, if: -> { new_record? || will_save_change_to_conditions? || will_save_change_to_actions? || will_save_change_to_trigger? || (enabled? && will_save_change_to_enabled?) }
   validate :within_active_limit, if: -> { enabled? && (new_record? || will_save_change_to_enabled?) }
 
   scope :active, -> { where(enabled: true) }
@@ -63,6 +65,8 @@ class AutomationRule < ApplicationRecord
   private
 
   def valid_conditions
+    return errors.add(:conditions, "are invalid") unless conditions.is_a?(Hash) && conditions.values.all? { [ String, TrueClass, FalseClass ].include?(_1.class) }
+
     unknown = conditions.keys - CONDITIONS.keys
     errors.add(:conditions, "has unknown keys: #{unknown.join(", ")}") if unknown.any?
     if TRIGGERS.key?(trigger)
@@ -79,6 +83,8 @@ class AutomationRule < ApplicationRecord
     return errors.add(:actions, "need at least one") unless actions.is_a?(Array) && actions.any?
 
     actions.each do |action|
+      next errors.add(:actions, "are invalid") unless action.is_a?(Hash) && action.values.all?(String)
+
       definition = ACTIONS[action["type"]] or next errors.add(:actions, "include an unknown one")
       errors.add(:actions, "“#{definition[:label]}” doesn't fit “#{trigger_definition.label.downcase}”") if TRIGGERS.key?(trigger) && !definition[:subjects].include?(subject_type)
       case action["type"]

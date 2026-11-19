@@ -34,14 +34,14 @@ module AutomationRecipe
     recipe = find(key)
     rule = nil
     AutomationRule.transaction do
-      actions = recipe.actions.map do |action|
+      actions = recipe.actions.deep_dup.map do |action|
         next action unless action["type"] == "send_template"
 
         template = MessageTemplate.custom.find_by("lower(name) = ?", recipe.template[:name].downcase) ||
                    MessageTemplate.create!(**recipe.template, updated_by: by)
         action.merge("template" => template.uid)
       end
-      rule = AutomationRule.create(name: recipe.name, trigger: recipe.trigger, delay_minutes: recipe.delay_minutes, conditions: recipe.conditions,
+      rule = AutomationRule.create(name: recipe.name, trigger: recipe.trigger, delay_minutes: recipe.delay_minutes, conditions: recipe.conditions.deep_dup,
                                    actions:, recipe: recipe.key, created_by: by)
       raise ActiveRecord::Rollback unless rule.persisted?
     end

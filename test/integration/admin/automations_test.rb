@@ -77,6 +77,25 @@ class Admin::AutomationsTest < ActionDispatch::IntegrationTest
     assert_select "[role=alert]", /need at least one/
   end
 
+  test "unconfirmed senders can't set up automations; odd values and a deleted template are handled" do
+    @owner.update_columns(confirmed_at: nil)
+    post recipe_admin_automations_path(key: "quote_follow_up")
+    assert_match "Confirm your email", flash[:alert]
+    assert_empty rules
+    @owner.update_columns(confirmed_at: Time.current)
+    post admin_automations_path, params: { automation_rule: rule_params(conditions: { client_tag: %w[a b] }, actions: { tag_client: { on: "1", tag: %w[x y] } }) }
+    assert_response :unprocessable_content, "array values aren't kept, so the tag step has no tag"
+    post admin_automations_path, params: { automation_rule: rule_params(delay_amount: "91", delay_unit: "days") }
+    assert_select "[role=alert]", /can be up to 90 days/
+    post admin_automations_path, params: { automation_rule: rule_params }
+    rule = rules.last
+    as_business(@business) { @template.destroy! }
+    get edit_admin_automation_path(rule)
+    assert_select "option[selected]", /deleted template/
+    patch toggle_admin_automation_path(rule)
+    assert_not rule.reload.enabled?, "a rule whose template was deleted can still be turned off"
+  end
+
   test "the plan's limit on active automations: turning one on past it says so" do
     3.times { |i| post admin_automations_path, params: { automation_rule: rule_params(name: "Rule #{i}") } }
     as_business(@business) { AutomationRule.last.update!(enabled: false) }

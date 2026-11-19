@@ -29,7 +29,7 @@ module AutomationsHelper
     case key
     when "still_open" then "it's still open" unless AutomationConditions.off?(value)
     when "paid_in_full" then "it's paid in full" unless AutomationConditions.off?(value)
-    when "total_at_least" then "the total is at least #{number_to_currency(value, precision: value.to_s.include?(".") ? 2 : 0)}"
+    when "total_at_least" then "the total is at least #{Money.parse(value.to_s, current_business.currency).format}"
     when "client_tag" then "the client is tagged “#{value}”"
     end
   end
@@ -63,7 +63,7 @@ module AutomationsHelper
     subject = run.subject
     return tag.span("A deleted record", class: "text-muted") unless subject
 
-    label = AutomationActions.label_for(subject)
+    label = subject.is_a?(Payment) ? "a payment on #{subject.invoice.number}" : AutomationActions.label_for(subject)
     path = AutomationActions.notice_path(subject)
     path ? link_to(label, path, class: "font-medium text-canopy hover:underline") : label
   end

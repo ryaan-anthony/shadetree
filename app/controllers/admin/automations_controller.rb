@@ -4,13 +4,18 @@
 class Admin::AutomationsController < Admin::BaseController
   requires_permission :business_settings
   before_action :require_feature, except: :index
+  # Automations can email clients, so setting one up (or turning one on) needs a confirmed sender.
+  before_action :require_confirmed_sender, only: %i[create update recipe]
   before_action :set_rule, only: %i[edit update destroy toggle]
 
   DELAY_UNITS = { "minutes" => 1, "hours" => 60, "days" => 24 * 60 }.freeze
 
   def index
     @rules = AutomationRule.order(:created_at).to_a
-    @runs = AutomationRun.recent.includes(:subject).limit(30)
+    @runs = AutomationRun.recent.includes(:subject).limit(30).to_a
+    subjects = @runs.filter_map(&:subject)
+    ActiveRecord::Associations::Preloader.new(records: subjects.grep(Payment), associations: :invoice).call
+    ActiveRecord::Associations::Preloader.new(records: subjects.grep(Visit), associations: :job).call
     @editable = editable?
     @entitlements = current_business.entitlements
   end
@@ -40,6 +45,8 @@ class Admin::AutomationsController < Admin::BaseController
   end
 
   def toggle
+    return require_confirmed_sender if !@rule.enabled? && !current_user.can_send_to_clients?
+
     @rule.enabled = !@rule.enabled
     return redirect_to(admin_automations_path, notice: "“#{@rule.name}” is #{@rule.enabled ? "on" : "off"}.") if @rule.save
 
@@ -75,11 +82,11 @@ class Admin::AutomationsController < Admin::BaseController
   def rule_attributes
     form = params.expect(automation_rule: [ :name, :trigger, :delay_amount, :delay_unit, { conditions: {}, actions: {} } ])
     delay = form[:delay_amount].to_i.clamp(0, AutomationRule::MAX_DELAY_MINUTES) * DELAY_UNITS.fetch(form[:delay_unit].to_s, 60)
-    conditions = (form[:conditions]&.to_h || {}).select { |key, value| AutomationRule::CONDITIONS.key?(key) && value.present? && value != "0" }
+    conditions = (form[:conditions]&.to_h || {}).select { |key, value| AutomationRule::CONDITIONS.key?(key) && value.is_a?(String) && value.present? && value != "0" }
     actions = (form[:actions]&.to_h || {}).filter_map do |type, fields|
       next unless AutomationRule::ACTIONS.key?(type) && fields.is_a?(Hash) && fields["on"] == "1"
 
-      { "type" => type }.merge(fields.slice("template", "team", "tag").compact_blank)
+      { "type" => type }.merge(fields.slice("template", "team", "tag").select { _2.is_a?(String) }.compact_blank)
     end
     { name: form[:name], trigger: form[:trigger], delay_minutes: delay, conditions:, actions: }
   end

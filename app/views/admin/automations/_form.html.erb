@@ -23,8 +23,9 @@
       <fieldset>
         <legend class="label">Wait</legend>
         <div class="flex items-center gap-2">
-          <input type="number" name="automation_rule[delay_amount]" value="<%= amount %>" min="0" max="<%= 90 * 24 * 60 %>" class="input !w-24" aria-label="How long to wait">
-          <select name="automation_rule[delay_unit]" class="select !w-32" aria-label="Unit">
+          <input type="number" name="automation_rule[delay_amount]" value="<%= amount %>" min="0" max="<%= { "days" => 90, "hours" => 2160, "minutes" => 129_600 }[unit] %>" class="input !w-24" aria-label="How long to wait"
+                 data-automation-form-target="delay">
+          <select name="automation_rule[delay_unit]" class="select !w-32" aria-label="Unit" data-automation-form-target="unit" data-action="automation-form#limitDelay">
             <% %w[minutes hours days].each do |u| %>
               <option value="<%= u %>" <%= "selected" if unit == u %>><%= u %></option>
             <% end %>
@@ -69,14 +70,16 @@
           <% case type %>
           <% when "send_template" %>
             <div class="ml-6 mt-2" data-option-details>
-              <% if templates.any? %>
+              <% saved = action&.dig("template") %>
+              <% if templates.any? || saved %>
                 <select name="automation_rule[actions][send_template][template]" class="select h-8 max-w-xs py-0 text-sm2" aria-label="Template to email">
+                  <option value="" <%= "selected" unless templates.any? { _1.uid == saved } %>><%= saved ? "(deleted template: choose another)" : "Choose a template" %></option>
                   <% templates.each do |template| %>
                     <option value="<%= template.uid %>" <%= "selected" if action&.dig("template") == template.uid %>><%= template.name %></option>
                   <% end %>
                 </select>
               <% end %>
-              <p class="help"><%= templates.any? ? "Goes to the client's main email, once per quote or invoice, with a button to their page." : "You don't have any templates yet." %>
+              <p class="help"><%= templates.any? ? "Goes to the client's main email, once per record (a quote, an invoice, a job…), with a button to their page where there is one." : "You don't have any templates yet." %>
                 <%= link_to "New template", new_admin_custom_message_template_path, class: "font-semibold text-canopy hover:underline" %></p>
             </div>
           <% when "notify_team" %>

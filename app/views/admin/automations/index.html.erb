@@ -10,7 +10,7 @@
   <% end %>
 
   <%= card title: "Your automations",
-           subtitle: "Each one waits for something to happen, checks it still makes sense, then does its steps. #{"Your plan includes #{pluralize(limit, "active automation")}." if limit}",
+           subtitle: "Each one waits for something to happen, checks it still makes sense, then does its steps. #{"Your plan includes #{pluralize(limit, "active automation")}." if limit&.positive?}",
            flush: true,
            actions: (link_to(new_admin_automation_path, class: button_classes(:secondary, :sm)) { icon("plus") + " New automation" } if @editable) do %>
     <% if @rules.empty? %>

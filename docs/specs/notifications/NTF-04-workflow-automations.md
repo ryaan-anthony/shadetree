@@ -58,8 +58,8 @@ build custom rules from a fixed list of triggers, conditions and actions.
 - **Auto-create job on approval becomes a recipe** (accepted), beside the four. The JOB-01
   setting stays for plans without automations; with both on there's still one job (unique
   index). Retiring the setting on paid plans is the owner's call.
-- **The location condition waits for CAT-07**; the conditions today are still open, total at
-  least, and client tag.
+- **The location condition waits for CAT-07**; the conditions today are still open, paid in
+  full (for the review request), total at least, and client tag. Waits can also be in minutes.
 - **"Notify the team" goes to everyone with a permission** (running the office, or
   scheduling), so custom roles (ACC-07) are covered without naming roles.
 - **An overdue rule chases invoices that fall due after it's made**, not every old invoice the

@@ -4,9 +4,14 @@ import { Controller } from "@hotwired/stimulus"
 // (each option lists the subjects it fits in data-subjects), and opens an option's own fields
 // when its box is ticked. Hidden options are disabled so they aren't sent.
 export default class extends Controller {
-  static targets = ["trigger", "option"]
+  static targets = ["trigger", "option", "delay", "unit"]
+  static maxDelay = { days: 90, hours: 2160, minutes: 129600 } // 90 days in each unit
 
   connect() { this.refresh() }
+
+  limitDelay() {
+    this.delayTarget.max = this.constructor.maxDelay[this.unitTarget.value]
+  }
 
   refresh() {
     const subject = this.triggerTarget.selectedOptions[0]?.dataset.subject
