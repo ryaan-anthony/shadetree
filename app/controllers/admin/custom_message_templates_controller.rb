@@ -2,6 +2,8 @@
 # quote or invoice email from, and for automations (NTF-04). Same plan feature and editor as
 # the catalog emails.
 class Admin::CustomMessageTemplatesController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed, reads: %i[preview]
   include MessageTemplatePreviews
   requires_permission :business_settings
   before_action :require_feature, except: %i[edit preview]

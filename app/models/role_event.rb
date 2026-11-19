@@ -3,6 +3,7 @@
 # member (by user id, so the name isn't kept once their account is deleted).
 class RoleEvent < ApplicationRecord
   include BusinessOwned
+  include SupportAttribution # OPS-03
 
   KINDS = %w[created changed deleted assigned unassigned].freeze
 

@@ -1,6 +1,8 @@
 # ACC-05: the setup checklist's extras: a sample quote to preview (built in memory, never
 # saved), dismissing the checklist, and dismissing a technician's welcome.
 class Admin::OnboardingController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :business_settings, only: %i[sample_quote dismiss show]
   allow_any_member only: :dismiss_welcome
 

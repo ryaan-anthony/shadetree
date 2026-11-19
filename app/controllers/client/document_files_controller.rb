@@ -2,6 +2,8 @@
 # revoking or expiring it also cuts off the files: each request is checked, then redirected
 # to a short-lived storage URL.
 class Client::DocumentFilesController < ApplicationController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :read_only
   include ClientLinkAccess
   include ActiveStorage::SetCurrent
 

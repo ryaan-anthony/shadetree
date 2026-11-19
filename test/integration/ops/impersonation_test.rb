@@ -58,7 +58,7 @@ class Ops::ImpersonationTest < ActionDispatch::IntegrationTest
     assert_nil notification.reload.read_at
     assert_nil @owner.reload.last_active_at
     get download_admin_data_exports_path(table: "clients")
-    assert_match "read-only", flash[:alert]
+    assert_match "can't open this", flash[:alert]
     patch user_registration_path, params: { user: { first_name: "Hacked" } }
     assert_equal "Jane", users(:two).reload.first_name
     assert_not AuditEntry.exists?(action: "impersonation.change")
@@ -80,9 +80,8 @@ class Ops::ImpersonationTest < ActionDispatch::IntegrationTest
     assert_equal [ users(:two), "admin/clients#create", "POST" ], [ change.target_user, change.data["change"], change.data["method"] ]
 
     blocked = {
-      -> { patch user_registration_path, params: { user: { email: "x@example.com", current_password: "password123" } } } => "account settings",
-      -> { delete destroy_user_session_path } => "account settings",
-      -> { post switch_admin_business_path, params: { business: businesses(:one).uid } } => "which business",
+      -> { patch user_registration_path, params: { user: { email: "x@example.com", current_password: "password123" } } } => "can't open this",
+      -> { post switch_admin_business_path, params: { business: businesses(:one).uid } } => "can't open this",
       -> { patch admin_member_path(@owner), params: { member: { role: "admin" } } } => "Owners' roles",
       -> { patch admin_member_path(business_users(:one_member_of_two)), params: { member: { role: "owner" } } } => "Owners' roles"
     }
@@ -168,4 +167,96 @@ class Ops::ImpersonationTest < ActionDispatch::IntegrationTest
     get admin_team_path
     assert_select "#support-access", 0
   end
+
+  test "data downloads and invitations are refused in both modes; the export page writes nothing" do
+    export = as_business(@business) do
+      DataExport.create!(kind: "full", status: "ready", requested_by: users(:two), expires_at: 1.day.from_now,
+                         files: [ { io: StringIO.new("PK"), filename: "x.zip", content_type: "application/zip" } ])
+    end
+    sign_in_operator
+    start
+    [ false, true ].each do |write|
+      allow_changes if write
+      get admin_data_exports_path
+      assert_response :success
+      assert_no_difference(-> { as_business(@business) { DataExport.count } }) do
+        get admin_data_export_path(export)
+        assert_match "can't open this", flash[:alert]
+        get download_admin_data_exports_path(table: "clients")
+        assert_match "can't open this", flash[:alert]
+      end
+      assert_no_difference(-> { as_business(@business) { Invitation.count } }) do
+        post admin_invitations_path, params: { invitation: { email: "user1@example.com", role: "owner" } }
+      end
+      assert_match "can't open this", flash[:alert]
+    end
+    invitation = as_business(businesses(:one)) { Invitation.create!(email: "x@example.com", role: "owner", invited_by: users(:one)) }
+    post accept_invitation_path(invitation.token)
+    assert_match "can't open this", flash[:alert]
+    assert_nil invitation.reload.accepted_at
+  end
+
+  test "searches and previews work read-only; signing out ends the session first" do
+    sign_in_operator
+    start
+    post search_admin_clients_path(format: :json), params: { q: "a" }
+    assert_response :success
+    post matches_admin_clients_path, params: { client: { display_name: "x" } }
+    assert_response :success
+    assert_not AuditEntry.exists?(action: "impersonation.change")
+
+    get edit_user_registration_path
+    assert_response :success
+    assert_select "#browser-sessions", 0, "the member's browsers and addresses aren't shown"
+    delete destroy_user_session_path
+    assert_equal "signed_out", AuditEntry.find_by!(action: "impersonation.ended").data["ended"]
+    get admin_root_path
+    assert_redirected_to new_user_session_path
+  end
+
+  test "changes are attributed to support in histories and the audit log; the business email stays" do
+    sign_in_operator
+    start
+    allow_changes
+    post admin_clients_path, params: { client: { display_name: "Added by support", contact_methods_attributes: { "0" => { kind: "phone", value: "5550100100" } } } }
+    client = as_business(@business) { Client.find_by!(display_name: "Added by support") }
+    assert_equal "/admin/clients/#{client.uid}", AuditEntry.find_by!(action: "impersonation.change").data["location"]
+    post admin_client_notes_path(client), params: { client_note: { body: "Gate code 1234" } }
+    assert as_business(@business) { client.events.find_by!(kind: "note_added").via_support? }
+    get admin_client_path(client)
+    assert_match "Jane Smith via Shadetree support", response.body
+
+    patch admin_business_path, params: { business: { email: "support-took-over@example.com" } }
+    assert_match "the business's email", flash[:alert]
+    assert_equal "business2@example.com", @business.reload.email
+  end
+
+  test "allowing changes needs a fresh code; a timed-out session counts to its last request" do
+    sign_in_operator
+    start
+    later 6.minutes
+    patch ops_impersonation_path, params: { mode: "write", reason: "Fixing" }
+    assert_redirected_to new_ops_two_factor_verification_path(recent: 1)
+    later 6.minutes
+    get admin_root_path
+    later 3.hours
+    get admin_root_path
+    ended = AuditEntry.find_by!(action: "impersonation.ended")
+    assert_equal [ "timed_out", 12 ], ended.data.values_at("ended", "minutes")
+  end
+
+  test "a stopped session can't be brought back by an old copy of the cookie" do
+    sign_in_operator
+    start
+    copy = session_impersonation
+    delete ops_impersonation_path
+    revived = Impersonation.load({ Impersonation::KEY => copy }, users(:one))
+    assert_equal @owner, revived.membership
+    assert_equal "already_ended", revived.ended_because
+  end
+
+  private
+
+  # The impersonation as the server stored it in this browser's session.
+  def session_impersonation = session["warden.user.user.session"][Impersonation::KEY].dup
 end

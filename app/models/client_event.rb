@@ -7,6 +7,7 @@
 # data holds what the line says that the subject may not keep (a channel, an amount).
 class ClientEvent < ApplicationRecord
   include BusinessOwned
+  include SupportAttribution # OPS-03
 
   KINDS = %w[request_received quote_sent quote_viewed quote_approved quote_declined quote_changes_requested
              visit_scheduled visit_completed visit_reopened visit_cancelled

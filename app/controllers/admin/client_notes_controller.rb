@@ -1,6 +1,8 @@
 # CLI-05: notes on a client's timeline. Anyone on the office team adds them; only the author
 # edits one.
 class Admin::ClientNotesController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :office
 
   before_action :set_client

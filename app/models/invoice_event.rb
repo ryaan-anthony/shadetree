@@ -6,6 +6,7 @@
 # ({ "location", "changed" }).
 class InvoiceEvent < ApplicationRecord
   include BusinessOwned
+  include SupportAttribution # OPS-03
 
   KINDS = %w[created sent revised revision_discarded partially_paid paid voided reopened
              payment_recorded payment_changed payment_deleted repriced].freeze

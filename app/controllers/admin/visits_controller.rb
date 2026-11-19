@@ -2,6 +2,8 @@
 # move it, change who's going, cancel or restore it, or mark it done. Every change is recorded
 # with who made it.
 class Admin::VisitsController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :schedule
   before_action :set_job
   before_action :set_visit, only: %i[edit update cancel restore complete]

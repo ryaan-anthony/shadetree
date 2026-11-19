@@ -1,6 +1,8 @@
 # MKT-03: accepting a material change to the Terms or Privacy Policy, asked on the next visit
 # to the app after it takes effect (Admin::BaseController#require_current_legal_terms).
 class Users::LegalAcceptancesController < ApplicationController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :blocked # support can't accept terms for them
   before_action :authenticate_user!
   layout "application"
 

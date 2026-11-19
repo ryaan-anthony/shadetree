@@ -1,6 +1,8 @@
 # Jobs (JOB-01): the list, a job's page, a job from scratch, and finishing or cancelling one.
 # Technicians don't get here: they see jobs through their assigned visits (JOB-04).
 class Admin::JobsController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed, reads: %i[search]
   requires_permission :office
   before_action :set_job, only: %i[show edit update complete cancel reopen]
   before_action :require_open, only: %i[edit update]

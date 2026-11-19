@@ -1,12 +1,15 @@
 # Your data (INS-02): download any table as CSV, on every plan; every download is logged.
 class Admin::DataExportsController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :read_only, only: %i[index]
+  impersonation :blocked # downloads are logged in the member's name
   requires_permission :export_data
   layout "app"
 
   def index
     @exports = DataExport.newest_first.includes(:requested_by).limit(20)
     @full = DataExport.where(kind: "full").newest_first.first
-    @full&.give_up_if_stale!
+    @full&.give_up_if_stale! unless impersonation # OPS-03: support looking writes nothing
   end
 
   # Starts the full export (or finds the one already being built).

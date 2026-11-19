@@ -1,6 +1,8 @@
 # What a client can do with an invoice through its link (PAY-02): download it. Paying online
 # comes with PAY-04.
 class Client::InvoicesController < ApplicationController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :read_only
   include ClientLinkAccess
   include SendsPdf
 

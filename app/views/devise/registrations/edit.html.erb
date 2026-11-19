@@ -38,6 +38,7 @@
     <% end %>
   <% end %>
 
+  <% unless impersonation %><%# OPS-03: support doesn't see the member's browsers and addresses %>
   <% browser_sessions = current_user.user_sessions.listed.to_a.sort_by { _1 == current_user_session ? 0 : 1 } %>
   <%= card title: "Where you're signed in", subtitle: "Lost a phone or used a shared computer? Sign it out here.", flush: true, class: "mt-4" do %>
     <ul class="list" id="browser-sessions">
@@ -65,6 +66,7 @@
                       form: { class: "shrink-0", data: { turbo_confirm: "Sign out of every other browser?", turbo_confirm_button: "Sign out others" } } %>
       </div>
     <% end %>
+  <% end %>
   <% end %>
 
   <% blocking = current_user.businesses_blocking_deletion %>

@@ -3,6 +3,8 @@
 # choosing where its members go. Custom roles are a plan feature: without it they keep working
 # and are shown read-only.
 class Admin::RolesController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :manage_owners
   before_action :require_feature, except: %i[index edit delete destroy] # old roles can always be removed
   before_action :set_role, only: %i[edit update delete destroy]

@@ -2,6 +2,8 @@
 # visits on a time grid, or an agenda list on phones, filtered by member; the jobs still
 # needing a visit beside it. Opening a visit shows it in a side panel.
 class Admin::ScheduleController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :schedule
   filters_by_location Visit, Job, only: :show # CAT-07
   # The visit panel loads into its frame in the background; a load finishing after an Undo

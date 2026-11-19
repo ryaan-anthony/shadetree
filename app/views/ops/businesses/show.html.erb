@@ -24,7 +24,8 @@
     <% end %>
   <% end %>
   <%= card title: "View as a member", subtitle: "Read-only to start. Account, billing and payment settings are always blocked.", id: "view-as" do %>
-    <% candidates = @summary.members.select { Impersonation.refusal_for(_1, operator: current_user).nil? } %>
+    <% operator_ids = Operator.active.pluck(:user_id).to_set %>
+    <% candidates = @summary.members.select { Impersonation.refusal_for(_1, operator: current_user, operator_ids:).nil? } %>
     <% if impersonation %>
       <p class="text-sm text-subtle">You're viewing the app as <%= impersonation.user.full_name %>. Stop that first.</p>
     <% elsif candidates.empty? %>

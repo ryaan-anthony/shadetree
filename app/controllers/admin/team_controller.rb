@@ -1,5 +1,7 @@
 # The team page: members, pending invitations and deactivated people (ACC-03).
 class Admin::TeamController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :manage_team
 
   def show

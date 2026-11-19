@@ -1,5 +1,7 @@
 # PAY-01: invoice an approved quote as agreed (its lines, not the job's later changes).
 class Admin::QuoteInvoicesController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :office
 
   def create

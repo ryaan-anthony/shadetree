@@ -1,5 +1,7 @@
 # JOB-04: a note on one of the signed-in member's visits.
 class Admin::MyVisitNotesController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :field_work
 
   def create

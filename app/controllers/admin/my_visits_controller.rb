@@ -1,6 +1,8 @@
 # JOB-04: one of the signed-in member's visits, from their day view: where and when, how to get
 # in and reach the client, what to do, and Start / Complete. Any other visit is "not found".
 class Admin::MyVisitsController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :field_work
   before_action :set_visit
 

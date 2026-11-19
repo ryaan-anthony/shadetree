@@ -1,5 +1,7 @@
 # Invite people, resend and revoke invitations (ACC-03).
 class Admin::InvitationsController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :blocked # an invitation would outlast the support session
   requires_permission :manage_team
   before_action :require_confirmed_sender, only: %i[create resend]
   before_action :set_invitation, only: %i[resend revoke]

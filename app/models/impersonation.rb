@@ -44,16 +44,27 @@ class Impersonation
   def mode = data["mode"]
   def read_only? = mode != "write"
   def started_at = Time.zone.at(data["started_at"])
-  def minutes = ((Time.current - started_at) / 60).round
+  def seen_at = Time.zone.at(data["seen_at"].to_i)
+
+  # How long it lasted: to now, or for one that timed out, to its last request (never past the
+  # hour), not to whenever the next request happened to notice.
+  def minutes(because = nil)
+    ended = because == "timed_out" ? [ seen_at, started_at + MAX_LENGTH ].min : Time.current
+    ((ended - started_at) / 60).round
+  end
 
   # Why this session can't go on, or nil if it can.
   def ended_because
-    return "timed_out" if Time.zone.at(data["seen_at"].to_i) < IDLE_TIMEOUT.ago || started_at < MAX_LENGTH.ago
+    return "timed_out" if seen_at < IDLE_TIMEOUT.ago || started_at < MAX_LENGTH.ago
     return "access_changed" unless operator && data["operator_id"] == operator.id && Operator.for(operator)
     return "access_changed" unless membership&.active? && !membership.user.deleted?
+    return "already_ended" if self.class.ended?(id) # an old cookie replayed after Stop
 
     nil
   end
+
+  # Ended sessions are on record in the audit log, so a copy of the cookie can't bring one back.
+  def self.ended?(id) = AuditEntry.where(action: "impersonation.ended").where("data->>'session' = ?", id.to_s).exists?
 
   def touch! = data["seen_at"] = Time.current.to_i
 
@@ -64,10 +75,11 @@ class Impersonation
   def self.clear!(session_data) = session_data.delete(KEY)
 
   # Who may be viewed as: an active member who isn't the operator or another operator.
-  def self.refusal_for(membership, operator:)
+  # operator_ids: the active operators' user ids, when checking several members at once.
+  def self.refusal_for(membership, operator:, operator_ids: nil)
     if membership.nil? || !membership.active? || membership.user.deleted? then "Pick an active member of this business."
     elsif membership.user_id == operator.id then "You can't view the app as yourself."
-    elsif Operator.for(membership.user) then "Operators can't be viewed as."
+    elsif operator_ids ? operator_ids.include?(membership.user_id) : Operator.for(membership.user) then "Operators can't be viewed as."
     end
   end
 end

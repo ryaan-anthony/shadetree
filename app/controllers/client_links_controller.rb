@@ -1,5 +1,7 @@
 # The page a client lands on from a link: /c/:token (PLT-12).
 class ClientLinksController < ApplicationController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :read_only
   include ClientLinkAccess
   skip_before_action :load_client_link, only: :request_fresh
   before_action :load_link_for_request, only: :request_fresh

@@ -1,5 +1,7 @@
 # NTF-02: a member's notifications in the current business, and which ones they get by email.
 class Admin::NotificationsController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   allow_any_member
   before_action :set_notification, only: %i[open read]
 

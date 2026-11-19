@@ -54,17 +54,21 @@ audited, impossible to mistake for normal use.
 
 ## Implementation notes
 
-- `Impersonation` lives in the operator's own Warden session data, so signing out ends it.
-  `ImpersonationSupport` (ApplicationController) makes `current_user` the member everywhere but
-  `Ops::` (which uses `true_user`), pins the business, and refuses: in read-only, every non-GET
-  and logged GETs (data downloads); with changes allowed, `users/*` (password, email, sign-out,
-  account deletion), plan/billing/subscription and payment-account controllers, Owners' roles,
-  adding or switching businesses, and client-link actions. Refusals redirect back with a message.
+- `Impersonation` lives in the operator's own Warden session data, so signing out ends it (and
+  is allowed: it records `ended: signed_out` first); ended sessions are on record, so an old
+  cookie can't revive one. `ImpersonationSupport` makes `current_user` the member everywhere but
+  `Ops::`. Each staff, account and invitation controller declares `impersonation :allowed`,
+  `:read_only` or `:blocked` (per action, with `reads:` for POSTs that only search or preview);
+  a test walks the routes for undeclared ones, and undeclared means read-only. Blocked in both
+  modes: data downloads, invitations (sending and accepting), account settings and sign-in pages,
+  switching or adding a business. Never changed even in write mode: plans, client erasure, test
+  emails, Owners' roles, the business's email. Events recorded meanwhile read "… via Shadetree
+  support" in histories (`Current.impersonator`).
 - Browsing leaves no trace on the member: last active isn't touched, notifications opened stay
   unread, client link views aren't recorded, and legal re-acceptance isn't asked.
-- Start needs a reason and a code from the last 5 minutes; "Allow changes" a second reason; Stop
+- Start needs a reason and a recent code; "Allow changes" a second reason and a recent code; Stop
   always works. Audited: `impersonation.started`, `changes_allowed`, `read_only`, `change`
-  (every change that goes through: controller#action, method, path, status) and `ended`
-  (stopped, timed out or access changed, with minutes), all tied by a session id.
+  (every change: controller#action, method, path, status, where it led) and `ended` (stopped,
+  signed out, timed out or access changed; minutes to its last request), tied by a session id.
 - The banner (`layouts/_impersonation_banner`) is on every layout. Dev seeds: a past visit.
   Tests: `test/integration/ops/impersonation_test.rb`.

@@ -3,6 +3,7 @@
 class Ops::ImpersonationsController < Ops::BaseController
   skip_before_action :expire_idle_session, :require_two_factor, only: :destroy # Stop always works
   before_action :require_recent_verification, only: :create
+  before_action :require_recent_verification, only: :update, if: -> { params[:mode] == "write" }
   before_action :require_impersonation, only: %i[edit update destroy]
 
   def create

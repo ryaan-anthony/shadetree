@@ -1,4 +1,7 @@
 class Admin::BusinessesController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
+  impersonation :blocked, only: %i[new create switch] # another business, or a new one, in the member's name
   skip_before_action :require_business_setup, only: [ :new, :create ]
   allow_without_business only: %i[new create]
   allow_any_member only: :switch

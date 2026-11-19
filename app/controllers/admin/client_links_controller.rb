@@ -1,5 +1,7 @@
 # Staff tools for client links: preview as the client sees it, revoke, and re-issue (PLT-12).
 class Admin::ClientLinksController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :office # owners and admins; technicians get 403 (ACC-04)
   before_action :set_client_link
 

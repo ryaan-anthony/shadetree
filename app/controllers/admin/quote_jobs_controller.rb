@@ -1,6 +1,8 @@
 # JOB-01: make the job for an approved quote (when the business doesn't do it automatically,
 # or the automatic one didn't happen). A second press opens the same job.
 class Admin::QuoteJobsController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :office
 
   def create

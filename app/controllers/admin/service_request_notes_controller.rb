@@ -1,5 +1,7 @@
 # CLI-04: internal notes on a request.
 class Admin::ServiceRequestNotesController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :office
 
   def create

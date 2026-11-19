@@ -1,6 +1,8 @@
 # Business hours and closures (CAT-06), a tab of business settings. CAT-07: with more than one
 # location, ?location=<uid> picks whose hours; the main location's are the business's.
 class Admin::HoursController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :business_settings
   before_action :set_place
 

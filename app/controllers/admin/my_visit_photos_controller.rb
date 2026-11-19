@@ -2,6 +2,8 @@
 # request, with progress and a retry on a dropped connection, and gets the new thumbnail back;
 # without scripts, the plain form sends several and comes back to the visit.
 class Admin::MyVisitPhotosController < Admin::BaseController
+  # OPS-03: what support may do while viewing as a member
+  impersonation :allowed
   requires_permission :field_work
   before_action :set_visit
 
