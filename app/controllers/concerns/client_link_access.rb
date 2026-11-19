@@ -17,9 +17,9 @@ module ClientLinkAccess
 
   included do
     layout "client"
-    # Order matters: rate limit and headers apply even when the link is unknown or inactive.
-    rate_limit to: 120, within: 1.minute, by: -> { request.remote_ip }, with: -> { head :too_many_requests }
+    # Order matters: headers, then the rate limit, apply even when the link is unknown or inactive.
     before_action :set_client_page_headers
+    rate_limit to: 120, within: 1.minute, by: -> { request.remote_ip }, with: -> { too_many_requests }
     before_action :load_client_link
   end
 

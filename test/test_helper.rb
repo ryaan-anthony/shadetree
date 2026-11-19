@@ -19,6 +19,11 @@ Rails.application.reload_routes_unless_loaded
 # Include Devise test helpers
 class ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
+
+  # The hidden fields a public form sends (AbuseProtection, PLT-13), as if opened 10 seconds ago.
+  def form_guard_params(purpose, at: 10.seconds.ago)
+    { website: "", form_token: Rails.application.message_verifier("form_guard").generate(at.to_f, purpose:, expires_in: 1.day) }
+  end
 end
 
 module ActiveSupport

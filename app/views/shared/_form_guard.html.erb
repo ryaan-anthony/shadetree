@@ -1,0 +1,7 @@
+<%# locals: (purpose:) -%>
+<%# PLT-13 (AbuseProtection): a field people never see or fill (bots do), and when the form was shown. %>
+<div class="hidden" aria-hidden="true">
+  <label for="form_guard_website">Leave this empty</label>
+  <input type="text" name="website" id="form_guard_website" tabindex="-1" autocomplete="off">
+</div>
+<%= hidden_field_tag :form_token, form_guard_token(purpose), id: nil %>

@@ -26,14 +26,14 @@ public endpoints. Run a focused review and fix what it finds.
 
 - [x] A strict content security policy is enforced (no inline scripts/styles except via
       nonces), along with secure headers (HSTS, frame protections, referrer policy).
-- [ ] Rate limiting applies to sign-in, password reset, sign-up, client-link lookup, request
+- [x] Rate limiting applies to sign-in, password reset, sign-up, client-link lookup, request
       form and contact form, with sensible limits and friendly error pages.
-- [ ] Public forms have invisible bot protection (e.g. honeypot + timing) with an escalation
+- [x] Public forms have invisible bot protection (e.g. honeypot + timing) with an escalation
       option if abuse is detected.
-- [ ] Uploaded files are validated by content type and size, served safely (no execution, no
+- [x] Uploaded files are validated by content type and size, served safely (no execution, no
       inline rendering of risky types), and stripped of location metadata for photos.
 - [x] Session cookies are secure, HTTP-only and same-site; session fixation is prevented.
-- [ ] A security review checklist (authentication, authorization, tenancy, uploads, links,
+- [x] A security review checklist (authentication, authorization, tenancy, uploads, links,
       payments webhooks, mass assignment, SSRF) is completed and findings resolved or ticketed.
 - [x] A responsible disclosure page/contact exists (security.txt).
 
@@ -44,7 +44,8 @@ public endpoints. Run a focused review and fix what it finds.
 ## Decisions
 
 - **No third-party bot challenge for now** (owner accepted the recommendation, M5 planning):
-  honeypot and timing first; a challenge is revisited only if abuse gets past them.
+  honeypot and timing first; the escalation is a lockdown that tightens both, and a challenge
+  is revisited only if abuse gets past that.
 - **Style attributes are gone, not allowed.** `style-src` has no `'unsafe-inline'`; values known
   only at render time become classes backed by one nonced `<style>` (`InlineStyleHelper`).
   JavaScript still sets styles through the CSSOM (`el.style.x = …`), which CSP allows.
@@ -76,3 +77,15 @@ Part 1 (headers, policy, cookies, disclosure):
   attribute, inline handler, `javascript:` link, or inline script/style without the nonce; it
   also scans every view and script for them, and checks that a view calling `inline_style`
   emits its `<style>`.
+
+Part 2 (abuse, uploads, review):
+- `AbuseProtection` (in every controller): `too_many_requests` (friendly page with the real
+  wait and `Retry-After`; `public/429.html` as a safety net), the hidden field and a signed,
+  single-use form token that must be a few seconds old (a re-shown form keeps its start time),
+  per-IP attempts, logged rejections (`[abuse]`), and the lockdown (`bin/rails
+  security:lockdown HOURS=`, or `FORMS_LOCKDOWN=true`: 10-second wait, 5 tries per IP per 15
+  minutes; kept in the cache). Sign-up, the request form and the contact form use it (MKT-02
+  rebuilds the contact form so it keeps what's sent).
+- Scripts and stylesheets join HTML/SVG/XML in being served as plain-byte downloads.
+- Invitation lookups now count toward the rate limit.
+- The review and its findings: [docs/security/review-checklist.md](../../security/review-checklist.md).

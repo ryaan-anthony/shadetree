@@ -7,13 +7,13 @@ class Users::SignUpTest < ActionDispatch::IntegrationTest
     post user_registration_path, params: { user: {
       first_name: "Ana", last_name: "Silva", email: "ana@example.com",
       password: "long enough phrase", terms_of_service: "1"
-    }.merge(overrides) }
+    }.merge(overrides), **form_guard_params("sign-up") }
   end
 
   test "the form asks for name, email, password and terms only" do
     get new_user_registration_path
     assert_response :success
-    assert_select "form input:not([type=hidden]):not([type=submit])", 5 # first, last, email, password, terms
+    assert_select "form input:not([type=hidden]):not([type=submit]):not([name=website])", 5 # first, last, email, password, terms
     assert_select "input#user_password[minlength='10'][autocomplete='new-password']"
     assert_select "[data-controller='password-strength']"
     assert_select "a[href='#{terms_path}']"
@@ -41,7 +41,7 @@ class Users::SignUpTest < ActionDispatch::IntegrationTest
 
   test "terms can't be skipped by leaving the field out" do
     assert_no_difference("User.count") do
-      post user_registration_path, params: { user: { first_name: "Ana", email: "ana@example.com", password: "long enough phrase" } }
+      post user_registration_path, params: { user: { first_name: "Ana", email: "ana@example.com", password: "long enough phrase" }, **form_guard_params("sign-up") }
     end
     assert_response :unprocessable_entity
   end
@@ -63,5 +63,77 @@ class Users::SignUpTest < ActionDispatch::IntegrationTest
   test "duplicate emails are rejected" do
     assert_no_difference("User.count") { sign_up(email: users(:one).email) }
     assert_response :unprocessable_entity
+  end
+
+  test "bots are turned away: the hidden field, a form sent too fast or from elsewhere, and too many tries" do
+    assert_no_difference("User.count") do
+      post user_registration_path, params: { user: { first_name: "Bot", email: "bot@example.com", password: "long enough phrase", terms_of_service: "1" },
+                                             **form_guard_params("sign-up"), website: "http://spam.example" }
+    end
+    assert_redirected_to root_path
+
+    assert_no_difference("User.count") do
+      post user_registration_path, params: { user: { first_name: "Ana", email: "ana@example.com", password: "long enough phrase", terms_of_service: "1" },
+                                             **form_guard_params("sign-up", at: 1.second.ago) }
+    end
+    assert_response :unprocessable_content
+    assert_select "[role=alert]", /Enter your password again, then create your account/
+    assert_select "input[name='user[email]'][value='ana@example.com']"
+    assert_select "input[name='user[password]']:not([value])"
+
+    post user_registration_path, params: { user: { first_name: "Ana", email: "ana@example.com" }, **form_guard_params("request:oakline") }
+    assert_response :unprocessable_content, "a token from another form doesn't count"
+
+    cache, Rails.cache = Rails.cache, ActiveSupport::Cache::MemoryStore.new
+    10.times { post user_registration_path, params: { user: { first_name: "" }, **form_guard_params("sign-up") } }
+    assert_no_difference("User.count") { sign_up }
+    assert_select "[role=alert]", /a lot of sign-ups/
+  ensure
+    Rails.cache = cache if cache
+  end
+
+  test "a form token works once; a form shown again keeps its start time, so a quick fix isn't a bot" do
+    cache, Rails.cache = Rails.cache, ActiveSupport::Cache::MemoryStore.new
+    guard = form_guard_params("sign-up", at: 30.seconds.ago)
+    post user_registration_path, params: { user: { first_name: "Ana", email: "ana@example.com", password: "short", terms_of_service: "1" }, **guard }
+    assert_response :unprocessable_content
+    assert_select ".error-text", /too short/
+    token = css_select("input[name=form_token]").first["value"]
+    assert_not_equal guard[:form_token], token
+    assert_difference("User.count") do
+      post user_registration_path, params: { user: { first_name: "Ana", last_name: "Silva", email: "ana@example.com", password: "long enough phrase", terms_of_service: "1" },
+                                             website: "", form_token: token }
+    end
+    sign_out :user
+    assert_no_difference("User.count") do
+      post user_registration_path, params: { user: { first_name: "Bo", last_name: "Silva", email: "bo@example.com", password: "long enough phrase", terms_of_service: "1" }, **guard }
+    end
+    assert_select "[role=alert]", /Enter your password again/, "the first token was used up"
+  ensure
+    Rails.cache = cache
+  end
+
+  test "FORMS_LOCKDOWN turns a lockdown on; false or empty don't" do
+    { "true" => true, "1" => true, "false" => false, "0" => false, "" => false }.each do |value, on|
+      ENV["FORMS_LOCKDOWN"] = value
+      assert_equal on, AbuseProtection.lockdown?, value.inspect
+    end
+  ensure
+    ENV.delete("FORMS_LOCKDOWN")
+  end
+
+  test "in a lockdown, forms wait longer and allow fewer tries" do
+    cache, Rails.cache = Rails.cache, ActiveSupport::Cache::MemoryStore.new
+    AbuseProtection.lockdown!(hours: 1)
+    post user_registration_path, params: { user: { first_name: "Ana" }, **form_guard_params("sign-up", at: 5.seconds.ago) }
+    assert_select "[role=alert]", /Enter your password again/
+    4.times { post user_registration_path, params: { user: { first_name: "" }, **form_guard_params("sign-up", at: 20.seconds.ago) } }
+    assert_no_difference("User.count") { post user_registration_path, params: { user: { first_name: "Ana", last_name: "Silva", email: "ana@example.com", password: "long enough phrase", terms_of_service: "1" }, **form_guard_params("sign-up", at: 20.seconds.ago) } }
+    assert_select "[role=alert]", /a lot of sign-ups/
+    AbuseProtection.lift_lockdown!
+    Rails.cache.clear
+    assert_difference("User.count") { sign_up }
+  ensure
+    Rails.cache = cache
   end
 end

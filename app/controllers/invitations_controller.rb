@@ -5,8 +5,8 @@
 #  - signed out, new person: set name and password; accepting confirms the email
 class InvitationsController < ApplicationController
   layout "marketing"
+  rate_limit to: 30, within: 10.minutes, by: -> { request.remote_ip }, with: -> { too_many_requests(retry_after: 10.minutes) } # before the lookup, so guessing tokens counts
   before_action :load_invitation
-  rate_limit to: 30, within: 10.minutes, by: -> { request.remote_ip }, with: -> { head :too_many_requests }
 
   def show
     @existing_account = User.exists?(email: @invitation.email) unless user_signed_in?

@@ -14,7 +14,7 @@ class PublicRequestsTest < ActionDispatch::IntegrationTest
   end
 
   # A form shown 10 seconds ago (the minimum time on the page is 3).
-  def token(at: 10.seconds.ago) = Rails.application.message_verifier("request_form").generate(at.to_f, purpose: "oakline", expires_in: 1.day)
+  def token(at: 10.seconds.ago) = Rails.application.message_verifier("form_guard").generate(at.to_f, purpose: "request:oakline", expires_in: 1.day)
 
   def submit(handle: "oakline", form_token: token, website: "", **fields)
     fields = { name: "Hannah Brooks", email: "hannah@example.com", phone: "", address_line1: "12 Maple St", postal_code: "06804",
@@ -144,11 +144,11 @@ class PublicRequestsTest < ActionDispatch::IntegrationTest
   test "a form sent within seconds, left open too long or forged is shown again to send" do
     submit(form_token: token(at: 1.second.ago))
     assert_response :unprocessable_content
-    assert_select ".banner-warning", /Check your details, then send your request\./
+    assert_select ".banner-warning", /Check your details, then send it again\./
     assert_select "input[name='request_submission[name]'][value='Hannah Brooks']"
     submit(form_token: "")
     assert_select ".banner-warning", /open for a while/
-    other = Rails.application.message_verifier("request_form").generate(10.seconds.ago.to_f, purpose: "two-biz")
+    other = Rails.application.message_verifier("form_guard").generate(10.seconds.ago.to_f, purpose: "request:two-biz")
     submit(form_token: other)
     assert_response :unprocessable_content
     assert_empty requests
@@ -168,9 +168,21 @@ class PublicRequestsTest < ActionDispatch::IntegrationTest
     assert_empty requests
 
     businesses(:two).update!(request_form_enabled: true)
-    post public_request_path("two-biz"), params: { website: "", form_token: Rails.application.message_verifier("request_form").generate(10.seconds.ago.to_f, purpose: "two-biz", expires_in: 1.day),
+    post public_request_path("two-biz"), params: { website: "", form_token: Rails.application.message_verifier("form_guard").generate(10.seconds.ago.to_f, purpose: "request:two-biz", expires_in: 1.day),
                                                   request_submission: { name: "Hannah Brooks", phone: "5550100100", address_line1: "1 Elm St", description: "Mowing" } }
     assert_redirected_to public_request_sent_path("two-biz")
+  ensure
+    Rails.cache = cache
+  end
+
+  test "in a lockdown the request form waits longer too" do
+    cache, Rails.cache = Rails.cache, ActiveSupport::Cache::MemoryStore.new
+    AbuseProtection.lockdown!(hours: 1)
+    submit(form_token: token(at: 5.seconds.ago))
+    assert_response :unprocessable_content
+    assert_empty requests
+    submit(form_token: token(at: 15.seconds.ago))
+    assert_redirected_to public_request_sent_path("oakline")
   ensure
     Rails.cache = cache
   end
