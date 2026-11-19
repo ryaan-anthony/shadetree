@@ -41,6 +41,7 @@ class ContactFormTest < ActionDispatch::IntegrationTest
     follow_redirect!
     assert_select "h1", "Message sent"
     assert_select "[role=status]", /emailed you a confirmation/
+    assert_select "#flash .toast", false, "the flag isn't shown as a message"
 
     message = ContactMessage.last
     assert_equal [ "Ana Silva", "ana@example.com", "Silva Lawns", "landscaping" ], [ message.name, message.email, message.business_name, message.industry ]
@@ -54,7 +55,9 @@ class ContactFormTest < ActionDispatch::IntegrationTest
     assert_match "Do you handle recurring mowing visits?", team.text_part.body.to_s
     assert_match "Landscaping", team.text_part.body.to_s
     assert_equal [ "ana@example.com" ], confirmation.to
-    assert_no_match(/recurring mowing/, confirmation.text_part.body.to_s, "the confirmation doesn't repeat the message")
+    [ confirmation.text_part.body.to_s, confirmation.html_part.body.to_s, confirmation.subject ].each do |text|
+      assert_no_match(/Ana|Silva|recurring mowing/, text, "the confirmation holds nothing the sender typed")
+    end
   end
 
   test "missing or bad fields are explained inline, and nothing is kept" do
@@ -119,19 +122,44 @@ class ContactFormTest < ActionDispatch::IntegrationTest
     assert_equal 1, ActionMailer::Base.deliveries.count { _1.to == [ "ana@example.com" ] }
   end
 
+  test "what people type stays out of the logs, and HTML is escaped in the team's email" do
+    filter = ActiveSupport::ParameterFilter.new(Rails.application.config.filter_parameters)
+    filtered = filter.filter("contact_message" => { "name" => "Ana", "business_name" => "Silva", "body" => "Hi", "industry" => "cleaning" })
+    assert_equal %w[[FILTERED] [FILTERED] [FILTERED] cleaning], filtered["contact_message"].values_at("name", "business_name", "body", "industry")
+    perform_enqueued_jobs { send_message(body: "<b>bold</b> question") }
+    team = ActionMailer::Base.deliveries.find { _1.to == [ "support@getshadetree.com" ] }
+    assert_includes team.html_part.body.to_s, "&lt;b&gt;bold&lt;/b&gt;"
+  end
+
+  test "a +tag doesn't earn another confirmation, and an address needs a domain with a dot" do
+    perform_enqueued_jobs do
+      send_message
+      send_message(email: "ana+2@example.com", body: "Second question")
+    end
+    assert_equal 1, ActionMailer::Base.deliveries.count { _1.subject == "We got your message" }
+    send_message(email: "ana@localhost")
+    assert_response :unprocessable_content
+  end
+
   test "names can't break the email headers" do
     perform_enqueued_jobs { send_message(name: "Ana\r\nBcc: victim@example.com") }
     team = ActionMailer::Base.deliveries.find { _1.to == [ "support@getshadetree.com" ] }
     assert_empty Array(team.bcc)
     assert_equal "Ana Bcc: victim@example.com", ContactMessage.last.name
+    send_message(name: "Ana \u202Emoc.live", body: "Another")
+    assert_equal "Ana moc.live", ContactMessage.last.name, "text-direction tricks are removed"
   end
 
   test "messages are pruned after two years (spam after 30 days) and erased on request" do
     old = ContactMessage.create!(name: "Old", email: "old@example.com", body: "x", created_at: 25.months.ago)
     old_spam = ContactMessage.create!(name: "Spam", email: "s@example.com", body: "x", spam_reason: "spam words", created_at: 31.days.ago)
-    kept = ContactMessage.create!(name: "Kept", email: "Kept@example.com", body: "x", created_at: 1.year.ago)
+    kept = ContactMessage.create!(name: "Kept", email: "Kept@example.com", body: "x", ip_address: "203.0.113.9", user_agent: "Firefox", created_at: 1.year.ago)
+    recent = ContactMessage.create!(name: "New", email: "new@example.com", body: "x", ip_address: "203.0.113.8", created_at: 1.day.ago)
     PruneContactMessagesJob.perform_now
-    assert_equal [ kept ], ContactMessage.all.to_a
+    assert_equal [ kept, recent ], ContactMessage.order(:id).to_a
+    assert_equal [ nil, nil ], kept.reload.slice(:ip_address, :user_agent).values, "abuse details go after 30 days"
+    assert_equal "203.0.113.8", recent.reload.ip_address
+    recent.delete
     assert_not ContactMessage.exists?(old.id) || ContactMessage.exists?(old_spam.id)
 
     Rails.application.load_tasks unless Rake::Task.task_defined?("contact:erase")

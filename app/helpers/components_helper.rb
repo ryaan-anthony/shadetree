@@ -62,7 +62,8 @@ module ComponentsHelper
 
   # Flash messages as toasts. notice → success, alert → danger; other keys render neutral.
   def flash_toasts
-    render "components/flash", messages: flash.to_hash.select { |_, message| message.present? }
+    # A true/false flag passed through the flash (the contact form's "emailed") isn't a message.
+    render "components/flash", messages: flash.to_hash.select { |_, message| message.present? && message != true }
   end
 
   def flash_tone(key)

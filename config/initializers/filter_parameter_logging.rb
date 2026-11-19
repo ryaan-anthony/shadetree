@@ -17,5 +17,7 @@ Rails.application.config.filter_parameters += [
   # The public request form (CLI-03): everything the person types.
   /\Arequest_submission\.(name|address_line\d|region|description)\z/,
   # The request inbox (CLI-04): what staff log and their internal notes.
-  /\Aservice_request\.(description|timing)\z/, /\Aservice_request_note\.body\z/
+  /\Aservice_request\.(description|timing)\z/, /\Aservice_request_note\.body\z/,
+  # The contact form (MKT-02): everything the person types.
+  /\Acontact_message\.(name|business_name|body)\z/
 ]
