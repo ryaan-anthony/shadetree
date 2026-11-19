@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_19_002100) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_19_002300) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -622,6 +622,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002100) do
     t.integer "revision", default: 1, null: false
     t.datetime "paid_at"
     t.bigint "location_id", null: false
+    t.bigint "priced_for_location_id"
     t.index ["business_id", "location_id"], name: "index_invoices_on_business_id_and_location_id"
     t.index ["business_id", "number"], name: "index_invoices_on_business_id_and_number", unique: true
     t.index ["business_id", "status", "due_on"], name: "index_invoices_on_business_id_and_status_and_due_on"
@@ -721,6 +722,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002100) do
     t.index ["user_id"], name: "index_location_members_on_user_id"
   end
 
+  create_table "location_prices", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "location_id", null: false
+    t.bigint "catalog_item_id", null: false
+    t.bigint "unit_price_cents", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "catalog_item_id"], name: "index_location_prices_on_business_id_and_catalog_item_id"
+    t.index ["catalog_item_id"], name: "index_location_prices_on_catalog_item_id"
+    t.index ["location_id", "catalog_item_id"], name: "index_location_prices_on_location_id_and_catalog_item_id", unique: true
+    t.check_constraint "unit_price_cents >= 0", name: "location_prices_not_negative"
+  end
+
   create_table "locations", force: :cascade do |t|
     t.bigint "business_id", null: false
     t.string "uid", null: false
@@ -739,6 +753,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002100) do
     t.datetime "archived_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "tax_rate_ids", array: true
     t.index ["business_id", "name"], name: "index_locations_on_business_id_and_name", unique: true
     t.index ["business_id"], name: "index_locations_one_primary", unique: true, where: "\"primary\""
     t.index ["uid"], name: "index_locations_on_uid", unique: true
@@ -876,7 +891,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002100) do
     t.index ["business_id", "quote_id", "occurred_at"], name: "index_quote_events_on_business_id_and_quote_id_and_occurred_at"
     t.index ["quote_id"], name: "index_quote_events_on_quote_id"
     t.index ["user_id"], name: "index_quote_events_on_user_id"
-    t.check_constraint "kind::text = ANY (ARRAY['archived'::character varying::text, 'unarchived'::character varying::text, 'expiry_extended'::character varying::text, 'duplicated'::character varying::text, 'revised'::character varying::text])", name: "quote_events_kind"
+    t.check_constraint "kind::text = ANY (ARRAY['archived'::character varying::text, 'unarchived'::character varying::text, 'expiry_extended'::character varying::text, 'duplicated'::character varying::text, 'revised'::character varying::text, 'repriced'::character varying::text])", name: "quote_events_kind"
   end
 
   create_table "quote_line_items", force: :cascade do |t|
@@ -1003,6 +1018,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002100) do
     t.integer "revision", default: 1, null: false
     t.bigint "service_request_id"
     t.bigint "location_id", null: false
+    t.bigint "priced_for_location_id"
     t.index ["business_id", "archived_at", "created_at"], name: "index_quotes_on_business_id_and_archived_at_and_created_at"
     t.index ["business_id", "location_id"], name: "index_quotes_on_business_id_and_location_id"
     t.index ["business_id", "number"], name: "index_quotes_on_business_id_and_number", unique: true
@@ -1292,6 +1308,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002100) do
   add_foreign_key "invoices", "clients"
   add_foreign_key "invoices", "jobs"
   add_foreign_key "invoices", "locations"
+  add_foreign_key "invoices", "locations", column: "priced_for_location_id", on_delete: :nullify
   add_foreign_key "invoices", "properties"
   add_foreign_key "invoices", "quotes"
   add_foreign_key "invoices", "users", column: "created_by_id"
@@ -1311,6 +1328,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002100) do
   add_foreign_key "location_members", "businesses", on_delete: :cascade
   add_foreign_key "location_members", "locations", on_delete: :cascade
   add_foreign_key "location_members", "users"
+  add_foreign_key "location_prices", "businesses", on_delete: :cascade
+  add_foreign_key "location_prices", "catalog_items", on_delete: :cascade
+  add_foreign_key "location_prices", "locations", on_delete: :cascade
   add_foreign_key "locations", "businesses", on_delete: :cascade
   add_foreign_key "message_templates", "businesses"
   add_foreign_key "message_templates", "users", column: "updated_by_id"
@@ -1347,6 +1367,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002100) do
   add_foreign_key "quotes", "businesses", on_delete: :cascade
   add_foreign_key "quotes", "clients"
   add_foreign_key "quotes", "locations"
+  add_foreign_key "quotes", "locations", column: "priced_for_location_id", on_delete: :nullify
   add_foreign_key "quotes", "properties", on_delete: :nullify
   add_foreign_key "quotes", "service_requests", on_delete: :nullify
   add_foreign_key "quotes", "users", column: "created_by_id", on_delete: :nullify

@@ -10,6 +10,31 @@ class CatalogItem < ApplicationRecord
 
   belongs_to_business_record :category, class_name: "CatalogCategory", optional: true
   money :unit_price, currency: -> { business.currency_code }
+  has_many :location_prices, dependent: :delete_all # CAT-08
+  validate :location_prices_readable, if: -> { @location_price_inputs }
+  after_save :save_location_prices, if: -> { @location_price_inputs }
+
+  # CAT-08: the form's prices by location, { location uid => "45.00" }; blank means the business
+  # price there. Saved with the item.
+  def location_price_inputs=(inputs)
+    @location_price_inputs = inputs.to_h.to_h { |uid, value| [ uid.to_s, value.to_s.strip ] }
+  end
+
+  # What the form shows for a location: what was typed, else its saved override.
+  def location_price_input(location)
+    return @location_price_inputs[location.uid] if @location_price_inputs&.key?(location.uid)
+
+    location_prices.find { _1.location_id == location.id }&.unit_price&.to_s
+  end
+
+  # CAT-08: the price at a location: its override if it has one, else the business price.
+  # `overrides` ({ catalog_item_id => cents }, from LocationPrice.cents_at) saves a query per item.
+  def price_at(location, overrides: nil)
+    return unit_price if location.nil? || location.primary?
+
+    cents = overrides ? overrides[id] : location_prices.find_by(location:)&.unit_price_cents
+    cents ? Money.new(cents, business.currency_code) : unit_price
+  end
 
   normalizes :name, with: ->(name) { name.to_s.squish }
   validates :name, presence: true, length: { maximum: 120 }
@@ -51,6 +76,7 @@ class CatalogItem < ApplicationRecord
       copy.uid = nil
       copy.name = "#{name} (copy)"
       copy.archived_at = nil
+      copy.location_price_inputs = location_prices.includes(:location).to_h { [ _1.location.uid, _1.unit_price.to_s ] } # CAT-08
     end
   end
 
@@ -72,8 +98,31 @@ class CatalogItem < ApplicationRecord
   end
 
   # For the item picker.
-  def as_picker_json
+  private def location_prices_readable
+    @location_price_inputs.each do |uid, value|
+      next if value.empty?
+
+      cents = Money.parse(value, business.currency_code).cents rescue nil
+      errors.add(:base, "The price for #{Location.find_by(uid:)&.name || "a location"} isn't an amount we can read.") if cents.nil? || cents.negative?
+    end
+  end
+
+  private def save_location_prices
+    locations = Location.where(primary: false, uid: @location_price_inputs.keys).index_by(&:uid)
+    @location_price_inputs.each do |uid, value|
+      location = locations[uid] or next
+      if value.empty? then location_prices.where(location:).delete_all
+      else # an upsert, so a double submit can't trip the unique index
+        LocationPrice.upsert({ business_id:, location_id: location.id, catalog_item_id: id, unit_price_cents: Money.parse(value, business.currency_code).cents },
+                             unique_by: %i[location_id catalog_item_id], record_timestamps: true)
+      end
+    end
+    @location_price_inputs = nil
+  end
+
+  def as_picker_json(location: nil, overrides: nil)
+    price = price_at(location, overrides:)
     { uid:, name:, description:, unit: unit_label, taxable:, category: category&.name,
-      price: unit_price&.format, unit_price: unit_price&.to_s, unit_price_cents: }
+      price: price&.format, unit_price: price&.to_s, unit_price_cents: price&.cents }
   end
 end

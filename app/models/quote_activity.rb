@@ -64,6 +64,7 @@ class QuoteActivity
         from = event.data["from"] ? " from #{I18n.l(Date.parse(event.data["from"]))}" : ""
         Entry.new(at: event.occurred_at, icon: "calendar", title: "Valid-until date moved#{from} to #{I18n.l(Date.parse(event.data["to"]))}#{by}")
       when "revised" then Entry.new(at: event.occurred_at, icon: "edit-3", title: "Revision #{event.data["revision"]} started#{by}")
+      when "repriced" then Entry.new(at: event.occurred_at, icon: "tag", title: "#{Array(event.data["changed"]).join(" and ").capitalize} set for #{event.data["location"]}#{by}")
       end
     end
   end

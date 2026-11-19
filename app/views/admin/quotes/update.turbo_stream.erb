@@ -3,6 +3,9 @@
 <% @quote.current_line_items.each_with_index do |line, index| %>
   <%= turbo_stream.update "line-total-#{line.key}", money(totals.lines[index].subtotal) %>
 <% end %>
+<% if @location_changed %><%# CAT-08 %>
+  <%= turbo_stream.update "location_reprice" do %><%= render "admin/locations/reprice", document: @quote %><% end %>
+<% end %>
 <%= turbo_stream.update "builder_errors" do %><%= render "errors", quote: @quote %><% end %>
 <%= turbo_stream.replace "quote_lock_version" do %><input type="hidden" name="quote[lock_version]" id="quote_lock_version" value="<%= @quote.lock_version %>" autocomplete="off"><% end %>
 <% if @client_changed %>

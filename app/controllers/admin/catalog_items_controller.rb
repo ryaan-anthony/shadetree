@@ -15,6 +15,13 @@ class Admin::CatalogItemsController < Admin::BaseController
     @items = scope.search(@query).includes(:category).ordered
     @groups = @items.group_by(&:category).sort_by { |category, _| category ? [ 0, category.position, category.name ] : [ 1 ] }
     @archived_count = CatalogItem.archived.count
+    # CAT-08: each item's prices at other locations (active ones, with several locations).
+    @overrides = if current_business.multiple_locations?
+      LocationPrice.joins(:location).merge(Location.active).where(catalog_item: @items).includes(:location, :business)
+                   .group_by(&:catalog_item_id).transform_values { |prices| prices.sort_by { _1.location.name.downcase } }
+    else
+      {}
+    end
   end
 
   # ?duplicate_of=<uid> starts from an unsaved copy of that item; ?category=<uid> preselects one.
@@ -75,7 +82,10 @@ class Admin::CatalogItemsController < Admin::BaseController
       else
         scope.search(params[:q]).order(:name).limit(SEARCH_LIMIT)
       end
-    render json: { items: items.map(&:as_picker_json) }
+    # CAT-08: priced for the document's location when the builder says which.
+    location = Location.find_by(uid: params[:location].to_s) if params[:location].present?
+    overrides = LocationPrice.cents_at(location, items)
+    render json: { items: items.map { _1.as_picker_json(location:, overrides:) } }
   end
 
   private
@@ -84,7 +94,7 @@ class Admin::CatalogItemsController < Admin::BaseController
 
   def item_params
     params.require(:catalog_item).permit(:name, :description, :unit, :custom_unit, :unit_price, :taxable,
-                                         :duration_minutes, :show_on_request_form, :category_id).tap do |permitted|
+                                         :duration_minutes, :show_on_request_form, :category_id, location_price_inputs: {}).tap do |permitted|
       # Categories arrive as uids from the form.
       if permitted.key?(:category_id)
         permitted[:category_id] = CatalogCategory.find_by(uid: permitted[:category_id].to_s)&.id

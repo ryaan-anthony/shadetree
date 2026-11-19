@@ -30,10 +30,10 @@ class TaxRate < ApplicationRecord
   before_create { self.position = (self.class.maximum(:position) || -1) + 1 }
 
   # The rates a new document applies to its taxable lines.
-  def self.for_new_document(client: nil)
+  def self.for_new_document(client: nil, location: nil)
     return [] if client&.tax_exempt
 
-    default_set.map(&:to_pricing)
+    (location ? location.default_tax_rates : default_set).map(&:to_pricing)
   end
 
   def archived? = archived_at.present?

@@ -70,7 +70,13 @@ class Admin::LocationsController < Admin::BaseController
   def set_location = @location = Location.find_by_param!(params[:id])
 
   def location_params
-    params.require(:location).permit(:name, :address_line1, :address_line2, :city, :region, :postal_code, :country, :phone, :email, :timezone)
+    permitted = params.require(:location).permit(:name, :address_line1, :address_line2, :city, :region, :postal_code, :country, :phone, :email, :timezone)
+    # CAT-08: its own default taxes (ticked rates, maybe none), or the business's (nil).
+    if params[:location].key?(:own_tax_rates)
+      own = params[:location][:own_tax_rates] == "1"
+      permitted[:tax_rate_ids] = own ? TaxRate.active.where(uid: Array(params[:location][:tax_rate_ids])).pluck(:id) : nil
+    end
+    permitted
   end
 
   # The members ticked on the form, if it was sent with the team list (only active members).

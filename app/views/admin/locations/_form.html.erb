@@ -35,6 +35,23 @@
                   choices: grouped_options_for_select(time_zone_options(@location.timezone), time_zone_identifier(@location.timezone)) %>
     <% end %>
   <% end %>
+  <% rates = TaxRate.active.ordered.to_a %>
+  <% if !@location.primary? && rates.any? %><%# CAT-08 %>
+    <%= card title: "Default taxes", subtitle: "What new quotes and invoices here apply to taxable items." do %>
+      <fieldset class="space-y-3">
+        <legend class="sr-only">Default taxes</legend>
+        <label class="check"><%= radio_button_tag "location[own_tax_rates]", "0", !@location.own_tax_rates?, id: "location_own_tax_rates_0" %>
+          <span><span class="font-medium text-ink">The business's defaults</span><span class="block text-sm2 text-muted">From the Taxes tab: <%= rates.select(&:applies_by_default).map(&:label).to_sentence.presence || "none" %>.</span></span></label>
+        <label class="check"><%= radio_button_tag "location[own_tax_rates]", "1", @location.own_tax_rates?, id: "location_own_tax_rates_1" %>
+          <span class="font-medium text-ink">Its own, ticked below</span></label>
+        <div class="grid gap-2 pl-7">
+          <% rates.each do |rate| %>
+            <label class="check"><%= check_box_tag "location[tax_rate_ids][]", rate.uid, Array(@location.tax_rate_ids).include?(rate.id), id: "location_tax_rate_#{rate.uid}" %><span><%= rate.label %></span></label>
+          <% end %>
+        </div>
+      </fieldset>
+    <% end %>
+  <% end %>
   <%= card title: "Team", subtitle: "Who works here. Someone who works at only one location starts their new documents there." do %>
     <%= hidden_field_tag "location[member_ids][]", "", id: nil %>
     <div class="grid gap-2 sm:grid-cols-2">

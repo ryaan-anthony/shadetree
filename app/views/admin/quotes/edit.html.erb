@@ -73,6 +73,7 @@
         <%= f.field :expires_on, as: :date, label: "Valid until", optional: true %>
       </div>
       <div class="mt-4 empty:hidden"><%= render "admin/locations/field", f:, document: @quote, help: "The client sees this location's contact details." %></div>
+      <div id="location_reprice"><%= render "admin/locations/reprice", document: @quote %></div>
     <% end %>
 
     <%= card title: "Items", flush: true do %>
@@ -85,7 +86,7 @@
         No items yet. Add one from your catalog or type a custom line.
       </p>
       <div class="flex flex-wrap items-end gap-2 border-t border-line px-5 py-4">
-        <div class="min-w-0 flex-1 basis-64"><%= render "admin/catalog_items/picker", label: "Add from catalog" %></div>
+        <div class="min-w-0 flex-1 basis-64"><%= render "admin/catalog_items/picker", label: "Add from catalog", location: @quote.location %></div>
         <button type="button" class="<%= button_classes(:secondary) %>" data-action="quote-builder#addCustom"><%= icon "plus" %> Custom line</button>
       </div>
       <template data-quote-builder-target="template">
@@ -152,4 +153,6 @@
 <% @quote.saved_attachments.each do |file| %>
   <%= form_with url: admin_quote_attachment_path(@quote, file), method: :delete, id: "remove-attachment-#{file.id}", class: "hidden" do %><% end %>
 <% end %>
+<%# CAT-08: the re-price offer's form, outside the builder (its buttons use form=). %>
+<%= form_with url: reprice_admin_quote_path(@quote), method: :patch, id: "location-reprice-form", class: "hidden", data: { turbo: false } do %><%= hidden_field_tag :lock_version, @quote.lock_version, id: nil %><% end %>
 <%= render "admin/clients/quick_create", button: false %>

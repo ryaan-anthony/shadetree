@@ -6,8 +6,8 @@ class Admin::InvoicesController < Admin::BaseController
   include DocumentBuilder
   include SendsPdf
   requires_permission :office
-  before_action :set_invoice, only: %i[show edit update destroy revise discard_revision void preview pdf]
-  before_action :require_editable, only: %i[edit update]
+  before_action :set_invoice, only: %i[show edit update destroy revise discard_revision void preview pdf reprice]
+  before_action :require_editable, only: %i[edit update reprice]
 
   PER_PAGE = 50
 
@@ -102,6 +102,13 @@ class Admin::InvoicesController < Admin::BaseController
   # PAY-02: the PDF. A draft is rendered fresh; a sent invoice's stored file is reused.
   def pdf = send_pdf(@invoice, back: @invoice.editable? ? edit_admin_invoice_path(@invoice) : admin_invoice_path(@invoice))
 
+  # CAT-08: the draft's location's catalog prices and default taxes, when staff accept the offer.
+  def reprice
+    apply_location_repricing(@invoice, edit_admin_invoice_path(@invoice)) do |changed|
+      @invoice.record!(:repriced, by: current_user, location: @invoice.location.name, changed:)
+    end
+  end
+
   def destroy
     return redirect_to(admin_invoice_path(@invoice), alert: "Only invoices that were never sent can be deleted.") unless @invoice.deletable?
 
@@ -147,6 +154,7 @@ class Admin::InvoicesController < Admin::BaseController
     change_client(attrs[:client]) if attrs[:client].present? && attrs[:client] != @invoice.client.uid && !@invoice.job && !@invoice.quote
     assign_property(attrs[:property]) if attrs.key?(:property)
     @invoice.location = picked_location(attrs[:location]) || @invoice.location if attrs.key?(:location)
+    @location_changed = @invoice.location_id_changed? # CAT-08: offer the new location's prices
     @invoice.assign_attributes(attrs.slice(:title, :message, :internal_notes, :terms, :issued_on, :payment_terms, :prices_include_tax))
     @invoice.due_on = attrs[:due_on] if attrs[:payment_terms] == "custom" && attrs.key?(:due_on)
     @invoice.set_discount(attrs[:discount_kind], attrs[:discount_value]) if attrs.key?(:discount_kind)

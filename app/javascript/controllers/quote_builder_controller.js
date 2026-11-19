@@ -98,6 +98,20 @@ export default class extends Controller {
     if (!this.dirty && !this.conflict) Turbo.visit(href)
   }
 
+  // CAT-08: a button for a form outside the builder (re-pricing): save first, then submit that
+  // form with the latest lock_version, so nothing pending is lost and a stale tab is refused.
+  async saveAndSubmit(event) {
+    event.preventDefault()
+    const button = event.currentTarget
+    const form = button.form
+    if (this.dirty) this.save()
+    await this.saving
+    if (this.dirty || this.conflict || !form) return
+    const lock = this.formTarget.querySelector(`#${this.scopeValue}_lock_version`)
+    if (lock && form.elements.lock_version) form.elements.lock_version.value = lock.value
+    form.requestSubmit(button)
+  }
+
   // Download PDF: save first, so the PDF has the latest.
   async download(event) {
     event.preventDefault()

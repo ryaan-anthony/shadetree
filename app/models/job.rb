@@ -256,7 +256,7 @@ class Job < ApplicationRecord
 
     self.number ||= business.next_document_number(:job)
     self.currency ||= business.currency_code
-    self.tax_rates = TaxRate.for_new_document(client:).map { { "name" => _1.name.to_s, "percent" => _1.percent.to_d.to_s("F") } } if tax_rates.blank? && quote.nil?
+    self.tax_rates = TaxRate.for_new_document(client:, location:).map { { "name" => _1.name.to_s, "percent" => _1.percent.to_d.to_s("F") } } if tax_rates.blank? && quote.nil?
   end
 
   def location_source = quote

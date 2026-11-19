@@ -57,6 +57,11 @@ class Location < ApplicationRecord
 
   def closures = business.closures.where(location_id: (id unless primary?))
 
+  # CAT-08: the tax rates new documents here start with: its own set, else the business's
+  # defaults (always the business's for the main location). Archived rates drop out.
+  def own_tax_rates? = !primary? && !tax_rate_ids.nil?
+  def default_tax_rates = own_tax_rates? ? TaxRate.active.where(id: tax_rate_ids).ordered.to_a : TaxRate.default_set.to_a
+
   # Archiving: the primary can't be; a restore is an addition, so it needs the plan feature.
   def archive! = update!(archived_at: Time.current)
 

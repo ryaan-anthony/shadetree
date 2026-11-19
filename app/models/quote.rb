@@ -8,6 +8,7 @@
 class Quote < ApplicationRecord
   include BusinessOwned
   include AtLocation # CAT-07
+  include LocationRepricing # CAT-08
   include PricedDocument
   include BuiltDocument
   include DocumentAttachments
@@ -174,6 +175,7 @@ class Quote < ApplicationRecord
     transaction do
       copy = Quote.start(client:, property: (property if same_client), created_by: by, location: (location unless location.archived?))
       copy.assign_attributes(title:, terms:, prices_include_tax:, discount_kind:, discount_percent:, discount_amount_cents:)
+      copy.priced_for_location = pricing_location # CAT-08: copied prices; a different location offers its own
       copy.assign_attributes(message:, internal_notes:) if same_client
       copy.sync_line_items(BuiltDocument.rows_from(current_line_items))
       attachments.each { copy.attachments.attach(_1.blob) } if same_client
@@ -329,7 +331,7 @@ class Quote < ApplicationRecord
     self.currency ||= business.currency_code
     self.expires_on ||= business.today + business.quote_expiry_days.to_i.days if business.quote_expiry_days.to_i.positive?
     self.terms ||= business.quote_terms
-    self.tax_rate_list = TaxRate.for_new_document(client:) if tax_rates.blank?
+    self.tax_rate_list = TaxRate.for_new_document(client:, location:) if tax_rates.blank?
   end
 
   # JOB-01: an approved quote becomes a job when the business has that on (the default). It
