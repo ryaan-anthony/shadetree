@@ -35,7 +35,12 @@ class ScheduleTest < ApplicationSystemTestCase
 
   test "move a visit from the quick-edit sheet, past a warning" do
     visit admin_schedule_visit_path(@visit)
-    click_on "Move"
+    # A click that lands before the page's script has connected opens nothing: click again
+    # until the dialog is open (a real failure still fails, after 15 seconds).
+    page.document.synchronize(15) do
+      click_on "Move" unless page.has_css?("dialog[open]", wait: 0)
+      raise Capybara::ExpectationNotMet, "the Move dialog didn't open" unless page.has_css?("dialog[open]", wait: 3)
+    end
     within("dialog[open]") do
       fill_in "Day", with: @monday + 6
       click_on "Move visit"
