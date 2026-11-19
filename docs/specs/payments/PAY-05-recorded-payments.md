@@ -23,24 +23,36 @@ accurate regardless of how the money arrived.
 
 ## Acceptance criteria
 
-- [ ] Owners/Admins record a payment on a sent invoice: amount (default balance), date, method
+- [x] Owners/Admins record a payment on a sent invoice: amount (default balance), date, method
       (cash, check, bank transfer, other), reference (e.g. check number) and note.
-- [ ] Recording updates balance and status (Partially paid / Paid); overpayment is prevented or
+- [x] Recording updates balance and status (Partially paid / Paid); overpayment is prevented or
       requires explicit confirmation.
 - [ ] Optionally send the client a receipt for a recorded payment.
-- [ ] Recorded payments can be edited or deleted by Owners/Admins with a reason; changes are
+- [x] Recorded payments can be edited or deleted by Owners/Admins with a reason; changes are
       kept in the invoice history. Online payments cannot be edited here.
-- [ ] Client page shows outstanding balance; invoice list and dashboard totals include recorded
-      payments.
-- [ ] Payment history on the invoice lists all payments (online and recorded) with who/when.
-- [ ] Tests cover partials, overpayment handling, edits/deletes, status recalculation, roles and
+- [x] Client page shows outstanding balance; invoice list and dashboard totals include recorded
+      payments. (The dashboard comes with INS-01, from the same amounts.)
+- [x] Payment history on the invoice lists all payments (online and recorded) with who/when.
+- [x] Tests cover partials, overpayment handling, edits/deletes, status recalculation, roles and
       tenancy.
 
 ## Out of scope
 
 - Client credit balances, applying one payment across several invoices (backlog).
 
-## Open questions
+## Decisions
 
-- Allow recording payments on draft invoices (paid on the spot before sending)? Recommend yes —
-  common for small jobs; it marks the invoice sent/paid in one step.
+- Payments can be recorded on a draft (paid on the spot): it marks the invoice sent and paid in
+  one step. Not on a revision being prepared: send or discard it first.
+- Overpayment is refused: a payment can't be more than the balance.
+
+## Implementation notes
+
+- Part 1: `Payment` (source recorded or online, method, amount, date received, reference,
+  note, who recorded it). `Invoice#record_payment!`, `#change_payment!` and `#delete_payment!`
+  lock the invoice and recalculate it (`#apply_payments!`): the amount paid, the status (Paid,
+  Partly paid, or back to Sent) and `paid_at`, which starts the client link's last year
+  (PLT-12); unpaid again, the link stops expiring. Changes and deletions need a reason, and
+  the invoice's history keeps the before and after. Online payments (PAY-04) are listed but
+  can't be changed here.
+- Part 2: the optional receipt email.

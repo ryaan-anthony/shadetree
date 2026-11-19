@@ -127,6 +127,7 @@ Rails.application.routes.draw do
       get :preview, on: :member # PAY-02
       get :pdf, on: :member
       resource :send, only: %i[new create], controller: "invoice_sends" # PAY-02
+      resources :payments, only: %i[new create edit update destroy], controller: "invoice_payments" # PAY-05
       post :search, on: :collection # POST keeps client names out of URLs
       member do
         post :revise

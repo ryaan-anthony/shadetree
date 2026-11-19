@@ -1,0 +1,32 @@
+<%# PAY-05: correct or delete a recorded payment, with a reason the invoice's history keeps. %>
+<% content_for :title, "Change payment" %>
+<%= page_header "Change a payment", lede: "On invoice #{@invoice.number} for #{@invoice.client.display_name}. The invoice's history keeps what it was and why it changed." do %>
+  <%= link_to "Cancel", admin_invoice_path(@invoice), class: button_classes(:ghost) %>
+<% end %>
+<div class="max-w-2xl space-y-4">
+  <%= form_with model: @payment, scope: :payment, url: admin_invoice_payment_path(@invoice, @payment), method: :patch do |f| %>
+    <%= card do %>
+      <%= render "fields", f:, payment: @payment %>
+      <div class="field">
+        <label class="label" for="payment_change_reason">Why it's changing</label>
+        <%= text_field_tag :reason, (params[:reason] unless @delete_reason_error), id: "payment_change_reason", class: "input", maxlength: 200, required: true,
+                           placeholder: "Typed the wrong amount", "aria-invalid": (@reason_error ? "true" : nil), "aria-describedby": ("payment_change_reason_error" if @reason_error) %>
+        <% if @reason_error %><p class="error-text mt-1.5" id="payment_change_reason_error"><%= icon "alert-circle" %><%= @reason_error %></p><% end %>
+      </div>
+      <%= f.submit_button "Save changes", class: "mt-4 w-full sm:w-auto" %>
+    <% end %>
+  <% end %>
+
+  <%= card title: "Delete this payment", subtitle: "If it was recorded by mistake. The invoice's balance goes back up." do %>
+    <%= form_with url: admin_invoice_payment_path(@invoice, @payment), method: :delete, class: "flex flex-col gap-3 sm:flex-row sm:items-start",
+                  data: { turbo_confirm: "Delete the #{money(Money.new(@payment.amount_cents_in_database, @payment.currency))} payment? The balance goes back up.", turbo_confirm_button: "Delete payment" } do %>
+      <div class="field flex-1">
+        <label class="label" for="payment_delete_reason">Why</label>
+        <%= text_field_tag :reason, (params[:reason] if @delete_reason_error), id: "payment_delete_reason", class: "input", maxlength: 200, required: true, placeholder: "Check bounced",
+                           "aria-invalid": (@delete_reason_error ? "true" : nil), "aria-describedby": ("payment_delete_reason_error" if @delete_reason_error) %>
+        <% if @delete_reason_error %><p class="error-text mt-1.5" id="payment_delete_reason_error"><%= icon "alert-circle" %><%= @delete_reason_error %></p><% end %>
+      </div>
+      <%= submit_tag "Delete payment", class: button_classes(:danger), name: nil %>
+    <% end %>
+  <% end %>
+</div>

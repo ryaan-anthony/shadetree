@@ -1,0 +1,28 @@
+<%# locals: (invoice:) -%>
+<%# PAY-05: every payment on the invoice, online (PAY-04) and recorded, with who and when;
+    recorded ones can be corrected. %>
+<% payments = invoice.payments.includes(:recorded_by).to_a %>
+<%= card title: "Payments", flush: true do %>
+  <% if payments.any? %>
+    <ul class="list">
+      <% payments.each do |payment| %>
+        <li id="payment-<%= payment.uid %>" class="items-start text-sm">
+          <div class="min-w-0 flex-1">
+            <p class="font-medium text-ink"><%= payment.method_label %><%= " #{payment.reference}" if payment.reference %>
+              <span class="font-normal text-muted">· <%= local_date(payment.received_on) %></span></p>
+            <p class="text-sm2 text-muted"><%= payment.online? ? "Paid online" : "Recorded" %><%= " by #{payment.recorded_by.full_name}" if payment.recorded_by %>, <%= local_time(payment.created_at) %></p>
+            <% if payment.note %><p class="mt-1 whitespace-pre-line text-sm2 text-subtle"><%= payment.note %></p><% end %>
+          </div>
+          <span class="money font-semibold text-ink"><%= money(payment.amount) %></span>
+          <% if payment.recorded? && !invoice.void? %>
+            <%= link_to edit_admin_invoice_payment_path(invoice, payment), class: button_classes(:ghost, :sm), aria: { label: "Change the #{money(payment.amount)} payment" } do %><%= icon "edit-3" %><% end %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+  <dl class="quote-totals border-t border-line px-5 py-3 text-sm">
+    <div><dt>Paid</dt><dd class="money"><%= money(invoice.amount_paid) %></dd></div>
+    <div class="font-semibold text-ink"><dt>Balance</dt><dd class="money"><%= money(invoice.balance) %></dd></div>
+  </dl>
+<% end %>

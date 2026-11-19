@@ -1,0 +1,12 @@
+<%# PAY-05: record a payment received by cash, check, transfer or other means. %>
+<% content_for :title, "Record a payment" %>
+<% lede = @invoice.draft? ? "Paid on the spot? Recording it also marks invoice #{@invoice.number} as sent." : "#{money(@invoice.balance)} left to pay on invoice #{@invoice.number}, due #{l(@invoice.due_on)}." %>
+<%= page_header "Record a payment", lede: do %>
+  <%= link_to "Cancel", staff_invoice_path(@invoice), class: button_classes(:ghost) %>
+<% end %>
+<%= form_with model: @payment, scope: :payment, url: admin_invoice_payments_path(@invoice), method: :post, class: "max-w-2xl" do |f| %>
+  <%= card title: @invoice.client.display_name, subtitle: "Invoice #{@invoice.number}: #{money(@invoice.total)} total#{", #{money(@invoice.amount_paid)} paid so far" if @invoice.payments?}" do %>
+    <%= render "fields", f:, payment: @payment %>
+    <%= f.submit_button "Record payment", class: "mt-4 w-full sm:w-auto" %>
+  <% end %>
+<% end %>
