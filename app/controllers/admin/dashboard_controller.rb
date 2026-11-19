@@ -7,5 +7,6 @@ class Admin::DashboardController < Admin::BaseController
 
     @business = current_business
     @checklist = SetupChecklist.new(@business, membership: Current.membership) # ACC-05
+    @dashboard = ActionDashboard.new(@business) # INS-01
   end
 end

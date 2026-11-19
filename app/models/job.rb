@@ -60,12 +60,21 @@ class Job < ApplicationRecord
 
   # The list's tabs. "Needs scheduling" is the approved-but-unscheduled shortcut.
   FILTERS = { "open" => "Open", "unscheduled" => "Needs scheduling", "scheduled" => "Scheduled", "in_progress" => "In progress",
-              "completed" => "Completed", "cancelled" => "Cancelled", "all" => "All" }.freeze
+              "completed" => "Completed", "to_invoice" => "To invoice", "cancelled" => "Cancelled", "all" => "All" }.freeze
+
+  # INS-01: finished, and not billed yet: no invoice that went out (a draft or a void one
+  # doesn't count) for the job, or for the quote it came from (a deposit invoice).
+  def self.ready_to_invoice
+    sent = Invoice.where.not(status: "void").where.not(sent_at: nil)
+    where(status: "completed").where.not(id: sent.where.not(job_id: nil).select(:job_id))
+                              .where("jobs.quote_id IS NULL OR jobs.quote_id NOT IN (?)", sent.where.not(quote_id: nil).select(:quote_id))
+  end
 
   def self.filtered(filter)
     case filter
     when "all" then all
     when "open" then unfinished
+    when "to_invoice" then ready_to_invoice
     else where(status: filter)
     end
   end
@@ -77,6 +86,7 @@ class Job < ApplicationRecord
       [ key, case key
              when "all" then by_status.values.sum
              when "open" then by_status.values_at(*OPEN_STATUSES).compact.sum
+             when "to_invoice" then ready_to_invoice.count
              else by_status.fetch(key, 0)
              end ]
     end

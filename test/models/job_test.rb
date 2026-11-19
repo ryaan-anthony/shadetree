@@ -128,7 +128,7 @@ class JobTest < ActiveSupport::TestCase
       c = Job.create!(client: sam, title: "Patio").tap { _1.cancel!(by: nil) }
       assert_equal [ a ], Job.filtered("open").to_a
       assert_equal [ a ], Job.filtered("unscheduled").to_a
-      assert_equal({ "open" => 1, "unscheduled" => 1, "scheduled" => 0, "in_progress" => 0, "completed" => 1, "cancelled" => 1, "all" => 3 }, Job.filter_counts)
+      assert_equal({ "open" => 1, "unscheduled" => 1, "scheduled" => 0, "in_progress" => 0, "completed" => 1, "to_invoice" => 1, "cancelled" => 1, "all" => 3 }, Job.filter_counts)
       assert_equal [ c ], Job.search("ortiz").to_a
       assert_equal [ b ], Job.search("hedg").to_a
       assert_equal [ a ], Job.search(a.number).to_a
