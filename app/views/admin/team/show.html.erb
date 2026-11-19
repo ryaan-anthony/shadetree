@@ -73,9 +73,9 @@
             <li>
               <div class="min-w-0 flex-1">
                 <p class="font-semibold text-ink"><%= member.user.full_name %></p>
-                <p class="text-sm2 text-muted"><%= member.role.humanize %> · deactivated <%= member.deactivated_at ? "#{time_ago_in_words(member.deactivated_at)} ago" : "" %></p>
+                <p class="text-sm2 text-muted"><%= member.role.humanize %> · <%= member.user.deleted? ? "deleted their account" : "deactivated" %> <%= member.deactivated_at ? "#{time_ago_in_words(member.deactivated_at)} ago" : "" %></p>
               </div>
-              <% if current_membership.can_assign_role?(member, member.role) %>
+              <% if !member.user.deleted? && current_membership.can_assign_role?(member, member.role) %>
                 <%= button_to "Reactivate", reactivate_admin_member_path(member), method: :patch, class: button_classes(:secondary, :sm) %>
               <% end %>
             </li>

@@ -2,6 +2,8 @@ class Users::RegistrationsController < Devise::RegistrationsController
   layout -> { %w[edit update].include?(action_name) ? "application" : "marketing" } # the account page is for signed-in people
   before_action :configure_sign_up_params, only: :create
   before_action :configure_account_update_params, only: :update
+  rate_limit to: 5, within: 10.minutes, only: :destroy, by: -> { current_user&.id || request.remote_ip },
+             with: -> { redirect_to edit_user_registration_path(anchor: "delete-account"), alert: "Too many tries. Wait a few minutes and try again." }
   rate_limit to: 10, within: 10.minutes, only: :create, with: -> { redirect_to new_user_registration_path, alert: "Too many attempts. Try again in a few minutes." }
 
   # A new password signs out every other browser (Devise checks the password's salt); their
@@ -10,6 +12,23 @@ class Users::RegistrationsController < Devise::RegistrationsController
     super do |user|
       user.user_sessions.active.where.not(id: current_user_session&.id).update_all(revoked_at: Time.current) if user.errors.empty? && user.saved_change_to_encrypted_password?
     end
+  end
+
+  # ACC-06: deleting your own account, with your password. Blocked while you're the only Owner
+  # of a business others depend on.
+  def destroy
+    unless resource.valid_password?(params[:current_password].to_s)
+      return redirect_to(edit_user_registration_path(anchor: "delete-account"), alert: "That password didn't match. Your account wasn't deleted.")
+    end
+
+    email, first_name = resource.email, resource.first_name
+    unless resource.delete_account!
+      return redirect_to(edit_user_registration_path(anchor: "delete-account"), alert: "Your account wasn't deleted: you're the only Owner of a business others depend on.")
+    end
+
+    AccountMailer.with(email:, first_name:).deleted.deliver_later
+    sign_out(resource_name)
+    redirect_to root_path, notice: "Your account is deleted. We've sent a confirmation to #{email}."
   end
 
   protected
