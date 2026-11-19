@@ -16,6 +16,7 @@ class BusinessDeletionTest < ActiveSupport::TestCase
     ActiveStorage::VariantRecord.create!(blob: business.logo.blob, variation_digest: "x").image.attach(variant_blob)
     blobs = ActiveStorage::Blob.where(id: [ business.logo.blob.id, job.attachments.first.blob.id, variant_blob.id ]).to_a
     AuditEntry.record!(operator: users(:one), action: "business.viewed", business:)
+    audit_before = AuditEntry.where(business_id: business.id).count # incl. the seeded support visit (OPS-03)
     FeatureFlag.create!(name: "beta", state: "businesses", business_ids: [ business.id, businesses(:two).id ])
     others = Business.where.not(id: business.id).to_h { [ _1.id, rows_of(_1).values.sum ] }
     tables = rows_of(business)
@@ -35,7 +36,7 @@ class BusinessDeletionTest < ActiveSupport::TestCase
     assert_equal 0, ActiveStorage::Attachment.where(record_type: "Business", record_id: business.id).count
     assert_equal 0, ActiveStorage::VariantRecord.where(blob_id: blobs.map(&:id)).count
     assert_equal others, Business.where.not(id: business.id).to_h { [ _1.id, rows_of(_1).values.sum ] }
-    assert_equal 1, AuditEntry.where(business_id: business.id).count
+    assert_equal audit_before, AuditEntry.where(business_id: business.id).count, "the audit log keeps its entries"
     assert_equal [ businesses(:two).id ], FeatureFlag.find_by!(name: "beta").business_ids
     assert User.exists?(email: "owner@example.com"), "people keep their accounts"
   end
