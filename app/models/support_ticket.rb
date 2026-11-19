@@ -24,6 +24,26 @@ class SupportTicket < ApplicationRecord
   scope :recent, -> { order(last_message_at: :desc, id: :desc) }
   scope :unresolved, -> { where.not(status: "resolved") }
 
+  # "Waiting on you" tickets with no answer after this long are resolved, with a notice.
+  AUTO_RESOLVE_AFTER = Integer(ENV.fetch("SUPPORT_AUTO_RESOLVE_DAYS", 7)).days
+  AUTO_RESOLVE_NOTICE = "We've marked this resolved because we haven't heard back. Reply any time to reopen it.".freeze
+
+  # Run daily (ResolveStaleSupportTicketsJob). Returns how many were resolved.
+  def self.resolve_stale!(before: AUTO_RESOLVE_AFTER.ago)
+    stale = Tenancy.across_businesses(reason: "resolving stale support tickets (OPS-05)") do
+      where(status: "waiting", waiting_since: ...before).includes(:business, :opened_by).to_a
+    end
+    stale.each do |ticket|
+      Tenancy.with_business(ticket.business) do
+        message = ticket.resolve_unanswered!
+        SupportNotifier.replied(ticket, message, title: "Resolved: #{ticket.subject}")
+        AuditEntry.record!(operator: nil, operator_email: "system", action: "ticket.auto_resolved", business: ticket.business,
+                           user: ticket.opened_by, ticket: ticket.uid)
+      end
+    end
+    stale.size
+  end
+
   def self.open!(opened_by:, body:, files: [], **attributes)
     ticket = new(opened_by:, status: "open", last_message_at: Time.current, **attributes)
     message = ticket.messages.build(author: opened_by, body:)
@@ -54,6 +74,9 @@ class SupportTicket < ApplicationRecord
   def note!(operator, body) = add_message!(author: operator, body:, from_operator: true, internal: true, touch: false) { {} }
 
   def change_status!(status) = update!(status_changes(status))
+
+  # Resolved with a notice in the thread, after the member didn't answer.
+  def resolve_unanswered! = add_message!(body: AUTO_RESOLVE_NOTICE, from_operator: true, source: "system") { status_changes("resolved") }
 
   private
 

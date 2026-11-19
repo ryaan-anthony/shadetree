@@ -42,3 +42,4 @@ approach, a hosting change. Small, local choices belong in the PR description.
 | [0017](0017-transactional-email-smtp.md) | Transactional email over SMTP | Accepted |
 | [0018](0018-client-page-referrer-policy.md) | Client pages send Referrer-Policy: same-origin | Accepted |
 | [0019](0019-hand-built-operator-console.md) | Hand-built operator console, with in-app two-factor and an append-only audit log | Accepted |
+| [0020](0020-in-app-support-tickets.md) | Support tickets built into the app | Accepted |

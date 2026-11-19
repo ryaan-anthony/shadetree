@@ -28,6 +28,9 @@ production:
   delete_scheduled_businesses: # OPS-04: businesses whose deletion waiting period is over
     class: DeleteScheduledBusinessesJob
     schedule: every day at 3:40am
+  resolve_stale_support_tickets: # OPS-05: "Waiting on you" tickets nobody answered
+    class: ResolveStaleSupportTicketsJob
+    schedule: every day at 5:20am
   visit_reminders: # JOB-05: the day-before reminders, as each business's clock reaches the hour
     class: VisitRemindersJob
     schedule: every hour at minute 7

@@ -286,3 +286,13 @@ unless AuditEntry.exists?(action: "impersonation.started", business:)
     end
   end
 end
+
+# OPS-05: a support ticket with a reply and an operator's internal note.
+Tenancy.with_business(business) do
+  unless SupportTicket.exists?
+    ticket = SupportTicket.open!(opened_by: owner, subject: "How do I take tax off one invoice?", category: "billing", page: "/admin/invoices",
+                                 browser: "Mozilla/5.0 (Macintosh) Safari/605.1.15", body: "Westgate is tax exempt for this building only. How do I take tax off just this invoice?")
+    ticket.note!(owner, "Exempt building; check they have the certificate on file.")
+    ticket.reply_from_operator!(owner, "Open the invoice, choose Tax on the line, then pick None. Only that invoice changes.")
+  end
+end
