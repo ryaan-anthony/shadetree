@@ -23,17 +23,17 @@ related documents, balance and a chronological timeline.
 
 ## Acceptance criteria
 
-- [ ] The client page lists the client's requests, quotes, jobs (with next visit) and invoices
+- [x] The client page lists the client's requests, quotes, jobs (with next visit) and invoices
       with status and amounts, each linking to the record.
-- [ ] Outstanding balance and lifetime paid are shown.
+- [x] Outstanding balance and lifetime paid are shown.
 - [x] A timeline shows key events newest first: request received, quote sent/viewed/approved/
       declined, visit scheduled/completed, invoice sent/paid, payments recorded, notes added —
       with who/when.
-- [ ] Staff can add a free-text note to the timeline; notes are editable by their author.
+- [x] Staff can add a free-text note to the timeline; notes are editable by their author.
 - [x] The timeline is paginated and fast for long-standing clients.
 - [x] Events are recorded by the owning features at the time they happen (a shared way to record
       an event exists for later specs to reuse).
-- [ ] Role and tenancy tests exist.
+- [x] Role and tenancy tests exist.
 
 ## Out of scope
 
@@ -53,5 +53,7 @@ related documents, balance and a chronological timeline.
   next page with a turbo stream), with one query for the page plus preloads, on an index of
   (business, client, time, id).
 - Events start when this ships: history from before isn't backfilled (pre-launch data only).
-- Part 2: notes (added by staff, editable by their author), the lists' next visits and
-  lifetime paid.
+- Part 2: notes (`ClientNote`, added by the office team from the timeline, edited only by
+  their author and marked "edited"); each job in the Work list shows its next visit; the
+  Balance card adds what the client has paid in all, recorded or online. (The record lists
+  show the five most recent of each kind, as CLI-01 built them.)

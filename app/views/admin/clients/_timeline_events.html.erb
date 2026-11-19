@@ -1,4 +1,4 @@
-<%# locals: (events:) -%>
+<%# locals: (events:, client:) -%>
 <%# CLI-05: timeline lines, newest first. %>
 <% events.each do |event| %>
   <% icon_name, text, path = client_event_parts(event) %>
@@ -8,7 +8,11 @@
       <p class="<%= "whitespace-pre-line" if event.kind == "note_added" %> text-ink">
         <% if path %><%= link_to text, path, class: "hover:underline" %><% else %><%= text %><% end %>
       </p>
-      <p class="text-sm2 text-muted"><%= local_time(event.occurred_at) %><%= " · #{event.user.full_name}" if event.user %></p>
+      <p class="text-sm2 text-muted"><%= local_time(event.occurred_at) %><%= " · #{event.user.full_name}" if event.user %>
+        <% if event.kind == "note_added" && (note = event.subject) %>
+          <%= " · edited" if note.edited_at %>
+          <% if note.editable_by?(current_user) %>· <%= link_to "Edit", edit_admin_client_note_path(client, note), class: "font-medium text-ink hover:underline" %><% end %>
+        <% end %></p>
     </div>
   </li>
 <% end %>

@@ -55,6 +55,7 @@ Rails.application.routes.draw do
       end
       post :matches, on: :collection # POST keeps emails and phones out of URLs and access logs
       post :search, on: :collection # list results and the client picker (CLI-02); POST keeps search terms out of URLs
+      resources :notes, only: %i[create edit update], controller: "client_notes" # CLI-05
     end
 
     # Business settings (tabs for profile, documents, branding, request form; hours and taxes have their own)
