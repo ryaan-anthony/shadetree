@@ -118,7 +118,7 @@ class Admin::InvoicesTest < ActionDispatch::IntegrationTest
 
     patch admin_invoice_path(invoice), params: builder_params(invoice.reload, lines:, payment_terms: "custom", due_on: "2027-01-15"), as: :turbo_stream
     assert_equal Date.new(2027, 1, 15), fresh(invoice, &:due_on)
-    assert_select "input#invoice_due_on[value='2027-01-15']"
+    assert_no_match "invoice[payment_terms]", response.body, "the controls aren't replaced, so edits made during a save stay"
 
     stale = builder_params(invoice, lines:).deep_merge(invoice: { lock_version: 0 })
     patch admin_invoice_path(invoice), params: stale, as: :turbo_stream
