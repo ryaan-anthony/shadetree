@@ -92,6 +92,23 @@ class Admin::LocationsTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_content
   end
 
+  test "a new location's time zone follows the business until one is chosen" do
+    post admin_locations_path, params: { location: { name: "North yard", timezone: "" } }
+    location = as_business(@business) { Location.find_by!(name: "North yard") }
+    assert_nil location.timezone
+    @business.update!(timezone: "America/Chicago")
+    assert_equal "America/Chicago", as_business(@business) { location.reload.time_zone.tzinfo.identifier }
+  end
+
+  test "deactivated members aren't listed as working at a location" do
+    tech = member_with_role(:technician)
+    location = branch
+    as_business(@business) { LocationMember.create!(location:, user: tech) }
+    @business.business_users.find_by(user: tech).deactivate!
+    get admin_locations_path
+    assert_select "#location-#{location.uid}", /Nobody assigned/
+  end
+
   test "a member's default location" do
     location = branch
     member = business_users(:one)
@@ -104,6 +121,11 @@ class Admin::LocationsTest < ActionDispatch::IntegrationTest
   test "another business's locations aren't found" do
     theirs = branch(business: businesses(:two).tap { _1.update!(plan_overrides: { "features" => { "locations" => true } }) })
     assert_not_found_across_businesses { get edit_admin_location_path(theirs) }
+    assert_not_found_across_businesses { patch admin_location_path(theirs), params: { location: { name: "Mine" } } }
+    assert_not_found_across_businesses { patch restore_admin_location_path(theirs) }
+    assert_not_found_across_businesses { get new_admin_closure_path(location: theirs) }
+    assert_not_found_across_businesses { post admin_closures_path(location: theirs), params: { closure: { reason: "Off", starts_on: "2026-12-01" } } }
+    assert_equal "North yard", as_business(businesses(:two)) { theirs.reload.name }
     assert_not_found_across_businesses { patch archive_admin_location_path(theirs) }
     assert_not_found_across_businesses { get admin_hours_path(location: theirs) }
     assert_not_found_across_businesses { patch member_default_admin_locations_path(member: business_users(:two).uid), params: { default_location: "" } }

@@ -154,6 +154,9 @@ class User < ApplicationRecord
       business.logo.purge_later if business.logo.attached?
       business.update_columns(active: false, email: nil, phone: nil, address_line1: nil, address_line2: nil, city: nil,
                               region: nil, postal_code: nil, updated_at: Time.current)
+      # CAT-07: its locations' details too, and a main location named after the city.
+      Location.update_all(email: nil, phone: nil, address_line1: nil, address_line2: nil, city: nil, region: nil, postal_code: nil, updated_at: Time.current)
+      Location.where(primary: true).update_all(name: Location::PRIMARY_NAME) unless Location.exists?(primary: false, name: Location::PRIMARY_NAME)
     end
   end
 

@@ -12,6 +12,7 @@ class Admin::LocationsController < Admin::BaseController
     locations = Location.ordered.includes(:members).to_a
     @locations, @archived = locations.partition { !_1.archived? }
     @members = current_business.business_users.active.includes(:user, :default_location).sort_by { _1.user.full_name.downcase }
+    @working = @members.map(&:user_id).to_set # deactivated members aren't listed as working anywhere
   end
 
   def new

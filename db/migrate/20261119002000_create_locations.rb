@@ -42,7 +42,7 @@ class CreateLocations < ActiveRecord::Migration[8.1]
       dir.up do
         execute <<~SQL
           INSERT INTO locations (business_id, uid, name, "primary", country, created_at, updated_at)
-          SELECT id, substr(md5(random()::text || id::text), 1, 12), COALESCE(NULLIF(btrim(city), ''), 'Main location'), true, country, now(), now()
+          SELECT id, substr(md5(random()::text || id::text), 1, 12), left(COALESCE(NULLIF(btrim(city), ''), 'Main location'), 60), true, country, now(), now()
           FROM businesses
         SQL
       end

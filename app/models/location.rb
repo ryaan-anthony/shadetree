@@ -29,8 +29,7 @@ class Location < ApplicationRecord
   before_validation(on: :create) do
     next if primary?
 
-    self.country ||= business&.country
-    self.timezone ||= business&.timezone
+    self.country ||= business&.country # the time zone is left empty: "same as the business", which follows it
     self.weekly_hours ||= business&.weekly_hours # a new branch starts with the business's hours
   end
 
