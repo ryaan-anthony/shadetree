@@ -1,0 +1,61 @@
+<%# OPS-02: one business at a glance. Aggregates only: no client's name or details. %>
+<% content_for :title, @business.name %>
+<% entitlements = @summary.entitlements %>
+<p class="text-sm2"><%= link_to "← Businesses", ops_businesses_path, class: "text-muted hover:underline" %></p>
+<div class="mt-1 flex flex-wrap items-center gap-2">
+  <h1 class="page-title break-words"><%= @business.name %></h1>
+  <%= render "status", business: @business %><%= badge entitlements.plan.name, tone: :info, dot: false %>
+</div>
+<p class="page-lede" id="business-dates">
+  Signed up <%= local_time(@business.created_at) %> ·
+  <% if (last = @summary.last_active_at) %>last active <%= local_time_ago(last) %><% else %>never active<% end %>
+  · <span class="break-all">ID <%= @business.uid %></span>
+</p>
+<div class="mt-6 grid gap-4 lg:grid-cols-2">
+  <%= card title: "Members", subtitle: (pluralize(@summary.pending_invitations, "pending invitation") if @summary.pending_invitations.positive?), flush: true, id: "members" do %>
+    <% members = @summary.members.to_a %>
+    <% current, former = members.partition(&:active?) %>
+    <ul class="list"><%= render partial: "member", collection: current, as: :membership %></ul>
+    <% if former.any? %>
+      <details class="border-t border-line" id="former-members">
+        <summary class="cursor-pointer px-5 py-3 text-sm2 text-muted">Former members (<%= former.size %>)</summary>
+        <ul class="list"><%= render partial: "member", collection: former, as: :membership %></ul>
+      </details>
+    <% end %>
+  <% end %>
+  <%= card title: "Plan and usage", id: "plan" do %>
+    <dl class="space-y-2 text-sm">
+      <div class="flex justify-between gap-3"><dt class="text-subtle">Plan</dt><dd class="font-semibold text-ink"><%= entitlements.plan.name %><%= " (with overrides)" if @business.plan_overrides.present? %></dd></div>
+      <div class="flex justify-between gap-3"><dt class="text-subtle">Subscription</dt><dd class="text-ink" id="subscription-status"><%= entitlements.plan.free? ? "None (free plan)" : "Not billed through Shadetree yet" %></dd></div>
+      <% Plan::LIMITS.each do |key, label| %>
+        <% limit = entitlements.limit(key) %>
+        <div class="flex justify-between gap-3" id="usage-<%= key %>"><dt class="text-subtle"><%= label %></dt><dd class="font-semibold text-ink"><%= limit ? "#{entitlements.used(key)} of #{limit}" : "#{entitlements.used(key)}, no limit" %></dd></div>
+      <% end %>
+    </dl>
+    <p class="mt-3 text-sm2 text-muted">This period runs <%= local_date(entitlements.period.starts_at) %> to <%= local_date(entitlements.period.ends_at - 1.second) %> (<%= entitlements.period.billing_cycle? ? "billing cycle" : "calendar month" %>).</p>
+  <% end %>
+  <%= card title: "Activity", id: "counts" do %>
+    <dl class="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+      <% Ops::BusinessSummary::COUNTS.each do |key, label| %>
+        <div id="count-<%= key %>"><dt class="text-subtle"><%= label %></dt><dd class="tabular text-lg font-semibold text-ink"><%= @summary.counts.fetch(key) %></dd></div>
+      <% end %>
+    </dl>
+  <% end %>
+  <%= card title: "Setup and payments", id: "setup" do %>
+    <% done, required = @summary.setup_progress %>
+    <dl class="space-y-2 text-sm">
+      <div class="flex justify-between gap-3"><dt class="text-subtle">Setup checklist</dt><dd class="text-ink" id="setup-progress"><%= done == required ? "Complete" : "#{done} of #{required} steps" %><% if @business.onboarded_at %>, finished <%= local_date(@business.onboarded_at) %><% end %></dd></div>
+      <div class="flex justify-between gap-3"><dt class="text-subtle">First quote sent</dt><dd class="text-ink"><%= @business.first_quote_sent_at ? local_date(@business.first_quote_sent_at) : "Not yet" %></dd></div>
+      <div class="flex justify-between gap-3"><dt class="text-subtle">Online payments account</dt><dd class="text-ink" id="payments-account">Not connected</dd></div>
+    </dl>
+  <% end %>
+  <%= card title: "Billing history", flush: true, id: "billing-history" do %>
+    <p class="px-5 pt-4 text-sm2 text-muted">No subscription payments yet. Quotes sent in each usage period:</p>
+    <ul class="list">
+      <% @summary.usage_history.each do |period, used| %>
+        <li class="text-sm"><span class="flex-1 text-subtle"><%= local_date(period.starts_at) %> – <%= local_date(period.ends_at - 1.second) %></span><span class="tabular font-semibold text-ink"><%= used %></span></li>
+      <% end %>
+    </ul>
+  <% end %>
+</div>
+<p class="mt-6 text-sm2 text-muted"><%= link_to "This business in the audit log", ops_audit_entries_path(business: @business.uid), class: "hover:underline" %></p>

@@ -4,6 +4,8 @@
   <head>
     <%= render "layouts/head" %>
     <meta name="robots" content="noindex, nofollow">
+    <%# Hovering a link mustn't open the page: opening a business is audited (OPS-02). %>
+    <meta name="turbo-prefetch" content="false">
   </head>
   <body class="bg-canvas text-sm text-body">
     <a href="#main" class="btn btn-secondary sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50">Skip to content</a>
@@ -13,6 +15,7 @@
         <% if current_operator&.two_factor? && ops_session["ops_verified_at"] && ops_session["ops_verified_for"] == [ current_operator.id, current_operator.otp_enabled_at.to_i ] %>
           <nav aria-label="Console" class="flex gap-4 text-sm2">
             <%= link_to "Home", ops_root_path, class: "hover:underline", "aria-current": ("page" if controller_name == "dashboard") %>
+            <%= link_to "Businesses", ops_businesses_path, class: "hover:underline", "aria-current": ("page" if controller_name == "businesses") %>
             <%= link_to "Operators", ops_operators_path, class: "hover:underline", "aria-current": ("page" if controller_name == "operators") %>
             <%= link_to "Audit log", ops_audit_entries_path, class: "hover:underline", "aria-current": ("page" if controller_name == "audit_entries") %>
           </nav>

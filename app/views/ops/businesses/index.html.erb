@@ -1,0 +1,38 @@
+<%# OPS-02: every business, searchable by name or a member's email. %>
+<% content_for :title, "Businesses" %>
+<h1 class="page-title">Businesses</h1>
+<p class="page-lede">Find a business by its name or anyone's email. Business details only: no client data is shown here.</p>
+<%= form_with url: ops_businesses_path, method: :get, class: "mt-4 grid gap-3 sm:grid-cols-6 sm:items-end", id: "directory-filters" do %>
+  <div class="field sm:col-span-2"><label class="label" for="q">Name or email</label><%= search_field_tag :q, @directory.query, class: "input", id: "q", autocomplete: "off" %></div>
+  <div class="field"><label class="label" for="plan">Plan</label><%= select_tag :plan, options_from_collection_for_select(@plans, :id, :name, @directory.plan_id), include_blank: "Any", class: "select", id: "plan" %></div>
+  <div class="field"><label class="label" for="status">Status</label><%= select_tag :status, options_for_select(Ops::Directory::STATUSES.invert, @directory.status), include_blank: "Any", class: "select", id: "status" %></div>
+  <div class="field"><label class="label" for="from">Signed up from</label><%= date_field_tag :from, @directory.from, class: "input", id: "from" %></div>
+  <div class="field"><label class="label" for="to">to (UTC)</label><%= date_field_tag :to, @directory.to, class: "input", id: "to" %></div>
+  <div class="field sm:col-span-2"><label class="label" for="sort">Sort</label><%= select_tag :sort, options_for_select(Ops::Directory::SORTS.invert, @directory.sort), class: "select", id: "sort" %></div>
+  <div class="flex gap-2 sm:col-span-4"><%= submit_tag "Search", class: button_classes(:secondary), name: nil %><%= link_to "Clear", ops_businesses_path, class: button_classes(:ghost) %></div>
+<% end %>
+<p class="mt-4 text-sm2 text-muted" id="directory-count" role="status"><%= pluralize(@total, "business") %><%= " match" if @directory.filtered? %></p>
+<%= card flush: true, class: "mt-2" do %>
+  <% if @businesses.any? %>
+    <ul class="list" id="businesses">
+      <% @businesses.each do |business| %>
+        <li class="p-0" id="business-<%= business.uid %>">
+          <%= link_to ops_business_path(business), class: "flex min-w-0 flex-1 flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:gap-4" do %>
+            <span class="min-w-0 flex-1">
+              <span class="block truncate font-semibold text-ink"><%= business.name %></span>
+              <span class="block truncate text-sm2 text-muted"><%= Ops::Directory.owner_of(business)&.email || "No active owner" %></span>
+            </span>
+            <span class="flex flex-wrap items-center gap-2 text-sm2 text-muted sm:justify-end">
+              <%= render "status", business: %><%= badge business.plan.name, tone: :info, dot: false %>
+              <span>Signed up <%= local_date(business.created_at) %></span>
+              <span>· <%= business.last_active_at ? "active #{time_ago_in_words(business.last_active_at)} ago" : "never active" %></span>
+            </span>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <%= empty_state title: "No businesses match", text: (@directory.filtered? ? "Try part of the name, or the full email address." : "Nobody has signed up yet."), icon: "search" %>
+  <% end %>
+<% end %>
+<div class="mt-3"><%= pagination(page: @page, per_page: Ops::BusinessesController::PER_PAGE, total_count: @total) %></div>

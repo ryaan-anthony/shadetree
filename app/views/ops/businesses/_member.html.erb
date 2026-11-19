@@ -1,0 +1,8 @@
+<%# locals: (membership:) -%>
+<li class="text-sm" id="member-<%= membership.uid %>">
+  <div class="min-w-0 flex-1">
+    <p class="font-medium text-ink"><%= membership.user.full_name %> <span class="font-normal text-muted">· <%= membership.role_name %><%= " (deactivated)" unless membership.active? %></span></p>
+    <p class="break-all text-sm2 text-muted"><%= membership.user.deleted? ? "Deleted their account" : membership.user.email %></p>
+  </div>
+  <p class="shrink-0 text-sm2 text-muted"><%= membership.last_active_at ? local_time_ago(membership.last_active_at) : "Never" %></p>
+</li>
