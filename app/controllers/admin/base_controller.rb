@@ -13,8 +13,12 @@ class Admin::BaseController < ApplicationController
   def require_current_legal_terms
     return if current_user.legal_documents_to_accept.none?
 
+    # Lookups and frames get a plain refusal (and no session write); only a full page is worth
+    # returning to after accepting.
+    return head(:forbidden) unless request.format.html? && !turbo_frame_request? && !request.xhr?
+
     session[:after_legal_acceptance] = request.fullpath if request.get?
-    redirect_to legal_acceptance_path
+    redirect_to legal_acceptance_path, status: :see_other
   end
 
   # ACC-05: a page opened from the setup checklist (from=setup) goes back to it when done.

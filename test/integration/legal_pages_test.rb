@@ -65,6 +65,21 @@ class LegalPagesTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "while a material update waits, lookups and frames are refused without saving where to return" do
+    sign_in users(:one)
+    with_material_terms_update do
+      post search_admin_clients_path(format: :json), params: { q: "a" }
+      assert_response :forbidden
+      get new_admin_client_path(inline: 1), headers: { "Turbo-Frame" => "new_client" }
+      assert_response :forbidden
+      post admin_clients_path, params: { client: { display_name: "X" } }
+      assert_redirected_to legal_acceptance_path
+      assert_nil session[:after_legal_acceptance]
+      post legal_acceptance_path, params: { accept: "1" }
+      assert_redirected_to admin_root_path
+    end
+  end
+
   test "nothing to accept today: no prompt" do
     sign_in users(:one)
     get admin_root_path
@@ -84,10 +99,13 @@ class LegalPagesTest < ActionDispatch::IntegrationTest
     business = businesses(:one)
     link = as_business(business) { ClientLink.issue!(create_test_document(business), actions: %w[approve]) }
     get client_link_path(link.token)
-    assert_select "footer a[href=?]", privacy_url, "Privacy"
+    get privacy_path
+    assert_select "h2#clients"
+    get client_link_path(link.token)
+    assert_select "footer a[href=?]", privacy_url(anchor: "clients"), "Privacy (Shadetree)"
 
     mail = ClientMailer.with(business_id: business.id, to: "maria@example.com", recipient_name: "Maria").test_message
-    assert_match %r{href="http://[^"]+/privacy"}, mail.html_part.body.to_s
-    assert_match %r{How your details are handled: http://\S+/privacy}, mail.text_part.body.to_s
+    assert_match %r{href="http://[^"]+/privacy#clients"}, mail.html_part.body.to_s
+    assert_match %r{How your details are handled: http://\S+/privacy#clients}, mail.text_part.body.to_s
   end
 end
