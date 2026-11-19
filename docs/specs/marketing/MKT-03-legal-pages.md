@@ -46,7 +46,7 @@ and trust pages a small SaaS needs, wire acceptance into sign-up, and make updat
   open questions below still block public launch.
 - **No cookie notice**: Shadetree sets only cookies it needs to work (session, remember-me,
   this browser's id), and MKT-04's analytics will be cookieless, so the notice never appears.
-  The policy doesn't mention analytics until MKT-04 ships.
+  The policy describes MKT-04's analytics (self-hosted, cookieless, a daily anonymous ID).
 - **The first version isn't "material"**: people who signed up earlier accepted the placeholder
   terms and aren't asked again; later material versions are.
 
