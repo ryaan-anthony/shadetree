@@ -1,0 +1,30 @@
+<% content_for :title, "Edit #{@preset.name}" %>
+<% rows = @preset.item_list + Array.new(Ops::PresetsController::BLANK_ROWS) { IndustryPreset::Item.from({}) } %>
+<p class="text-sm2"><%= link_to "← Industry presets", ops_presets_path, class: "text-muted hover:underline" %></p>
+<h1 class="page-title mt-1"><%= @preset.name %></h1>
+<p class="page-lede">Clear a service's name to remove it. Businesses that already added a service keep their own copy.</p>
+<%= form_with url: ops_preset_path(@preset), method: :patch, class: "mt-4", data: { turbo_confirm: "Save the #{@preset.name} preset?" } do %>
+  <% if @preset.errors.any? %><div class="banner banner-warning mb-4" role="alert"><p><%= @preset.errors.full_messages.to_sentence %></p></div><% end %>
+  <div class="field max-w-xs"><label class="label" for="default_visit_minutes">Default visit length (minutes)</label><%= number_field_tag :default_visit_minutes, @preset.default_visit_minutes, min: 5, max: 1440, class: "input", id: "default_visit_minutes" %></div>
+  <div class="mt-4 overflow-x-auto rounded-card border border-line bg-surface" tabindex="0" role="region" aria-label="Starter services">
+    <table class="w-full min-w-[56rem] text-sm" id="preset-items">
+      <thead><tr class="border-b border-line text-left text-muted">
+        <th class="p-2 font-medium">Name</th><th class="p-2 font-medium">Description</th><th class="p-2 font-medium">Unit</th><th class="p-2 font-medium">Custom unit</th>
+        <th class="p-2 font-medium">Minutes</th><th class="p-2 font-medium">Category</th><th class="p-2 font-medium">Taxable</th></tr></thead>
+      <tbody>
+        <% rows.each_with_index do |item, index| %>
+          <tr class="border-b border-line last:border-b-0">
+            <td class="p-2"><%= text_field_tag "items[#{index}][name]", item.name, class: "input", "aria-label": "Name, row #{index + 1}", maxlength: 120 %></td>
+            <td class="p-2"><%= text_field_tag "items[#{index}][description]", item.description, class: "input", "aria-label": "Description, row #{index + 1}" %></td>
+            <td class="p-2"><%= select_tag "items[#{index}][unit]", options_for_select(CatalogItem::UNITS.invert, item.unit.presence || "each"), class: "select", "aria-label": "Unit, row #{index + 1}" %></td>
+            <td class="p-2"><%= text_field_tag "items[#{index}][custom_unit]", item.custom_unit, class: "input w-24", "aria-label": "Custom unit, row #{index + 1}", maxlength: 20 %></td>
+            <td class="p-2"><%= number_field_tag "items[#{index}][duration_minutes]", item.duration_minutes, class: "input w-24", min: 1, max: 1440, "aria-label": "Minutes, row #{index + 1}" %></td>
+            <td class="p-2"><%= text_field_tag "items[#{index}][category]", item.category, class: "input", "aria-label": "Category, row #{index + 1}", maxlength: 60 %></td>
+            <td class="p-2 text-center"><%= hidden_field_tag "items[#{index}][taxable]", "0", id: nil %><%= check_box_tag "items[#{index}][taxable]", "1", item.name.nil? || item.taxable, class: "checkbox", "aria-label": "Taxable, row #{index + 1}" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <div class="mt-4 flex gap-2"><%= submit_tag "Save preset", class: button_classes, name: nil %><%= link_to "Cancel", ops_presets_path, class: button_classes(:ghost) %></div>
+<% end %>

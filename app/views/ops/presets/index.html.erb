@@ -1,0 +1,15 @@
+<%# OPS-04: industry presets (CAT-05). %>
+<% content_for :title, "Industry presets" %>
+<h1 class="page-title">Industry presets</h1>
+<p class="page-lede">The starter services and visit length a new business in each industry is offered. Edits here survive deploys.</p>
+<%= card flush: true, class: "mt-4" do %>
+  <ul class="list" id="presets">
+    <% @presets.each do |preset| %>
+      <li id="preset-<%= preset.industry %>">
+        <div class="min-w-0 flex-1"><p class="font-semibold text-ink"><%= preset.name %></p>
+          <p class="text-sm2 text-muted"><%= pluralize(preset.items.size, "starter service") %> · visits <%= preset.default_visit_minutes %> min</p></div>
+        <%= link_to "Edit", edit_ops_preset_path(preset), class: button_classes(:ghost, :sm) %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

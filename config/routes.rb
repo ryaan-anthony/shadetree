@@ -62,6 +62,8 @@ Rails.application.routes.draw do
     end
     resource :impersonation, only: %i[edit update destroy]
     resources :plans, only: %i[index edit update] # OPS-04
+    resources :presets, only: %i[index edit update] # OPS-04: industry presets (CAT-05)
+    resources :feature_flags, only: %i[index update], path: "flags", constraints: { id: /[a-z0-9_]+/ } # OPS-04: release flags (PLT-11)
     resources :users, only: :index do # OPS-02: lookup by email
       member do # OPS-04: sign-in help
         post :confirmation, to: "user_actions#confirmation"
