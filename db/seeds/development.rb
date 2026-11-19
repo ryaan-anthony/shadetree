@@ -210,7 +210,7 @@ Tenancy.with_business(business) do
   # CLI-04: one logged by phone, already in progress.
   unless ServiceRequest.exists?(source: "phone")
     client = Client.order(:id).offset(1).first
-    logged = ServiceRequest.create!(client:, property: client&.properties&.first, source: "phone", created_by: owner, status: "in_progress",
+    logged = ServiceRequest.create!(client:, property: client&.properties&.first, source: "phone", created_by: owner, status: "in_progress", location: Location.find_by(name: "North yard"),
                                     description: "Called about monthly grounds maintenance next season. Wants a quote by Dec 15.")
     logged.notes.create!(business:, user: owner, body: "Site visit booked for Thursday.")
   end

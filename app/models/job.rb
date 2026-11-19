@@ -7,6 +7,7 @@
 # Pricing::DocumentTotals; the *_cents columns are a cache for lists, refreshed on every save.
 class Job < ApplicationRecord
   include BusinessOwned
+  include AtLocation # CAT-07
   include PricedDocument
 
   STATUSES = %w[unscheduled scheduled in_progress completed cancelled].freeze
@@ -243,4 +244,6 @@ class Job < ApplicationRecord
     self.currency ||= business.currency_code
     self.tax_rates = TaxRate.for_new_document(client:).map { { "name" => _1.name.to_s, "percent" => _1.percent.to_d.to_s("F") } } if tax_rates.blank? && quote.nil?
   end
+
+  def location_source = quote
 end

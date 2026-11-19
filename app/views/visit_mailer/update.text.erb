@@ -13,4 +13,4 @@
 <% end %>View visit: <%= client_link_url(item.link.token) %>
 <% end %>
 
-Questions? Reply to this email<%= " or call #{@business.phone}" if @business.phone.present? %>.
+Questions? Reply to this email<%= " or call #{@contact.contact_phone}" if @contact.contact_phone.present? %>.

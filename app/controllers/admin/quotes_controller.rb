@@ -134,6 +134,7 @@ class Admin::QuotesController < Admin::BaseController
   def preview
     @business = current_business
     @document = @quote
+    @contact = @quote.contact # CAT-07
     @preview = true
     render "client_links/show", layout: "client"
   end
@@ -181,7 +182,7 @@ class Admin::QuotesController < Admin::BaseController
 
   def builder_params
     params.require(:quote).permit(
-      :lock_version, :lines_present, :client, :property, :title, :message, :internal_notes, :terms, :expires_on, :prices_include_tax,
+      :lock_version, :lines_present, :client, :property, :location, :title, :message, :internal_notes, :terms, :expires_on, :prices_include_tax,
       :discount_kind, :discount_value, tax_rates: [], lines: [ %i[key catalog_item name description quantity unit unit_price taxable discount_kind discount_value] ],
       attachments: []
     )
@@ -193,6 +194,7 @@ class Admin::QuotesController < Admin::BaseController
     # A revision stays with its client: its link was sent to them (QTE-06).
     change_client(attrs[:client]) if attrs[:client].present? && attrs[:client] != @quote.client.uid && !@quote.revising?
     assign_property(attrs[:property]) if attrs.key?(:property)
+    @quote.location = picked_location(attrs[:location]) || @quote.location if attrs.key?(:location)
     @quote.assign_attributes(attrs.slice(:title, :message, :internal_notes, :terms, :expires_on, :prices_include_tax))
     @quote.set_discount(attrs[:discount_kind], attrs[:discount_value]) if attrs.key?(:discount_kind)
     # After a client change the ticks were for the old client; change_client chose the taxes.

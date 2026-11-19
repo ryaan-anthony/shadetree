@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_19_002000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_19_002100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -621,6 +621,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002000) do
     t.datetime "updated_at", null: false
     t.integer "revision", default: 1, null: false
     t.datetime "paid_at"
+    t.bigint "location_id", null: false
+    t.index ["business_id", "location_id"], name: "index_invoices_on_business_id_and_location_id"
     t.index ["business_id", "number"], name: "index_invoices_on_business_id_and_number", unique: true
     t.index ["business_id", "status", "due_on"], name: "index_invoices_on_business_id_and_status_and_due_on"
     t.index ["business_id"], name: "index_invoices_on_business_id"
@@ -694,6 +696,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002000) do
     t.datetime "updated_at", null: false
     t.datetime "ready_to_invoice_notified_at"
     t.datetime "client_notice_due_at"
+    t.bigint "location_id", null: false
+    t.index ["business_id", "location_id"], name: "index_jobs_on_business_id_and_location_id"
     t.index ["business_id", "number"], name: "index_jobs_on_business_id_and_number", unique: true
     t.index ["business_id", "status", "created_at"], name: "index_jobs_on_business_id_and_status_and_created_at"
     t.index ["client_id"], name: "index_jobs_on_client_id"
@@ -998,7 +1002,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002000) do
     t.datetime "archived_at"
     t.integer "revision", default: 1, null: false
     t.bigint "service_request_id"
+    t.bigint "location_id", null: false
     t.index ["business_id", "archived_at", "created_at"], name: "index_quotes_on_business_id_and_archived_at_and_created_at"
+    t.index ["business_id", "location_id"], name: "index_quotes_on_business_id_and_location_id"
     t.index ["business_id", "number"], name: "index_quotes_on_business_id_and_number", unique: true
     t.index ["business_id", "status", "created_at"], name: "index_quotes_on_business_id_and_status_and_created_at"
     t.index ["business_id"], name: "index_quotes_on_business_id"
@@ -1075,6 +1081,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "created_by_id"
+    t.bigint "location_id", null: false
+    t.index ["business_id", "location_id"], name: "index_service_requests_on_business_id_and_location_id"
     t.index ["business_id", "status", "created_at"], name: "idx_on_business_id_status_created_at_f13f5269d8"
     t.index ["client_id"], name: "index_service_requests_on_client_id"
     t.index ["created_by_id"], name: "index_service_requests_on_created_by_id"
@@ -1283,6 +1291,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002000) do
   add_foreign_key "invoices", "businesses"
   add_foreign_key "invoices", "clients"
   add_foreign_key "invoices", "jobs"
+  add_foreign_key "invoices", "locations"
   add_foreign_key "invoices", "properties"
   add_foreign_key "invoices", "quotes"
   add_foreign_key "invoices", "users", column: "created_by_id"
@@ -1293,6 +1302,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002000) do
   add_foreign_key "job_line_items", "jobs", on_delete: :cascade
   add_foreign_key "jobs", "businesses"
   add_foreign_key "jobs", "clients"
+  add_foreign_key "jobs", "locations"
   add_foreign_key "jobs", "properties", on_delete: :nullify
   add_foreign_key "jobs", "quotes", on_delete: :nullify
   add_foreign_key "jobs", "users", column: "cancelled_by_id", on_delete: :nullify
@@ -1336,6 +1346,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002000) do
   add_foreign_key "quotes", "active_storage_blobs", column: "pdf_blob_id", on_delete: :nullify
   add_foreign_key "quotes", "businesses", on_delete: :cascade
   add_foreign_key "quotes", "clients"
+  add_foreign_key "quotes", "locations"
   add_foreign_key "quotes", "properties", on_delete: :nullify
   add_foreign_key "quotes", "service_requests", on_delete: :nullify
   add_foreign_key "quotes", "users", column: "created_by_id", on_delete: :nullify
@@ -1352,6 +1363,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002000) do
   add_foreign_key "service_request_views", "users", on_delete: :cascade
   add_foreign_key "service_requests", "businesses"
   add_foreign_key "service_requests", "clients"
+  add_foreign_key "service_requests", "locations"
   add_foreign_key "service_requests", "properties", on_delete: :nullify
   add_foreign_key "service_requests", "users", column: "created_by_id", on_delete: :nullify
   add_foreign_key "tax_rates", "businesses", on_delete: :cascade

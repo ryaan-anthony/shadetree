@@ -1,7 +1,7 @@
 <%# The invoice PDF (PAY-02, QTE-02's approach): the business's letterhead, then the same
     document the client page shows (client/invoices/_document). %>
 <% content_for :title, "Invoice #{@invoice.number}" %>
-<%= render "pdfs/letterhead", business: @business %>
+<%= render "pdfs/letterhead", business: @business, contact: @invoice.contact %>
 
 <article class="quote-doc">
   <%= render "client/invoices/document", invoice: @invoice, pdf: true %>

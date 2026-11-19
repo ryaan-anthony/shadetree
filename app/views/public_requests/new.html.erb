@@ -13,6 +13,15 @@
       <% end %>
       <%= render "shared/form_guard", purpose: form_purpose %>
 
+      <%# CAT-07: a location's own link fixes the location; otherwise, with several, the client picks. %>
+      <% locations = @business.multiple_locations? ? @business.active_locations : [] %>
+      <% if params[:location].present? && f.object.chosen_location %>
+        <%= f.hidden_field :location %>
+        <p class="text-sm text-subtle">For <strong class="text-ink"><%= f.object.chosen_location.name %></strong></p>
+      <% elsif locations.size > 1 %>
+        <%= f.field :location, as: :select, label: "Which location is nearest?", optional: true, include_blank: "Not sure",
+                    choices: locations.map { [ _1.name, _1.uid ] } %>
+      <% end %>
       <% services = RequestSubmission.offered_services.to_a %>
       <% if services.any? %>
         <fieldset>

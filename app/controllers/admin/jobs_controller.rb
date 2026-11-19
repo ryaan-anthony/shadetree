@@ -19,11 +19,12 @@ class Admin::JobsController < Admin::BaseController
   # From scratch, for work agreed by phone (?client=<uid> preselects the client).
   def new
     client = Client.active.find_by(uid: params[:client])
-    @job = Job.new(client:, property: client&.properties&.find_by(billing: true) || client&.properties&.first)
+    @job = Job.new(client:, property: client&.properties&.find_by(billing: true) || client&.properties&.first, location: current_membership.document_location)
   end
 
   def create
     @job = Job.new(job_params.merge(created_by: current_user))
+    @job.location = picked_location(params.dig(:job, :location))
     @job.client = Client.active.find_by(uid: params.dig(:job, :client).to_s)
     @job.property = @job.client&.properties&.find_by(uid: params.dig(:job, :property).to_s)
     if @job.client.nil?
@@ -42,6 +43,7 @@ class Admin::JobsController < Admin::BaseController
     stale = params.dig(:job, :lock_version).present? && params.dig(:job, :lock_version).to_i != @job.lock_version
     @job.assign_attributes(job_params)
     @job.property = @job.client.properties.find_by(uid: params.dig(:job, :property).to_s) if params[:job]&.key?(:property)
+    @job.location = picked_location(params.dig(:job, :location)) || @job.location if params[:job]&.key?(:location)
     if @job.save
       redirect_to admin_job_path(@job), notice: "Job #{@job.number} saved."
     else

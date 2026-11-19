@@ -40,6 +40,7 @@ module ClientLinkAccess
     @business = @client_link.business
     Current.business = @business
     @document = Tenancy.across_businesses(reason: "client link document") { @client_link.linkable }
+    @contact = @document.try(:contact) # CAT-07: the document's location's details
     render_link_unavailable unless @client_link.usable?
   end
 

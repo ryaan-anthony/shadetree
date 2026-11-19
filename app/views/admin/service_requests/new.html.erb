@@ -44,6 +44,7 @@
         <% if description_error %><p class="error-text"><%= icon "alert-circle" %><%= description_error %></p><% end %>
       </div>
       <%= f.field :timing, label: "When", optional: true, maxlength: 120, placeholder: "e.g. Before Memorial Day" %>
+      <%= render "admin/locations/field", f:, document: @request %>
 
     </div>
   <% end %>

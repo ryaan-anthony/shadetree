@@ -20,8 +20,10 @@
         <% end %>
         <div class="min-w-0">
           <p class="truncate font-bold text-ink <%= "sr-only" if branding.logo? %>"><%= branding.name %></p>
-          <% if @business&.phone.present? %>
-            <p class="text-sm2 text-muted"><%= link_to @business.phone, "tel:#{@business.phone}", class: "hover:text-ink" %></p>
+          <% contact = @contact || @business %><%# CAT-07: the location the client deals with %>
+          <% if contact&.contact_label %><p class="truncate text-sm2 font-medium text-subtle"><%= contact.contact_label %></p><% end %>
+          <% if contact&.contact_phone.present? %>
+            <p class="text-sm2 text-muted"><%= link_to contact.contact_phone, "tel:#{contact.contact_phone}", class: "hover:text-ink" %></p>
           <% end %>
         </div>
       </div>

@@ -26,14 +26,15 @@ class Admin::ServiceRequestsController < Admin::BaseController
   end
 
   def new
-    @request = ServiceRequest.new(source: "phone")
+    @request = ServiceRequest.new(source: "phone", location: current_membership.document_location)
   end
 
   # Logged by staff: a client (picked, or added inline), one of their properties, the services,
   # what they need and how they got in touch.
   def create
-    attrs = params.expect(service_request: [ :client, :property, :source, :description, :timing, { service_ids: [] } ])
-    @request = ServiceRequest.new(created_by: current_user, source: attrs[:source], description: attrs[:description], timing: attrs[:timing])
+    attrs = params.expect(service_request: [ :client, :property, :source, :description, :timing, :location, { service_ids: [] } ])
+    @request = ServiceRequest.new(created_by: current_user, source: attrs[:source], description: attrs[:description], timing: attrs[:timing],
+                                  location: picked_location(attrs[:location]))
     @request.client = Client.active.find_by(uid: attrs[:client])
     @request.property = @request.client&.properties&.find_by(uid: attrs[:property])
     @request.services = CatalogItem.active.where(uid: Array(attrs[:service_ids])).map { { "catalog_item_id" => _1.id, "name" => _1.name } }

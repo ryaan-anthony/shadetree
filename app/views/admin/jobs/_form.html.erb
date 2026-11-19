@@ -24,6 +24,7 @@
         <%= render "admin/quotes/property_select", client: @job.client, selected: @job.property&.uid, name: "job[property]" %>
       <% end %>
       <%= f.field :title, maxlength: 120, placeholder: "Spring cleanup", autofocus: !new_job && params[:items].nil? %>
+      <%= render "admin/locations/field", f:, document: @job, help: "Its visits use this location's hours and time zone." %>
       <%= f.field :instructions, as: :textarea, optional: true, rows: 4, maxlength: 5_000, label: "Instructions for the crew",
                   placeholder: "Park on the street. Leave bagged debris by the side gate.", help: "Everyone assigned to this job's visits sees these." %>
       <%= f.field :internal_notes, as: :textarea, optional: true, rows: 3, maxlength: 5_000, help: "Only Owners and Admins see these." %>
