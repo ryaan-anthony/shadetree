@@ -117,12 +117,13 @@ class Invoice < ApplicationRecord
   def sendable? = status.in?(%w[draft sent partially_paid]) && line_items.any?
 
   # The issue and due dates it goes out with. A draft first sent after its issue date is issued
-  # today, its due date following its terms (a custom date that has passed becomes today), so
-  # an invoice never goes out already overdue. Revisions keep their dates.
+  # today, its due date following its terms (a custom date keeps its distance from the issue
+  # date, as in the builder), so an invoice never goes out already overdue. Revisions keep
+  # their dates.
   def dates_when_sent(today = business.today)
     return [ issued_on, due_on ] if sent_at || issued_on.nil? || issued_on >= today
 
-    due = payment_terms == "custom" ? due_on : due_on_for(payment_terms, today)
+    due = payment_terms == "custom" ? due_on && due_on + (today - issued_on) : due_on_for(payment_terms, today)
     [ today, [ due, today ].compact.max ]
   end
 

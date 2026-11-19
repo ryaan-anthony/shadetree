@@ -75,7 +75,7 @@ connected — lets the client pay.
   unpaid sent invoice can be sent again; paid and void ones can't. The email's button says
   "View invoice" until PAY-04 adds paying.
 - A draft first sent after its issue date goes out issued today, its due date following its
-  terms (a custom date that has passed becomes today), so it never arrives overdue; the send
+  terms (a custom date keeps its distance from the issue date), so it never arrives overdue; the send
   page says so first. Revisions keep their dates.
 - An email still queued when the invoice is revised or voided isn't sent: it's marked failed
   ("changed before the email went out") for staff to send again. Quotes do the same. Client
