@@ -25,7 +25,8 @@ class Admin::ScheduleController < Admin::BaseController
     on = Date.iso8601(params[:on].to_s) rescue nil
     return refuse("Choose a day.") unless on
 
-    changes = @visit.move_attributes(on:, at: params[:at].presence, from: member_param(:from), to: member_param(:to),
+    on, at = from_grid_clock(on, params[:at].presence)
+    changes = @visit.move_attributes(on:, at:, from: member_param(:from), to: member_param(:to),
                                      crew: (Array(params[:crew]).select { _1.is_a?(String) || _1.is_a?(Integer) }.map(&:to_s).compact_blank if params.key?(:crew)))
     @visit.assign_attributes(changes)
     return refuse(@visit.errors.full_messages.to_sentence) unless @visit.valid?
@@ -65,6 +66,17 @@ class Admin::ScheduleController < Admin::BaseController
   end
 
   private
+
+  # CAT-07: a drag's day and time are on the calendar's clock (?grid_zone=); a visit keeps its
+  # location's, so a visit in another zone gets the same moment on its own clock.
+  def from_grid_clock(on, at)
+    zone = ActiveSupport::TimeZone[params[:grid_zone].to_s] if params[:grid_zone].present?
+    return [ on, at ] unless zone && at.to_s.match?(/\A\d\d:\d\d/) && zone.tzinfo.identifier != @visit.time_zone.tzinfo.identifier
+
+    hour, minute = at.to_s.split(":").map { Integer(_1, 10) }
+    local = zone.local(on.year, on.month, on.day, hour, minute).in_time_zone(@visit.time_zone)
+    [ local.to_date, local.strftime("%H:%M") ]
+  end
 
   # A member id from the drag ("none" for the "Nobody yet" column), only if they're in this business.
   def member_param(key)

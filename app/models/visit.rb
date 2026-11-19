@@ -410,6 +410,10 @@ class Visit < ApplicationRecord
     @assignee_ids = nil
   end
 
+  # The visit's own time zone, and its start on another clock (the calendar's, CAT-07).
+  def time_zone = place.time_zone
+  def start_time_in(zone) = starts_at&.in_time_zone(zone)&.strftime("%H:%M")
+
   private
 
   # Every change takes the job's lock, then the visit's (the order Job#complete! uses, so the two
@@ -433,9 +437,12 @@ class Visit < ApplicationRecord
     ampm ? "#{label} #{local.hour < 12 ? "am" : "pm"}" : label
   end
 
-  # CAT-07: visits keep the time of their job's location (its zone; the business's for the main one).
+  # CAT-07: visits keep the time of their job's location (its zone; the business's for the main
+  # one). With one location there's nothing to look up.
   def place
-    location = Tenancy.with_business(business) { job&.location } if business
+    return business if business.nil? || !business.multiple_locations?
+
+    location = Tenancy.with_business(business) { job&.location }
     location.nil? || location.primary? ? business : location
   end
 

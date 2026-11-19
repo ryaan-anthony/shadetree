@@ -180,6 +180,9 @@ class ScheduleView
   def unscheduled_jobs = Job.where(status: "unscheduled").includes(:client, :property).order(:created_at, :id).limit(UNSCHEDULED_SHOWN)
   def unscheduled_count = @unscheduled_count ||= Job.where(status: "unscheduled").count
 
+  # The grid's clock: the filtered location's time zone (CAT-07), else the business's.
+  def place = @location || business
+
   private
 
   def by_date = @by_date ||= visits.group_by(&:scheduled_on)
@@ -191,8 +194,6 @@ class ScheduleView
 
   def opening = @opening ||= OpeningHours.new(place)
 
-  # The grid's clock: the filtered location's time zone (CAT-07), else the business's.
-  def place = @location || business
 
   def midnight(date) = place.local_time(date, "00:00")
 

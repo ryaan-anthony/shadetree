@@ -44,7 +44,7 @@
         <div class="flex flex-wrap items-center gap-x-3 gap-y-2" data-automation-form-target="option" data-subjects="<%= definition[:subjects].join(" ") %>">
           <% if key == "location" %>
             <label class="text-sm text-ink" for="condition-location"><%= definition[:label] %></label>
-            <%= select_tag "automation_rule[conditions][location]", options_for_select(current_business.active_locations.map { [ _1.name, _1.uid ] }, value),
+            <%= select_tag "automation_rule[conditions][location]", options_for_select(current_business.active_locations.then { |active| (chosen = Location.find_by(uid: value.to_s)) && !active.include?(chosen) ? active + [ chosen ] : active }.map { [ "#{_1.name}#{" (archived)" if _1.archived?}", _1.uid ] }, value),
                            include_blank: "Any location", id: "condition-location", class: "select h-8 !w-48 py-0" %>
           <% elsif %w[still_open paid_in_full].include?(key) %>
             <label class="flex items-center gap-2 text-sm text-ink">

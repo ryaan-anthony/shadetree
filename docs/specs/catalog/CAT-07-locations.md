@@ -56,7 +56,11 @@ businesses never see any of it.
 - **One payment account per business** for now (the current model); see the open question.
 - The main location's address, contact details, time zone, hours and closures stay on the
   business profile (Settings → Business and Hours), so single-location businesses see no change.
-- A member's filter starts at their default location; visits keep their location's time zone.
+- A member's filter starts where their new documents do (their default, else the one location
+  they work at). Visits keep their location's time zone: the all-locations calendar lays out on
+  the business's clock, names a visit's zone when it differs, and converts drops to the visit's
+  clock. Moving a job to a location in another zone keeps its visits' clock times.
+- A location's time zone left as "same as the business" follows later changes to it.
 - NTF-04's deferred "location" condition is added to automations.
 
 ## Implementation notes
@@ -72,6 +76,8 @@ businesses never see any of it.
 - `LocationFilter` (`filters_by_location Model, only:`) scopes lists, the schedule (its grid in
   that location's zone) and the dashboard. `Visit#place`, `VisitWarnings` and `VisitReminders`
   use the job's location. `MarketingHelper::COMING_SOON` no longer lists locations.
+- Location badges on lists and document pages, a location on calendar cards and the visit panel,
+  and a Location column (plus a locations table) in the data export (INS-02).
 - Dev seeds: the feature comped for the demo business, a "North yard" location (Priya works
   there) with a logged request.
 

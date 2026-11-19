@@ -129,6 +129,10 @@ class Admin::LocationsTest < ActionDispatch::IntegrationTest
                                                               conditions: { location: location.uid }, actions: { notify_team: { on: "1", team: "office" } } } }
     follow_redirect!
     assert_select "#automation-#{as_business(@business) { AutomationRule.last.uid }} p", /if it's for North yard:/
+    rule = as_business(@business) { AutomationRule.last }
+    patch archive_admin_location_path(location)
+    get edit_admin_automation_path(rule)
+    assert_select "select#condition-location option[selected]", "North yard (archived)", "an archived location stays on the rule"
   end
 
   test "another business's locations aren't found" do

@@ -50,7 +50,7 @@ class LocationSchedulingTest < ActiveSupport::TestCase
     Tenancy.with_business(@business) do
       quote = Quote.start(client: @client, location: @denver)
       assert_nil AutomationConditions.failing({ "location" => @denver.uid }, quote)
-      assert_match "It's for Denver yard", AutomationConditions.failing({ "location" => @business.primary_location.uid }, quote)
+      assert_equal "Only for New York; this is for Denver yard.", AutomationConditions.failing({ "location" => @business.primary_location.uid }, quote)
       v = visit(Date.new(2026, 11, 18))
       assert_nil AutomationConditions.failing({ "location" => @denver.uid }, v), "a visit goes by its job"
 

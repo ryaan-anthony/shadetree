@@ -51,7 +51,10 @@ module AutomationConditions
     when Payment then subject.invoice
     else subject
     end
-    "It's for #{document.location.name}, not another location." unless document.try(:location)&.uid == uid.to_s
+    here = document.try(:location)
+    return if here&.uid == uid.to_s
+
+    "Only for #{Location.find_by(uid: uid.to_s)&.name || "another location"}; this is for #{here&.name || "no location"}."
   end
 
   def client_tag(subject, tag)

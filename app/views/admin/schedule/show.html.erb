@@ -116,7 +116,7 @@
     <% params_now = { view: s.view, member: s.member }.compact_blank %>
     <div class="card hidden overflow-x-auto md:block <%= inline_style("--cal-days: #{s.columns.size}") %>" id="schedule-grid"
          data-controller="schedule-drag" data-schedule-drag-first-hour-value="<%= s.hours.first %>" data-schedule-drag-hour-px-value="<%= ScheduleView::HOUR_PX %>"
-         data-schedule-drag-url-value="<%= admin_schedule_move_path("ID") %>" data-schedule-drag-context-value="<%= params_now.to_json %>">
+         data-schedule-drag-url-value="<%= admin_schedule_move_path("ID") %>" data-schedule-drag-context-value="<%= params_now.merge(grid_zone: s.place.time_zone.tzinfo.identifier).to_json %>">
       <div class="cal-grid border-b border-line <%= "cal-wide" if s.columns.size > 7 %>">
         <div></div>
         <% s.columns.each do |column| %>
@@ -165,7 +165,7 @@
                 <% width = 100.0 / placed.columns %>
                 <%= link_to admin_schedule_visit_path(visit, params_now), class: "cal-visit cal-#{s.visit_color(visit)} #{inline_style("top: #{placed.top}px; height: #{placed.height}px; left: calc(#{(width * placed.column).round(3)}% + 2px); width: calc(#{width.round(3)}% - 4px)")}", id: schedule_visit_id(visit, column, s),
                             data: { turbo_frame: "schedule_visit", **schedule_drag_data(visit, column) } do %>
-                  <span class="block font-semibold"><%= visit.time_label.delete_prefix("Arrive ") %> <%= visit.job.client.display_name %><span class="sr-only">, <%= date.strftime("%A, %B %-d") %></span></span>
+                  <span class="block font-semibold"><%= schedule_time_label(visit, s) %> <%= visit.job.client.display_name %><span class="sr-only">, <%= date.strftime("%A, %B %-d") %></span></span>
                   <span class="block truncate"><%= visit.job.title %><%= ", #{visit.job.property.city}" if visit.job.property&.city.present? %></span>
                   <span class="block truncate opacity-80"><%= crew_first_names(visit) %><%= " · #{visit.job.location.name}" if show_locations %></span>
                 <% end %>
