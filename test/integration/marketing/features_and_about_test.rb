@@ -35,7 +35,7 @@ class MarketingFeaturesAndAboutTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", /crews who keep neighborhoods running/
     assert_select "#promises-heading + dl dt", 6
-    assert_select "#founder-story", /home services.*Transparency is the first principle/m
+    assert_select "#founder-story", /Ryan Tulino.*home services.*Transparency/m
     assert_select "a[href=?]", contact_path, text: "Get in touch"
     assert_select "img", false, "no stock photos of people who don't work here"
   end

@@ -68,9 +68,10 @@ Part 2 (Features and About):
   sidebar cropped, client and technician screens at 390×844. Retake them the same way from
   staging before launch, keeping the file names.
 - About: why Shadetree exists and the six promises it keeps (from `docs/plans/00-vision.md`),
-  with no stock photos. "Who builds it" is the founder's story in his own words (Ryan Tulino:
-  his twenties in home services, then software; family in the trade; transparency first), and
-  replaces the unconfirmed "small, independent team" line.
+  with no stock photos. "Who builds it" is the founder's story, in first person and drawn only
+  from what he provided (Ryan Tulino: his twenties in home services, then tech; family in the
+  trade; transparency as a first principle). It replaces the unconfirmed "small, independent
+  team" line.
 
 Part 3 (Pricing):
 - Every listed plan from `Plan.listed`, in order: price (monthly, or a year's price shown per
@@ -88,4 +89,4 @@ Part 3 (Pricing):
 
 ## Open questions
 
-None.
+- None.
