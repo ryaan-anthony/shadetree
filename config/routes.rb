@@ -254,6 +254,8 @@ Rails.application.routes.draw do
   root "home#index"
 
   # Marketing pages
+  get "robots.txt", to: "seo#robots", as: :robots, format: false # MKT-04
+  get "sitemap.xml", to: "seo#sitemap", as: :sitemap, defaults: { format: :xml }
   get "pricing", to: "pricing#index"
   get "about", to: "about#index"
   get "features", to: "features#index" # MKT-01

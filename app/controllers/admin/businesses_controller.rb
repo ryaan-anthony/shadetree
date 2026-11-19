@@ -72,7 +72,7 @@ class Admin::BusinessesController < Admin::BaseController
       :name, :industry, :description, :email, :phone, :website,
       :address_line1, :address_line2, :city, :region, :postal_code, :country, :timezone, :currency,
       :quote_expiry_days, :auto_create_jobs, :technicians_see_prices, :quote_terms, :quote_approved_message, :invoice_due_days, :invoice_terms, :quote_number_prefix, :invoice_number_prefix,
-      :handle, :request_form_enabled, :request_form_intro, # CLI-03
+      :handle, :request_form_enabled, :request_form_intro, :request_form_indexable, # CLI-03, MKT-04
       client_visit_emails: Business::CLIENT_VISIT_EMAILS.keys # JOB-05
     )
   end

@@ -6,7 +6,8 @@
   <head>
     <% content_for(:title, @business&.name) unless content_for?(:title) %>
     <%= render "layouts/head" %>
-    <meta name="robots" content="noindex">
+    <%# MKT-04: client pages are never indexed; a request page is when its business opts in. %>
+    <% if content_for?(:indexable) %><link rel="canonical" href="<%= public_base_url %><%= public_request_path(@business.handle) %>"><% else %><meta name="robots" content="noindex"><% end %>
   </head>
   <body class="client" style="<%= branding.css_variables %>">
     <header class="client-head">

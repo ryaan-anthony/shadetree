@@ -1,5 +1,10 @@
 <%# Wraps every auth screen. locals: (title:, lede: nil, footer: nil) %>
 <% content_for :title, title %>
+<%# MKT-04: sign-in and sign-up can be found; the other account pages (reset, unlock, confirm) are kept out. %>
+<% if devise_controller? %><%# other pages using the card (contact) describe themselves %>
+  <% page_meta description: local_assigns[:lede].presence || "Sign in to your Shadetree account to run your quotes, schedule and invoices.",
+               index: action_name == "new" && controller_name.in?(%w[sessions registrations]) %>
+<% end %>
 <div class="mx-auto w-full max-w-[27rem] px-4 py-10 sm:py-16">
   <div class="mb-6 text-center">
     <h1 class="text-2xl font-bold tracking-tight text-ink"><%= title %></h1>

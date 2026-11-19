@@ -1,5 +1,5 @@
 <% content_for :title, "Pricing" %>
-<% content_for :head, tag.meta(name: "description", content: "Free to start, with the whole workflow. Paid plans by how many quotes you send each month. No contracts, no setup fees.") %>
+<% page_meta description: "Free to start, with the whole workflow. Paid plans by how many quotes you send each month. No contracts, no setup fees." %>
 <% yearly = @plans.any? { plan_yearly?(_1) } %>
 <% savings = @plans.select { plan_yearly?(_1) }.map { plan_annual_saving(_1) }.uniq %>
 

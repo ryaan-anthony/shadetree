@@ -157,6 +157,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
     t.bigint "plan_id", null: false
     t.jsonb "plan_overrides", default: {}, null: false
     t.datetime "billing_cycle_anchor"
+    t.boolean "request_form_indexable", default: false, null: false
     t.index ["active"], name: "index_businesses_on_active"
     t.index ["handle"], name: "index_businesses_on_handle", unique: true
     t.index ["industry"], name: "index_businesses_on_industry"

@@ -5,6 +5,7 @@ class Admin::BaseController < ApplicationController
   before_action :require_business_setup
   include Authorization # after setup, so users without a business are sent to create one
   layout "app"
+  before_action { response.set_header("X-Robots-Tag", "noindex, nofollow") } # MKT-04: never in search results
 
   private
 
