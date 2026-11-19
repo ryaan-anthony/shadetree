@@ -1,0 +1,17 @@
+<%# locals: (id:, image:, width:, height:, alt:, title:, text:, points:, phone: false, flip: false) -%>
+<%# MKT-01: one feature, beside a real screenshot (app/assets/images/marketing, see the spec for how they're taken). %>
+<section id="<%= id %>" class="scroll-mt-20 border-b border-line last-of-type:border-b-0">
+  <div class="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 sm:px-8 lg:gap-16 lg:py-20 <%= { [ true, false ] => "lg:grid-cols-[1fr_22rem]", [ true, true ] => "lg:grid-cols-[22rem_1fr]", [ false, false ] => "lg:grid-cols-[2fr_3fr]", [ false, true ] => "lg:grid-cols-[3fr_2fr]" }.fetch([ phone, flip ]) %>">
+    <div class="max-w-xl <%= "lg:order-2" if flip %>">
+      <h2 class="text-3xl font-extrabold tracking-[-0.035em] text-ink sm:text-[2.25rem] sm:leading-[1.1]"><%= title %></h2>
+      <p class="mt-4 text-lg leading-relaxed text-subtle"><%= text %></p>
+      <%= render "home/checks", items: points %>
+    </div>
+    <figure class="<%= phone ? "mx-auto w-full max-w-[19rem] rounded-[2rem] border-[7px] border-ink bg-ink shadow-pop" : "overflow-hidden rounded-card border border-line shadow-pop" %>">
+      <%# On a phone a desktop screen is too small to read, so it opens full size. %>
+      <%= link_to_unless phone, image_tag(image, alt:, width:, height:, loading: "lazy", decoding: "async",
+                                          class: "h-auto w-full #{phone ? "rounded-[1.5rem]" : ""}"),
+                         image_path(image), target: "_blank", rel: "noopener", title: "Open full size" %>
+    </figure>
+  </div>
+</section>

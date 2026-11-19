@@ -21,6 +21,14 @@ class MarketingTest < ApplicationSystemTestCase
     assert_current_path pricing_path
   end
 
+  test "Features from the navigation shows the screenshots, and its links jump to each section" do
+    visit root_path
+    within("header") { click_on "Features" }
+    assert_selector "h1", text: "Everything between the first call and getting paid"
+    click_on "Invoices and payments"
+    assert_selector "#invoicing img"
+  end
+
   test "on a phone the links fold into a menu" do
     page.current_window.resize_to(390, 800)
     visit root_path

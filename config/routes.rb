@@ -256,6 +256,7 @@ Rails.application.routes.draw do
   # Marketing pages
   get "pricing", to: "pricing#index"
   get "about", to: "about#index"
+  get "features", to: "features#index" # MKT-01
   get "terms", to: "legal#terms"
   get "privacy", to: "legal#privacy"
 
