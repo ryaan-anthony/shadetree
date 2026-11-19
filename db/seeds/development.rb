@@ -240,3 +240,15 @@ unless User.where.not(deleted_at: nil).exists?
   BusinessUser.create!(user: former, business:, role: "technician")
   former.delete_account!
 end
+
+# CLI-06: a finished client import with a couple of rows that didn't go in, to see the summary.
+Tenancy.with_business(business) do
+  unless ClientImport.exists?
+    ClientImport.create!(created_by: owner, filename: "old-crm-export.csv", status: "finished", headers: [ "Name", "Email", "Phone" ],
+                         mapping: { "0" => "display_name", "1" => "email", "2" => "phone" }, total_rows: 42, processed_rows: 42,
+                         created_count: 39, skipped_count: 2, failed_count: 1, started_at: 1.hour.ago, finished_at: 58.minutes.ago,
+                         problems: [ { "row" => 7, "reason" => "Skipped: matches Maria Lopez, a client you already have", "values" => [ "Maria L", "maria@example.com", "" ] },
+                                     { "row" => 19, "reason" => "Skipped: matches Ben Carter, a client you already have", "values" => [ "Ben Carter", "", "(828) 555-0142" ] },
+                                     { "row" => 31, "reason" => "“jo@@example” isn't an email address", "values" => [ "Jo Park", "jo@@example", "" ] } ])
+  end
+end

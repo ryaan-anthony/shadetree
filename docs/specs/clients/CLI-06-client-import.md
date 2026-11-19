@@ -28,13 +28,13 @@ safely and a clear report of anything that didn't go in.
       client name, company, email, phone, address fields, notes and tags.
 - [x] A preview shows the first rows as they will be imported, plus validation errors and likely
       duplicates (existing clients matching email/phone).
-- [ ] The user chooses how to handle duplicates: skip or create anyway (no automatic merge).
-- [ ] Imports run in the background for large files; the user sees progress and gets an
+- [x] The user chooses how to handle duplicates: skip or create anyway (no automatic merge).
+- [x] Imports run in the background for large files; the user sees progress and gets an
       email/in-app summary: created, skipped, failed (downloadable error report).
-- [ ] An import can be undone within a time window (removes only the clients it created that
+- [x] An import can be undone within a time window (removes only the clients it created that
       have no documents yet).
 - [x] A sample CSV template is downloadable.
-- [ ] Tests cover mapping, duplicates, error reporting, undo and tenancy.
+- [x] Tests cover mapping, duplicates, error reporting, undo and tenancy.
 
 ## Out of scope
 
@@ -70,3 +70,24 @@ Part 1 (upload, mapping, preview, template):
   10 rows (stacked on phones): "New", "Matches <existing client>" (same email or phone), or
   "Won't import" with the reason in words.
 - The template (`/admin/clients/imports/template`) maps itself.
+
+Part 2 (running, summary, report, undo):
+- "Import N rows" (confirmed) queues `ClientImportJob`, which makes a client per row inside the
+  business: rows that can't be saved fail with the reason; with "Skip them", rows matching an
+  existing client by email or phone (including one added earlier in the same file) are
+  skipped. Each row and the progress it makes are saved together, so a job stopped partway (a
+  deploy) carries on from the next row when it runs again, never adding a client twice. The page
+  shows a progress bar in a frame that reloads itself (`poll` controller; the rest of the page
+  and the live region stay put), then shows the summary once.
+- When it finishes (or breaks partway), the person who started it gets a notification and email
+  (`client_import_finished`, theirs alone) with the counts; the uploaded file is deleted; the
+  summary page shows added / skipped / couldn't add, the first rows not added, and a report CSV
+  (line, why, then the row as uploaded; up to 1,000 rows; cells a spreadsheet would run as a
+  formula are prefixed with ', except phone numbers, and that ' is dropped again if the report
+  is fixed and uploaded). The preview rows and examples are cleared too.
+- Undo for 7 days, also after an import that stopped partway (`ClientImportUndoJob`), removes
+  the clients it added (with their notes), except ones that already have quotes, requests, jobs
+  or invoices, checked under a lock per client; it always finishes, and says how many were kept.
+- `PruneClientImportsJob` (daily) deletes uploads left at the mapping step for 2 days and the
+  rows kept for the report once undo is over, and starts again any import or undo whose job was
+  lost (no progress for an hour).

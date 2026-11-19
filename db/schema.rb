@@ -249,6 +249,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
     t.integer "created_count", default: 0, null: false
     t.integer "skipped_count", default: 0, null: false
     t.integer "failed_count", default: 0, null: false
+    t.integer "undone_count", default: 0, null: false
     t.jsonb "problems", default: [], null: false
     t.datetime "started_at"
     t.datetime "finished_at"

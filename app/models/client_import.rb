@@ -1,3 +1,5 @@
+require "csv"
+
 # CLI-06: bringing a client list over from a CSV. Upload → map columns (guessed from the
 # headers, changeable) and choose what to do with likely duplicates, with a preview → import in
 # the background → a summary, a report of rows that didn't go in, and undo for UNDO_WINDOW.
@@ -7,7 +9,7 @@
 class ClientImport < ApplicationRecord
   include BusinessOwned
 
-  STATUSES = %w[mapping queued importing finished failed undone].freeze
+  STATUSES = %w[mapping queued importing finished failed undoing undone].freeze
   DUPLICATES = { "skip" => "Skip them", "create" => "Add them anyway" }.freeze
   PREVIEW_ROWS = 10
   UNDO_WINDOW = 7.days
@@ -102,12 +104,22 @@ class ClientImport < ApplicationRecord
   def csv_file = @csv_file ||= CsvFile.read(file.download)
   def rows = csv_file.rows
 
+  # "Imported 120 clients from clients.csv; 3 skipped, 2 couldn't be added."
+  def summary
+    count = ->(number, word) { "#{number.to_fs(:delimited)} #{number == 1 ? word : word.pluralize}" }
+    return "Your import of #{filename} stopped partway. #{count.(created_count, "client")} #{created_count == 1 ? "was" : "were"} added." if failed?
+
+    parts = [ ("#{skipped_count.to_fs(:delimited)} skipped" if skipped_count.positive?), ("#{failed_count.to_fs(:delimited)} couldn't be added" if failed_count.positive?) ].compact
+    "Imported #{count.(created_count, "client")} from #{filename}#{"; #{parts.join(", ")}" if parts.any?}."
+  end
+
   def field_for(index) = mapping[index.to_s]
 
   # The client a row would become (unsaved), for the preview and the import.
   def build_client(row)
     values = Hash.new { |hash, key| hash[key] = [] }
-    mapping.each { |index, field| values[field] << row[index.to_i].to_s.strip if row[index.to_i].present? }
+    # A cell from our own report ("'=..." made safe for spreadsheets) goes back to what it was.
+    mapping.each { |index, field| values[field] << row[index.to_i].to_s.strip.sub(/\A'(?=[=+\-@])/, "") if row[index.to_i].present? }
     one = ->(field) { values[field].join(" ").squish.presence }
 
     name = one.("display_name") || [ one.("first_name"), one.("last_name") ].compact.join(" ").presence || one.("company_name") || values["email"].first
@@ -136,6 +148,84 @@ class ClientImport < ApplicationRecord
 
   def mapped_fields = mapping.values
 
+  def running? = queued? || importing? || undoing?
+
+  # Queues the import (once).
+  def start!
+    with_lock do
+      return false unless mapping?
+
+      update!(status: "queued")
+    end
+    ClientImportJob.perform_later(id, business_id)
+    true
+  end
+
+  # Imports every row: a client per row, skipping likely duplicates if chosen, and recording why
+  # a row didn't go in. Runs in ClientImportJob, inside the business. Each row and the progress
+  # it makes are saved together, so a job that's stopped (a deploy) and run again carries on
+  # from the next row, never adding a client twice.
+  def run!
+    update!(status: "importing", started_at: Time.current) if queued?
+    csv_file.rows.each_with_index do |row, index|
+      next if index < processed_rows
+
+      transaction do
+        outcome, problem = import_row(row)
+        changes = { processed_rows: index + 1, "#{outcome}_count": public_send(:"#{outcome}_count") + 1, updated_at: Time.current }
+        changes[:problems] = problems + [ { "row" => csv_file.line_numbers[index], "reason" => problem, "values" => row } ] if problem && problems.size < MAX_PROBLEMS
+        update_columns(changes)
+      end
+    end
+    finish!("finished")
+  rescue StandardError => error
+    Rails.error.report(error, context: { client_import: id })
+    finish!("failed")
+  end
+
+  # Clients this import created that can still be removed: no quotes, requests, jobs or invoices.
+  def undoable? = (finished? || failed?) && finished_at && finished_at > UNDO_WINDOW.ago && created_count.positive?
+
+  def undo_until = finished_at && finished_at + UNDO_WINDOW
+
+  # Queues removing what it created (once).
+  def undo!
+    with_lock do
+      return false unless undoable?
+
+      update!(status: "undoing")
+    end
+    ClientImportUndoJob.perform_later(id, business_id)
+    true
+  end
+
+  # Removes the clients it created that have no documents yet; others are kept and counted.
+  def run_undo!
+    removed = 0
+    clients.find_each do |client|
+      Client.transaction do
+        client.lock!
+        next if client.documents?
+
+        client.destroy!
+        removed += 1
+      end
+    rescue ActiveRecord::DeleteRestrictionError
+      next # a document arrived meanwhile: kept
+    end
+  ensure
+    update!(status: "undone", undone_at: Time.current, undone_count: removed.to_i)
+  end
+
+  # The report of rows that didn't go in: row number, why, then the row as uploaded. Cells that
+  # a spreadsheet would run as a formula are prefixed with ', so opening the report is safe.
+  def report_csv
+    CSV.generate do |csv|
+      csv << [ "Line", "Why", *headers ].map { safe_cell(_1) }
+      problems.each { |problem| csv << [ problem["row"], problem["reason"], *problem["values"] ].map { safe_cell(_1) } }
+    end
+  end
+
   # Why a row's client can't be saved, in words about the row ("“bad-email” isn't an email
   # address"), or [] if it can.
   def problems_for(client)
@@ -148,6 +238,35 @@ class ClientImport < ApplicationRecord
   end
 
   private
+
+  # :created, :skipped or :failed, and why if not created.
+  def import_row(row)
+    client = build_client(row)
+    if (problems = problems_for(client)).any?
+      [ :failed, problems.to_sentence ]
+    elsif duplicates == "skip" && (existing = duplicates_of(client).first)
+      [ :skipped, "Skipped: matches #{existing.display_name}, a client you already have" ]
+    else
+      client.save!
+      [ :created, nil ]
+    end
+  rescue ActiveRecord::RecordInvalid => error
+    [ :failed, error.record.errors.full_messages.to_sentence ]
+  end
+
+  def finish!(status)
+    # The file and the preview go; only the rows that didn't go in are kept, for the report.
+    update!(status:, finished_at: Time.current, preview_rows: [], examples: [])
+    file.purge_later
+    created_by && NotificationType.deliver("client_import_finished", business:, to: [ created_by ], subject: self,
+                                           title: summary, path: Rails.application.routes.url_helpers.admin_client_import_path(self))
+  end
+
+  # Phone numbers like "+1 828 555 0142" are left as they are.
+  def safe_cell(value)
+    text = value.to_s
+    text.match?(/\A[=+\-@\t\r]/) && !text.match?(/\A\+[\d\s().-]+\z/) ? "'#{text}" : text
+  end
 
   def mapping_makes_sense
     unknown = mapping.values - FIELDS.keys
