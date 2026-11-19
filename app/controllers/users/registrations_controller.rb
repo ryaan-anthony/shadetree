@@ -9,6 +9,8 @@ class Users::RegistrationsController < Devise::RegistrationsController
   def build_resource(hash = {})
     super
     resource.new_record_from_sign_up = true if action_name == "create"
+    # MKT-01: the home page's "Start free" box passes the email along.
+    resource.email = params[:email].to_s.strip.first(254) if action_name == "new" && params[:email].is_a?(String)
   end
 
   # Unconfirmed users are signed in straight away and go on to set up their business.

@@ -1,118 +1,24 @@
-<!-- Navigation Header -->
-<nav class="sticky top-0 z-20 bg-white border-b border-gray-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center py-4">
-            <!-- Logo -->
-            <div class="flex items-center">
-                <div class="text-2xl font-bold">
-                  <%= link_to root_path do %>
-                    <span class="text-shadetree-green">Shade</span><span class="text-enterprise-navy">tree</span>
-                  <% end %>
-                </div>
-                <div class="ml-3 text-sm text-gray-500 hidden sm:block">Service Business Software</div>
-            </div>
-
-            <!-- Navigation Links -->
-            <div class="hidden lg:flex items-center space-x-8">
-                <div class="relative group">
-                    <button class="flex items-center text-enterprise-gray hover:text-enterprise-navy" onclick="toggleDropdown('features-dropdown')">
-                        Features
-                        <%= icon "chevron-down", class: "ml-1 h-4 w-4" %>
-                    </button>
-                    <!-- Dropdown Menu -->
-                    <div id="features-dropdown" class="hidden absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black/5 z-10">
-                        <div class="py-1" role="menu" aria-orientation="vertical">
-                            <%= link_to "#quote-management", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
-                                <%= icon "file-text", class: "mr-3 h-4 w-4 text-shadetree-blue" %>
-                                Quote Management
-                            <% end %>
-                            <%= link_to "#appointment-scheduling", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
-                                <%= icon "calendar", class: "mr-3 h-4 w-4 text-shadetree-green" %>
-                                Appointment Scheduling
-                            <% end %>
-                            <%= link_to "#payment-processing", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
-                                <%= icon "credit-card", class: "mr-3 h-4 w-4 text-shadetree-yellow" %>
-                                Payment Processing
-                            <% end %>
-                            <%= link_to "#team-management", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
-                                <%= icon "users", class: "mr-3 h-4 w-4 text-shadetree-red" %>
-                                Team Management
-                            <% end %>
-                        </div>
-                    </div>
-                </div>
-                <div class="relative group">
-                    <button class="flex items-center text-enterprise-gray hover:text-enterprise-navy" onclick="toggleDropdown('industries-dropdown')">
-                        Industries
-                        <%= icon "chevron-down", class: "ml-1 h-4 w-4" %>
-                    </button>
-                    <!-- Industries Dropdown Menu -->
-                    <div id="industries-dropdown" class="hidden absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black/5 z-10">
-                        <div class="py-1" role="menu" aria-orientation="vertical">
-                            <%= link_to "#handyman", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
-                                <%= icon "tool", class: "mr-3 h-4 w-4 text-shadetree-blue" %>
-                                Handyman
-                            <% end %>
-                            <%= link_to "#landscaping", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
-                                <%= icon "scissors", class: "mr-3 h-4 w-4 text-shadetree-green" %>
-                                Landscaping
-                            <% end %>
-                            <%= link_to "#cleaning", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
-                                <%= icon "shield", class: "mr-3 h-4 w-4 text-shadetree-purple" %>
-                                Cleaning
-                            <% end %>
-                            <%= link_to "#electrical", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100", role: "menuitem" do %>
-                                <%= icon "zap", class: "mr-3 h-4 w-4 text-shadetree-yellow" %>
-                                Electrical
-                            <% end %>
-                            <div class="border-t border-gray-100">
-                                <%= link_to "#all-industries", class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-medium", role: "menuitem" do %>
-                                    <%= icon "grid", class: "mr-3 h-4 w-4 text-gray-500" %>
-                                    View More Industries
-                                <% end %>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <%= link_to pricing_path, class: "text-enterprise-gray hover:text-enterprise-navy" do %>
-                    Pricing
-                <% end %>
-            </div>
-
-            <!-- CTA Buttons -->
-            <div class="flex items-center space-x-4">
-                <%= link_to contact_path, class: "text-enterprise-gray hover:text-enterprise-navy" do %>
-                    Contact Sales
-                <% end %>
-                <%= link_to new_user_registration_path, class: "bg-shadetree-blue text-white px-6 py-2.5 text-sm font-medium rounded-md hover:bg-blue-800 shadow-xs" do %>
-                    Start Free Trial
-                <% end %>
-            </div>
-        </div>
+<%# MKT-01: one navigation for the public site. On small screens the links fold into a menu (no script needed). %>
+<% links = [ [ "How it works", root_path(anchor: "how-it-works") ], [ "Features", root_path(anchor: "features") ], [ "Pricing", pricing_path ], [ "About", about_path ] ] %>
+<header class="sticky top-0 z-40 border-b border-line bg-surface/95 backdrop-blur">
+  <nav class="mx-auto flex h-16 max-w-6xl items-center gap-8 px-5 sm:px-8" aria-label="Main">
+    <%= link_to root_path, class: "logo", "aria-label": "Shadetree home" do %><span class="logo-mark"><%= logo_mark %></span><span>Shadetree</span><% end %>
+    <ul class="hidden items-center gap-7 md:flex">
+      <% links.each do |label, path| %>
+        <li><%= link_to label, path, class: "text-sm font-medium #{current_page?(path) ? "text-ink" : "text-subtle hover:text-ink"}", "aria-current": ("page" if current_page?(path)) %></li>
+      <% end %>
+    </ul>
+    <div class="ml-auto flex items-center gap-3">
+      <%= link_to "Sign in", new_user_session_path, class: "hidden text-sm font-medium text-subtle hover:text-ink sm:inline" %>
+      <%= link_to "Start free", new_user_registration_path, class: button_classes(:primary) %>
+      <details class="relative md:hidden">
+        <summary class="<%= button_classes(:ghost, :icon) %> list-none" aria-label="Menu"><%= icon "menu" %></summary>
+        <ul class="absolute right-0 top-full mt-2 w-56 rounded-card border border-line bg-surface p-2 shadow-pop">
+          <% (links + [ [ "Sign in", new_user_session_path ] ]).each do |label, path| %>
+            <li><%= link_to label, path, class: "block rounded-control px-3 py-2.5 text-[0.9375rem] font-medium text-ink hover:bg-sunken" %></li>
+          <% end %>
+        </ul>
+      </details>
     </div>
-</nav>
-<script>
-    // Dropdown functionality
-    function toggleDropdown(dropdownId) {
-        const dropdown = document.getElementById(dropdownId);
-        dropdown.classList.toggle('hidden');
-    }
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function(event) {
-        const solutionsDropdown = document.getElementById('features-dropdown');
-        const industriesDropdown = document.getElementById('industries-dropdown');
-        const solutionsButton = event.target.closest('[onclick*="features-dropdown"]');
-        const industriesButton = event.target.closest('[onclick*="industries-dropdown"]');
-
-        // Close Features dropdown if clicking outside
-        if (!solutionsButton && solutionsDropdown && !solutionsDropdown.contains(event.target)) {
-            solutionsDropdown.classList.add('hidden');
-        }
-
-        // Close Industries dropdown if clicking outside
-        if (!industriesButton && industriesDropdown && !industriesDropdown.contains(event.target)) {
-            industriesDropdown.classList.add('hidden');
-        }
-    });
-</script>
+  </nav>
+</header>

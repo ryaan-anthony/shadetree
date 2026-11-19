@@ -1,58 +1,25 @@
-<!-- Enterprise Footer -->
-<footer class="bg-gray-900 text-white py-16">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <!-- Company Info -->
-            <div class="lg:col-span-2">
-                <div class="text-2xl font-bold mb-4">
-                  <%= link_to root_path do %>
-                    <span class="text-shadetree-green">Shade</span><span class="text-white">tree</span>
-                  <% end %>
-                </div>
-                <p class="text-gray-400 text-sm mb-6 max-w-md">
-                    The complete service business management platform. Streamline your workflow from quote to payment across multiple locations.
-                </p>
-                <div class="flex space-x-4">
-                    <div class="bg-gray-800 p-2 rounded-sm">
-                        <%= icon "file-text", class: "w-4 h-4 text-shadetree-blue" %>
-                    </div>
-                    <div class="bg-gray-800 p-2 rounded-sm">
-                        <%= icon "calendar", class: "w-4 h-4 text-shadetree-green" %>
-                    </div>
-                    <div class="bg-gray-800 p-2 rounded-sm">
-                        <%= icon "credit-card", class: "w-4 h-4 text-shadetree-yellow" %>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Features -->
-            <div>
-                <h4 class="text-sm font-semibold text-white mb-4">Features</h4>
-                <ul class="space-y-3 text-sm text-gray-400">
-                    <li><%= link_to "#", class: "hover:text-white" do %>Quote Management<% end %></li>
-                    <li><%= link_to "#", class: "hover:text-white" do %>Appointment Scheduling<% end %></li>
-                    <li><%= link_to "#", class: "hover:text-white" do %>Payment Processing<% end %></li>
-                    <li><%= link_to "#", class: "hover:text-white" do %>Team Management<% end %></li>
-                </ul>
-            </div>
-
-            <!-- Company -->
-            <div>
-                <h4 class="text-sm font-semibold text-white mb-4">Company</h4>
-                <ul class="space-y-3 text-sm text-gray-400">
-                    <li><%= link_to about_path, class: "hover:text-white" do %>About<% end %></li>
-                    <li><%= link_to contact_path, class: "hover:text-white" do %>Contact<% end %></li>
-                    <li><%= link_to pricing_path, class: "hover:text-white" do %>Pricing<% end %></li>
-                </ul>
-            </div>
+<%# MKT-01: the public footer. Legal pages are MKT-03's. %>
+<footer class="bg-side text-side-text">
+  <div class="mx-auto max-w-6xl px-5 py-14 sm:px-8">
+    <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]">
+      <div>
+        <%= link_to root_path, class: "logo logo-light" do %><span class="logo-mark"><%= logo_mark %></span><span>Shadetree</span><% end %>
+        <p class="mt-4 max-w-xs text-sm">Quotes, scheduling and payments for small service businesses.</p>
+      </div>
+      <% { "Product" => [ [ "How it works", root_path(anchor: "how-it-works") ], [ "Features", root_path(anchor: "features") ], [ "Pricing", pricing_path ], [ "Sign in", new_user_session_path ] ],
+           "Company" => [ [ "About", about_path ], [ "Contact", contact_path ] ],
+           "Legal" => [ [ "Terms", terms_path ], [ "Privacy", privacy_path ] ] }.each do |heading, items| %>
+        <div>
+          <h2 class="text-sm font-semibold text-white"><%= heading %></h2>
+          <ul class="mt-4 space-y-3 text-sm" <%= "id=legal-links" if heading == "Legal" %>>
+            <% items.each do |label, path| %><li><%= link_to label, path, class: "hover:text-white" %></li><% end %>
+          </ul>
         </div>
-
-        <div class="border-t border-gray-800 mt-12 pt-8">
-            <div class="text-center">
-                <div class="text-gray-400 text-sm">
-                    &copy; <%= Date.current.year %> Shadetree. All rights reserved.
-                </div>
-            </div>
-        </div>
+      <% end %>
     </div>
+    <div class="mt-12 flex flex-col gap-2 border-t border-side-line pt-6 text-sm2 sm:flex-row sm:justify-between">
+      <p>© <%= Date.current.year %> Shadetree</p>
+      <p>Made for the people who keep neighborhoods running.</p>
+    </div>
+  </div>
 </footer>
