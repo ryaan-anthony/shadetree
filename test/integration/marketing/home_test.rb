@@ -46,7 +46,7 @@ class MarketingHomeTest < ActionDispatch::IntegrationTest
       assert_select "header a[href=?]", new_user_registration_path, text: "Start free"
       assert_select "footer #legal-links a[href=?]", terms_path
       assert_select "footer #legal-links a[href=?]", privacy_path
-      assert_select "select", false, "no language picker that does nothing"
+      assert_select "header select, footer select", false, "no language picker that does nothing"
     end
   end
 end
