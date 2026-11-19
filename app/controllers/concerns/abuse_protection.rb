@@ -40,7 +40,7 @@ module AbuseProtection
   # retry_after: the rate limit's window, in seconds.
   def too_many_requests(retry_after: 60)
     @retry_after = retry_after.to_i
-    @try_again_url = request.get? ? request.fullpath : url_from(request.referer)
+    @try_again_url = request.get? || request.head? ? request.fullpath : url_from(request.referer)
     response.set_header("Retry-After", @retry_after.to_s)
     log_abuse("rate limited")
     respond_to do |format|
