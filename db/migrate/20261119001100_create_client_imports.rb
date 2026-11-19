@@ -10,6 +10,8 @@ class CreateClientImports < ActiveRecord::Migration[8.1]
       t.string :filename, null: false
       t.string :status, null: false, default: "mapping" # mapping, queued, importing, finished, failed, undone
       t.jsonb :headers, null: false, default: []
+      t.jsonb :examples, null: false, default: [] # the first value in each column, for the mapping page
+      t.jsonb :preview_rows, null: false, default: [] # [[line number, values], ...] for the preview, so it never re-reads the file
       t.jsonb :mapping, null: false, default: {}  # header index => field
       t.string :duplicates, null: false, default: "skip" # skip or create
       t.integer :total_rows, null: false, default: 0

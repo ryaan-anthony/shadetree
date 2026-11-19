@@ -25,8 +25,36 @@ class ClientImportTest < ActiveSupport::TestCase
       "Name\n\"unclosed\n" => /couldn't be read as CSV/ }.each do |data, message|
       assert_raises(Csv::Invalid, data.inspect) { Csv.read(data) }.then { assert_match message, _1.message }
     end
-    assert_match "limit is #{Csv::MAX_ROWS}", assert_raises(Csv::Invalid) { Csv.read("Name\n" + "a\n" * (Csv::MAX_ROWS + 1)) }.message
+    assert_match "more than #{Csv::MAX_ROWS} rows", assert_raises(Csv::Invalid) { Csv.read("Name\n" + "a\n" * (Csv::MAX_ROWS + 1)) }.message
     assert_match "larger than", assert_raises(Csv::Invalid) { Csv.read("Name\n" + "a" * Csv::MAX_BYTES) }.message
+  end
+
+  test "rows remember the line they start on; long cells are cut; a quoted separator doesn't fool the guess" do
+    csv = Csv.read("Name,Notes\n\nAna,\"two\nlines\"\n\nBo,#{"x" * 5_000}\n")
+    assert_equal [ 3, 6 ], csv.line_numbers
+    assert_equal Csv::MAX_CELL, csv.rows.last.last.length
+    assert_equal [ "Last, First", "Email" ], Csv.read("\"Last, First\";Email\nLopez, Maria;m@example.com\n").headers
+    wide = Csv.read((1..200).map { "C#{_1}" }.join(",") + "\n" + "x," * 199 + "x\n")
+    assert_equal [ Csv::MAX_COLUMNS, 50 ], [ wide.headers.size, wide.ignored_columns ]
+  end
+
+  test "real exports: Google Contacts, Outlook, Jobber, Housecall Pro" do
+    google = [ "First Name", "Phonetic First Name", "Last Name", "Organization Name", "Labels", "E-mail 1 - Label", "E-mail 1 - Value", "Phone 1 - Label", "Phone 1 - Value",
+               "Address 1 - Formatted", "Address 1 - Street", "Address 1 - City", "Address 1 - Region", "Address 1 - Postal Code", "Address 1 - Country" ]
+    assert_equal %w[first_name last_name company_name tags email phone address_line1 city region postal_code], ClientImport.auto_map(google).values
+    outlook = [ "First Name", "Last Name", "E-mail Address", "E-mail Type", "E-mail Display Name", "Mobile Phone", "Business Fax", "Assistant's Phone", "Home Street", "Home City", "Home State", "Home Postal Code", "Notes" ]
+    assert_equal %w[first_name last_name email phone address_line1 city region postal_code notes], ClientImport.auto_map(outlook).values
+    jobber = [ "Display Name", "Company Name", "Main Phone #s", "E-mails", "Billing Street 1", "Billing Street 2", "Billing City", "Billing State", "Billing Zip code" ]
+    assert_equal %w[display_name company_name phone email address_line1 address_line2 city region postal_code], ClientImport.auto_map(jobber).values
+    assert_equal %w[phone phone], ClientImport.auto_map([ "Mobile Number", "Home Number" ]).values
+    assert_equal({ "1" => "email" }, ClientImport.auto_map([ "Name", "Email" ], examples: [ "", "a@example.com" ]), "empty columns aren't mapped")
+
+    as_business(businesses(:one)) do
+      import = ClientImport.new(business: businesses(:one), mapping: { "0" => "display_name", "1" => "phone", "2" => "tags" })
+      client = import.build_client([ "Ana", "828-555-0100, 828-555-0101", "* myContacts ::: customers ::: weekly" ])
+      assert_equal [ "828-555-0100", "828-555-0101" ], client.contact_methods.map(&:value)
+      assert_equal %w[customers weekly], client.tags
+    end
   end
 
   test "columns are guessed from common header names" do

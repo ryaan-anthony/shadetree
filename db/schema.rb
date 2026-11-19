@@ -240,6 +240,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
     t.string "filename", null: false
     t.string "status", default: "mapping", null: false
     t.jsonb "headers", default: [], null: false
+    t.jsonb "examples", default: [], null: false
+    t.jsonb "preview_rows", default: [], null: false
     t.jsonb "mapping", default: {}, null: false
     t.string "duplicates", default: "skip", null: false
     t.integer "total_rows", default: 0, null: false

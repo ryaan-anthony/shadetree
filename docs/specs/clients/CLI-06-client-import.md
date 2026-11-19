@@ -51,14 +51,22 @@ safely and a clear report of anything that didn't go in.
 
 Part 1 (upload, mapping, preview, template):
 - `ClientImport` (per business): the uploaded file, its headers, `mapping` (column → field),
-  the duplicate choice, counts and problems. `ClientImport::CsvFile` reads UTF-8 (with or without
-  a BOM), UTF-16 and Windows-1252, with comma, semicolon or tab separators; drops blank rows;
-  names unnamed columns; and refuses empty, oversized, binary or malformed files with a reason.
-- Columns are guessed from header spellings (`SYNONYMS`; any "…email…" or "…phone/mobile/cell…"
-  header too). Each field once, except email and phone, which take every matching column. A
-  row's name is the Name column, else first + last name, else the company, else the email.
-- The mapping page shows each column with an example value and a "Goes to" choice, the
-  duplicate choice (skip, or add anyway — never merged), and a preview of the first 10 rows:
-  "New", "Matches <existing client>" (same email or phone), or "Won't import" with the reason
-  in words.
+  the duplicate choice, counts and problems, plus each column's first value and the first 10
+  rows (so the mapping page never re-reads the file). `ClientImport::CsvFile` reads UTF-8 (with
+  or without a BOM), UTF-16 and Windows-1252, with comma, semicolon or tab separators (counted
+  outside quotes); drops blank rows; names unnamed columns; keeps 150 columns and 1,000
+  characters a cell; remembers the line each row starts on (blank lines and multi-line cells
+  count) for messages; and refuses empty, oversized (checked before reading), binary or
+  malformed files with a reason.
+- Columns are guessed from header spellings after removing prefixes ("Home", "Billing",
+  "Business"…) and numbering ("E-mail 1 - Value", "Address 1 - Street", "Main Phone #s");
+  columns about another column ("… - Label", "E-mail Type", "E-mail Display Name", "Phonetic…",
+  fax, pager, assistant) and empty columns are left out. Tested against Google Contacts, Outlook,
+  Jobber and Housecall Pro headers. Each field once, except email and phone, which take every
+  matching column; several phones in one cell are split. A row's name is the Name column, else
+  first + last name, else the company, else the email.
+- The mapping page lists columns that have something in them, with an example and a "Goes to"
+  choice; the duplicate choice (skip, or add anyway — never merged); and a preview of the first
+  10 rows (stacked on phones): "New", "Matches <existing client>" (same email or phone), or
+  "Won't import" with the reason in words.
 - The template (`/admin/clients/imports/template`) maps itself.

@@ -15,9 +15,12 @@ class Admin::ClientImportsController < Admin::BaseController
 
   def create
     return redirect_to(new_admin_client_import_path, alert: "Choose a CSV file to upload.") unless params[:file].respond_to?(:read)
+    # Checked before reading, so a huge upload never fills memory.
+    return redirect_to(new_admin_client_import_path, alert: "The file is larger than #{ClientImport::CsvFile::MAX_BYTES / 1.megabyte} MB. Split it into smaller files.") if params[:file].size > ClientImport::CsvFile::MAX_BYTES
 
     import = ClientImport.start!(params[:file], by: current_user)
-    redirect_to edit_admin_client_import_path(import)
+    wide = import.headers.size >= ClientImport::CsvFile::MAX_COLUMNS
+    redirect_to edit_admin_client_import_path(import), notice: ("Only the first #{ClientImport::CsvFile::MAX_COLUMNS} columns are used." if wide)
   rescue ClientImport::CsvFile::Invalid => error
     redirect_to new_admin_client_import_path, alert: error.message
   end
@@ -32,9 +35,8 @@ class Admin::ClientImportsController < Admin::BaseController
 
     @import.assign_attributes(mapping: mapping_param, duplicates: params.dig(:client_import, :duplicates).presence || @import.duplicates)
     return render(:edit, status: :unprocessable_content) unless @import.save
-    return redirect_to(edit_admin_client_import_path(@import)) unless params[:start]
 
-    redirect_to admin_client_import_path(@import), notice: "Import mapping saved." # CLI-06 part 2 runs it
+    redirect_to edit_admin_client_import_path(@import)
   end
 
   def show; end

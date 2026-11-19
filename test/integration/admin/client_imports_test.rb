@@ -22,7 +22,7 @@ class Admin::ClientImportsTest < ActionDispatch::IntegrationTest
     get admin_clients_path
     assert_select "a[href=?]", new_admin_client_import_path, "Import"
 
-    upload("Full Name,E-mail,Phone,Birthday\nMaria L,maria@example.com,,1990\nBo Diaz,,555-010-0200,\n,,,\nCal,not-an-email,,\n", name: "Old CRM export.csv")
+    upload("Full Name,E-mail,Phone,Birthday,Fax\nMaria L,maria@example.com,,1990,\nBo Diaz,,555-010-0200,,\n,,,,\nCal,not-an-email,,,\n", name: "Old CRM export.csv")
     import = as_business(@business) { ClientImport.last }
     assert_redirected_to edit_admin_client_import_path(import)
     assert_equal [ "Old CRM export.csv", 3 ], [ import.filename, import.total_rows ]
@@ -30,7 +30,10 @@ class Admin::ClientImportsTest < ActionDispatch::IntegrationTest
     assert_select "#column_0 option[selected]", "Name"
     assert_select "#column_1 option[selected]", "Email"
     assert_select "#column_3 option[selected]", 0
+    assert_select "#column_4", 0, "an empty column isn't listed"
+    assert_select "#empty-columns", /1 column with nothing in it/
     assert_select "#import-preview tbody tr", 3
+    assert_select "#import-preview tr", /5.*Cal/m, "line numbers count the blank line"
     assert_select "#import-preview tr", /Maria L.*Matches Maria Lopez/m
     assert_select "#import-preview tr", /Bo Diaz.*New/m
     assert_select "#import-preview tr", /Cal.*Won't import.*isn't an email/m
@@ -44,6 +47,13 @@ class Admin::ClientImportsTest < ActionDispatch::IntegrationTest
     patch admin_client_import_path(import), params: { client_import: { columns: { "0" => "notes", "1" => "notes" } } }
     assert_response :unprocessable_content
     assert_select ".banner", /Notes is chosen for more than one column.*client's name/m
+  end
+
+  test "a file that's too big is refused before it's read" do
+    big = Rack::Test::UploadedFile.new(StringIO.new("Name\n" + "a" * (ClientImport::CsvFile::MAX_BYTES + 1)), "text/csv", original_filename: "big.csv")
+    post admin_client_imports_path, params: { file: big }
+    assert_match "larger than", flash[:alert]
+    assert_equal 0, as_business(@business) { ClientImport.count }
   end
 
   test "a file that can't be read says why" do

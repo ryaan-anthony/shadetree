@@ -7,11 +7,14 @@ require "csv"
 class ClientImport::CsvFile
   MAX_BYTES = 2.megabytes
   MAX_ROWS = 5_000
-  MAX_COLUMNS = 60
+  MAX_COLUMNS = 150
+  MAX_CELL = 1_000 # characters kept per cell (and 100 per header)
 
   class Invalid < StandardError; end
 
-  attr_reader :headers, :rows
+  # rows: the values, one array per row; line_numbers: where each row starts in the file (blank
+  # lines and multi-line cells count), for messages about a row; ignored_columns: past MAX_COLUMNS.
+  attr_reader :headers, :rows, :line_numbers, :ignored_columns
 
   def self.read(data) = new(data)
 
@@ -22,15 +25,25 @@ class ClientImport::CsvFile
     text = decode(data)
     raise Invalid, "This doesn't look like a CSV file. Export your list as CSV and try again." if text.include?("\u0000")
 
-    table = CSV.parse(text, col_sep: separator(text), liberal_parsing: true).map { |row| row.map { _1.to_s.strip } }
-    table.reject! { |row| row.all?(&:blank?) }
+    table = []
+    csv = CSV.new(text, col_sep: separator(text), liberal_parsing: true)
+    line = 1 # physical line a row starts on (CSV's own lineno counts records, not lines)
+    loop do
+      row = csv.shift or break
+      start, line = line, line + [ csv.line.to_s.count("\n"), 1 ].max
+      row = row.map { _1.to_s.strip.first(MAX_CELL) }
+      table << [ start, row ] unless row.all?(&:blank?)
+      raise Invalid, "The file has more than #{MAX_ROWS} rows. Split it into smaller files." if table.size > MAX_ROWS + 1
+    end
     raise Invalid, "The file has no rows." if table.empty?
 
-    @headers = table.shift.first(MAX_COLUMNS).each_with_index.map { |header, index| header.presence || "Column #{index + 1}" }
+    header = table.shift.last
+    @ignored_columns = [ header.size - MAX_COLUMNS, 0 ].max
+    @headers = header.first(MAX_COLUMNS).each_with_index.map { |name, index| name.first(100).presence || "Column #{index + 1}" }
     raise Invalid, "The file has a header row but no clients under it." if table.empty?
-    raise Invalid, "The file has #{table.size} rows; the limit is #{MAX_ROWS}. Split it into smaller files." if table.size > MAX_ROWS
 
-    @rows = table.map { |row| row.first(@headers.size).fill("", row.size...@headers.size) }
+    @line_numbers = table.map(&:first)
+    @rows = table.map { |_, row| row.first(@headers.size).then { _1.fill("", _1.size...@headers.size) } }
   rescue CSV::MalformedCSVError => error
     raise Invalid, "The file couldn't be read as CSV (#{error.message.sub(/ in line \d+\.?/, "")}, around row #{error.line_number})."
   end
@@ -51,9 +64,9 @@ class ClientImport::CsvFile
     raise Invalid, "The file's text encoding couldn't be read. Save it as CSV UTF-8 and try again."
   end
 
-  # The separator used most in the header line.
+  # The separator used most in the header line, outside quoted names.
   def separator(text)
-    header = text.each_line.find { _1.strip.present? }.to_s
+    header = text.each_line.find { _1.strip.present? }.to_s.gsub(/"[^"]*"/, "")
     [ ",", ";", "\t" ].max_by { header.count(_1) }
   end
 end

@@ -23,22 +23,27 @@ class ClientImport < ApplicationRecord
   }.freeze
   REPEATABLE = %w[email phone].freeze
 
-  # Header spellings, compared lowercased with only letters and digits.
+  # Header spellings, after header_key (lowercased, prefixes like "Home"/"Billing" and suffixes
+  # like "1 - Value" removed, letters and digits only).
   SYNONYMS = {
-    "display_name" => %w[name fullname clientname customername customer client contactname displayname contact],
+    "display_name" => %w[name fullname displayname clientname customername customer client contactname contact],
     "first_name" => %w[firstname first givenname fname],
     "last_name" => %w[lastname last surname familyname lname],
-    "company_name" => %w[company companyname business businessname organization organisation org],
-    "email" => %w[email emailaddress mail email1 email2 primaryemail workemail homeemail],
-    "phone" => %w[phone phonenumber telephone tel mobile mobilephone cell cellphone homephone workphone primaryphone phone1 phone2],
-    "address_line1" => %w[address street streetaddress address1 addressline1 serviceaddress billingaddress],
-    "address_line2" => %w[address2 addressline2 unit apt suite],
+    "company_name" => %w[company companyname business businessname organization organisation organizationname org],
+    "email" => %w[email emails emailaddress mail],
+    "phone" => %w[phone phonenumber phones telephone tel mobile mobilephone mobilenumber cell cellphone number],
+    "address_line1" => %w[address street streetaddress addressline street1 address1 addressline1],
+    "address_line2" => %w[address2 addressline2 street2 unit apt suite],
     "city" => %w[city town],
     "region" => %w[state province region county stateprovince],
     "postal_code" => %w[zip zipcode postcode postalcode postal],
     "notes" => %w[notes note comments comment description],
-    "tags" => %w[tags tag labels label groups group]
+    "tags" => %w[tags tag labels label groups group categories]
   }.freeze
+  # Columns about another column, never data to import: "E-mail 1 - Label", "E-mail Type",
+  # "E-mail Display Name", "Phonetic First Name", "Address 1 - Formatted".
+  IGNORED_HEADER = /\b(label|type|formatted|phonetic|country|fax|pager|assistant'?s?|car|radio|tty|telex|callback|yomi)\b|.\s*display ?name/
+  HEADER_PREFIXES = /\A(home|business|work|billing|service|primary|main|other|personal|default|property)\s+/
 
   belongs_to :created_by, class_name: "User", optional: true
   has_many :clients, dependent: :nullify
@@ -53,22 +58,25 @@ class ClientImport < ApplicationRecord
   # A new import from an uploaded file, with columns mapped from the headers. Raises
   # CsvFile::Invalid with a reason to show.
   def self.start!(upload, by:)
+    raise CsvFile::Invalid, "The file is larger than #{CsvFile::MAX_BYTES / 1.megabyte} MB. Split it into smaller files." if upload.size > CsvFile::MAX_BYTES
+
     data = upload.read
     csv = CsvFile.read(data)
+    examples = csv.headers.each_index.map { |index| csv.rows.lazy.map { _1[index] }.find(&:present?).to_s.first(80) }
     create!(created_by: by, filename: upload.original_filename.to_s.first(200).presence || "clients.csv",
-            headers: csv.headers, mapping: auto_map(csv.headers), total_rows: csv.rows.size,
+            headers: csv.headers, examples:, mapping: auto_map(csv.headers, examples:), total_rows: csv.rows.size,
+            preview_rows: csv.line_numbers.zip(csv.rows).first(PREVIEW_ROWS),
             file: { io: StringIO.new(data), filename: "clients.csv", content_type: "text/csv" })
   end
 
   # { column index (string) => field }, guessed from header names; each field once (but email
-  # and phone from every matching column).
-  def self.auto_map(headers)
+  # and phone from every matching column). Columns empty in every row aren't mapped.
+  def self.auto_map(headers, examples: nil)
     taken = []
     headers.each_with_index.each_with_object({}) do |(header, index), mapping|
-      key = header.to_s.downcase.gsub(/[^a-z0-9]/, "")
-      field = SYNONYMS.find { |_, names| names.include?(key) }&.first
-      field ||= "email" if key.include?("email")
-      field ||= "phone" if key.match?(/phone|mobile|cell/)
+      next if examples && examples[index].blank?
+
+      field = guess_field(header)
       next unless field && (REPEATABLE.include?(field) || !taken.include?(field))
 
       taken << field
@@ -76,7 +84,23 @@ class ClientImport < ApplicationRecord
     end
   end
 
-  def rows = @rows ||= CsvFile.read(file.download).rows
+  def self.guess_field(header)
+    text = header.to_s.downcase.squish
+    return if text.match?(IGNORED_HEADER)
+
+    text = text.sub(/\s*-\s*(value|name)\z/, " \\1").sub(/\s*#s?\z/, "") # "E-mail 1 - Value", "Main Phone #s"
+    text = text.gsub(/\b(address|organization|e-mail|email|phone)\s+\d+\s*-\s*/, "") # "Address 1 - Street", "Organization 1 - Name"
+    text = text.gsub(/(street|address|line)\s*2\b/, "\\1two").gsub(/\s*\d+\b/, "").gsub("two", " 2") # keep "Street 2", drop "Phone 1"
+    text = text.sub(HEADER_PREFIXES, "") unless text.match?(/\A(business|work|home)\s*\z/)
+    key = text.gsub(/[^a-z0-9]/, "")
+    key = "organizationname" if key == "name" && header.to_s.downcase.include?("organization")
+    SYNONYMS.find { |_, names| names.include?(key) }&.first ||
+      ("email" if text.match?(/\be-?mail\b/)) ||
+      ("phone" if text.match?(/\b(phone|mobile|cell)\b/))
+  end
+
+  def csv_file = @csv_file ||= CsvFile.read(file.download)
+  def rows = csv_file.rows
 
   def field_for(index) = mapping[index.to_s]
 
@@ -88,11 +112,11 @@ class ClientImport < ApplicationRecord
 
     name = one.("display_name") || [ one.("first_name"), one.("last_name") ].compact.join(" ").presence || one.("company_name") || values["email"].first
     contact = values["email"].flat_map { _1.split(/[;,\s]+/) }.compact_blank.map { { kind: "email", value: _1 } } +
-              values["phone"].flat_map { _1.split(/[;\n]+/) }.map(&:strip).compact_blank.map { { kind: "phone", value: _1 } }
+              values["phone"].flat_map { _1.split(/[;,\n]+|:::/) }.map(&:strip).compact_blank.map { { kind: "phone", value: _1 } }
     address = %w[address_line1 address_line2 city region postal_code].index_with { one.(_1) }
 
     Client.new(display_name: name, company_name: one.("company_name"), notes: values["notes"].join("\n").presence,
-               tag_list: values["tags"].join(","), client_import: self,
+               tag_list: values["tags"].flat_map { _1.split(/,|:::/) }.map(&:strip).reject { _1.start_with?("*") }.join(","), client_import: self,
                contact_methods_attributes: contact.uniq.first(10).each_with_index.map { |method, position| method.merge(position:) },
                properties_attributes: address["address_line1"] ? [ address.merge(billing: true, country: business.country) ] : [])
   end
@@ -102,11 +126,11 @@ class ClientImport < ApplicationRecord
     Client.matching(emails: client.contact_methods.select(&:email?).map(&:value), phones: client.contact_methods.select(&:phone?).map(&:value))
   end
 
-  # The first rows as they'll be imported: [row number, client, problems, duplicates].
+  # The first rows as they'll be imported: [line number, client, problems, duplicates].
   def preview
-    rows.first(PREVIEW_ROWS).each_with_index.map do |row, index|
+    preview_rows.map do |line, row|
       client = build_client(row)
-      [ index + 2, client, problems_for(client), duplicates_of(client).to_a ] # row 1 is the header
+      [ line, client, problems_for(client), duplicates_of(client).to_a ]
     end
   end
 
@@ -117,7 +141,7 @@ class ClientImport < ApplicationRecord
   def problems_for(client)
     return [] if client.valid?
 
-    nested = client.contact_methods.reject { _1.errors.empty? }.map { |method| "“#{method.value}” #{method.errors[:value].first || method.errors.full_messages.first}" }
+    nested = client.contact_methods.reject { _1.errors.empty? }.map { |method| "“#{method.value.truncate(60)}” #{method.errors[:value].first || method.errors.full_messages.first}" }
     nested += client.properties.reject { _1.errors.empty? }.map { |property| "Address: #{property.errors.full_messages.to_sentence}" }
     own = client.errors.reject { _1.attribute.to_s.start_with?("contact_methods", "properties") }.map(&:full_message)
     own.map { _1.sub(/\ADisplay name can't be blank\z/, "No name, company or email") } + nested
