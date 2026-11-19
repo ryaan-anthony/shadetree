@@ -23,6 +23,8 @@ class AuditEntry < ApplicationRecord
     "impersonation.ended" => "Stopped viewing as a member",
     "business.suspended" => "Suspended a business",
     "business.reactivated" => "Reactivated a business",
+    "business.plan_overrides_changed" => "Changed a business's limits or features",
+    "plan.updated" => "Edited a plan",
     "user.confirmation_resent" => "Resent a confirmation email",
     "user.password_reset_sent" => "Sent a password reset",
     "user.unlocked" => "Unlocked an account"

@@ -1,0 +1,17 @@
+<%# OPS-04: the plans businesses can be on (BIL-01). %>
+<% content_for :title, "Plans" %>
+<h1 class="page-title">Plans</h1>
+<p class="page-lede">Changes apply to every business on the plan straight away. Prices here are what the pricing page shows.</p>
+<%= card flush: true, class: "mt-4" do %>
+  <ul class="list" id="plans">
+    <% @plans.each do |plan| %>
+      <li id="plan-<%= plan.key %>">
+        <div class="min-w-0 flex-1">
+          <p class="font-semibold text-ink"><%= plan.name %> <span class="font-normal text-muted">· <%= plan.key %><%= " · default" if plan.default %><%= " · not listed" unless plan.public %></span></p>
+          <p class="text-sm2 text-muted"><%= plan.free? ? "No charge" : "#{money(plan.monthly_price)}/month, #{money(plan.annual_price)}/year" %> · <%= pluralize(@counts.fetch(plan.id, 0), "business") %></p>
+        </div>
+        <%= link_to "Edit", edit_ops_plan_path(plan), class: button_classes(:ghost, :sm) %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

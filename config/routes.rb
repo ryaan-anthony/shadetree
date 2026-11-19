@@ -58,8 +58,10 @@ Rails.application.routes.draw do
       resources :notes, only: %i[create edit update destroy]
       resource :impersonation, only: :create # OPS-03: view the app as a member
       resource :suspension, only: %i[create destroy] # OPS-04
+      resource :plan_overrides, only: %i[edit update], path: "overrides" # OPS-04: comped limits and features
     end
     resource :impersonation, only: %i[edit update destroy]
+    resources :plans, only: %i[index edit update] # OPS-04
     resources :users, only: :index do # OPS-02: lookup by email
       member do # OPS-04: sign-in help
         post :confirmation, to: "user_actions#confirmation"
