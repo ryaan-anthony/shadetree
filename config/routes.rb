@@ -16,6 +16,8 @@ Rails.application.routes.draw do
     post "users/confirmation/resend", to: "users/confirmations#resend", as: :resend_users_confirmation
     post "users/sign_out_everywhere", to: "users/sessions#destroy_others", as: :sign_out_everywhere
   end
+  # ACC-06: signing out one of your other browsers, from the account page
+  delete "users/browsers/:id", to: "users/browser_sessions#destroy", as: :user_browser_session
 
   # Team invitations (ACC-03)
   resources :invitations, only: :show, param: :token do
