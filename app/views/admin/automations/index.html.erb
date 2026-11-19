@@ -1,0 +1,72 @@
+<%= render "admin/businesses/settings_header", current: "automations" %>
+<% templates = MessageTemplate.custom.index_by(&:uid) %>
+<% limit = @entitlements.limit(:active_automations) %>
+
+<div class="max-w-3xl space-y-4">
+  <% unless @editable %>
+    <div class="banner banner-info" role="status"><%= icon "info" %>
+      <p>Automations are part of a paid plan. <%= link_to "See plans", admin_plan_path, class: "font-semibold underline" %><%= ". Your automations are paused, and their history stays below." if @rules.any? %></p>
+    </div>
+  <% end %>
+
+  <%= card title: "Your automations",
+           subtitle: "Each one waits for something to happen, checks it still makes sense, then does its steps. #{"Your plan includes #{pluralize(limit, "active automation")}." if limit&.positive?}",
+           flush: true,
+           actions: (link_to(new_admin_automation_path, class: button_classes(:secondary, :sm)) { icon("plus") + " New automation" } if @editable) do %>
+    <% if @rules.empty? %>
+      <p class="px-5 py-4 text-sm text-muted">None yet.<%= " Start with a ready-made one below, or build your own." if @editable %></p>
+    <% else %>
+      <ul class="list">
+        <% @rules.each do |rule| %>
+          <li id="automation-<%= rule.uid %>">
+            <div class="min-w-0 flex-1">
+              <p class="font-semibold text-ink">
+                <%= @editable ? link_to(rule.name, edit_admin_automation_path(rule), class: "hover:underline") : rule.name %>
+                <%= badge(rule.enabled? ? "On" : "Off", tone: rule.enabled? ? :success : :neutral) %>
+              </p>
+              <p class="text-sm2 text-muted"><%= automation_summary(rule, templates) %></p>
+            </div>
+            <% if @editable %>
+              <%= button_to (rule.enabled? ? "Turn off" : "Turn on"), toggle_admin_automation_path(rule), method: :patch,
+                            class: button_classes(:secondary, :sm), form: { class: "shrink-0" }, "aria-label": "#{rule.enabled? ? "Turn off" : "Turn on"} #{rule.name}" %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  <% end %>
+
+  <% if @editable %>
+    <% installed = @rules.map(&:recipe).compact %>
+    <%= card title: "Ready-made automations", subtitle: "Turn one on in a click, then change its wording or timing if you like.", flush: true do %>
+      <ul class="list">
+        <% AutomationRecipe::ALL.each_value do |recipe| %>
+          <li id="recipe-<%= recipe.key %>">
+            <div class="min-w-0 flex-1">
+              <p class="font-semibold text-ink"><%= recipe.name %></p>
+              <p class="text-sm2 text-muted"><%= recipe.description %><%= " Adds the email “#{recipe.template[:name]}” to your templates." if recipe.template && !templates.values.any? { _1.name.casecmp?(recipe.template[:name]) } %></p>
+            </div>
+            <% if installed.include?(recipe.key) %>
+              <%= badge "Added", tone: :neutral, dot: false %>
+            <% else %>
+              <%= button_to "Turn on", recipe_admin_automations_path(key: recipe.key), class: button_classes(:secondary, :sm), form: { class: "shrink-0" },
+                            "aria-label": "Turn on #{recipe.name}" %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  <% end %>
+
+  <%= card title: "Recent activity", subtitle: "What your automations did, and what they skipped and why.", flush: true do %>
+    <% if @runs.empty? %>
+      <p class="px-5 py-4 text-sm text-muted">Nothing yet. Each time an automation starts, it shows up here.</p>
+    <% else %>
+      <ul class="list">
+        <% @runs.each do |run| %>
+          <%= render "admin/automations/run", run: run, show_rule: true %>
+        <% end %>
+      </ul>
+    <% end %>
+  <% end %>
+</div>

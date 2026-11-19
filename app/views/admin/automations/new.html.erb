@@ -1,0 +1,5 @@
+<% content_for :title, "New automation" %>
+<%= page_header "New automation", lede: "Pick what starts it, how long to wait, and what to do." do %>
+  <%= link_to admin_automations_path, class: button_classes(:ghost) do %><%= icon "arrow-left" %> Automations<% end %>
+<% end %>
+<%= render "form", rule: @rule, url: admin_automations_path, method: :post %>

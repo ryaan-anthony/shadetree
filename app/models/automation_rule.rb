@@ -24,10 +24,12 @@ class AutomationRule < ApplicationRecord
     Trigger.new("payment_received", "A payment is received", "Payment")
   ].index_by(&:key).freeze
 
+  # Each condition, and the subjects it makes sense for.
   CONDITIONS = {
-    "still_open" => "The quote still isn't answered, or the invoice still isn't paid",
-    "total_at_least" => "The total is at least an amount",
-    "client_tag" => "The client has a tag"
+    "still_open" => { label: "It's still open: the quote isn't answered, the invoice isn't paid, the job isn't done", subjects: %w[Quote Job Invoice] },
+    "paid_in_full" => { label: "The invoice is paid in full", subjects: %w[Invoice Payment] },
+    "total_at_least" => { label: "The total is at least", subjects: %w[Quote Invoice Payment] },
+    "client_tag" => { label: "The client has the tag", subjects: %w[ServiceRequest Quote Job Visit Invoice Payment] }
   }.freeze
 
   # Each action, and the subjects (by trigger subject) it makes sense for.
@@ -48,8 +50,10 @@ class AutomationRule < ApplicationRecord
 
   validates :name, presence: true, length: { maximum: 80 }
   validates :trigger, inclusion: { in: TRIGGERS.keys }
-  validates :delay_minutes, numericality: { only_integer: true, greater_than_or_equal_to: 0, less_than_or_equal_to: MAX_DELAY_MINUTES }
-  validate :valid_conditions, :valid_actions
+  validates :delay_minutes, numericality: { only_integer: true, greater_than_or_equal_to: 0, less_than_or_equal_to: MAX_DELAY_MINUTES, message: "can be up to 90 days" }
+  # Checked when they change or the rule is turned on, so a rule whose template was deleted can
+  # still be turned off.
+  validate :valid_conditions, :valid_actions, if: -> { new_record? || will_save_change_to_conditions? || will_save_change_to_actions? || will_save_change_to_trigger? || (enabled? && will_save_change_to_enabled?) }
   validate :within_active_limit, if: -> { enabled? && (new_record? || will_save_change_to_enabled?) }
 
   scope :active, -> { where(enabled: true) }
@@ -61,8 +65,14 @@ class AutomationRule < ApplicationRecord
   private
 
   def valid_conditions
+    return errors.add(:conditions, "are invalid") unless conditions.is_a?(Hash) && conditions.values.all? { [ String, TrueClass, FalseClass ].include?(_1.class) }
+
     unknown = conditions.keys - CONDITIONS.keys
     errors.add(:conditions, "has unknown keys: #{unknown.join(", ")}") if unknown.any?
+    if TRIGGERS.key?(trigger)
+      unfit = (conditions.keys & CONDITIONS.keys).reject { CONDITIONS[_1][:subjects].include?(subject_type) }
+      unfit.each { errors.add(:conditions, "“#{CONDITIONS[_1][:label]}” doesn't fit “#{trigger_definition.label.downcase}”") }
+    end
     if conditions.key?("total_at_least") && !(conditions["total_at_least"].to_s =~ /\A\d+(\.\d{1,2})?\z/)
       errors.add(:conditions, "need an amount like 250 or 250.00")
     end
@@ -73,6 +83,8 @@ class AutomationRule < ApplicationRecord
     return errors.add(:actions, "need at least one") unless actions.is_a?(Array) && actions.any?
 
     actions.each do |action|
+      next errors.add(:actions, "are invalid") unless action.is_a?(Hash) && action.values.all?(String)
+
       definition = ACTIONS[action["type"]] or next errors.add(:actions, "include an unknown one")
       errors.add(:actions, "“#{definition[:label]}” doesn't fit “#{trigger_definition.label.downcase}”") if TRIGGERS.key?(trigger) && !definition[:subjects].include?(subject_type)
       case action["type"]

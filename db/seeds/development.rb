@@ -212,6 +212,8 @@ Tenancy.with_business(business) do
   MessageTemplate.create_with(subject: "See you tomorrow, {{client_first_name}}",
                               body: "Hi {{client_first_name}},\n\nJust a reminder that we'll be there tomorrow, {{visit_window}}. " \
                                     "Please leave the side gate unlocked.\n\nThanks!").find_or_create_by!(kind: "visit_reminder")
+  # NTF-04: the quote follow-up recipe (Settings → Automations; runs need a plan with automations).
+  AutomationRecipe.install!("quote_follow_up", by: owner) unless AutomationRule.exists?(recipe: "quote_follow_up")
   puts "Request form: http://localhost:3000/request/#{business.handle}"
 end
 

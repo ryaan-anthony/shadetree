@@ -11,5 +11,6 @@
   <%= link_to "Branding", edit_admin_business_path(tab: "branding"), class: "tab", "aria-current": ("page" if current == "branding") %>
   <%= link_to "Request form", edit_admin_business_path(tab: "request_form"), class: "tab", "aria-current": ("page" if current == "request_form") %>
   <%= link_to "Messages", admin_message_templates_path, class: "tab", "aria-current": ("page" if current == "messages") %>
+  <%= link_to "Automations", admin_automations_path, class: "tab", "aria-current": ("page" if current == "automations") %>
   <%= link_to "Plan", admin_plan_path, class: "tab", "aria-current": ("page" if current == "plan") %>
 </nav>

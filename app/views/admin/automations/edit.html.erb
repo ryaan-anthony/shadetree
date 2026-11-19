@@ -1,0 +1,13 @@
+<% content_for :title, @rule.name_was %>
+<%= page_header @rule.name_was, lede: (@rule.enabled? ? "On." : "Off: nothing runs until you turn it on.") do %>
+  <%= link_to admin_automations_path, class: button_classes(:ghost) do %><%= icon "arrow-left" %> Automations<% end %>
+<% end %>
+<%= render "form", rule: @rule, url: admin_automation_path(@rule), method: :patch %>
+<div class="mt-4 max-w-2xl">
+  <%= button_to (@rule.enabled_was ? "Turn off" : "Turn on"), toggle_admin_automation_path(@rule), method: :patch, class: button_classes(:secondary, :sm) %>
+</div>
+<div class="mt-8 max-w-2xl border-t border-line pt-5">
+  <p class="text-sm text-muted">Deleting it stops anything still waiting. What it already did stays in the activity list.</p>
+  <%= button_to "Delete automation", admin_automation_path(@rule), method: :delete, class: button_classes(:danger, :sm) + " mt-2",
+                form: { data: { turbo_confirm: "Delete “#{@rule.name}”? Anything still waiting won't run." } } %>
+</div>

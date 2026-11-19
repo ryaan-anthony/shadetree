@@ -8,13 +8,21 @@ module AutomationConditions
 
     conditions.each do |key, value|
       reason = case key
-      when "still_open" then still_open(subject) unless value.blank? || value == false || value == "0"
+      when "still_open" then still_open(subject) unless off?(value)
+      when "paid_in_full" then paid_in_full(subject) unless off?(value)
       when "total_at_least" then total_at_least(subject, value)
       when "client_tag" then client_tag(subject, value)
       end
       return reason if reason
     end
     nil
+  end
+
+  def off?(value) = value.blank? || value == false || value == "0"
+
+  def paid_in_full(subject)
+    invoice = subject.is_a?(Payment) ? subject.invoice : subject
+    "The invoice isn't paid in full." unless invoice.is_a?(Invoice) && invoice.status == "paid"
   end
 
   def still_open(subject)

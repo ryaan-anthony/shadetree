@@ -1,0 +1,107 @@
+<%# locals: (rule:, url:, method:) -%>
+<%# NTF-04: build an automation from the fixed triggers, conditions and actions. %>
+<% amount, unit = automation_delay_parts(rule.delay_minutes.to_i) %>
+<% templates = MessageTemplate.custom.order(:name) %>
+<% action_for = ->(type) { rule.actions.find { _1["type"] == type } } %>
+<%= form_with model: rule, scope: :automation_rule, url:, method:, class: "max-w-2xl space-y-4",
+              data: { controller: "automation-form" } do |f| %>
+  <%= card do %>
+    <% if rule.errors.any? %>
+      <div class="banner banner-warning mb-4" role="alert"><%= icon "alert-circle" %><p><%= rule.errors.full_messages.to_sentence %>.</p></div>
+    <% end %>
+    <div class="space-y-4">
+      <%= f.field :name, label: "Name", maxlength: 80, help: "Only your team sees this." %>
+      <div>
+        <label class="label" for="automation_rule_trigger">When</label>
+        <select name="automation_rule[trigger]" id="automation_rule_trigger" class="select"
+                data-automation-form-target="trigger" data-action="automation-form#refresh">
+          <% AutomationRule::TRIGGERS.each_value do |trigger| %>
+            <option value="<%= trigger.key %>" data-subject="<%= trigger.subject %>" <%= "selected" if rule.trigger == trigger.key %>><%= trigger.label %></option>
+          <% end %>
+        </select>
+      </div>
+      <fieldset>
+        <legend class="label">Wait</legend>
+        <div class="flex items-center gap-2">
+          <input type="number" name="automation_rule[delay_amount]" value="<%= amount %>" min="0" max="<%= { "days" => 90, "hours" => 2160, "minutes" => 129_600 }[unit] %>" class="input !w-24" aria-label="How long to wait"
+                 data-automation-form-target="delay">
+          <select name="automation_rule[delay_unit]" class="select !w-32" aria-label="Unit" data-automation-form-target="unit" data-action="automation-form#limitDelay">
+            <% %w[minutes hours days].each do |u| %>
+              <option value="<%= u %>" <%= "selected" if unit == u %>><%= u %></option>
+            <% end %>
+          </select>
+        </div>
+        <p class="help">0 to do it right away; up to 90 days.<%= " Changing this doesn't move runs already waiting." if rule.persisted? %></p>
+      </fieldset>
+    </div>
+  <% end %>
+
+  <%= card title: "Only if", subtitle: "Checked when the wait is over. If one doesn't hold, the steps are skipped and the log says why." do %>
+    <div class="space-y-3">
+      <% AutomationRule::CONDITIONS.each do |key, definition| %>
+        <% value = rule.conditions[key] %>
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-2" data-automation-form-target="option" data-subjects="<%= definition[:subjects].join(" ") %>">
+          <% if %w[still_open paid_in_full].include?(key) %>
+            <label class="flex items-center gap-2 text-sm text-ink">
+              <input type="checkbox" class="checkbox" name="automation_rule[conditions][<%= key %>]" value="1" <%= "checked" unless AutomationConditions.off?(value) %>
+                     data-action="automation-form#refresh">
+              <%= definition[:label] %>
+            </label>
+          <% else %>
+            <label class="text-sm text-ink" for="condition-<%= key %>"><%= definition[:label] %></label>
+            <input type="text" id="condition-<%= key %>" name="automation_rule[conditions][<%= key %>]" value="<%= value %>" class="input h-8 !w-40"
+                   placeholder="<%= key == "total_at_least" ? "e.g. 500" : "e.g. vip" %>" <%= 'inputmode="decimal"'.html_safe if key == "total_at_least" %>>
+            <span class="text-sm2 text-muted">Leave empty to skip.</span>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%= card title: "Then", subtitle: "Pick one or more steps. Each step's result is logged." do %>
+    <div class="space-y-3">
+      <% AutomationRule::ACTIONS.each do |type, definition| %>
+        <% action = action_for.call(type) %>
+        <div data-automation-form-target="option" data-subjects="<%= definition[:subjects].join(" ") %>">
+          <label class="flex items-center gap-2 text-sm text-ink">
+            <input type="checkbox" class="checkbox" name="automation_rule[actions][<%= type %>][on]" value="1" <%= "checked" if action %> data-action="automation-form#refresh">
+            <%= definition[:label] %>
+          </label>
+          <% case type %>
+          <% when "send_template" %>
+            <div class="ml-6 mt-2" data-option-details>
+              <% saved = action&.dig("template") %>
+              <% if templates.any? || saved %>
+                <select name="automation_rule[actions][send_template][template]" class="select h-8 max-w-xs py-0 text-sm2" aria-label="Template to email">
+                  <option value="" <%= "selected" unless templates.any? { _1.uid == saved } %>><%= saved ? "(deleted template: choose another)" : "Choose a template" %></option>
+                  <% templates.each do |template| %>
+                    <option value="<%= template.uid %>" <%= "selected" if action&.dig("template") == template.uid %>><%= template.name %></option>
+                  <% end %>
+                </select>
+              <% end %>
+              <p class="help"><%= templates.any? ? "Goes to the client's main email, once per record (a quote, an invoice, a job…), with a button to their page where there is one." : "You don't have any templates yet." %>
+                <%= link_to "New template", new_admin_custom_message_template_path, class: "font-semibold text-canopy hover:underline" %></p>
+            </div>
+          <% when "notify_team" %>
+            <div class="ml-6 mt-2" data-option-details>
+              <select name="automation_rule[actions][notify_team][team]" class="select h-8 max-w-xs py-0 text-sm2" aria-label="Who to notify">
+                <% AutomationRule::TEAMS.each do |key, label| %>
+                  <option value="<%= key %>" <%= "selected" if action&.dig("team") == key %>><%= label %></option>
+                <% end %>
+              </select>
+            </div>
+          <% when "tag_client" %>
+            <div class="ml-6 mt-2" data-option-details>
+              <input type="text" name="automation_rule[actions][tag_client][tag]" value="<%= action&.dig("tag") %>" maxlength="40" class="input h-8 !w-48" aria-label="Tag to add" placeholder="e.g. repeat client">
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="flex flex-wrap items-center gap-2">
+    <%= f.submit_button rule.persisted? ? "Save automation" : "Turn on automation" %>
+    <%= link_to "Cancel", admin_automations_path, class: button_classes(:ghost) %>
+  </div>
+<% end %>

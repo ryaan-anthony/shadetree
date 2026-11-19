@@ -1,0 +1,10 @@
+<%# locals: (record:) -%>
+<%# NTF-04: automations that ran (or are waiting) for this record; an invoice's include its payments'. %>
+<% subjects = AutomationRun.where(subject: record) %>
+<% subjects = subjects.or(AutomationRun.where(subject_type: "Payment", subject_id: record.payments.select(:id))) if record.is_a?(Invoice) %>
+<% runs = subjects.recent.limit(10).to_a %>
+<% if runs.any? %>
+  <%= card title: "Automations", flush: true, id: "automation-runs" do %>
+    <ul class="list"><% runs.each do |run| %><%= render "admin/automations/run", run: %><% end %></ul>
+  <% end %>
+<% end %>
