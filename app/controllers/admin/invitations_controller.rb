@@ -25,6 +25,8 @@ class Admin::InvitationsController < Admin::BaseController
   def resend
     @invitation.resend!
     redirect_to admin_team_path, notice: "Invitation resent to #{@invitation.email}. It now expires in 7 days."
+  rescue Invitation::TeamFull => error
+    redirect_to admin_team_path, alert: error.message
   end
 
   def revoke

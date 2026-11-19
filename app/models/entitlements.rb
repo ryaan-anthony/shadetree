@@ -58,6 +58,11 @@ class Entitlements
   # The usage period (BIL-02): the calendar month on a free plan, the billing cycle on a paid one.
   def period = @period ||= UsagePeriod.for(business)
 
-  # How far through its limit the business is, 0–100 (nil when unlimited).
-  def percent_used(key) = unlimited?(key) ? nil : (limit(key).zero? ? 100 : (used(key) * 100 / limit(key)))
+  # The team size message for invitations and reactivations (the owner counts, as do pending
+  # invitations).
+  def team_limit_message
+    pending = Tenancy.with_business(business) { Invitation.pending.exists? }
+    "Your #{plan.name} plan includes #{limit(:team_members)} people, counting you and pending invitations." \
+      "#{" Revoke an invitation to make room, or see Settings → Plan." if pending}#{" See Settings → Plan." unless pending}"
+  end
 end

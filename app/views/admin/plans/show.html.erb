@@ -3,18 +3,18 @@
 <%= render "admin/businesses/settings_header", current: "plan" %>
 <% plan = @entitlements.plan %>
 
-<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+<div class="max-w-2xl">
   <%= card title: "You're on #{plan.name}", subtitle: plan.description, id: "current-plan" do %>
     <dl class="space-y-3 text-sm">
       <% Plan::LIMITS.each do |key, label| %>
         <% limit = @entitlements.limit(key) %>
         <div class="flex items-baseline justify-between gap-3" id="limit-<%= key %>">
-          <dt class="text-subtle"><%= label %></dt>
+          <dt class="text-subtle"><%= label %><% if key == "team_members" %><span class="block text-sm2 text-muted">Counting you and pending invitations</span><% end %></dt>
           <dd class="font-semibold text-ink"><%= limit ? "#{@entitlements.used(key)} of #{limit}" : "#{@entitlements.used(key)}, no limit" %></dd>
         </div>
       <% end %>
     </dl>
-    <ul class="mt-4 space-y-1.5 border-t border-line pt-4 text-sm" aria-label="Included">
+    <ul class="mt-4 space-y-1.5 border-t border-line pt-4 text-sm" aria-label="Features">
       <% Plan::FEATURES.each do |key, label| %>
         <% included = @entitlements.feature?(key) %>
         <li class="flex items-center gap-2 <%= included ? "text-ink" : "text-muted" %>">
@@ -28,15 +28,17 @@
 </div>
 
 <h2 class="mb-3 mt-8 text-base font-semibold text-ink">Compare plans</h2>
-<div class="overflow-x-auto rounded-card border border-line bg-surface">
+<div class="overflow-x-auto rounded-card border border-line bg-surface" tabindex="0" role="region" aria-label="Compare plans">
   <table class="w-full min-w-[40rem] text-sm" id="compare-plans">
+    <caption class="sr-only">Limits and features of each plan</caption>
     <thead>
       <tr class="border-b border-line text-left">
         <th scope="col" class="p-3 font-medium text-muted"><span class="sr-only">What's included</span></th>
         <% @plans.each do |option| %>
           <th scope="col" class="p-3 <%= "bg-sunken" if option == plan %>">
             <span class="block font-semibold text-ink"><%= option.name %><%= " (yours)" if option == plan %></span>
-            <span class="block text-sm2 font-normal text-muted"><%= option.free? ? "$0" : "#{money(option.monthly_price)}/month" %></span>
+            <span class="block text-sm2 font-normal text-muted"><%= option.free? ? "No charge" : "#{money(option.monthly_price)}/month" %></span>
+            <% unless option.free? || option.annual_price_cents.zero? %><span class="block text-xs font-normal text-muted">or <%= money(option.annual_price) %>/year</span><% end %>
           </th>
         <% end %>
       </tr>

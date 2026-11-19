@@ -28,6 +28,9 @@ class Plan < ApplicationRecord
   validate :known_keys
 
   scope :listed, -> { where(public: true).order(:position, :id) }
+  scope :free, -> { where(monthly_price_cents: 0, annual_price_cents: 0) }
+
+  validates :default, uniqueness: { message: "is already another plan" }, if: :default
 
   def self.default! = find_by!(default: true)
 
@@ -54,10 +57,22 @@ class Plan < ApplicationRecord
   private
 
   def known_keys
-    unknown = limits.keys - LIMITS.keys
-    errors.add(:limits, "has unknown keys: #{unknown.join(", ")}") if unknown.any?
-    errors.add(:limits, "must be whole numbers or empty (unlimited)") unless limits.values.all? { _1.nil? || (_1.is_a?(Integer) && _1 >= 0) }
-    unknown = features.keys - FEATURES.keys
-    errors.add(:features, "has unknown keys: #{unknown.join(", ")}") if unknown.any?
+    self.class.override_problems({ "limits" => limits, "features" => features }).each do |problem|
+      errors.add(problem.start_with?("limits") ? :limits : :features, problem.sub(/\A(limits|features) /, ""))
+    end
+  end
+
+  # What's wrong with a set of limits and features (a plan's, or a business's overrides).
+  def self.override_problems(set)
+    set = set.to_h
+    problems = []
+    unknown = set.keys - %w[limits features]
+    problems << "#{unknown.join(", ")} can't be overridden" if unknown.any?
+    limits, features = set.fetch("limits", {}).to_h, set.fetch("features", {}).to_h
+    problems << "limits has unknown keys: #{(limits.keys - LIMITS.keys).join(", ")}" if (limits.keys - LIMITS.keys).any?
+    problems << "limits must be whole numbers or empty (unlimited)" unless limits.values.all? { _1.nil? || (_1.is_a?(Integer) && _1 >= 0) }
+    problems << "features has unknown keys: #{(features.keys - FEATURES.keys).join(", ")}" if (features.keys - FEATURES.keys).any?
+    problems << "features must be true or false" unless features.values.all? { _1 == true || _1 == false }
+    problems
   end
 end

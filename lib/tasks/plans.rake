@@ -11,9 +11,12 @@ Rake::Task["db:prepare"].enhance { Rake::Task["plans:sync"].invoke } if Rake::Ta
 module PlanTasks
   module_function
 
+  # VALUE is required; only "unlimited" means no limit.
   def value(raw)
+    abort "Give VALUE= (a number, unlimited, true or false)" if raw.nil? || raw.empty?
+
     case raw.to_s
-    when "unlimited", "" then nil
+    when "unlimited" then nil
     when "true" then true
     when "false" then false
     when /\A\d+\z/ then raw.to_i
@@ -49,7 +52,10 @@ namespace :plans do
     if ENV["LIMIT"] then PlanTasks.set(plan, :limits)
     elsif ENV["FEATURE"] then PlanTasks.set(plan, :features)
     elsif %w[monthly_price annual_price].include?(ENV["FIELD"]) then plan["#{ENV["FIELD"]}_cents"] = Money.parse(ENV.fetch("VALUE"), plan.currency).cents
-    elsif %w[name description public position provider_monthly_price provider_annual_price].include?(ENV["FIELD"]) then plan[ENV["FIELD"]] = ENV.fetch("VALUE")
+    elsif ENV["FIELD"] == "public"
+      abort "public is true or false" unless %w[true false].include?(ENV["VALUE"])
+      plan.public = ENV["VALUE"] == "true"
+    elsif %w[name description position provider_monthly_price provider_annual_price].include?(ENV["FIELD"]) then plan[ENV["FIELD"]] = ENV.fetch("VALUE")
     else abort "Give LIMIT=, FEATURE= or FIELD= (monthly_price, annual_price, name, description, public, position, provider_monthly_price, provider_annual_price)"
     end
     plan.save!
@@ -66,7 +72,7 @@ namespace :plans do
     overrides = business.plan_overrides.deep_dup
     overrides[group] ||= {}
     ENV["CLEAR"] == "1" ? overrides[group].delete(key) : overrides[group][key] = PlanTasks.value(ENV["VALUE"])
-    business.update_columns(plan_overrides: overrides)
+    business.update!(plan_overrides: overrides)
     puts "#{business.name}: #{overrides.inspect}"
   end
 end
