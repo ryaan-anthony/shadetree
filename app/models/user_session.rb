@@ -3,29 +3,34 @@
 # digest of the secret is stored. Wired up in config/initializers/user_sessions.rb.
 class UserSession < ApplicationRecord
   SESSION_KEY = "user_session" # in the signed-in user's Warden session data
+  BROWSER_COOKIE = :browser_id # permanent, so a browser signing in again replaces its old session
   ACTIVITY_EVERY = 5.minutes # how often last_active_at is written
   LISTED_FOR = 30.days       # sessions idle longer aren't listed (remember-me lasts 4 weeks)
-  KEPT_FOR = 90.days         # then they're deleted
+  KEPT_FOR = 90.days         # then they're deleted, when that person next signs in
 
   belongs_to :user
 
   scope :active, -> { where(revoked_at: nil) }
   scope :listed, -> { active.where(last_active_at: LISTED_FOR.ago..).order(last_active_at: :desc) }
 
-  # A new session for this browser; returns [session, "id:secret"] for the browser to keep.
-  def self.start!(user, request)
+  # A new session for this browser, replacing any it had before (closing the browser and coming
+  # back through "Keep me signed in" is a new sign-in). Returns [session, "id:secret"] for the
+  # browser to keep.
+  def self.start!(user, request, browser_id: nil)
     user.user_sessions.where(last_active_at: ...KEPT_FOR.ago).delete_all
+    user.user_sessions.active.where(browser_id:).update_all(revoked_at: Time.current) if browser_id
     secret = SecureRandom.base58(32)
-    session = user.user_sessions.create!(secret_digest: digest(secret), last_active_at: Time.current, **request_details(request))
+    session = user.user_sessions.create!(secret_digest: digest(secret), browser_id:, last_active_at: Time.current, **request_details(request))
     [ session, "#{session.id}:#{secret}" ]
   end
 
-  # The session a browser's "id:secret" belongs to, revoked or not; nil if it doesn't match.
+  # The session a browser's "id:secret" belongs to (for this user, if given), revoked or not;
+  # nil if it doesn't match.
   def self.find_by_credential(user, credential)
     id, secret = credential.to_s.split(":", 2)
     return if id.blank? || secret.blank?
 
-    session = user.user_sessions.find_by(id:)
+    session = (user ? user.user_sessions : self).find_by(id:)
     session if session && ActiveSupport::SecurityUtils.secure_compare(session.secret_digest, digest(secret))
   end
 

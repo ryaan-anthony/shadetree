@@ -46,7 +46,12 @@ business that others depend on.
   planning); account deletion is self-serve (owner's request).
 - **Signing out one browser also ends remember-me on every browser.** Devise's remember-me is
   per account, not per browser, so it's the only way the signed-out browser can't sign itself
-  back in. Other browsers stay signed in until they're closed; the confirm says so.
+  back in. Other browsers stay signed in until they're closed; the confirm says so. (When the
+  signed-out browser next calls, its sign-out clears remember-me once more, as every sign-out
+  does with `expire_all_remember_me_on_sign_out`.)
+- **A signed-in browser with no session record is signed out**, including everyone signed in
+  before this shipped (one sign-in each): otherwise a copied pre-launch cookie could never be
+  signed out from the list.
 
 ## Implementation notes
 
@@ -56,9 +61,12 @@ Part 1 (settings page, sessions):
   menu in every business. It now links team email choices (NTF-02) and lists where you're signed
   in.
 - `UserSession` (config/initializers/user_sessions.rb): each sign-in starts one; the browser
-  keeps "id:secret" in its session (only a digest is stored); each request checks it's active
-  and notes activity at most every 5 minutes; signing out ends it. Listed: active in the last 30
-  days, as "Chrome on Mac · last active … · IP · signed in …"; deleted after 90 days quiet.
+  keeps "id:secret" in its session (only a digest is stored) and a permanent `browser_id`
+  cookie, so signing in again in the same browser replaces its old session. Each request checks
+  it's active and notes activity at most every 5 minutes; signing out ends it. Listed (this
+  browser first): active in the last 30 days, as "Chrome on Mac · last active … · IP · signed in
+  …"; sessions quiet for 90 days are deleted when that person next signs in.
 - Signing out another browser (`Users::BrowserSessionsController`) ends it on its next request
-  ("signed out from another device"); "Sign out of all other browsers" and a new password end
-  every other session too.
+  ("signed out from another device"); "Sign out of all other browsers", a new password and a
+  password reset end every other session too (and any session Devise turns away is ended in
+  the list).

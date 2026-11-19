@@ -38,31 +38,31 @@
     <% end %>
   <% end %>
 
-  <% sessions = current_user.user_sessions.listed.to_a %>
+  <% browser_sessions = current_user.user_sessions.listed.to_a.sort_by { _1 == current_user_session ? 0 : 1 } %>
   <%= card title: "Where you're signed in", subtitle: "Lost a phone or used a shared computer? Sign it out here.", flush: true, class: "mt-4" do %>
     <ul class="list" id="browser-sessions">
-      <% sessions.each do |session| %>
-        <% this = session == current_user_session %>
-        <li id="browser-session-<%= session.id %>">
+      <% browser_sessions.each do |browser_session| %>
+        <% this = browser_session == current_user_session %>
+        <li id="browser-session-<%= browser_session.id %>">
           <div class="min-w-0 flex-1">
-            <p class="font-medium text-ink"><%= session.device_label %><% if this %> <span class="badge badge-success ml-1">This browser</span><% end %></p>
+            <p class="font-medium text-ink"><%= browser_session.device_label %><% if this %> <span class="badge badge-success ml-1">This browser</span><% end %></p>
             <p class="text-sm2 text-muted">
-              <%= this ? "Active now" : "Last active #{time_ago_in_words(session.last_active_at)} ago" %>
-              <% if session.ip_address %>· <%= session.ip_address %><% end %> · signed in <%= local_date(session.created_at) %>
+              <%= this ? "Active now" : "Last active #{time_ago_in_words(browser_session.last_active_at)} ago" %>
+              <% if browser_session.ip_address %>· <%= browser_session.ip_address %><% end %> · signed in <%= local_date(browser_session.created_at) %>
             </p>
           </div>
           <% unless this %>
-            <%= button_to "Sign out", user_browser_session_path(session), method: :delete, class: button_classes(:ghost, :sm),
-                          form: { class: "contents", data: { turbo_confirm: "Sign out #{session.device_label}? Browsers that stay signed in will also ask you to sign in again the next time they're opened.", turbo_confirm_button: "Sign out" } } %>
+            <%= button_to "Sign out", user_browser_session_path(browser_session), method: :delete, class: button_classes(:ghost, :sm),
+                          form: { class: "contents", data: { turbo_confirm: "Sign out #{browser_session.device_label}? “Keep me signed in” will also stop working on your other browsers, including this one.", turbo_confirm_button: "Sign out" } } %>
           <% end %>
         </li>
       <% end %>
     </ul>
-    <% if sessions.many? %>
-      <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-4">
+    <% if browser_sessions.size > 2 %>
+      <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-4 sm:flex-nowrap">
         <p class="text-sm text-subtle">Sign out everywhere except this browser. Changing your password does this too.</p>
-        <%= button_to "Sign out of all other browsers", sign_out_everywhere_path, class: button_classes(:secondary),
-                      form: { data: { turbo_confirm: "Sign out of every other device and browser?", turbo_confirm_button: "Sign out others" } } %>
+        <%= button_to "Sign out of all other browsers", sign_out_everywhere_path, class: button_classes(:secondary, extra: "shrink-0"),
+                      form: { class: "shrink-0", data: { turbo_confirm: "Sign out of every other browser?", turbo_confirm_button: "Sign out others" } } %>
       </div>
     <% end %>
   <% end %>

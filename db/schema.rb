@@ -940,14 +940,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
   create_table "user_sessions", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "secret_digest", null: false
+    t.string "browser_id"
     t.string "user_agent"
     t.string "ip_address"
     t.datetime "last_active_at", null: false
     t.datetime "revoked_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["user_id", "browser_id"], name: "index_user_sessions_on_user_id_and_browser_id"
     t.index ["user_id", "revoked_at", "last_active_at"], name: "idx_on_user_id_revoked_at_last_active_at_d9becbce14"
-    t.index ["user_id"], name: "index_user_sessions_on_user_id"
   end
 
   create_table "users", force: :cascade do |t|

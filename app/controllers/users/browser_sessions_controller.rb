@@ -5,11 +5,11 @@ class Users::BrowserSessionsController < ApplicationController
   before_action :authenticate_user!
 
   def destroy
-    session = current_user.user_sessions.active.find(params[:id])
-    return redirect_to(edit_user_registration_path, alert: "That's this browser. Use Sign out instead.") if session == current_user_session
+    browser_session = current_user.user_sessions.active.find(params[:id])
+    return redirect_to(edit_user_registration_path, alert: "That's this browser. Use Sign out instead.") if browser_session == current_user_session
 
-    session.revoke!
+    browser_session.revoke!
     current_user.forget_me!
-    redirect_to edit_user_registration_path, notice: "Signed out of #{session.device_label}."
+    redirect_to edit_user_registration_path, notice: "Signed out of #{browser_session.device_label}."
   end
 end

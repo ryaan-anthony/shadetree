@@ -9,7 +9,7 @@ class Users::SessionsController < Devise::SessionsController
   def destroy_others
     current_user.sign_out_everywhere!(except: current_user_session)
     bypass_sign_in(current_user)
-    redirect_to edit_user_registration_path, notice: "Signed out of all other devices."
+    redirect_to edit_user_registration_path, notice: "Signed out of all other browsers."
   end
 
   protected

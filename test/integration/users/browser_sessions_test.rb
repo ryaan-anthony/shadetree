@@ -39,9 +39,52 @@ class Users::BrowserSessionsTest < ActionDispatch::IntegrationTest
     phone.get admin_root_path
     phone.assert_redirected_to new_user_session_path
     assert_match "signed out from another device", phone.flash[:alert]
-    laptop.get admin_root_path
-    assert_includes [ 200, 302 ], laptop.response.status
-    assert_not_equal new_user_session_url, laptop.response.location
+    laptop.get edit_user_registration_path
+    assert_equal 200, laptop.response.status, "this browser stays signed in"
+  end
+
+  test "a signed-out browser holding a remember-me cookie can't sign itself back in" do
+    phone = open_session
+    phone.post user_session_path, params: { user: { email: @user.email, password: "password123", remember_me: "1" } }, headers: { "User-Agent" => IPHONE_SAFARI }
+    assert phone.cookies["remember_user_token"].present?
+    laptop = browser(MAC_CHROME)
+    laptop.delete user_browser_session_path(@user.user_sessions.find_by!(user_agent: IPHONE_SAFARI))
+
+    phone.cookies.delete("_shadetree_session") # the browser was closed and opened again
+    phone.get admin_root_path, headers: { "User-Agent" => IPHONE_SAFARI }
+    phone.assert_redirected_to new_user_session_path
+    assert_equal 1, @user.user_sessions.active.count
+  end
+
+  test "signing in again in the same browser replaces its old session" do
+    laptop = browser(MAC_CHROME)
+    laptop.delete destroy_user_session_path
+    laptop.post user_session_path, params: { user: { email: @user.email, password: "password123" } }, headers: { "User-Agent" => MAC_CHROME }
+    assert_equal 1, @user.user_sessions.active.count
+    stale = @user.user_sessions.active.first
+    laptop.cookies.delete("_shadetree_session")
+    laptop.post user_session_path, params: { user: { email: @user.email, password: "password123" } }, headers: { "User-Agent" => MAC_CHROME }
+    assert_not stale.reload.active?, "the browser's earlier session is replaced, not listed twice"
+    assert_equal 1, @user.user_sessions.active.count
+  end
+
+  test "a browser with no session record is signed out, not given a new one" do
+    sign_in @user
+    get edit_user_registration_path
+    UserSession.delete_all # as if its record were gone
+    get edit_user_registration_path
+    assert_redirected_to new_user_session_path
+    assert_equal 0, UserSession.count
+  end
+
+  test "a password reset ends every other browser's session in the list" do
+    phone = browser(IPHONE_SAFARI)
+    token = @user.send_reset_password_instructions
+    reset = open_session
+    reset.put user_password_path, params: { user: { reset_password_token: token, password: "brand new phrase", password_confirmation: "brand new phrase" } }
+    assert_equal 1, @user.user_sessions.active.count, "only the browser that reset"
+    phone.get admin_root_path
+    phone.assert_redirected_to new_user_session_path
   end
 
   test "you can't sign out this browser or someone else's from here" do
@@ -66,12 +109,16 @@ class Users::BrowserSessionsTest < ActionDispatch::IntegrationTest
 
     laptop.post sign_out_everywhere_path
     assert_equal [ MAC_CHROME ], @user.user_sessions.active.pluck(:user_agent)
+    laptop.get edit_user_registration_path
+    assert_equal 200, laptop.response.status
     phone.get admin_root_path
     phone.assert_redirected_to new_user_session_path
 
     phone = browser(IPHONE_SAFARI)
     laptop.put user_registration_path, params: { user: { current_password: "password123", password: "a brand new phrase", first_name: @user.first_name } }
     assert_equal [ MAC_CHROME ], @user.user_sessions.active.pluck(:user_agent)
+    laptop.get edit_user_registration_path
+    assert_equal 200, laptop.response.status
     assert phone
   end
 
@@ -100,6 +147,10 @@ class Users::BrowserSessionsTest < ActionDispatch::IntegrationTest
     sign_in @user
     get edit_user_registration_path
     assert_select "a[href=?]", settings_admin_notifications_path, "Choose emails"
+    sign_out :user
+    sign_in User.create!(email: "new@example.com", password: "password123", first_name: "New", confirmed_at: Time.current)
+    get edit_user_registration_path
+    assert_select "a[href=?]", settings_admin_notifications_path, 0
   end
 
   test "device labels" do
