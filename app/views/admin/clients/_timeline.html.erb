@@ -1,6 +1,5 @@
-<%# locals: (client:) -%>
+<%# locals: (client:, events:, more:) -%>
 <%# CLI-05: everything that's happened with the client, newest first, a page at a time. %>
-<% events, more = ClientEvent.page_for(client) %>
 <%= card title: "Timeline", flush: true do %>
   <%= form_with url: admin_client_notes_path(client), scope: :client_note, class: "flex flex-col gap-2 border-b border-line px-5 py-3 sm:flex-row sm:items-start" do |f| %>
     <label class="sr-only" for="client_note_body">Add a note</label>

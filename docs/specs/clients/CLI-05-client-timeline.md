@@ -52,6 +52,10 @@ related documents, balance and a chronological timeline.
   mail server. The client page shows them newest first, 25 at a time ("Show older" appends the
   next page with a turbo stream), with one query for the page plus preloads, on an index of
   (business, client, time, id).
+- Corrections show too: a payment changed or deleted, an invoice no longer paid in full, a visit
+  reopened or cancelled (a booked visit that has moved says where it is now). A client's own
+  answer to a quote names them; one staff recorded says so. Bounces don't copy the address.
+  "Opened" is once per document, however many links. The page cursor is the event's uid.
 - Events start when this ships: history from before isn't backfilled (pre-launch data only).
 - Part 2: notes (`ClientNote`, added by the office team from the timeline, edited only by
   their author and marked "edited"); each job in the Work list shows its next visit; the

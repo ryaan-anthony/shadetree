@@ -255,6 +255,7 @@ class Invoice < ApplicationRecord
         issued, due = dates_when_sent
         update!(status: "sent", sent_at: Time.current, sent_by: by, issued_on: issued, due_on: due)
         record!(:sent, by:, channel: "payment", revision:)
+        ClientEvent.record!(client, :invoice_sent, subject: self, by:, channel: "payment", revision:) # CLI-05
       end
       payment.save!
       record!(:payment_recorded, by:, payment: payment.uid, **payment.summary)
@@ -273,6 +274,7 @@ class Invoice < ApplicationRecord
 
       payment.save!
       record!(:payment_changed, by:, payment: payment.uid, reason: reason.to_s.squish.first(200), before:, after: payment.summary)
+      ClientEvent.record!(client, :payment_changed, subject: payment, by:, before:, after: payment.summary) # CLI-05
       payment
     end
   end
@@ -281,6 +283,7 @@ class Invoice < ApplicationRecord
     adjust_payment(payment, by:, reason:) do
       payment.destroy!
       record!(:payment_deleted, by:, payment: payment.uid, reason: reason.to_s.squish.first(200), **payment.summary)
+      ClientEvent.record!(client, :payment_deleted, subject: self, by:, **payment.summary) # CLI-05
       payment
     end
   end
@@ -295,7 +298,9 @@ class Invoice < ApplicationRecord
     assign_attributes(amount_paid_cents: paid_cents, status:, paid_at: (status == "paid" ? (paid_at || Time.current) : nil))
     save!(validate: false)
     record!({ "paid" => :paid, "partially_paid" => :partially_paid, "sent" => :reopened }.fetch(status), by:) if changed
-    ClientEvent.record!(client, :invoice_paid, subject: self, by:) if changed && status == "paid" # CLI-05
+    # CLI-05: paid in full, and no longer (a payment changed or deleted).
+    ClientEvent.record!(client, :invoice_paid, subject: self, by:) if changed && status == "paid"
+    ClientEvent.record!(client, :invoice_unpaid, subject: self, by:) if changed && status_previously_was == "paid"
     ClientLink.active.where(linkable: self).update_all(expires_at: client_link_expires_at)
   end
 
