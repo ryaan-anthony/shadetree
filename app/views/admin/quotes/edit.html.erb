@@ -31,6 +31,7 @@
 <% end %>
 
 <div id="builder_banner"></div>
+<%= render "admin/usage/limit_notice" if @quote.sends.none? %>
 <%= render "admin/quotes/from_request", quote: @quote %>
 <% if @quote.revising? && (previous = @quote.revisions.last) %>
   <%# What this revision answers: the client's last words on the previous one. %>

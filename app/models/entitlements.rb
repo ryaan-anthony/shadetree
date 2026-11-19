@@ -55,6 +55,28 @@ class Entitlements
 
   def remove_powered_by? = feature?(:remove_powered_by)
 
+  # BIL-03: sending quotes. A notice from WARN_AT percent of the limit; at the limit, one more
+  # (GRACE) is allowed with a warning so nobody is blocked mid-conversation; then new quotes
+  # can't be sent until the period resets or the plan changes. Resending or revising a quote
+  # that already went out never counts.
+  WARN_AT = Integer(ENV.fetch("USAGE_WARNING_PERCENT", 80))
+  GRACE = 1
+
+  # :ok, :approaching, :at_limit (the grace send is left) or :blocked.
+  def quote_sending
+    return :ok if unlimited?(:quotes_sent)
+
+    used = used(:quotes_sent)
+    limit = limit(:quotes_sent)
+    if used >= limit + GRACE then :blocked
+    elsif used >= limit then :at_limit
+    elsif limit.positive? && used * 100 >= limit * WARN_AT then :approaching
+    else :ok
+    end
+  end
+
+  def can_send_new_quote? = quote_sending != :blocked
+
   # The usage period (BIL-02): the calendar month on a free plan, the billing cycle on a paid one.
   def period = @period ||= UsagePeriod.for(business)
 

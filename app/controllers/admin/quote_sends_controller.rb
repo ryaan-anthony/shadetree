@@ -14,6 +14,7 @@ class Admin::QuoteSendsController < Admin::BaseController
   before_action :set_quote
   before_action :require_sendable
   before_action :require_confirmed_sender, only: :create
+  before_action :require_quote_allowance, only: :create
 
   def new
     @form = QuoteSendForm.new(to: @quote.client.primary_email&.value, subject: QuoteMailer.default_subject(@quote),
@@ -27,6 +28,14 @@ class Admin::QuoteSendsController < Admin::BaseController
   end
 
   private
+
+  # BIL-03: a quote's first send counts toward the plan's quotes; over the limit (and its one
+  # extra), new quotes wait. Resends of quotes already sent never count.
+  def require_quote_allowance
+    return if !@quote.draft? || @quote.sends.exists? || current_business.entitlements.can_send_new_quote?
+
+    redirect_to new_admin_quote_send_path(@quote), alert: "You've used this period's quotes. New quotes can be sent again on #{l(current_business.entitlements.period.resets_on)}."
+  end
 
   def set_quote = @quote = Quote.includes(:client, :line_items).find_by_param!(params[:quote_id])
 
