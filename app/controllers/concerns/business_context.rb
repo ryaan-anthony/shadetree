@@ -15,6 +15,8 @@ module BusinessContext
     return unless current_user
 
     Current.user = current_user
+    return use_impersonated_membership if impersonation # OPS-03: pinned, and the member's records untouched
+
     memberships = current_user.business_users.active.includes(:business)
     # This session's choice, then the user's last choice on any device, then their newest
     # membership. Every candidate must be an active membership.
@@ -27,6 +29,11 @@ module BusinessContext
     Current.membership = membership
     Current.business = membership&.business
     touch_last_active(membership)
+  end
+
+  def use_impersonated_membership
+    Current.membership = impersonation.membership
+    Current.business = impersonation.business
   end
 
   def switch_business_to(business)

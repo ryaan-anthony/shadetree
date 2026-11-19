@@ -10,7 +10,8 @@ class ClientLinksController < ApplicationController
     return render_link_unavailable unless visible
 
     # A page saying the quote is being revised isn't a view of the quote.
-    @client_link.record_view!(device: client_device) unless @document.try(:revising?)
+    # Nor is support viewing the app as a member (OPS-03).
+    @client_link.record_view!(device: client_device) unless @document.try(:revising?) || impersonation
   end
 
   # From the "no longer active" page: tell the business the client wants a new link.

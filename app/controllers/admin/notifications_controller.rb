@@ -9,7 +9,7 @@ class Admin::NotificationsController < Admin::BaseController
 
   # Opening one marks it read. Turbo's hover prefetch is skipped so hovering doesn't count.
   def open
-    @notification.mark_read! unless request.headers["X-Sec-Purpose"] == "prefetch"
+    @notification.mark_read! unless request.headers["X-Sec-Purpose"] == "prefetch" || impersonation # OPS-03: support looking isn't the member reading
     redirect_to @notification.path
   end
 

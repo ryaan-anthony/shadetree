@@ -3,6 +3,7 @@ class ApplicationController < ActionController::Base
   allow_browser versions: :modern
 
   include AbuseProtection
+  include ImpersonationSupport # OPS-03
 
   helper_method :feature?, :current_user_session
 

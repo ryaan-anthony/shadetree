@@ -109,3 +109,22 @@
     <% end %>
   <% end %>
 </div>
+
+<% if @support_visits %>
+  <%# OPS-03: Owners see when Shadetree support viewed the app as one of their team. %>
+  <%= card title: "Shadetree support access", subtitle: "When our support team viewed your account as one of your people, to help with a question.", flush: true, class: "mt-6", id: "support-access" do %>
+    <% if @support_visits.any? %>
+      <ul class="list">
+        <% @support_visits.each do |visit| %>
+          <li class="text-sm">
+            <span class="min-w-0 flex-1 text-ink">Viewed as <%= visit.member_name %><%= visit.minutes ? " for #{pluralize([ visit.minutes, 1 ].max, "minute")}" : "" %>
+              · <%= visit.changes_allowed ? "changes allowed (#{pluralize(visit.changes, "change")})" : "read-only" %></span>
+            <span class="shrink-0 text-sm2 text-muted"><%= local_time(visit.started_at) %></span>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="px-5 py-4 text-sm text-muted">Support hasn't viewed your account.</p>
+    <% end %>
+  <% end %>
+<% end %>

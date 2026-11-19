@@ -56,7 +56,9 @@ Rails.application.routes.draw do
     resources :audit_entries, only: :index, path: "audit-log"
     resources :businesses, only: %i[index show] do # OPS-02
       resources :notes, only: %i[create edit update destroy]
+      resource :impersonation, only: :create # OPS-03: view the app as a member
     end
+    resource :impersonation, only: %i[edit update destroy]
     resources :users, only: :index # OPS-02: lookup by email
   end
 

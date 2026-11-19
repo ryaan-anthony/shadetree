@@ -15,7 +15,12 @@ class AuditEntry < ApplicationRecord
     "business.viewed" => "Opened a business",
     "business.note_added" => "Added a note",
     "business.note_edited" => "Edited a note",
-    "business.note_deleted" => "Deleted a note"
+    "business.note_deleted" => "Deleted a note",
+    "impersonation.started" => "Started viewing as a member",
+    "impersonation.changes_allowed" => "Allowed changes while viewing as a member",
+    "impersonation.read_only" => "Went back to read-only",
+    "impersonation.change" => "Made a change while viewing as a member",
+    "impersonation.ended" => "Stopped viewing as a member"
   }.freeze
 
   belongs_to :operator_user, class_name: "User", optional: true
@@ -35,6 +40,24 @@ class AuditEntry < ApplicationRecord
   end
 
   def action_label = ACTIONS.fetch(action, action.humanize)
+
+  # OPS-03: the times Shadetree support viewed a business's app as one of its members, for its
+  # Owners: when, as whom, whether changes were allowed, and how long. Nothing about which operator.
+  SupportVisit = Data.define(:started_at, :member_name, :changes_allowed, :changes, :minutes)
+
+  def self.support_visits(business, limit: 10)
+    starts = where(business:, action: "impersonation.started").newest_first.limit(limit).includes(:target_user).to_a
+    sessions = starts.map { _1.data["session"] }
+    related = where(business:, action: %w[impersonation.changes_allowed impersonation.change impersonation.ended])
+              .where("data->>'session' IN (?)", sessions.presence || [ "" ]).group_by { _1.data["session"] }
+    starts.map do |start|
+      later = related.fetch(start.data["session"], [])
+      ended = later.find { _1.action == "impersonation.ended" }
+      SupportVisit.new(started_at: start.created_at, member_name: start.target_user&.full_name || "a former member",
+                       changes_allowed: later.any? { _1.action == "impersonation.changes_allowed" },
+                       changes: later.count { _1.action == "impersonation.change" }, minutes: ended&.data&.dig("minutes"))
+    end
+  end
 
   # The database refuses to change, delete or truncate entries. schema.rb can't hold triggers,
   # so the migration adds this, and so does every schema load, db:prepare and test database

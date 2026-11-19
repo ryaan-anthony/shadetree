@@ -9,5 +9,6 @@ class Admin::TeamController < Admin::BaseController
     @invitations = Invitation.where(accepted_at: nil, revoked_at: nil).includes(:invited_by).order(created_at: :desc)
     @invitation = Invitation.new(role: "technician")
     @custom_roles = Role.ordered.to_a # ACC-07
+    @support_visits = AuditEntry.support_visits(current_business) if current_membership.owner? # OPS-03
   end
 end

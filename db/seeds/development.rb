@@ -270,3 +270,14 @@ Operator.grant!(owner) unless Operator.for(owner)
 
 # OPS-02: an internal note on the demo business, seen in the console's business page.
 business.operator_notes.create!(author: owner, body: "Beta customer since spring. Asked about a second location.", created_at: 2.weeks.ago, updated_at: 2.weeks.ago) unless business.operator_notes.exists?
+
+# OPS-03: a past read-only support visit, listed for Owners on the Team page.
+unless AuditEntry.exists?(action: "impersonation.started", business:)
+  admin_member = business.business_users.joins(:user).find_by(users: { email: "admin@example.com" })&.user
+  if admin_member
+    { "impersonation.started" => { mode: "read_only" }, "impersonation.ended" => { minutes: 6, ended: "stopped" } }.each_with_index do |(action, data), index|
+      AuditEntry.create!(operator_user: owner, operator_email: owner.email, action:, business:, target_user: admin_member,
+                         reason: ("Ticket: PDF logo looks blurry" if index.zero?), data: data.merge(session: "seeded0visit"), created_at: (3.days.ago + (index * 6).minutes))
+    end
+  end
+end

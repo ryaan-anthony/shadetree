@@ -7,6 +7,7 @@
     <%= tag.script(defer: true, src: Analytics.script_url, data: { domain: Analytics.domain }) if Analytics.script_url && content_for?(:analytics) %><%# MKT-04 %>
   </head>
   <body class="bg-surface text-body">
+    <%= render "layouts/impersonation_banner" %>
     <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 btn btn-secondary">Skip to content</a>
     <%= render "shared/marketing/navigation" %>
     <main id="main">

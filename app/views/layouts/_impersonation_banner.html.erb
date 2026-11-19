@@ -1,0 +1,20 @@
+<%# OPS-03: on every page while an operator views the app as a member. %>
+<% if (imp = impersonation) %>
+  <div class="sticky top-0 z-[150] border-b-2 border-amber-600 bg-amber-300 text-ink" role="region" aria-label="Viewing as a member" id="impersonation-banner">
+    <div class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2 text-sm">
+      <p class="min-w-0 flex-1">
+        <strong>Viewing as <%= imp.user.full_name %></strong> (<%= imp.membership.role_name %>, <%= imp.business.name %>)
+        · <strong id="impersonation-mode"><%= imp.read_only? ? "Read-only" : "Changes allowed" %></strong>
+        · by <span class="break-all"><%= true_user.email %></span>, ends after <%= Impersonation::IDLE_TIMEOUT.in_minutes.to_i %> minutes idle
+      </p>
+      <div class="flex shrink-0 gap-2">
+        <% if imp.read_only? %>
+          <%= link_to "Allow changes", edit_ops_impersonation_path, class: button_classes(:secondary, :sm) %>
+        <% else %>
+          <%= button_to "Back to read-only", ops_impersonation_path, method: :patch, params: { mode: "read_only" }, class: button_classes(:secondary, :sm) %>
+        <% end %>
+        <%= button_to "Stop", ops_impersonation_path, method: :delete, class: button_classes(:danger_solid, :sm), form: { data: { turbo: false } } %>
+      </div>
+    </div>
+  </div>
+<% end %>
