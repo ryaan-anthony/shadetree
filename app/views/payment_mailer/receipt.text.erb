@@ -1,5 +1,6 @@
-Thank you. We've received your payment.
-
+<% if @intro %><%= @intro %>
+<% else %>Thank you. We've received your payment.
+<% end %>
 Invoice <%= @invoice.number %><%= " - #{@invoice.title}" if @invoice.title %>
 <%= money(@payment.amount) %>: <%= @payment.method_label %><%= " #{@payment.reference}" if @payment.reference %>, received <%= l(@payment.received_on) %>
 <%= @balance.zero? ? "Paid in full" : "#{money(@balance)} left to pay" %>

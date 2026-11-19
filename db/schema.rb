@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_19_000700) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_19_001600) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -557,6 +557,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_000700) do
     t.check_constraint "status::text = ANY (ARRAY['unscheduled'::character varying, 'scheduled'::character varying, 'in_progress'::character varying, 'completed'::character varying, 'cancelled'::character varying]::text[])", name: "jobs_status"
   end
 
+  create_table "message_templates", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.string "kind"
+    t.string "name"
+    t.string "subject", null: false
+    t.text "body", null: false
+    t.bigint "updated_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "kind"], name: "index_message_templates_on_business_id_and_kind", unique: true, where: "(kind IS NOT NULL)"
+    t.index ["business_id"], name: "index_message_templates_on_business_id"
+    t.index ["uid"], name: "index_message_templates_on_uid", unique: true
+    t.index ["updated_by_id"], name: "index_message_templates_on_updated_by_id"
+  end
+
   create_table "notifications", force: :cascade do |t|
     t.bigint "business_id", null: false
     t.bigint "user_id", null: false
@@ -1022,6 +1038,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_000700) do
   add_foreign_key "jobs", "users", column: "cancelled_by_id", on_delete: :nullify
   add_foreign_key "jobs", "users", column: "completed_by_id", on_delete: :nullify
   add_foreign_key "jobs", "users", column: "created_by_id", on_delete: :nullify
+  add_foreign_key "message_templates", "businesses"
+  add_foreign_key "message_templates", "users", column: "updated_by_id"
   add_foreign_key "notifications", "businesses", on_delete: :cascade
   add_foreign_key "notifications", "users", column: "actor_id", on_delete: :nullify
   add_foreign_key "notifications", "users", on_delete: :cascade

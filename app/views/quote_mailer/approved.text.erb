@@ -1,7 +1,8 @@
-Thanks, <%= @approval.signer_name %>. You're all set.
+<% if @intro %><%= @intro %>
+<% else %>Thanks, <%= @approval.signer_name %>. You're all set.
 
 <%= @business.quote_next_steps %>
-
+<% end %>
 Quote <%= @quote.number %><%= " - #{@quote.title}" if @quote.title %>
 Total: <%= money(@quote.totals.total) %>
 Approved <%= l(@approval.created_at.in_time_zone(@business.time_zone), format: :long) %>, reference <%= @approval.reference %>

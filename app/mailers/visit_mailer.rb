@@ -12,14 +12,18 @@ class VisitMailer < ClientMailer
       visit = visits[change["visit_id"]] or next
       Item.new(visit, change["kind"], change["before"], change["when"] || visit.when_label, visit.client_link!)
     end
-    client_mail subject: self.class.update_subject(@items)
+    kinds = @items.map(&:kind).uniq
+    kind = kinds.one? ? "visit_#{kinds.first}" : "visit_changed" # mixed changes use the "moved" wording
+    subject = custom_subject(kind, MessageTemplate::Values.visit(@job, @items.first&.when)) if @items.any?
+    client_mail subject: subject || self.class.update_subject(@items)
   end
 
   def reminder
     @job = Job.includes(:client, :property).find(params[:job_id])
     visit = @job.visits.find(params[:visit_id])
     @items = [ Item.new(visit, "reminder", nil, visit.when_label, visit.client_link!) ]
-    client_mail subject: "Reminder: your visit tomorrow, #{visit.when_label}"
+    subject = custom_subject("visit_reminder", MessageTemplate::Values.visit(@job, visit.when_label))
+    client_mail subject: subject || "Reminder: your visit tomorrow, #{visit.when_label}"
   end
 
   def self.update_subject(items)

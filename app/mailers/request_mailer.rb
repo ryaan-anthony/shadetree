@@ -4,6 +4,7 @@
 class RequestMailer < ClientMailer
   def received
     @request = ServiceRequest.find(params[:request_id])
-    client_mail subject: "#{@business.name} received your request"
+    subject = custom_subject("request_received", MessageTemplate::Values.request(@request))
+    client_mail subject: subject || "#{@business.name} received your request"
   end
 end

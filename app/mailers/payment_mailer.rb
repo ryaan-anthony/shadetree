@@ -10,6 +10,7 @@ class PaymentMailer < ClientMailer
     paid = @invoice.payments.unscope(:order).where(id: ..@payment.id).sum(:amount_cents)
     @balance = Money.new([ @invoice.total_cents - paid, 0 ].max, @invoice.currency)
     @link = @invoice.client_link!
-    client_mail subject: "Receipt for invoice #{@invoice.number} from #{@business.name}"
+    subject = custom_subject("payment_receipt", MessageTemplate::Values.invoice(@invoice, link: @link, balance: @balance))
+    client_mail subject: subject || "Receipt for invoice #{@invoice.number} from #{@business.name}"
   end
 end

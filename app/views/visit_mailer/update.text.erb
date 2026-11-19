@@ -1,9 +1,10 @@
 <% kinds = @items.map(&:kind).uniq %>
 <% labels = { "scheduled" => "Booked", "changed" => "Moved", "cancelled" => "Cancelled" } %>
-Hi <%= @job.client.display_name %>,
+<% if @intro %><%= @intro %>
+<% else %>Hi <%= @job.client.display_name %>,
 
 <% if kinds == [ "scheduled" ] %><%= @items.one? ? "Your visit is booked." : "Your visits are booked." %> We'll see you then.<% elsif kinds == [ "changed" ] %><%= @items.one? ? "Your visit has moved." : "Your visits have moved." %> Here's when we'll be there now.<% elsif kinds == [ "cancelled" ] %><%= @items.one? ? "Your visit is cancelled." : "Your visits are cancelled." %> Get in touch if you'd like to book another time.<% else %>Your visits have changed. Here's where things stand.<% end %>
-<% @items.each do |item| %>
+<% end %><% @items.each do |item| %>
 
 <%= labels.fetch(item.kind) %>: <%= item.when %>
 <% if item.before %>Was <%= item.before %>

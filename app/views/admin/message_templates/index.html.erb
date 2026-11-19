@@ -1,0 +1,27 @@
+<%= render "admin/businesses/settings_header", current: "messages" %>
+
+<div class="max-w-3xl space-y-4">
+  <% unless @editable %>
+    <div class="banner banner-info" role="status"><%= icon "info" %>
+      <p>Editing messages is part of a paid plan. <%= link_to "See plans", admin_plan_path, class: "font-semibold underline" %><%= ". Messages you've already customized keep sending as they are." if @templates.any? %></p>
+    </div>
+  <% end %>
+  <%= card title: "Emails to clients", subtitle: "Change the subject and opening words so they sound like you. Your logo, the summary, the button to their page and your contact details are always included.", flush: true do %>
+    <ul class="list">
+      <% MessageTemplate::DEFINITIONS.each_value do |definition| %>
+        <% entry = EmailCatalog.find(definition.kind) %>
+        <% template = @templates[definition.kind] %>
+        <li id="message-<%= definition.kind %>">
+          <div class="min-w-0 flex-1">
+            <p class="font-semibold text-ink">
+              <%= link_to entry.name, edit_admin_message_template_path(definition.kind), class: "hover:underline" %>
+              <% if template %><%= badge "Customized", tone: :info, dot: false %><% end %>
+            </p>
+            <p class="text-sm2 text-muted"><%= definition.hint %></p>
+          </div>
+          <%= link_to (@editable ? "Edit" : "View"), edit_admin_message_template_path(definition.kind), class: button_classes(:secondary, :sm) %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</div>

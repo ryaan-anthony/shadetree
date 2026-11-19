@@ -26,7 +26,8 @@ class QuoteMailer < ClientMailer
     @link = @approval.client_link&.usable? ? @approval.client_link : @quote.client_link!
     pdf = @quote.current_pdf
     attachments[@quote.pdf_filename] = { mime_type: "application/pdf", content: pdf.is_a?(ActiveStorage::Blob) ? pdf.download : pdf }
-    client_mail subject: "You approved quote #{@quote.number} from #{@business.name}"
+    values = MessageTemplate::Values.quote(@quote, link: @link).merge("signer_name" => @approval.signer_name)
+    client_mail subject: custom_subject("quote_approved", values) || "You approved quote #{@quote.number} from #{@business.name}"
   end
 
   def self.default_subject(quote) = "Quote #{quote.number} from #{quote.business.name}#{": #{quote.title}" if quote.title}"

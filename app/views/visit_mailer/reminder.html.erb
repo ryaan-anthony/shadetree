@@ -1,4 +1,8 @@
+<% if @intro %>
+<%= render "client_mailer/intro", text: @intro %>
+<% else %>
 <p style="margin:0 0 12px;">Hi <%= @job.client.display_name %>,</p>
 <p style="margin:0 0 16px;">A reminder that <%= @business.name %> is coming tomorrow.</p>
+<% end %>
 <%= render "visit_mailer/items", items: @items, job: @job %>
 <p style="margin:16px 0 0;font-size:13px;color:#64748b;">Need to change it? Reply to this email<%= " or call #{@business.phone}" if @business.phone.present? %>.</p>

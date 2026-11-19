@@ -1,8 +1,9 @@
 <% item = @items.first %>
-Hi <%= @job.client.display_name %>,
+<% if @intro %><%= @intro %>
+<% else %>Hi <%= @job.client.display_name %>,
 
 A reminder that <%= @business.name %> is coming tomorrow.
-
+<% end %>
 <%= item.visit.when_label %>
 <%= @job.title %><%= " - #{@job.property.one_line}" if @job.property %>
 <% if item.visit.client_note.present? %><%= item.visit.client_note %>
