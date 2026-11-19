@@ -26,14 +26,14 @@ related documents, balance and a chronological timeline.
 - [ ] The client page lists the client's requests, quotes, jobs (with next visit) and invoices
       with status and amounts, each linking to the record.
 - [ ] Outstanding balance and lifetime paid are shown.
-- [x] A timeline shows key events newest first: request received, quote sent/viewed/approved/
+- [ ] A timeline shows key events newest first: request received, quote sent/viewed/approved/
       declined, visit scheduled/completed, invoice sent/paid, payments recorded, notes added —
       with who/when.
 - [ ] Staff can add a free-text note to the timeline; notes are editable by their author.
 - [x] The timeline is paginated and fast for long-standing clients.
 - [x] Events are recorded by the owning features at the time they happen (a shared way to record
       an event exists for later specs to reuse).
-- [ ] Role and tenancy tests exist.
+- [x] Role and tenancy tests exist.
 
 ## Out of scope
 
@@ -52,6 +52,10 @@ related documents, balance and a chronological timeline.
   mail server. The client page shows them newest first, 25 at a time ("Show older" appends the
   next page with a turbo stream), with one query for the page plus preloads, on an index of
   (business, client, time, id).
+- Corrections show too: a payment changed or deleted, an invoice no longer paid in full, a visit
+  reopened or cancelled (a booked visit that has moved says where it is now). A client's own
+  answer to a quote names them; one staff recorded says so. Bounces don't copy the address.
+  "Opened" is once per document, however many links. The page cursor is the event's uid.
 - Events start when this ships: history from before isn't backfilled (pre-launch data only).
 - Part 2: notes (added by staff, editable by their author), the lists' next visits and
   lifetime paid.

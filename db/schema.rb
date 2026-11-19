@@ -162,6 +162,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_000300) do
 
   create_table "client_events", force: :cascade do |t|
     t.bigint "business_id", null: false
+    t.string "uid", null: false
     t.bigint "client_id", null: false
     t.string "kind", null: false
     t.string "subject_type"
@@ -171,6 +172,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_000300) do
     t.datetime "occurred_at", null: false
     t.datetime "created_at", null: false
     t.index ["business_id", "client_id", "occurred_at", "id"], name: "index_client_events_timeline", order: { occurred_at: :desc, id: :desc }
+    t.index ["business_id", "uid"], name: "index_client_events_on_business_id_and_uid", unique: true
     t.index ["subject_type", "subject_id"], name: "index_client_events_on_subject_type_and_subject_id"
   end
 
@@ -927,9 +929,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_000300) do
   add_foreign_key "catalog_items", "catalog_categories", column: "category_id", on_delete: :nullify
   add_foreign_key "client_contact_methods", "businesses", on_delete: :cascade
   add_foreign_key "client_contact_methods", "clients", on_delete: :cascade
-  add_foreign_key "client_events", "businesses"
-  add_foreign_key "client_events", "clients"
-  add_foreign_key "client_events", "users"
+  add_foreign_key "client_events", "businesses", on_delete: :cascade
+  add_foreign_key "client_events", "clients", on_delete: :cascade
+  add_foreign_key "client_events", "users", on_delete: :nullify
   add_foreign_key "client_link_events", "businesses", on_delete: :cascade
   add_foreign_key "client_link_events", "client_links", on_delete: :cascade
   add_foreign_key "client_links", "businesses", on_delete: :cascade

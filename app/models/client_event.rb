@@ -9,7 +9,8 @@ class ClientEvent < ApplicationRecord
   include BusinessOwned
 
   KINDS = %w[request_received quote_sent quote_viewed quote_approved quote_declined quote_changes_requested
-             visit_scheduled visit_completed invoice_sent invoice_viewed invoice_paid payment_recorded
+             visit_scheduled visit_completed visit_reopened visit_cancelled
+             invoice_sent invoice_viewed invoice_paid invoice_unpaid payment_recorded payment_changed payment_deleted
              email_bounced note_added].freeze
   PAGE_SIZE = 25
 
@@ -31,7 +32,7 @@ class ClientEvent < ApplicationRecord
   # A page of a client's events, newest first, after `before` (the last one shown), and
   # whether there are more.
   def self.page_for(client, before: nil)
-    scope = client.events.timeline.includes(:user, :subject)
+    scope = client.events.timeline.includes(:user, :subject, :client)
     scope = scope.where("(client_events.occurred_at, client_events.id) < (?, ?)", before.occurred_at, before.id) if before
     events = scope.limit(PAGE_SIZE + 1).to_a
     subjects = events.filter_map(&:subject)

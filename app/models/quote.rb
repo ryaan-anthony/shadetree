@@ -209,7 +209,7 @@ class Quote < ApplicationRecord
       # validations aren't re-run (a rule added since mustn't block the client's answer).
       self.status = kind
       save!(validate: false)
-      ClientEvent.record!(client, "quote_#{kind}", subject: self, by:, revision:) # CLI-05
+      ClientEvent.record!(client, "quote_#{kind}", subject: self, by:, revision:, via: link && !by ? "client" : "staff") # CLI-05
       response
     end.tap { create_job_after_approval(by) if kind == "approved" }
   end

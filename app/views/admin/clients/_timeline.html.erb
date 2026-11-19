@@ -1,6 +1,5 @@
-<%# locals: (client:) -%>
+<%# locals: (client:, events:, more:) -%>
 <%# CLI-05: everything that's happened with the client, newest first, a page at a time. %>
-<% events, more = ClientEvent.page_for(client) %>
 <%= card title: "Timeline", flush: true do %>
   <% if events.any? %>
     <ol class="list" id="client-timeline"><%= render "admin/clients/timeline_events", events: %></ol>
