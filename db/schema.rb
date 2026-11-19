@@ -951,9 +951,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_000400) do
   add_foreign_key "client_links", "businesses", on_delete: :cascade
   add_foreign_key "client_links", "users", column: "created_by_id", on_delete: :nullify
   add_foreign_key "client_links", "users", column: "revoked_by_id", on_delete: :nullify
-  add_foreign_key "client_notes", "businesses"
-  add_foreign_key "client_notes", "clients"
-  add_foreign_key "client_notes", "users"
+  add_foreign_key "client_notes", "businesses", on_delete: :cascade
+  add_foreign_key "client_notes", "clients", on_delete: :cascade
+  add_foreign_key "client_notes", "users", on_delete: :nullify
   add_foreign_key "clients", "businesses", on_delete: :cascade
   add_foreign_key "closures", "businesses", on_delete: :cascade
   add_foreign_key "document_sequences", "businesses"

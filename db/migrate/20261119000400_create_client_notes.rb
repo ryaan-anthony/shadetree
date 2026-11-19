@@ -2,10 +2,10 @@
 class CreateClientNotes < ActiveRecord::Migration[8.1]
   def change
     create_table :client_notes do |t|
-      t.references :business, null: false, foreign_key: true, index: false
+      t.references :business, null: false, foreign_key: { on_delete: :cascade }, index: false
       t.string :uid, null: false
-      t.references :client, null: false, foreign_key: true
-      t.references :user, foreign_key: true
+      t.references :client, null: false, foreign_key: { on_delete: :cascade }
+      t.references :user, foreign_key: { on_delete: :nullify }
       t.text :body, null: false
       t.datetime :edited_at
       t.timestamps

@@ -6,7 +6,8 @@ class ClientNote < ApplicationRecord
   belongs_to :user, optional: true
   has_one :event, -> { where(kind: "note_added") }, class_name: "ClientEvent", as: :subject, dependent: :delete
 
-  normalizes :body, with: ->(value) { value.to_s.strip }
+  # Line breaks as the browser counts them (one character), so its length limit matches ours.
+  normalizes :body, with: ->(value) { value.to_s.gsub("\r\n", "\n").strip }
   validates :body, presence: { message: "can't be empty" }, length: { maximum: 5_000 }
 
   after_create { ClientEvent.record!(client, :note_added, subject: self, by: user) }

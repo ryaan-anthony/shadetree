@@ -31,7 +31,18 @@ class Admin::ClientNotesTest < ActionDispatch::IntegrationTest
     assert_select "#client-timeline li", /Gate code is on file.*edited/m
 
     post admin_client_notes_path(@maria), params: { client_note: { body: " " } }
-    assert_match "can't be empty", flash[:alert]
+    assert_response :unprocessable_content
+    assert_select ".field", /can't be empty/
+    long = Array.new(50) { "x" * 99 }.join("\r\n") # 4,999 characters as the browser counts them
+    post admin_client_notes_path(@maria), params: { client_note: { body: long } }
+    assert_response :redirect
+    patch admin_client_note_path(@maria, note), params: { client_note: { body: "Gate code is on file" } }
+    assert_equal 1, as_business(@business) { note.reload.edited_at ? 1 : 0 }
+    edited = as_business(@business) { note.reload.edited_at }
+    travel 1.minute do
+      patch admin_client_note_path(@maria, note), params: { client_note: { body: "Gate code is on file" } }
+    end
+    assert_equal edited, as_business(@business) { note.reload.edited_at }, "unchanged isn't an edit"
 
     admin = member_with_role("admin", business: @business)
     sign_in admin
@@ -70,5 +81,27 @@ class Admin::ClientNotesTest < ActionDispatch::IntegrationTest
     get admin_client_path(@maria)
     assert_select "li", /Spring cleanup.*Next visit/m
     assert_select "#client-lifetime-paid", /Paid in all: \$75\.00/
+
+    as_business(@business) do
+      job = Job.create!(client: @maria, title: "Gutters", line_items_attributes: [ { name: "Gutters", quantity: 1, unit_price: "50" } ])
+      job.visits.new(scheduled_on: @business.today + 2, timing: "anytime").tap { _1.schedule!(by: @owner, notify_client: false) }
+      job.visits.new(scheduled_on: @business.today + 9, timing: "anytime").tap { _1.schedule!(by: @owner, notify_client: false) }
+      job.visits.first.update_columns(scheduled_on: @business.today - 2)
+    end
+    get admin_client_path(@maria)
+    assert_select "li .text-danger", /Overdue visit/
+  end
+
+  test "a note by someone who left still shows, and nobody can edit it; notes are escaped on the next page too" do
+    leaver = member_with_role("admin", business: @business)
+    note = as_business(@business) { @maria.timeline_notes.create!(business: @business, user: leaver, body: "<script>x</script>") }
+    BusinessUser.where(user: leaver).update_all(active: false)
+    as_business(@business) { 30.times { |i| ClientEvent.record!(@maria, :visit_cancelled, when: "d#{i}", at: (i + 1).days.from_now) } }
+    get admin_client_path(@maria)
+    last = as_business(@business) { @maria.events.timeline.offset(ClientEvent::PAGE_SIZE - 1).first }
+    get timeline_admin_client_path(@maria, before: last.uid), headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_match "&lt;script&gt;x&lt;/script&gt;", response.body
+    assert_match leaver.full_name, response.body
+    assert_no_match edit_admin_client_note_path(@maria, note), response.body
   end
 end

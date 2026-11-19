@@ -7,18 +7,20 @@ class Admin::ClientNotesController < Admin::BaseController
   before_action :set_note, only: %i[edit update]
 
   def create
-    @note = @client.timeline_notes.new(business: current_business, user: current_user, body: params.dig(:client_note, :body))
+    @note = @client.timeline_notes.new(business: current_business, user: current_user, body: note_body)
     if @note.save
       redirect_to admin_client_path(@client, anchor: "client-timeline"), notice: "Note added."
     else
-      redirect_to admin_client_path(@client), alert: "Note #{@note.errors[:body].first}."
+      render :new, status: :unprocessable_content # keeps what was typed
     end
   end
 
   def edit; end
 
   def update
-    if @note.update(body: params.dig(:client_note, :body), edited_at: Time.current)
+    @note.body = note_body
+    @note.edited_at = Time.current if @note.body_changed?
+    if @note.save
       redirect_to admin_client_path(@client, anchor: "client-event-#{@note.event&.id}"), notice: "Note saved."
     else
       render :edit, status: :unprocessable_content
@@ -28,6 +30,7 @@ class Admin::ClientNotesController < Admin::BaseController
   private
 
   def set_client = @client = Client.find_by_param!(params[:client_id])
+  def note_body = params.expect(client_note: [ :body ])[:body]
 
   def set_note
     @note = @client.timeline_notes.find_by_param!(params[:id])
