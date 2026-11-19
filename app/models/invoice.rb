@@ -8,6 +8,7 @@
 # business's today. Each change of status is recorded as an InvoiceEvent.
 class Invoice < ApplicationRecord
   include BusinessOwned
+  include AtLocation # CAT-07
   include PricedDocument
   include BuiltDocument
   include DocumentAttachments
@@ -59,8 +60,8 @@ class Invoice < ApplicationRecord
   # A new draft for a client, with the business's defaults (terms, due date, taxes).
   class NotApproved < StandardError; end
 
-  def self.start(client:, property: nil, created_by: nil)
-    transaction { create!(client:, property: property || client.primary_property, created_by:).tap { _1.record!(:created, by: created_by) } }
+  def self.start(client:, property: nil, created_by: nil, location: nil)
+    transaction { create!(client:, property: property || client.primary_property, created_by:, location:).tap { _1.record!(:created, by: created_by) } }
   end
 
   # PAY-01: the job's work, billed: its client, property, items, discount and taxes. The job's
@@ -472,4 +473,6 @@ class Invoice < ApplicationRecord
     errors.add(:job, "must be for the same client") if job && job.client_id != client_id
     errors.add(:quote, "must be for the same client") if quote && quote.client_id != client_id
   end
+
+  def location_source = job || quote
 end

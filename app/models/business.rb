@@ -130,6 +130,11 @@ class Business < ApplicationRecord
   # Address lines as they appear on documents, skipping blanks.
   def address_lines = AddressLines.for(self)
 
+  # Who clients deal with (CAT-07): a Location answers the same, for its documents.
+  def contact_label = nil
+  def contact_phone = phone
+  def contact_email = email
+
   # CAT-07: the location the profile describes, made with the business.
   def primary_location
     @primary_location ||= Tenancy.with_business(self) { Location.find_by(primary: true) }&.tap { _1.association(:business).target = self }

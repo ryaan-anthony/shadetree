@@ -11,6 +11,8 @@ class Payment < ApplicationRecord
 
   belongs_to_business_record :invoice
   belongs_to :recorded_by, class_name: "User", optional: true
+
+  def contact = invoice.contact # CAT-07: receipts come from the invoice's location
   has_many :email_messages, as: :related, dependent: :nullify # its receipt
 
   # The invoice's currency, set before the amount is read (it can be assigned first).

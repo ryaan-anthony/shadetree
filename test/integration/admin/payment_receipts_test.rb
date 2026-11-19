@@ -26,6 +26,18 @@ class Admin::PaymentReceiptsTest < ActionDispatch::IntegrationTest
                                                           payment: { amount:, received_on: @business.today.iso8601, payment_method: "check", reference: "1042" } }
   end
 
+  test "a receipt comes from the invoice's location (CAT-07)" do
+    @business.update!(plan_overrides: { "features" => { "locations" => true } })
+    as_business(@business) do
+      north = Location.create!(name: "North yard", email: "north@example.com", phone: "555-0177")
+      @invoice.update_columns(location_id: north.id)
+    end
+    perform_enqueued_jobs { record("50") }
+    mail = ActionMailer::Base.deliveries.last
+    assert_equal [ "north@example.com" ], mail.reply_to
+    assert_includes mail.text_part.body.to_s, "North yard"
+  end
+
   test "ticking the box emails the client a receipt with what's left; it shows on the payment" do
     get new_admin_invoice_payment_path(@invoice)
     assert_select "input[type=checkbox][name=send_receipt]:not([checked])"

@@ -1,0 +1,8 @@
+<%# locals: (f:, document:, help: nil) -%>
+<%# CAT-07: which location a document belongs to; only with more than one location. An archived
+    location stays listed on a document that's already there. %>
+<% if current_business.multiple_locations? %>
+  <% locations = current_business.active_locations %>
+  <% locations += [ document.location ] if document.location&.archived? %>
+  <%= f.field :location, as: :select, choices: options_for_select(locations.map { [ _1.name, _1.uid ] }, document.location&.uid), help: %>
+<% end %>

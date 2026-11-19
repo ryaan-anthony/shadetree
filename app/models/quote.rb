@@ -7,6 +7,7 @@
 # columns are a cache for lists, refreshed on every save.
 class Quote < ApplicationRecord
   include BusinessOwned
+  include AtLocation # CAT-07
   include PricedDocument
   include BuiltDocument
   include DocumentAttachments
@@ -171,7 +172,7 @@ class Quote < ApplicationRecord
   def duplicate!(client: self.client, by: nil)
     same_client = client.id == client_id
     transaction do
-      copy = Quote.start(client:, property: (property if same_client), created_by: by)
+      copy = Quote.start(client:, property: (property if same_client), created_by: by, location: (location unless location.archived?))
       copy.assign_attributes(title:, terms:, prices_include_tax:, discount_kind:, discount_percent:, discount_amount_cents:)
       copy.assign_attributes(message:, internal_notes:) if same_client
       copy.sync_line_items(BuiltDocument.rows_from(current_line_items))
@@ -315,8 +316,8 @@ class Quote < ApplicationRecord
 
   # Starts a draft for a client with the business's defaults: next number, expiry, terms,
   # and the tax rates new documents get (none for a tax-exempt client).
-  def self.start(client:, property: nil, created_by: nil)
-    create!(client:, property: property || client.billing_property || client.properties.first, created_by:)
+  def self.start(client:, property: nil, created_by: nil, location: nil)
+    create!(client:, property: property || client.billing_property || client.properties.first, created_by:, location:)
   end
 
   private
@@ -350,4 +351,6 @@ class Quote < ApplicationRecord
   def property_belongs_to_client
     errors.add(:property, "must be one of this client's properties") if property && client && property.client_id != client.id
   end
+
+  def location_source = service_request
 end

@@ -2,7 +2,7 @@
 <% invoice = @invoice %>
 <% totals = invoice.totals %>
 <% content_for :title, "Invoice #{invoice.number}" %>
-<%= page_header "Invoice #{invoice.number}", lede: safe_join([ "For ", link_to(invoice.client.display_name, admin_client_path(invoice.client), class: "font-medium text-ink hover:underline") ]) do %>
+<%= page_header "Invoice #{invoice.number}", lede: safe_join([ "For ", link_to(invoice.client.display_name, admin_client_path(invoice.client), class: "font-medium text-ink hover:underline"), location_badge(invoice) ].compact) do %>
   <% if invoice.payable? %>
     <%= link_to new_admin_invoice_payment_path(invoice), class: button_classes(:primary) do %><%= icon "dollar-sign" %> Record payment<% end %>
   <% end %>

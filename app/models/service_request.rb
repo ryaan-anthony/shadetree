@@ -4,6 +4,7 @@
 # never changes that client's details.
 class ServiceRequest < ApplicationRecord
   include BusinessOwned
+  include AtLocation # CAT-07
 
   STATUSES = %w[new in_progress quoted archived].freeze
   SOURCES = %w[form phone email walk_in other].freeze
@@ -69,7 +70,7 @@ class ServiceRequest < ApplicationRecord
     transaction do
       lock!
       property = self.property || property_matching_address
-      quote = Quote.start(client:, property:, created_by: by)
+      quote = Quote.start(client:, property:, created_by: by, location:)
       items = CatalogItem.where(id: services.map { _1["catalog_item_id"] }).index_by(&:id)
       quote.sync_line_items(services.each_with_index.map do |service, index|
         item = items[service["catalog_item_id"]]

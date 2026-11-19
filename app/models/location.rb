@@ -40,8 +40,10 @@ class Location < ApplicationRecord
 
   # Where clients reach this location. The primary location's come from the business profile.
   def address_lines = primary? ? business.address_lines : AddressLines.for(self)
-  def contact_phone = primary? ? business.phone : phone
-  def contact_email = primary? ? business.email : email.presence || business.email
+  def contact_phone = primary? ? business.phone : phone || business.phone
+  def contact_email = primary? ? business.email : email || business.email
+  # Named beside the business's name only while it has several locations.
+  def contact_label = (name if business.multiple_locations?)
 
   # Time zone, hours and closures: the business's for the primary location (CAT-06).
   def time_zone = (primary? || timezone.blank? ? business.time_zone : ActiveSupport::TimeZone[timezone]) || business.time_zone

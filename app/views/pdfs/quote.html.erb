@@ -1,7 +1,7 @@
 <%# The quote PDF (QTE-02): the business's letterhead, then the same document the client page
     shows (client/quotes/_document), so the two never drift. %>
 <% content_for :title, "Quote #{@quote.number}" %>
-<%= render "pdfs/letterhead", business: @business %>
+<%= render "pdfs/letterhead", business: @business, contact: @quote.contact %>
 
 <article class="quote-doc">
   <%= render "client/quotes/document", quote: @quote, pdf: true %>

@@ -22,6 +22,8 @@ class Visit < ApplicationRecord
 
   belongs_to_business_record :job
   belongs_to :created_by, class_name: "User", optional: true
+
+  def contact = job.contact # CAT-07: the job's location, for client pages and emails
   has_many :assignments, class_name: "VisitAssignment", inverse_of: :visit, dependent: :delete_all
   has_many :assignees, -> { order(:first_name, :last_name, :email) }, through: :assignments, source: :user
   has_many :events, -> { order(:occurred_at, :id) }, class_name: "VisitEvent", inverse_of: :visit, dependent: :delete_all

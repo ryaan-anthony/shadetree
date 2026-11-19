@@ -72,6 +72,7 @@
         <%= f.field :title, optional: true, placeholder: "Spring cleanup", maxlength: 120, help: "Shown at the top of the quote." %>
         <%= f.field :expires_on, as: :date, label: "Valid until", optional: true %>
       </div>
+      <div class="mt-4 empty:hidden"><%= render "admin/locations/field", f:, document: @quote, help: "The client sees this location's contact details." %></div>
     <% end %>
 
     <%= card title: "Items", flush: true do %>

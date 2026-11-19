@@ -72,6 +72,7 @@
         <%= f.field :title, optional: true, placeholder: "Spring cleanup", maxlength: 120, help: "Shown at the top of the invoice." %>
         <%= f.field :issued_on, as: :date, label: "Issue date" %>
       </div>
+      <div class="mt-4 empty:hidden"><%= render "admin/locations/field", f:, document: @invoice, help: "The client sees this location's contact details." %></div>
       <div class="mt-4"><%= render "due", invoice: @invoice %></div>
     <% end %>
 

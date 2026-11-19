@@ -45,6 +45,7 @@ class ClientMailer < ApplicationMailer
     @branding = @business.branding
     Tenancy.with_business(@business) do
       @email_message = EmailMessage.find_by(id: params[:email_message_id])
+      @contact = @email_message&.related.try(:contact) || @business # CAT-07: the document's location
       yield
     end
   end
@@ -68,7 +69,7 @@ class ClientMailer < ApplicationMailer
 
     headers["X-Shadetree-Email"] = @email_message&.uid
     mail(to:, subject:, from: email_address_with_name(self.class.sending_address, "#{@business.name} via Shadetree"),
-         reply_to: @business.email.presence, **options)
+         reply_to: @contact.contact_email.presence, **options)
   end
 
   def record_sent

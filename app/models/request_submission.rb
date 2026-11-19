@@ -23,6 +23,7 @@ class RequestSubmission
   attribute :postal_code, :string
   attribute :description, :string
   attribute :timing, :string
+  attribute :location, :string # CAT-07: a location's uid, from its own link or the client's choice
   attr_accessor :business, :service_ids, :photos
 
   validates :name, presence: { message: "Tell us your name." }, length: { maximum: 120 }
@@ -36,6 +37,7 @@ class RequestSubmission
   validate :phone_is_a_phone_number
   validate :something_to_quote
   validate :photos_are_allowed
+  validate { errors.add(:location, "Choose one of the locations listed.") if location.present? && chosen_location.nil? }
 
   def initialize(business:, **attributes)
     super(**attributes)
@@ -49,6 +51,9 @@ class RequestSubmission
 
   def services = self.class.offered_services.where(uid: service_ids).to_a
 
+  # CAT-07: the location the request is for; none chosen means the main location.
+  def chosen_location = (@chosen_location ||= Location.active.find_by(uid: location.to_s) if location.present?)
+
   # The saved request, or false.
   def save
     return false unless valid?
@@ -57,7 +62,7 @@ class RequestSubmission
       matched = matching_client
       client = matched || new_client
       property = matched ? existing_property(matched) : client.properties.first
-      request = ServiceRequest.new(client:, property:, source: "form", description:, timing:, address: typed_address,
+      request = ServiceRequest.new(client:, property:, source: "form", location: chosen_location, description:, timing:, address: typed_address,
                                    services: services.map { { "catalog_item_id" => _1.id, "name" => _1.name } },
                                    contact_name: name, contact_email: email, contact_phone: phone, matched_existing_client: matched.present?)
       @cleaned_photos.each { request.photos.attach(_1) }

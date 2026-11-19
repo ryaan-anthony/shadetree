@@ -16,7 +16,9 @@ class PublicRequestsController < ApplicationController
   around_action :as_business
 
   def new
-    @submission = RequestSubmission.new(business: @business)
+    @submission = RequestSubmission.new(business: @business, location: params[:location].presence)
+    @submission.location = nil unless @submission.chosen_location # an old link to an archived location: let them choose
+    @contact = @submission.chosen_location
   end
 
   def create
@@ -25,6 +27,7 @@ class PublicRequestsController < ApplicationController
     return redirect_to(public_request_sent_path(@business.handle)) if honeypot_filled?
 
     @submission = RequestSubmission.new(business: @business, **submission_params)
+    @contact = @submission.chosen_location
     if (problem = AbuseProtection::PROBLEMS[form_guard_problem(form_purpose)] || limit_problem)
       @submission.photos = [] # not worth processing for a form that goes back anyway
       @submission.valid?
@@ -61,6 +64,6 @@ class PublicRequestsController < ApplicationController
 
   def submission_params
     params.fetch(:request_submission, {}).permit(:name, :email, :phone, :address_line1, :address_line2, :city, :region, :postal_code,
-                                                  :description, :timing, service_ids: [], photos: []).to_h.symbolize_keys
+                                                  :description, :timing, :location, service_ids: [], photos: []).to_h.symbolize_keys
   end
 end

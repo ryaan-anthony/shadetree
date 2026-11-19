@@ -29,6 +29,9 @@ class Admin::BaseController < ApplicationController
     redirect_to(from_setup? ? admin_root_path : default, **options)
   end
 
+  # CAT-07: a location picked on a document form, if it's one new work can go to.
+  def picked_location(uid) = (Location.active.find_by(uid: uid.to_s) if uid.present?)
+
   # Staff pages need a current business; without one, send the user to create it.
   def require_business_setup
     redirect_to new_admin_business_path unless current_business

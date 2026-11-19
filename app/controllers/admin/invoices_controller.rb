@@ -92,6 +92,7 @@ class Admin::InvoicesController < Admin::BaseController
   def preview
     @business = current_business
     @document = @invoice
+    @contact = @invoice.contact # CAT-07
     @preview = true
     render "client_links/show", layout: "client"
   end
@@ -118,7 +119,7 @@ class Admin::InvoicesController < Admin::BaseController
     @owed = scope.owed(today:)
     @total_pages = [ (@total_count.to_f / PER_PAGE).ceil, 1 ].max
     @page = params[:page].to_i.clamp(1, @total_pages)
-    @invoices = scope.includes(:business, :client).order(created_at: :desc, id: :desc).offset((@page - 1) * PER_PAGE).limit(PER_PAGE).to_a
+    @invoices = scope.includes(:business, :client, :location).order(created_at: :desc, id: :desc).offset((@page - 1) * PER_PAGE).limit(PER_PAGE).to_a
     @counts = Invoice.filter_counts(today:) unless request.post? # the tabs (and their counts) are outside the results
     @any_invoices = @total_count.positive? || Invoice.exists?
   end
@@ -131,7 +132,7 @@ class Admin::InvoicesController < Admin::BaseController
 
   def builder_params
     params.require(:invoice).permit(
-      :lock_version, :lines_present, :client, :property, :title, :message, :internal_notes, :terms, :issued_on, :payment_terms, :due_on,
+      :lock_version, :lines_present, :client, :property, :location, :title, :message, :internal_notes, :terms, :issued_on, :payment_terms, :due_on,
       :prices_include_tax, :discount_kind, :discount_value, tax_rates: [], attachments: [], job_photos: [],
       lines: [ %i[key catalog_item name description quantity unit unit_price taxable discount_kind discount_value] ]
     )
@@ -143,6 +144,7 @@ class Admin::InvoicesController < Admin::BaseController
     # An invoice from a job or quote stays with that client; one from scratch can move.
     change_client(attrs[:client]) if attrs[:client].present? && attrs[:client] != @invoice.client.uid && !@invoice.job && !@invoice.quote
     assign_property(attrs[:property]) if attrs.key?(:property)
+    @invoice.location = picked_location(attrs[:location]) || @invoice.location if attrs.key?(:location)
     @invoice.assign_attributes(attrs.slice(:title, :message, :internal_notes, :terms, :issued_on, :payment_terms, :prices_include_tax))
     @invoice.due_on = attrs[:due_on] if attrs[:payment_terms] == "custom" && attrs.key?(:due_on)
     @invoice.set_discount(attrs[:discount_kind], attrs[:discount_value]) if attrs.key?(:discount_kind)

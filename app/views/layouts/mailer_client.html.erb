@@ -3,7 +3,8 @@
     Branding#ink for contrast. Dark mode: color-scheme declares light-only so clients that
     force dark mode keep contrast, and nothing relies on background images. %>
 <% branding = @branding %>
-<% address = @business.address_lines.join(", ") %>
+<% contact = @contact || @business %><%# CAT-07: the location the email is about %>
+<% address = contact.address_lines.join(", ") %>
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -37,8 +38,8 @@
             </tr>
             <tr>
               <td style="padding:18px 4px 4px;font-size:13px;line-height:1.6;color:#475569;">
-                <strong style="color:#0f172a;"><%= @business.name %></strong>
-                <% [ address.presence, @business.phone.presence, @business.email.presence ].compact.each do |line| %><br><%= line %><% end %>
+                <strong style="color:#0f172a;"><%= [ @business.name, contact.contact_label ].compact.join(" · ") %></strong>
+                <% [ address.presence, contact.contact_phone.presence, contact.contact_email.presence ].compact.each do |line| %><br><%= line %><% end %>
               </td>
             </tr>
             <tr>
