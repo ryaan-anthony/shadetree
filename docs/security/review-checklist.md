@@ -16,8 +16,10 @@ the issue named.
 - ✓ Session cookie HTTP-only, `SameSite=Lax`, secure in production; id renewed at sign-in.
 - ✓ Rate limits per IP: sign-in, password reset, confirmation and unlock emails.
 - fixed — sign-up had a per-IP limit but no bot check: now the hidden field and form timing.
-- ✓ Operators (OPS-01): two-factor with attempt limits and lockout, idle timeout, fresh code for
-  access changes.
+- pending #194 — operators (OPS-01, not merged yet): two-factor with attempt limits and
+  lockout, idle timeout, fresh code for access changes. Re-check once merged.
+- ✓ CSRF protection on every form (Rails defaults); the only API controller is the CSP report
+  endpoint, which changes nothing.
 - ticketed — two-factor for business users: backlog (spec out of scope).
 
 ### Authorization and tenancy
@@ -26,9 +28,14 @@ the issue named.
   `Authorization`), and checks use permissions, never role names.
 - ✓ Tenant data is scoped by default (`BusinessOwned`, ADR 0014); the one `unscoped` call
   (`Client` merge) is limited to ids already loaded in the business.
+- ✓ The deliberate escape hatch, `Tenancy.across_businesses`, is used only where a token or job
+  has to find its business first: client links, invitations, the mail delivery job, visit
+  reminders, notification pruning and a search-reindex rake task. Each needs a written reason;
+  the lookups find one record or a list of ids, then work inside that business (pruning old
+  notifications across all businesses is deliberate).
 - ✓ URLs carry opaque ids; another business's records are "not found" (tested with
   `assert_not_found_across_businesses`).
-- ✓ The operator console is "not found" to everyone else, including forged POSTs.
+- pending #194 — the operator console is "not found" to everyone else, including forged POSTs.
 
 ### Mass assignment and injection
 
@@ -39,7 +46,7 @@ the issue named.
 - ✓ Content security policy: no inline scripts or styles without the nonce, no style
   attributes, no framing (PLT-13 part 1).
 - ✓ Redirects: `redirect_back_or_to` only follows same-host referers (Rails' open-redirect
-  protection is on); the operator console returns only to console paths.
+  protection is on).
 
 ### Uploads
 
@@ -60,10 +67,15 @@ the issue named.
 - fixed — invitation tokens were looked up before the rate limit, so guesses weren't counted.
 - fixed — client-link and invitation limits returned a blank 429; now a friendly page with
   `Retry-After` (and `public/429.html` for limits that raise).
-- ✓ Request form: hidden field, form timing, attempts per IP per business, requests per
-  business per hour.
-- ticketed — the contact form stores nothing yet; MKT-02 (#111) builds it with
-  `AbuseProtection` (hidden field, timing, per-IP attempts).
+- ✓ Request form, sign-up and contact form: hidden field, a single-use form token that must be
+  a few seconds old, attempts per IP (and requests per business per hour on the request form).
+  Rejections are logged as `[abuse]`, which is how to tell when a lockdown is needed. Limit: a
+  bot with many IP addresses that waits out the timing gets through at the per-IP rate.
+- ticketed — the contact form says "thank you" but keeps nothing; MKT-02 (#111) builds it.
+- ✓ Per-IP limits rely on `request.remote_ip`: behind kamal-proxy and Thruster it's the
+  client's address and a forged `X-Forwarded-For` is ignored. **If a CDN such as Cloudflare is
+  put in front, set `config.action_dispatch.trusted_proxies` to its ranges**, or every visitor
+  shares the CDN's addresses.
 
 ### Outbound requests (SSRF)
 
@@ -80,7 +92,8 @@ the issue named.
 
 ### Escalation
 
-- If bots get past the public forms: `bin/rails security:lockdown HOURS=24` (or
-  `FORMS_LOCKDOWN=1`) makes public forms wait longer and allow fewer tries per IP. A
-  third-party challenge is the next step, decided then (privacy trade-off).
+- If bots get past the public forms (watch the `[abuse]` log lines): `bin/rails
+  security:lockdown HOURS=24` (or `FORMS_LOCKDOWN=true`) makes public forms wait longer and allow
+  fewer tries per IP. It lives in the cache, so clearing the cache ends it. A third-party
+  challenge is the next step, decided then (privacy trade-off).
 - ticketed — external penetration test after launch (spec out of scope).

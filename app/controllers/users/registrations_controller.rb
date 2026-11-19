@@ -39,7 +39,8 @@ class Users::RegistrationsController < Devise::RegistrationsController
   def guard_sign_up
     return redirect_to(root_path) if honeypot_filled?
 
-    problem = form_guard_problem("sign-up")
+    kind = form_guard_problem("sign-up")
+    problem = "#{"This page was open for a while. " if kind == :expired}Enter your password again, then create your account." if kind
     problem ||= "There have been a lot of sign-ups from your network. Try again in a few minutes." if too_many_attempts?("sign-up", **SIGN_UPS_PER_IP)
     return unless problem
 

@@ -79,11 +79,13 @@ Part 1 (headers, policy, cookies, disclosure):
   emits its `<style>`.
 
 Part 2 (abuse, uploads, review):
-- `AbuseProtection` (in every controller): `too_many_requests` (friendly page, `Retry-After`;
-  `public/429.html` for limits that raise), the hidden field and signed form timing
-  (`shared/_form_guard`), per-IP attempts, and the lockdown (`bin/rails security:lockdown
-  HOURS=`, or `FORMS_LOCKDOWN=1`: 10-second wait, 3 tries per IP per hour). Sign-up and the
-  request form use it; MKT-02 adds the contact form (it stores nothing today).
+- `AbuseProtection` (in every controller): `too_many_requests` (friendly page with the real
+  wait and `Retry-After`; `public/429.html` as a safety net), the hidden field and a signed,
+  single-use form token that must be a few seconds old (a re-shown form keeps its start time),
+  per-IP attempts, logged rejections (`[abuse]`), and the lockdown (`bin/rails
+  security:lockdown HOURS=`, or `FORMS_LOCKDOWN=true`: 10-second wait, 5 tries per IP per 15
+  minutes; kept in the cache). Sign-up, the request form and the contact form use it (MKT-02
+  rebuilds the contact form so it keeps what's sent).
 - Scripts and stylesheets join HTML/SVG/XML in being served as plain-byte downloads.
 - Invitation lookups now count toward the rate limit.
 - The review and its findings: [docs/security/review-checklist.md](../../security/review-checklist.md).

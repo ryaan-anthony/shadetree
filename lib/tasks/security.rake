@@ -8,8 +8,9 @@ namespace :security do
   task lockdown: :environment do
     hours = Float(ENV.fetch("HOURS", "24"))
     AbuseProtection.lockdown!(hours:)
+    tries, within = AbuseProtection::LOCKDOWN_ATTEMPTS
     puts "Public forms are in lockdown for #{hours} hours (#{AbuseProtection::LOCKDOWN_MIN_SECONDS}s wait, " \
-         "#{AbuseProtection::LOCKDOWN_ATTEMPTS.first} tries per IP per hour)."
+         "#{tries} tries per IP per #{within.in_minutes.to_i} minutes). It's kept in the cache: clearing the cache ends it."
   end
 
   desc "End a lockdown early"

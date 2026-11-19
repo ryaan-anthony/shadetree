@@ -57,7 +57,7 @@ class ContactControllerTest < ActionDispatch::IntegrationTest
   # Happy Path Tests - POST
 
   test "should create contact submission with valid params" do
-    post contact_path, params: {
+    post contact_path, params: { **form_guard_params("contact"),
       name: "John Doe",
       email: "john@example.com",
       company: "Test Company",
@@ -70,7 +70,7 @@ class ContactControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should handle submission with minimal params" do
-    post contact_path, params: {
+    post contact_path, params: { **form_guard_params("contact"),
       name: "Jane Smith",
       email: "jane@example.com",
       message: "Quick question"
@@ -83,7 +83,7 @@ class ContactControllerTest < ActionDispatch::IntegrationTest
   # Flash Message Tests
 
   test "should display flash notice after form submission" do
-    post contact_path, params: {
+    post contact_path, params: { **form_guard_params("contact"),
       name: "Test User",
       email: "test@example.com",
       message: "Test"
@@ -101,7 +101,7 @@ class ContactControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create should redirect" do
-    post contact_path, params: {
+    post contact_path, params: { **form_guard_params("contact"),
       name: "Test",
       email: "test@test.com",
       message: "Test"
@@ -119,7 +119,7 @@ class ContactControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create should not require authentication" do
-    post contact_path, params: {
+    post contact_path, params: { **form_guard_params("contact"),
       name: "Test",
       email: "test@test.com",
       message: "Test"
@@ -148,12 +148,12 @@ class ContactControllerTest < ActionDispatch::IntegrationTest
   # Edge Cases
 
   test "should handle empty form submission gracefully" do
-    post contact_path, params: {}
+    post contact_path, params: form_guard_params("contact")
     assert_redirected_to contact_path
   end
 
   test "should handle special characters in message" do
-    post contact_path, params: {
+    post contact_path, params: { **form_guard_params("contact"),
       name: "Test User",
       email: "test@example.com",
       message: "Special chars: <script>alert('test')</script> & symbols"

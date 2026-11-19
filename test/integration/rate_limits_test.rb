@@ -35,8 +35,13 @@ class RateLimitsTest < ActionDispatch::IntegrationTest
       assert_select "h1", /a lot of requests/
       assert_select "a[href=?]", client_link_path(link.token), "Try again"
 
+      assert_equal "same-origin", response.headers["Referrer-Policy"], "client-page headers on the slow-down page too"
+      assert_equal "noindex, nofollow", response.headers["X-Robots-Tag"]
+
       get invitation_path("x" * 32)
       assert_response :too_many_requests, "counted before the token is looked up"
+      assert_equal "600", response.headers["Retry-After"]
+      assert_select "p", /Wait 10 minutes/
     end
   end
 

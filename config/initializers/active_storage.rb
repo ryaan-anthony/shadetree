@@ -10,5 +10,7 @@ end
 # real PDF, so none of these should be stored at all.)
 Rails.application.config.active_storage.content_types_to_serve_as_binary += %w[
   text/javascript application/javascript application/x-javascript application/ecmascript text/ecmascript
+  text/x-javascript application/x-ecmascript text/jscript text/livescript text/javascript1.0 text/javascript1.1
+  text/javascript1.2 text/javascript1.3 text/javascript1.4 text/javascript1.5
   text/css application/json application/wasm
 ]

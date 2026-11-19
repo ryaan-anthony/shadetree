@@ -1,6 +1,7 @@
 <% content_for :title, "Too many requests" %>
 <main id="main" class="mx-auto flex min-h-[60vh] max-w-md flex-col justify-center px-4 py-12 text-center">
   <h1 class="text-xl font-bold text-ink">That was a lot of requests in a short time</h1>
-  <p class="mt-2 text-sm text-subtle">Wait a minute, then try again.</p>
-  <p class="mt-6"><%= link_to "Try again", (request.get? ? request.fullpath : "/"), class: button_classes(:secondary) %></p>
+  <% minutes = (@retry_after.to_i / 60.0).ceil %>
+  <p class="mt-2 text-sm text-subtle">Wait <%= minutes <= 1 ? "a minute" : "#{minutes} minutes" %>, then try again.</p>
+  <% if @try_again_url %><p class="mt-6"><%= link_to "Try again", @try_again_url, class: button_classes(:secondary) %></p><% end %>
 </main>

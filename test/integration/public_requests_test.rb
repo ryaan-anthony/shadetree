@@ -175,6 +175,18 @@ class PublicRequestsTest < ActionDispatch::IntegrationTest
     Rails.cache = cache
   end
 
+  test "in a lockdown the request form waits longer too" do
+    cache, Rails.cache = Rails.cache, ActiveSupport::Cache::MemoryStore.new
+    AbuseProtection.lockdown!(hours: 1)
+    submit(form_token: token(at: 5.seconds.ago))
+    assert_response :unprocessable_content
+    assert_empty requests
+    submit(form_token: token(at: 15.seconds.ago))
+    assert_redirected_to public_request_sent_path("oakline")
+  ensure
+    Rails.cache = cache
+  end
+
   test "a business takes at most #{PublicRequestsController::REQUESTS_PER_HOUR} requests an hour" do
     as_business(@business) do
       client = Client.create!(display_name: "Many", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ])

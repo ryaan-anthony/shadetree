@@ -25,7 +25,7 @@ class PublicRequestsController < ApplicationController
     return redirect_to(public_request_sent_path(@business.handle)) if honeypot_filled?
 
     @submission = RequestSubmission.new(business: @business, **submission_params)
-    if (problem = form_guard_problem(form_purpose) || limit_problem)
+    if (problem = AbuseProtection::PROBLEMS[form_guard_problem(form_purpose)] || limit_problem)
       @submission.photos = [] # not worth processing for a form that goes back anyway
       @submission.valid?
       @submission.errors.add(:base, problem)

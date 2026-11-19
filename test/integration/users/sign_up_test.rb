@@ -77,7 +77,7 @@ class Users::SignUpTest < ActionDispatch::IntegrationTest
                                              **form_guard_params("sign-up", at: 1.second.ago) }
     end
     assert_response :unprocessable_content
-    assert_select "[role=alert]", /Check your details/
+    assert_select "[role=alert]", /Enter your password again, then create your account/
     assert_select "input[name='user[email]'][value='ana@example.com']"
     assert_select "input[name='user[password]']:not([value])"
 
@@ -92,12 +92,42 @@ class Users::SignUpTest < ActionDispatch::IntegrationTest
     Rails.cache = cache if cache
   end
 
+  test "a form token works once; a form shown again keeps its start time, so a quick fix isn't a bot" do
+    cache, Rails.cache = Rails.cache, ActiveSupport::Cache::MemoryStore.new
+    guard = form_guard_params("sign-up", at: 30.seconds.ago)
+    post user_registration_path, params: { user: { first_name: "Ana", email: "ana@example.com", password: "short", terms_of_service: "1" }, **guard }
+    assert_response :unprocessable_content
+    assert_select ".error-text", /too short/
+    token = css_select("input[name=form_token]").first["value"]
+    assert_not_equal guard[:form_token], token
+    assert_difference("User.count") do
+      post user_registration_path, params: { user: { first_name: "Ana", last_name: "Silva", email: "ana@example.com", password: "long enough phrase", terms_of_service: "1" },
+                                             website: "", form_token: token }
+    end
+    sign_out :user
+    assert_no_difference("User.count") do
+      post user_registration_path, params: { user: { first_name: "Bo", last_name: "Silva", email: "bo@example.com", password: "long enough phrase", terms_of_service: "1" }, **guard }
+    end
+    assert_select "[role=alert]", /Enter your password again/, "the first token was used up"
+  ensure
+    Rails.cache = cache
+  end
+
+  test "FORMS_LOCKDOWN turns a lockdown on; false or empty don't" do
+    { "true" => true, "1" => true, "false" => false, "0" => false, "" => false }.each do |value, on|
+      ENV["FORMS_LOCKDOWN"] = value
+      assert_equal on, AbuseProtection.lockdown?, value.inspect
+    end
+  ensure
+    ENV.delete("FORMS_LOCKDOWN")
+  end
+
   test "in a lockdown, forms wait longer and allow fewer tries" do
     cache, Rails.cache = Rails.cache, ActiveSupport::Cache::MemoryStore.new
     AbuseProtection.lockdown!(hours: 1)
     post user_registration_path, params: { user: { first_name: "Ana" }, **form_guard_params("sign-up", at: 5.seconds.ago) }
-    assert_select "[role=alert]", /Check your details/
-    2.times { post user_registration_path, params: { user: { first_name: "" }, **form_guard_params("sign-up", at: 20.seconds.ago) } }
+    assert_select "[role=alert]", /Enter your password again/
+    4.times { post user_registration_path, params: { user: { first_name: "" }, **form_guard_params("sign-up", at: 20.seconds.ago) } }
     assert_no_difference("User.count") { post user_registration_path, params: { user: { first_name: "Ana", last_name: "Silva", email: "ana@example.com", password: "long enough phrase", terms_of_service: "1" }, **form_guard_params("sign-up", at: 20.seconds.ago) } }
     assert_select "[role=alert]", /a lot of sign-ups/
     AbuseProtection.lift_lockdown!

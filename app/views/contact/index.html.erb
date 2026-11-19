@@ -22,6 +22,8 @@
         <!-- Contact Form -->
         <div class="bg-white py-8 px-6 shadow-lg rounded-lg border border-gray-200">
             <%= form_with url: contact_path, method: :post, local: true, html: { class: "space-y-6" } do |form| %>
+                <%= render "shared/form_guard", purpose: "contact" %>
+                <% if flash.now[:alert] %><p class="rounded-md bg-amber-50 p-3 text-sm text-amber-900" role="alert"><%= flash.now[:alert] %></p><% end %>
 
                 <!-- Name Field -->
                 <div>
