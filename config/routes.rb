@@ -75,6 +75,14 @@ Rails.application.routes.draw do
     resources :contact_messages, only: %i[index show update destroy], path: "messages" do # MKT-02
       delete :erase, on: :member
     end
+    resources :tickets, only: %i[index show] do # OPS-05: the support inbox
+      member do
+        patch :assign
+        post :reply
+        post :note
+        patch :status
+      end
+    end
   end
 
   namespace :admin do

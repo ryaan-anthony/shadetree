@@ -7,7 +7,12 @@ class ApplicationMailer < ActionMailer::Base
   rescue_from(ClientLink::ClientErased) { Rails.logger.info("Skipped #{self.class.name}##{action_name}: client erased") }
 
   # A Message-ID on the sending domain (Mail would otherwise use the container's hostname).
-  after_action { message.message_id = "<#{SecureRandom.uuid}@#{self.class.sending_domain}>" }
+  # A mailer can choose its own (OPS-05's support replies carry the ticket's reference).
+  after_action { message.message_id = custom_message_id || "<#{SecureRandom.uuid}@#{self.class.sending_domain}>" }
 
   def self.sending_domain = Mail::Address.new(default[:from]).domain
+
+  private
+
+  def custom_message_id = nil
 end

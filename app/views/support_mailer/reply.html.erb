@@ -1,0 +1,5 @@
+<p style="margin:0 0 12px;font-size:14px;color:#334155;">Hi <%= @user.first_name.presence || "there" %>,</p>
+<div style="margin:0 0 16px;font-size:14px;color:#0f172a;white-space:pre-line;"><%= @message.body %></div>
+<p style="margin:0 0 16px;font-size:13px;color:#64748b;">Shadetree Support · about “<%= @ticket.subject %>” (<%= @ticket.reference %>). Reply to this email or in Shadetree.</p>
+<%= render "shared/mailer/button", label: "Open in Shadetree", url: @url %>
+<%= render "shared/mailer/notification_settings" %>

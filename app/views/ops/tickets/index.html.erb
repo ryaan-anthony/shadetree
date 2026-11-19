@@ -1,0 +1,35 @@
+<%# OPS-05: every business's support tickets in one queue. %>
+<% content_for :title, "Support" %>
+<h1 class="page-title">Support</h1>
+<p class="page-lede">Questions from businesses, newest activity first.</p>
+<%= form_with url: ops_tickets_path, method: :get, class: "mt-4 grid gap-3 sm:grid-cols-5 sm:items-end", id: "ticket-filters" do %>
+  <div class="field"><label class="label" for="status">Status</label><%= select_tag :status, options_for_select([ [ "Not resolved", "unresolved" ], *SupportTicket::STATUSES.invert.to_a, [ "Any", "any" ] ], @filters[:status]), class: "select", id: "status" %></div>
+  <div class="field"><label class="label" for="category">Category</label><%= select_tag :category, options_for_select(SupportTicket::CATEGORIES.invert, @filters[:category]), include_blank: "Any", class: "select", id: "category" %></div>
+  <div class="field"><label class="label" for="plan">Plan</label><%= select_tag :plan, options_from_collection_for_select(@plans, :id, :name, @filters[:plan].to_i), include_blank: "Any", class: "select", id: "plan" %></div>
+  <div class="field"><label class="label" for="assignee">Assignee</label><%= select_tag :assignee, options_for_select([ [ "Me", "me" ], [ "Nobody", "none" ], *@operators.map { [ _1.email, _1.id.to_s ] } ], @filters[:assignee]), include_blank: "Anyone", class: "select", id: "assignee" %></div>
+  <div class="flex gap-2"><%= submit_tag "Filter", class: button_classes(:secondary), name: nil %><%= link_to "Clear", ops_tickets_path, class: button_classes(:ghost) %></div>
+<% end %>
+<%= card flush: true, class: "mt-4" do %>
+  <% if @tickets.any? %>
+    <ul class="list" id="tickets">
+      <% @tickets.each do |ticket| %>
+        <li class="p-0" id="ticket-<%= ticket.uid %>">
+          <%= link_to ops_ticket_path(ticket), class: "flex min-w-0 flex-1 flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:gap-4" do %>
+            <span class="min-w-0 flex-1">
+              <span class="block truncate font-semibold text-ink"><%= ticket.subject %></span>
+              <span class="block truncate text-sm2 text-muted"><%= ticket.business.name %> · <%= ticket.business.plan.name %> · <%= ticket.category_label %></span>
+            </span>
+            <span class="flex flex-wrap items-center gap-2 text-sm2 text-muted">
+              <%= render "admin/support_tickets/status", ticket: %>
+              <span><%= ticket.assignee&.email || "Unassigned" %></span>
+              <span>· <%= local_time_ago(ticket.last_message_at) %></span>
+            </span>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <%= empty_state title: "No tickets here", text: "Nothing matches these filters.", icon: "life-buoy" %>
+  <% end %>
+<% end %>
+<div class="mt-3"><%= pagination(page: @page, per_page: Ops::TicketsController::PER_PAGE, total_count: @total) %></div>
