@@ -40,7 +40,7 @@ class InvoiceMarkSentTest < ActiveSupport::TestCase
       @invoice.update_columns(issued_on: today, due_on: today + 15)
       assert_equal [ today, today + 15 ], @invoice.reload.dates_when_sent
       @invoice.update_columns(issued_on: today - 40, due_on: today - 10, payment_terms: "custom")
-      assert_equal [ today, today ], @invoice.reload.dates_when_sent, "a passed custom date becomes today"
+      assert_equal [ today, today + 30 ], @invoice.reload.dates_when_sent, "a custom date keeps its distance"
       @invoice.update_columns(sent_at: 1.month.ago, revision: 2)
       assert_equal [ today - 40, today - 10 ], @invoice.reload.dates_when_sent
     end
