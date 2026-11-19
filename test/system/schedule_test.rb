@@ -14,9 +14,7 @@ class ScheduleTest < ApplicationSystemTestCase
       @visit.schedule!(by: @owner)
     end
     visit new_user_session_path
-    fill_in "Email", with: @owner.email
-    fill_in "Password", with: "password123"
-    click_button "Sign in"
+    sign_in_with_form(@owner.email, "password123")
     assert_text "Home"
   end
 
