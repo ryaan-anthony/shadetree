@@ -1,4 +1,5 @@
 <%= page_header "Requests", lede: "New work from your request form and phone calls." do %>
+  <%= render "admin/shared/location_filter", path: admin_service_requests_path, keep: { status: @status } %>
   <% if current_business.request_form_enabled? %>
     <span data-controller="clipboard">
       <input type="hidden" value="<%= public_request_url(current_business.handle) %>" data-clipboard-target="source">

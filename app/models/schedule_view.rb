@@ -18,10 +18,11 @@ class ScheduleView
 
   attr_reader :business, :view, :date, :member, :color_by
 
-  def initialize(business, view: "week", date: nil, member: nil, color_by: "member")
+  def initialize(business, view: "week", date: nil, member: nil, color_by: "member", location: nil)
+    @location = location # CAT-07: shades that location's hours (else the main location's)
     @business = business
     @view = view == "day" ? "day" : "week"
-    @date = date || business.today
+    @date = date || place.today # the filtered location's today (CAT-07)
     @member = member.presence
     @color_by = color_by == "status" ? "status" : "member"
   end
@@ -31,7 +32,7 @@ class ScheduleView
 
   def previous_date = @date - (@view == "day" ? 1 : 7)
   def next_date = @date + (@view == "day" ? 1 : 7)
-  def today? = dates.include?(business.today)
+  def today? = dates.include?(place.today)
 
   def title
     year = ->(date) { date.year == business.today.year ? "" : ", #{date.year}" }
@@ -47,7 +48,7 @@ class ScheduleView
   def visits
     @visits ||= begin
       scope = Visit.where(scheduled_on: dates.first..dates.last).where.not(status: "cancelled")
-                   .includes(:assignees, job: %i[client property]).in_order
+                   .includes(:assignees, job: %i[client property location]).in_order
       scope = scope.where.missing(:assignments) if @member == "unassigned"
       scope = scope.where(id: VisitAssignment.where(user_id: @member).select(:visit_id)) if @member && @member != "unassigned"
       scope.to_a.each { _1.association(:business).target = business } # labels need its time zone; not one query per visit
@@ -129,8 +130,8 @@ class ScheduleView
     return [] unless opening.set? || opening.closures_on(date).any?
 
     day = opening.day(date)
-    start = business.local_time(date, format("%02d:00", hours.first))
-    finish = hours.last == 24 ? midnight(date + 1) : business.local_time(date, format("%02d:00", hours.last))
+    start = place.local_time(date, format("%02d:00", hours.first))
+    finish = hours.last == 24 ? midnight(date + 1) : place.local_time(date, format("%02d:00", hours.last))
     cursor = start
     shades = []
     day.periods.each do |period|
@@ -145,7 +146,13 @@ class ScheduleView
 
   # Members who can be put on visits, with a color each and their booked hours this period.
   def members
-    @members ||= business.business_users.active.includes(:user).map(&:user).sort_by { _1.full_name.downcase }
+    @members ||= begin
+      users = business.business_users.active.includes(:user).map(&:user)
+      # CAT-07: filtered to a location with a team, just that team.
+      team = @location ? Tenancy.with_business(business) { LocationMember.where(location: @location).pluck(:user_id) } : []
+      users = users.select { team.include?(_1.id) } if team.any?
+      users.sort_by { _1.full_name.downcase }
+    end
   end
 
   def color_for(user)
@@ -182,9 +189,12 @@ class ScheduleView
     @all_visits_in_period ||= Visit.where(scheduled_on: dates.first..dates.last).where.not(status: "cancelled").includes(:assignments).to_a
   end
 
-  def opening = @opening ||= OpeningHours.new(business)
+  def opening = @opening ||= OpeningHours.new(place)
 
-  def midnight(date) = business.local_time(date, "00:00")
+  # The grid's clock: the filtered location's time zone (CAT-07), else the business's.
+  def place = @location || business
+
+  def midnight(date) = place.local_time(date, "00:00")
 
   def clock_hour(clock, round_up: false)
     hour, minute = clock.split(":").map(&:to_i)
@@ -194,7 +204,7 @@ class ScheduleView
   # Wall-clock minutes into `date` (1440 for its next midnight), so a DST day still lines up
   # with the hour labels.
   def minutes_on(date, time)
-    local = time.in_time_zone(business.time_zone)
+    local = time.in_time_zone(place.time_zone)
     local.to_date > date ? 24 * 60 : (local.hour * 60) + local.min
   end
 

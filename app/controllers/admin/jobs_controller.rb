@@ -7,6 +7,8 @@ class Admin::JobsController < Admin::BaseController
 
   PER_PAGE = 25
 
+  filters_by_location Job, only: %i[index search] # CAT-07
+
   def index = load_list
 
   def search
