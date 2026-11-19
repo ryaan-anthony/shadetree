@@ -23,7 +23,7 @@
         </li>
       <% end %>
     </ul>
-    <p class="mt-4 text-sm2 text-muted">Quotes sent count from the 1st of each month. Changing plan is coming soon.</p>
+    <p class="mt-4 text-sm2 text-muted" id="usage-resets">Your quote count resets on <%= local_date(@entitlements.period.resets_on) %>. Changing plan is coming soon.</p>
   <% end %>
 </div>
 

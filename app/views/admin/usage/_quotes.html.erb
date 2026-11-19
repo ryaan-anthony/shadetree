@@ -1,0 +1,8 @@
+<%# locals: (entitlements: current_business.entitlements) -%>
+<%# BIL-02: how many quotes the business has sent this period, next to the send action. Shown
+    only when the plan has a limit. %>
+<% if (limit = entitlements.limit(:quotes_sent)) %>
+  <span class="self-center text-sm2 text-muted" id="quote-usage">
+    <%= entitlements.used(:quotes_sent) %> of <%= limit %> quotes sent<span class="sr-only">, resets <%= l(entitlements.period.resets_on) %></span>
+  </span>
+<% end %>

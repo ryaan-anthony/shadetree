@@ -108,7 +108,7 @@ class Admin::DashboardActionsTest < ActionDispatch::IntegrationTest
     assert_select "#todays-visits section", 2
     assert_select "#todays-visits section:first-child h3", tech.full_name
     assert_select "#todays-visits section:last-child h3", "Not assigned"
-    assert_select "#month-summary", /Quotes sent this month\s*3.*Approval rate\s*67%.*Payments received\s*\$120\.00/m
+    assert_select "#month-summary", /Quotes sent this month\s*3 of 5.*Approval rate\s*67%.*Payments received\s*\$120\.00/m
   end
 
   test "technicians land on their day; another business's work never shows" do

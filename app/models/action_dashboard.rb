@@ -43,7 +43,10 @@ class ActionDashboard
   # This month so far, in the business's time zone.
   def month = today.beginning_of_month..today
 
-  def quotes_sent_this_month = UsageEvent.where(kind: "quote_sent", occurred_at: month_range).count
+  # BIL-02: quotes sent in the usage period, and the plan's limit (nil when unlimited).
+  def quotes_sent_this_period = entitlements.used(:quotes_sent)
+  def quote_limit = entitlements.limit(:quotes_sent)
+  def entitlements = @entitlements ||= business.entitlements
 
   # Of the quotes answered this month, the share approved, by each quote's latest answer (one
   # declined, revised and approved counts once, as approved). Nil when none were answered.

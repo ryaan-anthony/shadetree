@@ -44,7 +44,7 @@ class Entitlements
   def used(key)
     @usage[key.to_s] ||= case key.to_s
     when "team_members" then Tenancy.with_business(business) { business.business_users.active.count + Invitation.pending.count }
-    when "quotes_sent" then Tenancy.with_business(business) { UsageEvent.where(kind: "quote_sent", occurred_at: period_start..).count }
+    when "quotes_sent" then period.used("quote_sent")
     end
   end
 
@@ -55,6 +55,9 @@ class Entitlements
 
   def remove_powered_by? = feature?(:remove_powered_by)
 
+  # The usage period (BIL-02): the calendar month on a free plan, the billing cycle on a paid one.
+  def period = @period ||= UsagePeriod.for(business)
+
   # The team size message for invitations and reactivations (the owner counts, as do pending
   # invitations).
   def team_limit_message
@@ -62,8 +65,4 @@ class Entitlements
     "Your #{plan.name} plan includes #{limit(:team_members)} people, counting you and pending invitations." \
       "#{" Revoke an invitation to make room, or see Settings → Plan." if pending}#{" See Settings → Plan." unless pending}"
   end
-
-  # The calendar month in the business's time zone (BIL-02 moves paid plans to their billing
-  # cycle).
-  def period_start = business.today.beginning_of_month.in_time_zone(business.time_zone)
 end

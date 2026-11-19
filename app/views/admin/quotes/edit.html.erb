@@ -12,6 +12,7 @@
   <span class="save-status" id="save_status" role="status" data-quote-builder-target="status">Saved</span>
   <%= link_to preview_admin_quote_path(@quote), class: button_classes(:secondary), target: "_blank", rel: "noopener",
               data: { action: "quote-builder#preview" } do %><%= icon "eye" %> Preview as client<% end %>
+  <%= render "admin/usage/quotes" unless @quote.revising? %>
   <%= link_to new_admin_quote_send_path(@quote, from: ("setup" if from_setup?)), class: button_classes(:primary),
               data: { action: "quote-builder#saveAndGo" } do %><%= icon "send" %> Send<% end %>
   <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
