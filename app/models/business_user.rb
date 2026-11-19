@@ -43,14 +43,17 @@ class BusinessUser < ApplicationRecord
   # CAT-07: the locations this member works at.
   def locations = Tenancy.with_business(business) { Location.where(id: LocationMember.where(user_id:).select(:location_id)).ordered.to_a }
 
-  # Where documents this member creates start: their default location while it's active, else
-  # the only active location they work at, else the main location.
-  def document_location
+  # Their home location: their default while it's active, else the only active location they
+  # work at; nil when neither (CAT-07). The location filter starts here.
+  def home_location
     Tenancy.with_business(business) do
       active = Location.active.where(id: LocationMember.where(user_id:).select(:location_id)).to_a
-      (default_location unless default_location&.archived?) || (active.first if active.one?) || business.primary_location
+      (default_location unless default_location&.archived?) || (active.first if active.one?)
     end
   end
+
+  # Where documents this member creates start: their home location, else the main location.
+  def document_location = home_location || business.primary_location
 
   # Check if user is owner of this business
   def owner?

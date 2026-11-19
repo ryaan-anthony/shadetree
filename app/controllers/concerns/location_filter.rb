@@ -1,6 +1,7 @@
 # CAT-07: lists, the calendar and the dashboard filtered by location, once a business has more
 # than one. ?location=<uid> (or "all") changes the filter and is remembered for the member; until
-# they choose, it's their default location if they have one, else every location. Visibility
+# they choose, it's their home location (as for new documents: their default, else the one location they
+# work at), else every location. Visibility
 # only: anyone can switch to any location (location-scoped permissions are for later).
 #
 #   class Admin::QuotesController < Admin::BaseController
@@ -44,7 +45,7 @@ module LocationFilter
       current_membership.update_column(:location_filter, choice)
     end
     stored = current_membership.location_filter
-    @location_filter = stored.nil? ? current_membership.default_location : (Location.find_by(uid: stored) unless stored == "all")
+    @location_filter = stored.nil? ? current_membership.home_location : (Location.find_by(uid: stored) unless stored == "all")
   end
 
   # Active locations, plus the one being shown if it's archived.

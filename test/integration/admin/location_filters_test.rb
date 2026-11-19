@@ -51,6 +51,27 @@ class Admin::LocationFiltersTest < ActionDispatch::IntegrationTest
     assert_no_match "Main job", response.body
   end
 
+  test "the starting filter is the one location a member works at, like new documents" do
+    as_business(@business) { LocationMember.create!(location: @north, user: users(:one)) }
+    get admin_jobs_path
+    assert_no_match "Main job", response.body
+  end
+
+  test "the calendar names each visit's location when showing all, and a location's team when filtered" do
+    tech = member_with_role(:technician)
+    as_business(@business) do
+      LocationMember.create!(location: @north, user: tech)
+      Job.find_by!(title: "North job").visits.new(scheduled_on: Date.new(2026, 11, 23), timing: "anytime").schedule!(by: users(:one), notify_client: false)
+    end
+    get admin_schedule_path(view: "week", date: "2026-11-23", location: "all")
+    assert_match "· North yard", response.body
+    assert_select "#schedule-members", /#{users(:one).full_name}/
+    get admin_schedule_path(view: "week", date: "2026-11-23", location: @north.uid)
+    assert_select "#schedule-members", text: /#{users(:one).full_name}/, count: 0
+    assert_select "#schedule-members", /#{tech.full_name}/
+    assert_no_match "· North yard", response.body
+  end
+
   test "the calendar and dashboard follow the filter, with the location's hours and time zone" do
     get admin_root_path(location: @north.uid)
     assert_select ".page-lede", /North yard stands/
