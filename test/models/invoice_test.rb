@@ -40,7 +40,7 @@ class InvoiceTest < ActiveSupport::TestCase
     assert_equal [ "custom", @business.today + 14 ], [ odd.payment_terms, odd.due_on ], "14 days isn't one of the terms: a custom date"
   end
 
-  test "terms set the due date from the issue date; a custom date is kept, but not before the issue date" do
+  test "terms set the due date from the issue date; a custom date keeps its distance from it, but not before it" do
     invoice = Invoice.start(client: @maria)
     invoice.update!(issued_on: Date.new(2026, 12, 1), payment_terms: "net_30")
     assert_equal Date.new(2026, 12, 31), invoice.due_on
@@ -48,7 +48,9 @@ class InvoiceTest < ActiveSupport::TestCase
     assert_equal Date.new(2026, 12, 1), invoice.due_on
     invoice.update!(payment_terms: "custom", due_on: Date.new(2027, 1, 10))
     invoice.update!(issued_on: Date.new(2026, 12, 2))
-    assert_equal Date.new(2027, 1, 10), invoice.reload.due_on, "a custom date stays put"
+    assert_equal Date.new(2027, 1, 11), invoice.reload.due_on, "a custom date moves with the issue date (Net 45 and the like)"
+    invoice.update!(issued_on: Date.new(2026, 12, 5), due_on: Date.new(2027, 2, 1))
+    assert_equal Date.new(2027, 2, 1), invoice.reload.due_on, "unless the date was chosen too"
     invoice.due_on = Date.new(2026, 11, 30)
     assert_not invoice.valid?
     assert_includes invoice.errors[:due_on], "can't be before the issue date"
@@ -64,7 +66,7 @@ class InvoiceTest < ActiveSupport::TestCase
     assert_equal({ "from" => "quote", "number" => quote.number }, invoice.events.first.data)
 
     quote.update_columns(status: "sent")
-    assert_raises(ArgumentError) { Invoice.from_quote!(quote.reload) }
+    assert_raises(Invoice::NotApproved) { Invoice.from_quote!(quote.reload) }
   end
 
   test "from a job: the job's items as they are now (with on-site changes), and the job's quote too; a job can be billed twice" do
@@ -122,5 +124,21 @@ class InvoiceTest < ActiveSupport::TestCase
     invoice.sync_line_items((0..BuiltDocument::MAX_LINES).map { { "key" => "k#{_1}", "name" => "Line #{_1}" } })
     assert_not invoice.valid?
     assert_includes invoice.errors[:base], "This invoice can have at most #{BuiltDocument::MAX_LINES} lines."
+  end
+
+  test "from a job or quote, in that document's currency; an unapproved quote can't be billed" do
+    job = Job.create!(client: @maria, property: @maria.primary_property, title: "Spring cleanup", currency: "CAD", line_items_attributes: [ { name: "Mowing", quantity: 1, unit_price: "50" } ])
+    assert_equal "CAD", Invoice.from_job!(job).currency
+    quote = approved_quote
+    quote.update_columns(currency: "CAD")
+    assert_equal "CAD", Invoice.from_quote!(quote.reload).currency
+    quote.update_columns(status: "sent")
+    assert_raises(Invoice::NotApproved) { Invoice.from_quote!(quote.reload) }
+  end
+
+  test "a client with an invoice can't be deleted (archive instead)" do
+    assert @maria.deletable?
+    Invoice.start(client: @maria)
+    assert_not @maria.reload.deletable?
   end
 end
