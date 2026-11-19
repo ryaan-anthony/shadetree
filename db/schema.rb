@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_19_002000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -128,8 +128,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
     t.datetime "setup_hidden_at"
     t.jsonb "notification_emails", default: {}, null: false
     t.bigint "role_id"
+    t.bigint "default_location_id"
+    t.string "location_filter"
     t.index ["business_id", "active"], name: "index_business_users_on_business_id_and_active"
     t.index ["business_id"], name: "index_business_users_on_business_id"
+    t.index ["default_location_id"], name: "index_business_users_on_default_location_id"
     t.index ["role_id"], name: "index_business_users_on_role_id"
     t.index ["uid"], name: "index_business_users_on_uid", unique: true
     t.index ["user_id", "active"], name: "index_business_users_on_user_id_and_active"
@@ -370,7 +373,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
     t.boolean "repeats_yearly", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "location_id"
     t.index ["business_id", "ends_on"], name: "index_closures_on_business_id_and_ends_on"
+    t.index ["location_id"], name: "index_closures_on_location_id"
     t.index ["uid"], name: "index_closures_on_uid", unique: true
     t.check_constraint "(start_minute IS NULL) = (end_minute IS NULL) AND (start_minute IS NULL OR start_minute >= 0 AND start_minute < end_minute AND end_minute <= 1440)", name: "closures_minutes"
     t.check_constraint "ends_on >= starts_on", name: "closures_date_order"
@@ -699,6 +704,41 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
     t.index ["uid"], name: "index_jobs_on_uid", unique: true
     t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying, 'amount'::character varying]::text[]))", name: "jobs_discount_kind"
     t.check_constraint "status::text = ANY (ARRAY['unscheduled'::character varying, 'scheduled'::character varying, 'in_progress'::character varying, 'completed'::character varying, 'cancelled'::character varying]::text[])", name: "jobs_status"
+  end
+
+  create_table "location_members", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "location_id", null: false
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "user_id"], name: "index_location_members_on_business_id_and_user_id"
+    t.index ["location_id", "user_id"], name: "index_location_members_on_location_id_and_user_id", unique: true
+    t.index ["user_id"], name: "index_location_members_on_user_id"
+  end
+
+  create_table "locations", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.string "name", null: false
+    t.boolean "primary", default: false, null: false
+    t.string "address_line1"
+    t.string "address_line2"
+    t.string "city"
+    t.string "region"
+    t.string "postal_code"
+    t.string "country", default: "US", null: false
+    t.string "phone"
+    t.string "email"
+    t.string "timezone"
+    t.jsonb "weekly_hours"
+    t.datetime "archived_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "name"], name: "index_locations_on_business_id_and_name", unique: true
+    t.index ["business_id"], name: "index_locations_one_primary", unique: true, where: "\"primary\""
+    t.index ["uid"], name: "index_locations_on_uid", unique: true
+    t.check_constraint "NOT (\"primary\" AND archived_at IS NOT NULL)", name: "locations_primary_active"
   end
 
   create_table "message_templates", force: :cascade do |t|
@@ -1188,6 +1228,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
   add_foreign_key "automation_runs", "automation_rules", column: "rule_id", on_delete: :nullify
   add_foreign_key "automation_runs", "businesses", on_delete: :cascade
   add_foreign_key "business_users", "businesses"
+  add_foreign_key "business_users", "locations", column: "default_location_id", on_delete: :nullify
   add_foreign_key "business_users", "roles"
   add_foreign_key "business_users", "users"
   add_foreign_key "businesses", "plans"
@@ -1213,6 +1254,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
   add_foreign_key "clients", "businesses", on_delete: :cascade
   add_foreign_key "clients", "client_imports", on_delete: :nullify
   add_foreign_key "closures", "businesses", on_delete: :cascade
+  add_foreign_key "closures", "locations", on_delete: :cascade
   add_foreign_key "data_exports", "businesses"
   add_foreign_key "data_exports", "users", column: "requested_by_id", on_delete: :nullify
   add_foreign_key "document_sequences", "businesses"
@@ -1256,6 +1298,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
   add_foreign_key "jobs", "users", column: "cancelled_by_id", on_delete: :nullify
   add_foreign_key "jobs", "users", column: "completed_by_id", on_delete: :nullify
   add_foreign_key "jobs", "users", column: "created_by_id", on_delete: :nullify
+  add_foreign_key "location_members", "businesses", on_delete: :cascade
+  add_foreign_key "location_members", "locations", on_delete: :cascade
+  add_foreign_key "location_members", "users"
+  add_foreign_key "locations", "businesses", on_delete: :cascade
   add_foreign_key "message_templates", "businesses"
   add_foreign_key "message_templates", "users", column: "updated_by_id"
   add_foreign_key "notifications", "businesses", on_delete: :cascade

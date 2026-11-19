@@ -1,7 +1,8 @@
 # CAT-06: when a business is open, for scheduling (JOB-02 warnings, JOB-03 shading) and later
-# self-booking. Combines the weekly hours with closures, in the business's time zone:
+# self-booking. Combines the weekly hours with closures, in the business's time zone (CAT-07: a
+# location's hours, closures and zone; the business means its main location):
 #
-#   hours = OpeningHours.new(business)
+#   hours = OpeningHours.new(business)   # or OpeningHours.new(location)
 #   hours.open_at?(visit.starts_at)   # inside the day's hours and not closed then
 #   hours.open_on?(date)              # open at some point that day
 #   hours.day(date)                   # its open periods, hours and closures, for a calendar
@@ -15,15 +16,16 @@ class OpeningHours
     def closed_all_day? = closures.any?(&:all_day?)
   end
 
-  def initialize(business)
-    @business = business
-    @weekly = business.hours
+  def initialize(place)
+    @place = place.is_a?(Business) ? (place.primary_location || place) : place
+    @business = place.is_a?(Business) ? place : place.business
+    @weekly = @place.hours
   end
 
   def set? = @weekly.set?
 
   def open_at?(time)
-    local = time.in_time_zone(@business.time_zone)
+    local = time.in_time_zone(@place.time_zone)
     day(local.to_date).periods.any? { _1.cover?(local) }
   end
 
@@ -63,8 +65,8 @@ class OpeningHours
   def build_day(date)
     closures = closures_on(date)
     hours = @weekly.set? ? @weekly.for(date.wday) : nil
-    periods = if !@weekly.set? then [ @business.local_time(date, "00:00")...@business.local_time(date + 1, "00:00") ]
-    elsif hours then [ @business.local_time(date, hours[0])...@business.local_time(WeeklyHours.end_of_day?(hours[1]) ? date + 1 : date, hours[1]) ]
+    periods = if !@weekly.set? then [ @place.local_time(date, "00:00")...@place.local_time(date + 1, "00:00") ]
+    elsif hours then [ @place.local_time(date, hours[0])...@place.local_time(WeeklyHours.end_of_day?(hours[1]) ? date + 1 : date, hours[1]) ]
     else []
     end
     closures.each { |closure| periods = periods.flat_map { subtract(_1, closure.period_on(date)) } }
@@ -74,8 +76,13 @@ class OpeningHours
   def all_closures
     # Through the association, so even inside Tenancy.across_businesses only this business's
     # closures load; the business is set on each so none queries for it.
-    @all_closures ||= Tenancy.with_business(@business) { @business.closures.ordered.to_a }.each { _1.association(:business).target = @business }
+    @all_closures ||= Tenancy.with_business(@business) { closures_here.ordered.to_a }.each do |closure|
+      closure.association(:business).target = @business
+      closure.association(:location).target = @place if closure.location_id
+    end
   end
+
+  def closures_here = @place.is_a?(Location) ? @place.closures : @business.closures
 
   def overlaps?(a, b) = a.begin < b.end && b.begin < a.end
 

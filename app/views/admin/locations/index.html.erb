@@ -1,0 +1,68 @@
+<%# CAT-07: the business's locations, who works where, and each member's default location. %>
+<%= render "admin/businesses/settings_header", current: "locations" %>
+<% can_add = current_business.entitlements.feature?(:locations) %>
+
+<div class="max-w-3xl space-y-4">
+  <% unless can_add %>
+    <div class="banner banner-info"><%= icon "info" %>
+      <p><%= Location.plan_message %> <%= link_to "See plans", admin_plan_path, class: "font-semibold text-ink underline-offset-2 hover:underline" %></p></div>
+  <% end %>
+
+  <%= card title: "Locations", subtitle: "Each has its own address, contact details, time zone, hours and team. Clients see the details of the location their work is with.", flush: true,
+           actions: (link_to(new_admin_location_path, class: button_classes(:secondary, :sm)) { icon("plus") + " Add location" } if can_add) do %>
+    <ul class="list">
+      <% @locations.each do |location| %>
+        <li id="location-<%= location.uid %>">
+          <div class="min-w-0 flex-1">
+            <p class="font-semibold text-ink"><%= link_to location.name, edit_admin_location_path(location), class: "hover:underline" %>
+              <% if location.primary? %><%= badge "Main", tone: :info, dot: false %><% end %></p>
+            <p class="text-sm2 text-muted"><%= [ location.address_lines.first, location.contact_phone ].compact_blank.join(" · ").presence || "No address yet" %></p>
+            <p class="text-sm2 text-muted"><%= location.members.map(&:full_name).sort.to_sentence.presence || "Nobody assigned" %></p>
+          </div>
+          <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
+            <button type="button" class="<%= button_classes(:ghost, :sm, :icon) %>" data-menu-target="button" data-action="menu#toggle"
+                    aria-haspopup="true" aria-expanded="false" aria-label="More actions for <%= location.name %>"><%= icon "more-horizontal" %></button>
+            <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
+              <%= link_to edit_admin_location_path(location), class: "menu-item" do %><%= icon "edit-2" %> Edit<% end %>
+              <%= link_to admin_hours_path(location: (location unless location.primary?)), class: "menu-item" do %><%= icon "clock" %> Hours and closures<% end %>
+              <% unless location.primary? %>
+                <%= button_to archive_admin_location_path(location), method: :patch, class: "menu-item",
+                              form: { class: "contents", data: { turbo_confirm: "Archive #{location.name}? New work can't go there, but its quotes, jobs and invoices stay as they are.", turbo_confirm_button: "Archive" } } do %><%= icon "archive" %> Archive<% end %>
+              <% end %>
+            </div>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <%= card title: "Default locations", subtitle: "Where new quotes, jobs and invoices from each person start. Automatic: the one location they work at, else #{@locations.first.name}.", flush: true do %>
+    <ul class="list">
+      <% @members.each do |member| %>
+        <li id="member-<%= member.uid %>" class="flex-wrap">
+          <span class="min-w-0 flex-1 font-medium text-ink"><%= member.user.full_name %></span>
+          <%= form_with url: member_default_admin_locations_path(member: member.uid), method: :patch, class: "w-full sm:w-64" do %>
+            <label class="sr-only" for="default-<%= member.uid %>">Default location for <%= member.user.full_name %></label>
+            <%= select_tag :default_location, options_for_select(@locations.map { [ _1.name, _1.uid ] }, member.default_location&.uid),
+                           include_blank: "Automatic", id: "default-#{member.uid}", class: "select",
+                           data: { controller: "submit-form", action: "change->submit-form#submit" } %>
+            <noscript><%= submit_tag "Save", class: button_classes(:secondary, :sm), name: nil %></noscript>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <% if @archived.any? %>
+    <%= card title: "Archived", subtitle: "Kept on the documents that used them.", flush: true do %>
+      <ul class="list">
+        <% @archived.each do |location| %>
+          <li id="location-<%= location.uid %>">
+            <span class="flex-1 text-muted"><%= location.name %></span>
+            <% if can_add %><%= button_to "Restore", restore_admin_location_path(location), method: :patch, class: button_classes(:secondary, :sm), "aria-label": "Restore #{location.name}" %><% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  <% end %>
+</div>

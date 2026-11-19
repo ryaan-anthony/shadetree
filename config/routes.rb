@@ -248,6 +248,15 @@ Rails.application.routes.draw do
     resource :plan, only: :show, controller: "plans" # BIL-01
     resources :closures, except: %i[index show]
 
+    # Locations (CAT-07)
+    resources :locations, except: %i[show destroy] do
+      member do
+        patch :archive
+        patch :restore
+      end
+      patch "members/:member", on: :collection, action: :default_for, as: :member_default
+    end
+
     # Service catalog (CAT-03)
     resource :catalog_presets, path: "catalog/starter", only: %i[show create] # CAT-05
     resources :catalog_items, path: "catalog", except: %i[show destroy] do

@@ -3,6 +3,7 @@
 # and day, from its first year on; the yearly ones can wrap the new year (Dec 24 to Jan 2).
 class Closure < ApplicationRecord
   include BusinessOwned
+  belongs_to_business_record :location, optional: true # CAT-07: none for the main location
 
   MAX = 200
   MAX_DAYS = 366
@@ -64,10 +65,11 @@ class Closure < ApplicationRecord
   end
 
   # The closed time on a covered date, in the business's zone (ends at the next midnight when
-  # all day). A wall-clock time a DST change skips moves ahead, as Business#local_time does.
+  # all day; a branch's zone for its closures, CAT-07). A wall-clock time a DST change skips moves ahead, as Business#local_time does.
   def period_on(date)
-    from = business.local_time(date, start_time || "00:00")
-    to = end_time ? business.local_time(date, end_time) : business.local_time(date + 1, "00:00")
+    place = location || business
+    from = place.local_time(date, start_time || "00:00")
+    to = end_time ? place.local_time(date, end_time) : place.local_time(date + 1, "00:00")
     from...to
   end
 

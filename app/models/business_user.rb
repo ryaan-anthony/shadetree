@@ -7,6 +7,7 @@
 class BusinessUser < ApplicationRecord
   belongs_to :user
   belongs_to :business
+  belongs_to :default_location, class_name: "Location", optional: true # CAT-07
 
   before_validation { self.uid ||= SecureRandom.base58(BusinessOwned::UID_LENGTH) if new_record? }
 
@@ -22,6 +23,7 @@ class BusinessUser < ApplicationRecord
   validates :role_id, presence: true, if: :custom_role?
   validate :custom_role_in_this_business
   validates :active, inclusion: { in: [ true, false ] }
+  validate { errors.add(:default_location, "isn't available") if default_location && default_location.business_id != business_id }
 
   # A membership never moves between users or businesses.
   attr_readonly :user_id, :business_id
@@ -37,6 +39,18 @@ class BusinessUser < ApplicationRecord
   scope :owners, -> { where(role: "owner") }
   scope :admins, -> { where(role: "admin") }
   scope :technicians, -> { where(role: "technician") }
+
+  # CAT-07: the locations this member works at.
+  def locations = Tenancy.with_business(business) { Location.where(id: LocationMember.where(user_id:).select(:location_id)).ordered.to_a }
+
+  # Where documents this member creates start: their default location while it's active, else
+  # the only active location they work at, else the main location.
+  def document_location
+    Tenancy.with_business(business) do
+      active = Location.active.where(id: LocationMember.where(user_id:).select(:location_id)).to_a
+      (default_location unless default_location&.archived?) || (active.first if active.one?) || business.primary_location
+    end
+  end
 
   # Check if user is owner of this business
   def owner?
