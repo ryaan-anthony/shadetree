@@ -64,12 +64,21 @@ email, and nothing gets lost in a personal inbox.
   assign, reply with the next status, note, set status; all audited as `ticket.*`.
 - Replies: NTF-02 `support_reply` to the opener; `SupportMailer#reply` with reply-to the
   support address, `[#uid]` in the subject and a `ticket-<uid>-…` Message-ID.
-- `ResolveStaleSupportTicketsJob` (daily) resolves with a notice in the thread, app and email.
+- Limits: 10 messages an hour per person, 30 per business; screenshots need a confirmed account
+  and open through a checked, 5-minute link. Replies reach every active member who wrote on the
+  ticket (else the Owners). Operators opening a ticket is audited (`ticket.viewed`).
+- `ResolveStaleSupportTicketsJob` (daily) re-checks each ticket under a lock, so a reply in the
+  meantime wins, and resolves it with a notice in the thread, app and email.
+- Data: tickets and screenshots are kept while the business exists and go with it; they aren't in
+  INS-02 exports and client erasure doesn't scan them (members are asked to leave client details out).
 - Dev seeds: a ticket with a reply and a note. Tests: `test/integration/admin/support_tickets_test.rb`,
   `test/integration/ops/support_inbox_test.rb`, `test/models/support_{mail,ticket}_test.rb`.
 
 ## Open questions
 
 - **(blocking for email threading)** How does email to the support address reach the app: the
-  provider's inbound routing posting each message to the app, or a mailbox the app reads? It
-  also decides how a sender is proven genuine (`SupportMail.receive` trusts the From address).
+  provider's inbound routing posting each message to the app, or a mailbox the app reads?
+  `SupportMail.receive` stays unconnected until then. Before wiring it: prove the sender (the
+  provider's verified DKIM/SPF result, or a signed per-recipient reply address
+  `support+<token>@`), no matching by subject alone, and a rate limit per sender and business.
+  Until then emails say "Reply in Shadetree".

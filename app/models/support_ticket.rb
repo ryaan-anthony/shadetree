@@ -25,23 +25,37 @@ class SupportTicket < ApplicationRecord
   scope :unresolved, -> { where.not(status: "resolved") }
 
   # "Waiting on you" tickets with no answer after this long are resolved, with a notice.
-  AUTO_RESOLVE_AFTER = Integer(ENV.fetch("SUPPORT_AUTO_RESOLVE_DAYS", 7)).days
+  # A whole number of days from SUPPORT_AUTO_RESOLVE_DAYS; anything else means 7, never a failed boot.
+  def self.auto_resolve_days(value) = Integer(value.to_s, 10, exception: false)&.then { _1.positive? ? _1 : nil } || 7
+  AUTO_RESOLVE_AFTER = auto_resolve_days(ENV.fetch("SUPPORT_AUTO_RESOLVE_DAYS", "7")).days
   AUTO_RESOLVE_NOTICE = "We've marked this resolved because we haven't heard back. Reply any time to reopen it.".freeze
 
   # Run daily (ResolveStaleSupportTicketsJob). Returns how many were resolved.
+  # Each ticket on its own: one that fails is reported and the rest go on.
   def self.resolve_stale!(before: AUTO_RESOLVE_AFTER.ago)
-    stale = Tenancy.across_businesses(reason: "resolving stale support tickets (OPS-05)") do
-      where(status: "waiting", waiting_since: ...before).includes(:business, :opened_by).to_a
+    reason = "resolving stale support tickets (OPS-05)"
+    ids = Tenancy.across_businesses(reason:) { where(status: "waiting", waiting_since: ...before).pluck(:id) }
+    ids.count do |id|
+      ticket = Tenancy.across_businesses(reason:) { includes(:business).find_by(id:) }
+      ticket && Tenancy.with_business(ticket.business) { ticket.resolve_if_still_unanswered!(before) }
+    rescue StandardError => error
+      Rails.error.report(error, context: { support_ticket_id: id })
+      false
     end
-    stale.each do |ticket|
-      Tenancy.with_business(ticket.business) do
-        message = ticket.resolve_unanswered!
-        SupportNotifier.replied(ticket, message, title: "Resolved: #{ticket.subject}")
-        AuditEntry.record!(operator: nil, operator_email: "system", action: "ticket.auto_resolved", business: ticket.business,
-                           user: ticket.opened_by, ticket: ticket.uid)
+  end
+
+  # Resolves it, with the notice and the audit entry, only if it's still been waiting since
+  # before `before` once locked: a reply or a status change in the meantime wins.
+  def resolve_if_still_unanswered!(before)
+    message = with_lock do
+      next unless status == "waiting" && waiting_since && waiting_since < before
+
+      resolve_unanswered!.tap do
+        AuditEntry.record!(operator: nil, operator_email: "system", action: "ticket.auto_resolved", business:, user: opened_by, ticket: uid)
       end
     end
-    stale.size
+    message && SupportNotifier.replied(self, message, title: "Resolved: #{subject}")
+    message.present?
   end
 
   def self.open!(opened_by:, body:, files: [], **attributes)

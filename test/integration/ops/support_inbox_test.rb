@@ -67,6 +67,8 @@ class Ops::SupportInboxTest < ActionDispatch::IntegrationTest
     assert_match "[##{@ticket.uid}]", mail.subject
     assert_match "ticket-#{@ticket.uid}-", mail.message_id
     assert_match "Tax → None", mail.text_part.body.to_s
+    assert_match "Reply in Shadetree.", mail.text_part.body.to_s
+    assert_no_match "Reply to this email", mail.html_part.body.to_s
 
     post note_ops_ticket_path(@ticket), params: { body: "Customer is tax exempt per building" }
     assert as_business(@business) { @ticket.messages.last.internal? }

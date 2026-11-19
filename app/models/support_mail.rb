@@ -6,7 +6,12 @@
 # - from a member, answering a ticket of one of their businesses: adds their reply (reopening it);
 # - from a member, about anything else: opens a ticket in the business they last used;
 # - from anyone else: ignores it.
-# How email reaches the app (and checks the sender is genuine) isn't decided yet; see the spec.
+# NOT CONNECTED, ON PURPOSE: nothing calls receive yet, and it must stay that way until the
+# spec's open question is settled. It trusts the From address, which anyone can forge. Before
+# wiring it to any inbound email: (1) prove the sender, either the provider's verified DKIM/SPF
+# result or a signed reply address per recipient (support+<token>@…) instead of From; (2) stop
+# matching tickets by subject alone (headers or the signed address only); (3) rate limit per
+# sender and per business, as the in-app form is.
 module SupportMail
   Result = Data.define(:outcome, :ticket)
   UID = /[1-9A-HJ-NP-Za-km-z]{#{BusinessOwned::UID_LENGTH}}/o
