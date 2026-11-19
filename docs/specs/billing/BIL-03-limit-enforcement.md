@@ -34,7 +34,7 @@ limits are part of the brand.
       members are never removed automatically.
 - [x] Feature switches (e.g. hiding "Powered by Shadetree") revert gracefully on downgrade; no
       data is deleted; over-limit content becomes read-only where relevant.
-- [x] All prompts link to the upgrade flow (BIL-04); prompt copy is reviewed and consistent.
+- [x] All prompts link to the upgrade flow — Settings → Plan for now; BIL-04 turns that page into checkout. Prompt copy is reviewed and consistent.
 - [x] Tests cover thresholds, at-limit behavior per role, client flows unaffected, and downgrade.
 
 ## Out of scope
@@ -52,14 +52,16 @@ limits are part of the brand.
   default 80), `:at_limit` (the one extra left) or `:blocked`. Only a quote's first send counts
   and is checked (`Admin::QuoteSendsController#require_quote_allowance`, both email and link);
   resends and revisions of quotes already sent never count, and drafts always save.
-- One notice (`admin/usage/_limit_notice`) on the quote builder, the send page (where Send and
-  Get the link are disabled when blocked) and the dashboard: usage, the reset date, and
-  "See plans" for owners (Settings → Plan, which BIL-04 turns into checkout) or "Ask <owner>"
+- One notice (`admin/usage/_limit_notice`) on the quote builder, the send page (where the send
+  options give way to the notice and a "Back to the quote" button when blocked) and the dashboard: usage, the reset date, and
+  "See plans" for anyone who can manage billing (Settings → Plan, which BIL-04 turns into checkout) or "Ask <owner>"
   for others.
 - Team size: at the limit the team page shows the same kind of prompt instead of the invite
   form (BIL-01 enforces it); members are never removed.
 - Nothing client-facing checks entitlements: sent quotes and invoices stay viewable, approvable
-  and payable, visit pages and the request form keep working (tested over the limit).
+  and payable, and the request form keeps working (tested over the limit).
+- The count is claimed inside the send transaction under a row lock on the business, so two
+  first sends at the boundary can't both take the one extra.
 - A downgrade turns features off ("Powered by" returns) and deletes nothing. No content is
   over-limit today; later gated features (templates, automations, roles, locations) keep their
   data read-only.

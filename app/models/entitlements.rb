@@ -59,7 +59,7 @@ class Entitlements
   # (GRACE) is allowed with a warning so nobody is blocked mid-conversation; then new quotes
   # can't be sent until the period resets or the plan changes. Resending or revising a quote
   # that already went out never counts.
-  WARN_AT = Integer(ENV.fetch("USAGE_WARNING_PERCENT", 80))
+  WARN_AT = Integer(ENV.fetch("USAGE_WARNING_PERCENT", 80)).clamp(1, 99)
   GRACE = 1
 
   # :ok, :approaching, :at_limit (the grace send is left) or :blocked.
@@ -68,7 +68,7 @@ class Entitlements
 
     used = used(:quotes_sent)
     limit = limit(:quotes_sent)
-    if used >= limit + GRACE then :blocked
+    if limit.zero? || used >= limit + GRACE then :blocked # a limit of 0 has no grace
     elsif used >= limit then :at_limit
     elsif limit.positive? && used * 100 >= limit * WARN_AT then :approaching
     else :ok

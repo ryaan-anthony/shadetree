@@ -1,9 +1,9 @@
 <%= page_header "Send quote #{@quote.number}", lede: "To #{@quote.client.display_name}: #{money(@quote.totals.total)}#{", valid until #{l(@quote.expires_on)}" if @quote.expires_on}" do %>
-  <%= render "admin/usage/quotes" if @quote.draft? && !@quote.revising? %>
+  <%= render "admin/usage/quotes" if @quote.counts_toward_usage? %>
   <%= link_to "Back", staff_quote_path(@quote), class: button_classes(:ghost) %>
 <% end %>
 
-<% counts = @quote.draft? && @quote.sends.none? %>
+<% counts = @quote.counts_toward_usage? %>
 <% blocked = counts && !current_business.entitlements.can_send_new_quote? %>
 <%= render "admin/usage/limit_notice" if counts %>
 <% unless current_user.can_send_to_clients? %>
@@ -12,6 +12,10 @@
   </div>
 <% end %>
 
+<% if blocked %>
+  <%# BIL-03: over the limit, the explanation (above) replaces the send options. %>
+  <%= link_to "Back to the quote", staff_quote_path(@quote), class: button_classes(:secondary) %>
+<% else %>
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
   <%= card title: "Email it", subtitle: "Your message, a button to the quote page, and the PDF attached. Replies come to you." do %>
     <%= form_with model: @form, scope: :quote_send, url: admin_quote_send_path(@quote), method: :post do |f| %>
@@ -24,7 +28,7 @@
       <%= f.field :cc, label: "CC", optional: true, help: "Up to #{QuoteSendForm::MAX_CC} addresses, separated by commas." %>
       <%= f.field :subject, required: true %>
       <%= f.field :message, as: :textarea, optional: true, rows: 8 %>
-      <%= f.submit_button(@quote.draft? ? "Send quote" : "Send again", class: "mt-4 w-full sm:w-auto", disabled: !current_user.can_send_to_clients? || blocked) %>
+      <%= f.submit_button(@quote.draft? ? "Send quote" : "Send again", class: "mt-4 w-full sm:w-auto", disabled: !current_user.can_send_to_clients?) %>
     <% end %>
   <% end %>
 
@@ -37,7 +41,7 @@
         </div>
       <% else %>
         <%= button_to admin_quote_send_path(@quote), params: { channel: "link" }, class: button_classes(:secondary, extra: "w-full"),
-                      disabled: !current_user.can_send_to_clients? || blocked do %><%= icon "link" %> Get the link<% end %>
+                      disabled: !current_user.can_send_to_clients? do %><%= icon "link" %> Get the link<% end %>
         <% unless @quote.draft? || current_user.can_send_to_clients? %>
           <p class="mt-2 text-sm2 text-muted">Confirm your email address to see the link.</p>
         <% end %>
@@ -51,3 +55,4 @@
     <% end %>
   </div>
 </div>
+<% end %>

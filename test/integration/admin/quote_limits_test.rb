@@ -52,8 +52,8 @@ class Admin::QuoteLimitsTest < ActionDispatch::IntegrationTest
 
     blocked = draft
     get new_admin_quote_send_path(blocked)
-    assert_select "#quote-limit-notice", /and the one extra/
-    assert_select "button[disabled]", /Get the link/
+    assert_select "#quote-limit-notice", /and your one extra/
+    assert_select "form[action=?]", admin_quote_send_path(blocked), 0, "the send options give way to the explanation"
     post admin_quote_send_path(blocked), params: { channel: "link" }
     assert_redirected_to new_admin_quote_send_path(blocked)
     assert_match "used this period's quotes", flash[:alert]
@@ -88,7 +88,7 @@ class Admin::QuoteLimitsTest < ActionDispatch::IntegrationTest
   test "the team size shows an upgrade prompt, not the invite form; members stay" do
     as_business(@business) { Invitation.create!(email: "new@example.com", role: "technician", invited_by: @owner) }
     get admin_team_path
-    assert_select "#team-limit", /Free plan includes 2 team members/
+    assert_select "#team-limit", /Free plan includes 2 people, counting you and pending invitations\..*See plans.*or revoke an invitation/m
     assert_select "#team-limit a[href=?]", admin_plan_path
     assert_select "form[action=?]", admin_invitations_path, 0
   end
@@ -101,5 +101,62 @@ class Admin::QuoteLimitsTest < ActionDispatch::IntegrationTest
     assert Branding.new(@business.reload).show_powered_by?
     assert_equal 8, as_business(@business) { Quote.where(id: quotes.map(&:id)).count }
     assert_equal :blocked, @business.entitlements.quote_sending
+  end
+
+  test "admins at the limit are told to ask; technicians never see the notice" do
+    sent(6)
+    admin = member_with_role("admin", business: @business)
+    sign_out :user
+    sign_in admin
+    post switch_admin_business_path, params: { business: @business.uid }
+    get edit_admin_quote_path(draft)
+    assert_select "#quote-limit-notice", /and your one extra.*Ask John about a bigger plan/m
+    sign_out :user
+    tech = member_with_role("technician", business: @business)
+    sign_in tech
+    post switch_admin_business_path, params: { business: @business.uid }
+    get admin_my_day_path
+    assert_select "#quote-limit-notice", 0
+  end
+
+  test "a limit of 0 allows no sends; two first sends at the boundary can't both get the extra" do
+    @business.update!(plan_overrides: { "limits" => { "quotes_sent" => 0 } })
+    quote = draft
+    get new_admin_quote_send_path(quote)
+    assert_select "#quote-limit-notice", /doesn't include sending quotes/
+    post admin_quote_send_path(quote), params: { channel: "link" }
+    assert_equal "draft", as_business(@business) { quote.reload.status }
+
+    @business.update!(plan_overrides: {})
+    sent(5)
+    first, second = draft, draft
+    # Both pass the page's check; the second is refused inside its send.
+    post admin_quote_send_path(first), params: { channel: "link" }
+    controller_class = Admin::QuoteSendsController
+    controller_class.skip_before_action :require_quote_allowance, raise: false
+    begin
+      post admin_quote_send_path(second), params: { channel: "link" }
+    ensure
+      controller_class.before_action :require_quote_allowance, only: :create
+    end
+    assert_match "used this period's quotes", flash[:alert]
+    assert_equal [ "sent", "draft" ], as_business(@business) { [ first.reload.status, second.reload.status ] }
+  end
+
+  test "over the limit, clients still pay invoices and see their visits" do
+    sent(6)
+    invoice, visit_job = as_business(@business) do
+      invoice = Invoice.start(client: @maria)
+      invoice.sync_line_items([ { "key" => "a", "name" => "Work", "quantity" => "1", "unit_price" => "100" } ])
+      invoice.update!(tax_rates: [])
+      invoice.mark_sent!(by: @owner, channel: "link")
+      [ invoice, Job.create!(client: @maria, title: "Mowing") ]
+    end
+    link = as_business(@business) { invoice.client_link! }
+    sign_out :user
+    get client_link_path(link.token)
+    assert_response :success
+    assert_select ".client-card", /Amount due/
+    assert visit_job
   end
 end

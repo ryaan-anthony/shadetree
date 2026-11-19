@@ -243,6 +243,10 @@ class Quote < ApplicationRecord
   # Whether it can go out: it needs something to quote, and a valid-until date that hasn't
   # passed (an expired quote is renewed with a revision, QTE-06).
   def sendable? = (draft? || sent?) && line_items.any? && !past_expiry?
+
+  # BIL-02/03: whether sending it now counts toward the plan's quotes: its first send only
+  # (resends and revisions of a quote that went out never count).
+  def counts_toward_usage? = draft? && sends.none?
   def past_expiry? = expires_on.present? && expires_on < business.today
 
   # Clients only ever see quotes that were sent (QTE-03): a draft is never reachable.

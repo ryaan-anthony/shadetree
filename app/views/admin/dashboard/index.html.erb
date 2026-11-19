@@ -4,7 +4,7 @@
                 lede: "Here's where #{current_business.name} stands." %>
 
 <% if can?(:office) %>
-  <%= render "admin/usage/limit_notice" %>
+  <%= render "admin/usage/limit_notice", entitlements: dashboard.entitlements %>
   <%# How the month is going. %>
   <section class="mb-4" aria-labelledby="month-summary-h">
     <h2 id="month-summary-h" class="sr-only">So far this period</h2>
