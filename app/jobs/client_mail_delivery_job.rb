@@ -52,6 +52,9 @@ class ClientMailDeliveryJob < ActionMailer::MailDeliveryJob
   # Sorts SMTP and network errors into the three outcomes above. The new errors carry only the
   # reply code, so neither the retry log lines nor the record name the address.
   def perform(...)
+    # OPS-04: email queued before a business was suspended isn't sent.
+    return email_message.mark!("failed", error: "Not sent: the business is suspended.") if email_message&.business&.suspended?
+
     super
   rescue *NETWORK_ERRORS => error
     raise Temporary, error.class.name.demodulize

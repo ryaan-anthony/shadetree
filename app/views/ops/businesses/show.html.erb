@@ -39,6 +39,23 @@
       <% end %>
     <% end %>
   <% end %>
+  <%= card title: "Account actions", subtitle: "Each needs a reason and a code from the last few minutes, and is audited.", id: "account-actions" do %>
+    <% if @business.suspended? %>
+      <div class="banner banner-warning mb-3" role="status"><p>Suspended <%= local_time(@business.suspended_at) %>: “<%= @business.suspension_reason %>”</p></div>
+      <%= form_with url: ops_business_suspension_path(@business), method: :delete, class: "space-y-2", data: { turbo_confirm: "Reactivate #{@business.name}? Its members and client links work again." } do %>
+        <div class="field"><label class="label" for="reactivate_reason">Reason for reactivating</label><%= text_field_tag :reason, nil, class: "input", id: "reactivate_reason", required: true, maxlength: 500 %></div>
+        <%= submit_tag "Reactivate", class: button_classes(:secondary), name: nil %>
+      <% end %>
+    <% elsif @business.active? %>
+      <%= form_with url: ops_business_suspension_path(@business), class: "space-y-2", data: { turbo_confirm: "Suspend #{@business.name}? Its members lose access at once and client links show as unavailable. Billing isn't changed.", turbo_confirm_button: "Suspend" } do %>
+        <div class="field"><label class="label" for="suspend_reason">Reason for suspending</label><%= text_field_tag :reason, nil, class: "input", id: "suspend_reason", required: true, maxlength: 500, placeholder: "e.g. Sending spam through client emails" %></div>
+        <%= submit_tag "Suspend business", class: button_classes(:danger), name: nil %>
+        <p class="text-sm2 text-muted">Billing isn't paused; change it in the billing provider if needed.</p>
+      <% end %>
+    <% else %>
+      <p class="text-sm text-muted">This business was closed when its last member deleted their account.</p>
+    <% end %>
+  <% end %>
   <%= card title: "Plan and usage", id: "plan" do %>
     <dl class="space-y-2 text-sm">
       <div class="flex justify-between gap-3"><dt class="text-subtle">Plan</dt><dd class="font-semibold text-ink"><%= entitlements.plan.name %><%= " (with overrides)" if @business.plan_overrides.present? %></dd></div>

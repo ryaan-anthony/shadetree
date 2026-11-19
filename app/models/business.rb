@@ -238,6 +238,23 @@ class Business < ApplicationRecord
     super(result.attachable) if result.attachable
   end
 
+  # OPS-04: an operator stops a business (spam, abuse, a dispute). It stops being active, so its
+  # members see a contact-support page, client links show "unavailable", its request form and
+  # automations stop and queued client email isn't sent. Reactivating restores all of it.
+  def suspended? = suspended_at.present?
+
+  def suspend!(reason:)
+    raise ArgumentError, "a closed business can't be suspended" unless active? || suspended?
+
+    update_columns(active: false, suspended_at: Time.current, suspension_reason: reason, updated_at: Time.current)
+  end
+
+  def reactivate!
+    raise ArgumentError, "only a suspended business can be reactivated" unless suspended?
+
+    update_columns(active: true, suspended_at: nil, suspension_reason: nil, updated_at: Time.current)
+  end
+
   def user_role(user)
     business_users.find_by(user: user)&.role
   end

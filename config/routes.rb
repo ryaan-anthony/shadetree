@@ -60,6 +60,15 @@ Rails.application.routes.draw do
     end
     resource :impersonation, only: %i[edit update destroy]
     resources :users, only: :index # OPS-02: lookup by email
+      resource :suspension, only: %i[create destroy] # OPS-04
+    end
+    resources :users, only: :index do # OPS-02: lookup by email
+      member do # OPS-04: sign-in help
+        post :confirmation, to: "user_actions#confirmation"
+        post :password_reset, to: "user_actions#password_reset"
+        post :unlock, to: "user_actions#unlock"
+      end
+    end
   end
 
   namespace :admin do

@@ -5,6 +5,7 @@ class Admin::BaseController < ApplicationController
   include ConfirmedSender
   include LocationFilter # CAT-07
   before_action :require_business_setup
+  before_action :refuse_suspended_business # OPS-04
   include Authorization # after setup, so users without a business are sent to create one
   layout "app"
   before_action { response.set_header("X-Robots-Tag", "noindex, nofollow") } # MKT-04: never in search results
@@ -32,6 +33,14 @@ class Admin::BaseController < ApplicationController
 
   # CAT-07: a location picked on a document form, if it's one new work can go to.
   def picked_location(uid) = (Location.active.find_by(uid: uid.to_s) if uid.present?)
+
+  # A suspended business's members see who to contact, and can still switch to another business.
+  def refuse_suspended_business
+    return unless current_business&.suspended?
+    return if controller_path == "admin/businesses" && %w[switch new create].include?(action_name)
+
+    render "admin/suspended", status: :forbidden
+  end
 
   # Staff pages need a current business; without one, send the user to create it.
   def require_business_setup

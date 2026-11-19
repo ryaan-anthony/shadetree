@@ -20,7 +20,12 @@ class AuditEntry < ApplicationRecord
     "impersonation.changes_allowed" => "Allowed changes while viewing as a member",
     "impersonation.read_only" => "Went back to read-only",
     "impersonation.change" => "Made a change while viewing as a member",
-    "impersonation.ended" => "Stopped viewing as a member"
+    "impersonation.ended" => "Stopped viewing as a member",
+    "business.suspended" => "Suspended a business",
+    "business.reactivated" => "Reactivated a business",
+    "user.confirmation_resent" => "Resent a confirmation email",
+    "user.password_reset_sent" => "Sent a password reset",
+    "user.unlocked" => "Unlocked an account"
   }.freeze
 
   belongs_to :operator_user, class_name: "User", optional: true

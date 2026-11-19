@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_19_002500) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_19_002700) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -183,6 +183,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002500) do
     t.jsonb "plan_overrides", default: {}, null: false
     t.datetime "billing_cycle_anchor"
     t.boolean "request_form_indexable", default: false, null: false
+    t.datetime "suspended_at"
+    t.text "suspension_reason"
     t.index ["active"], name: "index_businesses_on_active"
     t.index ["handle"], name: "index_businesses_on_handle", unique: true
     t.index ["industry"], name: "index_businesses_on_industry"
