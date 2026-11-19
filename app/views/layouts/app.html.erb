@@ -3,6 +3,7 @@
 <html lang="en">
   <head>
     <%= render "layouts/head" %>
+    <meta name="robots" content="noindex"><%# signed-in pages are never indexed (MKT-04) %>
     <%# JOB-04: the staff app installs to the home screen (the crew opens straight to My day); client and marketing pages don't offer it. %>
     <link rel="manifest" href="<%= pwa_manifest_path(format: :json) %>">
   </head>

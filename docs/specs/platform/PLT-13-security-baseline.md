@@ -54,8 +54,8 @@ public endpoints. Run a focused review and fix what it finds.
   signing out resets the session; those forms skip Turbo, and a `csp-nonce-check` meta tracked
   by Turbo forces a full load if the nonce changes some other way.
 - **Third parties are added one at a time** in the policy when a feature needs them: Stripe's
-  hosted checkout (BIL-04) will need `form-action` once we post to it; self-hosted Plausible
-  (MKT-04) its script and connect origin.
+  hosted checkout (BIL-04) will need `form-action` once we post to it. Self-hosted Plausible
+  (MKT-04) is in: its host joins `script-src` and `connect-src` only when analytics is on.
 
 ## Implementation notes
 

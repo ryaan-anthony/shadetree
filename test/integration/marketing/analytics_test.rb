@@ -31,6 +31,17 @@ class MarketingAnalyticsTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "the security policy allows the analytics host only when analytics is on (PLT-13)" do
+    get pricing_path
+    assert_no_match "stats.example.com", response.headers["Content-Security-Policy"]
+    with_analytics do
+      get pricing_path
+      policy = response.headers["Content-Security-Policy"]
+      assert_match %r{script-src 'self' https://stats\.example\.com}, policy
+      assert_match %r{connect-src 'self' https://stats\.example\.com}, policy
+    end
+  end
+
   test "when configured, the script is on marketing pages only, never the staff app or client pages" do
     with_analytics do
       get pricing_path
