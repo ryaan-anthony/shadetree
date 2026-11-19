@@ -1,0 +1,5 @@
+<%= @intro %>
+<% if @link && @button %>
+
+<%= @button %>: <%= client_link_url(@link.token) %>
+<% end %>

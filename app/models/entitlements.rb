@@ -45,6 +45,7 @@ class Entitlements
     @usage[key.to_s] ||= case key.to_s
     when "team_members" then Tenancy.with_business(business) { business.business_users.active.count + Invitation.pending.count }
     when "quotes_sent" then period.used("quote_sent")
+    when "active_automations" then Tenancy.with_business(business) { AutomationRule.where(enabled: true).count }
     end
   end
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_19_001610) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -41,6 +41,58 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001610) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "automation_deliveries", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "message_template_id", null: false
+    t.string "subject_type", null: false
+    t.bigint "subject_id", null: false
+    t.datetime "created_at", null: false
+    t.index ["business_id"], name: "index_automation_deliveries_on_business_id"
+    t.index ["message_template_id", "subject_type", "subject_id"], name: "index_automation_deliveries_once", unique: true
+    t.index ["message_template_id"], name: "index_automation_deliveries_on_message_template_id"
+    t.index ["subject_type", "subject_id"], name: "index_automation_deliveries_on_subject"
+  end
+
+  create_table "automation_rules", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.string "name", null: false
+    t.string "trigger", null: false
+    t.integer "delay_minutes", default: 0, null: false
+    t.jsonb "conditions", default: {}, null: false
+    t.jsonb "actions", default: [], null: false
+    t.boolean "enabled", default: true, null: false
+    t.string "recipe"
+    t.bigint "created_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "trigger"], name: "index_automation_rules_on_business_id_and_trigger", where: "enabled"
+    t.index ["business_id"], name: "index_automation_rules_on_business_id"
+    t.index ["created_by_id"], name: "index_automation_rules_on_created_by_id"
+    t.index ["uid"], name: "index_automation_rules_on_uid", unique: true
+  end
+
+  create_table "automation_runs", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "rule_id"
+    t.string "rule_name", null: false
+    t.string "trigger", null: false
+    t.string "subject_type", null: false
+    t.bigint "subject_id", null: false
+    t.string "status", default: "scheduled", null: false
+    t.datetime "run_at", null: false
+    t.datetime "finished_at"
+    t.jsonb "log", default: [], null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "created_at"], name: "index_automation_runs_on_business_id_and_created_at"
+    t.index ["business_id"], name: "index_automation_runs_on_business_id"
+    t.index ["rule_id", "subject_type", "subject_id"], name: "index_automation_runs_once_per_subject", unique: true
+    t.index ["rule_id"], name: "index_automation_runs_on_rule_id"
+    t.index ["run_at"], name: "index_automation_runs_scheduled", where: "((status)::text = 'scheduled'::text)"
+    t.index ["subject_type", "subject_id"], name: "index_automation_runs_on_subject"
   end
 
   create_table "business_users", force: :cascade do |t|
@@ -977,6 +1029,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001610) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "automation_deliveries", "businesses", on_delete: :cascade
+  add_foreign_key "automation_deliveries", "message_templates", on_delete: :cascade
+  add_foreign_key "automation_rules", "businesses", on_delete: :cascade
+  add_foreign_key "automation_rules", "users", column: "created_by_id", on_delete: :nullify
+  add_foreign_key "automation_runs", "automation_rules", column: "rule_id", on_delete: :nullify
+  add_foreign_key "automation_runs", "businesses", on_delete: :cascade
   add_foreign_key "business_users", "businesses"
   add_foreign_key "business_users", "users"
   add_foreign_key "businesses", "plans"

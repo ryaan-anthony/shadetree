@@ -10,6 +10,9 @@
 #     schedule: at 5am every day
 
 production:
+  automations_due: # NTF-04: overdue invoices, and runs a restart dropped
+    class: AutomationsDueJob
+    schedule: every hour at minute 23
   prune_notifications: # NTF-02
     class: PruneNotificationsJob
     schedule: every day at 4:20am

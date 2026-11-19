@@ -10,7 +10,7 @@ free:
   position: 0
   monthly_price: "0"
   annual_price: "0"
-  limits: { quotes_sent: 5, team_members: 2 }
+  limits: { quotes_sent: 5, team_members: 2, active_automations: 0 }
   features: {}
 starter:
   name: Starter
@@ -18,7 +18,7 @@ starter:
   position: 1
   monthly_price: "19"
   annual_price: "190"
-  limits: { quotes_sent: 30, team_members: 3 }
+  limits: { quotes_sent: 30, team_members: 3, active_automations: 0 }
   features: { remove_powered_by: true }
 pro:
   name: Pro
@@ -26,7 +26,7 @@ pro:
   position: 2
   monthly_price: "49"
   annual_price: "490"
-  limits: { quotes_sent: 150, team_members: 10 }
+  limits: { quotes_sent: 150, team_members: 10, active_automations: 10 }
   features: { remove_powered_by: true, message_templates: true, automations: true, custom_roles: true }
 business:
   name: Business
@@ -34,5 +34,5 @@ business:
   position: 3
   monthly_price: "99"
   annual_price: "990"
-  limits: { quotes_sent: ~, team_members: ~ }
+  limits: { quotes_sent: ~, team_members: ~, active_automations: ~ }
   features: { remove_powered_by: true, message_templates: true, automations: true, custom_roles: true, locations: true, priority_support: true }

@@ -20,7 +20,8 @@ module EmailCatalog
     [ "invoice_sent", "Invoice sent", "Client", "Staff send an invoice", "PAY-02", true ],
     [ "payment_receipt", "Payment receipt", "Client", "A payment succeeds, or staff record one and choose to send it", "PAY-04, PAY-05", true ],
     [ "invoice_paid", "Invoice paid", "Team", "An invoice is paid", "PAY-04, PAY-05", false ],
-    [ "team_invitation", "Team invitation", "Invitee", "An owner or admin invites someone", "ACC-03", false ]
+    [ "team_invitation", "Team invitation", "Invitee", "An owner or admin invites someone", "ACC-03", false ],
+    [ "automated_message", "Automated message", "Client", "An automation sends one of the business's templates", "NTF-04", true ]
   ].map { Entry.new(*_1) }.freeze
 
   def self.all = ENTRIES

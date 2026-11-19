@@ -49,7 +49,9 @@ class NotificationType
     Definition.new(kind: "job_ready_to_invoice", label: "A job is ready to invoice", hint: "The last visit on a job is completed.",
                    permission: :office, email_by_default: true, icon: "check-circle"),
     Definition.new(kind: "visit_cancelled", label: "A visit you're on is cancelled", hint: "With the reason, if one was given.",
-                   permission: :field_work, email_by_default: true, icon: "x-circle", audience: :named)
+                   permission: :field_work, email_by_default: true, icon: "x-circle", audience: :named),
+    Definition.new(kind: "automation", label: "Automation notices", hint: "An automation's “notify the team” step.", # NTF-04
+                   permission: %i[office schedule], email_by_default: true, icon: "zap", audience: :named)
   ].index_by(&:kind).freeze
 
   class UnknownKind < ArgumentError; end
@@ -58,7 +60,10 @@ class NotificationType
   def self.fetch(kind) = ALL.fetch(kind.to_s) { raise UnknownKind, "No notification type #{kind.inspect}" }
 
   # The types a member can receive, for their settings.
-  def self.for(membership) = ALL.values.select { membership.can?(_1.permission) }
+  def self.for(membership) = ALL.values.select { allowed?(membership, _1) }
+
+  # A type's permission, or any one of several (NTF-04's notices go to office or schedule staff).
+  def self.allowed?(membership, type) = Array(type.permission).any? { membership.can?(_1) }
 
   def self.deliver(kind, business:, title:, path:, subject: nil, body: nil, actor: nil, to: nil, email: nil)
     type = fetch(kind)
@@ -75,7 +80,7 @@ class NotificationType
   def self.recipients(type, business, to:, actor:)
     memberships = business.business_users.active.includes(:user).to_a
     named = to && Array(to).to_set(&:id)
-    memberships = named ? memberships.select { named.include?(_1.user_id) && _1.can?(type.permission) } : memberships.select { _1.can?(type.permission) }
+    memberships = named ? memberships.select { named.include?(_1.user_id) && allowed?(_1, type) } : memberships.select { allowed?(_1, type) }
     memberships.reject { _1.user_id == actor&.id }
   end
 

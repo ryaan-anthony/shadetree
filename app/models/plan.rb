@@ -8,7 +8,8 @@ class Plan < ApplicationRecord
   # doesn't list is unlimited (limits) or off (features).
   LIMITS = {
     "quotes_sent" => "Quotes sent a month",
-    "team_members" => "Team members"
+    "team_members" => "Team members",
+    "active_automations" => "Active automations" # NTF-04
   }.freeze
   FEATURES = {
     "remove_powered_by" => "No “Powered by Shadetree” on client pages and emails",
