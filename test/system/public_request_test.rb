@@ -23,7 +23,7 @@ class PublicRequestSystemTest < ApplicationSystemTestCase
     fill_in "Your name", with: "Hannah Brooks"
     fill_in "Phone", with: "555 010 0444"
     fill_in "Street address", with: "5 Pine Rd"
-    sleep PublicRequestsController::MIN_SECONDS_ON_PAGE # people take longer than this; the form expects it
+    sleep AbuseProtection::MIN_SECONDS # people take longer than this; the form expects it
     click_on "Send request"
     assert_text "Request sent"
     request = as_business(@business) { ServiceRequest.sole }

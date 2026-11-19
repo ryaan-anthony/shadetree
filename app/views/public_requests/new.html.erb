@@ -11,12 +11,7 @@
       <% if f.object.errors[:base].any? %>
         <div class="banner banner-warning" role="alert"><%= icon "alert-circle" %><p><%= f.object.errors[:base].to_sentence %></p></div>
       <% end %>
-      <%# Spam protection: a field people never see or fill (bots do), and when the form was shown. %>
-      <div class="hidden" aria-hidden="true">
-        <label for="request_website">Leave this empty</label>
-        <input type="text" name="website" id="request_website" tabindex="-1" autocomplete="off">
-      </div>
-      <%= hidden_field_tag :form_token, form_token, id: nil %>
+      <%= render "shared/form_guard", purpose: form_purpose %>
 
       <% services = RequestSubmission.offered_services.to_a %>
       <% if services.any? %>

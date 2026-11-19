@@ -1,6 +1,8 @@
 <% if resource.errors.any? %>
   <div class="banner banner-danger mb-5" role="alert" data-turbo-temporary>
     <%= icon "alert-circle" %>
-    <p><%= resource.errors.count == 1 ? "One thing to fix" : "#{resource.errors.count} things to fix" %> before continuing. Each one is marked below.</p>
+    <% field_errors = resource.errors.count - resource.errors[:base].size %>
+    <p><%= safe_join(resource.errors[:base], " ") %>
+      <% if field_errors.positive? %><%= field_errors == 1 ? "One thing to fix" : "#{field_errors} things to fix" %> before continuing. Each one is marked below.<% end %></p>
   </div>
 <% end %>

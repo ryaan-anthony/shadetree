@@ -3,3 +3,12 @@
 Rails.application.config.to_prepare do
   ActiveStorage::DirectUploadsController.before_action { head :not_found }
 end
+
+# PLT-13: stored files never act as code on our origin. Rails already serves HTML, SVG and XML
+# as downloads of plain bytes; scripts and stylesheets join them, since the content security
+# policy trusts our own origin for those. (Every upload path re-encodes photos or checks for a
+# real PDF, so none of these should be stored at all.)
+Rails.application.config.active_storage.content_types_to_serve_as_binary += %w[
+  text/javascript application/javascript application/x-javascript application/ecmascript text/ecmascript
+  text/css application/json application/wasm
+]
