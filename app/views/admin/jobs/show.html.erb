@@ -3,7 +3,7 @@
 <% totals = job.totals %>
 <% content_for :title, "#{job.number} #{job.title}" %>
 <%= page_header job.title, lede: safe_join([ "#{job.number} for ", link_to(job.client.display_name, admin_client_path(job.client), class: "font-medium text-ink hover:underline"),
-                                              (safe_join([ " · from ", link_to("quote #{job.quote.number}", admin_quote_path(job.quote), class: "font-medium text-ink hover:underline") ]) if job.quote) ].compact) do %>
+                                              (safe_join([ " · from ", link_to("quote #{job.quote.number}", admin_quote_path(job.quote), class: "font-medium text-ink hover:underline") ]) if job.quote), location_badge(job) ].compact) do %>
   <% if job.open? %>
     <%= link_to edit_admin_job_path(job), class: button_classes(:secondary) do %><%= icon "edit-2" %> Edit<% end %>
     <%= button_to complete_admin_job_path(job), method: :patch, class: button_classes(:primary),

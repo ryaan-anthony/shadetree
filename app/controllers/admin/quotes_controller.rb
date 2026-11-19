@@ -162,7 +162,7 @@ class Admin::QuotesController < Admin::BaseController
     @totals = scope.group(:currency).sum(:total_cents).map { |currency, cents| Money.new(cents, currency) }
     @total_pages = [ (@total_count.to_f / PER_PAGE).ceil, 1 ].max
     @page = params[:page].to_i.clamp(1, @total_pages)
-    @quotes = scope.includes(:business, :client, :property, :responses, sends: :email_message).order(created_at: :desc, id: :desc)
+    @quotes = scope.includes(:business, :client, :property, :location, :responses, sends: :email_message).order(created_at: :desc, id: :desc)
                    .offset((@page - 1) * PER_PAGE).limit(PER_PAGE).to_a
     @views = ClientLink.where(linkable: @quotes).group(:linkable_id).sum(:views_count)
     @counts = Quote.filter_counts(today:) unless request.post? # the tabs (and their counts) are outside the results

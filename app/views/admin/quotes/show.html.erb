@@ -2,7 +2,7 @@
 <% quote = @quote %>
 <% totals = quote.totals %>
 <% content_for :title, "#{quote.number}#{" #{quote.title}" if quote.title}" %>
-<%= page_header (quote.title || "Quote #{quote.number}"), lede: safe_join([ "#{quote.number} for ", link_to(quote.client.display_name, admin_client_path(quote.client), class: "font-medium text-ink hover:underline"), (", #{quote.property.one_line}" if quote.property) ].compact) do %>
+<%= page_header (quote.title || "Quote #{quote.number}"), lede: safe_join([ "#{quote.number} for ", link_to(quote.client.display_name, admin_client_path(quote.client), class: "font-medium text-ink hover:underline"), (", #{quote.property.one_line}" if quote.property), location_badge(quote) ].compact) do %>
   <% if (job = quote.job) %>
     <%= link_to admin_job_path(job), class: button_classes(:primary) do %><%= icon "job" %> Job <%= job.number %><% end %>
   <% elsif quote.approved? %>

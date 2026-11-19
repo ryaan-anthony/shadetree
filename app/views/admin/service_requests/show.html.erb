@@ -1,6 +1,6 @@
 <% request_record = @request %>
 <% client = request_record.client %>
-<%= page_header client.display_name, lede: "#{request_record.matched_existing_client || request_record.source != "form" ? "Existing client" : "New client"} · #{request_record.source_label}#{" · logged by #{request_record.created_by.full_name}" if request_record.created_by} · #{l(request_record.created_at.in_time_zone(current_business.time_zone), format: :long)}" do %>
+<%= page_header client.display_name, lede: safe_join([ "#{request_record.matched_existing_client || request_record.source != "form" ? "Existing client" : "New client"} · #{request_record.source_label}#{" · logged by #{request_record.created_by.full_name}" if request_record.created_by} · #{l(request_record.created_at.in_time_zone(current_business.time_zone), format: :long)}", location_badge(request_record) ].compact) do %>
   <% (ServiceRequest::STATUSES - [ request_record.status, "quoted" ]).each do |status| %>
     <%= button_to status_admin_service_request_path(request_record, status:), method: :patch, class: button_classes(:secondary), form: { class: "contents" } do %>
       <%= { "new" => "Mark new", "in_progress" => "Mark in progress", "archived" => "Archive" }.fetch(status) %>

@@ -27,7 +27,7 @@
                 <span class="min-w-0 truncate font-semibold text-ink"><%= job.title %></span>
                 <span class="money text-sm font-semibold text-ink"><%= job.total_cents.zero? ? "—" : money(job.total) %></span>
               </span>
-              <span class="mt-0.5 block truncate text-sm2 text-muted"><%= job.number %> · <%= job.client.display_name %><%= " · #{job.property.one_line}" if job.property %></span>
+              <span class="mt-0.5 block truncate text-sm2 text-muted"><%= job.number %> · <%= job.client.display_name %><%= " · #{job.property.one_line}" if job.property %><%= location_badge(job) %></span>
               <span class="mt-1.5 flex flex-wrap items-center gap-1.5 text-sm2 text-muted"><%= job_status_badge(job) %>
                 <% if job.quote %><span class="ml-auto">From <%= job.quote.number %></span><% end %></span>
             <% end %>
@@ -47,7 +47,7 @@
         <tbody>
           <% @jobs.each do |job| %>
             <tr id="job-<%= job.uid %>">
-              <td><%= link_to job.title, admin_job_path(job), class: "primary hover:underline", data: { turbo_frame: "_top" } %><span class="sub"><%= job.number %></span></td>
+              <td><%= link_to job.title, admin_job_path(job), class: "primary hover:underline", data: { turbo_frame: "_top" } %><span class="sub"><%= job.number %><%= location_badge(job) %></span></td>
               <td><%= job.client.display_name %><% if job.property %><span class="sub"><%= job.property.one_line %></span><% end %></td>
               <td><%= job_status_badge(job) %>
                 <% if job.status == "unscheduled" && can?(:schedule) %>

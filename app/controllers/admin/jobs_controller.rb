@@ -98,7 +98,7 @@ class Admin::JobsController < Admin::BaseController
     @total_count = scope.count
     @total_pages = [ (@total_count.to_f / PER_PAGE).ceil, 1 ].max
     @page = params[:page].to_i.clamp(1, @total_pages)
-    @jobs = scope.includes(:client, :property, :quote).order(created_at: :desc, id: :desc).offset((@page - 1) * PER_PAGE).limit(PER_PAGE).to_a
+    @jobs = scope.includes(:client, :property, :quote, :location).order(created_at: :desc, id: :desc).offset((@page - 1) * PER_PAGE).limit(PER_PAGE).to_a
     @counts = Job.filter_counts unless request.post? # the tabs are outside the results frame
     @any_jobs = @total_count.positive? || Job.exists?
   end

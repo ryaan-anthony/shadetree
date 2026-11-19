@@ -71,7 +71,17 @@ class DataExport < ApplicationRecord
       column("Billing address", &:billing)
       column("Access notes", &:access_notes)
     end,
-    Table.new("requests", "Requests", "Requests for work from your form or added by your team.", scope: -> { ServiceRequest.includes(:client, :property) }) do
+    Table.new("locations", "Locations", "Your locations (CAT-07); the main one's details are your business profile's.", scope: -> { Location.all }) do
+      column("Location ID", &:uid)
+      column("Name", &:name)
+      column("Main location", &:primary)
+      column("Address") { _1.primary? ? nil : _1.address_lines.join(", ") }
+      column("Phone", &:phone)
+      column("Email", &:email)
+      column("Time zone", &:timezone)
+      column("Archived", &:archived_at)
+    end,
+    Table.new("requests", "Requests", "Requests for work from your form or added by your team.", scope: -> { ServiceRequest.includes(:client, :property, :location) }) do
       column("Request ID", &:uid)
       column("Received", &:created_at)
       column("Status", &:status)
@@ -86,8 +96,9 @@ class DataExport < ApplicationRecord
       column("Description", &:description)
       column("Property ID") { _1.property&.uid }
       column("Address given") { |r| r.address.is_a?(Hash) ? r.address.values_at("address_line1", "address_line2", "city", "region", "postal_code").compact_blank.join(", ") : nil }
+      column("Location") { _1.location.name }
     end,
-    Table.new("quotes", "Quotes", "One row per quote, with its totals and taxes.", scope: -> { Quote.includes(:client, :property, :created_by, :line_items) }) do
+    Table.new("quotes", "Quotes", "One row per quote, with its totals and taxes.", scope: -> { Quote.includes(:client, :property, :created_by, :line_items, :location) }) do
       column("Quote number", &:number)
       column("Client ID") { _1.client.uid }
       column("Client") { _1.client.display_name }
@@ -106,9 +117,10 @@ class DataExport < ApplicationRecord
       column("Taxes") { taxes_of.(_1) }
       column("Prices include tax", &:prices_include_tax)
       column("Internal notes", &:internal_notes)
+      column("Location") { _1.location.name }
     end,
     Table.new("quote_lines", "Quote line items", "Each line on each quote.", scope: -> { QuoteLineItem.includes(:quote) }, cursor: %i[quote_id position id], &lines.("quote", "Quote number")),
-    Table.new("jobs", "Jobs", "One row per job, with its totals.", scope: -> { Job.includes(:client, :property, :quote, :line_items) }) do
+    Table.new("jobs", "Jobs", "One row per job, with its totals.", scope: -> { Job.includes(:client, :property, :quote, :line_items, :location) }) do
       column("Job number", &:number)
       column("Client ID") { _1.client.uid }
       column("Client") { _1.client.display_name }
@@ -128,6 +140,7 @@ class DataExport < ApplicationRecord
       column("Taxes") { taxes_of.(_1) }
       column("Instructions", &:instructions)
       column("Internal notes", &:internal_notes)
+      column("Location") { _1.location.name }
     end,
     Table.new("job_lines", "Job line items", "Each line on each job.", scope: -> { JobLineItem.includes(:job) }, cursor: %i[job_id position id], &lines.("job", "Job number")),
     Table.new("visits", "Visits", "Each scheduled visit, by date, with who was on it.", scope: -> { Visit.includes(:assignees, job: :client) }, cursor: %i[scheduled_on id]) do
@@ -146,7 +159,7 @@ class DataExport < ApplicationRecord
       column("Cancelled", &:cancelled_at)
       column("Cancel reason", &:cancel_reason)
     end,
-    Table.new("invoices", "Invoices", "One row per invoice, with totals, taxes and what's been paid.", scope: -> { Invoice.includes(:client, :property, :job, :line_items) }) do
+    Table.new("invoices", "Invoices", "One row per invoice, with totals, taxes and what's been paid.", scope: -> { Invoice.includes(:client, :property, :job, :line_items, :location) }) do
       column("Invoice number", &:number)
       column("Client ID") { _1.client.uid }
       column("Client") { _1.client.display_name }
@@ -171,6 +184,7 @@ class DataExport < ApplicationRecord
       column("Payment terms", &:payment_terms)
       column("Void reason", &:void_reason)
       column("Internal notes", &:internal_notes)
+      column("Location") { _1.location.name }
     end,
     Table.new("invoice_lines", "Invoice line items", "Each line on each invoice.", scope: -> { InvoiceLineItem.includes(:invoice) }, cursor: %i[invoice_id position id], &lines.("invoice", "Invoice number")),
     Table.new("payments", "Payments", "Each payment recorded against an invoice, by date received.", scope: -> { Payment.includes(:invoice, :recorded_by) }, cursor: %i[received_on id]) do

@@ -55,6 +55,29 @@ class LocationDocumentsTest < ActionDispatch::IntegrationTest
     assert_select "select[name='service_request[location]'] option[selected]", "North yard"
   end
 
+  test "another business's location can't be picked when creating a job or request" do
+    sign_in_owner
+    theirs = businesses(:two).primary_location
+    property = as_business(@business) { @maria.properties.first.uid }
+    post admin_jobs_path, params: { job: { client: @maria.uid, property:, title: "Sneaky", location: theirs.uid } }
+    assert_equal @main.id, as_business(@business) { Job.find_by!(title: "Sneaky").location_id }
+    post admin_service_requests_path, params: { service_request: { client: @maria.uid, source: "phone", description: "Sneaky request", location: theirs.uid } }
+    assert_equal @main.id, as_business(@business) { ServiceRequest.find_by!(description: "Sneaky request").location_id }
+  end
+
+  test "lists, pages and the data export show each document's location" do
+    sign_in_owner
+    quote = as_business(@business) { Quote.start(client: @maria, location: @north).tap { _1.update!(title: "North quote"); _1.update_columns(status: "sent", sent_at: Time.current) } }
+    get admin_quotes_path
+    assert_select ".badge", "North yard"
+    get admin_quote_path(quote)
+    assert_select ".page-lede .badge", "North yard"
+    csv, = as_business(@business) { DataExport.table("quotes").generate }
+    assert_includes csv.lines.first, "Location"
+    assert_includes csv, "North yard"
+    assert_includes as_business(@business) { DataExport.table("locations").generate.first }, "North yard"
+  end
+
   test "with one location, documents never show a location" do
     as_business(@business) { @north.destroy! }
     sign_in_owner
@@ -98,5 +121,10 @@ class LocationDocumentsTest < ActionDispatch::IntegrationTest
 
     post public_request_path("oakline"), params: { form_token:, website: "", request_submission: { name: "Ivy", email: "i@example.com", address_line1: "3 Oak St", description: "Lawn", location: "nope" } }
     assert_response :unprocessable_content
+
+    post public_request_path("oakline"), params: { form_token:, website: "", fixed_location: "1", request_submission: { name: "", email: "j@example.com", address_line1: "4 Oak St", location: @north.uid } }
+    assert_response :unprocessable_content
+    assert_select "input[type=hidden][name='request_submission[location]'][value='#{@north.uid}']", 1, "a location's own link stays fixed after an error"
+    assert_select "select[name='request_submission[location]']", 0
   end
 end

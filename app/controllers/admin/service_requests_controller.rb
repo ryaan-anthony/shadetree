@@ -14,7 +14,7 @@ class Admin::ServiceRequestsController < Admin::BaseController
     @total_count = scope.count
     @total_pages = [ (@total_count.to_f / PER_PAGE).ceil, 1 ].max
     @page = params[:page].to_i.clamp(1, @total_pages)
-    @requests = scope.recent.includes(:client, :property, :created_by).with_attached_photos.offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
+    @requests = scope.recent.includes(:client, :property, :created_by, :location).with_attached_photos.offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
     @seen_by_me = ServiceRequestView.where(user: current_user, service_request_id: @requests.map(&:id)).pluck(:service_request_id).to_set
   end
 
