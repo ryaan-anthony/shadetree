@@ -33,6 +33,7 @@ class CreateAutomations < ActiveRecord::Migration[8.1]
     end
     add_index :automation_runs, %i[business_id created_at]
     add_index :automation_runs, %i[rule_id subject_type subject_id], unique: true, name: "index_automation_runs_once_per_subject"
+    add_index :automation_runs, :run_at, where: "status = 'scheduled'", name: "index_automation_runs_scheduled"
 
     create_table :automation_deliveries do |t|
       t.references :business, null: false, foreign_key: { on_delete: :cascade }

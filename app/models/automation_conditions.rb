@@ -4,7 +4,7 @@ module AutomationConditions
 
   # nil when they all hold, else why not (shown in the run's log).
   def failing(conditions, subject)
-    return "The #{subject.model_name.human.downcase} no longer exists." if subject.nil?
+    return "The record no longer exists." if subject.nil?
 
     conditions.each do |key, value|
       reason = case key

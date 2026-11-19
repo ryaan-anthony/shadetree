@@ -86,7 +86,7 @@ class AutomationRule < ApplicationRecord
   def within_active_limit
     entitlements = business.entitlements
     limit = entitlements.limit(:active_automations)
-    return if limit.nil? || AutomationRule.active.where.not(id:).count < limit
+    return if limit.nil? || AutomationRule.unscoped.active.where(business_id:).where.not(id:).count < limit
 
     errors.add(:base, "Your plan includes #{limit} active #{"automation".pluralize(limit)}. Switch one off, or see plans for more.")
   end

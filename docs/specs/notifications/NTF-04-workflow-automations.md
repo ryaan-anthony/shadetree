@@ -61,6 +61,12 @@ build custom rules from a fixed list of triggers, conditions and actions.
   least, and client tag.
 - **"Notify the team" goes to everyone with a permission** (running the office, or
   scheduling), so custom roles (ACC-07) are covered without naming roles.
+- **An overdue rule chases invoices that fall due after it's made**, not every old invoice the
+  moment it's switched on.
+- **Logs and notices name the record (Q-1042), never the client**, so client erasure (INS-02)
+  has nothing to scrub there; runs for an erased client are skipped.
+- **While a business is suspended**, new events start nothing and waiting runs stay waiting;
+  they go ahead (conditions re-checked) once it's active again.
 
 ## Implementation notes
 
@@ -73,12 +79,15 @@ Part 1 (the engine):
   `active_automations` counts rules switched on (Pro 10, Business unlimited).
 - `Automation.trigger` is called by `ClientEvent` (after commit), `Job#complete!` and the hourly
   `AutomationsDueJob` (overdue invoices, and any due run a restart dropped). Each active rule
-  gets one `AutomationRun` per record (unique), run at once or by `AutomationRunJob` when its
-  delay ends. Running re-checks the plan, the business, the rule and its conditions, then does
-  each action and logs the result ("done", "skipped" with why, "failed" with the error).
-- Safeguards: while an automation acts (`Current.automation_run`) nothing else triggers, so
-  rules can't feed each other; a template goes to a client once per document
-  (`AutomationDelivery`); suspended businesses and plans without automations skip;
+  gets one `AutomationRun` per record (unique), always run by `AutomationRunJob` (even with no
+  delay), so a failing automation never breaks the request that triggered it; `trigger` reports
+  errors rather than raising. The sweep handles each business on its own, so one failure
+  doesn't stop the rest. Running re-checks the plan, the business, the rule and its conditions, then does
+  each action in its own savepoint and logs the result ("done", "skipped" with why, "failed" with
+  the error); anything unexpected marks the run failed rather than retrying it forever.
+- Safeguards: events recorded while an automation acts (`Current.automation_run`, taken when the
+  event is created, not when it commits) trigger nothing, so rules can't feed each other; a template goes to a client once per document
+  (`AutomationDelivery`); runs wait while the business is suspended; plans without automations skip;
   `AutomationMailer` sends through the client mailer, so suppressed addresses aren't mailed.
 
 Part 2: the automations page (rules, recipes, the log), and runs shown on each record.

@@ -3,7 +3,9 @@
 class AutomationMailer < ClientMailer
   SUBJECTS = [ ServiceRequest, Quote, Job, Visit, Invoice, Payment ].index_by(&:name).freeze
   def template_email
-    template = MessageTemplate.find(params[:template_id])
+    template = MessageTemplate.find_by(id: params[:template_id])
+    return skip_changed_document(subject: "Automated message", error: "The template was deleted before the email went out.") unless template
+
     model = SUBJECTS[params[:subject_type]]
     subject = model&.find_by(id: params[:subject_id])
     return skip_changed_document(subject: template.subject, error: "The record was deleted before the email went out.") unless subject

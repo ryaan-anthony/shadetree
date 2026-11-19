@@ -91,6 +91,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
     t.index ["business_id"], name: "index_automation_runs_on_business_id"
     t.index ["rule_id", "subject_type", "subject_id"], name: "index_automation_runs_once_per_subject", unique: true
     t.index ["rule_id"], name: "index_automation_runs_on_rule_id"
+    t.index ["run_at"], name: "index_automation_runs_scheduled", where: "((status)::text = 'scheduled'::text)"
     t.index ["subject_type", "subject_id"], name: "index_automation_runs_on_subject"
   end
 

@@ -3,9 +3,13 @@
 module AutomationActions
   module_function
 
+  # Each action in its own savepoint: a database error in one rolls back only that one, and the
+  # run (and its log) carries on.
   def perform(action, run)
     type = action["type"]
-    result, detail = public_send(type, action, run.subject, run)
+    return run.note!(type.to_s, "failed", "Unknown action.") unless AutomationRule::ACTIONS.key?(type)
+
+    result, detail = ActiveRecord::Base.transaction(requires_new: true) { public_send(type, action, run.subject, run) }
     run.note!(type, result, detail)
   rescue StandardError => e
     Rails.error.report(e, context: { automation_run_id: run.id, action: type })
@@ -19,6 +23,18 @@ module AutomationActions
     when Payment then subject.invoice
     else subject
     end
+  end
+
+  # Client erasure (INS-02) leaves documents in place; automations never act for an erased client.
+  def client_erased?(subject)
+    client = client_for(subject)
+    client.respond_to?(:erased?) && client.erased?
+  end
+
+  # A short name for the record in logs and notices: its number, never the client's name (so
+  # nothing here needs scrubbing when a client is erased).
+  def label_for(subject)
+    subject.try(:number) || subject.try(:job)&.number || subject.model_name.human.downcase
   end
 
   def client_for(subject)
@@ -35,11 +51,11 @@ module AutomationActions
     email = client&.primary_email&.value or return [ "skipped", "The client has no email address." ]
     document = document_for(subject)
     delivery = AutomationDelivery.create_or_find_by!(message_template: template, subject: document)
-    return [ "skipped", "#{client.display_name} already got “#{template.name}” about this." ] unless delivery.previously_new_record?
+    return [ "skipped", "The client already got “#{template.name}” about #{label_for(document)}." ] unless delivery.previously_new_record?
 
     AutomationMailer.send_later(:template_email, business: run.business, to: email, kind: "automated_message", related: document,
                                           template_id: template.id, subject_type: subject.class.name, subject_id: subject.id)
-    [ "done", "Emailed “#{template.name}” to #{client.display_name}." ]
+    [ "done", "Emailed “#{template.name}” to the client." ]
   end
 
   def notify_team(action, subject, run)
@@ -47,9 +63,7 @@ module AutomationActions
     users = run.business.business_users.active.includes(:user).select { _1.can?(permission) }.map(&:user)
     return [ "skipped", "Nobody to notify." ] if users.empty?
 
-    client = client_for(subject)
-    NotificationType.deliver("automation", business: run.business, to: users,
-                             title: "#{run.rule_name}: #{subject.model_name.human.downcase} for #{client&.display_name || "a client"}",
+    NotificationType.deliver("automation", business: run.business, to: users, title: "#{run.rule_name}: #{label_for(subject)}",
                              path: notice_path(subject))
     [ "done", "Notified #{users.size} #{"person".pluralize(users.size)}." ]
   end
@@ -86,7 +100,7 @@ module AutomationActions
     return [ "skipped", "Already tagged “#{tag}”." ] if client.tags.include?(tag)
 
     client.update!(tags: client.tags + [ tag ])
-    [ "done", "Tagged #{client.display_name} “#{tag}”." ]
+    [ "done", "Tagged the client “#{tag}”." ]
   end
 
   def notice_path(subject)
