@@ -8,9 +8,13 @@ class Admin::MembersController < Admin::BaseController
     return deny_change(choice) unless current_membership.can_assign_role?(@member, choice)
     return redirect_to(admin_team_path, alert: "That person deleted their Shadetree account.") if @member.user.deleted? # ACC-06
 
+    previous = @member.custom_role_record
     @member.assign_role_choice(choice)
     if @member.save
-      RoleEvent.record!(@member.custom_role_record, "assigned", by: current_user, member: @member.user.full_name) if @member.custom_role?
+      if @member.saved_change_to_role_id?
+        RoleEvent.record!(previous, "unassigned", by: current_user, member_id: @member.user_id) if previous
+        RoleEvent.record!(@member.custom_role_record, "assigned", by: current_user, member_id: @member.user_id) if @member.custom_role?
+      end
       redirect_to admin_team_path, notice: "#{@member.user.full_name} is now #{@member.role_name.match?(/\A[AEIOU]/i) ? "an" : "a"} #{@member.role_name}."
     else
       redirect_to admin_team_path, alert: @member.errors.full_messages.to_sentence
@@ -47,7 +51,10 @@ class Admin::MembersController < Admin::BaseController
   end
 
   def deny_change(choice = nil)
-    alert = choice.to_s.start_with?("role:") && !current_business.entitlements.feature?(:custom_roles) ? "Custom roles aren't included in your plan." : "Only owners can change owners."
+    alert = if choice.to_s.start_with?("role:") && !current_business.entitlements.feature?(:custom_roles) then "Custom roles aren't included in your plan."
+    elsif @member.owner? || choice.to_s == "owner" then "Only owners can change owners."
+    else "You can only give roles, or change people, within what you can do yourself."
+    end
     redirect_to admin_team_path, alert:
   end
 end

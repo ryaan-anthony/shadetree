@@ -34,7 +34,7 @@ class Admin::VisitsController < Admin::BaseController
 
     Visit.schedule_all!(visits, by: current_user, notify_client: notify_client?)
     notice = visits.one? ? "Visit scheduled for #{@visit.when_label}." : "#{visits.size} visits scheduled, #{visits.first.scheduled_on.strftime("%b %-d")} to #{visits.last.scheduled_on.strftime("%b %-d")}."
-    redirect_to admin_job_path(@job), notice:
+    redirect_to after_visit_path, notice:
   rescue Visit::BadDates => error
     @visit.errors.add(:base, error.message)
     render :new, status: :unprocessable_content
@@ -42,7 +42,7 @@ class Admin::VisitsController < Admin::BaseController
     @visit.errors.add(:base, error.message.delete_prefix("Validation failed: ")) unless error.record == @visit
     render :new, status: :unprocessable_content
   rescue Visit::NotOpen => error # the job was finished meanwhile
-    redirect_to admin_job_path(@job), alert: error.message
+    redirect_to after_visit_path, alert: error.message
   end
 
   def edit; end
@@ -53,13 +53,13 @@ class Admin::VisitsController < Admin::BaseController
     return render(:edit, status: :unprocessable_content) if @visit.when_or_crew_changed? && warn?([ @visit ])
 
     @visit.reload.reschedule!(visit_params, by: current_user, notify_client: notify_client?)
-    redirect_to admin_job_path(@job), notice: "Visit saved: #{@visit.when_label}."
+    redirect_to after_visit_path, notice: "Visit saved: #{@visit.when_label}."
   rescue ActiveRecord::RecordInvalid
     render :edit, status: :unprocessable_content
   rescue ActiveRecord::StaleObjectError
     redirect_to edit_admin_job_visit_path(@job, @visit), alert: "This visit was changed in another tab or by someone else. Here's the latest version."
   rescue Visit::NotOpen => error
-    redirect_to admin_job_path(@job), alert: error.message
+    redirect_to after_visit_path, alert: error.message
   end
 
   def cancel = transition { @visit.cancel!(by: current_user, reason: params[:reason], notify_client: notify_client?) && "Visit on #{@visit.when_label} cancelled." }
@@ -67,6 +67,9 @@ class Admin::VisitsController < Admin::BaseController
   def complete = transition { @visit.complete!(by: current_user) && "Visit on #{@visit.when_label} marked done." }
 
   private
+
+  # Back to the job, or to the schedule for someone who schedules but can't open jobs (ACC-07).
+  def after_visit_path(anchor: nil) = can?(:office) ? admin_job_path(@job, anchor:) : admin_schedule_path(date: @visit&.scheduled_on)
 
   def set_job = @job = Job.includes(:client, :property).find_by_param!(params[:job_id])
 
@@ -81,7 +84,7 @@ class Admin::VisitsController < Admin::BaseController
   helper_method def confirm_digest = self.class.digest(@warnings)
 
   def require_open_job
-    redirect_to admin_job_path(@job), alert: "#{@job.number} is #{@job.status_label.downcase}. Reopen it to schedule visits." unless @job.open?
+    redirect_to after_visit_path, alert: "#{@job.number} is #{@job.status_label.downcase}. Reopen it to schedule visits." unless @job.open?
   end
   def set_visit
     @visit = @job.visits.includes(:assignees).find_by_param!(params[:id])
@@ -89,9 +92,9 @@ class Admin::VisitsController < Admin::BaseController
   end
 
   def transition
-    redirect_to admin_job_path(@job, anchor: "visits"), notice: yield
+    redirect_to after_visit_path(anchor: "visits"), notice: yield
   rescue Visit::NotOpen, ActiveRecord::RecordInvalid => error
-    redirect_to admin_job_path(@job, anchor: "visits"), alert: error.message.delete_prefix("Validation failed: ")
+    redirect_to after_visit_path(anchor: "visits"), alert: error.message.delete_prefix("Validation failed: ")
   end
 
   # JOB-05: "Email the client about this" unticked means they aren't told about this change.

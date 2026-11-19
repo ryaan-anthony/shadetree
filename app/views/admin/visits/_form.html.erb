@@ -1,7 +1,8 @@
 <%# JOB-02: book or change a visit. Times are in the business's time zone. %>
 <% visit = @visit %>
 <%# Active members, plus anyone already going who has since been deactivated (kept unless unticked). %>
-<% members = current_business.business_users.includes(:user).select { _1.active? || visit.assignee_ids.include?(_1.user_id) }.sort_by { _1.user.full_name.downcase } %>
+<%# Only people who can work visits (field_work), plus anyone already on this one. %>
+<% members = current_business.business_users.includes(:user).select { (_1.active? && _1.can?(:field_work)) || visit.assignee_ids.include?(_1.user_id) }.sort_by { _1.user.full_name.downcase } %>
 <% zone = current_business.time_zone %>
 <% zone_name = ActiveSupport::TimeZone::MAPPING.key(zone.tzinfo.identifier) || zone.tzinfo.identifier.split("/").last.tr("_", " ") %>
 <%= form_with model: visit, url: (visit.new_record? ? admin_job_visits_path(@job) : admin_job_visit_path(@job, visit)), class: "max-w-2xl space-y-4" do |f| %>
@@ -77,7 +78,7 @@
           <% members.each do |member| %>
             <label class="check items-center">
               <%= check_box_tag "visit[assignee_ids][]", member.user_id, visit.assignee_ids.include?(member.user_id), id: "visit_assignee_#{member.user_id}" %>
-              <span><span class="text-ink"><%= member.user.full_name %></span> <span class="text-sm2 text-muted"><%= member.active? ? member.role.capitalize : "No longer on the team" %></span></span>
+              <span><span class="text-ink"><%= member.user.full_name %></span> <span class="text-sm2 text-muted"><%= member.active? ? member.role_name : "No longer on the team" %></span></span>
             </label>
           <% end %>
         </div>

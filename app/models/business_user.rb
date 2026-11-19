@@ -100,11 +100,14 @@ class BusinessUser < ApplicationRecord
   def email_notification?(kind) = notification_emails.fetch(kind.to_s) { NotificationType.fetch(kind).email_by_default } == true
 
   # May `self` give `target` the role `new_role` (a picker's value)? Admins manage the team but
-  # never Owners. A custom role needs the plan feature (ACC-07); on a plan without it, members
-  # keep theirs but nobody new is given one.
+  # never Owners. Nobody hands out, or changes the role of someone with, a permission they don't
+  # have themselves (a custom "team lead" can't make Admins, or promote themselves).
+  # A custom role needs the plan feature (ACC-07); on a plan without it, members keep theirs
+  # but nobody new is given one.
   def can_assign_role?(target, new_role)
     new_role = new_role.to_s
     return false unless can?(:manage_team) && target.business_id == business_id
+    return false unless covers?(target.permission_set) && covers?(BusinessUser.permissions_for(new_role, business))
     keeping = target.persisted? && new_role == target.role_choice # deactivating or reactivating
     return false unless ROLES.include?(new_role) || ((keeping || custom_roles_allowed?) && BusinessUser.role_attributes(new_role, business))
     return can?(:manage_owners) if target.owner? || new_role == "owner"
@@ -113,6 +116,20 @@ class BusinessUser < ApplicationRecord
   end
 
   def custom_roles_allowed? = business.entitlements.feature?(:custom_roles)
+
+  # The permissions this membership's role grants (ignoring whether it's active).
+  def permission_set = custom_role? ? Array(custom_role_record&.permissions).map(&:to_sym) : Permissions::ROLES.fetch(role, [])
+
+  # The permissions a picker's value would grant in `business` (nil for an unknown value).
+  def self.permissions_for(choice, business)
+    choice = choice.to_s
+    return Permissions::ROLES[choice] if ROLES.include?(choice)
+
+    role = choice.start_with?("role:") && Role.unscoped.find_by(business_id: business.id, uid: choice.delete_prefix("role:"))
+    role ? role.permissions.map(&:to_sym) : nil
+  end
+
+  private def covers?(permissions) = !permissions.nil? && permissions.all? { can?(_1) }
 
   def last_active_owner?
     owner? && active? && business.business_users.active.owners.where.not(id:).none?

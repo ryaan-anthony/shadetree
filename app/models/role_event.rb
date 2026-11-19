@@ -1,9 +1,10 @@
 # ACC-07: what happened to a custom role, and who did it: created, changed (permissions or
-# name, before and after), deleted (and where its members went), assigned to a member.
+# name, before and after), deleted (and where its members went), given to or taken from a
+# member (by user id, so the name isn't kept once their account is deleted).
 class RoleEvent < ApplicationRecord
   include BusinessOwned
 
-  KINDS = %w[created changed deleted assigned].freeze
+  KINDS = %w[created changed deleted assigned unassigned].freeze
 
   belongs_to :role, optional: true
   belongs_to :user, optional: true

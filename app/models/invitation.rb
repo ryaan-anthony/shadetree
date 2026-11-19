@@ -96,16 +96,20 @@ class Invitation < ApplicationRecord
         raise NotAcceptable, "This invitation is no longer valid" unless pending?
 
         membership = BusinessUser.find_or_initialize_by(business:, user:)
-        membership.assign_attributes(role:, role_id:, active: true, deactivated_at: nil) if membership.new_record? || !membership.active?
+        # ACC-07: on a plan without custom roles, nobody new gets one: the invitation's becomes Technician.
+        granted = role == BusinessUser::CUSTOM && !business.entitlements.feature?(:custom_roles) ? { role: "technician", role_id: nil } : { role:, role_id: }
+        membership.assign_attributes(**granted, active: true, deactivated_at: nil) if membership.new_record? || !membership.active?
         membership.save!
         update!(accepted_at: Time.current, accepted_by: user)
+        RoleEvent.record!(membership.custom_role_record, "assigned", by: user, member_id: user.id) if membership.custom_role? && membership.saved_change_to_role_id?
         membership
       end.tap { notify_accepted(user) }
     end
   end
 
   # "Technician", or the custom role's name (ACC-07).
-  def role_name = role == BusinessUser::CUSTOM ? custom_role&.name.to_s : role.humanize
+  # Read across businesses: the invitation page has no current business.
+  def role_name = role == BusinessUser::CUSTOM ? Role.unscoped.find_by(id: role_id, business_id:)&.name.to_s : role.humanize
 
   private
 

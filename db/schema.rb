@@ -116,6 +116,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
     t.index ["user_id", "active"], name: "index_business_users_on_user_id_and_active"
     t.index ["user_id", "business_id"], name: "index_business_users_on_user_id_and_business_id", unique: true
     t.index ["user_id"], name: "index_business_users_on_user_id"
+    t.check_constraint "(role::text = 'custom'::text) = (role_id IS NOT NULL)", name: "business_users_custom_role"
   end
 
   create_table "businesses", force: :cascade do |t|
@@ -1149,7 +1150,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
   add_foreign_key "automation_runs", "automation_rules", column: "rule_id", on_delete: :nullify
   add_foreign_key "automation_runs", "businesses", on_delete: :cascade
   add_foreign_key "business_users", "businesses"
-  add_foreign_key "business_users", "roles", on_delete: :restrict
+  add_foreign_key "business_users", "roles"
   add_foreign_key "business_users", "users"
   add_foreign_key "businesses", "plans"
   add_foreign_key "businesses", "users", column: "owner_id"
@@ -1181,7 +1182,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
   add_foreign_key "email_suppressions", "businesses", on_delete: :cascade
   add_foreign_key "email_suppressions", "email_messages", on_delete: :nullify
   add_foreign_key "invitations", "businesses", on_delete: :cascade
-  add_foreign_key "invitations", "roles", on_delete: :restrict
+  add_foreign_key "invitations", "roles"
   add_foreign_key "invitations", "users", column: "accepted_by_id", on_delete: :nullify
   add_foreign_key "invitations", "users", column: "invited_by_id", on_delete: :nullify
   add_foreign_key "invoice_events", "businesses"
@@ -1252,10 +1253,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
   add_foreign_key "quotes", "service_requests", on_delete: :nullify
   add_foreign_key "quotes", "users", column: "created_by_id", on_delete: :nullify
   add_foreign_key "quotes", "users", column: "sent_by_id", on_delete: :nullify
-  add_foreign_key "role_events", "businesses"
+  add_foreign_key "role_events", "businesses", on_delete: :cascade
   add_foreign_key "role_events", "roles", on_delete: :nullify
   add_foreign_key "role_events", "users", on_delete: :nullify
-  add_foreign_key "roles", "businesses"
+  add_foreign_key "roles", "businesses", on_delete: :cascade
   add_foreign_key "service_request_notes", "businesses"
   add_foreign_key "service_request_notes", "service_requests", on_delete: :cascade
   add_foreign_key "service_request_notes", "users", on_delete: :nullify

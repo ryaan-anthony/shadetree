@@ -37,7 +37,9 @@
       <% if can?(:office) || can?(:business_settings) %>
         <%= side_link "Home", admin_root_path, icon: "home", active: controller_name == "dashboard" %>
       <% end %>
-      <%= side_link "My day", admin_my_day_path, icon: "sun", active: controller_name.in?(%w[my_day my_visits]) %>
+      <% if can?(:field_work) %>
+        <%= side_link "My day", admin_my_day_path, icon: "sun", active: controller_name.in?(%w[my_day my_visits]) %>
+      <% end %>
       <% if can?(:office) %>
         <%= side_link "Requests", admin_service_requests_path, icon: "inbox", active: controller_name.in?(%w[service_requests service_request_notes]),
                       count: ServiceRequest.where(status: "new").count %>
@@ -45,9 +47,9 @@
         <%= side_link "Quotes", admin_quotes_path, icon: "quote", active: controller_name.in?(%w[quotes quote_attachments]) %>
         <%= side_link "Jobs", admin_jobs_path, icon: "job", active: controller_name.in?(%w[jobs quote_jobs]) %>
         <%= side_link "Invoices", admin_invoices_path, icon: "invoice", active: controller_name.in?(%w[invoices job_invoices quote_invoices invoice_attachments]) %>
-        <% if can?(:schedule) %>
-          <%= side_link "Schedule", admin_schedule_path, icon: "calendar", active: controller_name == "schedule" %>
-        <% end %>
+      <% end %>
+      <% if can?(:schedule) %>
+        <%= side_link "Schedule", admin_schedule_path, icon: "calendar", active: controller_name == "schedule" %>
       <% end %>
       <% if can?(:business_settings) || can?(:manage_team) %>
         <p class="side-group">Business</p>

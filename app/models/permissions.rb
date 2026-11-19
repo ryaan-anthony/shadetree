@@ -33,7 +33,7 @@ module Permissions
     "Business" => {
       business_settings: "Change the business profile, branding, hours, catalog and taxes",
       manage_team: "Invite people and change their roles (never Owners)",
-      export_data: "Export the business's data"
+      export_data: "Export all the business's data, invoices and payments included"
     }
   }.freeze
   GRANTABLE = GROUPS.values.flat_map(&:keys).freeze

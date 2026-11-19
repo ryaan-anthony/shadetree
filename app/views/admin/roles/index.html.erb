@@ -23,12 +23,10 @@
     <%= card title: role.name, subtitle: pluralize(@counts.fetch(role.id, 0), "member"), id: "role-#{role.uid}",
              actions: link_to((@editable ? "Edit" : "View"), edit_admin_role_path(role), class: button_classes(:secondary, :sm)) do %>
       <%= render "permissions", granted: role.permissions %>
-      <% if @editable %>
-        <div class="mt-4 flex gap-2">
-          <%= link_to "Duplicate", new_admin_role_path(from: role.uid), class: button_classes(:ghost, :sm) %>
-          <%= link_to "Delete", delete_admin_role_path(role), class: button_classes(:ghost, :sm) + " text-danger" %>
-        </div>
-      <% end %>
+      <div class="mt-4 flex gap-2">
+        <% if @editable %><%= link_to "Duplicate", new_admin_role_path(from: role.uid), class: button_classes(:ghost, :sm) %><% end %>
+        <%= link_to "Delete", delete_admin_role_path(role), class: button_classes(:ghost, :sm) + " text-danger" %>
+      </div>
     <% end %>
   <% end %>
 </div>

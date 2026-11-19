@@ -1,0 +1,5 @@
+<% content_for :title, current_business.name %>
+<%= page_header current_business.name %>
+<%= card do %>
+  <%= empty_state title: "Nothing here for your role yet", text: "Your role in #{current_business.name} doesn't include any of the pages yet. Ask an owner to change it.", icon: "shield" %>
+<% end %>

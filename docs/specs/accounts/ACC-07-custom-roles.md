@@ -48,7 +48,10 @@ Let Owners create custom roles from a fixed catalog of permissions, alongside th
 
 - **Pro and above** (recommendation accepted, M5 planning): the `custom_roles` plan feature.
 - **Location-scoped roles wait for CAT-07** (recommendation accepted).
-- **Owners manage roles; Admins can give them** (they already manage the team, never Owners).
+- **Owners manage roles; anyone who manages the team can give them**, within a rule: nobody
+  gives a role, or changes someone's role, carrying a permission they don't have themselves
+  (so nobody promotes themselves). (Admins hold every grantable permission, so for them
+  nothing changes; a custom "team lead" can hand out Technician but not Admin.)
 - **Owner-only, never in a custom role:** `billing` (plan, deleting the business, the payment
   account) and `manage_owners`.
 
@@ -67,8 +70,13 @@ Let Owners create custom roles from a fixed catalog of permissions, alongside th
   duplicate, and delete, which asks for a replacement when anyone (or a pending invitation) has
   the role. `RoleEvent` records created / changed (name, permissions added and removed) /
   assigned / deleted, shown as the role's history.
-- Plan gating: without the feature, roles are read-only, can't be given to anyone new, and
-  keep working; members who have one can still be deactivated and reactivated.
+- Plan gating: without the feature, roles are read-only (still deletable), can't be given to
+  anyone new (a pending invitation with one becomes Technician on acceptance), and keep
+  working; members who have one can still be deactivated and reactivated.
+- Pages follow the role: Home sends someone without office access to the first page they can
+  use (My day, the schedule, the team), the sidebar shows My day and Schedule by their own
+  permissions, the schedule hides job links from people without office access (and visit saves
+  return to the schedule), and only people who can work visits are offered as assignees.
 
 ## Open questions
 

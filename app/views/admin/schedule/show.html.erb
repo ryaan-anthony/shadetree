@@ -52,14 +52,14 @@
           <% jobs.each do |job| %>
             <li class="items-start">
               <div class="min-w-0 flex-1">
-                <p class="truncate font-medium text-ink"><%= link_to job.title, admin_job_path(job), class: "hover:underline" %></p>
+                <p class="truncate font-medium text-ink"><%= link_to_if can?(:office), job.title, admin_job_path(job), class: "hover:underline" %></p>
                 <p class="truncate text-sm2 text-muted"><%= job.client.display_name %><%= ", #{job.property.one_line}" if job.property %></p>
               </div>
               <%= link_to "Schedule", new_admin_job_visit_path(job, on: s.date.iso8601), class: button_classes(:secondary, :sm), "aria-label": "Schedule #{job.number}" %>
             </li>
           <% end %>
         </ul>
-        <% if s.unscheduled_count > jobs.size %>
+        <% if s.unscheduled_count > jobs.size && can?(:office) %>
           <p class="border-t border-line px-4 py-2 text-sm2"><%= link_to "See all #{s.unscheduled_count}", admin_jobs_path(filter: "unscheduled"), class: "underline-offset-2 hover:underline" %></p>
         <% end %>
       <% end %>

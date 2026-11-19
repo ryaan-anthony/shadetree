@@ -4,7 +4,7 @@
 # and are shown read-only.
 class Admin::RolesController < Admin::BaseController
   requires_permission :manage_owners
-  before_action :require_feature, except: %i[index edit]
+  before_action :require_feature, except: %i[index edit delete destroy] # old roles can always be removed
   before_action :set_role, only: %i[edit update delete destroy]
 
   def index
