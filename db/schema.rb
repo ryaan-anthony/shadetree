@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_19_001600) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_19_001610) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -567,6 +567,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001600) do
     t.bigint "updated_by_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index "business_id, lower((name)::text)", name: "index_message_templates_on_business_and_custom_name", unique: true, where: "(kind IS NULL)"
     t.index ["business_id", "kind"], name: "index_message_templates_on_business_id_and_kind", unique: true, where: "(kind IS NOT NULL)"
     t.index ["business_id"], name: "index_message_templates_on_business_id"
     t.index ["uid"], name: "index_message_templates_on_uid", unique: true

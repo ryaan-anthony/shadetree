@@ -16,9 +16,9 @@ class Admin::InvoiceSendsController < Admin::BaseController
   before_action :require_confirmed_sender, only: :create
 
   def new
-    subject, message = templated_wording # NTF-03: the business's own wording, if it has some
-    @form = QuoteSendForm.new(to: @invoice.client.primary_email&.value, subject: subject || InvoiceMailer.default_subject(@invoice),
-                              message: message || default_message)
+    subject, message = usual_wording
+    @form = QuoteSendForm.new(to: @invoice.client.primary_email&.value, subject:, message:)
+    @template_choices = template_choices
     # The link itself is client-facing: only for accounts that may send (ACC-01), and only once
     # there's something for the client to see.
     @link = ClientLink.active.where(linkable: @invoice).order(created_at: :desc).first if @invoice.client_visible? && current_user.can_send_to_clients?
@@ -58,6 +58,7 @@ class Admin::InvoiceSendsController < Admin::BaseController
     @form = QuoteSendForm.new(params.expect(invoice_send: %i[to cc subject message]))
     valid = @form.valid? # (clears errors, so the daily limit is added after)
     @form.errors.add(:base, "This invoice has been emailed #{EMAILS_PER_INVOICE_PER_DAY} times today. Try again tomorrow.") if too_many_today?
+    @template_choices = template_choices unless valid && @form.errors.empty?
     return render(:new, status: :unprocessable_content) unless valid && @form.errors.empty?
 
     # One transaction: the send and the email record commit together, and the email job is
@@ -73,6 +74,22 @@ class Admin::InvoiceSendsController < Admin::BaseController
   end
 
   def too_many_today? = @invoice.sends.unscope(:order).where(channel: "email", created_at: 1.day.ago..).count >= EMAILS_PER_INVOICE_PER_DAY
+
+  # NTF-03: the usual wording, then the business's own templates, filled in for this invoice.
+  def template_choices
+    custom = MessageTemplate.custom.to_a
+    return [] if custom.empty?
+
+    values = MessageTemplate::Values.invoice(@invoice).merge(MessageTemplate::Values.sender(current_user, current_business))
+    [ [ "Your usual wording", *usual_wording ] ] +
+      custom.map { [ _1.name, MessageTemplate.render_subject(_1.subject, values), MessageTemplate.render(_1.body, values) ] }
+  end
+
+  # NTF-03: the business's own wording for this email if it has some, else the standard.
+  def usual_wording
+    subject, message = templated_wording
+    [ subject || InvoiceMailer.default_subject(@invoice), message || default_message ]
+  end
 
   def templated_wording
     return if @invoice.revising? # a revised invoice says it's an updated version (the standard note)

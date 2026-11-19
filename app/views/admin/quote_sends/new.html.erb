@@ -26,8 +26,11 @@
       <%= f.field :to, as: :email, label: "To", required: true, autocomplete: "off",
                   help: ("#{@quote.client.display_name} has no email address yet." if @quote.client.primary_email.nil?) %>
       <%= f.field :cc, label: "CC", optional: true, help: "Up to #{QuoteSendForm::MAX_CC} addresses, separated by commas." %>
-      <%= f.field :subject, required: true %>
-      <%= f.field :message, as: :textarea, optional: true, rows: 8 %>
+      <div data-controller="template-picker" class="mt-4 space-y-4">
+        <% if @template_choices.to_a.any? %><%= render "admin/shared/template_picker", choices: @template_choices %><% end %>
+        <%= f.field :subject, required: true, data: { template_picker_target: "subject" } %>
+        <%= f.field :message, as: :textarea, optional: true, rows: 8, data: { template_picker_target: "message" } %>
+      </div>
       <%= f.submit_button(@quote.draft? ? "Send quote" : "Send again", class: "mt-4 w-full sm:w-auto", disabled: !current_user.can_send_to_clients?) %>
     <% end %>
   <% end %>

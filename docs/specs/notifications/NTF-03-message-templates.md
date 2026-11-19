@@ -28,10 +28,10 @@ with a live preview. Automations (NTF-04) send these same templates.
 - [x] Placeholders are offered from a documented list per message (client first name, business
       name, document number, total, due date, visit window, link). Unknown placeholders are
       flagged before saving.
-- [ ] A live preview renders the message with sample data, or with a real recent record when
+- [x] A live preview renders the message with sample data, or with a real recent record when
       one is chosen.
 - [x] Templates can be reset to the default. Edited templates are marked as customized.
-- [ ] Owners/Admins can also create additional custom templates (subject and body with
+- [x] Owners/Admins can also create additional custom templates (subject and body with
       placeholders) for use by automations and manual sends.
 - [x] Text is sanitized: a template can't inject markup or scripts and can't remove the client
       link.
@@ -79,8 +79,16 @@ Part 1 (editing the catalog's client emails):
 - Plan feature `message_templates`: without it the pages are read-only (with a link to plans),
   and saved templates keep sending.
 
-Part 2: extra templates of a business's own (for automations and manual sends), choosing one
-in the send forms, and previewing with a real recent record.
+Part 2 (a business's own templates, real-record previews):
+- Templates of a business's own (a name, unique per business; up to 50) use the document
+  placeholders (`document_number`, `document_title`, `total`, the client's and sender's names), so
+  one template works for quotes and invoices. The quote and invoice send forms get "Start from":
+  the usual wording, then each template filled in for that document (what's been typed is
+  replaced only after asking). On a plan without the feature, saved templates still show there.
+  NTF-04 will offer them for quote and invoice automations; their placeholders are about the
+  document, so visit or payment automations need wording of their own there.
+- "Preview" can use one of the business's ten most recent records of the right kind (quotes,
+  invoices, visits or requests) instead of the samples; anything else falls back to the samples.
 
 ## Open questions
 

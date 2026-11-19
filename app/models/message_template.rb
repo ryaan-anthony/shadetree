@@ -1,4 +1,6 @@
-# NTF-03: a business's own wording for a client-facing email. Each editable message in
+# NTF-03: a business's own wording for a client-facing email (kind), or an extra template of
+# its own (no kind, a name) to start a quote or invoice email from, and for automations
+# (NTF-04). Each editable message in
 # EmailCatalog has a default (DEFINITIONS) that matches what the product sends; saving one
 # makes it "customized", and deleting it goes back to the default. Only the subject and the
 # opening text are editable: the branded layout, the summary, the button to the client's page
@@ -29,6 +31,8 @@ class MessageTemplate < ApplicationRecord
     "valid_until" => "The quote's valid-until date",
     "due_date" => "The invoice's due date",
     "visit_window" => "The visit's day and time, like Tue, Nov 17 · 8–10 AM",
+    "document_number" => "The quote or invoice number",
+    "document_title" => "The quote or invoice title",
     "signer_name" => "The name the client signed with",
     "next_steps" => "Your “what happens next” text (Settings → Documents)",
     "link" => "The link to the client's page (the button is always there too)"
@@ -71,11 +75,16 @@ class MessageTemplate < ApplicationRecord
                    %w[client_first_name client_name business_name invoice_number invoice_title balance link], "When a payment is recorded and you choose to send a receipt.")
   ].index_by(&:kind).freeze
 
+  # A business's own templates work for quotes and invoices alike, so their placeholders are
+  # about "the document".
+  CUSTOM_PLACEHOLDERS = %w[client_first_name client_name business_name your_name document_number document_title total].freeze
+  MAX_CUSTOM = 50
+
   # Filled in for the preview, and for checking a template renders.
   SAMPLE = {
     "client_first_name" => "Maria", "client_name" => "Maria Lopez", "your_name" => "Dana",
     "quote_number" => "Q-1041", "quote_title" => "Spring cleanup", "invoice_number" => "INV-2210", "invoice_title" => "Spring cleanup",
-    "total" => "$1,250.00", "balance" => "$450.00", "valid_until" => "Dec 19, 2026", "due_date" => "Dec 3, 2026",
+    "total" => "$1,250.00", "document_number" => "Q-1041", "document_title" => "Spring cleanup", "balance" => "$450.00", "valid_until" => "Dec 19, 2026", "due_date" => "Dec 3, 2026",
     "visit_window" => "Tue, Nov 17 · 8–10 AM", "signer_name" => "Maria Lopez", "link" => "https://getshadetree.com/c/…"
   }.freeze
 
@@ -85,12 +94,18 @@ class MessageTemplate < ApplicationRecord
   belongs_to :updated_by, class_name: "User", optional: true
 
   normalizes :subject, with: ->(text) { text.to_s.squish }
-  normalizes :body, with: ->(text) { text.to_s.gsub("\r\n", "\n").strip }
+  normalizes :body, with: ->(text) { text.to_s.gsub("\r\n", "\n").gsub(/\n{3,}/, "\n\n").strip }
+  normalizes :name, with: ->(name) { name.to_s.squish }
 
-  validates :kind, inclusion: { in: DEFINITIONS.keys }, uniqueness: { scope: :business_id }
+  validates :kind, inclusion: { in: DEFINITIONS.keys }, uniqueness: { scope: :business_id }, allow_nil: true
+  validates :name, presence: true, length: { maximum: 80 }, if: :custom?
+  validates :name, uniqueness: { scope: :business_id, case_sensitive: false, message: "is already one of your templates" }, if: :custom?, on: %i[create update]
+  validate :custom_limit, on: :create, if: :custom?
   validates :subject, presence: true, length: { maximum: 200 }
   validates :body, presence: true, length: { maximum: 5_000 }
   validate :known_placeholders, :no_markup
+
+  scope :custom, -> { where(kind: nil).order(:name) }
 
   def self.definition(kind) = DEFINITIONS.fetch(kind.to_s)
   def self.for_kind(kind) = find_by(kind: kind.to_s)
@@ -102,22 +117,29 @@ class MessageTemplate < ApplicationRecord
   # ("Quote Q-1 from Oakline: " when the quote has no title).
   def self.render_subject(text, values) = render(text, values).squish.sub(/[\s:·–-]+\z/, "")
 
+  def custom? = kind.nil?
   def definition = self.class.definition(kind)
-  def placeholders = definition.placeholders
+  def placeholders = custom? ? CUSTOM_PLACEHOLDERS : definition.placeholders
+  def label = custom? ? name : EmailCatalog.find(kind).name
 
   # What it would say with sample values (and the business's real name and next steps).
-  def preview(business)
-    values = SAMPLE.merge("business_name" => business.name, "next_steps" => business.quote_next_steps)
+  # values: a real record's (MessageTemplate::Values), in place of the samples.
+  def preview(business, values: nil)
+    values ||= SAMPLE.merge("business_name" => business.name, "next_steps" => business.quote_next_steps)
     [ self.class.render_subject(subject, values), self.class.render(body, values) ]
   end
 
   private
 
   def known_placeholders
-    return unless DEFINITIONS.key?(kind)
+    return unless custom? || DEFINITIONS.key?(kind)
 
     unknown = (subject.to_s.scan(PLACEHOLDER) + body.to_s.scan(PLACEHOLDER)).flatten.uniq - placeholders
     errors.add(:base, "#{unknown.map { "{{#{_1}}}" }.to_sentence} #{unknown.one? ? "isn't a placeholder" : "aren't placeholders"} for this message.") if unknown.any?
+  end
+
+  def custom_limit
+    errors.add(:base, "You can keep up to #{MAX_CUSTOM} templates of your own.") if self.class.custom.count >= MAX_CUSTOM
   end
 
   def no_markup
