@@ -23,13 +23,13 @@ the business's financial records.
 
 ## Acceptance criteria
 
-- [ ] Owners/Admins can download CSVs for: clients, properties, requests, quotes (and line
+- [x] Owners/Admins can download CSVs for: clients, properties, requests, quotes (and line
       items), jobs and visits, invoices (and line items), payments. Columns are documented and
       stable; money and dates are formatted for spreadsheets.
 - [ ] A full-account export bundles all CSVs plus document PDFs and uploaded files into one
       archive, generated in the background; the requester receives an email/in-app link that
       expires (e.g. 7 days).
-- [ ] Exports are available on every plan and are logged (who, what, when).
+- [x] Exports are available on every plan and are logged (who, what, when).
 - [ ] Owners/Admins can erase a client: personal data (names, contacts, addresses, notes,
       photos of the property) is removed or anonymized; documents remain with totals intact and
       a neutral "erased client" label; the action requires typed confirmation and is logged.
@@ -42,7 +42,26 @@ the business's financial records.
 - Scheduled exports, accounting integrations, reports (backlog). Operator-initiated full
   business deletion (OPS-04).
 
-## Open questions
+## Decisions
 
-- Legal retention requirements for invoices vs erasure (12-insights open question 3).
-- Should Technician-uploaded photos be included in exports? Recommend yes.
+- **Erasure keeps the financial records** (owner accepted the recommendation, M5 planning):
+  quotes, invoices and payments stay with their numbers and totals under "Erased client"; the
+  person's details are what's removed. Where a business must keep more for tax law, it should
+  export before erasing. The legal text (MKT-03) still has to confirm this.
+- **Technicians' visit photos are included in the full export** (recommendation accepted).
+
+## Implementation notes
+
+Part 1 (CSV downloads, the log):
+- Settings → Your data (`export_data`: Owners and Admins): a CSV for clients, properties,
+  requests, quotes, quote / job / invoice line items, jobs, visits, invoices, payments, and the
+  client, request and visit notes, each with its columns listed. Documents carry their property,
+  per-rate taxes ("State 6.25%: 15.00; County 1%: 2.40"), whether prices include tax, and
+  internal notes; lines carry their discount and total. Definitions live in `DataExport::TABLES`
+  (new columns go at the end; none renamed or reordered); rows come out in a fixed order (visits
+  and payments by date, lines by position).
+- Money is a plain decimal in the document's currency (its own decimal places), dates
+  YYYY-MM-DD, times YYYY-MM-DD HH:MM in the business's time zone, lists joined with "; ". Text a
+  spreadsheet would run as a formula is prefixed with ' (our numbers and phone numbers are left
+  alone). Files start with a byte-order mark and are sent as UTF-8 with `no-store`.
+- Every download is a `DataExport` row (who, what, when, row count), listed as "Recent exports".

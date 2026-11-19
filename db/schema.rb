@@ -371,6 +371,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
     t.index ["uid"], name: "index_contact_messages_on_uid", unique: true
   end
 
+  create_table "data_exports", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.bigint "requested_by_id"
+    t.string "requested_by_email"
+    t.string "kind", null: false
+    t.string "status", default: "ready", null: false
+    t.integer "rows_count"
+    t.datetime "expires_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "created_at"], name: "index_data_exports_on_business_id_and_created_at"
+    t.index ["business_id"], name: "index_data_exports_on_business_id"
+    t.index ["requested_by_id"], name: "index_data_exports_on_requested_by_id"
+    t.index ["uid"], name: "index_data_exports_on_uid", unique: true
+  end
+
   create_table "document_sequences", force: :cascade do |t|
     t.bigint "business_id", null: false
     t.string "kind", null: false
@@ -1124,6 +1141,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
   add_foreign_key "clients", "businesses", on_delete: :cascade
   add_foreign_key "clients", "client_imports", on_delete: :nullify
   add_foreign_key "closures", "businesses", on_delete: :cascade
+  add_foreign_key "data_exports", "businesses"
+  add_foreign_key "data_exports", "users", column: "requested_by_id", on_delete: :nullify
   add_foreign_key "document_sequences", "businesses"
   add_foreign_key "email_messages", "businesses", on_delete: :cascade
   add_foreign_key "email_suppressions", "businesses", on_delete: :cascade

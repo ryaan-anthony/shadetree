@@ -1,0 +1,43 @@
+<% content_for :title, "Your data" %>
+<%= render "admin/businesses/settings_header", current: "data" %>
+<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+  <%= card title: "Download as spreadsheets", subtitle: "Your data is yours: download any of it, any time, on any plan. Each file opens in Excel, Numbers or Google Sheets.", flush: true do %>
+    <ul class="list" id="export-tables">
+      <% DataExport::TABLES.each_value do |table| %>
+        <li id="export-<%= table.key %>" class="items-start">
+          <div class="min-w-0 flex-1">
+            <p class="font-medium text-ink"><%= table.label %></p>
+            <p class="text-sm2 text-muted"><%= table.description %></p>
+            <details class="mt-1 text-sm2 text-muted">
+              <summary class="cursor-pointer">Columns</summary>
+              <p class="mt-1"><%= table.columns.map(&:header).join(", ") %></p>
+            </details>
+          </div>
+          <%= link_to "Download CSV", download_admin_data_exports_path(table.key), class: button_classes(:secondary, :sm), data: { turbo: false } %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+  <div class="space-y-4">
+    <%= card title: "About these files" do %>
+      <ul class="list-disc space-y-1 pl-5 text-sm2 text-subtle">
+        <li>Money is a plain number in the document's currency, like 1240.00.</li>
+        <li>Dates are YYYY-MM-DD; times are in <%= current_business.time_zone.name %>.</li>
+        <li>Columns stay the same over time (new ones are added at the end), so a spreadsheet you build on them keeps working.</li>
+        <li>Spreadsheet apps drop leading zeros from postal codes like 02134. Import that column as text to keep them.</li>
+      </ul>
+    <% end %>
+    <%= card title: "Recent exports", flush: true do %>
+      <% if @exports.any? %>
+        <ul class="list" id="export-log">
+          <% @exports.each do |export| %>
+            <li><div class="min-w-0 flex-1"><p class="text-sm text-ink"><%= export.label %></p>
+              <p class="break-all text-sm2 text-muted"><%= export.requested_by&.full_name || export.requested_by_email %> · <%= local_time(export.created_at) %><%= " · #{pluralize(number_with_delimiter(export.rows_count), "row")}" if export.rows_count && export.kind != "full" %></p></div></li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="px-5 py-4 text-sm text-muted">None yet. Every download is listed here.</p>
+      <% end %>
+    <% end %>
+  </div>
+</div>

@@ -61,4 +61,5 @@ features.
 
 1. Should the dashboard's summary strip be visible to Admins or only Owners? Recommend both.
 2. Retention of export files — recommend 7 days.
-3. Erasure vs. legal record-keeping for invoices — confirm with legal review (MKT-03).
+3. Erasure vs. legal record-keeping for invoices — confirm with legal review (MKT-03). INS-02
+   keeps documents and totals under "Erased client" and removes the person's details.
