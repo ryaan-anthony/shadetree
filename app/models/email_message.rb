@@ -28,7 +28,11 @@ class EmailMessage < ApplicationRecord
 
   def mark!(status, at: Time.current, **attributes)
     stamp = { "sent" => :sent_at, "bounced" => :bounced_at, "failed" => :failed_at }[status]
-    update!(status:, **(stamp ? { stamp => at } : {}), **attributes)
+    transaction do
+      update!(status:, **(stamp ? { stamp => at } : {}), **attributes)
+      # CLI-05: a refused address shows on the client's timeline (bounces only, not opens).
+      ClientEvent.record!(related.try(:client), :email_bounced, subject: self, to:, at:) if status == "bounced"
+    end
   end
 
   # Plain words for staff.

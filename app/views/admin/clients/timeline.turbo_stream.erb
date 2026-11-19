@@ -1,0 +1,2 @@
+<%= turbo_stream.append "client-timeline", partial: "timeline_events", locals: { events: @events } %>
+<%= turbo_stream.replace "client-timeline-more", partial: "timeline_more", locals: { client: @client, last: (@events.last if @more) } %>

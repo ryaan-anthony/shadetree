@@ -150,6 +150,7 @@ class ClientLink < ApplicationRecord
       when Invoice then [ "invoice", Rails.application.routes.url_helpers.admin_invoice_path(linkable) ]
       else return
       end
+      ClientEvent.record!(linkable.client, "#{kind}_viewed", subject: linkable) # CLI-05
       NotificationType.deliver("#{kind}_viewed", business:, subject: linkable, title: "#{linkable.client.display_name} opened #{kind} #{linkable.number}",
                                body: linkable.title, path:)
     end

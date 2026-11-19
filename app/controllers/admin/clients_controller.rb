@@ -5,7 +5,7 @@ class Admin::ClientsController < Admin::BaseController
   PICKER_LIMIT = 8
 
   requires_permission :office
-  before_action :set_client, only: %i[show edit update archive restore destroy picked mark_deliverable]
+  before_action :set_client, only: %i[show edit update archive restore destroy picked mark_deliverable timeline]
   layout -> { inline? ? false : "app" }
   leaves_session_alone only: %i[search matches]
 
@@ -32,6 +32,13 @@ class Admin::ClientsController < Admin::BaseController
   end
 
   def show; end
+
+  # CLI-05: older timeline events, a page at a time, into the timeline's frame.
+  def timeline
+    before = @client.events.find_by!(id: params[:before])
+    @events, @more = ClientEvent.page_for(@client, before:)
+    respond_to { |format| format.turbo_stream }
+  end
 
   def new
     @client = Client.new

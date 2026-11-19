@@ -1,0 +1,11 @@
+<%# locals: (client:) -%>
+<%# CLI-05: everything that's happened with the client, newest first, a page at a time. %>
+<% events, more = ClientEvent.page_for(client) %>
+<%= card title: "Timeline", flush: true do %>
+  <% if events.any? %>
+    <ol class="list" id="client-timeline"><%= render "admin/clients/timeline_events", events: %></ol>
+    <%= render "admin/clients/timeline_more", client:, last: (events.last if more) %>
+  <% else %>
+    <p class="px-5 py-4 text-sm text-muted" id="client-timeline">Requests, quotes, visits, invoices and payments for <%= client.display_name %> will show here.</p>
+  <% end %>
+<% end %>

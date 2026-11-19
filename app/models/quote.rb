@@ -209,6 +209,7 @@ class Quote < ApplicationRecord
       # validations aren't re-run (a rule added since mustn't block the client's answer).
       self.status = kind
       save!(validate: false)
+      ClientEvent.record!(client, "quote_#{kind}", subject: self, by:, revision:) # CLI-05
       response
     end.tap { create_job_after_approval(by) if kind == "approved" }
   end
@@ -225,6 +226,7 @@ class Quote < ApplicationRecord
       # ACC-05: when the business sent its first quote, for time-to-first-quote (no PII).
       Business.where(id: business_id, first_quote_sent_at: nil).update_all(first_quote_sent_at: Time.current)
       UsageEvent.record!("quote_sent", self, at: sent_at || Time.current)
+      ClientEvent.record!(client, :quote_sent, subject: self, by:, channel:, revision:) # CLI-05
       sends.create!(business:, user: by, channel:, recipient:, cc:, email_message:, revision:)
     end
   end

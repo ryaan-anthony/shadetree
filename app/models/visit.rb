@@ -160,6 +160,7 @@ class Visit < ApplicationRecord
         visit.save!
         visit.sync_assignments
         VisitEvent.record!(visit, :scheduled, by:, to: visit.snapshot, crew: visit.crew_names, crew_ids: visit.assignees.map(&:id))
+        ClientEvent.record!(job.client, :visit_scheduled, subject: visit, by:, when: visit.when_label) # CLI-05
       end
       visits.first.reset_ready_to_invoice
       job.refresh_status!
@@ -317,6 +318,7 @@ class Visit < ApplicationRecord
     if status == "completed"
       update!(status:, completed_at: Time.current)
       VisitEvent.record!(self, :completed, by:)
+      ClientEvent.record!(job.client, :visit_completed, subject: self, by:) # CLI-05
     else
       update!(status:, cancelled_at: Time.current, cancel_reason: reason)
       VisitEvent.record!(self, :cancelled, by:, reason: cancel_reason)

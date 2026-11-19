@@ -50,6 +50,7 @@ Rails.application.routes.draw do
         patch :archive
         patch :restore
         get :picked
+        get :timeline # CLI-05: older events
         patch "contact_methods/:contact_method_id/deliverable", action: :mark_deliverable, as: :mark_deliverable # NTF-01
       end
       post :matches, on: :collection # POST keeps emails and phones out of URLs and access logs

@@ -136,6 +136,7 @@ class Invoice < ApplicationRecord
         update!(status: "sent", sent_at: Time.current, sent_by: by, issued_on: issued, due_on: due)
       end
       record!(:sent, by:, channel:, revision:)
+      ClientEvent.record!(client, :invoice_sent, subject: self, by:, channel:, revision:) # CLI-05
       sends.create!(business:, user: by, channel:, recipient:, cc:, revision:)
     end
   end
@@ -254,6 +255,7 @@ class Invoice < ApplicationRecord
       end
       payment.save!
       record!(:payment_recorded, by:, payment: payment.uid, **payment.summary)
+      ClientEvent.record!(client, :payment_recorded, subject: payment, by:, **payment.summary) # CLI-05
       apply_payments!(by:)
       payment
     end
@@ -290,6 +292,7 @@ class Invoice < ApplicationRecord
     assign_attributes(amount_paid_cents: paid_cents, status:, paid_at: (status == "paid" ? (paid_at || Time.current) : nil))
     save!(validate: false)
     record!({ "paid" => :paid, "partially_paid" => :partially_paid, "sent" => :reopened }.fetch(status), by:) if changed
+    ClientEvent.record!(client, :invoice_paid, subject: self, by:) if changed && status == "paid" # CLI-05
     ClientLink.active.where(linkable: self).update_all(expires_at: client_link_expires_at)
   end
 

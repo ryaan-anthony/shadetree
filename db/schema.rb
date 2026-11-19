@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_19_000200) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_19_000300) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -158,6 +158,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_000200) do
     t.index ["business_id", "kind", "normalized"], name: "idx_on_business_id_kind_normalized_9d4b32aefd"
     t.index ["business_id"], name: "index_client_contact_methods_on_business_id"
     t.index ["client_id"], name: "index_client_contact_methods_on_client_id"
+  end
+
+  create_table "client_events", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "client_id", null: false
+    t.string "kind", null: false
+    t.string "subject_type"
+    t.bigint "subject_id"
+    t.bigint "user_id"
+    t.jsonb "data", default: {}, null: false
+    t.datetime "occurred_at", null: false
+    t.datetime "created_at", null: false
+    t.index ["business_id", "client_id", "occurred_at", "id"], name: "index_client_events_timeline", order: { occurred_at: :desc, id: :desc }
+    t.index ["subject_type", "subject_id"], name: "index_client_events_on_subject_type_and_subject_id"
   end
 
   create_table "client_link_events", force: :cascade do |t|
@@ -913,6 +927,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_000200) do
   add_foreign_key "catalog_items", "catalog_categories", column: "category_id", on_delete: :nullify
   add_foreign_key "client_contact_methods", "businesses", on_delete: :cascade
   add_foreign_key "client_contact_methods", "clients", on_delete: :cascade
+  add_foreign_key "client_events", "businesses"
+  add_foreign_key "client_events", "clients"
+  add_foreign_key "client_events", "users"
   add_foreign_key "client_link_events", "businesses", on_delete: :cascade
   add_foreign_key "client_link_events", "client_links", on_delete: :cascade
   add_foreign_key "client_links", "businesses", on_delete: :cascade
