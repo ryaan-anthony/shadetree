@@ -18,8 +18,14 @@ class ClientsSystemTest < ApplicationSystemTestCase
   test "adding a client with two phones and two properties" do
     visit new_admin_client_path
     fill_in "Name", with: "Lopez Rentals"
-    first("input[type=tel]").fill_in with: "555 010 0100"
-    assert_text "A client already has this email or phone.", wait: 10 # the first lookup can be slow on a cold CI runner
+    # The duplicate lookup runs after typing; on a slow headless Chrome keys can be lost, or the
+    # first lookup can be slow on a cold runner. Type again until the match shows (typing the
+    # same number again is harmless); a real failure still fails, after 20 seconds.
+    phone = first("input[type=tel]")
+    page.document.synchronize(20) do
+      phone.fill_in(with: "555 010 0100") unless phone.value == "555 010 0100"
+      raise Capybara::ExpectationNotMet, "no duplicate match shown (the box holds #{phone.value.inspect})" unless page.has_text?("A client already has this email or phone.", wait: 4)
+    end
     assert_link "Open", href: %r{/admin/clients/}
 
     click_on "Add phone"
