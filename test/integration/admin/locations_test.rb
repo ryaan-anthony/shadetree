@@ -118,6 +118,23 @@ class Admin::LocationsTest < ActionDispatch::IntegrationTest
     assert_nil member.reload.default_location
   end
 
+  test "automations can be limited to a location once there are several (NTF-04)" do
+    @business.update!(plan_overrides: { "features" => { "locations" => true, "automations" => true }, "limits" => { "active_automations" => 5 } })
+    get new_admin_automation_path
+    assert_select "select#condition-location", 0
+    location = branch
+    get new_admin_automation_path
+    assert_select "select#condition-location option", [ "Any location", @business.primary_location.name, "North yard" ].size
+    post admin_automations_path, params: { automation_rule: { name: "North notice", trigger: "quote_sent", delay_amount: "0", delay_unit: "hours",
+                                                              conditions: { location: location.uid }, actions: { notify_team: { on: "1", team: "office" } } } }
+    follow_redirect!
+    assert_select "#automation-#{as_business(@business) { AutomationRule.last.uid }} p", /if it's for North yard:/
+    rule = as_business(@business) { AutomationRule.last }
+    patch archive_admin_location_path(location)
+    get edit_admin_automation_path(rule)
+    assert_select "select#condition-location option[selected]", "North yard (archived)", "an archived location stays on the rule"
+  end
+
   test "another business's locations aren't found" do
     theirs = branch(business: businesses(:two).tap { _1.update!(plan_overrides: { "features" => { "locations" => true } }) })
     assert_not_found_across_businesses { get edit_admin_location_path(theirs) }

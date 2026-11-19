@@ -21,8 +21,19 @@ module ScheduleHelper
   def schedule_drag_data(visit, column)
     return {} unless visit.open?
 
-    { schedule_drag_target: "visit", visit: visit.uid, lock: visit.lock_version, start: visit.start_time.to_s,
+    # CAT-07: the start on the calendar's clock, which a drag's time is on too.
+    start = @schedule ? visit.start_time_in(@schedule.place.time_zone).to_s : visit.start_time.to_s
+    { schedule_drag_target: "visit", visit: visit.uid, lock: visit.lock_version, start:,
       timing: visit.timing, member: column.member_key, label: "#{visit.job.client.display_name}, #{visit.time_label}" }
+  end
+
+  # CAT-07: a visit's time, with its zone named when it isn't the calendar's ("9 am CST").
+  def schedule_time_label(visit, schedule)
+    label = visit.time_label.delete_prefix("Arrive ")
+    zone = visit.time_zone
+    return label if visit.anytime? || zone.tzinfo.identifier == schedule.place.time_zone.tzinfo.identifier
+
+    "#{label} #{visit.starts_at.in_time_zone(zone).strftime("%Z")}"
   end
 
   # A grid column's name for screen readers: its day, and whose it is in a day split by person.

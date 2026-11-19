@@ -29,7 +29,7 @@ class VisitClientNotice
       next postpone if EmailMessage.hourly_limit_reached?
 
       # Visits from the day the changes were made, so one late in the evening still counts.
-      from = (due - Job::CLIENT_NOTICE_DELAY).in_time_zone(@business.time_zone).to_date
+      from = (due - Job::CLIENT_NOTICE_DELAY).in_time_zone(@job.location.time_zone).to_date
       visits = @job.visits.where(scheduled_on: from..).where(status: %w[scheduled cancelled]).includes(:business).in_order.to_a
       changes = sendable(visits.filter_map { change_for(_1) })
       emailing = changes.map(&:visit)

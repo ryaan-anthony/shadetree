@@ -30,7 +30,7 @@ class ActionDashboard
   # Today's open and done visits, by the people on them ("Not assigned" last).
   def todays_visits
     @todays_visits ||= begin
-      visits = Visit.where(scheduled_on: today).where.not(status: "cancelled").includes(:business, :assignees, job: :client).in_order.to_a
+      visits = Visit.where(scheduled_on: today).where.not(status: "cancelled").includes(:business, :assignees, job: %i[client location]).in_order.to_a
       visits.flat_map { |visit| (visit.assignees.presence || [ nil ]).map { [ _1, visit ] } }
             .group_by(&:first).transform_values { _1.map(&:last) }
             .sort_by { |person, _| person ? [ 0, person.full_name ] : [ 1, "" ] }

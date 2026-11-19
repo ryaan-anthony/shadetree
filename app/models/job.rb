@@ -26,6 +26,7 @@ class Job < ApplicationRecord
   has_many :line_items, -> { order(:position, :id) }, class_name: "JobLineItem", inverse_of: :job, dependent: :delete_all
   has_many :email_messages, as: :related, dependent: :nullify # JOB-05: what the client was sent
   has_many :visits, inverse_of: :job, dependent: :restrict_with_exception # JOB-02
+  after_update :keep_visit_clock_times, if: :saved_change_to_location_id? # CAT-07
   has_many :invoices, dependent: :restrict_with_exception # PAY-01: one or more (progress billing)
   accepts_nested_attributes_for :line_items, allow_destroy: true, reject_if: :blank_new_line?
 
@@ -231,6 +232,19 @@ class Job < ApplicationRecord
   end
 
   private
+
+  # CAT-07: a job moved to a location in another time zone keeps its visits' clock times (9 am
+  # stays 9 am, on the new location's clock), rather than the same moments.
+  def keep_visit_clock_times
+    before, after = Location.find_by(id: location_id_before_last_save), location
+    from, to = before&.time_zone, after.time_zone
+    return if from.nil? || from.tzinfo.identifier == to.tzinfo.identifier
+
+    move = ->(time) { time && to.local(*time.in_time_zone(from).then { [ _1.year, _1.month, _1.day, _1.hour, _1.min ] }) }
+    visits.where.not(starts_at: nil).find_each do |visit|
+      visit.update_columns(starts_at: move.(visit.starts_at), window_ends_at: move.(visit.window_ends_at))
+    end
+  end
 
   # An added row left empty is ignored rather than an error.
   def blank_new_line?(row)

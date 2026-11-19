@@ -31,6 +31,7 @@ module AutomationsHelper
     when "paid_in_full" then "it's paid in full" unless AutomationConditions.off?(value)
     when "total_at_least" then "the total is at least #{Money.parse(value.to_s, current_business.currency).format}"
     when "client_tag" then "the client is tagged “#{value}”"
+    when "location" then "it's for #{(@automation_locations ||= Location.all.index_by(&:uid))[value.to_s]&.name || "a location that no longer exists"}"
     end
   end
 

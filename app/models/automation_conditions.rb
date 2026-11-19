@@ -12,6 +12,7 @@ module AutomationConditions
       when "paid_in_full" then paid_in_full(subject) unless off?(value)
       when "total_at_least" then total_at_least(subject, value)
       when "client_tag" then client_tag(subject, value)
+      when "location" then location(subject, value)
       end
       return reason if reason
     end
@@ -41,6 +42,19 @@ module AutomationConditions
 
     minimum = Money.parse(amount.to_s, document.currency)
     "The total is under #{minimum.format}." if document.totals.total < minimum
+  end
+
+  # CAT-07: the record's location (a visit's job's, a payment's invoice's).
+  def location(subject, uid)
+    document = case subject
+    when Visit then subject.job
+    when Payment then subject.invoice
+    else subject
+    end
+    here = document.try(:location)
+    return if here&.uid == uid.to_s
+
+    "Only for #{Location.find_by(uid: uid.to_s)&.name || "another location"}; this is for #{here&.name || "no location"}."
   end
 
   def client_tag(subject, tag)

@@ -27,6 +27,20 @@ class Admin::ScheduleMovesTest < ActionDispatch::IntegrationTest
 
   def fresh = as_business(@business) { @visit.reload.tap { _1.assignments.load } }
 
+  test "CAT-07: on the all-locations calendar a branch in another zone is shown and dropped on the calendar's clock" do
+    @business.update!(plan_overrides: { "features" => { "locations" => true } })
+    chicago = as_business(@business) { Location.create!(name: "Chicago yard", timezone: "America/Chicago") }
+    as_business(@business) { @job.update!(location: chicago) }
+    assert_equal "09:00", fresh.start_time, "the job's move kept the visit's clock time, on Chicago's clock"
+    get admin_schedule_path(view: "day", date: @monday.iso8601, location: "all")
+    assert_match "9–11 am CST", response.body, "the card names the visit's zone, unlike the calendar's"
+    assert_select "[data-visit='#{@visit.uid}'][data-start='10:00']", 1, "drags start from the calendar's clock"
+
+    drag(on: @monday.iso8601, at: "12:00", grid_zone: "America/New_York")
+    assert_response :ok
+    assert_equal [ "11:00", Time.utc(2026, 11, 23, 17) ], fresh.then { [ _1.start_time, _1.starts_at ] }, "noon in New York is 11 am in Chicago"
+  end
+
   test "dragged to another day and time: a window keeps its length; the toast offers Undo, which puts it back" do
     drag(on: (@monday + 2).iso8601, at: "13:30", view: "week")
     assert_response :ok

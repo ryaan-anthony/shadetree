@@ -18,7 +18,7 @@ class Admin::VisitsController < Admin::BaseController
   def create
     attrs = visit_params.merge(created_by: current_user)
     @visit = @job.visits.new(attrs)
-    @hours = OpeningHours.new(current_business)
+    @hours = OpeningHours.new(@job.location) # CAT-07
     dates = Visit.plan_dates(attrs[:scheduled_on], through: params[:through], extra: params[:extra_dates],
                              skip_closed: params[:skip_closed] == "1", hours: @hours)
     if dates.size > Visit::MAX_DAYS
