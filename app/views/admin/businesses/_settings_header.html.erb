@@ -13,4 +13,5 @@
   <%= link_to "Messages", admin_message_templates_path, class: "tab", "aria-current": ("page" if current == "messages") %>
   <%= link_to "Automations", admin_automations_path, class: "tab", "aria-current": ("page" if current == "automations") %>
   <%= link_to "Plan", admin_plan_path, class: "tab", "aria-current": ("page" if current == "plan") %>
+  <% if current_membership&.can?(:export_data) %><%= link_to "Your data", admin_data_exports_path, class: "tab", "aria-current": ("page" if current == "data") %><% end %>
 </nav>
