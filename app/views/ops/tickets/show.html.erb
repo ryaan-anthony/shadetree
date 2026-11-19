@@ -17,7 +17,7 @@
           <%= submit_tag "Send reply", class: button_classes, name: nil %>
           <%= submit_tag "Add internal note", class: button_classes(:secondary), name: nil, formaction: note_ops_ticket_path(@ticket) %>
         </div>
-        <p class="text-sm2 text-muted">Replies go to <%= @ticket.opened_by&.email || "nobody (they left)" %> in the app and by email. Notes stay with operators.</p>
+        <p class="text-sm2 text-muted">Replies go to <%= @recipients.any? ? @recipients.map(&:full_name).to_sentence : "nobody (the business has no active members)" %> in the app and by email. Notes stay with operators.</p>
       <% end %>
     <% end %>
   </div>

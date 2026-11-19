@@ -25,10 +25,14 @@ class Ops::TicketsController < Ops::BaseController
     @messages = in_business { @ticket.messages.includes(:author, files_attachments: :blob).to_a }
     @summary = Ops::BusinessSummary.new(@ticket.business)
     @operators = Operator.active.includes(:user).map(&:user)
+    @recipients = SupportNotifier.recipients(@ticket)
+    audit!("ticket.viewed", ticket: @ticket.uid)
   end
 
   def assign
     assignee = params[:assignee].present? ? Operator.active.find_by(user_id: params[:assignee])&.user : nil
+    return redirect_to(ops_ticket_path(@ticket), alert: "Only an operator can be assigned.") if params[:assignee].present? && assignee.nil?
+
     in_business { @ticket.update!(assignee:) }
     audit!("ticket.assigned", ticket: @ticket.uid, assignee: assignee&.email)
     redirect_to ops_ticket_path(@ticket), notice: assignee ? "Assigned to #{assignee.email}." : "Unassigned."
@@ -38,9 +42,9 @@ class Ops::TicketsController < Ops::BaseController
     message = in_business { @ticket.reply_from_operator!(current_user, params[:body], status: params[:status].presence || "waiting") }
     return redirect_to(ops_ticket_path(@ticket, anchor: "reply"), alert: "Write a reply first.") unless message.persisted?
 
-    in_business { SupportNotifier.replied(@ticket, message) }
+    told = in_business { SupportNotifier.replied(@ticket, message) }
     audit!("ticket.replied", ticket: @ticket.uid, status: @ticket.status)
-    redirect_to ops_ticket_path(@ticket), notice: "Reply sent. #{@ticket.opened_by ? "They'll see it in the app and by email." : ""}".strip
+    redirect_to ops_ticket_path(@ticket), notice: told.any? ? "Reply sent to #{told.map(&:full_name).to_sentence}, in the app and by email." : "Reply saved. Nobody in the business can be told: it has no active members."
   end
 
   def note

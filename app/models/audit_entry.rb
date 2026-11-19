@@ -36,6 +36,7 @@ class AuditEntry < ApplicationRecord
     "user.unlocked" => "Unlocked an account",
     "contact_message.deleted" => "Deleted a contact message",
     "contact_message.erased" => "Deleted everything from a contact-form sender",
+    "ticket.viewed" => "Opened a support ticket",
     "ticket.assigned" => "Assigned a support ticket",
     "ticket.replied" => "Replied to a support ticket",
     "ticket.noted" => "Added a note to a support ticket",

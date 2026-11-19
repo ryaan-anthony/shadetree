@@ -82,6 +82,7 @@ Rails.application.routes.draw do
         post :note
         patch :status
       end
+      resources :files, only: :show, controller: "ticket_files" # screenshots, checked then redirected
     end
   end
 

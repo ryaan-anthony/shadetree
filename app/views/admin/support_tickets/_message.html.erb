@@ -10,7 +10,7 @@
     <% if message.files.attached? %>
       <ul class="mt-2 flex flex-wrap gap-2" aria-label="Screenshots">
         <% message.files.each do |file| %>
-          <li><%= link_to file.filename.to_s, admin_support_ticket_file_path(message.support_ticket, file), target: "_blank", rel: "noopener", class: "inline-flex items-center gap-1 text-sm2 text-ink underline-offset-2 hover:underline" %></li>
+          <li><%= link_to file.filename.to_s, (operator_view ? ops_ticket_file_path(message.support_ticket, file) : admin_support_ticket_file_path(message.support_ticket, file)), target: "_blank", rel: "noopener", class: "inline-flex items-center gap-1 text-sm2 text-ink underline-offset-2 hover:underline" %></li>
         <% end %>
       </ul>
     <% end %>
