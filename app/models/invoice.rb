@@ -57,15 +57,17 @@ class Invoice < ApplicationRecord
   before_validation :apply_payment_terms
 
   # A new draft for a client, with the business's defaults (terms, due date, taxes).
+  class NotApproved < StandardError; end
+
   def self.start(client:, property: nil, created_by: nil)
-    create!(client:, property: property || client.primary_property, created_by:).tap { _1.record!(:created, by: created_by) }
+    transaction { create!(client:, property: property || client.primary_property, created_by:).tap { _1.record!(:created, by: created_by) } }
   end
 
   # PAY-01: the job's work, billed: its client, property, items, discount and taxes. The job's
   # quote (if any) is linked too. A job can be invoiced more than once (progress billing).
   def self.from_job!(job, by: nil)
     transaction do
-      invoice = new(client: job.client, property: job.property, job:, quote: job.quote, created_by: by, title: job.title)
+      invoice = new(client: job.client, property: job.property, job:, quote: job.quote, created_by: by, title: job.title, currency: job.currency)
       invoice.copy_pricing_from(job)
       invoice.save!
       invoice.record!(:created, by:, from: "job", number: job.number)
@@ -76,10 +78,10 @@ class Invoice < ApplicationRecord
   # PAY-01: an approved quote, billed as agreed (the quote's lines, not the job's on-site
   # changes). Its job is linked when there is one.
   def self.from_quote!(quote, by: nil)
-    raise ArgumentError, "Only an approved quote can be invoiced." unless quote.approved?
+    raise NotApproved, "Only an approved quote can be invoiced." unless quote.approved?
 
     transaction do
-      invoice = new(client: quote.client, property: quote.property, quote:, job: quote.job, created_by: by, title: quote.title)
+      invoice = new(client: quote.client, property: quote.property, quote:, job: quote.job, created_by: by, title: quote.title, currency: quote.currency)
       invoice.copy_pricing_from(quote)
       invoice.save!
       invoice.record!(:created, by:, from: "quote", number: quote.number)
@@ -446,8 +448,15 @@ class Invoice < ApplicationRecord
   end
 
   # Terms other than "custom" set the due date from the issue date.
+  # Fixed terms give the due date from the issue date. A custom date (also what a business's
+  # own number of days, like 45, starts as) keeps its distance from the issue date when only
+  # the issue date moves.
   def apply_payment_terms
-    self.due_on = due_on_for(payment_terms) if TERMS[payment_terms] && issued_on
+    if TERMS[payment_terms] && issued_on
+      self.due_on = due_on_for(payment_terms)
+    elsif issued_on_changed? && issued_on_was && issued_on && due_on && !due_on_changed?
+      self.due_on = due_on + (issued_on - issued_on_was)
+    end
   end
 
   def belongs_with_client
