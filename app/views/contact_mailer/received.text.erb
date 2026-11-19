@@ -1,0 +1,8 @@
+From: <%= @message.name %> <<%= @message.email %>>
+<% if @message.business_name %>Business: <%= @message.business_name %>
+<% end %><% if @message.industry %>Industry: <%= @message.industry_name %>
+<% end %>Sent: <%= @message.created_at.utc.to_fs(:long) %> UTC
+
+<%= @message.body %>
+
+Reply to this email to answer <%= @message.name %>.

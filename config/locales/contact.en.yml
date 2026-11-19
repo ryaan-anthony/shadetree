@@ -1,0 +1,18 @@
+en:
+  activerecord:
+    attributes:
+      contact_message:
+        name: "Your name"
+        email: "Email"
+        business_name: "Business name"
+        industry: "Industry"
+        body: "Message"
+    errors:
+      models:
+        contact_message:
+          attributes:
+            # MKT-02: shown to the public as written, without the field name in front.
+            name: { format: "%{message}", blank: "Enter your name." }
+            email: { format: "%{message}", blank: "Enter the email we should reply to.", invalid: "That email doesn't look right." }
+            industry: { format: "%{message}", inclusion: "Choose an industry from the list." }
+            body: { format: "%{message}", blank: "Write your message.", too_long: "Keep your message under %{count} characters." }

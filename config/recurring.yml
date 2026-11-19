@@ -16,6 +16,9 @@ production:
   prune_notifications: # NTF-02
     class: PruneNotificationsJob
     schedule: every day at 4:20am
+  prune_contact_messages: # MKT-02
+    class: PruneContactMessagesJob
+    schedule: every day at 4:35am
   visit_reminders: # JOB-05: the day-before reminders, as each business's clock reaches the hour
     class: VisitRemindersJob
     schedule: every hour at minute 7

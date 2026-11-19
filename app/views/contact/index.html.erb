@@ -1,120 +1,23 @@
-<% content_for :title, "Contact Us" %>
+<% content_for :title, "Contact" %>
 <% content_for :analytics, "on" %>
 <% page_meta description: "Questions about Shadetree, pricing or moving from another tool? Write to us and a person will reply." %>
-
-<!-- Contact Section -->
-<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
-
-        <!-- Header -->
-        <div class="text-center">
-            <div class="mx-auto h-16 w-16 bg-shadetree-green rounded-full flex items-center justify-center mb-6">
-                <%= icon "mail", class: "h-8 w-8 text-white" %>
-            </div>
-            <h2 class="text-3xl font-bold text-enterprise-navy">
-                Get in touch
-            </h2>
-            <p class="mt-2 text-sm text-enterprise-gray">
-                Have questions about Shadetree? We'd love to hear from you and help grow your service business.
-            </p>
-        </div>
-
-        <!-- Contact Form -->
-        <div class="bg-white py-8 px-6 shadow-lg rounded-lg border border-gray-200">
-            <%= form_with url: contact_path, method: :post, local: true, html: { class: "space-y-6" } do |form| %>
-                <%= render "shared/form_guard", purpose: "contact" %>
-                <% if flash.now[:alert] %><p class="rounded-md bg-amber-50 p-3 text-sm text-amber-900" role="alert"><%= flash.now[:alert] %></p><% end %>
-
-                <!-- Name Field -->
-                <div>
-                    <%= form.label :name, "Full name", class: "block text-sm font-medium text-gray-700 mb-2" %>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <%= icon "user", class: "h-5 w-5 text-gray-400" %>
-                        </div>
-                        <%= form.text_field :name, required: true,
-                            class: "border pl-10 shadow-xs focus:ring-shadetree-blue focus:border-shadetree-blue block w-full sm:text-sm border-gray-300 rounded-md py-3",
-                            placeholder: "Enter your full name" %>
-                    </div>
-                </div>
-
-                <!-- Email Field -->
-                <div>
-                    <%= form.label :email, "Email address", class: "block text-sm font-medium text-gray-700 mb-2" %>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <%= icon "mail", class: "h-5 w-5 text-gray-400" %>
-                        </div>
-                        <%= form.email_field :email, required: true,
-                            class: "border pl-10 shadow-xs focus:ring-shadetree-blue focus:border-shadetree-blue block w-full sm:text-sm border-gray-300 rounded-md py-3",
-                            placeholder: "Enter your email address" %>
-                    </div>
-                </div>
-
-                <!-- Company Field -->
-                <div>
-                    <%= form.label :company, "Company name", class: "block text-sm font-medium text-gray-700 mb-2" %>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <%= icon "tool", class: "h-5 w-5 text-gray-400" %>
-                        </div>
-                        <%= form.text_field :company,
-                            class: "border pl-10 shadow-xs focus:ring-shadetree-blue focus:border-shadetree-blue block w-full sm:text-sm border-gray-300 rounded-md py-3",
-                            placeholder: "Enter your company name (optional)" %>
-                    </div>
-                </div>
-
-                <!-- Phone Field -->
-                <div>
-                    <%= form.label :phone, "Phone number", class: "block text-sm font-medium text-gray-700 mb-2" %>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <%= icon "phone", class: "h-5 w-5 text-gray-400" %>
-                        </div>
-                        <%= form.telephone_field :phone,
-                            class: "border pl-10 shadow-xs focus:ring-shadetree-blue focus:border-shadetree-blue block w-full sm:text-sm border-gray-300 rounded-md py-3",
-                            placeholder: "Enter your phone number (optional)" %>
-                    </div>
-                </div>
-
-                <!-- Message Field -->
-                <div>
-                    <%= form.label :message, "Message", class: "block text-sm font-medium text-gray-700 mb-2" %>
-                    <div class="relative">
-                        <div class="absolute top-3 left-0 pl-3 flex items-start pointer-events-none">
-                            <%= icon "message-square", class: "h-5 w-5 text-gray-400" %>
-                        </div>
-                        <%= form.text_area :message, required: true, rows: 4,
-                            class: "border pl-10 shadow-xs focus:ring-shadetree-blue focus:border-shadetree-blue block w-full sm:text-sm border-gray-300 rounded-md py-3 resize-none",
-                            placeholder: "Tell us about your service business and how we can help..." %>
-                    </div>
-                </div>
-
-                <!-- Submit Button -->
-                <div>
-                    <%= form.submit "Send message", class: "group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-shadetree-blue hover:bg-blue-800 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-shadetree-blue shadow-lg" %>
-                </div>
-            <% end %>
-
-          <div class="mt-6 text-center">
-            <p class="text-sm text-gray-600">
-              Our team will contact you within 24 hours.
-            </p>
-            <div class="flex items-center justify-center mt-4 space-x-6 text-xs text-gray-500">
-                    <span class="flex items-center">
-                        <%= icon "shield", class: "w-4 h-4 mr-1" %>
-                        SOC 2 Certified
-                    </span>
-              <span class="flex items-center">
-                        <%= icon "clock", class: "w-4 h-4 mr-1" %>
-                        99.9% Uptime
-                    </span>
-              <span class="flex items-center">
-                        <%= icon "check-circle", class: "w-4 h-4 mr-1" %>
-                        14-Day Free Trial
-                    </span>
-            </div>
-          </div>
-        </div>
-    </div>
-</div>
+<%= render layout: "devise/shared/card", locals: {
+      title: "Get in touch",
+      lede: "Questions about Shadetree, pricing or moving from another tool? Write to us and a person will reply." } do %>
+  <%= form_with model: @message, url: contact_path, method: :post, data: { turbo: false }, class: "space-y-4" do |f| %>
+    <% if f.object.errors[:base].any? %>
+      <div class="banner banner-warning" role="alert"><%= icon "alert-circle" %><p><%= f.object.errors[:base].to_sentence %></p></div>
+    <% end %>
+    <%= render "shared/form_guard", purpose: "contact" %>
+    <%= f.field :name, label: "Your name", autocomplete: "name", maxlength: 120, required: true %>
+    <%= f.field :email, as: :email, label: "Email", autocomplete: "email", maxlength: 254, required: true,
+                help: "We'll reply to this address." %>
+    <%= f.field :business_name, label: "Business name", optional: true, autocomplete: "organization", maxlength: 120 %>
+    <%= f.field :industry, as: :select, label: "Industry", optional: true, include_blank: "Choose one",
+                choices: Industry.options + [ [ "Other", "other" ] ] %>
+    <%= f.field :body, as: :textarea, label: "Message", rows: 6, maxlength: 5_000, required: true,
+                placeholder: "What would you like to know?" %>
+    <%= f.submit_button "Send message", class: "w-full btn-lg" %>
+    <p class="text-center text-sm2 text-muted">We only use your details to reply. See our <%= link_to "privacy policy", privacy_path, class: "underline" %>.</p>
+  <% end %>
+<% end %>

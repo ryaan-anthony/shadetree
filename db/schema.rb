@@ -323,6 +323,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
     t.check_constraint "ends_on >= starts_on", name: "closures_date_order"
   end
 
+  create_table "contact_messages", force: :cascade do |t|
+    t.string "uid", null: false
+    t.string "name", null: false
+    t.string "email", null: false
+    t.string "business_name"
+    t.string "industry"
+    t.text "body", null: false
+    t.string "spam_reason"
+    t.string "ip_address"
+    t.string "user_agent"
+    t.datetime "notified_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_contact_messages_on_created_at"
+    t.index ["email"], name: "index_contact_messages_on_email"
+    t.index ["uid"], name: "index_contact_messages_on_uid", unique: true
+  end
+
   create_table "document_sequences", force: :cascade do |t|
     t.bigint "business_id", null: false
     t.string "kind", null: false

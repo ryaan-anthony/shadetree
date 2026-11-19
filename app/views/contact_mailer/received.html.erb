@@ -1,0 +1,6 @@
+<p style="margin:0 0 4px;"><strong>From:</strong> <%= @message.name %> &lt;<%= mail_to @message.email %>&gt;</p>
+<% if @message.business_name %><p style="margin:0 0 4px;"><strong>Business:</strong> <%= @message.business_name %></p><% end %>
+<% if @message.industry %><p style="margin:0 0 4px;"><strong>Industry:</strong> <%= @message.industry_name %></p><% end %>
+<p style="margin:0 0 16px;color:#64748b;">Sent <%= @message.created_at.utc.to_fs(:long) %> UTC</p>
+<div style="white-space:pre-wrap;"><%= @message.body %></div>
+<p style="margin:16px 0 0;color:#64748b;">Reply to this email to answer <%= @message.name %>.</p>
