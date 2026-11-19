@@ -19,12 +19,14 @@ class Ops::PlansController < Ops::BaseController
     @plan.annual_price_cents = price_cents(params.dig(:plan, :annual_price)) if params.dig(:plan, :annual_price)
     @plan.limits = Plan::LIMITS.keys.each_with_object({}) do |key, limits|
       value = params.dig(:plan, :limits, key).to_s.strip
-      limits[key] = value.match?(/\A\d+\z/) ? value.to_i : nil unless value.empty? # blank: unlimited
+      # Blank is unlimited; anything that isn't a whole number fails the plan's check, never
+      # quietly becoming unlimited for every business on it.
+      limits[key] = value.match?(/\A\d+\z/) ? value.to_i : value unless value.empty?
     end
     @plan.features = Plan::FEATURES.keys.index_with { params.dig(:plan, :features, _1) == "1" }.select { _2 }
-    changed = @plan.changed
+    changes = @plan.changes_to_save.transform_values { |from, to| { "from" => from, "to" => to } }
     if @plan.save
-      audit!("plan.updated", plan: @plan.key, changed:) if changed.any?
+      audit!("plan.updated", plan: @plan.key, changes:) if changes.any? # from and to, so a bad edit can be put back
       redirect_to ops_plans_path, notice: "#{@plan.name} saved. Every business on it has the new limits and features now."
     else
       render :edit, status: :unprocessable_content

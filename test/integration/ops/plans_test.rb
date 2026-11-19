@@ -27,7 +27,14 @@ class Ops::PlansTest < ActionDispatch::IntegrationTest
     assert_equal({ "automations" => true }, plan.features)
     entry = AuditEntry.find_by!(action: "plan.updated")
     assert_equal "starter", entry.data["plan"]
-    assert_includes entry.data["changed"], "limits"
+    assert_equal({ "from" => "Starter", "to" => "Starter+" }, entry.data["changes"]["name"])
+    assert_equal({ "quotes_sent" => 40, "active_automations" => 3 }, entry.data["changes"]["limits"]["to"])
+
+    [ "3O", "-1" ].each do |typo|
+      patch ops_plan_path(plan), params: { plan: { name: "Starter+", limits: { "quotes_sent" => typo, "team_members" => "", "active_automations" => "3" } } }
+      assert_response :unprocessable_content
+      assert_equal 40, plan.reload.limits["quotes_sent"], "#{typo} isn't taken as unlimited"
+    end
 
     patch ops_plan_path(plan), params: { plan: { name: "", monthly_price: "lots" } }
     assert_response :unprocessable_content
