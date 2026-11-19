@@ -48,10 +48,11 @@ public endpoints. Run a focused review and fix what it finds.
 - **Style attributes are gone, not allowed.** `style-src` has no `'unsafe-inline'`; values known
   only at render time become classes backed by one nonced `<style>` (`InlineStyleHelper`).
   JavaScript still sets styles through the CSSOM (`el.style.x = …`), which CSP allows.
-- **The nonce is the session id** (random per request when there's no session), so `<style>`
-  blocks in Turbo navigations and frames match the page they land in. Signing in or out changes
-  it: those forms skip Turbo, and a `csp-nonce-check` meta tracked by Turbo forces a full load if
-  the nonce changes some other way.
+- **One random nonce per session, not per response**, kept in the session from the first
+  response, so `<style>` blocks in Turbo navigations, frames and streams match the page they land
+  in (a per-response nonce would make Turbo reload every page). Signing in starts a new one and
+  signing out resets the session; those forms skip Turbo, and a `csp-nonce-check` meta tracked
+  by Turbo forces a full load if the nonce changes some other way.
 - **Third parties are added one at a time** in the policy when a feature needs them: Stripe's
   hosted checkout (BIL-04) will need `form-action` once we post to it; self-hosted Plausible
   (MKT-04) its script and connect origin.
@@ -61,8 +62,8 @@ public endpoints. Run a focused review and fix what it finds.
 Part 1 (headers, policy, cookies, disclosure):
 - `config/initializers/content_security_policy.rb`: `default-src 'self'`, scripts and styles
   `'self'` plus nonce, `frame-ancestors 'none'`, `form-action 'self'`, `object-src 'none'`,
-  `base-uri 'self'`, reports to `/csp-reports` (`CspReportsController`: logged, truncated, rate
-  limited, never stored).
+  `base-uri 'self'`, reports to `/csp-reports` (`CspReportsController`: logged as paths with
+  tokens masked, truncated, rate limited, never stored).
 - `config/initializers/secure_headers.rb`: `Cross-Origin-Opener-Policy: same-origin`,
   `Permissions-Policy` turning off camera, microphone, geolocation, USB, payment and sensors,
   referrer policy; the session cookie is HTTP-only, `SameSite=Lax`, secure in production. HSTS
@@ -72,4 +73,6 @@ Part 1 (headers, policy, cookies, disclosure):
 - `public/.well-known/security.txt` (security@getshadetree.com, expires 2027-11-18; a test
   fails 60 days before so it gets renewed).
 - `SecurityHeadersTest` renders public, signed-in and client pages and fails on any style
-  attribute, inline handler, `javascript:` link, or inline script/style without the nonce.
+  attribute, inline handler, `javascript:` link, or inline script/style without the nonce; it
+  also scans every view and script for them, and checks that a view calling `inline_style`
+  emits its `<style>`.

@@ -47,6 +47,7 @@ class SecurityHeadersTest < ActionDispatch::IntegrationTest
     cookie = Array(response.headers["Set-Cookie"]).flat_map { _1.split("\n") }.find { _1.start_with?("_shadetree_session=") }
     assert_match(/httponly/i, cookie)
     assert_match(/samesite=lax/i, cookie)
+    get root_path
     assert_not_equal before, session.id.to_s, "a session id fixed before sign-in doesn't carry over"
   end
 
@@ -85,6 +86,34 @@ class SecurityHeadersTest < ActionDispatch::IntegrationTest
     assert_match(/\.#{visit_class}\{top: \d+px; height: \d+px; left: calc/, css_select("style[nonce]").map(&:text).join)
   end
 
+  test "a first-time visitor keeps one nonce from page to page, and signing in starts a new one" do
+    get root_path
+    first = nonce
+    get "/pricing"
+    assert_equal first, nonce, "or Turbo would reload the second page in full"
+    post user_session_path, params: { user: { email: users(:one).email, password: "password123" } }
+    get admin_root_path
+    assert_not_equal first, nonce
+  end
+
+  test "no view or script uses what the policy blocks, and every inline_style is emitted" do
+    views = Dir[Rails.root.join("app/views/**/*.erb")].reject { _1.match?(%r{_mailer/|/mailer|layouts/pdf}) }
+    views.each do |path|
+      source = File.read(path)
+      name = path.delete_prefix("#{Rails.root}/")
+      assert_no_match(/\sstyle=["']|\bstyle: ["']/, source, "#{name}: style attribute")
+      assert_no_match(/\son[a-z]+=["']/, source, "#{name}: inline event handler")
+      assert_no_match(/<script(?![^>]*\bsrc=)/, source, "#{name}: inline script")
+      next if name.start_with?("app/views/layouts/") || !source.include?("inline_style(")
+
+      assert_includes source, "inline_styles_tag", "#{name}: calls inline_style but never emits the <style> (a frame or stream would lose it)"
+    end
+    Dir[Rails.root.join("app/javascript/**/*.js")].each do |path|
+      source = File.read(path)
+      assert_no_match(/style=["']|setAttribute\(["']style|\bon[a-z]+=["']/, source, "#{path.delete_prefix("#{Rails.root}/")}: blocked by the policy")
+    end
+  end
+
   test "violation reports are logged, and anything else is ignored quietly" do
     io = StringIO.new
     logger, Rails.logger = Rails.logger, ActiveSupport::Logger.new(io)
@@ -95,15 +124,20 @@ class SecurityHeadersTest < ActionDispatch::IntegrationTest
       post csp_reports_path, params: [ { "type" => "csp-violation", "body" => { "effectiveDirective" => "style-src-attr" } } ].to_json,
                              headers: { "CONTENT_TYPE" => "application/reports+json" }
       post csp_reports_path, params: "not json", headers: { "CONTENT_TYPE" => "text/plain" }
+      post csp_reports_path, params: "[1]", headers: { "CONTENT_TYPE" => "application/json" }
+      assert_response :no_content
+      post csp_reports_path, params: { "csp-report" => { "document-uri" => "https://getshadetree.com/c/#{"a" * 32}?x=1", "violated-directive" => "img-src" } }.to_json,
+                             headers: { "CONTENT_TYPE" => "application/csp-report" }
       assert_response :no_content
     ensure
       Rails.logger = logger
     end
     logged = io.string.lines.grep(/\[csp\]/)
-    assert_equal 2, logged.size
+    assert_equal 3, logged.size
     assert_match "script-src", logged.first
     assert_no_match "secret", logged.first
-    assert_match "style-src-attr", logged.last
+    assert_match "style-src-attr", logged.second
+    assert_match %r{"/c/:token"}, logged.last, "page addresses as paths, tokens masked"
   end
 
   test "security.txt names a contact and hasn't expired" do

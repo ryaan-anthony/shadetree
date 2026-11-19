@@ -17,10 +17,12 @@ class InlineStyleHelperTest < ActionView::TestCase
   end
 
   test "markup and rules can't get in" do
-    [ "color: red}</style><script>x()</script>", "a{b}", "background: url(x) /* */", "content: '\\3c'" ].each do |css|
+    [ "color: red}</style><script>x()</script>", "a{b}", "background: red /* */", "content: '\\3c'", "width: calc(1px", "background: url('x')" ].each do |css|
       assert_raises(ArgumentError) { inline_style(css) }
     end
     assert_raises(ArgumentError) { inline_style_rule("body{", "color: red") }
+    assert inline_style("--color-brand: #9a3412; --color-brand-soft: color-mix(in srgb, #9a3412 10%, white);")
+    assert inline_style("left: calc(33.333% + 2px); width: calc(33.333% - 4px)")
     assert_equal %(<style nonce="abc123">body.client{color: red}</style>), inline_style_rule("body.client", "color: red")
   end
 end

@@ -11,12 +11,12 @@
       <p>This invitation is for <span class="font-semibold"><%= @invitation.email %></span>, but you're signed in as <span class="font-semibold"><%= current_user.email %></span>.</p>
     </div>
     <p class="mt-4 text-sm text-subtle">Sign out and come back to this link with the invited account, or ask <%= inviter %> to invite <%= current_user.email %> instead.</p>
-    <%= button_to "Sign out", destroy_user_session_path, method: :delete, class: button_classes(:secondary, extra: "mt-5 w-full") %>
+    <%= button_to "Sign out", destroy_user_session_path, method: :delete, class: button_classes(:secondary, extra: "mt-5 w-full"), form: { data: { turbo: false } } %>
   <% elsif @existing_account %>
     <p class="text-sm text-subtle"><span class="font-semibold text-ink"><%= @invitation.email %></span> already has a Shadetree account. Sign in to accept.</p>
     <%= link_to "Sign in to accept", new_user_session_path, class: button_classes(:primary, :lg, extra: "mt-5 w-full") %>
   <% else %>
-    <%= form_with model: @user, url: sign_up_invitation_path(params[:token]), scope: :user do |f| %>
+    <%= form_with model: @user, url: sign_up_invitation_path(params[:token]), scope: :user, data: { turbo: false } do |f| %><%# signs in: a new session, a new CSP nonce (PLT-13) %>
       <%= render "devise/shared/error_messages", resource: @user %>
       <%= f.field :email, as: :email, disabled: true, help: "Accepting confirms this address." %>
       <div class="grid gap-4 sm:grid-cols-2">

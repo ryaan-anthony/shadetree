@@ -1,6 +1,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title><%= [ content_for(:title).presence, "Shadetree" ].compact.uniq.join(" · ") %></title>
+<title><%= safe_join([ content_for(:title).presence, "Shadetree" ].compact.uniq, " · ") %></title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0b1221">

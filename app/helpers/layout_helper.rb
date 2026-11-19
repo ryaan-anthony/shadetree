@@ -41,7 +41,4 @@ module LayoutHelper
     branding = Branding.new(business)
     "background: #{branding.color}; color: #{branding.ink}"
   end
-
-  # CSS variables for client-facing pages. Only a validated #rrggbb value reaches the page.
-  def client_brand_style(business) = Branding.new(business).css_variables
 end

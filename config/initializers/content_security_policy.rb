@@ -24,9 +24,10 @@ Rails.application.configure do
     policy.report_uri "/csp-reports"
   end
 
-  # The session id is stable across a visit, so <style> blocks arriving with Turbo navigations
-  # and streams carry the same nonce as the page they land in. It's never exposed: the session
-  # cookie is encrypted.
-  config.content_security_policy_nonce_generator = ->(request) { request.session.id.to_s.presence || SecureRandom.base64(16) }
+  # A random nonce kept in the session (from the first response), so <style> blocks arriving
+  # with Turbo navigations, frames and streams carry the same nonce as the page they land in.
+  # Signing in starts a new one (config/initializers/warden_hooks.rb) and signing out resets
+  # the session; those forms skip Turbo, so the next page loads in full with the new nonce.
+  config.content_security_policy_nonce_generator = ->(request) { request.session[:csp_nonce] ||= SecureRandom.base64(16) }
   config.content_security_policy_nonce_directives = %w[script-src style-src]
 end

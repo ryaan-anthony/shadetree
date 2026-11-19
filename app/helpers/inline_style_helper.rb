@@ -3,12 +3,14 @@
 # <style> block. Views call inline_style(css) for a class name and inline_styles_tag once after
 # the elements that use it, so the block travels with them in Turbo frames and streams.
 module InlineStyleHelper
-  UNSAFE = /[<>{}\\]|\/\*/
+  # Declarations may only use what our values need (numbers, units, #hex, var(), calc(),
+  # color-mix()); anything else, or unbalanced brackets, is refused.
+  ALLOWED = %r{\A[\w\s:;%#.,()+*/-]*\z}
 
   # A class name for these declarations, e.g. inline_style("top: 64px; height: 32px").
   def inline_style(declarations)
     css = declarations.to_s.strip
-    raise ArgumentError, "inline_style takes declarations, not markup or rules" if css.match?(UNSAFE)
+    raise ArgumentError, "inline_style takes plain declarations: #{css.inspect}" unless safe?(css)
 
     name = "is-#{Digest::SHA256.hexdigest(css)[0, 12]}"
     (@inline_styles ||= {})[name] ||= css
@@ -29,8 +31,12 @@ module InlineStyleHelper
   # A nonced <style> with one rule, for a whole-page element such as the client layout's <body>.
   def inline_style_rule(selector, declarations)
     css = declarations.to_s.strip
-    raise ArgumentError, "inline_style_rule takes declarations, not markup or rules" if css.match?(UNSAFE) || selector.match?(UNSAFE)
+    raise ArgumentError, "inline_style_rule takes a simple selector and plain declarations" unless safe?(css) && selector.match?(/\A[\w.#-]+\z/)
 
     tag.style("#{selector}{#{css}}".html_safe, nonce: content_security_policy_nonce)
   end
+
+  private
+
+  def safe?(css) = css.match?(ALLOWED) && !css.include?("/*") && css.count("(") == css.count(")")
 end
