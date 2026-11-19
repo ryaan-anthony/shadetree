@@ -1,4 +1,5 @@
 <%= page_header "Clients", lede: "Who you work for and where." do %>
+  <%= link_to "Import", new_admin_client_import_path, class: button_classes(:secondary) %>
   <%= link_to new_admin_client_path, class: button_classes do %><%= icon "plus" %> Add client<% end %>
 <% end %>
 

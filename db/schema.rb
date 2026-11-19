@@ -233,6 +233,31 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
     t.index ["subject_type", "subject_id"], name: "index_client_events_on_subject_type_and_subject_id"
   end
 
+  create_table "client_imports", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.bigint "created_by_id"
+    t.string "filename", null: false
+    t.string "status", default: "mapping", null: false
+    t.jsonb "headers", default: [], null: false
+    t.jsonb "mapping", default: {}, null: false
+    t.string "duplicates", default: "skip", null: false
+    t.integer "total_rows", default: 0, null: false
+    t.integer "processed_rows", default: 0, null: false
+    t.integer "created_count", default: 0, null: false
+    t.integer "skipped_count", default: 0, null: false
+    t.integer "failed_count", default: 0, null: false
+    t.jsonb "problems", default: [], null: false
+    t.datetime "started_at"
+    t.datetime "finished_at"
+    t.datetime "undone_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id"], name: "index_client_imports_on_business_id"
+    t.index ["created_by_id"], name: "index_client_imports_on_created_by_id"
+    t.index ["uid"], name: "index_client_imports_on_uid", unique: true
+  end
+
   create_table "client_link_events", force: :cascade do |t|
     t.bigint "business_id", null: false
     t.bigint "client_link_id", null: false
@@ -297,10 +322,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
     t.datetime "updated_at", null: false
     t.text "search_text", default: "", null: false
     t.datetime "last_activity_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.bigint "client_import_id"
     t.index "business_id, lower((display_name)::text), id", name: "index_clients_on_business_and_name"
     t.index ["business_id", "created_at"], name: "index_clients_on_business_id_and_created_at"
     t.index ["business_id", "last_activity_at"], name: "index_clients_on_business_id_and_last_activity_at"
     t.index ["business_id"], name: "index_clients_on_business_id"
+    t.index ["client_import_id"], name: "index_clients_on_client_import_id"
     t.index ["search_text"], name: "index_clients_on_search_text", opclass: :gin_trgm_ops, using: :gin
     t.index ["tags"], name: "index_clients_on_tags", using: :gin
     t.index ["uid"], name: "index_clients_on_uid", unique: true
@@ -1081,6 +1108,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
   add_foreign_key "client_events", "businesses", on_delete: :cascade
   add_foreign_key "client_events", "clients", on_delete: :cascade
   add_foreign_key "client_events", "users", on_delete: :nullify
+  add_foreign_key "client_imports", "businesses"
+  add_foreign_key "client_imports", "users", column: "created_by_id", on_delete: :nullify
   add_foreign_key "client_link_events", "businesses", on_delete: :cascade
   add_foreign_key "client_link_events", "client_links", on_delete: :cascade
   add_foreign_key "client_links", "businesses", on_delete: :cascade
@@ -1090,6 +1119,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
   add_foreign_key "client_notes", "clients", on_delete: :cascade
   add_foreign_key "client_notes", "users", on_delete: :nullify
   add_foreign_key "clients", "businesses", on_delete: :cascade
+  add_foreign_key "clients", "client_imports", on_delete: :nullify
   add_foreign_key "closures", "businesses", on_delete: :cascade
   add_foreign_key "document_sequences", "businesses"
   add_foreign_key "email_messages", "businesses", on_delete: :cascade

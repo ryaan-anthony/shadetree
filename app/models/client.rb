@@ -10,6 +10,7 @@ class Client < ApplicationRecord
 
   has_many :contact_methods, -> { order(:position, :id) }, class_name: "ClientContactMethod",
            inverse_of: :client, dependent: :delete_all
+  belongs_to :client_import, optional: true # CLI-06: the import that created it, for undo
   has_many :quotes, dependent: :restrict_with_exception
   has_many :jobs, dependent: :restrict_with_exception
   has_many :invoices, dependent: :restrict_with_exception # PAY-01

@@ -47,6 +47,10 @@ Rails.application.routes.draw do
   # Admin routes
   namespace :admin do
     # Clients (CLI-01)
+    # Client CSV import (CLI-06)
+    resources :client_imports, only: %i[new create show edit update], path: "clients/imports" do
+      get :template, on: :collection
+    end
     resources :clients do
       member do
         patch :archive

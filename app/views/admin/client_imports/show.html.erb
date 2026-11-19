@@ -1,0 +1,5 @@
+<% content_for :title, "Import clients" %>
+<%= page_header @import.filename, lede: "#{pluralize(number_with_delimiter(@import.total_rows), "row")} · #{@import.status.humanize}" %>
+<%= card do %>
+  <p class="text-sm text-subtle">This import is set up. <%= link_to "Back to clients", admin_clients_path, class: "font-medium text-canopy hover:underline" %></p>
+<% end %>
