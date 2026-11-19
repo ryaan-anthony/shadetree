@@ -63,14 +63,17 @@ class User < ApplicationRecord
   # Returns false (deleting nothing) if a business blocks it.
   def delete_account!
     transaction do
+      # The same lock role changes take (BusinessUser), so two Owners deleting at once, or one
+      # deleting while the other is demoted, can't leave a business with no Owner.
+      Business.lock.where(id: business_users.active.owners.select(:business_id)).order(:id).load
       lock!
-      return false if businesses_blocking_deletion.any?
+      return false if deleted? || businesses_blocking_deletion.any?
 
-      sole_owner_memberships.each { |membership| membership.business.update_columns(active: false, updated_at: Time.current) }
+      sole_owner_memberships.each { |membership| close_empty_business(membership.business) }
+      scrub_names_left_elsewhere
       business_users.active.update_all(active: false, deactivated_at: Time.current, updated_at: Time.current)
       user_sessions.delete_all
-      Tenancy.across_businesses(reason: "deleting an account's notifications") { Notification.where(user_id: id).delete_all }
-      update_columns(email: "deleted-user-#{id}@#{DELETED_EMAIL_DOMAIN}", unconfirmed_email: nil, first_name: nil, last_name: nil,
+      update_columns(email: deleted_email, unconfirmed_email: nil, first_name: nil, last_name: nil,
                      encrypted_password: Devise::Encryptor.digest(self.class, SecureRandom.base58(32)), session_token: SecureRandom.base58(24),
                      reset_password_token: nil, reset_password_sent_at: nil, confirmation_token: nil, unlock_token: nil, locked_at: nil,
                      remember_created_at: nil, last_business_id: nil, deleted_at: Time.current, updated_at: Time.current)
@@ -128,6 +131,47 @@ class User < ApplicationRecord
 
   def sole_owner_memberships
     business_users.active.owners.includes(:business).select { |membership| membership.last_active_owner? }
+  end
+
+  def deleted_email = "deleted-user-#{id}@#{DELETED_EMAIL_DOMAIN}"
+
+  # Nobody else is in it and it has no records: closed, without its contact details (often the
+  # owner's own), logo, or pending invitations.
+  def close_empty_business(business)
+    Tenancy.with_business(business) do
+      Invitation.pending.update_all(revoked_at: Time.current)
+      business.logo.purge_later if business.logo.attached?
+      business.update_columns(active: false, email: nil, phone: nil, address_line1: nil, address_line2: nil, city: nil,
+                              region: nil, postal_code: nil, updated_at: Time.current)
+    end
+  end
+
+  # The name and email written into other records: visit crew changes, teammates'
+  # notifications about them, invitations they accepted, test emails they sent themselves.
+  # Their open visits lose them as crew, so the work shows as unassigned.
+  def scrub_names_left_elsewhere
+    name, address = full_name, email
+    Tenancy.across_businesses(reason: "deleting an account's personal data") do
+      Notification.where(user_id: id).delete_all
+      Notification.where(actor_id: id).find_each do |notification|
+        pattern = /\b#{Regexp.escape(name)}\b/
+        notification.update_columns(title: notification.title.to_s.gsub(pattern, FORMER_MEMBER), body: notification.body&.gsub(pattern, FORMER_MEMBER))
+      end
+      # Crew names are stored beside their ids: "crew"/"crew_ids", "added"/"added_ids", "removed"/"removed_ids".
+      sides = %w[crew added removed]
+      VisitEvent.where(sides.map { "data -> '#{_1}_ids' @> :ids" }.join(" OR "), ids: [ id ].to_json).find_each do |event|
+        data = event.data.dup
+        sides.each do |side|
+          next unless data["#{side}_ids"].is_a?(Array)
+
+          data[side] = Array(data[side]).each_with_index.map { |label, index| data["#{side}_ids"][index] == id ? FORMER_MEMBER : label }
+        end
+        event.update_columns(data:)
+      end
+      Invitation.where(accepted_by_id: id).update_all(email: deleted_email)
+      EmailMessage.where(to: address).where(business_id: business_users.select(:business_id)).update_all(to: deleted_email)
+      VisitAssignment.where(user_id: id, visit_id: Visit.open.select(:id)).delete_all
+    end
   end
 
   def business_in_use?(business)

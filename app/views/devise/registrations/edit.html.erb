@@ -71,12 +71,12 @@
   <%= card title: "Delete your account", class: "mt-4", id: "delete-account" do %>
     <% if blocking.any? %>
       <p class="text-sm text-subtle">You're the only Owner of <%= to_sentence(blocking.map(&:name)) %>, which other people or records depend on, so your account can't be deleted yet.</p>
-      <p class="mt-2 text-sm text-subtle">Make another member an Owner on the business's Team page, then come back. To close a business instead, <%= link_to "contact Shadetree", contact_path, class: "font-medium text-canopy hover:underline" %>.</p>
+      <p class="mt-2 text-sm text-subtle">Make another member an Owner on the business's Team page (invite someone first if it's just you), then come back. To close a business instead, <%= link_to "contact Shadetree", contact_path, class: "font-medium text-canopy hover:underline" %>.</p>
     <% else %>
       <ul class="list-disc space-y-1 pl-5 text-sm text-subtle">
         <li>Your name, email and password are removed, and you're signed out everywhere.</li>
         <li>You leave every business you're in. What you did there (quotes, visits, notes) stays with the business, shown as "Former member".</li>
-        <% if current_user.business_users.active.owners.any? %><li>A business only you own, with nothing in it yet, is closed.</li><% end %>
+        <% if current_user.business_users.active.owners.any? %><li>A business only you own, with nothing in it yet, is closed, along with its contact details and any invitations not yet accepted.</li><% end %>
         <li>This can't be undone. We'll email <%= current_user.email %> to confirm.</li>
       </ul>
       <%= form_with url: user_registration_path, method: :delete, class: "mt-4 flex flex-wrap items-end gap-3",

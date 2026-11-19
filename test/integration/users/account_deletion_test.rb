@@ -97,4 +97,71 @@ class Users::AccountDeletionTest < ActionDispatch::IntegrationTest
     assert_includes recipients, user.email
     assert_equal user.email, user.reload.email, "the change waits for confirmation"
   end
+
+  test "co-owners: the first can go, the last one then can't; a deactivated co-owner doesn't count" do
+    business = businesses(:one)
+    co = member_with_role("owner", business:)
+    tech = member_with_role("technician", business:)
+    assert users(:one).delete_account!, "another active Owner carries on"
+    assert_equal [ business ], co.businesses_blocking_deletion
+    assert_not co.delete_account!
+    assert_not co.reload.delete_account!
+    assert tech
+  end
+
+  test "an owner of an empty business who's also a member elsewhere: the empty one closes, the other carries on" do
+    owner = users(:one) # sole owner of business one (empty), technician in business two
+    assert_empty owner.businesses_blocking_deletion
+    assert owner.delete_account!
+    assert_not businesses(:one).reload.active?
+    assert businesses(:two).reload.active?
+    assert_not business_users(:one_member_of_two).reload.active?
+  end
+
+  test "closing an empty business revokes its pending invitations and clears its contact details" do
+    owner = users(:one)
+    business_users(:one_member_of_two).destroy!
+    invitation = as_business(businesses(:one)) { Invitation.create!(email: "new@example.com", role: "admin", invited_by: owner) }
+    businesses(:one).update_columns(email: "dana@example.com", phone: "5550100100")
+    assert owner.delete_account!
+    assert as_business(businesses(:one)) { invitation.reload.revoked_at }
+    assert_equal [ nil, nil ], [ businesses(:one).reload.email, businesses(:one).phone ]
+  end
+
+  test "their name is gone from teammates' notifications, visit crew changes, accepted invitations and open visits" do
+    business = businesses(:one)
+    business.update!(plan_overrides: { "limits" => { "team_members" => 10 } }) # room for the invitation (BIL-03)
+    member = member_with_role("technician", business:)
+    member.update!(first_name: "Marcus", last_name: "Reyes")
+    owner = users(:one)
+    visit = as_business(business) do
+      client = Client.create!(display_name: "Maria", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ])
+      job = Job.create!(client:, title: "Mowing")
+      job.visits.new(scheduled_on: business.today + 2, timing: "anytime", duration_minutes: 60, assignee_ids: [ member.id ]).tap { _1.schedule!(by: owner) }
+    end
+    as_business(business) do
+      Notification.create!(business:, user: owner, actor: member, kind: "invitation_accepted", title: "Marcus Reyes joined as Technician", path: "/admin/team")
+      Invitation.create!(email: "placeholder@example.com", role: "technician", invited_by: owner)
+                .update_columns(email: member.email, accepted_at: Time.current, accepted_by_id: member.id)
+    end
+
+    assert member.delete_account!
+    as_business(business) do
+      assert_equal "Former member joined as Technician", Notification.find_by!(actor_id: member.id).title
+      assert_equal "deleted-user-#{member.id}@deleted.invalid", Invitation.find_by!(accepted_by_id: member.id).email
+      assert_empty visit.reload.assignees, "open visits show as unassigned"
+    end
+    texts = [ Notification, VisitEvent, Invitation ].flat_map { |model| as_business(business) { model.all.map { _1.attributes.to_json } } }.join
+    assert_no_match(/Marcus|Reyes/, texts)
+  end
+
+  test "invitations they sent don't say Former member invited you" do
+    businesses(:one).update!(plan_overrides: { "limits" => { "team_members" => 10 } }) # room for the invitation (BIL-03)
+    inviter = member_with_role("admin")
+    invitation = as_business(businesses(:one)) { Invitation.create!(email: "new@example.com", role: "technician", invited_by: inviter) }
+    assert inviter.delete_account!
+    mail = InvitationMailer.with(business_id: businesses(:one).id, invitation_id: invitation.id).invite
+    assert_equal "Someone invited you to #{businesses(:one).name} on Shadetree", mail.subject
+    assert_match "#{businesses(:one).name} invited you", mail.text_part.body.to_s
+  end
 end

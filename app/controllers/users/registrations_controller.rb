@@ -2,6 +2,8 @@ class Users::RegistrationsController < Devise::RegistrationsController
   layout -> { %w[edit update].include?(action_name) ? "application" : "marketing" } # the account page is for signed-in people
   before_action :configure_sign_up_params, only: :create
   before_action :configure_account_update_params, only: :update
+  rate_limit to: 5, within: 10.minutes, only: :destroy, by: -> { current_user&.id || request.remote_ip },
+             with: -> { redirect_to edit_user_registration_path(anchor: "delete-account"), alert: "Too many tries. Wait a few minutes and try again." }
   rate_limit to: 10, within: 10.minutes, only: :create, with: -> { redirect_to new_user_registration_path, alert: "Too many attempts. Try again in a few minutes." }
 
   # A new password signs out every other browser (Devise checks the password's salt); their

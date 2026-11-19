@@ -75,9 +75,16 @@ Part 2 (deletion):
 - "Delete your account" on the account page lists what happens, needs the password, and confirms.
   `User#delete_account!` keeps the row (so quotes, visits and notes still point somewhere) but
   removes the name, email (becomes `deleted-user-<id>@deleted.invalid`), password, tokens,
-  sessions and notifications; ends every membership; closes a business only they owned that has
-  nothing in it. A deleted account can't sign in, and shows everywhere as "Former member"; the
-  team page says "deleted their account" and won't reactivate it.
+  sessions and notifications; ends every membership; takes them off open visits; and replaces
+  their name or email where it was written into other records (crew names in visit history,
+  teammates' notifications about them, invitations they accepted, test emails they sent
+  themselves). A business only they owned with nothing in it is closed, with its contact
+  details, logo and pending invitations removed. A deleted account can't sign in and shows as
+  "Former member"; invitations they sent name the business instead; the team page says "deleted
+  their account" and won't reactivate it or change its role.
+- It locks the businesses they own first (as role changes do), so two Owners deleting at once,
+  or one deleting while the other is demoted, can't leave a business without an Owner. Rate
+  limited (5 tries in 10 minutes).
 - Blocked while they're the only active Owner of a business with other active members or any
   clients, requests, quotes, jobs or invoices; the page names the business and says to make
   another member an Owner (Team page) or contact Shadetree to close it.
