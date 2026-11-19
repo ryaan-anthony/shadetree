@@ -26,11 +26,14 @@ module MarketingHelper
 
   # How many months a year's price saves against paying monthly ("2 months free"), or nil.
   def plan_annual_saving(plan)
-    return if plan.free? || plan.monthly_price_cents.zero?
+    return unless plan_yearly?(plan)
 
     months = ((plan.monthly_price_cents * 12) - plan.annual_price_cents) / plan.monthly_price_cents
     "#{months} #{"month".pluralize(months)} free" if months.positive?
   end
+
+  # Whether a paid plan has a yearly price to show (0 means it has no yearly option).
+  def plan_yearly?(plan) = !plan.free? && plan.monthly_price_cents.positive? && plan.annual_price_cents.positive?
 
   # The features this plan adds over the one before it, as [label, coming_soon?].
   def plan_new_features(plan, previous)

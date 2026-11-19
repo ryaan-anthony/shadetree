@@ -1,6 +1,7 @@
 <% content_for :title, "Pricing" %>
 <% content_for :head, tag.meta(name: "description", content: "Free to start, with the whole workflow. Paid plans by how many quotes you send each month. No contracts, no setup fees.") %>
-<% yearly = @plans.any? { plan_annual_saving(_1) } %>
+<% yearly = @plans.any? { plan_yearly?(_1) } %>
+<% savings = @plans.select { plan_yearly?(_1) }.map { plan_annual_saving(_1) }.uniq %>
 
 <%# MKT-01: every price, limit and feature here comes from the plans (BIL-01). The monthly/yearly
     switch is two radio buttons and CSS, so it works without script. %>
@@ -15,34 +16,38 @@
           <input type="radio" name="billing" value="monthly" class="sr-only" checked> Monthly
         </label>
         <label class="cursor-pointer rounded-[4px] px-3.5 py-1.5 font-medium text-subtle has-[:checked]:bg-surface has-[:checked]:text-ink has-[:checked]:shadow-card has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-canopy">
-          <input type="radio" name="billing" value="yearly" class="sr-only" id="billing-yearly"> Yearly<%= ", #{plan_annual_saving(@plans.find { plan_annual_saving(_1) })}" %>
+          <input type="radio" name="billing" value="yearly" class="sr-only" id="billing-yearly"> Yearly<%= ", #{savings.first}" if savings.one? && savings.first %>
         </label>
       </fieldset>
     <% end %>
   </section>
 
   <section class="mx-auto max-w-6xl px-5 sm:px-8" aria-label="Plans">
-    <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-<%= [ @plans.size, 4 ].min %>">
+    <ul class="grid gap-4 sm:grid-cols-2 <%= { 1 => "sm:grid-cols-1 lg:grid-cols-1", 2 => "lg:grid-cols-2", 3 => "lg:grid-cols-3" }.fetch(@plans.size, "lg:grid-cols-4") %>">
       <% @plans.each_with_index do |plan, index| %>
         <% previous = index.positive? ? @plans[index - 1] : nil %>
         <li class="flex flex-col rounded-card border border-line bg-surface p-6" id="plan-<%= plan.key %>">
           <h2 class="text-lg font-bold text-ink"><%= plan.name %></h2>
-          <% if plan.description.present? %><p class="mt-1 min-h-10 text-sm2 text-muted"><%= plan.description %></p><% end %>
+          <p class="mt-1 min-h-10 text-sm2 text-muted"><%= plan.description %></p>
           <p class="mt-6 flex items-baseline gap-1.5">
             <% if plan.free? %>
-              <span class="text-5xl font-extrabold tracking-tight text-ink">$0</span><span class="text-sm text-muted">forever</span>
+              <span class="text-5xl font-extrabold tracking-tight text-ink lg:text-[2.5rem]"><%= plan_price(plan.monthly_price) %></span><span class="text-sm text-muted">forever</span>
+            <% elsif plan_yearly?(plan) %>
+              <span class="text-5xl font-extrabold tracking-tight text-ink lg:text-[2.5rem] group-has-[#billing-yearly:checked]/billing:hidden"><%= plan_price(plan.monthly_price) %></span>
+              <span class="hidden text-5xl font-extrabold tracking-tight text-ink lg:text-[2.5rem] group-has-[#billing-yearly:checked]/billing:inline"><%= plan_annual_monthly(plan) %></span>
+              <span class="whitespace-nowrap text-sm text-muted">/ month</span>
             <% else %>
-              <span class="text-5xl font-extrabold tracking-tight text-ink group-has-[#billing-yearly:checked]/billing:hidden"><%= plan_price(plan.monthly_price) %></span>
-              <span class="hidden text-5xl font-extrabold tracking-tight text-ink group-has-[#billing-yearly:checked]/billing:inline"><%= plan_annual_monthly(plan) %></span>
-              <span class="text-sm text-muted">/ month</span>
+              <span class="text-5xl font-extrabold tracking-tight text-ink lg:text-[2.5rem]"><%= plan_price(plan.monthly_price) %></span>
+              <span class="whitespace-nowrap text-sm text-muted">/ month</span>
             <% end %>
           </p>
-          <% unless plan.free? %>
-            <p class="mt-1 text-sm2 text-muted">
+          <p class="mt-1 text-sm2 text-muted">
+            <% if plan.free? %>No card needed
+            <% elsif plan_yearly?(plan) %>
               <span class="group-has-[#billing-yearly:checked]/billing:hidden">billed monthly</span>
-              <span class="hidden group-has-[#billing-yearly:checked]/billing:inline"><%= plan_price(plan.annual_price) %> billed yearly</span>
-            </p>
-          <% end %>
+              <span class="hidden group-has-[#billing-yearly:checked]/billing:inline"><%= plan_price(plan.annual_price) %> billed yearly<%= ", #{plan_annual_saving(plan)}" if plan_annual_saving(plan) && !savings.one? %></span>
+            <% else %>billed monthly<% end %>
+          </p>
           <p class="mt-5 rounded-control bg-sunken px-3.5 py-2.5 text-sm font-semibold text-ink"><%= plan_quota(plan) %></p>
           <ul class="mt-5 flex-1 space-y-2.5 text-sm text-subtle">
             <li class="flex gap-2.5"><%= icon "check", class: "mt-0.5 size-4 shrink-0 text-canopy" %><%= plan_team(plan) %></li>
@@ -59,7 +64,7 @@
         </li>
       <% end %>
     </ul>
-    <p class="mt-4 text-center text-sm2 text-muted">Every account starts on Free. Move to a paid plan from Settings when you need more. Prices in US dollars.</p>
+    <p class="mt-4 text-center text-sm2 text-muted">Every account starts on Free. Choosing a paid plan from Settings is coming soon; until then, <%= link_to "ask us", contact_path, class: "underline" %>. Prices in <%= @plans.map(&:currency).uniq.to_sentence %>.</p>
   </section>
 
   <section class="mx-auto max-w-6xl px-5 pt-14 sm:px-8" aria-labelledby="every-plan">
@@ -87,11 +92,11 @@
          [ "What counts as a quote?",
            "A quote counts once, the first time you send it, by email or by copying its link. Drafts, revisions and sending it again don’t count. Jobs, invoices and requests never count." ],
          [ "What happens when I reach my limit?",
-           "We let you know as you get close. At the limit you can still create and edit drafts, but sending a new quote waits until your count resets on the 1st of the month, or until you move to a bigger plan. Quotes you’ve already sent keep working: clients can still open and approve them, and your request page keeps taking requests." ],
+           "We let you know as you get close. At the limit you can send one more; after that you can still create and edit drafts, but new quotes wait until your count resets at the start of your next period: the 1st of the month (in your time zone) on Free, your billing date on a paid plan. Quotes you’ve already sent keep working: clients can still open and approve them, and your request page keeps taking requests." ],
          [ "Do you charge per person?",
            "No. Each plan includes a number of team members#{" (#{plan_team(free).downcase} on #{free.name})" if free}. If you move to a plan with fewer, nobody is removed; you just can’t invite more until there’s room." ],
          [ "Can I cancel any time?",
-           "Yes. There’s no contract and no setup fee. You can move back to Free whenever you like, and nothing is deleted: anything over the Free plan’s limits becomes read-only." ],
+           "Yes. There’s no contract and no setup fee." ],
          [ "Can I take my data with me?",
            "Yes, on every plan. Download your clients, quotes, jobs, invoices and payments as spreadsheets, or everything at once with your PDFs and photos." ]
        ].each_with_index do |(question, answer), index| %>

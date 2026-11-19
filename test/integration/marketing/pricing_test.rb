@@ -50,9 +50,24 @@ class MarketingPricingTest < ActionDispatch::IntegrationTest
     assert_equal "2 months free", plan_annual_saving(Plan.new(monthly_price_cents: 1_900, annual_price_cents: 19_000, currency: "USD"))
     assert_nil plan_annual_saving(Plan.new(monthly_price_cents: 1_900, annual_price_cents: 22_800, currency: "USD"))
     assert_equal "$15.83", plan_annual_monthly(Plan.new(annual_price_cents: 19_000, currency: "USD"))
+    assert_nil plan_annual_saving(Plan.new(monthly_price_cents: 1_900, annual_price_cents: 0, currency: "USD")), "no yearly price, no yearly option"
+    assert_nil plan_annual_saving(Plan.new(monthly_price_cents: 1_900, annual_price_cents: 30_000, currency: "USD")), "dearer yearly saves nothing"
+    assert_equal "€19", plan_price(Money.new(1_900, "EUR"))
     get pricing_path
     assert_select "fieldset legend", "Billing"
     assert_select "input[type=radio][name=billing]", 2
+  end
+
+  test "a plan without a yearly price shows its monthly price either way, and mixed savings are shown per plan" do
+    Plan.find_by!(key: "starter").update!(annual_price_cents: 0)
+    get pricing_path
+    assert_select "#plan-starter span", text: "$19"
+    assert_select "#plan-starter", text: /billed monthly/
+    assert_no_match(/\$0 billed yearly|12 months free/, response.body)
+    Plan.find_by!(key: "starter").update!(annual_price_cents: 20_900) # one month free; Business saves two
+    get pricing_path
+    assert_includes css_select("fieldset label").map { _1.text.squish }, "Yearly"
+    assert_select "#plan-business", text: /2 months free/
   end
 
   test "the FAQ answers limits, what happens at the limit, people, cancelling and data export" do
@@ -62,6 +77,7 @@ class MarketingPricingTest < ActionDispatch::IntegrationTest
     assert_select "#faq ~ div details summary", text: /per person/
     assert_select "#faq ~ div details summary", text: /cancel/
     assert_select "#faq ~ div details summary", text: /take my data/
-    assert_no_match(/trial|most popular|card payments|pay online/i, response.body)
+    assert_no_match(/trial|most popular|card payments|pay online|read-only|move to a paid plan from Settings/i, response.body)
+    assert_select "a[href=?]", contact_path, text: "ask us"
   end
 end

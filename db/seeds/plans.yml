@@ -22,7 +22,7 @@ starter:
   features: { remove_powered_by: true }
 pro:
   name: Pro
-  description: Templates, automations and custom roles for a busy office.
+  description: For a busy office and a bigger crew.
   position: 2
   monthly_price: "49"
   annual_price: "490"
@@ -30,7 +30,7 @@ pro:
   features: { remove_powered_by: true, message_templates: true, automations: true, custom_roles: true }
 business:
   name: Business
-  description: Unlimited quotes and people, and more than one location.
+  description: Unlimited quotes and people.
   position: 3
   monthly_price: "99"
   annual_price: "990"
