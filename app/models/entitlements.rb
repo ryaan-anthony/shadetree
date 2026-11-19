@@ -55,6 +55,14 @@ class Entitlements
 
   def remove_powered_by? = feature?(:remove_powered_by)
 
+  # The team size message for invitations and reactivations (the owner counts, as do pending
+  # invitations).
+  def team_limit_message
+    pending = Tenancy.with_business(business) { Invitation.pending.exists? }
+    "Your #{plan.name} plan includes #{limit(:team_members)} people, counting you and pending invitations." \
+      "#{" Revoke an invitation to make room, or see Settings → Plan." if pending}#{" See Settings → Plan." unless pending}"
+  end
+
   # The calendar month in the business's time zone (BIL-02 moves paid plans to their billing
   # cycle).
   def period_start = business.today.beginning_of_month.in_time_zone(business.time_zone)

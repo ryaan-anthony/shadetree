@@ -6,7 +6,7 @@ class Admin::PlansController < Admin::BaseController
   def show
     @business = current_business
     @entitlements = @business.entitlements
-    @plans = Plan.listed.to_a
-    @plans |= [ @business.plan ] # a hidden plan the business is on still shows
+    # A hidden plan the business is on still shows, in its place.
+    @plans = (Plan.listed.to_a | [ @business.plan ]).sort_by { [ _1.position, _1.id ] }
   end
 end

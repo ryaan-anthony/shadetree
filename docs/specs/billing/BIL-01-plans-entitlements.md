@@ -53,6 +53,9 @@ change without a deploy, and give the whole app one way to ask "can this busines
 ## Decisions
 
 - Limits are per business, plus a cap of three businesses on a free plan per owner.
+- The team size counts everyone with access, the owner included, plus pending invitations; it's
+  checked on inviting, on resending an expired invitation and on reactivating a member. An
+  invitation sent before a downgrade can still be accepted, and nobody is ever removed.
 
 ## Implementation notes
 
@@ -67,6 +70,8 @@ change without a deploy, and give the whole app one way to ask "can this busines
   silently gate. Quotes sent count the calendar month in the business's time zone until
   BIL-02 moves paid plans to their billing cycle.
 - Gates wired: "Powered by Shadetree" on client pages and emails (`remove_powered_by`); team
-  size on invitations (active members plus pending invitations); free businesses per owner.
+  size (above); free businesses per owner (a Business validation on create, counted with the
+  owner's row locked). A business's `plan_overrides` and a plan's limits and features are
+  validated (known keys, whole numbers or unlimited, features true or false).
 - Operators: `bin/rails plans:list`, `plans:set PLAN= LIMIT=|FEATURE=|FIELD= VALUE=`,
   `plans:comp BUSINESS= LIMIT=|FEATURE= VALUE=` (or `CLEAR=1`), `plans:sync`.
