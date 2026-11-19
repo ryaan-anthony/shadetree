@@ -3,13 +3,14 @@
 # needing a visit beside it. Opening a visit shows it in a side panel.
 class Admin::ScheduleController < Admin::BaseController
   requires_permission :schedule
+  filters_by_location Visit, Job, only: :show # CAT-07
 
   def show
     date = Visit.parse_date(params[:date])
     member = params[:member].presence
     member = nil unless member == "unassigned" || current_business.business_users.active.exists?(user_id: member.to_i)
     @schedule = ScheduleView.new(current_business, view: params[:view], date:, member: member && (member == "unassigned" ? member : member.to_i),
-                                                   color_by: params[:color])
+                                                   color_by: params[:color], location: location_filter)
   end
 
   # A visit dragged to another day, time or person (JOB-03), or changed in the quick-edit sheet.

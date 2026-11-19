@@ -1,5 +1,6 @@
 class Admin::DashboardController < Admin::BaseController
   allow_any_member
+  filters_by_location ServiceRequest, Quote, Job, Invoice, Visit, Payment, QuoteResponse, only: :index # CAT-07
 
   # Members who don't work in the office land on the first page they can use: their day view
   # (technicians, JOB-04), else the schedule or the team (custom roles, ACC-07).

@@ -7,6 +7,8 @@ class Admin::ServiceRequestsController < Admin::BaseController
   requires_permission :office
   before_action :set_request, only: %i[show status quote]
 
+  filters_by_location ServiceRequest, only: :index # CAT-07
+
   def index
     @status = params[:status].presence_in(ServiceRequest::STATUSES) || "new"
     @counts = ServiceRequest.group(:status).count

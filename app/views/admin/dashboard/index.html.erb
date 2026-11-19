@@ -1,7 +1,9 @@
 <%# INS-01: what needs the office now, today's visits, and how the month is going. %>
 <% dashboard = @dashboard %>
 <%= page_header "Good #{day_period}, #{current_user.first_name.presence || "there"}",
-                lede: "Here's where #{current_business.name} stands." %>
+                lede: "Here's where #{location_filter&.name || current_business.name} stands." do %>
+  <%= render "admin/shared/location_filter", path: admin_root_path if can?(:office) %>
+<% end %>
 
 <% if can?(:office) %>
   <%= render "admin/usage/limit_notice", entitlements: dashboard.entitlements %>

@@ -3,6 +3,7 @@ class Admin::BaseController < ApplicationController
   before_action :require_current_legal_terms # MKT-03: a material change to the Terms or Privacy is accepted first
   include BusinessContext
   include ConfirmedSender
+  include LocationFilter # CAT-07
   before_action :require_business_setup
   include Authorization # after setup, so users without a business are sent to create one
   layout "app"

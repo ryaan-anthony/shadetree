@@ -2,6 +2,7 @@
 <% s = @schedule %>
 <% content_for :title, "Schedule" %>
 <%= page_header s.title, lede: (s.view == "day" ? "Day" : "Week") do %>
+  <%= render "admin/shared/location_filter", path: admin_schedule_path, keep: schedule_link_params(s) %>
   <div class="flex items-center gap-1" role="group" aria-label="Period">
     <%= link_to admin_schedule_path(schedule_link_params(s, date: s.previous_date.iso8601)), class: button_classes(:secondary, :icon), "aria-label": "Previous #{s.view}" do %><%= icon "chevron-left" %><% end %>
     <%= link_to "Today", admin_schedule_path(schedule_link_params(s, date: nil)), class: button_classes(:secondary), "aria-current": ("date" if s.today?) %>

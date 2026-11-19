@@ -9,6 +9,7 @@ class Admin::QuotesController < Admin::BaseController
   requires_permission :office
   include SendsPdf
   leaves_session_alone only: :search
+  filters_by_location Quote, only: %i[index search] # CAT-07
 
   before_action :set_quote, only: %i[show edit update destroy preview pdf archive unarchive duplicate extend_expiry revise revision]
   before_action :require_editable, only: %i[edit update]

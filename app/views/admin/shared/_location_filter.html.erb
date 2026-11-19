@@ -1,0 +1,12 @@
+<%# locals: (path:, keep: {}) -%>
+<%# CAT-07: which location a list, the calendar or the dashboard shows; remembered per member
+    (LocationFilter). Only with more than one location. %>
+<% if current_business.multiple_locations? %>
+  <%= form_with url: path, method: :get, class: "w-full sm:w-56", data: { turbo_action: "advance" } do %>
+    <% keep.compact_blank.each do |name, value| %><%= hidden_field_tag name, value, id: nil %><% end %>
+    <label class="sr-only" for="location-filter">Location</label>
+    <%= select_tag :location, options_for_select([ [ "All locations", "all" ] ] + location_filter_choices.map { [ _1.name, _1.uid ] }, location_filter&.uid || "all"),
+                   id: "location-filter", class: "select", data: { controller: "submit-form", action: "change->submit-form#submit" } %>
+    <noscript><%= submit_tag "Show", class: button_classes(:secondary, :sm), name: nil %></noscript>
+  <% end %>
+<% end %>

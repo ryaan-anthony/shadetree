@@ -11,6 +11,8 @@ class Admin::InvoicesController < Admin::BaseController
 
   PER_PAGE = 50
 
+  filters_by_location Invoice, only: %i[index search] # CAT-07
+
   def index = load_list
 
   def search
