@@ -30,11 +30,12 @@ class MarketingFeaturesAndAboutTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "about tells why Shadetree exists and what it promises, and links to contact" do
+  test "about tells why Shadetree exists, who builds it and what it promises, and links to contact" do
     get about_path
     assert_response :success
     assert_select "h1", /crews who keep neighborhoods running/
     assert_select "#promises-heading + dl dt", 6
+    assert_select "#founder-story", /home services.*Transparency is the first principle/m
     assert_select "a[href=?]", contact_path, text: "Get in touch"
     assert_select "img", false, "no stock photos of people who don't work here"
   end

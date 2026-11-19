@@ -30,7 +30,7 @@ product screenshots, and pricing that can never drift from what the app enforces
       and payments, with real screenshots from the product (not mockups).
 - [x] Pricing page renders plans, prices, limits and features from plan data (BIL-01) and
       includes an FAQ (limits, what happens at the limit, cancellation, data export).
-- [ ] About page tells the real story of who builds Shadetree; contact page is kept (MKT-02).
+- [x] About page tells the real story of who builds Shadetree; contact page is kept (MKT-02).
 - [x] Navigation and footer are consistent; footer links to legal pages (MKT-03).
 - [x] No fabricated metrics, logos or testimonials; placeholders are removed.
 - [x] All pages use the marketing layout (PLT-05) and work at 360 px.
@@ -68,8 +68,9 @@ Part 2 (Features and About):
   sidebar cropped, client and technician screens at 390×844. Retake them the same way from
   staging before launch, keeping the file names.
 - About: why Shadetree exists and the six promises it keeps (from `docs/plans/00-vision.md`),
-  with no stock photos. The founder's own story is still to come (open question), so its
-  criterion stays open.
+  with no stock photos. "Who builds it" is the founder's story in his own words (Ryan Tulino:
+  his twenties in home services, then software; family in the trade; transparency first), and
+  replaces the unconfirmed "small, independent team" line.
 
 Part 3 (Pricing):
 - Every listed plan from `Plan.listed`, in order: price (monthly, or a year's price shown per
@@ -87,5 +88,4 @@ Part 3 (Pricing):
 
 ## Open questions
 
-- The About page needs the founder's own story: who builds Shadetree and why (part 2 drafts
-  the structure without inventing it).
+None.
