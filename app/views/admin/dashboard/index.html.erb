@@ -3,12 +3,18 @@
 <%= page_header "Good #{day_period}, #{current_user.first_name.presence || "there"}",
                 lede: "Here's where #{current_business.name} stands." %>
 
-<%# How the month is going. %>
-<dl class="mb-4 grid grid-cols-3 gap-3" id="month-summary" aria-label="This month">
-  <div class="card card-body py-3"><dt class="text-sm2 text-muted">Quotes sent this month</dt><dd class="mt-1 text-lg font-semibold text-ink"><%= dashboard.quotes_sent_this_month %></dd></div>
-  <div class="card card-body py-3"><dt class="text-sm2 text-muted">Approval rate</dt><dd class="mt-1 text-lg font-semibold text-ink"><%= dashboard.approval_rate ? "#{dashboard.approval_rate}%" : "–" %></dd></div>
-  <div class="card card-body py-3"><dt class="text-sm2 text-muted">Payments received</dt><dd class="money mt-1 text-lg font-semibold text-ink"><%= dashboard.payments_this_month.any? ? safe_join(dashboard.payments_this_month.map { money(_1) }, " + ") : money(Money.zero(current_business.currency_code)) %></dd></div>
-</dl>
+<% if can?(:office) %>
+  <%# How the month is going. %>
+  <section class="mb-4" aria-labelledby="month-summary-h">
+    <h2 id="month-summary-h" class="sr-only">This month</h2>
+    <dl class="grid grid-cols-1 gap-3 sm:grid-cols-3" id="month-summary">
+      <div class="card card-body py-3"><dt class="text-sm2 text-muted">Quotes sent this month</dt><dd class="mt-1 text-lg font-semibold text-ink"><%= dashboard.quotes_sent_this_month %></dd></div>
+      <div class="card card-body py-3"><dt class="text-sm2 text-muted">Approval rate</dt><dd class="mt-1 text-lg font-semibold text-ink"><%= dashboard.approval_rate ? "#{dashboard.approval_rate}%" : "–" %></dd></div>
+      <div class="card card-body min-w-0 py-3"><dt class="text-sm2 text-muted">Payments received</dt>
+        <dd class="money mt-1 break-words text-lg font-semibold text-ink"><%= dashboard.payments_this_month.any? ? safe_join(dashboard.payments_this_month.map { money(_1) }, tag.br) : money(Money.zero(current_business.currency_code)) %></dd></div>
+    </dl>
+  </section>
+<% end %>
 
 <div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
   <div class="min-w-0 space-y-4">
@@ -19,20 +25,22 @@
       <div><%= button_to "Show setup checklist", admin_show_setup_path, method: :patch, class: "btn-link text-sm2" %></div>
     <% end %>
 
-    <% if dashboard.empty? %>
+    <% if !can?(:office) %>
+      <%# Settings without office work (a custom role): nothing here is theirs to act on. %>
+    <% elsif dashboard.empty? && !@checklist.visible? %>
       <%= card do %>
         <%= empty_state title: "You're all caught up",
                         text: "New requests, quotes waiting on clients, jobs to book and money owed will show up here when they need you.",
                         icon: "check-circle" do %>
-          <%= button_to admin_quotes_path, class: button_classes, form: { class: "contents" } do %><%= icon "plus" %> New quote<% end %>
+          <%= link_to new_admin_quote_path, class: button_classes do %><%= icon "plus" %> New quote<% end %>
         <% end %>
       <% end %>
-    <% else %>
+    <% elsif !dashboard.empty? %>
       <% dashboard.groups.reject(&:empty?).each do |group| %>
         <% path_name, options = group.path %>
         <%= card title: "#{group.title} (#{group.count})", id: "group-#{group.key}", flush: true,
-                 actions: link_to((group.count > group.items.size ? "See all #{group.count}" : "See all"), public_send(path_name, **options), class: button_classes(:ghost, :sm)) do %>
-          <ul class="list" aria-label="<%= group.title %>: <%= group.count %>">
+                 actions: link_to(public_send(path_name, **options), class: button_classes(:ghost, :sm)) { safe_join([ (group.count > group.items.size ? "See all #{group.count}" : "See all"), tag.span(" #{group.title.downcase}", class: "sr-only") ]) } do %>
+          <ul class="list">
             <% group.items.each do |item| %><%= render "group_item", key: group.key, item:, today: dashboard.today %><% end %>
           </ul>
         <% end %>
@@ -40,9 +48,9 @@
     <% end %>
   </div>
 
-  <aside>
+  <% if can?(:office) %><aside>
     <%= card title: "Today's visits", subtitle: pluralize(dashboard.visits_today_count, "visit"), id: "todays-visits", flush: true,
-             actions: link_to("Schedule", admin_schedule_path, class: button_classes(:ghost, :sm)) do %>
+             actions: (link_to("Schedule", admin_schedule_path, class: button_classes(:ghost, :sm)) if can?(:schedule)) do %>
       <% if dashboard.todays_visits.empty? %>
         <p class="px-5 py-4 text-sm text-muted">Nothing booked today.</p>
       <% else %>
@@ -53,7 +61,7 @@
               <% visits.each do |visit| %>
                 <li class="flex items-baseline justify-between gap-2 text-sm">
                   <%= link_to visit.job.client.display_name, admin_job_path(visit.job), class: "min-w-0 truncate text-ink hover:underline" %>
-                  <span class="shrink-0 text-sm2 <%= visit.status == "completed" ? "text-success" : "text-muted" %>"><%= visit.status == "completed" ? "Done" : visit.time_label %></span>
+                  <span class="shrink-0 text-sm2 <%= visit.status == "completed" ? "text-success" : "text-muted" %>"><%= { "completed" => "Done", "in_progress" => "In progress" }.fetch(visit.status) { visit.time_label } %></span>
                 </li>
               <% end %>
             </ul>
@@ -61,5 +69,5 @@
         <% end %>
       <% end %>
     <% end %>
-  </aside>
+  </aside><% end %>
 </div>

@@ -47,15 +47,19 @@ money overdue — plus a tiny summary of how the month is going.
 
 - `ActionDashboard` builds each group (a count and the top five, each linking to its record,
   with "See all" opening the matching list tab): new requests; quotes with changes asked for;
-  quotes awaiting an answer (oldest sent first, archived ones left out); jobs with nothing
-  booked; completed jobs with no invoice (a void one doesn't count); overdue invoices (oldest
-  due first, with the balance and days late). Today's visits are grouped by the people on them,
+  quotes awaiting an answer (the quote list's own rule: sent, not expired or archived; oldest
+  sent first); jobs with nothing booked; completed jobs not yet billed (`Job.ready_to_invoice`,
+  also the jobs list's "To invoice" tab: no invoice that went out for the job or its quote; a
+  draft or a void one doesn't count); overdue invoices (oldest due first, with the balance and
+  days late; an invoice being revised isn't among them until it's re-sent, as on the invoice
+  list). Today's visits are grouped by the people on them,
   "Not assigned" last.
-- Empty groups don't show; with nothing at all, "You're all caught up" with a New quote button.
-  The setup checklist (ACC-05) stays above while it's showing.
+- Empty groups don't show; with nothing at all, "You're all caught up" with a New quote button,
+  unless the setup checklist (ACC-05) is showing, which is the guidance then. The groups, the
+  month and today's visits are office information: a member without office access sees none.
 - The month strip: quotes sent (the billable "quote_sent" usage events, which BIL-02's plan
-  limits will count), the approval rate of quotes answered this month (approved ÷ approved or
-  declined), and payments received (by date received, recorded and online).
+  limits will count), the approval rate of quotes answered this month (by each quote's latest answer:
+  approved ÷ approved or declined), and payments received (by date received, recorded and online).
 - Speed: a fixed number of queries however busy the business is (a test checks that adding
   thirty records adds no queries beyond a small margin). On phones the groups stack, with
   today's visits last.

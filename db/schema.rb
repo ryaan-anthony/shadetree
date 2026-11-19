@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_19_000400) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_19_000500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -587,6 +587,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_000400) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["business_id", "invoice_id"], name: "index_payments_on_business_id_and_invoice_id"
+    t.index ["business_id", "received_on"], name: "index_payments_on_business_id_and_received_on"
     t.index ["business_id", "uid"], name: "index_payments_on_business_id_and_uid", unique: true
     t.index ["invoice_id"], name: "index_payments_on_invoice_id"
     t.index ["recorded_by_id"], name: "index_payments_on_recorded_by_id"

@@ -20,9 +20,9 @@ class ActionDashboard
     @groups ||= [
       group(:new_requests, "New requests", ServiceRequest.where(status: "new").includes(:client).order(:created_at, :id), [ :admin_service_requests_path, {} ]),
       group(:changes_requested, "Changes asked for", quotes.where(status: "changes_requested").order(:updated_at, :id), [ :admin_quotes_path, { filter: "changes_requested" } ]),
-      group(:awaiting_answer, "Quotes awaiting an answer", quotes.where(status: "sent").order(:sent_at, :id), [ :admin_quotes_path, { filter: "awaiting" } ]),
+      group(:awaiting_answer, "Quotes awaiting an answer", Quote.filtered("awaiting", today:).includes(:client).order(:sent_at, :id), [ :admin_quotes_path, { filter: "awaiting" } ]),
       group(:to_schedule, "Jobs to schedule", Job.where(status: "unscheduled").includes(:client).order(:created_at, :id), [ :admin_jobs_path, { filter: "unscheduled" } ]),
-      group(:to_invoice, "Ready to invoice", ready_to_invoice, [ :admin_jobs_path, { filter: "completed" } ]),
+      group(:to_invoice, "Ready to invoice", Job.ready_to_invoice.includes(:client).order(:completed_at, :id), [ :admin_jobs_path, { filter: "to_invoice" } ]),
       group(:overdue, "Overdue invoices", Invoice.where(status: Invoice::OUTSTANDING).where(due_on: ...today).includes(:client).order(:due_on, :id), [ :admin_invoices_path, { filter: "overdue" } ])
     ]
   end
@@ -30,7 +30,7 @@ class ActionDashboard
   # Today's open and done visits, by the people on them ("Not assigned" last).
   def todays_visits
     @todays_visits ||= begin
-      visits = Visit.where(scheduled_on: today).where.not(status: "cancelled").includes(:assignees, job: :client).in_order.to_a
+      visits = Visit.where(scheduled_on: today).where.not(status: "cancelled").includes(:business, :assignees, job: :client).in_order.to_a
       visits.flat_map { |visit| (visit.assignees.presence || [ nil ]).map { [ _1, visit ] } }
             .group_by(&:first).transform_values { _1.map(&:last) }
             .sort_by { |person, _| person ? [ 0, person.full_name ] : [ 1, "" ] }
@@ -45,11 +45,14 @@ class ActionDashboard
 
   def quotes_sent_this_month = UsageEvent.where(kind: "quote_sent", occurred_at: month_range).count
 
-  # Of the quotes answered this month, the share approved (nil when none were answered).
+  # Of the quotes answered this month, the share approved, by each quote's latest answer (one
+  # declined, revised and approved counts once, as approved). Nil when none were answered.
   def approval_rate
-    answers = QuoteResponse.where(kind: %w[approved declined], created_at: month_range).group(:kind).count
-    total = answers.values.sum
-    total.zero? ? nil : (answers.fetch("approved", 0) * 100.0 / total).round
+    latest = QuoteResponse.where(kind: %w[approved declined], created_at: month_range)
+                          .select("DISTINCT ON (quote_responses.quote_id) quote_responses.kind")
+                          .reorder(Arel.sql("quote_responses.quote_id, quote_responses.created_at DESC, quote_responses.id DESC"))
+    kinds = latest.map(&:kind)
+    kinds.empty? ? nil : (kinds.count("approved") * 100.0 / kinds.size).round
   end
 
   def payments_this_month = Payment.where(received_on: month).group(:currency).order(:currency).sum(:amount_cents).map { |currency, cents| Money.new(cents.to_i, currency) }
@@ -57,12 +60,6 @@ class ActionDashboard
   private
 
   def quotes = Quote.unarchived.includes(:client)
-
-  # Finished jobs with no invoice that counts (a void one doesn't).
-  def ready_to_invoice
-    billed = Invoice.where.not(status: "void").where.not(job_id: nil).select(:job_id)
-    Job.where(status: "completed").where.not(id: billed).includes(:client).order(:completed_at, :id)
-  end
 
   def group(key, title, scope, path) = Group.new(key:, title:, count: scope.unscope(:order, :includes).count, items: scope.limit(TOP).to_a, path:)
 
