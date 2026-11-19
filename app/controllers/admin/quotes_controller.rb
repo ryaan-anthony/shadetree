@@ -3,6 +3,7 @@
 # quote page with its activity, and archiving, duplicating and extending expiry. Sending is
 # QTE-04. Technicians can't see quotes (office permission).
 class Admin::QuotesController < Admin::BaseController
+  include DocumentBuilder
   PER_PAGE = 50
 
   requires_permission :office
@@ -144,8 +145,8 @@ class Admin::QuotesController < Admin::BaseController
   def property_options
     @client = Client.find_by_param!(params[:client])
     @selected = params[:selected]
-    # The builder's field, the request form's (CLI-04) or the job form's (JOB-01).
-    @field_name = params[:name].presence_in(%w[quote[property] service_request[property] job[property]]) || "quote[property]"
+    # The builder's field, the request form's (CLI-04), the job form's (JOB-01) or the invoice builder's (PAY-01).
+    @field_name = params[:name].presence_in(%w[quote[property] service_request[property] job[property] invoice[property]]) || "quote[property]"
     render layout: false
   end
 
@@ -202,33 +203,5 @@ class Admin::QuotesController < Admin::BaseController
     @quote.attach_files(attrs[:attachments]) if attrs[:attachments].present?
   end
 
-  # After a client change, a submitted property only counts if it's the new client's (the
-  # selector may already show the new client's properties); otherwise keep the new default.
-  def assign_property(uid)
-    property = @quote.client.properties.find_by(uid:) if uid.present?
-    return if @client_changed && property.nil?
-
-    @quote.property = property
-  end
-
-  # Moving a draft to another client resets its property, and its taxes when exemption differs.
-  def change_client(uid)
-    client = Client.active.find_by(uid:) or return
-    exempt_changed = client.tax_exempt != @quote.client.tax_exempt
-    @quote.client = client
-    @quote.property = client.billing_property || client.properties.first
-    @quote.tax_rate_list = TaxRate.for_new_document(client:) if exempt_changed
-    @client_changed = true
-  end
-
-  # Tax rates the builder ticked, by "name|percent": the business's active rates plus any the
-  # quote already had (so an archived rate on an old draft can stay).
-  def chosen_tax_rates(keys)
-    available = (TaxRate.active.ordered.map(&:to_pricing) + @quote.tax_rate_list).uniq
-    wanted = Array(keys).compact_blank
-    available.select { wanted.include?(tax_rate_key(_1)) }
-  end
-
-  def tax_rate_key(rate) = "#{rate.name}|#{rate.percent.to_d.to_s("F")}"
-  helper_method :tax_rate_key
+  def builder_document = @quote
 end

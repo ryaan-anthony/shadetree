@@ -1,8 +1,9 @@
 import { Controller } from "@hotwired/stimulus"
 import { Turbo } from "@hotwired/turbo-rails"
 
-// The quote builder (QTE-01). Lines are rows of the one form; their field names carry their
-// position (quote[lines][3][name]) and are renumbered whenever rows change. The whole draft
+// The document builder: quotes (QTE-01) and invoices (PAY-01, scope "invoice"). Lines are rows
+// of the one form; their field names carry their position (quote[lines][3][name]) and are
+// renumbered whenever rows change. The whole draft
 // autosaves shortly after each change and again when the page is hidden (a phone locking or
 // switching apps), with keepalive so the request survives the page going away. The server
 // answers with a turbo stream: totals from the shared pricing code, line totals, errors and
@@ -19,7 +20,7 @@ const KEEPALIVE_LIMIT = 60 * 1024
 
 export default class extends Controller {
   static targets = ["form", "line", "lines", "template", "empty", "status", "property"]
-  static values = { propertyUrl: String, delay: { type: Number, default: 700 } }
+  static values = { propertyUrl: String, delay: { type: Number, default: 700 }, scope: { type: String, default: "quote" } }
 
   connect() {
     this.dirty = false
@@ -79,6 +80,19 @@ export default class extends Controller {
     // Only once everything is saved: after a conflict (another tab saved newer work) the
     // page says so and the quote stays here, so an older version can't go out.
     if (!this.dirty && !this.conflict) Turbo.visit(href)
+  }
+
+  // The invoice's payment terms (PAY-01): a custom date shows the date box; other terms show
+  // the date they give (filled in by the next autosave). The disabled box isn't submitted.
+  termsChanged(event) {
+    const custom = event.target.value === "custom"
+    const box = this.element.querySelector("[data-due-custom]")
+    const fixed = this.element.querySelector("[data-due-fixed]")
+    if (!box || !fixed) return
+    box.hidden = !custom
+    fixed.hidden = custom
+    box.querySelector("input").disabled = !custom
+    if (!custom) fixed.querySelector("#invoice_due_text").textContent = "…"
   }
 
   // Preview as client: save first, so the preview shows the latest. The tab opens at once
@@ -152,7 +166,7 @@ export default class extends Controller {
   renumber() {
     this.lineTargets.forEach((row, index) => {
       row.querySelectorAll("[data-field]").forEach((input) => {
-        input.name = `quote[lines][${index}][${input.dataset.field}]`
+        input.name = `${this.scopeValue}[lines][${index}][${input.dataset.field}]`
       })
     })
   }
@@ -191,7 +205,7 @@ export default class extends Controller {
     this.renumber()
     const formElement = this.formTarget
     const form = new FormData(formElement)
-    form.delete("quote[attachments][]")
+    form.delete(`${this.scopeValue}[attachments][]`)
     form.delete("_method")
     const body = new URLSearchParams(form)
     const fits = new Blob([body.toString()]).size < KEEPALIVE_LIMIT
@@ -208,7 +222,7 @@ export default class extends Controller {
       // Apply the new lock_version now: the stream renders on the next frame, after a queued
       // save would already have read the old one.
       const lockVersion = response.headers.get("X-Lock-Version")
-      const lockField = formElement.querySelector("#quote_lock_version")
+      const lockField = formElement.querySelector(`#${this.scopeValue}_lock_version`)
       if (lockVersion && lockField) lockField.value = lockVersion
       const stream = await response.text()
       // The builder may have been left meanwhile (another quote has the same target ids).

@@ -7,8 +7,7 @@
 # Pricing::DocumentTotals; the *_cents columns are a cache for lists, refreshed on every save.
 class Job < ApplicationRecord
   include BusinessOwned
-  include HasMoney
-  include HasDiscount
+  include PricedDocument
 
   STATUSES = %w[unscheduled scheduled in_progress completed cancelled].freeze
   OPEN_STATUSES = %w[unscheduled scheduled in_progress].freeze
@@ -26,6 +25,7 @@ class Job < ApplicationRecord
   has_many :line_items, -> { order(:position, :id) }, class_name: "JobLineItem", inverse_of: :job, dependent: :delete_all
   has_many :email_messages, as: :related, dependent: :nullify # JOB-05: what the client was sent
   has_many :visits, inverse_of: :job, dependent: :restrict_with_exception # JOB-02
+  has_many :invoices, dependent: :restrict_with_exception # PAY-01: one or more (progress billing)
   accepts_nested_attributes_for :line_items, allow_destroy: true, reject_if: :blank_new_line?
 
   MAX_LINES = 100
@@ -33,7 +33,6 @@ class Job < ApplicationRecord
     attachable.variant :web, resize_to_limit: [ 640, 640 ], preprocessed: true
   end
 
-  def discount_currency = currency
 
   normalizes :title, with: ->(value) { value.to_s.squish }
   normalizes :instructions, :internal_notes, with: ->(value) { value.to_s.strip.presence }
@@ -56,7 +55,6 @@ class Job < ApplicationRecord
   before_validation :assign_number_and_defaults, on: :create
   # Prices typed into a new job's lines need its currency before it's saved.
   after_initialize { self.currency ||= (business || Current.business)&.currency_code if new_record? }
-  before_save :cache_totals
 
   scope :unfinished, -> { where(status: OPEN_STATUSES) }
 
@@ -220,15 +218,6 @@ class Job < ApplicationRecord
     super(kept.each_with_index.map { |row, index| row.merge("position" => index) } + removed)
   end
 
-  def tax_rate_list = tax_rates.map { Pricing::TaxRate.new(name: _1["name"], percent: _1["percent"]) }
-
-  def totals
-    Pricing::DocumentTotals.new(currency:, discount: pricing_discount, prices_include_tax:,
-                                lines: line_items.reject(&:marked_for_destruction?).map { _1.to_pricing(tax_rate_list) })
-  end
-
-  def total = Money.new(total_cents, currency)
-
   private
 
   # An added row left empty is ignored rather than an error.
@@ -242,13 +231,5 @@ class Job < ApplicationRecord
     self.number ||= business.next_document_number(:job)
     self.currency ||= business.currency_code
     self.tax_rates = TaxRate.for_new_document(client:).map { { "name" => _1.name.to_s, "percent" => _1.percent.to_d.to_s("F") } } if tax_rates.blank? && quote.nil?
-  end
-
-  def cache_totals
-    result = totals
-    self.subtotal_cents = result.subtotal.cents
-    self.discount_total_cents = (result.discount + Money.sum(result.lines.map(&:discount), currency)).cents
-    self.tax_cents = result.tax_total.cents
-    self.total_cents = result.total.cents
   end
 end

@@ -117,7 +117,11 @@ Rails.application.routes.draw do
       resource :send, only: %i[new create], controller: "quote_sends" # QTE-04
       resource :approval, only: :create, controller: "quote_approvals" # QTE-05: on the client's behalf
       resource :job, only: :create, controller: "quote_jobs" # JOB-01: an approved quote becomes a job
+      resources :invoices, only: :create, controller: "quote_invoices" # PAY-01: an approved quote, billed
     end
+
+    # Invoices (PAY-01)
+    resources :invoices, only: %i[new create show edit update destroy]
 
     # The team calendar (JOB-03)
     get "schedule", to: "schedule#show", as: :schedule
@@ -139,6 +143,7 @@ Rails.application.routes.draw do
     # Jobs (JOB-01)
     resources :jobs, only: %i[index show new create edit update] do
       post :search, on: :collection # POST keeps client names out of URLs
+      resources :invoices, only: :create, controller: "job_invoices" # PAY-01: the job's work, billed
       member do
         patch :complete
         patch :cancel

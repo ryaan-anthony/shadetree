@@ -1,0 +1,24 @@
+<%# locals: (invoice:) -%>
+<%# Payment terms and the due date they give; "Custom date" lets the date be chosen. Both
+    controls are always on the page (the builder shows the date box only for a custom date),
+    and autosave only refreshes the worked-out date beside them, never the controls themselves,
+    so a change made while a save is in flight isn't undone. %>
+<% custom = invoice.payment_terms == "custom" %>
+<div id="invoice_due" class="grid gap-4 sm:grid-cols-2 [&>*]:min-w-0">
+  <div class="field">
+    <label class="label" for="invoice_payment_terms">Payment terms</label>
+    <%= select_tag "invoice[payment_terms]", options_for_select(Invoice::TERM_LABELS.invert, invoice.payment_terms), id: "invoice_payment_terms", class: "select",
+                   data: { action: "change->quote-builder#termsChanged" } %>
+  </div>
+  <div class="field">
+    <div data-due-custom <%= "hidden" unless custom %>>
+      <label class="label" for="invoice_due_on">Due</label>
+      <%= date_field_tag "invoice[due_on]", invoice.due_on&.iso8601, id: "invoice_due_on", class: "input", min: invoice.issued_on&.iso8601, disabled: !custom %>
+    </div>
+    <div data-due-fixed <%= "hidden" if custom %>>
+      <p class="label">Due</p>
+      <p class="py-2 text-sm font-semibold text-ink" id="invoice_due_text"><%= local_date(invoice.due_on) %></p>
+    </div>
+    <div id="invoice_due_errors"><%= render "due_errors", invoice: %></div>
+  </div>
+</div>

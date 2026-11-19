@@ -1,0 +1,13 @@
+<% content_for :title, "New invoice" %>
+<%= page_header "New invoice", lede: "Who is it for? You'll add items next. To bill a job or an approved quote, start from its page instead." %>
+<%= form_with url: admin_invoices_path, method: :post, class: "max-w-xl space-y-4" do %>
+  <%= card do %>
+    <%= render "admin/clients/picker", name: "invoice[client]", selected: @client %>
+    <% @invoice.errors[:client].each do |message| %><p class="error-text mt-1.5"><%= icon "alert-circle" %><%= message %></p><% end %>
+  <% end %>
+  <div class="flex items-center justify-end gap-2">
+    <%= link_to "Cancel", :back, class: button_classes(:ghost) %>
+    <%= submit_tag "Start invoice", class: button_classes, name: nil %>
+  </div>
+<% end %>
+<%= render "admin/clients/quick_create", button: false %>

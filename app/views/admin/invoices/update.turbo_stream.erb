@@ -1,0 +1,14 @@
+<% totals = @invoice.totals %>
+<%= turbo_stream.replace "quote_totals" do %><%= render "admin/quotes/totals", quote: @invoice, totals: %><% end %>
+<% @invoice.current_line_items.each_with_index do |line, index| %>
+  <%= turbo_stream.update "line-total-#{line.key}", money(totals.lines[index].subtotal) %>
+<% end %>
+<%= turbo_stream.update "builder_errors" do %><%= render "admin/quotes/errors", quote: @invoice %><% end %>
+<%= turbo_stream.replace "invoice_lock_version" do %><input type="hidden" name="invoice[lock_version]" id="invoice_lock_version" value="<%= @invoice.lock_version %>" autocomplete="off"><% end %>
+<%# The worked-out due date and its errors; the terms and date controls stay as the user left them. %>
+<% unless @invoice.payment_terms == "custom" %><%= turbo_stream.update "invoice_due_text", local_date(@invoice.due_on) %><% end %>
+<%= turbo_stream.update "invoice_due_errors" do %><%= render "due_errors", invoice: @invoice %><% end %>
+<% if @client_changed %>
+  <%= turbo_stream.replace "quote_tax_rates" do %><%= render "admin/quotes/tax_rates", quote: @invoice, scope: "invoice" %><% end %>
+  <%= turbo_stream.update "quote_property" do %><%= render "admin/quotes/property_select", client: @invoice.client, selected: @invoice.property&.uid, name: "invoice[property]" %><% end %>
+<% end %>

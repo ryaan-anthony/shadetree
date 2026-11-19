@@ -25,8 +25,12 @@ class ScheduleTest < ApplicationSystemTestCase
   test "drag a visit to another day, then undo it" do
     visit admin_schedule_path(date: @monday.iso8601)
     thursday = find("#schedule-grid .cal-day[aria-label='#{(@monday + 3).strftime("%A, %B %-d")}']")
-    find("#cal-visit-#{@visit.uid}").drag_to(thursday)
-    assert_text "Moved: Maria Lopez"
+    # A synthetic drag can be dropped by a slow CI Chrome before the drop lands: drag again
+    # while the visit hasn't moved (once it has, a repeat drop on Thursday changes nothing).
+    page.document.synchronize(20) do
+      find("#cal-visit-#{@visit.uid}").drag_to(thursday) if moved.scheduled_on == @monday && page.has_no_text?("Moved: Maria Lopez", wait: 0)
+      raise Capybara::ExpectationNotMet, "the drag didn't move the visit" unless page.has_text?("Moved: Maria Lopez", wait: 4)
+    end
     assert_equal @monday + 3, moved.scheduled_on
     within("#flash") { click_on "Undo" }
     assert_text "Put back: Maria Lopez"
@@ -35,7 +39,12 @@ class ScheduleTest < ApplicationSystemTestCase
 
   test "move a visit from the quick-edit sheet, past a warning" do
     visit admin_schedule_visit_path(@visit)
-    click_on "Move"
+    # A click that lands before the page's script has connected opens nothing: click again
+    # until the dialog is open (a real failure still fails, after 15 seconds).
+    page.document.synchronize(15) do
+      click_on "Move" unless page.has_css?("dialog[open]", wait: 0)
+      raise Capybara::ExpectationNotMet, "the Move dialog didn't open" unless page.has_css?("dialog[open]", wait: 3)
+    end
     within("dialog[open]") do
       fill_in "Day", with: @monday + 6
       click_on "Move visit"

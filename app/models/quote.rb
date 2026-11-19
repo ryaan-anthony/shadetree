@@ -7,14 +7,13 @@
 # columns are a cache for lists, refreshed on every save.
 class Quote < ApplicationRecord
   include BusinessOwned
-  include HasMoney
-  include HasDiscount
+  include PricedDocument
+  include BuiltDocument
   include HasPdf
 
   # QTE-04 sends (draft → sent); QTE-05 records the client's answer. "Viewed" comes from the
   # client link and "expired" from expires_on, so neither is stored.
   STATUSES = %w[draft sent approved declined changes_requested].freeze
-  MAX_LINES = 200
   MAX_ATTACHMENTS = 10
   ATTACHMENT_MAX_BYTES = 10.megabytes
   ATTACHMENT_TYPES = %w[image/png image/jpeg image/webp application/pdf].freeze
@@ -32,14 +31,13 @@ class Quote < ApplicationRecord
   has_many :events, -> { order(:occurred_at, :id) }, class_name: "QuoteEvent", inverse_of: :quote, dependent: :delete_all
   has_many :revisions, -> { order(:number) }, class_name: "QuoteRevision", inverse_of: :quote, dependent: :delete_all
   has_one :job, dependent: :nullify # JOB-01: the work it became
+  has_many :invoices, dependent: :restrict_with_exception # PAY-01: what it was billed as
   has_many :line_items, -> { order(:position, :id) }, class_name: "QuoteLineItem", inverse_of: :quote,
            dependent: :delete_all, autosave: true
   # Photos get a page-sized version at upload, so the client's first view doesn't wait on it.
   has_many_attached :attachments do |attachable|
     attachable.variant :web, resize_to_limit: [ 640, 640 ], preprocessed: true
   end
-
-  def discount_currency = currency
 
   normalizes :title, with: ->(value) { value.to_s.squish.presence }
   normalizes :message, :internal_notes, :terms, with: ->(value) { value.to_s.strip.presence }
@@ -50,12 +48,9 @@ class Quote < ApplicationRecord
   validates :message, :terms, length: { maximum: 5_000 }
   validates :internal_notes, length: { maximum: 5_000 }
   validate :property_belongs_to_client
-  validate :tax_rates_are_valid
-  validate :not_too_many_lines
   validate :attachments_are_allowed
 
   before_validation :assign_number_and_defaults, on: :create
-  before_save :cache_totals
 
   scope :drafts, -> { where(status: "draft") }
   scope :unarchived, -> { where(archived_at: nil) }
@@ -186,12 +181,7 @@ class Quote < ApplicationRecord
       copy = Quote.start(client:, property: (property if same_client), created_by: by)
       copy.assign_attributes(title:, terms:, prices_include_tax:, discount_kind:, discount_percent:, discount_amount_cents:)
       copy.assign_attributes(message:, internal_notes:) if same_client
-      copy.sync_line_items(current_line_items.map do |line|
-        line.attributes.slice(*%w[name description quantity unit taxable discount_kind]).merge(
-          "key" => SecureRandom.uuid, "unit_price" => line.unit_price&.to_s, "discount_value" => line.discount_value&.to_s,
-          "catalog_item" => line.catalog_item&.uid
-        )
-      end)
+      copy.sync_line_items(BuiltDocument.rows_from(current_line_items))
       attachments.each { copy.attachments.attach(_1.blob) } if same_client
       copy.save!
       QuoteEvent.record!(copy, :duplicated, by:, from: number)
@@ -327,26 +317,6 @@ class Quote < ApplicationRecord
     create!(client:, property: property || client.billing_property || client.properties.first, created_by:)
   end
 
-  def tax_rate_list = tax_rates.map { Pricing::TaxRate.new(name: _1["name"], percent: _1["percent"]) }
-
-  # Replaces the quote's tax rates with these (name/percent pairs or Pricing::TaxRate).
-  def tax_rate_list=(rates)
-    self.tax_rates = Array(rates).map { |rate| { "name" => rate.name.to_s, "percent" => rate.percent.to_d.to_s("F") } }.uniq
-  end
-
-  def totals
-    Pricing::DocumentTotals.new(
-      currency:, discount: pricing_discount, prices_include_tax:,
-      lines: current_line_items.map { _1.to_pricing(tax_rate_list) }
-    )
-  end
-
-  # Lines as the builder sees them: in order, without ones being removed.
-  def current_line_items = line_items.reject(&:marked_for_destruction?).sort_by(&:position)
-
-  def subtotal = Money.new(subtotal_cents, currency)
-  def total = Money.new(total_cents, currency)
-
   # Attaches uploaded files: photos are checked and re-encoded without their metadata (phone
   # photos carry GPS), PDFs are kept as they are if they really are PDFs. Problems are added
   # as errors on save.
@@ -375,23 +345,6 @@ class Quote < ApplicationRecord
     header == "%PDF-"
   end
 
-  # Makes the saved lines match `rows` (the builder's full list, in order): rows are matched
-  # by their browser-made key, so autosaving again updates instead of duplicating, and
-  # saved lines missing from `rows` are removed. Call inside a transaction with save.
-  def sync_line_items(rows)
-    rows = Array(rows).first(MAX_LINES + 1)
-    by_key = line_items.index_by(&:key)
-    kept = rows.each_with_index.map do |row, index|
-      row = row.to_h.stringify_keys
-      item = by_key[row["key"].to_s] || line_items.build(key: row["key"].presence || SecureRandom.uuid)
-      item.assign_row(row, position: index)
-      item
-    end
-    (line_items.to_a - kept).each(&:mark_for_destruction)
-    @row_count = rows.size
-    kept
-  end
-
   private
 
   def assign_number_and_defaults
@@ -402,14 +355,6 @@ class Quote < ApplicationRecord
     self.expires_on ||= business.today + business.quote_expiry_days.to_i.days if business.quote_expiry_days.to_i.positive?
     self.terms ||= business.quote_terms
     self.tax_rate_list = TaxRate.for_new_document(client:) if tax_rates.blank?
-  end
-
-  def cache_totals
-    result = totals
-    self.subtotal_cents = result.subtotal.cents
-    self.discount_total_cents = (result.discount + Money.sum(result.lines.map(&:discount), currency)).cents
-    self.tax_cents = result.tax_total.cents
-    self.total_cents = result.total.cents
   end
 
   # JOB-01: an approved quote becomes a job when the business has that on (the default). It
@@ -430,18 +375,6 @@ class Quote < ApplicationRecord
 
   def property_belongs_to_client
     errors.add(:property, "must be one of this client's properties") if property && client && property.client_id != client.id
-  end
-
-  def tax_rates_are_valid
-    return errors.add(:tax_rates, "must be a list") unless tax_rates.is_a?(Array)
-
-    tax_rate_list
-  rescue ArgumentError, TypeError
-    errors.add(:tax_rates, "must each have a name and a percent from 0 to 100")
-  end
-
-  def not_too_many_lines
-    errors.add(:base, "A quote can have at most #{MAX_LINES} lines.") if (@row_count || line_items.size) > MAX_LINES
   end
 
   def attachments_are_allowed

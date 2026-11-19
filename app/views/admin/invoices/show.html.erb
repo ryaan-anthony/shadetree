@@ -1,0 +1,47 @@
+<%# PAY-01: an invoice that's no longer a draft. Sending is PAY-02; payments PAY-04/PAY-05. %>
+<% invoice = @invoice %>
+<% totals = invoice.totals %>
+<% content_for :title, "Invoice #{invoice.number}" %>
+<%= page_header "Invoice #{invoice.number}", lede: safe_join([ "For ", link_to(invoice.client.display_name, admin_client_path(invoice.client), class: "font-medium text-ink hover:underline") ]) %>
+
+<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+  <div class="min-w-0 space-y-4">
+    <%= card do %>
+      <dl class="grid gap-4 text-sm sm:grid-cols-4">
+        <div><dt class="text-sm2 text-muted">Status</dt><dd class="mt-1"><%= invoice_status_badge(invoice) %></dd></div>
+        <div><dt class="text-sm2 text-muted">Issued</dt><dd class="mt-1 text-ink"><%= local_date(invoice.issued_on) %></dd></div>
+        <div><dt class="text-sm2 text-muted">Due</dt><dd class="mt-1 text-ink"><%= local_date(invoice.due_on) %> <span class="text-muted">(<%= invoice.terms_label %>)</span></dd></div>
+        <div><dt class="text-sm2 text-muted">Balance</dt><dd class="money mt-1 font-semibold text-ink"><%= money(invoice.balance) %></dd></div>
+      </dl>
+      <div class="mt-3"><%= render "source", invoice: %></div>
+    <% end %>
+
+    <%= card title: invoice.title || "Items", flush: true do %>
+      <ul class="list">
+        <% invoice.current_line_items.each_with_index do |line, index| %>
+          <li class="items-start text-sm">
+            <div class="min-w-0 flex-1"><p class="font-medium text-ink"><%= line.name %></p>
+              <% if line.description %><p class="whitespace-pre-line text-sm2 text-muted"><%= line.description %></p><% end %>
+              <p class="text-sm2 text-muted"><%= line.quantity_label %> × <%= money(line.unit_price) %></p></div>
+            <span class="money font-semibold text-ink"><%= money(totals.lines[index].subtotal) %></span>
+          </li>
+        <% end %>
+      </ul>
+      <div class="border-t border-line px-5 py-3"><%= render "admin/quotes/totals", quote: invoice, totals: %></div>
+    <% end %>
+
+    <% if invoice.internal_notes %>
+      <%= card title: "Internal notes", subtitle: "Only your team sees these." do %><p class="whitespace-pre-line text-sm text-subtle"><%= invoice.internal_notes %></p><% end %>
+    <% end %>
+  </div>
+
+  <aside class="space-y-4">
+    <%= card title: "History", flush: true do %>
+      <ol class="list">
+        <% invoice.events.includes(:user).each do |event| %>
+          <li class="text-sm2"><span class="min-w-0 flex-1 text-ink"><%= invoice_event_text(event) %></span><span class="text-muted"><%= local_time(event.occurred_at) %></span></li>
+        <% end %>
+      </ol>
+    <% end %>
+  </aside>
+</div>

@@ -1,7 +1,8 @@
-<%# locals: (line:, index:, subtotal: nil) -%>
-<%# One line of the quote builder. Field names carry the row's position (quote[lines][2][…]);
-    quote_builder_controller renumbers them whenever rows are added, removed or moved. %>
-<% base = "quote[lines][#{index}]" %>
+<%# locals: (line:, index:, subtotal: nil, scope: "quote") -%>
+<%# One line of the document builder (quotes, and invoices with scope "invoice"). Field names
+    carry the row's position (quote[lines][2][…]); quote_builder_controller renumbers them
+    whenever rows are added, removed or moved. %>
+<% base = "#{scope}[lines][#{index}]" %>
 <div class="quote-line" data-quote-builder-target="line" data-key="<%= line.key %>" id="line-<%= line.key %>">
   <input type="hidden" name="<%= base %>[key]" value="<%= line.key %>" data-field="key">
   <input type="hidden" name="<%= base %>[catalog_item]" value="<%= line.catalog_item&.uid %>" data-field="catalog_item">

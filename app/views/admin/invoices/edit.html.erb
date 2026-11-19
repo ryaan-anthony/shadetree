@@ -1,0 +1,108 @@
+<% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
+<% content_for :title, "Invoice #{@invoice.number}" %>
+<% totals = @invoice.totals %>
+<% lines = @invoice.current_line_items %>
+<%# The quote builder's form, partials and script, for an invoice (scope "invoice"). %>
+<div data-controller="quote-builder" data-quote-builder-scope-value="invoice"
+     data-quote-builder-property-url-value="<%= property_options_admin_quotes_path(name: "invoice[property]") %>">
+<%= page_header "Invoice #{@invoice.number}", lede: "Draft for #{@invoice.client.display_name}. Changes save as you go." do %>
+  <span class="save-status" id="save_status" role="status" data-quote-builder-target="status">Saved</span>
+  <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
+    <button type="button" class="<%= button_classes(:ghost, :icon) %>" data-menu-target="button" data-action="menu#toggle"
+            aria-haspopup="true" aria-expanded="false" aria-label="More actions"><%= icon "more-horizontal" %></button>
+    <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
+      <% if @invoice.deletable? %>
+        <%= button_to admin_invoice_path(@invoice), method: :delete, class: "menu-item text-danger",
+                      form: { class: "contents", data: { turbo_confirm: "Delete draft invoice #{@invoice.number}? This can't be undone.", turbo_confirm_button: "Delete draft" } } do %>
+          <%= icon "trash" %> Delete draft
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<div id="builder_banner"></div>
+
+<%= form_with model: @invoice, url: admin_invoice_path(@invoice), method: :patch, id: "invoice-builder",
+              class: "grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]",
+              data: { quote_builder_target: "form",
+                      action: "submit->quote-builder#submit catalog-picker:pick->quote-builder#addFromCatalog client-picker:change->quote-builder#clientChanged input->quote-builder#changed change->quote-builder#changed" } do |f| %>
+  <%= f.hidden_field :lock_version, id: "invoice_lock_version" %>
+  <input type="hidden" name="invoice[lines_present]" value="1">
+
+  <div class="min-w-0 space-y-4">
+    <div id="builder_errors"><%= render "admin/quotes/errors", quote: @invoice %></div>
+
+    <%= card do %>
+      <div class="grid gap-4 sm:grid-cols-2 [&>*]:min-w-0">
+        <% if @invoice.job || @invoice.quote %>
+          <%# It bills that job or quote, so it stays with their client. %>
+          <div class="field"><p class="label">Client</p><p class="text-sm font-semibold text-ink"><%= @invoice.client.display_name %></p>
+            <%= render "source", invoice: @invoice %></div>
+        <% else %>
+          <%= render "admin/clients/picker", name: "invoice[client]", selected: @invoice.client %>
+        <% end %>
+        <%= turbo_frame_tag "quote_property", data: { quote_builder_target: "property" } do %>
+          <%= render "admin/quotes/property_select", client: @invoice.client, selected: @invoice.property&.uid, name: "invoice[property]" %>
+        <% end %>
+      </div>
+      <div class="mt-4 grid gap-4 sm:grid-cols-[minmax(0,1fr)_11rem] [&>*]:min-w-0">
+        <%= f.field :title, optional: true, placeholder: "Spring cleanup", maxlength: 120, help: "Shown at the top of the invoice." %>
+        <%= f.field :issued_on, as: :date, label: "Issue date" %>
+      </div>
+      <div class="mt-4"><%= render "due", invoice: @invoice %></div>
+    <% end %>
+
+    <%= card title: "Items", flush: true do %>
+      <div class="quote-lines" data-quote-builder-target="lines">
+        <% lines.each_with_index do |line, index| %>
+          <%= render "admin/quotes/line", line:, index:, subtotal: totals.lines[index]&.subtotal, scope: "invoice" %>
+        <% end %>
+      </div>
+      <p class="px-5 py-6 text-center text-sm text-muted" data-quote-builder-target="empty" <%= "hidden" if lines.any? %>>
+        No items yet. Add one from your catalog or type a custom line.
+      </p>
+      <div class="flex flex-wrap items-end gap-2 border-t border-line px-5 py-4">
+        <div class="min-w-0 flex-1 basis-64"><%= render "admin/catalog_items/picker", label: "Add from catalog" %></div>
+        <button type="button" class="<%= button_classes(:secondary) %>" data-action="quote-builder#addCustom"><%= icon "plus" %> Custom line</button>
+      </div>
+      <template data-quote-builder-target="template">
+        <%= render "admin/quotes/line", line: InvoiceLineItem.new(invoice: @invoice, key: "NEW_KEY", quantity: 1, taxable: true), index: "NEW_INDEX", scope: "invoice" %>
+      </template>
+    <% end %>
+
+    <%= card title: "Message and terms" do %>
+      <div class="space-y-4">
+        <%= f.field :message, as: :textarea, optional: true, rows: 3, label: "Message to client", placeholder: "Thanks for your business!" %>
+        <%= f.field :terms, as: :textarea, optional: true, rows: 4, help: "Defaults from your document settings; edit for this invoice." %>
+        <%= f.field :internal_notes, as: :textarea, optional: true, rows: 2, label: "Internal notes",
+                    help: "Only your team sees these. Never shown to the client." %>
+      </div>
+    <% end %>
+  </div>
+
+  <aside class="space-y-4 lg:sticky lg:top-6 lg:self-start">
+    <%= card title: "Totals" do %>
+      <div class="space-y-3">
+        <div class="flex items-end gap-2">
+          <div class="w-28 shrink-0">
+            <%= f.label :discount_kind, "Invoice discount", class: "label" %>
+            <%= f.select :discount_kind, [ [ "None", "" ], [ "%", "percent" ], [ "Amount", "amount" ] ], {}, class: "select" %>
+          </div>
+          <div class="min-w-0 flex-1">
+            <label class="sr-only" for="invoice_discount_value">Invoice discount value</label>
+            <%= text_field_tag "invoice[discount_value]", @invoice.discount_value, id: "invoice_discount_value", inputmode: "decimal", class: "input text-right tabular", placeholder: "0" %>
+          </div>
+        </div>
+        <%= render "admin/quotes/tax_rates", quote: @invoice, scope: "invoice" %>
+        <div class="border-t border-line pt-3"><%= render "admin/quotes/totals", quote: @invoice, totals: %></div>
+      </div>
+    <% end %>
+    <div class="flex flex-col gap-2">
+      <%= f.submit_button "Save draft" %>
+      <p class="text-center text-sm2 text-muted">Sending comes next: this draft is saved and can be finished later.</p>
+    </div>
+  </aside>
+<% end %>
+</div>
+<%= render "admin/clients/quick_create", button: false %>
