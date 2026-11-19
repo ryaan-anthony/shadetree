@@ -129,6 +129,15 @@ class Admin::ClientsTest < ActionDispatch::IntegrationTest
     assert_not response.headers["Set-Cookie"].to_s.include?("_session")
   end
 
+  test "Turbo's hover prefetches leave the session cookie alone too" do
+    as_member(@owner)
+    get admin_clients_path, headers: { "X-Sec-Purpose" => "prefetch" }
+    assert_response :success
+    assert_not response.headers["Set-Cookie"].to_s.include?("_session"), "a prefetch finishing late can't wipe a flash"
+    get admin_clients_path
+    assert response.headers["Set-Cookie"].to_s.include?("_session")
+  end
+
   test "inline creation hands the client back to the picker" do
     as_member(@owner)
     get new_admin_client_path(inline: 1)

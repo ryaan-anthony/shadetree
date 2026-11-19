@@ -4,6 +4,7 @@
 class Admin::ScheduleController < Admin::BaseController
   requires_permission :schedule
   filters_by_location Visit, Job, only: :show # CAT-07
+  leaves_session_alone only: :visit # the visit panel loads in the background, and on hover
 
   def show
     date = Visit.parse_date(params[:date])

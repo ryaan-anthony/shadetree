@@ -132,6 +132,7 @@ class Admin::ScheduleTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", admin_job_path(@job, anchor: "visit-#{@timed.uid}")
     assert_select "a[href=?]", edit_admin_job_visit_path(@job, @timed)
     assert_select "a[href=?]", admin_clients_path, 0, "no layout inside the frame"
+    assert_not response.headers["Set-Cookie"].to_s.include?("_session"), "the panel leaves the session alone (an Undo's flash survives it)"
 
     get admin_schedule_visit_path(@timed)
     assert_select "a[href=?]", admin_schedule_path(date: @monday.iso8601), text: /Schedule/
