@@ -7,7 +7,7 @@ class Users::SessionsController < Devise::SessionsController
   # POST /users/sign_out_everywhere — ends every other session and remember-me cookie,
   # keeping this one.
   def destroy_others
-    current_user.sign_out_everywhere!
+    current_user.sign_out_everywhere!(except: current_user_session)
     bypass_sign_in(current_user)
     redirect_to edit_user_registration_path, notice: "Signed out of all other devices."
   end

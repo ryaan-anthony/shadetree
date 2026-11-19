@@ -1,8 +1,16 @@
 class Users::RegistrationsController < Devise::RegistrationsController
-  layout "marketing"
+  layout -> { %w[edit update].include?(action_name) ? "application" : "marketing" } # the account page is for signed-in people
   before_action :configure_sign_up_params, only: :create
   before_action :configure_account_update_params, only: :update
   rate_limit to: 10, within: 10.minutes, only: :create, with: -> { redirect_to new_user_registration_path, alert: "Too many attempts. Try again in a few minutes." }
+
+  # A new password signs out every other browser (Devise checks the password's salt); their
+  # sessions are ended in the list too (ACC-06).
+  def update
+    super do |user|
+      user.user_sessions.active.where.not(id: current_user_session&.id).update_all(revoked_at: Time.current) if user.errors.empty? && user.saved_change_to_encrypted_password?
+    end
+  end
 
   protected
 

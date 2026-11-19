@@ -27,6 +27,7 @@ class User < ApplicationRecord
   # memberships; a membership that is the last Owner of someone else's business blocks deletion.
   has_many :owned_businesses, class_name: "Business", foreign_key: "owner_id", dependent: :destroy
   has_many :business_users, dependent: :destroy
+  has_many :user_sessions, dependent: :delete_all
   has_many :businesses, through: :business_users
 
   # Validations
@@ -45,7 +46,9 @@ class User < ApplicationRecord
     "#{super}#{session_token}"
   end
 
-  def sign_out_everywhere!
+  # Ends every other browser's session (ACC-06 lists them); `except` is the one to keep.
+  def sign_out_everywhere!(except: nil)
+    user_sessions.active.where.not(id: except&.id).update_all(revoked_at: Time.current)
     update_columns(session_token: SecureRandom.base58(24), remember_created_at: nil)
   end
 
