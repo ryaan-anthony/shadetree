@@ -17,7 +17,7 @@ class MarketingFeaturesAndAboutTest < ActionDispatch::IntegrationTest
   end
 
   test "the screenshots exist and stay small" do
-    Dir[Rails.root.join("app/assets/images/marketing/*.webp")].tap { assert_equal 5, _1.size }.each do |file|
+    Dir[Rails.root.join("app/assets/images/marketing/*.webp")].tap { assert_equal 10, _1.size, "each screenshot and its small version" }.each do |file|
       assert_operator File.size(file), :<, 120.kilobytes, "#{File.basename(file)} is too big for a marketing page"
     end
   end

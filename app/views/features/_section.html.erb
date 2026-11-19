@@ -9,7 +9,10 @@
     </div>
     <figure class="<%= phone ? "mx-auto w-full max-w-[19rem] rounded-[2rem] border-[7px] border-ink bg-ink shadow-pop" : "overflow-hidden rounded-card border border-line shadow-pop" %>">
       <%# On a phone a desktop screen is too small to read, so it opens full size. %>
+      <% small = image.sub(".webp", phone ? "-400.webp" : "-800.webp") %><%# MKT-04: a smaller file for small screens %>
       <%= link_to_unless phone, image_tag(image, alt:, width:, height:, loading: "lazy", decoding: "async",
+                                          srcset: { small => "#{phone ? 400 : 800}w", image => "#{width}w" },
+                                          sizes: phone ? "19rem" : "(min-width: 1152px) 612px, (min-width: 1024px) 50vw, calc(100vw - 2.5rem)",
                                           class: "h-auto w-full #{phone ? "rounded-[1.5rem]" : ""}"),
                          image_path(image), target: "_blank", rel: "noopener", title: "Open full size" %>
     </figure>

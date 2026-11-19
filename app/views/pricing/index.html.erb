@@ -1,4 +1,5 @@
 <% content_for :title, "Pricing" %>
+<% content_for :analytics, "on" %>
 <% page_meta description: "Free to start, with the whole workflow. Paid plans by how many quotes you send each month. No contracts, no setup fees." %>
 <% yearly = @plans.any? { plan_yearly?(_1) } %>
 <% savings = @plans.select { plan_yearly?(_1) }.map { plan_annual_saving(_1) }.uniq %>
@@ -28,7 +29,7 @@
         <% previous = index.positive? ? @plans[index - 1] : nil %>
         <li class="flex flex-col rounded-card border border-line bg-surface p-6" id="plan-<%= plan.key %>">
           <h2 class="text-lg font-bold text-ink"><%= plan.name %></h2>
-          <p class="mt-1 min-h-10 text-sm2 text-muted"><%= plan.description %></p>
+          <p class="mt-1 min-h-10 text-sm2 text-subtle"><%= plan.description %></p>
           <p class="mt-6 flex items-baseline gap-1.5">
             <% if plan.free? %>
               <span class="text-5xl font-extrabold tracking-tight text-ink lg:text-[2.5rem]"><%= plan_price(plan.monthly_price) %></span><span class="text-sm text-muted">forever</span>
@@ -41,7 +42,7 @@
               <span class="whitespace-nowrap text-sm text-muted">/ month</span>
             <% end %>
           </p>
-          <p class="mt-1 text-sm2 text-muted">
+          <p class="mt-1 text-sm2 text-subtle">
             <% if plan.free? %>No card needed
             <% elsif plan_yearly?(plan) %>
               <span class="group-has-[#billing-yearly:checked]/billing:hidden">billed monthly</span>
@@ -71,7 +72,7 @@
     <div class="grid gap-6 rounded-card border border-line bg-canvas p-6 sm:p-8 lg:grid-cols-[14rem_1fr]">
       <div>
         <h2 id="every-plan" class="text-lg font-bold text-ink">Included on every plan</h2>
-        <p class="mt-1 text-sm2 text-muted">Free included.</p>
+        <p class="mt-1 text-sm2 text-subtle">Free included.</p>
       </div>
       <ul class="grid gap-x-8 gap-y-2.5 text-sm text-subtle sm:grid-cols-2 lg:grid-cols-3">
         <% [ "Unlimited clients", "Your own request page", "Online approval with a signature", "Scheduling and calendar",

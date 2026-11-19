@@ -1,0 +1,21 @@
+# MKT-04: guards the marketing site's mobile Lighthouse scores (performance, accessibility, best
+# practices, SEO: 90 or more). Runs weekly and on demand against the live site, set as the
+# MARKETING_URL repository variable; does nothing until that's set.
+name: Lighthouse
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    if: ${{ vars.MARKETING_URL != '' }}
+    steps:
+      - uses: actions/checkout@v7 # Node and Chrome come with the runner
+      - name: Check scores
+        run: script/lighthouse_check "${{ vars.MARKETING_URL }}"

@@ -26,5 +26,8 @@ module Shadetree
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
+
+    # MKT-04: analytics (Analytics) only outside development and test.
+    config.x.analytics = !Rails.env.local?
   end
 end

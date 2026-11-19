@@ -15,10 +15,12 @@ class Users::RegistrationsController < Devise::RegistrationsController
 
   # Unconfirmed users are signed in straight away and go on to set up their business.
   def after_sign_up_path_for(_resource)
+    Analytics.track("Sign-up Completed", request:) # MKT-04
     new_admin_business_path
   end
 
   def after_inactive_sign_up_path_for(resource)
+    Analytics.track("Sign-up Completed", request:)
     awaiting_confirmation_users_confirmation_path(email: resource.email)
   end
 
