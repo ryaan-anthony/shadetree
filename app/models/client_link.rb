@@ -141,13 +141,17 @@ class ClientLink < ApplicationRecord
     false
   end
 
-  # NTF-02: the office team hears when a client first opens a quote (deliver never raises).
+  # NTF-02: the office team hears when a client first opens a quote or an invoice (PAY-02).
+  # deliver never raises.
   def notify_first_view
     Tenancy.with_business(business) do
-      return unless linkable.is_a?(Quote)
-
-      NotificationType.deliver("quote_viewed", business:, subject: linkable, title: "#{linkable.client.display_name} opened quote #{linkable.number}",
-                               body: linkable.title, path: Rails.application.routes.url_helpers.admin_quote_path(linkable))
+      kind, path = case linkable
+      when Quote then [ "quote", Rails.application.routes.url_helpers.admin_quote_path(linkable) ]
+      when Invoice then [ "invoice", Rails.application.routes.url_helpers.admin_invoice_path(linkable) ]
+      else return
+      end
+      NotificationType.deliver("#{kind}_viewed", business:, subject: linkable, title: "#{linkable.client.display_name} opened #{kind} #{linkable.number}",
+                               body: linkable.title, path:)
     end
   end
 

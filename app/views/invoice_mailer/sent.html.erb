@@ -1,0 +1,14 @@
+<% if @note.present? %>
+  <div style="margin:0 0 20px;"><%= simple_format(@note, style: "margin:0 0 12px;") %></div>
+<% end %>
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 20px;border:1px solid #e2e8f0;border-radius:8px;">
+  <tr><td style="padding:14px 16px;">
+    <p style="margin:0;font-size:13px;color:#64748b;">Invoice <%= @invoice.number %><%= " · #{@invoice.title}" if @invoice.title %></p>
+    <p style="margin:6px 0 0;font-size:22px;font-weight:700;color:#0f172a;"><%= money(@invoice.balance) %></p>
+    <p style="margin:4px 0 0;font-size:13px;color:#64748b;"><%= @invoice.payments? ? "Balance due" : "Due" %> <%= local_date(@invoice.due_on) %></p>
+  </td></tr>
+</table>
+<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="border-radius:8px;background:<%= @branding.color %>;">
+  <a href="<%= client_link_url(@link.token) %>" style="display:inline-block;padding:12px 20px;font-weight:600;font-size:15px;color:<%= @branding.ink %>;text-decoration:none;">View invoice</a>
+</td></tr></table>
+<p style="margin:16px 0 0;font-size:13px;color:#64748b;">The invoice is also attached as a PDF.</p>

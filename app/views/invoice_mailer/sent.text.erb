@@ -1,0 +1,9 @@
+<% if @note.present? %><%= @note %>
+
+<% end %>Invoice <%= @invoice.number %><%= " - #{@invoice.title}" if @invoice.title %>
+<%= @invoice.payments? ? "Balance due" : "Amount due" %>: <%= money(@invoice.balance) %>
+Due <%= l(@invoice.due_on) %>
+
+View the invoice: <%= client_link_url(@link.token) %>
+
+The invoice is also attached as a PDF.

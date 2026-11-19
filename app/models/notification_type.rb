@@ -37,6 +37,8 @@ class NotificationType
                    permission: :office, email_by_default: true, icon: "x-circle"),
     Definition.new(kind: "quote_changes_requested", label: "Changes requested", hint: "A client asks for changes to a quote.",
                    permission: :office, email_by_default: true, icon: "edit-3"),
+    Definition.new(kind: "invoice_viewed", label: "Invoice opened", hint: "The first time a client opens an invoice.",
+                   permission: :office, email_by_default: false, icon: "eye"),
     Definition.new(kind: "invitation_accepted", label: "Someone joins the team", hint: "An invitation you or a teammate sent is accepted.",
                    permission: :manage_team, email_by_default: false, icon: "user-plus"),
     # JOB-02: to the people going on a visit.

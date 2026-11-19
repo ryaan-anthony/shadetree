@@ -5,9 +5,9 @@ class Admin::QuoteSendsController < Admin::BaseController
   include ConfirmedSender
 
   requires_permission :office
-  # Emails per business per hour, and per quote per day (below): the platform's sending domain
+  # Emails per business per hour (one count with invoices' sends), and per quote per day (below): the platform's sending domain
   # isn't a relay. Only a quote's first send counts toward plan usage, so usage can't be the cap.
-  rate_limit to: EmailMessage::CLIENT_EMAILS_PER_HOUR, within: 1.hour, by: -> { current_business.id }, only: :create,
+  rate_limit to: EmailMessage::CLIENT_EMAILS_PER_HOUR, within: 1.hour, by: -> { current_business.id }, only: :create, scope: "client-emails",
              with: -> { redirect_to new_admin_quote_send_path(@quote || params[:quote_id]), alert: "That's a lot of emails in an hour. Try again later." }
   EMAILS_PER_QUOTE_PER_DAY = 5
 
@@ -60,7 +60,7 @@ class Admin::QuoteSendsController < Admin::BaseController
       quote_send = @quote.mark_sent!(by: current_user, channel: "email", recipient: @form.to, cc: @form.cc_header)
       link = @quote.client_link!
       email = QuoteMailer.send_later(:sent, business: current_business, to: @form.to, kind: "quote_sent", related: @quote,
-                                            quote_id: @quote.id, link_id: link.id, subject: @form.subject, message: @form.message, cc: @form.cc_header)
+                                            quote_id: @quote.id, revision: @quote.revision, link_id: link.id, subject: @form.subject, message: @form.message, cc: @form.cc_header)
       quote_send.update!(email_message: email)
     end
     redirect_after_setup_step admin_quote_path(@quote), notice: "Quote #{@quote.number} is on its way to #{@form.to}."

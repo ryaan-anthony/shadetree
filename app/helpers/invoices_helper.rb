@@ -19,6 +19,8 @@ module InvoicesHelper
     from = " from #{event.data["from"]} #{event.data["number"]}" if event.kind == "created" && event.data["from"]
     reason = ": “#{event.data["reason"]}”" if event.data["reason"].present?
     by = " by #{event.user.full_name}" if event.user
-    "#{EVENT_LABELS.fetch(event.kind)}#{from}#{by}#{reason}"
+    how = { "email" => " by email", "link" => " as a link" }[event.data["channel"]] if event.kind == "sent"
+    revision = " (revision #{event.data["revision"]})" if event.kind == "sent" && event.data["revision"].to_i > 1
+    "#{EVENT_LABELS.fetch(event.kind)}#{how}#{revision}#{from}#{by}#{reason}"
   end
 end

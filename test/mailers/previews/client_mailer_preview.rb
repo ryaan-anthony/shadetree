@@ -77,3 +77,16 @@ class VisitMailerPreview < ActionMailer::Preview
     VisitMailer.with(business_id: visits.first.business_id, to: "maria@example.com", job_id: visits.first.job_id, changes:).update
   end
 end
+
+# PAY-02: the invoice email, for the newest sent invoice (bin/rails db:seed makes one).
+class InvoiceMailerPreview < ActionMailer::Preview
+  def sent
+    invoice = Tenancy.across_businesses(reason: "mailer preview") { Invoice.joins(:line_items).where(status: Invoice::OUTSTANDING).order(:id).last }
+    return InvoiceMailer.with(business_id: Business.first.id, to: "maria@example.com").test_message unless invoice
+    Tenancy.with_business(invoice.business) do
+      link = invoice.client_link!
+      InvoiceMailer.with(business_id: invoice.business_id, to: "maria@example.com", invoice_id: invoice.id, link_id: link.id,
+                         subject: InvoiceMailer.default_subject(invoice), message: "Hi Maria,\n\nThanks again. Here's the invoice for the work.").sent
+    end
+  end
+end

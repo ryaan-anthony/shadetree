@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_18_000200) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_19_000100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -378,6 +378,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_18_000200) do
     t.index ["invoice_id", "number"], name: "index_invoice_revisions_on_invoice_id_and_number", unique: true
     t.index ["pdf_blob_id"], name: "index_invoice_revisions_on_pdf_blob_id"
     t.index ["revised_by_id"], name: "index_invoice_revisions_on_revised_by_id"
+  end
+
+  create_table "invoice_sends", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "invoice_id", null: false
+    t.bigint "user_id"
+    t.string "channel", null: false
+    t.string "recipient"
+    t.string "cc"
+    t.bigint "email_message_id"
+    t.integer "revision", default: 1, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "invoice_id"], name: "index_invoice_sends_on_business_id_and_invoice_id"
+    t.index ["email_message_id"], name: "index_invoice_sends_on_email_message_id"
+    t.index ["invoice_id"], name: "index_invoice_sends_on_invoice_id"
+    t.index ["user_id"], name: "index_invoice_sends_on_user_id"
+    t.check_constraint "channel::text = ANY (ARRAY['email'::character varying, 'link'::character varying]::text[])", name: "invoice_sends_channel"
   end
 
   create_table "invoices", force: :cascade do |t|
@@ -895,6 +913,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_18_000200) do
   add_foreign_key "invoice_revisions", "businesses"
   add_foreign_key "invoice_revisions", "invoices"
   add_foreign_key "invoice_revisions", "users", column: "revised_by_id"
+  add_foreign_key "invoice_sends", "businesses"
+  add_foreign_key "invoice_sends", "email_messages"
+  add_foreign_key "invoice_sends", "invoices"
+  add_foreign_key "invoice_sends", "users"
   add_foreign_key "invoices", "active_storage_blobs", column: "pdf_blob_id", on_delete: :nullify
   add_foreign_key "invoices", "businesses"
   add_foreign_key "invoices", "clients"
