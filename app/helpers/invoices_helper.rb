@@ -11,7 +11,7 @@ module InvoicesHelper
                 (badge("Overdue", tone: :danger) if invoice.overdue?(current_business.today)) ].compact, " ")
   end
 
-  EVENT_LABELS = { "created" => "Created", "sent" => "Sent", "revised" => "Revised", "partially_paid" => "Partly paid",
+  EVENT_LABELS = { "created" => "Created", "sent" => "Sent", "revised" => "Revised", "revision_discarded" => "Changes discarded", "partially_paid" => "Partly paid",
                    "paid" => "Paid", "voided" => "Voided", "reopened" => "Reopened" }.freeze
 
   # One line of its history: "Created from job J-0004 by Maria".

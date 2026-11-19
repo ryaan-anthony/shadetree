@@ -2,7 +2,7 @@
 <%# Voiding a sent invoice (PAY-01), from its page or from the builder while it's being revised. %>
 <div class="contents" data-controller="modal">
   <button type="button" class="<%= button_classes(:ghost) %>" data-action="modal#open" data-modal-target="return" aria-haspopup="dialog">Void</button>
-  <%= modal id: "invoice-void", title: "Void #{invoice.number}?", description: "It stays on record as Void and can't be paid. To bill again, create a new invoice." do %>
+  <%= modal id: "invoice-void", title: "Void #{invoice.number}?", description: "It stays on record as Void and can't be paid. To bill again, create a new invoice.#{" Your unsent changes are discarded first." if invoice.revising?}" do %>
     <%= form_with url: void_admin_invoice_path(invoice), method: :patch, class: "space-y-4" do %>
       <div class="field">
         <label class="label" for="void_reason">Reason</label>

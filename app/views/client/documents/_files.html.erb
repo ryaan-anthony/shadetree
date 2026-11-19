@@ -1,0 +1,30 @@
+<%# locals: (document:, file_path: nil) -%>
+<%# A quote's or invoice's photos and files. file_path routes each through the client link (so
+    revoking it cuts off the files); staff preview, with none, uses plain blob URLs. %>
+<% photos, files = document.attachments_attachments.includes(:blob).select { _1.blob.persisted? }.partition(&:image?) %>
+
+<% file_url = ->(file, size = nil) { file_path ? file_path.(file, size) : (size ? rails_representation_path(file.variant(:web)) : rails_blob_path(file, disposition: "inline")) } %>
+<% if photos.any? || files.any? %>
+  <section class="client-card mt-4 p-5 sm:p-6" aria-labelledby="attachments-h">
+    <h2 id="attachments-h" class="text-sm font-semibold text-ink">Photos and files</h2>
+    <% if photos.any? %>
+      <ul class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <% photos.each do |photo| %>
+          <li><%= link_to file_url.(photo), target: "_blank", rel: "noopener" do %>
+            <%= image_tag file_url.(photo, "web"), alt: photo.filename.base.tr("_-", "  "), loading: "lazy", decoding: "async",
+                          class: "aspect-[4/3] w-full rounded-lg border border-line object-cover" %>
+          <% end %></li>
+        <% end %>
+      </ul>
+    <% end %>
+    <% if files.any? %>
+      <ul class="mt-3 space-y-1.5">
+        <% files.each do |file| %>
+          <li><%= link_to file_url.(file), class: "flex items-center gap-2 text-sm font-medium text-ink hover:underline", target: "_blank", rel: "noopener" do %>
+            <%= icon "file-text", class: "size-4 text-faint" %><%= file.filename %><% end %></li>
+        <% end %>
+      </ul>
+    <% end %>
+  </section>
+<% end %>
+

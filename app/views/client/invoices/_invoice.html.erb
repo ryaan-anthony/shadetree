@@ -1,0 +1,42 @@
+<%# locals: (document:, client_link: nil, preview: false) -%>
+<%# The client's invoice page (PAY-02), from a client link (PLT-12) or as the staff preview:
+    what's owed and when, the document, files, and a PDF. Paying online comes with PAY-04. %>
+<% client_link = nil if preview %>
+<% invoice = document %>
+<% totals = invoice.totals %>
+<% if invoice.revising? && !preview %>
+  <%# A new revision is being prepared; its unfinished edits are never shown. %>
+  <div class="client-card p-6 text-center sm:p-8" role="status">
+    <span class="empty-icon"><%= icon "edit-3" %></span>
+    <h1 class="text-lg font-bold text-ink"><%= @business.name %> is updating this invoice</h1>
+    <p class="mx-auto mt-2 max-w-sm text-sm text-subtle">Invoice <%= invoice.number %> is being corrected. You'll get the new version soon, at this same link.</p>
+    <%= render "client_links/business_contact" %>
+  </div>
+<% else %>
+  <% if invoice.void? %>
+    <div class="banner banner-info mb-4" role="status"><%= icon "x-circle" %><p>This invoice was cancelled, so nothing is due on it. Questions? Contact <%= @business.name %> below.</p></div>
+  <% elsif invoice.paid? %>
+    <div class="banner banner-success mb-4" role="status"><%= icon "check-circle" %><p class="font-semibold">Paid in full. Thank you!</p></div>
+  <% else %>
+    <%# What's owed, first. %>
+    <div class="client-card mb-4 flex flex-wrap items-end justify-between gap-3 p-5 sm:p-6">
+      <div>
+        <p class="text-sm2 text-muted"><%= invoice.payments? ? "Balance due" : "Amount due" %></p>
+        <p class="money text-3xl font-bold text-ink"><%= money(invoice.balance) %></p>
+      </div>
+      <p class="text-sm <%= invoice.overdue?(@business.today) ? "font-semibold text-danger" : "text-subtle" %>">
+        <%= safe_join([ invoice.overdue?(@business.today) ? "Overdue: was due " : "Due ", local_date(invoice.due_on) ]) %></p>
+    </div>
+  <% end %>
+
+  <article class="client-card quote-doc p-6 sm:p-8">
+    <%= render "client/invoices/document", invoice:, totals: %>
+  </article>
+
+  <%= render "client/documents/files", document: invoice, file_path: client_link && ->(file, size) { client_invoice_file_path(client_link.token, file, size:) } %>
+
+  <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+    <%= link_to (preview ? pdf_admin_invoice_path(invoice) : client_invoice_pdf_path(client_link.token)), class: button_classes(:secondary), data: { turbo: false } do %><%= icon "download" %> Download PDF<% end %>
+  </div>
+  <div class="client-card mt-4 p-5 sm:p-6"><%= render "client_links/business_contact" %></div>
+<% end %>

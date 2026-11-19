@@ -98,6 +98,15 @@ export default class extends Controller {
     if (!this.dirty && !this.conflict) Turbo.visit(href)
   }
 
+  // Download PDF: save first, so the PDF has the latest.
+  async download(event) {
+    event.preventDefault()
+    const href = event.currentTarget.href
+    if (this.dirty) this.save()
+    await this.saving
+    window.location = href
+  }
+
   // The invoice's payment terms (PAY-01): a custom date shows the date box; other terms show
   // the date they give (filled in by the next autosave). The disabled box isn't submitted.
   termsChanged(event) {

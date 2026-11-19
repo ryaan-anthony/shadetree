@@ -265,7 +265,6 @@ class Quote < ApplicationRecord
   def pdf_filename = "Quote #{number}.pdf"
   def pdf_paper = PdfRenderer.paper_for(business.country)
   def store_pdf? = !draft?
-  LONG_DESCRIPTION = 400 # characters; longer lines may split across PDF pages
   # What a stored PDF must match: the template version (bump PDF_VERSION to replace stored files
   # after a template fix), the quote's own content (any saved edit bumps lock_version) and status,
   # and the client and property it names. Not the letterhead or the expiry date: a sent PDF

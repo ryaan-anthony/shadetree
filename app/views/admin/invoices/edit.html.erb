@@ -9,11 +9,20 @@
 <%= page_header "Invoice #{@invoice.number}", lede: do %>
   <%# A sent invoice being revised can still be voided instead of re-sent. %>
   <%= render "void", invoice: @invoice if @invoice.voidable? %>
+  <%= link_to preview_admin_invoice_path(@invoice), class: button_classes(:secondary), target: "_blank", rel: "noopener",
+              data: { action: "quote-builder#preview" } do %><%= icon "eye" %> Preview as client<% end %>
   <span class="save-status" id="save_status" role="status" data-quote-builder-target="status">Saved</span>
   <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
     <button type="button" class="<%= button_classes(:ghost, :icon) %>" data-menu-target="button" data-action="menu#toggle"
             aria-haspopup="true" aria-expanded="false" aria-label="More actions"><%= icon "more-horizontal" %></button>
     <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
+      <%= link_to pdf_admin_invoice_path(@invoice), class: "menu-item", data: { turbo: false, action: "quote-builder#download" } do %><%= icon "download" %> Download PDF<% end %>
+      <% if @invoice.revising? %>
+        <%= button_to discard_revision_admin_invoice_path(@invoice), class: "menu-item",
+                      form: { class: "contents", data: { turbo_confirm: "Discard your changes to #{@invoice.number}? It goes back to what #{@invoice.client.display_name} was sent.", turbo_confirm_button: "Discard changes" } } do %>
+          <%= icon "rotate-ccw" %> Discard changes
+        <% end %>
+      <% end %>
       <% if @invoice.deletable? %>
         <%= button_to admin_invoice_path(@invoice), method: :delete, class: "menu-item text-danger",
                       form: { class: "contents", data: { turbo_confirm: "Delete draft invoice #{@invoice.number}? This can't be undone.", turbo_confirm_button: "Delete draft" } } do %>

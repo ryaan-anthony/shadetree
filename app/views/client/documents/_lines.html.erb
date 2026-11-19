@@ -1,0 +1,27 @@
+<%# locals: (document:, totals: document.totals) -%>
+<%# A document's lines and totals as clients see them (quotes QTE-03, invoices PAY-02), on the
+    page and in the PDF alike. %>
+<%# Explicit roles: the phone layout turns rows into grids, which drops table semantics in Safari. %>
+<table class="quote-doc-lines" role="table">
+  <thead role="rowgroup">
+    <tr role="row"><th scope="col" role="columnheader">Item</th><th scope="col" role="columnheader" class="num">Qty</th><th scope="col" role="columnheader" class="num">Price</th><th scope="col" role="columnheader" class="num">Amount</th></tr>
+  </thead>
+  <tbody role="rowgroup">
+    <% document.current_line_items.each_with_index do |line, index| %>
+      <% result = totals.lines[index] %>
+      <%# A line with a long description may split across PDF pages rather than leave a gap. %>
+      <tr role="row" class="<%= "quote-doc-line-long" if line.description.to_s.length > DocumentLine::LONG_DESCRIPTION %>">
+        <td role="cell">
+          <p class="quote-doc-line-name"><%= line.name.presence || "Item" %></p>
+          <% if line.description %><p class="quote-doc-line-description"><%= line.description %></p><% end %>
+          <% if result.discount.positive? %><p class="quote-doc-line-discount">Includes <%= money(result.discount) %> off<%= " (#{line.discount_value}%)" if line.discount_kind == "percent" %></p><% end %>
+        </td>
+        <td role="cell" class="num"><%= line.quantity.to_d.round(4).to_s("F").sub(/\.?0+\z/, "") %><% if line.unit %> <span class="quote-doc-unit"><%= line.unit %></span><% end %></td>
+        <td role="cell" class="num"><%= money(line.unit_price || Money.zero(document.currency)) %></td>
+        <td role="cell" class="num"><%= money(result.subtotal) %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<div class="quote-doc-totals"><%= render "admin/quotes/totals", quote: document, totals: %></div>

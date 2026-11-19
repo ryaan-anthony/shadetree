@@ -1,21 +1,7 @@
 <%# The quote PDF (QTE-02): the business's letterhead, then the same document the client page
     shows (client/quotes/_document), so the two never drift. %>
 <% content_for :title, "Quote #{@quote.number}" %>
-<% branding = Branding.new(@business) %>
-<header class="pdf-letterhead">
-  <div class="min-w-0">
-    <% if branding.logo? %>
-      <img src="<%= PdfDocument.data_url(branding.logo(:pdf)) %>" alt="<%= branding.name %>" class="pdf-logo">
-    <% else %>
-      <p class="pdf-business-name"><%= branding.name %></p>
-    <% end %>
-  </div>
-  <address class="pdf-contact">
-    <% if branding.logo? %><span class="font-semibold text-ink"><%= branding.name %></span><br><% end %>
-    <% @business.address_lines.each do |line| %><%= line %><br><% end %>
-    <%= safe_join([ @business.phone, @business.email ].compact_blank, tag.br) %>
-  </address>
-</header>
+<%= render "pdfs/letterhead", business: @business %>
 
 <article class="quote-doc">
   <%= render "client/quotes/document", quote: @quote, pdf: true %>

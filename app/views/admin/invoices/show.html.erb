@@ -1,4 +1,4 @@
-<%# PAY-01: an invoice that's no longer a draft. Sending is PAY-02; payments PAY-04/PAY-05. %>
+<%# PAY-01: an invoice that's no longer a draft, with the client's view and its PDF (PAY-02). Payments are PAY-04/PAY-05. %>
 <% invoice = @invoice %>
 <% totals = invoice.totals %>
 <% content_for :title, "Invoice #{invoice.number}" %>
@@ -7,6 +7,8 @@
     <%= button_to revise_admin_invoice_path(invoice), class: button_classes(:secondary),
                   form: { class: "contents", data: { turbo_confirm: "This reopens #{invoice.number} as a draft to correct. Until you send the new version it isn't counted as awaiting payment, and #{invoice.client.display_name}'s link says the invoice is being updated.", turbo_confirm_button: "Revise" } } do %><%= icon "edit-3" %> Revise<% end %>
   <% end %>
+  <%= link_to preview_admin_invoice_path(invoice), class: button_classes(:secondary), target: "_blank", rel: "noopener" do %><%= icon "eye" %> View as client<% end %>
+  <%= link_to pdf_admin_invoice_path(invoice), class: button_classes(:secondary), data: { turbo: false } do %><%= icon "download" %> PDF<% end %>
   <%= render "void", invoice: invoice if invoice.voidable? %>
 <% end %>
 

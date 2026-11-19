@@ -28,12 +28,14 @@ connected — lets the client pay.
       when, channel). Sending requires a confirmed account.
 - [ ] The email uses the business-branded layout with amount due, due date, a "View & pay" (or
       "View invoice") button and the PDF attached.
-- [ ] The client invoice page shows business identity, invoice number and dates, client and
+- [x] The client invoice page shows business identity, invoice number and dates, client and
       property, line items, discounts, taxes, total, payments received, balance due, terms and a
-      PDF download; a payment area is shown when PAY-03/PAY-04 are enabled.
-- [ ] Paid and void invoices display clearly as such; the link keeps working after payment for
-      record-keeping.
-- [ ] The invoice PDF reuses the QTE-02 rendering approach and shows payments and balance.
+      PDF download; a payment area is shown when PAY-03/PAY-04 are enabled. (The payment area
+      itself comes with PAY-04.)
+- [x] Paid and void invoices display clearly as such; the link keeps working after payment for
+      record-keeping. (Links don't expire while unpaid; the year after payment is set once PAY-05
+      records payments.)
+- [x] The invoice PDF reuses the QTE-02 rendering approach and shows payments and balance.
 - [ ] Client views are recorded (first view notifies staff in-app via NTF-02 when available).
 - [ ] Bounced emails surface on the invoice.
 - [ ] Tests cover send paths, page states, PDF content and link isolation.
@@ -42,6 +44,28 @@ connected — lets the client pay.
 
 - Online payment (PAY-04). Overdue reminders, SMS delivery (backlog).
 
-## Open questions
+## Decisions
 
-- Client link expiry for invoices: recommend no expiry until paid + 1 year (PLT-12).
+- Client link expiry for invoices: no expiry until paid, then a year after payment (PLT-12).
+  Links are issued without an end; recording the payment that settles an invoice (PAY-04/PAY-05)
+  gives its active links their end.
+
+## Implementation notes
+
+- Part 1 (page and PDF): `client/invoices/_invoice` is the client page (also the staff
+  preview); `client/invoices/_document` is the document, shared by the page and the PDF
+  (`pdfs/invoice`), so the two can't drift. The line table (`client/documents/_lines`), the
+  files section (`client/documents/_files`) and the PDF letterhead (`pdfs/_letterhead`) are
+  shared with quotes. Files are served through the link (`Client::DocumentFilesController`,
+  formerly the quote-only controller), so revoking a link cuts them off.
+- The page leads with what's owed and when (overdue in red). The status on the document and
+  the PDF comes from the status and balance only, so a stored PDF doesn't go stale when the
+  due date passes. A sent invoice's PDF is stored and reused until its revision, status or
+  amount paid changes.
+- While a sent invoice is revised, its page says it's being updated, without the unfinished
+  edits, and isn't counted as a view; the PDF and files aren't offered. Staff can discard the
+  changes (back to exactly what was sent: lines, dates, terms, files and its PDF), and voiding
+  a revising invoice discards them first, so a client never sees unfinished edits.
+- A document's `client_link_expires_at` of nil now means its links don't expire (an unpaid
+  invoice), including links staff reissue; documents without a policy still get 90 days.
+- The payment area arrives with PAY-03/PAY-04.

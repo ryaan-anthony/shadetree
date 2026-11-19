@@ -1,10 +1,10 @@
 # What happened to an invoice, for its history (PAY-01): created ({ "from" => "job"|"quote",
 # "number" }), and each change of status: sent, partially_paid, paid, voided ({ "reason" }),
-# revised ({ "revision" }) and reopened.
+# revised ({ "revision" }), revision_discarded ({ "revision" }, back to what was sent) and reopened.
 class InvoiceEvent < ApplicationRecord
   include BusinessOwned
 
-  KINDS = %w[created sent revised partially_paid paid voided reopened].freeze
+  KINDS = %w[created sent revised revision_discarded partially_paid paid voided reopened].freeze
 
   belongs_to_business_record :invoice
   belongs_to :user, optional: true
