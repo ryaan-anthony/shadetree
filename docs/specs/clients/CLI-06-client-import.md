@@ -28,13 +28,13 @@ safely and a clear report of anything that didn't go in.
       client name, company, email, phone, address fields, notes and tags.
 - [x] A preview shows the first rows as they will be imported, plus validation errors and likely
       duplicates (existing clients matching email/phone).
-- [ ] The user chooses how to handle duplicates: skip or create anyway (no automatic merge).
-- [ ] Imports run in the background for large files; the user sees progress and gets an
+- [x] The user chooses how to handle duplicates: skip or create anyway (no automatic merge).
+- [x] Imports run in the background for large files; the user sees progress and gets an
       email/in-app summary: created, skipped, failed (downloadable error report).
-- [ ] An import can be undone within a time window (removes only the clients it created that
+- [x] An import can be undone within a time window (removes only the clients it created that
       have no documents yet).
 - [x] A sample CSV template is downloadable.
-- [ ] Tests cover mapping, duplicates, error reporting, undo and tenancy.
+- [x] Tests cover mapping, duplicates, error reporting, undo and tenancy.
 
 ## Out of scope
 
@@ -70,3 +70,18 @@ Part 1 (upload, mapping, preview, template):
   10 rows (stacked on phones): "New", "Matches <existing client>" (same email or phone), or
   "Won't import" with the reason in words.
 - The template (`/admin/clients/imports/template`) maps itself.
+
+Part 2 (running, summary, report, undo):
+- "Import N rows" (confirmed) queues `ClientImportJob`, which makes a client per row inside the
+  business: rows that can't be saved fail with the reason; with "Skip them", rows matching an
+  existing client by email or phone (including one added earlier in the same file) are
+  skipped. Progress is saved every 25 rows; the page shows a progress bar and refreshes itself.
+- When it finishes (or breaks partway), the person who started it gets a notification and email
+  (`client_import_finished`, theirs alone) with the counts; the uploaded file is deleted; the
+  summary page shows added / skipped / couldn't add, the first rows not added, and a report CSV
+  (line, why, then the row as uploaded; up to 1,000 rows; cells a spreadsheet would run as a
+  formula are prefixed with ').
+- Undo for 7 days (`ClientImportUndoJob`) removes the clients it added, except ones that
+  already have quotes, requests, jobs or invoices, and says how many were kept.
+- `PruneClientImportsJob` (daily) deletes uploads left at the mapping step for 2 days, and the
+  rows kept for the report once undo is over.

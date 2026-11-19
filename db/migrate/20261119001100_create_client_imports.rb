@@ -8,7 +8,7 @@ class CreateClientImports < ActiveRecord::Migration[8.1]
       t.string :uid, null: false, index: { unique: true }
       t.references :created_by, foreign_key: { to_table: :users, on_delete: :nullify }
       t.string :filename, null: false
-      t.string :status, null: false, default: "mapping" # mapping, queued, importing, finished, failed, undone
+      t.string :status, null: false, default: "mapping" # mapping, queued, importing, finished, failed, undoing, undone
       t.jsonb :headers, null: false, default: []
       t.jsonb :examples, null: false, default: [] # the first value in each column, for the mapping page
       t.jsonb :preview_rows, null: false, default: [] # [[line number, values], ...] for the preview, so it never re-reads the file
@@ -19,6 +19,7 @@ class CreateClientImports < ActiveRecord::Migration[8.1]
       t.integer :created_count, null: false, default: 0
       t.integer :skipped_count, null: false, default: 0
       t.integer :failed_count, null: false, default: 0
+      t.integer :undone_count, null: false, default: 0 # clients removed by undo
       t.jsonb :problems, null: false, default: [] # [{ "row" => 7, "reason" => "...", "values" => [...] }], capped
       t.datetime :started_at
       t.datetime :finished_at

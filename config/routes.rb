@@ -50,6 +50,10 @@ Rails.application.routes.draw do
     # Client CSV import (CLI-06)
     resources :client_imports, only: %i[new create show edit update], path: "clients/imports" do
       get :template, on: :collection
+      member do
+        get :report
+        post :undo
+      end
     end
     resources :clients do
       member do

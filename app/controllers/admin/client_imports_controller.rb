@@ -3,7 +3,7 @@ require "csv"
 # Client CSV import (CLI-06): upload, map columns with a preview, then import in the background.
 class Admin::ClientImportsController < Admin::BaseController
   requires_permission :office
-  before_action :set_import, only: %i[show edit update]
+  before_action :set_import, only: %i[show edit update report undo]
   layout "app"
 
   TEMPLATE_HEADERS = [ "Name", "Company", "Email", "Phone", "Street address", "Address line 2", "City", "State", "ZIP", "Notes", "Tags" ].freeze
@@ -35,11 +35,29 @@ class Admin::ClientImportsController < Admin::BaseController
 
     @import.assign_attributes(mapping: mapping_param, duplicates: params.dig(:client_import, :duplicates).presence || @import.duplicates)
     return render(:edit, status: :unprocessable_content) unless @import.save
+    return redirect_to(edit_admin_client_import_path(@import)) unless params[:start]
 
-    redirect_to edit_admin_client_import_path(@import)
+    @import.start!
+    redirect_to admin_client_import_path(@import)
   end
 
-  def show; end
+  # Progress while it runs (the page refreshes itself), then the summary.
+  def show
+    redirect_to(edit_admin_client_import_path(@import)) if @import.mapping?
+  end
+
+  # The rows that didn't go in, and why, as a CSV to fix and upload again.
+  def report
+    send_data @import.report_csv, filename: "#{File.basename(@import.filename, ".*")}-not-imported.csv", type: "text/csv"
+  end
+
+  def undo
+    if @import.undo!
+      redirect_to admin_client_import_path(@import), notice: "Removing the clients this import added."
+    else
+      redirect_to admin_client_import_path(@import), alert: "This import can't be undone any more."
+    end
+  end
 
   def template
     csv = CSV.generate { |rows| rows << TEMPLATE_HEADERS << TEMPLATE_ROW }
