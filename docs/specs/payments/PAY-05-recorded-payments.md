@@ -27,7 +27,7 @@ accurate regardless of how the money arrived.
       (cash, check, bank transfer, other), reference (e.g. check number) and note.
 - [x] Recording updates balance and status (Partially paid / Paid); overpayment is prevented or
       requires explicit confirmation.
-- [ ] Optionally send the client a receipt for a recorded payment.
+- [x] Optionally send the client a receipt for a recorded payment.
 - [x] Recorded payments can be edited or deleted by Owners/Admins with a reason; changes are
       kept in the invoice history. Online payments cannot be edited here.
 - [x] Client page shows outstanding balance; invoice list and dashboard totals include recorded
@@ -55,4 +55,9 @@ accurate regardless of how the money arrived.
   (PLT-12); unpaid again, the link stops expiring. Changes and deletions need a reason, and
   the invoice's history keeps the before and after. Online payments (PAY-04) are listed but
   can't be changed here.
-- Part 2: the optional receipt email.
+- Part 2: the optional receipt (`PaymentMailer#receipt`, catalog type `payment_receipt`, which
+  PAY-04 reuses for online payments): a box on the record form, off by default, shown when the
+  client has an email and the account may email clients. It goes to the client's email on file
+  within the hourly cap, at most five receipts a day per client, and not to a refused address;
+  its delivery shows on the payment. It states the balance as of its payment, and one queued
+  for a payment deleted since isn't sent (marked failed).

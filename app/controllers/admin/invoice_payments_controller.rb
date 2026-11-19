@@ -4,6 +4,8 @@
 class Admin::InvoicePaymentsController < Admin::BaseController
   requires_permission :office
 
+  RECEIPTS_PER_CLIENT_PER_DAY = 5
+
   before_action :set_invoice
   before_action :set_payment, only: %i[edit update destroy]
 
@@ -18,7 +20,7 @@ class Admin::InvoicePaymentsController < Admin::BaseController
     @payment = @invoice.record_payment!(by: current_user, **payment_params)
     return render(:new, status: :unprocessable_content) if @payment.errors.any?
 
-    redirect_to admin_invoice_path(@invoice), notice: "#{helpers.money(@payment.amount)} recorded. #{balance_notice}#{" Send the invoice so the client sees what's left." if @invoice.sends.none? && !@invoice.paid?}"
+    redirect_to admin_invoice_path(@invoice), notice: "#{helpers.money(@payment.amount)} recorded. #{balance_notice}#{send_receipt}#{send_nudge}"
   rescue ArgumentError
     redirect_to helpers.staff_invoice_path(@invoice), alert: cannot_pay_message
   end
@@ -61,6 +63,27 @@ class Admin::InvoicePaymentsController < Admin::BaseController
   end
 
   def payment_params = params.expect(payment: %i[amount received_on payment_method reference note]).to_h.symbolize_keys
+
+  # The optional receipt (to the client's email on file), only from accounts that may email
+  # clients (ACC-01) and within the hourly cap. Returns the notice's last sentence.
+  def send_receipt
+    return "" unless params[:send_receipt] == "1"
+
+    to = @invoice.client.primary_email&.value
+    if to.nil? then " No receipt sent: #{@invoice.client.display_name} has no email address."
+    elsif !current_user.can_send_to_clients? then " No receipt sent: confirm your email address first."
+    elsif EmailSuppression.suppressed?(to) then " No receipt sent: the mail server refused #{to} before."
+    elsif EmailMessage.hourly_limit_reached? then " No receipt sent: that's a lot of emails in an hour. Try again later."
+    elsif EmailMessage.where(kind: "payment_receipt", to:, created_at: 1.day.ago..).count >= RECEIPTS_PER_CLIENT_PER_DAY
+      " No receipt sent: #{to} has had #{RECEIPTS_PER_CLIENT_PER_DAY} receipts today."
+    else
+      PaymentMailer.send_later(:receipt, business: current_business, to:, kind: "payment_receipt", related: @payment, payment_id: @payment.id)
+      " Receipt on its way to #{to}."
+    end
+  end
+
+  # A part payment on an invoice the client hasn't been sent yet (paid on the spot).
+  def send_nudge = @invoice.sends.none? && !@invoice.paid? ? " Send the invoice so the client sees what's left." : ""
 
   def balance_notice
     @invoice.reload

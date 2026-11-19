@@ -1,7 +1,7 @@
 <%# locals: (invoice:) -%>
 <%# PAY-05: every payment on the invoice, online (PAY-04) and recorded, with who and when;
     recorded ones can be corrected. %>
-<% payments = invoice.payments.includes(:recorded_by).to_a %>
+<% payments = invoice.payments.includes(:recorded_by, :email_messages).to_a %>
 <%= card title: "Payments", flush: true do %>
   <% if payments.any? %>
     <ul class="list">
@@ -11,6 +11,9 @@
             <p class="font-medium text-ink"><%= payment.method_label %><%= " #{payment.reference}" if payment.reference %>
               <span class="font-normal text-muted">· <%= local_date(payment.received_on) %></span></p>
             <p class="text-sm2 text-muted"><%= payment.online? ? "Paid online" : "Recorded" %><%= " by #{payment.recorded_by.full_name}" if payment.recorded_by %>, <%= local_time(payment.created_at) %></p>
+            <% if (receipt = payment.email_messages.max_by(&:created_at)) %>
+              <p class="text-sm2 <%= receipt.problem? ? "font-medium text-danger" : "text-muted" %>">Receipt to <%= receipt.to %>: <%= receipt.status_label.downcase %></p>
+            <% end %>
             <% if payment.note %><p class="mt-1 whitespace-pre-line text-sm2 text-subtle"><%= payment.note %></p><% end %>
           </div>
           <span class="money font-semibold text-ink"><%= money(payment.amount) %></span>
