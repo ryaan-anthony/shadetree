@@ -1,0 +1,57 @@
+<% entry = EmailCatalog.find(@template.kind) %>
+<% content_for :title, entry.name %>
+<%= page_header entry.name, lede: @template.definition.hint do %>
+  <%= link_to admin_message_templates_path, class: button_classes(:ghost) do %><%= icon "arrow-left" %> Messages<% end %>
+<% end %>
+
+<%= form_with model: @template, url: admin_message_template_path(@template.kind), method: :patch,
+              data: { controller: "template-editor", template_editor_url_value: preview_admin_message_template_path(@template.kind),
+                      action: "input->template-editor#refresh" },
+              class: "grid gap-6 lg:grid-cols-[1fr_24rem]" do |f| %>
+  <div class="space-y-4">
+    <%= card do %>
+      <% if @template.errors[:base].any? %>
+        <div class="banner banner-warning mb-4" role="alert"><%= icon "alert-circle" %><p><%= @template.errors[:base].join(" ") %></p></div>
+      <% end %>
+      <fieldset class="space-y-4" <%= "disabled" unless @editable %>>
+        <%= f.field :subject, maxlength: 200, data: { template_editor_target: "subject", action: "focus->template-editor#focus" } %>
+        <%= f.field :body, as: :textarea, label: "Opening text", rows: 9, maxlength: 5_000,
+                    help: "Plain text. A blank line starts a new paragraph.",
+                    data: { template_editor_target: "body", action: "focus->template-editor#focus" } %>
+      </fieldset>
+      <div class="mt-5">
+        <p class="label">Placeholders</p>
+        <p class="help -mt-1 mb-2">Filled in for each client when the email goes out. Click one to add it.</p>
+        <ul class="space-y-1.5">
+          <% @template.placeholders.each do |name| %>
+            <li class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm2">
+              <button type="button" class="rounded-control border border-line bg-sunken px-2 py-1 font-mono text-xs text-ink hover:border-control disabled:opacity-50"
+                      data-action="template-editor#insert" data-placeholder="<%= name %>" aria-label="Add {{<%= name %>}}: <%= MessageTemplate::PLACEHOLDERS.fetch(name) %>"
+                      <%= "disabled" unless @editable %>>{{<%= name %>}}</button>
+              <span class="text-muted"><%= MessageTemplate::PLACEHOLDERS.fetch(name) %></span>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+    <% if @editable %>
+      <div class="flex flex-wrap items-center gap-2">
+        <%= f.submit_button "Save" %>
+        <%= link_to "Cancel", admin_message_templates_path, class: button_classes(:ghost) %>
+      </div>
+    <% else %>
+      <p class="text-sm text-muted">Editing messages is part of a paid plan. <%= link_to "See plans", admin_plan_path, class: "font-semibold text-canopy hover:underline" %></p>
+    <% end %>
+  </div>
+  <aside aria-label="Preview">
+    <p class="label">Preview</p>
+    <div data-template-editor-target="preview"><%= render "preview", template: @template %></div>
+  </aside>
+<% end %>
+
+<% if @template.persisted? && @editable %>
+  <%= button_to admin_message_template_path(@template.kind), method: :delete, class: "#{button_classes(:ghost, :sm)} mt-4",
+                form: { data: { turbo_confirm: "Go back to the default wording for #{entry.name}?", turbo_confirm_button: "Use the default" } } do %>
+    <%= icon "rotate-ccw" %> Go back to the default wording
+  <% end %>
+<% end %>

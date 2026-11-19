@@ -1,0 +1,18 @@
+<%# locals: (template:) -%>
+<%# NTF-03: the message as a client would get it, with sample details (and this business's name). %>
+<% subject, body = template.preview(current_business) %>
+<% if template.errors[:base].any? %>
+  <div class="banner banner-warning mb-3" role="alert"><%= icon "alert-circle" %><p><%= template.errors[:base].join(" ") %></p></div>
+<% end %>
+<div class="rounded-card border border-line bg-surface">
+  <div class="border-b border-line px-4 py-3 text-sm">
+    <p class="text-muted">From <span class="text-ink"><%= current_business.name %> via Shadetree</span></p>
+    <p class="mt-0.5 font-semibold text-ink"><%= subject.presence || "(no subject)" %></p>
+  </div>
+  <div class="space-y-3 px-4 py-4 text-sm text-body">
+    <% body.split(/\n{2,}/).each do |paragraph| %>
+      <p><%= safe_join(paragraph.split("\n"), tag.br) %></p>
+    <% end %>
+    <p class="rounded-control border border-dashed border-line px-3 py-2 text-sm2 text-muted">The summary and the button to the client's page go here, as always.</p>
+  </div>
+</div>

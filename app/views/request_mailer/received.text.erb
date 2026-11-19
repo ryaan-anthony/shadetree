@@ -1,7 +1,8 @@
-Thanks for your request
+<% if @intro %><%= @intro %>
+<% else %>Thanks for your request
 
 <%= @business.name %> has it and will be in touch soon.
-<% if @request.service_names.any? %>
+<% end %><% if @request.service_names.any? %>
 Services: <%= @request.service_names.join(", ") %>
 <% end -%>
 <% if @request.timing %>

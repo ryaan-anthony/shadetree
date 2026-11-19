@@ -1,4 +1,8 @@
+<% if @intro %>
+<%= render "client_mailer/intro", text: @intro %>
+<% else %>
 <p style="margin:0 0 16px;">Thank you. We've received your payment.</p>
+<% end %>
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 20px;border:1px solid #e2e8f0;border-radius:8px;">
   <tr><td style="padding:14px 16px;">
     <p style="margin:0;font-size:13px;color:#64748b;">Invoice <%= @invoice.number %><%= " · #{@invoice.title}" if @invoice.title %></p>

@@ -64,6 +64,11 @@ Rails.application.routes.draw do
       get :request_form_qr # CLI-03
     end
 
+    # Settings → Messages (NTF-03): one per client-facing email kind
+    resources :message_templates, only: %i[index edit update destroy], param: :kind, path: "messages" do
+      post :preview, on: :member
+    end
+
     # Team (ACC-03)
     resource :team, only: :show, controller: "team"
     resources :invitations, only: :create do

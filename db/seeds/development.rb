@@ -208,6 +208,10 @@ Tenancy.with_business(business) do
                                     description: "Called about monthly grounds maintenance next season. Wants a quote by Dec 15.")
     logged.notes.create!(business:, user: owner, body: "Site visit booked for Thursday.")
   end
+  # NTF-03: one customized client email (Settings → Messages; editing needs a plan with templates).
+  MessageTemplate.create_with(subject: "See you tomorrow, {{client_first_name}}",
+                              body: "Hi {{client_first_name}},\n\nJust a reminder that we'll be there tomorrow, {{visit_window}}. " \
+                                    "Please leave the side gate unlocked.\n\nThanks!").find_or_create_by!(kind: "visit_reminder")
   puts "Request form: http://localhost:3000/request/#{business.handle}"
 end
 

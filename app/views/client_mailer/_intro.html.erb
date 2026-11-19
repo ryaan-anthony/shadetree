@@ -1,0 +1,5 @@
+<%# locals: (text:) -%>
+<%# NTF-03: a business's own opening text, as plain paragraphs (escaped: templates can't add markup). %>
+<% text.split(/\n{2,}/).each do |paragraph| %>
+  <p style="margin:0 0 14px;"><%= safe_join(paragraph.split("\n"), tag.br) %></p>
+<% end %>

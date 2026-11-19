@@ -32,6 +32,14 @@ class ClientMailer < ApplicationMailer
 
   private
 
+  # NTF-03: the business's own subject for this email, filled in, with its opening text in
+  # @intro for the views; nil (and the default wording) when it hasn't customized the message.
+  def custom_subject(kind, values)
+    template = MessageTemplate.for_kind(kind) or return
+    @intro = MessageTemplate.render(template.body, values)
+    MessageTemplate.render_subject(template.subject, values)
+  end
+
   def within_business(&)
     @business = Business.find(params[:business_id])
     @branding = @business.branding
