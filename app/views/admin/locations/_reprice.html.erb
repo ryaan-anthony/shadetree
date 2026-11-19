@@ -1,0 +1,12 @@
+<%# locals: (document:, path:) -%>
+<%# CAT-08: after a draft moves to another location, offer that location's prices and taxes. %>
+<% if document.repricing_offer? %>
+  <% prices = document.location_price_changes.size %>
+  <% what = [ (prices.positive? ? "prices" : nil), (document.location_taxes_differ? ? "taxes" : nil) ].compact %>
+  <div class="banner banner-info mt-3" role="status"><%= icon "tag" %>
+    <div class="min-w-0 flex-1">
+      <p><%= document.location.name %> has <%= [ (pluralize(prices, "different price") if prices.positive?), ("different default taxes" if what.include?("taxes")) ].compact.to_sentence %> for this <%= document.model_name.human.downcase %>.</p>
+      <%= button_to "Use #{document.location.name}'s #{what.join(" and ")}", path, method: :patch, class: "#{button_classes(:secondary, :sm)} mt-2", form: { data: { turbo: false } } %>
+    </div>
+  </div>
+<% end %>

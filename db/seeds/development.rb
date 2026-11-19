@@ -61,6 +61,10 @@ Tenancy.with_business(business) do
     item = CatalogItem.find_by(name:)
     item.update!(unit_price: price) if item && item.unit_price.nil?
   end
+  # CAT-08: North yard charges more for mowing and applies only the state tax by default.
+  mowing = CatalogItem.find_by(name: "Lawn mowing")
+  LocationPrice.find_or_create_by!(location: north, catalog_item: mowing) { _1.unit_price = "55" } if mowing
+  north.update!(tax_rate_ids: TaxRate.where(name: "State sales tax").pluck(:id)) if north.tax_rate_ids.nil?
 
   # Clients (CLI-01, CLI-02).
   [

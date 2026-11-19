@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_19_002100) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_19_002200) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -721,6 +721,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002100) do
     t.index ["user_id"], name: "index_location_members_on_user_id"
   end
 
+  create_table "location_prices", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "location_id", null: false
+    t.bigint "catalog_item_id", null: false
+    t.bigint "unit_price_cents", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "catalog_item_id"], name: "index_location_prices_on_business_id_and_catalog_item_id"
+    t.index ["catalog_item_id"], name: "index_location_prices_on_catalog_item_id"
+    t.index ["location_id", "catalog_item_id"], name: "index_location_prices_on_location_id_and_catalog_item_id", unique: true
+    t.check_constraint "unit_price_cents >= 0", name: "location_prices_not_negative"
+  end
+
   create_table "locations", force: :cascade do |t|
     t.bigint "business_id", null: false
     t.string "uid", null: false
@@ -739,6 +752,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002100) do
     t.datetime "archived_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "tax_rate_ids", array: true
     t.index ["business_id", "name"], name: "index_locations_on_business_id_and_name", unique: true
     t.index ["business_id"], name: "index_locations_one_primary", unique: true, where: "\"primary\""
     t.index ["uid"], name: "index_locations_on_uid", unique: true
@@ -1311,6 +1325,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002100) do
   add_foreign_key "location_members", "businesses", on_delete: :cascade
   add_foreign_key "location_members", "locations", on_delete: :cascade
   add_foreign_key "location_members", "users"
+  add_foreign_key "location_prices", "businesses", on_delete: :cascade
+  add_foreign_key "location_prices", "catalog_items", on_delete: :cascade
+  add_foreign_key "location_prices", "locations", on_delete: :cascade
   add_foreign_key "locations", "businesses", on_delete: :cascade
   add_foreign_key "message_templates", "businesses"
   add_foreign_key "message_templates", "users", column: "updated_by_id"

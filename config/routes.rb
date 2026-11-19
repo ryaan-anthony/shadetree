@@ -159,6 +159,7 @@ Rails.application.routes.draw do
         post :duplicate
         patch :extend_expiry
         post :revise
+        patch :reprice # CAT-08
         get "revisions/:number", action: :revision, as: :revision, constraints: { number: /\d+/ }
       end
       resources :attachments, only: :destroy, controller: "quote_attachments"
@@ -179,6 +180,7 @@ Rails.application.routes.draw do
         post :revise
         post :discard_revision
         patch :void
+        patch :reprice # CAT-08
       end
       resources :attachments, only: :destroy, controller: "invoice_attachments"
     end

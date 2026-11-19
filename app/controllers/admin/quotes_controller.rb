@@ -11,8 +11,8 @@ class Admin::QuotesController < Admin::BaseController
   leaves_session_alone only: :search
   filters_by_location Quote, only: %i[index search] # CAT-07
 
-  before_action :set_quote, only: %i[show edit update destroy preview pdf archive unarchive duplicate extend_expiry revise revision]
-  before_action :require_editable, only: %i[edit update]
+  before_action :set_quote, only: %i[show edit update destroy preview pdf archive unarchive duplicate extend_expiry revise revision reprice]
+  before_action :require_editable, only: %i[edit update reprice]
 
   # The list, on the "All" tab (or ?filter= from a link). Searching posts to #search, so client
   # names never appear in URLs.
@@ -121,6 +121,12 @@ class Admin::QuotesController < Admin::BaseController
     end
   end
 
+  # CAT-08: the draft's location's catalog prices and default taxes, when staff accept the offer.
+  def reprice
+    @quote.reprice_for_location!
+    redirect_to edit_admin_quote_path(@quote), notice: "Prices and taxes now match #{@quote.location.name}."
+  end
+
   def destroy
     if !@quote.draft? || @quote.revising?
       return redirect_to(helpers.staff_quote_path(@quote), alert: "Only quotes that were never sent can be deleted.")
@@ -196,6 +202,7 @@ class Admin::QuotesController < Admin::BaseController
     change_client(attrs[:client]) if attrs[:client].present? && attrs[:client] != @quote.client.uid && !@quote.revising?
     assign_property(attrs[:property]) if attrs.key?(:property)
     @quote.location = picked_location(attrs[:location]) || @quote.location if attrs.key?(:location)
+    @location_changed = @quote.location_id_changed? # CAT-08: offer the new location's prices
     @quote.assign_attributes(attrs.slice(:title, :message, :internal_notes, :terms, :expires_on, :prices_include_tax))
     @quote.set_discount(attrs[:discount_kind], attrs[:discount_value]) if attrs.key?(:discount_kind)
     # After a client change the ticks were for the old client; change_client chose the taxes.

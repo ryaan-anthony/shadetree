@@ -9,6 +9,7 @@
 class Invoice < ApplicationRecord
   include BusinessOwned
   include AtLocation # CAT-07
+  include LocationRepricing # CAT-08
   include PricedDocument
   include BuiltDocument
   include DocumentAttachments
@@ -446,7 +447,7 @@ class Invoice < ApplicationRecord
     self.currency ||= business.currency_code
     self.issued_on ||= business.today
     self.terms ||= business.invoice_terms
-    self.tax_rate_list = TaxRate.for_new_document(client:) if tax_rates.blank? && job.nil? && quote.nil?
+    self.tax_rate_list = TaxRate.for_new_document(client:, location:) if tax_rates.blank? && job.nil? && quote.nil?
     return if payment_terms_changed? # chosen
 
     days = business.invoice_due_days.to_i

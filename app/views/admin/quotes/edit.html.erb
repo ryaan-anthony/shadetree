@@ -73,6 +73,7 @@
         <%= f.field :expires_on, as: :date, label: "Valid until", optional: true %>
       </div>
       <div class="mt-4 empty:hidden"><%= render "admin/locations/field", f:, document: @quote, help: "The client sees this location's contact details." %></div>
+      <div id="location_reprice"></div>
     <% end %>
 
     <%= card title: "Items", flush: true do %>
@@ -85,7 +86,7 @@
         No items yet. Add one from your catalog or type a custom line.
       </p>
       <div class="flex flex-wrap items-end gap-2 border-t border-line px-5 py-4">
-        <div class="min-w-0 flex-1 basis-64"><%= render "admin/catalog_items/picker", label: "Add from catalog" %></div>
+        <div class="min-w-0 flex-1 basis-64"><%= render "admin/catalog_items/picker", label: "Add from catalog", location: @quote.location %></div>
         <button type="button" class="<%= button_classes(:secondary) %>" data-action="quote-builder#addCustom"><%= icon "plus" %> Custom line</button>
       </div>
       <template data-quote-builder-target="template">

@@ -8,6 +8,7 @@
 class Quote < ApplicationRecord
   include BusinessOwned
   include AtLocation # CAT-07
+  include LocationRepricing # CAT-08
   include PricedDocument
   include BuiltDocument
   include DocumentAttachments
@@ -329,7 +330,7 @@ class Quote < ApplicationRecord
     self.currency ||= business.currency_code
     self.expires_on ||= business.today + business.quote_expiry_days.to_i.days if business.quote_expiry_days.to_i.positive?
     self.terms ||= business.quote_terms
-    self.tax_rate_list = TaxRate.for_new_document(client:) if tax_rates.blank?
+    self.tax_rate_list = TaxRate.for_new_document(client:, location:) if tax_rates.blank?
   end
 
   # JOB-01: an approved quote becomes a job when the business has that on (the default). It

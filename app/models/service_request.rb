@@ -65,18 +65,19 @@ class ServiceRequest < ApplicationRecord
 
   # CLI-04: a draft quote from this request: its client and property (a property for the
   # typed address if the request has none, now that a staff member has checked it), its
-  # services as lines with today's catalog prices, and its photos.
+  # services as lines with today's catalog prices (the location's, CAT-08), and its photos.
   def create_quote!(by:)
     transaction do
       lock!
       property = self.property || property_matching_address
       quote = Quote.start(client:, property:, created_by: by, location:)
       items = CatalogItem.where(id: services.map { _1["catalog_item_id"] }).index_by(&:id)
+      overrides = LocationPrice.cents_at(location, items.values) # CAT-08: this location's prices
       quote.sync_line_items(services.each_with_index.map do |service, index|
         item = items[service["catalog_item_id"]]
         base = { "key" => "request-#{index}", "name" => service["name"], "quantity" => "1" }
         item ? base.merge("catalog_item" => item.uid, "name" => item.name, "description" => item.description, "unit" => item.unit_label,
-                          "unit_price" => item.unit_price&.to_s || "0", "taxable" => item.taxable ? "1" : "0") : base
+                          "unit_price" => item.price_at(location, overrides:)&.to_s || "0", "taxable" => item.taxable ? "1" : "0") : base
       end)
       photos.each { quote.attachments.attach(_1.blob) }
       quote.service_request = self

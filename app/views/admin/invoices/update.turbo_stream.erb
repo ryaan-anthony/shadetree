@@ -3,6 +3,9 @@
 <% @invoice.current_line_items.each_with_index do |line, index| %>
   <%= turbo_stream.update "line-total-#{line.key}", money(totals.lines[index].subtotal) %>
 <% end %>
+<% if @location_changed %><%# CAT-08 %>
+  <%= turbo_stream.update "location_reprice" do %><%= render "admin/locations/reprice", document: @invoice, path: reprice_admin_invoice_path(@invoice) %><% end %>
+<% end %>
 <%= turbo_stream.update "builder_errors" do %><%= render "admin/quotes/errors", quote: @invoice %><% end %>
 <%= turbo_stream.replace "invoice_lock_version" do %><input type="hidden" name="invoice[lock_version]" id="invoice_lock_version" value="<%= @invoice.lock_version %>" autocomplete="off"><% end %>
 <%# The worked-out due date and its errors; the terms and date controls stay as the user left them. %>

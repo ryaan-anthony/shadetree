@@ -73,6 +73,7 @@
         <%= f.field :issued_on, as: :date, label: "Issue date" %>
       </div>
       <div class="mt-4 empty:hidden"><%= render "admin/locations/field", f:, document: @invoice, help: "The client sees this location's contact details." %></div>
+      <div id="location_reprice"></div>
       <div class="mt-4"><%= render "due", invoice: @invoice %></div>
     <% end %>
 
@@ -86,7 +87,7 @@
         No items yet. Add one from your catalog or type a custom line.
       </p>
       <div class="flex flex-wrap items-end gap-2 border-t border-line px-5 py-4">
-        <div class="min-w-0 flex-1 basis-64"><%= render "admin/catalog_items/picker", label: "Add from catalog" %></div>
+        <div class="min-w-0 flex-1 basis-64"><%= render "admin/catalog_items/picker", label: "Add from catalog", location: @invoice.location %></div>
         <button type="button" class="<%= button_classes(:secondary) %>" data-action="quote-builder#addCustom"><%= icon "plus" %> Custom line</button>
       </div>
       <template data-quote-builder-target="template">

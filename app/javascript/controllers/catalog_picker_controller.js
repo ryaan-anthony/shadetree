@@ -5,7 +5,7 @@ import { Controller } from "@hotwired/stimulus"
 // and archived items drop out. Recents are a convenience; storage may be empty or blocked.
 export default class extends Controller {
   static targets = ["input", "list", "status"]
-  static values = { url: String, storageKey: String }
+  static values = { url: String, storageKey: String, location: String }
 
   connect() {
     this.items = []
@@ -39,6 +39,9 @@ export default class extends Controller {
     const request = ++this.request
     const url = new URL(this.urlValue, window.location.origin)
     Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value))
+    // CAT-08: prices for the document's location (its form's location select, when it has one)
+    const location = this.element.closest("form")?.querySelector("select[name$='[location]']")?.value || this.locationValue
+    if (location) url.searchParams.set("location", location)
     try {
       const response = await fetch(url, { headers: { Accept: "application/json" } })
       if (!response.ok) throw new Error(response.statusText)

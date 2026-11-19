@@ -26,7 +26,7 @@ module DocumentBuilder
     exempt_changed = client.tax_exempt != document.client.tax_exempt
     document.client = client
     document.property = client.primary_property
-    document.tax_rate_list = TaxRate.for_new_document(client:) if exempt_changed
+    document.tax_rate_list = TaxRate.for_new_document(client:, location: document.location) if exempt_changed
     @client_changed = true
   end
 

@@ -44,7 +44,7 @@
         <% end %>
       </template>
       <div class="flex flex-wrap items-end gap-3" data-nested-fields-target="anchor">
-        <div class="min-w-0 flex-1 sm:max-w-sm"><%= render "admin/catalog_items/picker" %></div>
+        <div class="min-w-0 flex-1 sm:max-w-sm"><%= render "admin/catalog_items/picker", location: @job.location %></div>
         <button type="button" class="<%= button_classes(:secondary) %>" data-action="nested-fields#add" data-nested-fields-kind-param="line"><%= icon "plus" %> Add a custom item</button>
       </div>
     </div>

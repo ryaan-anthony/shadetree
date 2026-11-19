@@ -35,6 +35,21 @@
       <%= f.check :show_on_request_form, label: "Show on your request form", hint: "Clients can pick it when asking for work." %>
     </div>
   <% end %>
+  <% branches = current_business.multiple_locations? ? current_business.active_locations.reject(&:primary?) : [] %>
+  <% if branches.any? %><%# CAT-08 %>
+    <%= card title: "Prices by location", subtitle: "Leave a location empty to use the default price there. Quotes and invoices already made keep their prices." do %>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <% branches.each do |location| %>
+          <div class="field">
+            <label class="label" for="location_price_<%= location.uid %>"><%= location.name %> <span class="label-optional">(optional)</span></label>
+            <div class="input-group"><span class="input-addon" aria-hidden="true"><%= Money.currency(current_business.currency_code).symbol %></span>
+              <%= text_field_tag "catalog_item[location_price_inputs][#{location.uid}]", @item.location_price_input(location), id: "location_price_#{location.uid}",
+                                 class: "input tabular", inputmode: "decimal", autocomplete: "off", placeholder: @item.unit_price&.to_s %></div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
   <div class="flex items-center justify-end gap-2">
     <%= link_to "Cancel", admin_catalog_items_path, class: button_classes(:ghost) %>
     <%= f.submit_button @item.persisted? ? "Save item" : "Add item" %>

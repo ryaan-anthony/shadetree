@@ -1,10 +1,11 @@
-<%# locals: (label: "Add from catalog") -%>
+<%# locals: (label: "Add from catalog", location: nil) -%>
 <%# The catalog item picker (CAT-03), reused by quote, invoice and job line editors.
     Picking an item dispatches "catalog-picker:pick" with the item's JSON in event.detail;
     the line editor copies the values it needs, so later catalog edits never change the line. %>
 <div class="relative" data-controller="catalog-picker"
      data-catalog-picker-url-value="<%= search_admin_catalog_items_path(format: :json) %>"
      data-catalog-picker-storage-key-value="catalog-recent:<%= current_business.uid %>"
+     data-catalog-picker-location-value="<%= location&.uid %>"
      data-action="keydown->catalog-picker#keydown focusout->catalog-picker#blur">
   <label class="label" for="<%= picker_id = "catalog-picker-#{SecureRandom.hex(3)}" %>"><%= label %></label>
   <div class="relative">

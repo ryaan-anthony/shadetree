@@ -48,6 +48,9 @@
                   <% unless item.taxable %><%= badge "Not taxed", dot: false %><% end %>
                 </p>
                 <p class="truncate text-sm2 text-muted"><%= [ item.description.presence, item.duration_label ].compact.join(" · ") %></p>
+                <% if (overrides = @overrides[item.id]).present? %><%# CAT-08: prices at other locations, at a glance %>
+                  <p class="mt-1 flex flex-wrap gap-1"><% overrides.each do |price| %><%= badge "#{price.location.name} #{money(price.unit_price)}", tone: :info, dot: false %><% end %></p>
+                <% end %>
               </div>
               <p class="w-36 text-right">
                 <% if item.unit_price %>
