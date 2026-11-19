@@ -26,7 +26,7 @@ the business's financial records.
 - [x] Owners/Admins can download CSVs for: clients, properties, requests, quotes (and line
       items), jobs and visits, invoices (and line items), payments. Columns are documented and
       stable; money and dates are formatted for spreadsheets.
-- [ ] A full-account export bundles all CSVs plus document PDFs and uploaded files into one
+- [x] A full-account export bundles all CSVs plus document PDFs and uploaded files into one
       archive, generated in the background; the requester receives an email/in-app link that
       expires (e.g. 7 days).
 - [x] Exports are available on every plan and are logged (who, what, when).
@@ -49,6 +49,9 @@ the business's financial records.
   person's details are what's removed. Where a business must keep more for tax law, it should
   export before erasing. The legal text (MKT-03) still has to confirm this.
 - **Technicians' visit photos are included in the full export** (recommendation accepted).
+- **The zip is written by a small in-app writer** (`ZipWriter`, on Ruby's zlib) rather than a new
+  gem: entries are stored or deflated, names are UTF-8, and the archive is capped at 2 GB (well
+  under the 4 GB a ZIP without ZIP64 allows).
 
 ## Implementation notes
 
@@ -65,3 +68,12 @@ Part 1 (CSV downloads, the log):
   spreadsheet would run as a formula is prefixed with ' (our numbers and phone numbers are left
   alone). Files start with a byte-order mark and are sent as UTF-8 with `no-store`.
 - Every download is a `DataExport` row (who, what, when, row count), listed as "Recent exports".
+
+Part 2 (everything in one zip):
+- "Export everything" (one at a time per business) queues `DataExportJob`, which writes a zip
+  with every CSV, each quote's and invoice's PDF (as clients see it), every attached file and
+  photo (quotes, invoices, jobs, visits, requests) and the logo, plus a README explaining the
+  layout and listing anything that couldn't be included.
+- The requester gets a notification and email (`data_export_ready`, theirs alone); the zip is
+  downloadable by Owners and Admins for 7 days, streamed from storage; `PruneDataExportsJob`
+  (daily) removes it afterwards. The export stays in the log.

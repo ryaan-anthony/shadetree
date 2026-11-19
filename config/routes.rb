@@ -48,7 +48,7 @@ Rails.application.routes.draw do
   namespace :admin do
     # Clients (CLI-01)
     # Your data (INS-02): CSV downloads and the export log
-    resources :data_exports, only: :index, path: "data" do
+    resources :data_exports, only: %i[index show create], path: "data" do
       get "download/:table", action: :download, on: :collection, as: :download, constraints: { table: /[a-z_]+/ }
     end
 

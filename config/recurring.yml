@@ -22,6 +22,9 @@ production:
   prune_client_imports: # CLI-06: abandoned uploads and old reports
     class: PruneClientImportsJob
     schedule: every day at 4:50am
+  prune_data_exports: # INS-02: expired export zips
+    class: PruneDataExportsJob
+    schedule: every day at 5:05am
   visit_reminders: # JOB-05: the day-before reminders, as each business's clock reaches the hour
     class: VisitRemindersJob
     schedule: every hour at minute 7

@@ -6,6 +6,9 @@ class DataExport < ApplicationRecord
   STATUSES = %w[building ready failed expired].freeze
 
   belongs_to :requested_by, class_name: "User", optional: true
+  has_one_attached :file # the full export's zip, until it expires
+
+  LINK_LASTS = 7.days
 
   validates :status, inclusion: { in: STATUSES }
   validates :kind, inclusion: { in: ->(_) { TABLES.keys + %w[full] } }
@@ -196,4 +199,49 @@ class DataExport < ApplicationRecord
   end
 
   def label = kind == "full" ? "Everything (zip)" : self.class.table(kind).label
+
+  STATUSES.each { |status| define_method(:"#{status}?") { self.status == status } }
+
+  # Starts a full export in the background, or returns the one already being built.
+  def self.request_full!(by:)
+    transaction do
+      Current.business.lock!
+      where(kind: "full", status: "building").first ||
+        create!(kind: "full", status: "building", requested_by: by, requested_by_email: by.email).tap do |export|
+          DataExportJob.perform_later(export.id, export.business_id)
+        end
+    end
+  end
+
+  def downloadable? = ready? && file.attached? && expires_at&.future?
+
+  # Builds the zip (DataExportJob, inside the business) and tells whoever asked.
+  def build!
+    Tempfile.create([ "export", ".zip" ], binmode: true) do |tempfile|
+      count = Archive.new(business).write(tempfile)
+      tempfile.rewind
+      file.attach(io: tempfile, filename: "#{business.handle.presence || "shadetree"}-everything-#{business.today.iso8601}.zip", content_type: "application/zip")
+      update!(status: "ready", rows_count: count, expires_at: LINK_LASTS.from_now)
+    end
+    notify("Your data export is ready to download, until #{expires_at.in_time_zone(business.time_zone).to_date.to_fs(:long)}.")
+  rescue Archive::TooLarge, ZipWriter::TooLarge => error
+    update!(status: "failed")
+    notify("Your data export couldn't be made: #{error.message} Download the spreadsheets one at a time instead.")
+  rescue StandardError => error
+    Rails.error.report(error, context: { data_export: id })
+    update!(status: "failed")
+    notify("Your data export couldn't be made. Try again in a while; we've been told about the problem.")
+  end
+
+  # The zip is removed once the link expires (PruneDataExportsJob).
+  def expire! = (file.purge_later; update!(status: "expired"))
+
+  private
+
+  def notify(title)
+    return unless requested_by
+
+    NotificationType.deliver("data_export_ready", business:, to: [ requested_by ], subject: self, title:,
+                             path: Rails.application.routes.url_helpers.admin_data_exports_path)
+  end
 end
