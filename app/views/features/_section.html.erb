@@ -12,7 +12,7 @@
       <% small = image.sub(".webp", phone ? "-400.webp" : "-800.webp") %><%# MKT-04: a smaller file for small screens %>
       <%= link_to_unless phone, image_tag(image, alt:, width:, height:, loading: "lazy", decoding: "async",
                                           srcset: { small => "#{phone ? 400 : 800}w", image => "#{width}w" },
-                                          sizes: phone ? "19rem" : "(min-width: 1024px) 40vw, 100vw",
+                                          sizes: phone ? "19rem" : "(min-width: 1152px) 612px, (min-width: 1024px) 50vw, calc(100vw - 2.5rem)",
                                           class: "h-auto w-full #{phone ? "rounded-[1.5rem]" : ""}"),
                          image_path(image), target: "_blank", rel: "noopener", title: "Open full size" %>
     </figure>

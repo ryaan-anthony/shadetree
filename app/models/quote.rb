@@ -217,6 +217,9 @@ class Quote < ApplicationRecord
   # QTE-04: what the client sees is frozen from here on (changes after sending are revisions,
   # QTE-06). Records the send, and on the first one marks the quote sent and records the
   # billable "quote_sent" usage event exactly once (BIL-02). Returns the QuoteSend.
+  # MKT-04: whether the last mark_sent! was the business's first quote ever sent.
+  def first_quote_sent? = @first_quote_sent == true
+
   def mark_sent!(by:, channel:, recipient: nil, cc: nil, email_message: nil)
     transaction do
       lock!
@@ -224,7 +227,7 @@ class Quote < ApplicationRecord
 
       update!(status: "sent", sent_at: Time.current, sent_by: by) if draft?
       # ACC-05: when the business sent its first quote, for time-to-first-quote (no PII).
-      Business.where(id: business_id, first_quote_sent_at: nil).update_all(first_quote_sent_at: Time.current)
+      @first_quote_sent = Business.where(id: business_id, first_quote_sent_at: nil).update_all(first_quote_sent_at: Time.current) == 1
       UsageEvent.record!("quote_sent", self, at: sent_at || Time.current)
       ClientEvent.record!(client, :quote_sent, subject: self, by:, channel:, revision:) # CLI-05
       sends.create!(business:, user: by, channel:, recipient:, cc:, email_message:, revision:)

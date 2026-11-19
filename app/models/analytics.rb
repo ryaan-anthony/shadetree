@@ -5,16 +5,18 @@
 # Page views come from Plausible's script on public marketing pages only (never the staff app
 # or client pages). The funnel's later steps happen in the app, so they're sent from the
 # server: Analytics.track("Business Created", request:). Only the event name and a fixed,
-# id-free address go out, with the visitor's browser and IP so Plausible can link them to the
-# same anonymous visitor as their page views (it hashes these daily and keeps neither).
+# id-free address go out, with the visitor's browser and IP, which Plausible uses only to make
+# a daily anonymous ID (it keeps neither). No cookies. Pages opt in to the script with
+# `content_for :analytics, "on"` (public marketing pages and sign-up; never pages with tokens).
 module Analytics
   EVENTS = {
-    "Signup" => "/app/signed-up",
+    "Sign-up Completed" => "/app/signed-up",
     "Business Created" => "/app/business-created",
     "First Quote Sent" => "/app/first-quote-sent"
   }.freeze
 
-  def self.host = ENV["ANALYTICS_HOST"].to_s.chomp("/").presence
+  # A full https:// address; anything else leaves analytics off.
+  def self.host = ENV["ANALYTICS_HOST"].to_s.chomp("/").presence&.then { _1.match?(%r{\Ahttps://[^/\s]+\z}) ? _1 : nil }
   def self.domain = ENV["ANALYTICS_DOMAIN"].presence
   # config.x.analytics is false in development and test (config/application.rb).
   def self.enabled? = host.present? && domain.present? && Rails.configuration.x.analytics

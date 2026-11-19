@@ -27,12 +27,12 @@ cookie banner.
 - [x] A sitemap lists public marketing pages; robots rules and page metadata keep the staff app,
       operator console and client links out of search engines. Business request pages are
       indexable only if the business opts in (see open question).
-- [x] Marketing pages score ≥ 90 on mobile Lighthouse in performance, accessibility, best
+- [ ] Marketing pages score ≥ 90 on mobile Lighthouse in performance, accessibility, best
       practices and SEO; a CI or scheduled check guards against regressions.
 - [x] Privacy-respecting analytics (no cross-site cookies, no personal data) record page views
       and key events: sign-up started, sign-up completed, business created, first quote sent.
 - [x] Analytics are disabled in development/test and never load on client-facing pages.
-- [x] A simple funnel view (in the analytics tool) shows visit → sign-up → first quote sent.
+- [ ] A simple funnel view (in the analytics tool) shows visit → sign-up → first quote sent.
 - [x] Structured data for the organization/software product is present.
 
 ## Out of scope
@@ -68,18 +68,27 @@ Part 2 (analytics and speed):
 - `Analytics` (Plausible, self-hosted): set `ANALYTICS_HOST` and `ANALYTICS_DOMAIN` in
   production; off in development and test (`config.x.analytics`). The script loads on the
   marketing layout only. The app's funnel steps are sent from the server by
-  `AnalyticsEventJob`: "Signup", "Business Created" and "First Quote Sent" (the business's
+  `AnalyticsEventJob`: "Sign-up Completed", "Business Created" and "First Quote Sent" (the business's
   first), each with a fixed address and no ids, plus the visitor's browser and IP so Plausible
   links them to the same anonymous visitor. A failed send is logged and dropped.
 - In Plausible: add the goals Pageview `/users/sign_up` ("Sign-up started") and the three
-  custom events, then a funnel: visit → Sign-up started → Signup → Business Created → First
-  Quote Sent. The CSP (PLT-13) must allow `ANALYTICS_HOST` in `script-src` and `connect-src`.
+  custom events. Self-hosted Plausible (Community Edition) shows each goal's conversions but
+  has no funnel view, and its visitor ID changes daily, so steps on later days aren't linked:
+  the funnel criterion is open (see Open questions).
+- The script loads only on pages that opt in (`content_for :analytics`): the marketing pages
+  and sign-up, never invitation or account pages (tokens and private paths). The CSP (PLT-13,
+  #195) must allow `ANALYTICS_HOST` in `script-src` and `connect-src`; whichever of the two
+  merges second adds it. The privacy policy (MKT-03) describes it.
 - Speed: screenshots come with half-size versions (`srcset`), one low-contrast label is fixed.
   Measured on a development server (no compression, unminified): 87–89 performance, 100 for
   accessibility, best practices and SEO; production adds compression (Thruster).
   `script/lighthouse_check URL` checks the pages (90 or more in every category), and the
-  Lighthouse workflow runs it weekly against `MARKETING_URL` once that variable is set.
+  Lighthouse workflow runs it weekly against `MARKETING_URL` once that variable is set. The
+  criterion is ticked once that run passes against the live site.
 
 ## Open questions
 
-- None.
+- **The funnel view**: self-hosted Plausible has no funnels. Options: show per-goal
+  conversions only (Community Edition), Plausible Cloud's Business plan (then a sub-processor),
+  a self-hosted tool with funnels (Umami), or a funnel in the operator console from the app's
+  own data (`first_quote_sent_at` and friends).

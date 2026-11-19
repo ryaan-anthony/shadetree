@@ -98,10 +98,7 @@ class Admin::QuoteSendsController < Admin::BaseController
 
   # MKT-04: the funnel's last step, when this send was the business's first.
   def track_first_quote
-    return unless Analytics.enabled?
-    return unless @quote.sends.unscope(:order).count == 1 && Quote.where.not(id: @quote.id).where.not(sent_at: nil).none?
-
-    Analytics.track("First Quote Sent", request:)
+    Analytics.track("First Quote Sent", request:) if @quote.first_quote_sent?
   end
 
   def too_many_today? = @quote.sends.unscope(:order).where(channel: "email", created_at: 1.day.ago..).count >= EMAILS_PER_QUOTE_PER_DAY
