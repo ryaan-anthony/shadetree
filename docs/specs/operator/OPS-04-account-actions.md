@@ -39,6 +39,11 @@ feature flags — each one audited and hard to do by accident.
 - [ ] Tests cover each action's effects, client-link behavior under suspension, deletion
       completeness (no orphaned records or files) and audit entries.
 
+## Follow-ups
+
+- Add Trial / Past due / Suspended / payment-account status and billing history to the OPS-02
+  directory and business page (OPS-02 shows Active and Closed only until then).
+
 ## Out of scope
 
 - Self-serve business deletion by owners (backlog). Refunds (provider dashboard).

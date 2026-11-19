@@ -17,8 +17,10 @@ class Ops::NotesController < Ops::BaseController
   def edit; end
 
   def update
-    if @note.update(body: params.dig(:operator_note, :body))
-      audit!("business.note_edited", business: @business, note: @note.id)
+    @note.body = params.dig(:operator_note, :body)
+    changed = @note.body_changed?
+    if @note.save
+      audit!("business.note_edited", business: @business, note: @note.id) if changed
       redirect_to ops_business_path(@business, anchor: "notes"), notice: "Note saved."
     else
       render :edit, status: :unprocessable_content

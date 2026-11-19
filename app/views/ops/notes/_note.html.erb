@@ -2,7 +2,7 @@
 <li class="items-start text-sm" id="note-<%= note.id %>">
   <div class="min-w-0 flex-1">
     <p class="whitespace-pre-line break-words text-ink"><%= note.body %></p>
-    <p class="mt-1 break-words text-sm2 text-muted"><%= note.author&.email || "A former operator" %> · <%= local_time(note.created_at) %><%= " · edited" if note.updated_at > note.created_at + 1.second %></p>
+    <p class="mt-1 break-words text-sm2 text-muted"><%= note.author.nil? || note.author.deleted? ? "A former operator" : note.author.email %> · <%= local_time(note.created_at) %><%= " · edited" if note.updated_at > note.created_at + 1.second %></p>
   </div>
   <% if note.written_by?(current_user) %>
     <div class="flex shrink-0 gap-1">

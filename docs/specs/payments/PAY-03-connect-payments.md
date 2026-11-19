@@ -38,6 +38,11 @@ Shadetree never touches card data or holds funds.
 - [ ] Tests cover status transitions (using provider test fixtures/mocks), permissions and
       tenancy.
 
+## Follow-ups
+
+- Add Trial / Past due / Suspended / payment-account status and billing history to the OPS-02
+  directory and business page (OPS-02 shows Active and Closed only until then).
+
 ## Out of scope
 
 - Taking payments (PAY-04). Platform application fees (open question, 09-billing).

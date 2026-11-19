@@ -45,10 +45,11 @@ support — before helping or making decisions.
 ## Decisions
 
 - Operator notes are internal only; the business never sees them (recommendation accepted).
-- Statuses today are Active and Closed (a business closed when its last member deleted their
-  account); Suspended arrives with OPS-04, Trial and Past due with subscriptions (BIL-04/05).
-  Until then "recent billing history" shows quotes sent per usage period (BIL-02), and the
-  payment-account status reads "Not connected" (PAY-03).
+- Interim builder choice, pending BIL-04/05 (follow-ups noted there, in OPS-04 and PAY-03):
+  statuses are Active and Closed only (a business closed when its last member deleted their
+  account); Suspended comes with OPS-04, Trial and Past due with subscriptions. Until then
+  "recent billing history" shows quotes sent per usage period (BIL-02), and the payment-account
+  status reads "Not connected" (PAY-03).
 
 ## Implementation notes
 

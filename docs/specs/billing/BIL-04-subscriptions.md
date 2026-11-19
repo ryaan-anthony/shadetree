@@ -37,6 +37,11 @@ portal; Shadetree mirrors the resulting subscription state reliably.
 - [ ] Staging uses provider test mode; tests cover event processing (including duplicates and
       out-of-order events) with fixtures/mocks.
 
+## Follow-ups
+
+- Add Trial / Past due / Suspended / payment-account status and billing history to the OPS-02
+  directory and business page (OPS-02 shows Active and Closed only until then).
+
 ## Out of scope
 
 - Trials, failed-payment grace and downgrade behavior (BIL-05). Coupons and comps via operator
