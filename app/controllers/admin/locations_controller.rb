@@ -3,6 +3,7 @@
 # main location's details are the business profile's, so its form only names it. Each location
 # lists who works there; each member's default location is where their new documents start.
 class Admin::LocationsController < Admin::BaseController
+  impersonation :allowed
   requires_permission :business_settings
   before_action :set_location, only: %i[edit update archive restore]
 
