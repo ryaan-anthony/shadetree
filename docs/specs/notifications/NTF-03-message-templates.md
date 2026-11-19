@@ -83,7 +83,10 @@ Part 2 (a business's own templates, real-record previews):
 - Templates of a business's own (a name, unique per business; up to 50) use the document
   placeholders (`document_number`, `document_title`, `total`, the client's and sender's names), so
   one template works for quotes and invoices. The quote and invoice send forms get "Start from":
-  the usual wording, then each template filled in for that document. NTF-04 sends them too.
+  the usual wording, then each template filled in for that document (what's been typed is
+  replaced only after asking). On a plan without the feature, saved templates still show there.
+  NTF-04 will offer them for quote and invoice automations; their placeholders are about the
+  document, so visit or payment automations need wording of their own there.
 - "Preview" can use one of the business's ten most recent records of the right kind (quotes,
   invoices, visits or requests) instead of the samples; anything else falls back to the samples.
 

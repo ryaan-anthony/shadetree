@@ -10,7 +10,8 @@ module MessageTemplatePreviews
   # [[label, "Quote:uid"], …] for the "Preview with" menu.
   def preview_records(template)
     preview_models(template).flat_map do |model|
-      model.order(created_at: :desc).limit(RECENT).map { [ preview_label(_1), "#{model.name}:#{_1.uid}" ] }
+      model.includes(model == Visit ? { job: :client } : :client).order(created_at: :desc).limit(RECENT)
+           .map { [ preview_label(_1), "#{model.name}:#{_1.uid}" ] }
     end
   end
 

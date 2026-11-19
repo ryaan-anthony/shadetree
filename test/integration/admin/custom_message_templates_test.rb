@@ -56,6 +56,40 @@ class Admin::CustomMessageTemplatesTest < ActionDispatch::IntegrationTest
     assert_select "option", text: "Your usual wording"
   end
 
+  test "the picker stays after a send error, still offering the usual wording" do
+    create_template
+    post admin_quote_send_path(@quote), params: { channel: "email", quote_send: { to: "not-an-email", subject: "Mine", message: "Typed" } }
+    assert_response :unprocessable_content
+    assert_select "option[data-subject=?]", QuoteMailer.default_subject(@quote), text: "Your usual wording"
+    assert_select "input[name='quote_send[subject]'][value=?]", "Mine"
+  end
+
+  test "the invoice send form offers your templates too" do
+    create_template
+    invoice = as_business(@business) do
+      Invoice.start(client: @quote.client).tap { _1.sync_line_items([ { "key" => "a", "name" => "Mowing", "quantity" => "1", "unit_price" => "120" } ]); _1.update!(tax_rates: []) }
+    end
+    get new_admin_invoice_send_path(invoice)
+    assert_select "option[data-subject=?]", "#{invoice.number}: spring offer"
+  end
+
+  test "the preview of your own template shows sample or real values, without save-time errors" do
+    create_template
+    post preview_admin_custom_message_templates_path, params: { message_template: { name: "Spring offer", subject: "{{document_number}}", body: "Hi {{client_first_name}}" } }
+    assert_response :success
+    assert_select "p", text: "Hi Maria"
+    assert_select "[role=alert]", false, "its own name isn't 'already taken' in a preview"
+    post preview_admin_custom_message_templates_path, params: { message_template: { name: "x", subject: "{{document_number}}", body: "Hi" }, preview_record: "Quote:#{@quote.uid}" }
+    assert_select "p", text: @quote.number
+  end
+
+  test "up to 50 templates of your own" do
+    as_business(@business) { 50.times { |i| MessageTemplate.create!(name: "T#{i}", subject: "S", body: "B") } }
+    create_template
+    assert_response :unprocessable_content
+    assert_select "[role=alert]", /up to 50/
+  end
+
   test "without templates of your own there's no picker" do
     get new_admin_quote_send_path(@quote)
     assert_select "select#start_from", false

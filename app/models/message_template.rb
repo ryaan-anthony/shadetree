@@ -94,10 +94,12 @@ class MessageTemplate < ApplicationRecord
   belongs_to :updated_by, class_name: "User", optional: true
 
   normalizes :subject, with: ->(text) { text.to_s.squish }
-  normalizes :body, with: ->(text) { text.to_s.gsub("\r\n", "\n").strip }
+  normalizes :body, with: ->(text) { text.to_s.gsub("\r\n", "\n").gsub(/\n{3,}/, "\n\n").strip }
+  normalizes :name, with: ->(name) { name.to_s.squish }
 
   validates :kind, inclusion: { in: DEFINITIONS.keys }, uniqueness: { scope: :business_id }, allow_nil: true
-  validates :name, presence: true, length: { maximum: 80 }, uniqueness: { scope: :business_id, case_sensitive: false }, if: :custom?
+  validates :name, presence: true, length: { maximum: 80 }, if: :custom?
+  validates :name, uniqueness: { scope: :business_id, case_sensitive: false, message: "is already one of your templates" }, if: :custom?, on: %i[create update]
   validate :custom_limit, on: :create, if: :custom?
   validates :subject, presence: true, length: { maximum: 200 }
   validates :body, presence: true, length: { maximum: 5_000 }

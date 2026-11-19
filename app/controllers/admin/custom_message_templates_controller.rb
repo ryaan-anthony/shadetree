@@ -4,7 +4,7 @@
 class Admin::CustomMessageTemplatesController < Admin::BaseController
   include MessageTemplatePreviews
   requires_permission :business_settings
-  before_action :require_feature, except: :edit
+  before_action :require_feature, except: %i[edit preview]
   before_action :set_template, only: %i[edit update destroy]
   rate_limit to: 120, within: 1.minute, only: :preview, with: -> { head :too_many_requests }
 
@@ -41,7 +41,7 @@ class Admin::CustomMessageTemplatesController < Admin::BaseController
 
   def preview
     template = MessageTemplate.new(template_params)
-    template.validate
+    template.validate(:preview) # skips the per-business checks (limit, name taken) meant for saving
     render partial: "admin/message_templates/preview", locals: { template:, values: preview_values(template) }
   end
 
