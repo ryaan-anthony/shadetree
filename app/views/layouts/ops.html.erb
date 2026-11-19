@@ -1,0 +1,30 @@
+<%# OPS-01: the operator console's own layout: plainly marked as Shadetree's, not a business's. %>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%= render "layouts/head" %>
+    <meta name="robots" content="noindex, nofollow">
+  </head>
+  <body class="bg-canvas text-sm text-body">
+    <a href="#main" class="btn btn-secondary sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50">Skip to content</a>
+    <header class="border-b border-slate-800 bg-slate-900 text-white">
+      <div class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
+        <p class="font-semibold">Shadetree operator console</p>
+        <% if current_operator&.two_factor? && ops_session["ops_verified_at"] && ops_session["ops_verified_for"] == [ current_operator.id, current_operator.otp_enabled_at.to_i ] %>
+          <nav aria-label="Console" class="flex gap-4 text-sm2">
+            <%= link_to "Home", ops_root_path, class: "hover:underline", "aria-current": ("page" if controller_name == "dashboard") %>
+            <%= link_to "Operators", ops_operators_path, class: "hover:underline", "aria-current": ("page" if controller_name == "operators") %>
+            <%= link_to "Audit log", ops_audit_entries_path, class: "hover:underline", "aria-current": ("page" if controller_name == "audit_entries") %>
+          </nav>
+        <% end %>
+        <p class="ml-auto text-sm2 text-slate-300"><%= current_user&.email %> · <%= link_to "Back to the app", admin_root_path, class: "underline-offset-2 hover:underline" %></p>
+      </div>
+    </header>
+    <main id="main" class="mx-auto max-w-6xl px-4 py-6">
+      <% flash.each do |type, message| %>
+        <div class="banner <%= type.to_s == "alert" ? "banner-warning" : "banner-success" %> mb-4" role="<%= type.to_s == "alert" ? "alert" : "status" %>"><p><%= message %></p></div>
+      <% end %>
+      <%= yield %>
+    </main>
+  </body>
+</html>

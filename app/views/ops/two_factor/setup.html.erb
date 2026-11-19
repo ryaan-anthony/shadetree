@@ -1,0 +1,22 @@
+<% content_for :title, "Set up two-factor" %>
+<div class="mx-auto max-w-md">
+  <%= card title: "Set up two-factor", subtitle: "The console needs a code from an authenticator app every session." do %>
+    <ol class="list-decimal space-y-3 pl-5 text-sm text-subtle">
+      <li>Open your authenticator app (1Password, Google Authenticator, Authy…) and scan this code.
+        <div class="my-3 w-44 rounded-control border border-line bg-white p-2" aria-hidden="true"><%= raw @qr %></div>
+        <span class="block">Can't scan? Enter this key: <code class="select-all break-all font-mono text-ink" id="otp-secret"><%= @secret.scan(/.{4}/).join(" ") %></code></span></li>
+      <li>Enter the 6-digit code it shows, and your password to confirm it's you. This key is replaced if it isn't confirmed within <%= Operator::ENROLLMENT_TTL.in_minutes.to_i %> minutes.</li>
+    </ol>
+    <%= form_with url: ops_two_factor_setup_path, method: :post, class: "mt-4" do %>
+      <div class="field">
+        <label class="label" for="code">Code</label>
+        <%= text_field_tag :code, nil, id: "code", class: "input tabular", inputmode: "numeric", autocomplete: "one-time-code", required: true, maxlength: 8 %>
+      </div>
+      <div class="field mt-3">
+        <label class="label" for="password">Your Shadetree password</label>
+        <%= password_field_tag :password, nil, id: "password", class: "input", autocomplete: "current-password", required: true %>
+      </div>
+      <%= submit_tag "Turn on two-factor", class: "#{button_classes} mt-4 w-full", name: nil %>
+    <% end %>
+  <% end %>
+</div>

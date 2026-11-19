@@ -22,28 +22,51 @@ operator action writes to.
 
 ## Acceptance criteria
 
-- [ ] Operator access is a distinct grant, independent of business memberships; the first
+- [x] Operator access is a distinct grant, independent of business memberships; the first
       operator is created by a console command; operators can grant/revoke others; operators
       cannot revoke themselves if they are the last one.
-- [ ] Operators must enroll in and use two-factor authentication (authenticator app) to enter
+- [x] Operators must enroll in and use two-factor authentication (authenticator app) to enter
       the console; recovery codes are provided.
-- [ ] The console lives in its own area with its own layout, is excluded from indexing, and
+- [x] The console lives in its own area with its own layout, is excluded from indexing, and
       returns "not found" to non-operators.
-- [ ] Operator console sessions expire after a short idle period and require re-authentication
+- [x] Operator console sessions expire after a short idle period and require re-authentication
       for sensitive actions.
-- [ ] An audit log records operator actions with operator, action, target business/user, reason
+- [x] An audit log records operator actions with operator, action, target business/user, reason
       where required, time, and request metadata; entries cannot be edited or deleted through
       the app.
-- [ ] The console shows the audit log with filters (operator, action, business, date).
-- [ ] A shared way to record audited actions is available to OPS-02..04 and other specs.
-- [ ] Tests cover access denial, 2FA enforcement, session expiry and audit immutability.
+- [x] The console shows the audit log with filters (operator, action, business, date).
+- [x] A shared way to record audited actions is available to OPS-02..04 and other specs.
+- [x] Tests cover access denial, 2FA enforcement, session expiry and audit immutability.
 
 ## Out of scope
 
 - Business directory, impersonation and account actions (OPS-02..04).
 - Multiple operator roles (backlog).
 
-## Open questions
+## Decisions
 
-- Admin framework vs hand-built console — ADR (10-operator open question 3).
-- Should operator access also be restricted by IP/VPN? Recommend not at launch.
+- Hand-built console ([ADR 0019](../../adr/0019-hand-built-operator-console.md)).
+- No IP or VPN restriction at launch.
+
+## Implementation notes
+
+- `Operator` is a grant on a user (revocable, never the last one). The first comes from
+  `bin/rails ops:grant EMAIL=…`; operators grant and revoke others in the console. A locked-out
+  operator is recovered with `bin/rails ops:reset_two_factor EMAIL= REASON=`. Both tasks are
+  logged as "command line", and grants, two-factor setup and resets email the person.
+- Two-factor: authenticator-app codes (`Totp`, RFC 6238, no new dependency), the secret stored
+  encrypted with a key derived from `secret_key_base`; each code works once; ten recovery codes,
+  stored as HMAC digests, each used up (typed with or without the dash), with the count left
+  on the home page and a way to replace them. Setup asks for the account password, and an
+  unconfirmed key is replaced after 15 minutes. Codes are rate limited (5 a minute, 20 an hour)
+  and 10 wrong in a row stop code checks for an hour (audited).
+- `/ops` (`Ops::` controllers, the `ops` layout): non-operators get 404; `noindex` and
+  `no-store`. A code is needed every session (kept in the user's Warden session, so signing out
+  ends it, tied to the grant and two-factor setup it was made with); 15 minutes idle ends it;
+  granting or revoking needs a code from the last 5 minutes; after a code you only return to a
+  console page.
+- `AuditEntry.record!(operator:, action:, business:, user:, reason:, request:, **data)` is the
+  shared recorder (IP, browser, request id). Entries are read-only in the app, and a database
+  trigger refuses UPDATE, DELETE and TRUNCATE (added by the migration, `db:prepare` and every
+  schema load, `lib/tasks/audit_log.rake`; the home page warns if missing). Entries have no
+  foreign keys, so deleting a user or business leaves them as written. The log is filterable by operator, action, business and dates.

@@ -252,3 +252,6 @@ Tenancy.with_business(business) do
                                      { "row" => 31, "reason" => "“jo@@example” isn't an email address", "values" => [ "Jo Park", "jo@@example", "" ] } ])
   end
 end
+
+# OPS-01: the demo owner is an operator too (open /ops and set up two-factor).
+Operator.grant!(owner) unless Operator.for(owner)
