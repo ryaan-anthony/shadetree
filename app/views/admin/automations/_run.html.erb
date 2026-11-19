@@ -1,0 +1,23 @@
+<%# locals: (run:, show_rule: false) -%>
+<%# NTF-04: one automation run and its log, on the automations page (show_rule: which record) and
+    in a record's sidebar, where the status sits under the name. %>
+<li id="automation-run-<%= run.id %>" class="items-start">
+  <div class="min-w-0 flex-1">
+    <p class="text-ink">
+      <span class="font-semibold"><%= run.rule_name %></span>
+      <% if show_rule %><span class="text-muted">for</span> <%= automation_run_subject(run) %><% end %>
+    </p>
+    <% unless show_rule %><p class="mt-1"><%= badge automation_run_status(run), tone: automation_run_tone(run.status) %></p><% end %>
+    <% if run.log.is_a?(Array) && run.log.any? %>
+      <ul class="mt-1 space-y-0.5 text-sm2 text-muted">
+        <% run.log.each do |entry| %>
+          <li><%= entry["detail"] || entry["result"].to_s.humanize %></li>
+        <% end %>
+      </ul>
+    <% end %>
+    <p class="mt-0.5 text-xs text-muted">
+      <% if run.status == "scheduled" %>Runs <%= local_time(run.run_at) %>, if it still applies.<% else %>Started <%= local_time_ago(run.created_at) %><% end %>
+    </p>
+  </div>
+  <% if show_rule %><%= badge automation_run_status(run), tone: automation_run_tone(run.status) %><% end %>
+</li>

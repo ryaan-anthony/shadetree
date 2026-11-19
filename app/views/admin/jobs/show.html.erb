@@ -141,5 +141,6 @@
         <p class="whitespace-pre-line text-sm2 text-ink"><%= job.internal_notes %></p>
       <% end %>
     <% end %>
+    <%= render "admin/automations/record_runs", record: job %>
   </aside>
 </div>

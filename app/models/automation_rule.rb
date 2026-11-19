@@ -24,10 +24,12 @@ class AutomationRule < ApplicationRecord
     Trigger.new("payment_received", "A payment is received", "Payment")
   ].index_by(&:key).freeze
 
+  # Each condition, and the subjects it makes sense for.
   CONDITIONS = {
-    "still_open" => "The quote still isn't answered, or the invoice still isn't paid",
-    "total_at_least" => "The total is at least an amount",
-    "client_tag" => "The client has a tag"
+    "still_open" => { label: "It's still open: the quote isn't answered, the invoice isn't paid, the job isn't done", subjects: %w[Quote Job Invoice] },
+    "paid_in_full" => { label: "The invoice is paid in full", subjects: %w[Invoice Payment] },
+    "total_at_least" => { label: "The total is at least", subjects: %w[Quote Invoice Payment] },
+    "client_tag" => { label: "The client has the tag", subjects: %w[ServiceRequest Quote Job Visit Invoice Payment] }
   }.freeze
 
   # Each action, and the subjects (by trigger subject) it makes sense for.
@@ -63,6 +65,10 @@ class AutomationRule < ApplicationRecord
   def valid_conditions
     unknown = conditions.keys - CONDITIONS.keys
     errors.add(:conditions, "has unknown keys: #{unknown.join(", ")}") if unknown.any?
+    if TRIGGERS.key?(trigger)
+      unfit = (conditions.keys & CONDITIONS.keys).reject { CONDITIONS[_1][:subjects].include?(subject_type) }
+      unfit.each { errors.add(:conditions, "“#{CONDITIONS[_1][:label]}” doesn't fit “#{trigger_definition.label.downcase}”") }
+    end
     if conditions.key?("total_at_least") && !(conditions["total_at_least"].to_s =~ /\A\d+(\.\d{1,2})?\z/)
       errors.add(:conditions, "need an amount like 250 or 250.00")
     end

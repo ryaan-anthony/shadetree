@@ -64,6 +64,12 @@ Rails.application.routes.draw do
       get :request_form_qr # CLI-03
     end
 
+    # Settings → Automations (NTF-04)
+    resources :automations, only: %i[index new create edit update destroy] do
+      post :recipe, on: :collection
+      patch :toggle, on: :member
+    end
+
     # Settings → Messages (NTF-03): one per client-facing email kind
     resources :custom_message_templates, only: %i[new create edit update destroy], path: "messages/own" do
       post :preview, on: :collection
