@@ -14,11 +14,6 @@ class ApplicationController < ActionController::Base
     before_action(**options) { request.session_options[:skip] = true }
   end
 
-  # Turbo prefetches a link's page on hover (marked X-Sec-Purpose: prefetch). Those requests only
-  # read, so they leave the session alone too: one finishing after a click's request would wipe
-  # its flash (the schedule's "Put back" after Undo was lost this way).
-  before_action { request.session_options[:skip] = true if request.headers["X-Sec-Purpose"] == "prefetch" }
-
   private
 
   # This browser's session (ACC-06), for the account page.

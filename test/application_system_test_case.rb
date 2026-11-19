@@ -8,7 +8,11 @@ module StaleNodeAsStaleElement
     ex = super
     return ex unless ex.is_a?(Selenium::WebDriver::Error::UnknownError) && ex.message.include?("does not belong to the document")
 
-    Selenium::WebDriver::Error::StaleElementReferenceError.new(ex.message)
+    begin
+      raise Selenium::WebDriver::Error::StaleElementReferenceError, ex.message, cause: ex.cause # keeps the remote trace
+    rescue Selenium::WebDriver::Error::StaleElementReferenceError => stale
+      stale
+    end
   end
 end
 Selenium::WebDriver::Remote::Response.prepend(StaleNodeAsStaleElement)
