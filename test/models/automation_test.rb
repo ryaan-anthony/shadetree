@@ -160,6 +160,22 @@ class AutomationTest < ActiveSupport::TestCase
     assert_equal "failed", broken.reload.status, "an unexpected error marks the run failed instead of retrying it forever"
   end
 
+  test "client emails wait for a confirmed owner, and a rule moved to another trigger doesn't act on runs already waiting" do
+    r = rule(delay: 0)
+    @owner.update_columns(confirmed_at: nil)
+    q = quote
+    perform_enqueued_jobs(only: AutomationRunJob) { q.mark_sent!(by: @owner, channel: "link") }
+    assert_match "confirms their email", AutomationRun.find_by!(subject: q).log.first["detail"]
+    @owner.update_columns(confirmed_at: Time.current)
+    r.update!(delay_minutes: 60)
+    q2 = quote
+    q2.mark_sent!(by: @owner, channel: "link")
+    r.update!(trigger: "quote_viewed")
+    travel(2.hours) { perform_enqueued_jobs(only: AutomationRunJob) }
+    run = AutomationRun.find_by!(subject: q2)
+    assert_equal [ "skipped", "The automation now starts on something else." ], [ run.status, run.log.first["detail"] ]
+  end
+
   test "runs wait while a business is suspended, and go ahead once it's active again" do
     rule
     q = quote

@@ -45,7 +45,13 @@ module AutomationActions
     end
   end
 
+  # Client emails go out only once the business's owner has confirmed their email (as for
+  # request confirmations); otherwise the step is skipped and says why.
+  def sender_blocked?(run) = !run.business.owner&.can_send_to_clients?
+  SENDER_BLOCKED = "Emails to clients wait until the owner confirms their email address.".freeze
+
   def send_template(action, subject, run)
+    return [ "skipped", SENDER_BLOCKED ] if sender_blocked?(run)
     template = MessageTemplate.custom.find_by(uid: action["template"]) or return [ "skipped", "The template was deleted." ]
     client = client_for(subject)
     email = client&.primary_email&.value or return [ "skipped", "The client has no email address." ]
@@ -83,6 +89,7 @@ module AutomationActions
     invoice = Invoice.from_job!(job)
     email = job.client.primary_email&.value
     return [ "done", "Created #{invoice.number} as a draft: the client has no email address." ] unless email && invoice.sendable?
+    return [ "done", "Created #{invoice.number} as a draft. #{SENDER_BLOCKED}" ] if sender_blocked?(run)
 
     Invoice.transaction do
       invoice_send = invoice.mark_sent!(by: nil, channel: "email", recipient: email)

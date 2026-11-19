@@ -72,6 +72,7 @@ module Automation
     return "The automation was deleted." unless rule
     return "The automation is switched off." unless rule.enabled?
     return "Automations aren't included in the plan any more." unless run.business.entitlements.feature?(:automations)
+    return "The automation now starts on something else." if run.trigger != rule.trigger
     return "The record no longer exists." unless run.subject
     return "The client's details were erased." if AutomationActions.client_erased?(run.subject)
 
