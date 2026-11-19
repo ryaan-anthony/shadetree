@@ -1,18 +1,21 @@
 # OPS-01: the audit log, newest first, filtered by operator, action, business and dates.
 class Ops::AuditEntriesController < Ops::BaseController
   PER_PAGE = 50
+  MAX_PAGE = 10_000
 
   def index
     scope = AuditEntry.newest_first.includes(:business, :target_user)
     scope = scope.where(operator_email: params[:operator]) if params[:operator].present?
     scope = scope.where(action: params[:action_name]) if params[:action_name].present?
-    @business = Business.find_by(uid: params[:business].to_s) if params[:business].present?
-    scope = scope.where(business: @business) if params[:business].present?
+    if params[:business].present?
+      @business = Business.find_by(uid: params[:business].to_s.strip)
+      scope = @business ? scope.where(business: @business) : scope.none # a mistyped id shows nothing, not everything
+    end
     from = parse_date(params[:from])
     to = parse_date(params[:to])
     scope = scope.where(created_at: from.beginning_of_day..) if from
     scope = scope.where(created_at: ..to.end_of_day) if to
-    @page = [ params[:page].to_i, 1 ].max
+    @page = params[:page].to_i.clamp(1, MAX_PAGE)
     @entries = scope.offset((@page - 1) * PER_PAGE).limit(PER_PAGE + 1).to_a
     @more = @entries.size > PER_PAGE
     @entries = @entries.first(PER_PAGE)

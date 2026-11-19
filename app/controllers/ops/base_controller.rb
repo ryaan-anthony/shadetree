@@ -8,8 +8,9 @@ class Ops::BaseController < ApplicationController
 
   layout "ops"
 
-  before_action :set_console_headers
-  before_action :require_operator
+  # Before forgery protection too, so a non-operator's POST is "not found" like everything else.
+  prepend_before_action :require_operator
+  prepend_before_action :set_console_headers
   before_action :expire_idle_session
   before_action :require_two_factor
 
@@ -44,19 +45,45 @@ class Ops::BaseController < ApplicationController
 
   def require_two_factor
     return redirect_to(ops_two_factor_setup_path) unless current_operator.two_factor?
-    return if ops_session["ops_verified_at"]
+    return if verified?
 
-    ops_session["ops_return_to"] = request.fullpath if request.get?
+    ops_session["ops_return_to"] = request.fullpath if request.get? || request.head?
     redirect_to new_ops_two_factor_verification_path
   end
 
-  def verified_recently? = ops_session["ops_verified_at"] && Time.zone.at(ops_session["ops_verified_at"]) > RECENT.ago
+  # Verification counts for this grant and this two-factor setup only: after a revoke and
+  # re-grant, or a reset, an old browser session has to enter a code again.
+  def verification_key = [ current_operator.id, current_operator.otp_enabled_at.to_i ]
+
+  def verified?
+    return false unless ops_session["ops_verified_at"]
+    return true if ops_session["ops_verified_for"] == verification_key
+
+    ops_session.delete("ops_verified_at")
+    false
+  end
+
+  def mark_verified
+    ops_session["ops_verified_at"] = Time.current.to_i
+    ops_session["ops_verified_for"] = verification_key
+    ops_session["ops_seen_at"] = Time.current.to_i
+  end
+
+  def verified_recently? = verified? && Time.zone.at(ops_session["ops_verified_at"]) > RECENT.ago
+
+  # Where to go after a code: a console page, never another host.
+  def console_path(url)
+    path = URI.parse(url.to_s).path.to_s
+    path.start_with?("/ops") ? path : nil
+  rescue URI::InvalidURIError
+    nil
+  end
 
   # For actions that change access or data: a code entered in the last few minutes.
   def require_recent_verification
     return if verified_recently?
 
-    ops_session["ops_return_to"] = request.referer.presence || ops_root_path
+    ops_session["ops_return_to"] = console_path(request.referer) || ops_root_path
     redirect_to new_ops_two_factor_verification_path(recent: 1), alert: "Enter a code to confirm it's you."
   end
 

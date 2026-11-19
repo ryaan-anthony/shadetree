@@ -5,8 +5,8 @@
   <div class="field"><label class="label" for="operator">Operator</label><%= select_tag :operator, options_for_select(@operators, params[:operator]), include_blank: "Anyone", class: "select", id: "operator" %></div>
   <div class="field"><label class="label" for="action_name">Action</label><%= select_tag :action_name, options_for_select(@actions.map { [ AuditEntry::ACTIONS.fetch(_1, _1), _1 ] }, params[:action_name]), include_blank: "Any", class: "select", id: "action_name" %></div>
   <div class="field"><label class="label" for="business">Business ID</label><%= text_field_tag :business, params[:business], class: "input", id: "business", placeholder: "uid" %></div>
-  <div class="field"><label class="label" for="from">From</label><%= date_field_tag :from, params[:from], class: "input", id: "from" %></div>
-  <div class="field"><label class="label" for="to">To</label><%= date_field_tag :to, params[:to], class: "input", id: "to" %></div>
+  <div class="field"><label class="label" for="from">From (UTC)</label><%= date_field_tag :from, params[:from], class: "input", id: "from" %></div>
+  <div class="field"><label class="label" for="to">To (UTC)</label><%= date_field_tag :to, params[:to], class: "input", id: "to" %></div>
   <div class="sm:col-span-5 flex gap-2"><%= submit_tag "Filter", class: button_classes(:secondary), name: nil %><%= link_to "Clear", ops_audit_entries_path, class: button_classes(:ghost) %></div>
 <% end %>
 <%= card flush: true, class: "mt-4" do %>

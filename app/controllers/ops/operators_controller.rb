@@ -14,6 +14,7 @@ class Ops::OperatorsController < Ops::BaseController
 
     Operator.grant!(user, by: current_user)
     audit!("operator.granted", user:)
+    OperatorMailer.with(user:).granted.deliver_later
     redirect_to ops_operators_path, notice: "#{user.email} is an operator. They'll set up two-factor the first time they open the console."
   end
 
@@ -21,6 +22,8 @@ class Ops::OperatorsController < Ops::BaseController
     operator = Operator.active.find(params[:id])
     operator.revoke!(by: current_user)
     audit!("operator.revoked", user: operator.user)
+    return redirect_to(admin_root_path, notice: "You no longer have operator access.") if operator.user == current_user
+
     redirect_to ops_operators_path, notice: "#{operator.user.email} no longer has operator access."
   rescue Operator::LastOperator => error
     redirect_to ops_operators_path, alert: error.message

@@ -740,7 +740,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
     t.text "otp_secret_ciphertext"
     t.datetime "otp_enabled_at"
     t.bigint "otp_last_step"
+    t.datetime "otp_started_at"
     t.jsonb "recovery_code_digests", default: [], null: false
+    t.integer "failed_attempts", default: 0, null: false
+    t.datetime "locked_until"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["granted_by_id"], name: "index_operators_on_granted_by_id"
@@ -1149,9 +1152,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_001900) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "audit_entries", "businesses", on_delete: :nullify
-  add_foreign_key "audit_entries", "users", column: "operator_user_id", on_delete: :nullify
-  add_foreign_key "audit_entries", "users", column: "target_user_id", on_delete: :nullify
   add_foreign_key "automation_deliveries", "businesses", on_delete: :cascade
   add_foreign_key "automation_deliveries", "message_templates", on_delete: :cascade
   add_foreign_key "automation_rules", "businesses", on_delete: :cascade

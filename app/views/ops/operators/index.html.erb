@@ -7,11 +7,14 @@
       <% @operators.each do |operator| %>
         <li id="operator-<%= operator.id %>">
           <div class="min-w-0 flex-1">
-            <p class="font-medium text-ink"><%= operator.user.email %><%= " (you)" if operator.user == current_user %></p>
+            <p class="break-all font-medium text-ink"><%= operator.user.email %><%= " (you)" if operator.user == current_user %></p>
             <p class="text-sm2 text-muted"><%= operator.two_factor? ? "Two-factor on" : "Hasn't set up two-factor yet" %> · since <%= local_date(operator.created_at) %><%= " · granted by #{operator.granted_by.email}" if operator.granted_by %></p>
           </div>
-          <%= button_to "Revoke", ops_operator_path(operator), method: :delete, class: button_classes(:ghost, :sm),
-                        form: { class: "contents", data: { turbo_confirm: "Revoke #{operator.user.email}'s operator access?", turbo_confirm_button: "Revoke" } } %>
+          <% unless @operators.one? %><%# the last operator can't be revoked %>
+            <% you = operator.user == current_user %>
+            <%= button_to "Revoke", ops_operator_path(operator), method: :delete, class: button_classes(:ghost, :sm),
+                          form: { class: "contents", data: { turbo_confirm: you ? "Revoke your own operator access? You'll leave the console." : "Revoke #{operator.user.email}'s operator access?", turbo_confirm_button: "Revoke" } } %>
+          <% end %>
         </li>
       <% end %>
     </ul>

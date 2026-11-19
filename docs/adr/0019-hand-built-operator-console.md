@@ -35,4 +35,14 @@ the append-only `AuditEntry` log through `AuditEntry.record!`.
 - Each later operator feature (directory, impersonation, account actions, tickets) is a small,
   explicit set of screens, audited by construction.
 - No bulk row editing: data fixes stay in the Rails console, run by an engineer.
+- **Two-factor is built in** (RFC 6238 in `Totp`, ~40 lines, checked against the RFC's test
+  vectors) rather than adding `rotp`; the QR code uses `rqrcode`, already a dependency.
+- **The two-factor secrets and recovery-code digests are keyed from `secret_key_base`.**
+  Rotating it makes every operator set up two-factor again (`bin/rails ops:reset_two_factor`
+  for each, or they'll see setup on their next visit once the secret no longer decrypts).
+- **The audit log's append-only triggers aren't in `schema.rb`**, which can't hold them. The
+  migration creates them, and `lib/tasks/audit_log.rake` adds them after `db:prepare`,
+  `db:schema:load` and the test schema load; the console's home warns if they're missing. A
+  move to `structure.sql` would remove this workaround at the cost of the tooling built around
+  `schema.rb`.
 - **Cost:** none.

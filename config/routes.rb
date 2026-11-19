@@ -50,6 +50,7 @@ Rails.application.routes.draw do
     root "dashboard#index"
     get "two-factor/setup", to: "two_factor#setup", as: :two_factor_setup
     post "two-factor/setup", to: "two_factor#enable"
+    post "two-factor/recovery-codes", to: "two_factor#regenerate", as: :two_factor_recovery_codes
     resource :two_factor_verification, only: %i[new create], controller: "two_factor", path: "two-factor"
     resources :operators, only: %i[index create destroy]
     resources :audit_entries, only: :index, path: "audit-log"

@@ -12,16 +12,21 @@ class CreateOperatorsAndAuditEntries < ActiveRecord::Migration[8.1]
       t.text :otp_secret_ciphertext # encrypted with a key derived from secret_key_base
       t.datetime :otp_enabled_at
       t.bigint :otp_last_step # the last time step accepted, so a code can't be replayed
+      t.datetime :otp_started_at # an enrollment not confirmed within Operator::ENROLLMENT_TTL starts over
       t.jsonb :recovery_code_digests, null: false, default: []
+      t.integer :failed_attempts, null: false, default: 0 # wrong codes in a row
+      t.datetime :locked_until # after Operator::MAX_FAILED_ATTEMPTS, no code is checked until then
       t.timestamps
     end
 
     create_table :audit_entries do |t|
-      t.references :operator_user, foreign_key: { to_table: :users, on_delete: :nullify }
-      t.string :operator_email, null: false # kept if the user is ever deleted
+      # No foreign keys: entries outlive the users and businesses they name (deleting one mustn't
+      # touch the log, and the trigger would refuse a SET NULL). Emails are kept on the entry.
+      t.references :operator_user, foreign_key: false
+      t.string :operator_email, null: false
       t.string :action, null: false
-      t.references :business, foreign_key: { on_delete: :nullify }
-      t.references :target_user, foreign_key: { to_table: :users, on_delete: :nullify }
+      t.references :business, foreign_key: false
+      t.references :target_user, foreign_key: false
       t.text :reason
       t.jsonb :data, null: false, default: {}
       t.string :ip_address
@@ -40,11 +45,13 @@ class CreateOperatorsAndAuditEntries < ActiveRecord::Migration[8.1]
       END $$;
       CREATE TRIGGER audit_entries_no_update BEFORE UPDATE OR DELETE ON audit_entries
         FOR EACH ROW EXECUTE FUNCTION audit_entries_append_only();
+      CREATE TRIGGER audit_entries_no_truncate BEFORE TRUNCATE ON audit_entries
+        FOR EACH STATEMENT EXECUTE FUNCTION audit_entries_append_only();
     SQL
   end
 
   def down
-    execute "DROP TRIGGER IF EXISTS audit_entries_no_update ON audit_entries; DROP FUNCTION IF EXISTS audit_entries_append_only();"
+    execute "DROP TRIGGER IF EXISTS audit_entries_no_update ON audit_entries; DROP TRIGGER IF EXISTS audit_entries_no_truncate ON audit_entries; DROP FUNCTION IF EXISTS audit_entries_append_only();"
     drop_table :audit_entries
     drop_table :operators
   end

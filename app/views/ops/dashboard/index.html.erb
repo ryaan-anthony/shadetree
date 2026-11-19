@@ -1,6 +1,9 @@
 <% content_for :title, "Operator console" %>
 <h1 class="page-title">Operator console</h1>
 <p class="page-lede">Everything you do here is recorded in the audit log.</p>
+<% unless @append_only %>
+  <div class="banner banner-warning mt-4" role="alert" id="audit-unprotected"><p>The audit log isn't protected in this database: the append-only triggers are missing. Run <code>bin/rails runner "AuditEntry.install_append_only_trigger!"</code>.</p></div>
+<% end %>
 <div class="mt-6 grid gap-4 md:grid-cols-2">
   <%= card title: "Recent activity", flush: true, actions: link_to("Audit log", ops_audit_entries_path, class: button_classes(:ghost, :sm)) do %>
     <% if @recent.any? %>
@@ -12,5 +15,10 @@
   <%= card title: "Access" do %>
     <p class="text-sm text-subtle">Operators reach every business. Grant access only to people who run Shadetree.</p>
     <%= link_to "Operators", ops_operators_path, class: "#{button_classes(:secondary)} mt-3" %>
+  <% end %>
+  <%= card title: "Your recovery codes" do %>
+    <p class="text-sm text-subtle" id="recovery-codes-left">You have <%= pluralize(current_operator.recovery_codes_left, "recovery code") %> left. Each works once if you don't have your phone.</p>
+    <%= button_to "Make new recovery codes", ops_two_factor_recovery_codes_path, class: "#{button_classes(:secondary)} mt-3",
+                  form: { data: { turbo_confirm: "Make new recovery codes? The ones you have now stop working.", turbo_confirm_button: "Make new codes" } } %>
   <% end %>
 </div>

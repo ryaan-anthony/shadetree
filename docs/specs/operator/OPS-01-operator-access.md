@@ -51,14 +51,22 @@ operator action writes to.
 ## Implementation notes
 
 - `Operator` is a grant on a user (revocable, never the last one). The first comes from
-  `bin/rails ops:grant EMAIL=…`; operators grant and revoke others in the console.
+  `bin/rails ops:grant EMAIL=…`; operators grant and revoke others in the console. A locked-out
+  operator is recovered with `bin/rails ops:reset_two_factor EMAIL= REASON=`. Both tasks are
+  logged as "command line", and grants, two-factor setup and resets email the person.
 - Two-factor: authenticator-app codes (`Totp`, RFC 6238, no new dependency), the secret stored
   encrypted with a key derived from `secret_key_base`; each code works once; ten recovery codes,
-  stored as HMAC digests, each used up.
+  stored as HMAC digests, each used up (typed with or without the dash), with the count left
+  on the home page and a way to replace them. Setup asks for the account password, and an
+  unconfirmed key is replaced after 15 minutes. Codes are rate limited (5 a minute, 20 an hour)
+  and 10 wrong in a row stop code checks for an hour (audited).
 - `/ops` (`Ops::` controllers, the `ops` layout): non-operators get 404; `noindex` and
   `no-store`. A code is needed every session (kept in the user's Warden session, so signing out
-  ends it); 15 minutes idle ends it; granting or revoking needs a code from the last 5 minutes.
+  ends it, tied to the grant and two-factor setup it was made with); 15 minutes idle ends it;
+  granting or revoking needs a code from the last 5 minutes; after a code you only return to a
+  console page.
 - `AuditEntry.record!(operator:, action:, business:, user:, reason:, request:, **data)` is the
   shared recorder (IP, browser, request id). Entries are read-only in the app, and a database
-  trigger refuses UPDATE and DELETE (added by the migration and by every schema load,
-  `lib/tasks/audit_log.rake`). The log is filterable by operator, action, business and dates.
+  trigger refuses UPDATE, DELETE and TRUNCATE (added by the migration, `db:prepare` and every
+  schema load, `lib/tasks/audit_log.rake`; the home page warns if missing). Entries have no
+  foreign keys, so deleting a user or business leaves them as written. The log is filterable by operator, action, business and dates.
