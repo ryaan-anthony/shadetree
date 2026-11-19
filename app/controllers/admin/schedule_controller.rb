@@ -4,6 +4,9 @@
 class Admin::ScheduleController < Admin::BaseController
   requires_permission :schedule
   filters_by_location Visit, Job, only: :show # CAT-07
+  # The visit panel loads into its frame in the background; a load finishing after an Undo
+  # click mustn't overwrite that click's flash. (The full page, on phones, writes as usual.)
+  leaves_session_alone only: :visit, if: -> { turbo_frame_request? }
 
   def show
     date = Visit.parse_date(params[:date])

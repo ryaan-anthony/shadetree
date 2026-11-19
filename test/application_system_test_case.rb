@@ -1,5 +1,22 @@
 require "test_helper"
 
+# Chrome 157 sometimes reports an element replaced by a Turbo render as "Node with given id does
+# not belong to the document" (an UnknownError) instead of a stale element. Capybara retries
+# stale elements until its wait time runs out, but not unknown errors, so treat this one as stale.
+module StaleNodeAsStaleElement
+  def error
+    ex = super
+    return ex unless ex.is_a?(Selenium::WebDriver::Error::UnknownError) && ex.message.include?("does not belong to the document")
+
+    begin
+      raise Selenium::WebDriver::Error::StaleElementReferenceError, ex.message, cause: ex.cause # keeps the remote trace
+    rescue Selenium::WebDriver::Error::StaleElementReferenceError => stale
+      stale
+    end
+  end
+end
+Selenium::WebDriver::Remote::Response.prepend(StaleNodeAsStaleElement)
+
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   driven_by :selenium, using: :headless_chrome, screen_size: [ 1400, 1400 ] do |options|
     options.add_option("goog:loggingPrefs", { browser: "ALL" }) # so a failure can show the console

@@ -115,7 +115,7 @@
         per person. Visits can be dragged to another day, time or person (schedule_drag_controller). %>
     <% params_now = { view: s.view, member: s.member }.compact_blank %>
     <div class="card hidden overflow-x-auto md:block <%= inline_style("--cal-days: #{s.columns.size}") %>" id="schedule-grid"
-         data-controller="schedule-drag" data-schedule-drag-first-hour-value="<%= s.hours.first %>" data-schedule-drag-hour-px-value="<%= ScheduleView::HOUR_PX %>"
+         data-turbo-prefetch="false" data-controller="schedule-drag" data-schedule-drag-first-hour-value="<%= s.hours.first %>" data-schedule-drag-hour-px-value="<%= ScheduleView::HOUR_PX %>"
          data-schedule-drag-url-value="<%= admin_schedule_move_path("ID") %>" data-schedule-drag-context-value="<%= params_now.merge(grid_zone: s.place.time_zone.tzinfo.identifier).to_json %>">
       <div class="cal-grid border-b border-line <%= "cal-wide" if s.columns.size > 7 %>">
         <div></div>
