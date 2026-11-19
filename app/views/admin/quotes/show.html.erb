@@ -9,7 +9,9 @@
     <%= button_to admin_quote_job_path(quote), class: button_classes(:primary), form: { class: "contents" } do %><%= icon "job" %> Create job<% end %>
   <% end %>
   <% if quote.approved? %>
-    <%= button_to admin_quote_invoices_path(quote), class: button_classes(:secondary), form: { class: "contents" } do %><%= icon "invoice" %> Create invoice<% end %>
+    <% billed = (quote.invoices.to_a + Array(quote.job&.invoices&.to_a)).uniq.reject(&:void?) %>
+    <%= button_to admin_quote_invoices_path(quote), class: button_classes(billed.any? ? :ghost : :secondary),
+                  form: { class: "contents", data: (billed.any? ? { turbo_confirm: "#{quote.number} already has #{billed.map(&:number).to_sentence}. Create another invoice?", turbo_confirm_button: "Create invoice" } : {}) } do %><%= icon "invoice" %> Create invoice<% end %>
   <% end %>
   <% if quote.revisable? %>
     <%= button_to revise_admin_quote_path(quote), class: button_classes(:secondary),

@@ -1,0 +1,2 @@
+<%# locals: (invoice:) -%>
+<% invoice.errors[:due_on].each do |message| %><p class="error-text mt-1.5"><%= icon "alert-circle" %>Due date <%= message %></p><% end %>
