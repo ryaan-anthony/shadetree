@@ -56,6 +56,26 @@
       <p class="text-sm text-muted">This business was closed when its last member deleted their account.</p>
     <% end %>
   <% end %>
+  <%= card title: "Delete the business", subtitle: "Permanently removes all its data and files after #{Ops::DeletionsController::WAITING_PERIOD.in_days.to_i} days. The owner is emailed.", id: "deletion" do %>
+    <% if @business.deletion_due_at %>
+      <div class="banner banner-warning mb-3" role="status"><p>Scheduled for deletion on <%= local_date(@business.deletion_due_at) %>.</p></div>
+      <%= form_with url: ops_business_deletion_path(@business), method: :delete, class: "space-y-2" do %>
+        <div class="field"><label class="label" for="cancel_reason">Reason for cancelling</label><%= text_field_tag :reason, nil, class: "input", id: "cancel_reason", required: true, maxlength: 500 %></div>
+        <%= submit_tag "Cancel deletion", class: button_classes(:secondary), name: nil %>
+      <% end %>
+      <%= form_with url: ops_business_deletion_path(@business), method: :patch, class: "mt-4 space-y-2 border-t border-line pt-4", data: { turbo_confirm: "Delete #{@business.name} and everything in it now? This can't be undone.", turbo_confirm_button: "Delete now" } do %>
+        <div class="field"><label class="label" for="expedite_reason">Reason for deleting now</label><%= text_field_tag :reason, nil, class: "input", id: "expedite_reason", required: true, maxlength: 500, placeholder: "e.g. Privacy request from the owner" %></div>
+        <div class="field"><label class="label" for="expedite_name">Type “<%= @business.name %>” to confirm</label><%= text_field_tag :confirm_name, nil, class: "input", id: "expedite_name", required: true, autocomplete: "off" %></div>
+        <%= submit_tag "Delete now", class: button_classes(:danger_solid), name: nil %>
+      <% end %>
+    <% else %>
+      <%= form_with url: ops_business_deletion_path(@business), class: "space-y-2", data: { turbo_confirm: "Schedule #{@business.name} for deletion?" } do %>
+        <div class="field"><label class="label" for="delete_reason">Reason</label><%= text_field_tag :reason, nil, class: "input", id: "delete_reason", required: true, maxlength: 500, placeholder: "e.g. Owner asked by email on Nov 3" %></div>
+        <div class="field"><label class="label" for="delete_name">Type “<%= @business.name %>” to confirm</label><%= text_field_tag :confirm_name, nil, class: "input", id: "delete_name", required: true, autocomplete: "off" %></div>
+        <%= submit_tag "Schedule deletion", class: button_classes(:danger), name: nil %>
+      <% end %>
+    <% end %>
+  <% end %>
   <%= card title: "Plan and usage", id: "plan" do %>
     <dl class="space-y-2 text-sm">
       <div class="flex justify-between gap-3"><dt class="text-subtle">Plan</dt><dd class="font-semibold text-ink"><%= entitlements.plan.name %><%= " (with overrides)" if @business.plan_overrides.present? %></dd></div>

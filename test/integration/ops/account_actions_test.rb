@@ -103,4 +103,33 @@ class Ops::AccountActionsTest < ActionDispatch::IntegrationTest
     assert_equal %w[user.confirmation_resent user.password_reset_sent user.unlocked], AuditEntry.order(:id).where("action LIKE 'user.%'").pluck(:action)
     assert_equal users(:two), AuditEntry.find_by!(action: "user.unlocked").target_user
   end
+
+  test "deleting a business: typed name and reason to schedule, the owner emailed; cancel or delete now" do
+    sign_in_operator
+    post ops_business_deletion_path(@business), params: { reason: "Owner asked", confirm_name: "Test Business" }
+    assert_match "Type the business's name", flash[:alert]
+    post ops_business_deletion_path(@business), params: { reason: "", confirm_name: @business.name }
+    assert_match "Give a reason", flash[:alert]
+    assert_nil @business.reload.deletion_due_at
+
+    assert_enqueued_email_with BusinessDeletionMailer, :scheduled, params: { business: @business } do
+      post ops_business_deletion_path(@business), params: { reason: "Owner asked by email", confirm_name: @business.name }
+    end
+    assert_in_delta 30.days.from_now, @business.reload.deletion_due_at, 5.seconds
+    assert AuditEntry.exists?(action: "business.deletion_scheduled", reason: "Owner asked by email")
+    get ops_business_path(@business)
+    assert_select "#deletion", /Scheduled for deletion/
+
+    delete ops_business_deletion_path(@business), params: { reason: "Changed their mind" }
+    assert_nil @business.reload.deletion_due_at
+    assert AuditEntry.exists?(action: "business.deletion_cancelled")
+
+    post ops_business_deletion_path(@business), params: { reason: "Privacy request", confirm_name: @business.name }
+    assert_enqueued_with(job: DeleteScheduledBusinessesJob, args: [ @business.id ]) do
+      patch ops_business_deletion_path(@business), params: { reason: "Privacy request: now", confirm_name: @business.name }
+    end
+    assert_redirected_to ops_businesses_path
+    perform_enqueued_jobs(only: DeleteScheduledBusinessesJob)
+    assert_not Business.exists?(@business.id)
+  end
 end
