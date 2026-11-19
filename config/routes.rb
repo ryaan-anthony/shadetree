@@ -65,6 +65,9 @@ Rails.application.routes.draw do
     end
 
     # Settings → Messages (NTF-03): one per client-facing email kind
+    resources :custom_message_templates, only: %i[new create edit update destroy], path: "messages/own" do
+      post :preview, on: :collection
+    end
     resources :message_templates, only: %i[index edit update destroy], param: :kind, path: "messages" do
       post :preview, on: :member
     end

@@ -24,4 +24,23 @@
       <% end %>
     </ul>
   <% end %>
+
+  <%= card title: "Your own templates", subtitle: "Extra wording to start a quote or invoice email from: a follow-up, a seasonal offer, a thank-you.", flush: true,
+           actions: (link_to(new_admin_custom_message_template_path, class: button_classes(:secondary, :sm)) { icon("plus") + " New template" } if @editable) do %>
+    <% if @custom.empty? %>
+      <p class="px-5 py-4 text-sm text-muted">None yet.<%= " Templates you add here show up in the send form for quotes and invoices." if @editable %></p>
+    <% else %>
+      <ul class="list">
+        <% @custom.each do |template| %>
+          <li id="custom-template-<%= template.uid %>">
+            <div class="min-w-0 flex-1">
+              <p class="font-semibold text-ink"><%= link_to template.name, edit_admin_custom_message_template_path(template), class: "hover:underline" %></p>
+              <p class="truncate text-sm2 text-muted"><%= template.subject %></p>
+            </div>
+            <%= link_to (@editable ? "Edit" : "View"), edit_admin_custom_message_template_path(template), class: button_classes(:secondary, :sm) %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  <% end %>
 </div>

@@ -14,14 +14,14 @@ module MessageTemplate::Values
 
   def quote(quote, link: nil)
     client(quote.client).merge(business(quote.business)).merge(
-      "quote_number" => quote.number, "quote_title" => quote.title.to_s, "total" => quote.totals.total.format,
+      "quote_number" => quote.number, "quote_title" => quote.title.to_s, "document_number" => quote.number, "document_title" => quote.title.to_s, "total" => quote.totals.total.format,
       "valid_until" => quote.expires_on&.to_fs(:long).to_s, "link" => link_url(link)
     )
   end
 
   def invoice(invoice, link: nil, balance: invoice.balance)
     client(invoice.client).merge(business(invoice.business)).merge(
-      "invoice_number" => invoice.number, "invoice_title" => invoice.title.to_s, "total" => invoice.totals.total.format,
+      "invoice_number" => invoice.number, "invoice_title" => invoice.title.to_s, "document_number" => invoice.number, "document_title" => invoice.title.to_s, "total" => invoice.totals.total.format,
       "balance" => balance.format, "due_date" => invoice.due_on&.to_fs(:long).to_s, "link" => link_url(link)
     )
   end
@@ -29,6 +29,18 @@ module MessageTemplate::Values
   def visit(job, when_label) = client(job.client).merge(business(job.business)).merge("visit_window" => when_label.to_s)
 
   def request(request) = client(request.client, name: request.contact_name).merge(business(request.business))
+
+  # The values for a real record, for the editor's preview (and manual sends).
+  def for_record(record, user:)
+    values = case record
+    when Quote then quote(record).merge("signer_name" => record.approval&.signer_name.to_s)
+    when Invoice then invoice(record)
+    when Visit then visit(record.job, record.when_label)
+    when ServiceRequest then request(record)
+    else raise ArgumentError, "No message values for #{record.class}"
+    end
+    values.merge(sender(user, record.business))
+  end
 
   private
 

@@ -1,0 +1,6 @@
+<% content_for :title, "New template" %>
+<%= page_header "New template", lede: "Your own wording to start a quote or invoice email from." do %>
+  <%= link_to admin_message_templates_path, class: button_classes(:ghost) do %><%= icon "arrow-left" %> Messages<% end %>
+<% end %>
+<%= render "admin/message_templates/form", template: @template, url: admin_custom_message_templates_path, method: :post,
+           preview_url: preview_admin_custom_message_templates_path, editable: true, preview_records: @preview_records, save_label: "Save template" %>

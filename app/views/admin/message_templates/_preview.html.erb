@@ -1,6 +1,6 @@
-<%# locals: (template:) -%>
-<%# NTF-03: the message as a client would get it, with sample details (and this business's name). %>
-<% subject, body = template.preview(current_business) %>
+<%# locals: (template:, values: nil) -%>
+<%# NTF-03: the message as a client would get it, with sample details (and this business's name) or a real record's. %>
+<% subject, body = template.preview(current_business, values:) %>
 <% if template.errors[:base].any? %>
   <div class="banner banner-warning mb-3" role="alert"><%= icon "alert-circle" %><p><%= template.errors[:base].join(" ") %></p></div>
 <% end %>

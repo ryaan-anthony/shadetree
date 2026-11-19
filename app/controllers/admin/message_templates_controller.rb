@@ -2,18 +2,21 @@
 # client-facing email, with a live preview, or go back to the default. Editing is a plan
 # feature; on a plan without it, customized messages keep sending and are shown read-only.
 class Admin::MessageTemplatesController < Admin::BaseController
+  include MessageTemplatePreviews
   requires_permission :business_settings
   before_action :set_template, only: %i[edit update destroy preview]
   before_action :require_feature, only: %i[update destroy]
   rate_limit to: 120, within: 1.minute, only: :preview, with: -> { head :too_many_requests }
 
   def index
-    @templates = MessageTemplate.all.index_by(&:kind)
+    @templates = MessageTemplate.where.not(kind: nil).index_by(&:kind)
+    @custom = MessageTemplate.custom.to_a
     @editable = editable?
   end
 
   def edit
     @editable = editable?
+    @preview_records = preview_records(@template)
   end
 
   def update
@@ -22,6 +25,7 @@ class Admin::MessageTemplatesController < Admin::BaseController
       redirect_to admin_message_templates_path, notice: "Saved. #{EmailCatalog.find(@template.kind).name} emails now use your wording."
     else
       @editable = true
+      @preview_records = preview_records(@template)
       render :edit, status: :unprocessable_content
     end
   end
@@ -36,7 +40,7 @@ class Admin::MessageTemplatesController < Admin::BaseController
   def preview
     @template.assign_attributes(template_params)
     @template.validate
-    render partial: "preview", locals: { template: @template }
+    render partial: "preview", locals: { template: @template, values: preview_values(@template) }
   end
 
   private

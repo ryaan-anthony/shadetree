@@ -1,0 +1,11 @@
+<%# locals: (choices:) -%>
+<%# NTF-03: choose which wording the email starts from. choices: [[label, subject, message], …]; the first is the usual one. %>
+<div class="field">
+  <label class="label" for="start_from">Start from</label>
+  <select id="start_from" class="select" data-template-picker-target="select" data-action="template-picker#pick">
+    <% choices.each do |label, subject, message| %>
+      <option data-subject="<%= subject %>" data-message="<%= message %>"><%= label %></option>
+    <% end %>
+  </select>
+  <p class="help">Fills the subject and message below; you can still change them.</p>
+</div>

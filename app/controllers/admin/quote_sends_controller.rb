@@ -20,6 +20,7 @@ class Admin::QuoteSendsController < Admin::BaseController
     subject, message = templated_wording # NTF-03: the business's own wording, if it has some
     @form = QuoteSendForm.new(to: @quote.client.primary_email&.value, subject: subject || QuoteMailer.default_subject(@quote),
                               message: message || default_message)
+    @template_choices = template_choices(@form)
     # The link itself is client-facing: only for accounts that may send (ACC-01).
     @link = ClientLink.active.where(linkable: @quote).order(created_at: :desc).first unless @quote.draft? || !current_user.can_send_to_clients?
   end
@@ -94,6 +95,16 @@ class Admin::QuoteSendsController < Admin::BaseController
   end
 
   def too_many_today? = @quote.sends.unscope(:order).where(channel: "email", created_at: 1.day.ago..).count >= EMAILS_PER_QUOTE_PER_DAY
+
+  # NTF-03: the usual wording, then the business's own templates, filled in for this quote.
+  def template_choices(form)
+    custom = MessageTemplate.custom.to_a
+    return [] if custom.empty?
+
+    values = MessageTemplate::Values.quote(@quote).merge(MessageTemplate::Values.sender(current_user, current_business))
+    [ [ "Your usual wording", form.subject, form.message ] ] +
+      custom.map { [ _1.name, MessageTemplate.render_subject(_1.subject, values), MessageTemplate.render(_1.body, values) ] }
+  end
 
   def templated_wording
     template = MessageTemplate.for_kind("quote_sent") or return
