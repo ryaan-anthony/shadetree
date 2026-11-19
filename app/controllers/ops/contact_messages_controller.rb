@@ -8,6 +8,7 @@ class Ops::ContactMessagesController < Ops::BaseController
 
   before_action :set_message, except: :index
   before_action :require_recent_verification, only: %i[destroy erase]
+  helper_method :tab_for
 
   def index
     @tab = TABS.key?(params[:tab]) ? params[:tab] : "open"
@@ -30,15 +31,18 @@ class Ops::ContactMessagesController < Ops::BaseController
   end
 
   def destroy
-    @message.destroy!
-    audit!("contact_message.deleted", message: @message.uid, spam: @message.spam?)
+    ContactMessage.transaction do # deleted and audited together, or neither
+      @message.destroy!
+      audit!("contact_message.deleted", message: @message.uid, spam: @message.spam?)
+    end
     redirect_to ops_contact_messages_path(tab: tab_for(@message)), notice: "Message deleted."
   end
 
   # Someone asked to be forgotten: every message from their address goes (as `contact:erase`).
   def erase
-    count = ContactMessage.erase_for!(@message.email)
-    audit!("contact_message.erased", count:)
+    count = ContactMessage.transaction do
+      ContactMessage.erase_for!(@message.email).tap { audit!("contact_message.erased", count: _1) }
+    end
     redirect_to ops_contact_messages_path, notice: "Deleted #{helpers.pluralize(count, "message")} from that address."
   end
 

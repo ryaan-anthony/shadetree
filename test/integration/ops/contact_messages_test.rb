@@ -68,7 +68,7 @@ class Ops::ContactMessagesTest < ActionDispatch::IntegrationTest
     assert_select "#message-body", text: /Do you send <script>reminders<\/script>\?/, count: 1
     assert_select "#message-body script", 0, "what people type is shown as text"
     assert_select "h1", "Message from Sam <b>Lee</b>"
-    assert_select "a[href='mailto:sam@example.com']", /Reply by email/
+    assert_select "a[href^=?]", "mailto:sam@example.com?subject=", text: /Reply by email/
     get ops_contact_message_path(id: "nope")
     assert_response :not_found
   end
@@ -101,7 +101,7 @@ class Ops::ContactMessagesTest < ActionDispatch::IntegrationTest
     assert_equal [ @founder, { "message" => @spam.uid, "spam" => true } ], [ entry.operator_user, entry.data ]
     assert_no_match "seo@example.com", entry.attributes.to_json
     get ops_audit_entries_path(action_name: "contact_message.deleted")
-    assert_select "#audit-entries li", /Deleted a contact message/
+    assert_select "#audit-entries li", /Deleted a contact message.*Message #{@spam.uid} \(spam\)/m
   end
 
   test "everything from one address can be deleted on request, and that's audited" do
@@ -110,11 +110,14 @@ class Ops::ContactMessagesTest < ActionDispatch::IntegrationTest
     get ops_contact_message_path(again)
     assert_select "#erase-sender"
     assert_match "2 messages", response.body
+    assert_match "delete those emails there too", response.body, "the support inbox copies are mentioned"
     delete erase_ops_contact_message_path(again)
     assert_redirected_to ops_contact_messages_path
     assert_equal [ @newer, @spam ].sort, ContactMessage.all.sort
     entry = AuditEntry.find_by!(action: "contact_message.erased")
     assert_equal({ "count" => 2 }, entry.data)
     assert_no_match "dana@example.com", entry.attributes.to_json
+    get ops_audit_entries_path(action_name: "contact_message.erased")
+    assert_select "#audit-entries li", /2 messages/
   end
 end

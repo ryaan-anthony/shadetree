@@ -79,6 +79,14 @@ class AuditEntry < ApplicationRecord
   # The business's name, from the entry if the business has since been deleted.
   def business_label = business&.name || (data["business_name"] && "#{data["business_name"]} (deleted)")
 
+  # A short, non-personal detail shown under the label (what the entry's data records).
+  def detail
+    case action
+    when "contact_message.deleted" then "Message #{data["message"]}#{" (spam)" if data["spam"]}"
+    when "contact_message.erased" then ActionController::Base.helpers.pluralize(data["count"].to_i, "message")
+    end
+  end
+
   # The database refuses to change, delete or truncate entries. schema.rb can't hold triggers,
   # so the migration adds this, and so does every schema load, db:prepare and test database
   # (lib/tasks/audit_log.rake, test_helper). Idempotent.

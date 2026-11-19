@@ -65,7 +65,9 @@ Part 2 (the operator console, OPS-01):
 - Deleting one message, or everything from its address (a request to be forgotten, like
   `bin/rails contact:erase EMAIL=…`), needs a code from the last five minutes and is audited
   (`contact_message.deleted` / `.erased`) with the message id or count only: the permanent log
-  keeps no name or address. The console's home shows how many are open.
+  keeps no name or address (the audit page shows the id or count). Deleting and auditing happen
+  in one transaction. The copies emailed to the support inbox are deleted there by hand; the
+  erase card and its confirmation say so. The console's home shows how many are open.
 
 ## Open questions
 
