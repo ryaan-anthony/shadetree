@@ -27,7 +27,7 @@ class MarketingAnalyticsTest < ActionDispatch::IntegrationTest
     get root_path
     assert_select "script[data-domain]", false
     assert_no_enqueued_jobs(only: AnalyticsEventJob) do
-      post user_registration_path, params: { user: { first_name: "Ana", email: "ana@example.com", password: "long enough phrase", terms_of_service: "1" } }
+      post user_registration_path, params: { user: { first_name: "Ana", email: "ana@example.com", password: "long enough phrase", terms_of_service: "1" }, **form_guard_params("sign-up") }
     end
   end
 
@@ -66,7 +66,7 @@ class MarketingAnalyticsTest < ActionDispatch::IntegrationTest
   test "sign-up, a new business and the first quote sent are sent as events, with no ids or personal data" do
     with_analytics do
       assert_enqueued_with(job: AnalyticsEventJob, args: [ "Sign-up Completed", "https://getshadetree.com/app/signed-up", "Agent/1", "127.0.0.1" ]) do
-        post user_registration_path, params: { user: { first_name: "Ana", email: "ana@example.com", password: "long enough phrase", terms_of_service: "1" } },
+        post user_registration_path, params: { user: { first_name: "Ana", email: "ana@example.com", password: "long enough phrase", terms_of_service: "1" }, **form_guard_params("sign-up") },
                                      headers: { "User-Agent" => "Agent/1" }
       end
       sign_out :user
@@ -91,7 +91,7 @@ class MarketingAnalyticsTest < ActionDispatch::IntegrationTest
   test "a failed sign-up sends nothing, and a bare host leaves analytics off" do
     with_analytics do
       assert_no_enqueued_jobs(only: AnalyticsEventJob) do
-        post user_registration_path, params: { user: { first_name: "", email: "bad", password: "x", terms_of_service: "1" } }
+        post user_registration_path, params: { user: { first_name: "", email: "bad", password: "x", terms_of_service: "1" }, **form_guard_params("sign-up") }
       end
       ENV["ANALYTICS_HOST"] = "stats.example.com"
       assert_not Analytics.enabled?
