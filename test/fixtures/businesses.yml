@@ -5,6 +5,7 @@ one:
   handle: one-biz
   uid: bizOneUid001
   owner: one
+  plan: free
   phone: 555-0100
   email: business1@example.com
   timezone: America/New_York
@@ -24,6 +25,7 @@ two:
   handle: two-biz
   uid: bizTwoUid002
   owner: two
+  plan: free
   phone: 555-0200
   email: business2@example.com
   timezone: America/Los_Angeles

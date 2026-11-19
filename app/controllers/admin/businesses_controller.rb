@@ -13,6 +13,10 @@ class Admin::BusinessesController < Admin::BaseController
     @business = current_user.owned_businesses.build(params.require(:business).permit(:name, :industry, :timezone))
     @business.owner = current_user
     @business.timezone = nil unless ActiveSupport::TimeZone[@business.timezone.to_s] # browser guess only
+    if current_user.owned_businesses.where(plan: Plan.where(monthly_price_cents: 0, annual_price_cents: 0)).count >= Business::FREE_BUSINESSES_PER_OWNER
+      @business.errors.add(:base, "You already own #{Business::FREE_BUSINESSES_PER_OWNER} businesses on the free plan. Upgrade one to add another.")
+      return render(:new, status: :unprocessable_content)
+    end
 
     if @business.save(context: :setup)
       switch_business_to(@business)

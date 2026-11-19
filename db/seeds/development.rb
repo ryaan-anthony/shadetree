@@ -29,6 +29,10 @@ business = Business.find_or_create_by!(name: "Oakline Lawn & Landscape", owner: 
   b.onboarded_at = Time.current
 end
 
+# BIL-01: the demo business is on Starter (three people; "Powered by Shadetree" off). Run
+# `bin/rails plans:comp` or change it in the console to see other plans.
+business.update!(plan: Plan.find_by!(key: "starter")) if business.plan.key == "free"
+
 { admin => "admin", technician => "technician" }.each do |user, role|
   BusinessUser.find_or_create_by!(business: business, user: user) { |m| m.role = role }
 end

@@ -1,0 +1,26 @@
+# BIL-01: the plans tests run against (the same shape as db/seeds/plans.yml).
+free:
+  key: free
+  name: Free
+  default: true
+  position: 0
+  limits: { "quotes_sent": 5, "team_members": 2 }
+  features: {}
+
+starter:
+  key: starter
+  name: Starter
+  position: 1
+  monthly_price_cents: 1900
+  annual_price_cents: 19000
+  limits: { "quotes_sent": 30, "team_members": 3 }
+  features: { "remove_powered_by": true }
+
+business:
+  key: business
+  name: Business
+  position: 3
+  monthly_price_cents: 9900
+  annual_price_cents: 99000
+  limits: {}
+  features: { "remove_powered_by": true, "locations": true }

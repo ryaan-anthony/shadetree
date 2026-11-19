@@ -201,6 +201,7 @@ Rails.application.routes.draw do
 
     # Business hours and closures (CAT-06)
     resource :hours, only: %i[show update], controller: "hours"
+    resource :plan, only: :show, controller: "plans" # BIL-01
     resources :closures, except: %i[index show]
 
     # Service catalog (CAT-03)

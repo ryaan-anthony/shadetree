@@ -17,6 +17,7 @@ class Invitation < ApplicationRecord
   validates :invited_by, presence: true, on: :create
   validate :not_already_a_member, on: :create
   validate :not_already_invited, on: :create
+  validate :within_team_limit, on: :create
 
   before_validation do
     if new_record?
@@ -96,6 +97,15 @@ class Invitation < ApplicationRecord
   end
 
   private
+
+  # BIL-01: the plan's team size counts active members and pending invitations.
+  def within_team_limit
+    entitlements = business&.entitlements
+    return if entitlements.nil? || entitlements.within?(:team_members)
+
+    errors.add(:base, "Your #{entitlements.plan.name} plan includes #{entitlements.limit(:team_members)} team members, counting pending invitations. " \
+                      "Revoke an invitation or upgrade to add more.")
+  end
 
   # NTF-02: the people who manage the team hear that someone joined (deliver never raises).
   def notify_accepted(user)

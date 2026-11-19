@@ -1,0 +1,61 @@
+<%# BIL-01: the business's plan, its limits and features with what's used, and the other plans. %>
+<% content_for :title, "Plan" %>
+<%= render "admin/businesses/settings_header", current: "plan" %>
+<% plan = @entitlements.plan %>
+
+<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+  <%= card title: "You're on #{plan.name}", subtitle: plan.description, id: "current-plan" do %>
+    <dl class="space-y-3 text-sm">
+      <% Plan::LIMITS.each do |key, label| %>
+        <% limit = @entitlements.limit(key) %>
+        <div class="flex items-baseline justify-between gap-3" id="limit-<%= key %>">
+          <dt class="text-subtle"><%= label %></dt>
+          <dd class="font-semibold text-ink"><%= limit ? "#{@entitlements.used(key)} of #{limit}" : "#{@entitlements.used(key)}, no limit" %></dd>
+        </div>
+      <% end %>
+    </dl>
+    <ul class="mt-4 space-y-1.5 border-t border-line pt-4 text-sm" aria-label="Included">
+      <% Plan::FEATURES.each do |key, label| %>
+        <% included = @entitlements.feature?(key) %>
+        <li class="flex items-center gap-2 <%= included ? "text-ink" : "text-muted" %>">
+          <%= icon(included ? "check" : "minus", class: "size-4 #{included ? "text-success" : "text-faint"}") %>
+          <span><%= label %></span><span class="sr-only"><%= included ? "(included)" : "(not included)" %></span>
+        </li>
+      <% end %>
+    </ul>
+    <p class="mt-4 text-sm2 text-muted">Quotes sent count from the 1st of each month. Changing plan is coming soon.</p>
+  <% end %>
+</div>
+
+<h2 class="mb-3 mt-8 text-base font-semibold text-ink">Compare plans</h2>
+<div class="overflow-x-auto rounded-card border border-line bg-surface">
+  <table class="w-full min-w-[40rem] text-sm" id="compare-plans">
+    <thead>
+      <tr class="border-b border-line text-left">
+        <th scope="col" class="p-3 font-medium text-muted"><span class="sr-only">What's included</span></th>
+        <% @plans.each do |option| %>
+          <th scope="col" class="p-3 <%= "bg-sunken" if option == plan %>">
+            <span class="block font-semibold text-ink"><%= option.name %><%= " (yours)" if option == plan %></span>
+            <span class="block text-sm2 font-normal text-muted"><%= option.free? ? "$0" : "#{money(option.monthly_price)}/month" %></span>
+          </th>
+        <% end %>
+      </tr>
+    </thead>
+    <tbody>
+      <% Plan::LIMITS.each do |key, label| %>
+        <tr class="border-b border-line">
+          <th scope="row" class="p-3 text-left font-normal text-subtle"><%= label %></th>
+          <% @plans.each do |option| %><td class="p-3 text-ink <%= "bg-sunken" if option == plan %>"><%= option.limits[key] || "Unlimited" %></td><% end %>
+        </tr>
+      <% end %>
+      <% Plan::FEATURES.each do |key, label| %>
+        <tr class="border-b border-line last:border-b-0">
+          <th scope="row" class="p-3 text-left font-normal text-subtle"><%= label %></th>
+          <% @plans.each do |option| %>
+            <td class="p-3 <%= "bg-sunken" if option == plan %>"><%= option.features[key] ? icon("check", label: "Included", class: "size-4 text-success") : icon("minus", label: "Not included", class: "size-4 text-faint") %></td>
+          <% end %>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

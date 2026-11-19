@@ -22,12 +22,20 @@ class Business < ApplicationRecord
 
   # Relationships
   belongs_to :owner, class_name: "User"
+  belongs_to :plan # BIL-01: new businesses start on the default plan (Free)
   has_many :business_users, dependent: :destroy
   has_many :users, through: :business_users
   has_many :closures # CAT-06; the database removes them with the business
 
   # Callbacks
   before_validation { self.uid ||= SecureRandom.base58(BusinessOwned::UID_LENGTH) if new_record? }
+  before_validation(if: :new_record?) { self.plan ||= Plan.default! }
+
+  # BIL-01: how many businesses on a free plan one person may own (09-billing: limits are per
+  # business, with a cap on free businesses per user).
+  FREE_BUSINESSES_PER_OWNER = 3
+
+  def entitlements = Entitlements.for(self)
   before_save :set_default_brand_color
   after_create :add_owner_to_business_users
 
