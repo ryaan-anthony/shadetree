@@ -46,15 +46,21 @@ class ClientSearchSystemTest < ApplicationSystemTestCase
 
   test "the picker finds a client by keyboard, refuses an empty submit, and takes a new client" do
     visit styleguide_path(anchor: "pickers")
-    within("#picker-demo") { click_on "Submit" }
+    within("#picker-demo") do
+      input = find("input[type=search]")
+      # The blocked submit shows the browser's validation bubble and moves focus. On a slow CI
+      # Chrome the click can be lost (no message appears), so submit again until it shows;
+      # typing that races the bubble can be lost too, so wait for it before typing.
+      message = -> { evaluate_script("arguments[0].validationMessage", input) }
+      page.document.synchronize(15) do
+        click_on "Submit" if message.call.empty?
+        raise Capybara::ExpectationNotMet, "no validation message yet" if message.call.empty?
+      end
+      assert_equal "Choose a client, or add a new one.", message.call
+    end
     assert_nil find("#picker-demo")["data-submitted"], "an empty required picker blocks the submit"
     within("#picker-demo") do
       input = find("input[type=search]")
-      # The blocked submit shows the browser's validation bubble and moves focus; typing that
-      # races it can be lost in headless Chrome. Wait for it, then type into the field.
-      message = -> { evaluate_script("arguments[0].validationMessage", input) }
-      page.document.synchronize(5) { raise Capybara::ExpectationNotMet, "no validation message yet" if message.call.empty? }
-      assert_equal "Choose a client, or add a new one.", message.call
       input.click
       input.fill_in(with: "maria")
       assert_equal "maria", input.value
