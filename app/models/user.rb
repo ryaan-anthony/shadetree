@@ -17,10 +17,21 @@ class User < ApplicationRecord
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable, :confirmable, :lockable
 
-  # Sign-up form checkbox; stored as terms_accepted_at.
+  # Sign-up form checkbox; stored as terms_accepted_at with the Terms and Privacy versions it
+  # covered (MKT-03).
   attribute :terms_of_service, :boolean
   validates :terms_of_service, acceptance: { message: "must be accepted to create an account", allow_nil: false }, on: :create, if: :new_record_from_sign_up?
-  before_create { self.terms_accepted_at ||= Time.current if terms_of_service }
+  before_create { accept_legal_terms!(save: false) if terms_of_service }
+
+  # Records acceptance of the Terms and Privacy versions in force now.
+  def accept_legal_terms!(save: true)
+    versions = LegalDocument.current_versions
+    assign_attributes(terms_accepted_at: Time.current, terms_version: versions["terms"], privacy_version: versions["privacy"])
+    save!(validate: false) if save
+  end
+
+  # Documents with a material change since this person accepted (MKT-03).
+  def legal_documents_to_accept = LegalDocument.needing_acceptance(self)
 
   # Relationships. Accounts aren't destroyed (delete_account! anonymizes them), so these
   # dependents only matter for a user removed outright, e.g. in the console.

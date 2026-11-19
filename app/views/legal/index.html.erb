@@ -1,0 +1,15 @@
+<% content_for :title, "Legal and trust" %>
+<% content_for :analytics, "on" %>
+<% page_meta description: "Shadetree's terms, privacy policy, security and how we handle your clients' data, with every past version." %>
+<div class="mx-auto max-w-3xl px-4 py-12">
+  <h1 class="text-3xl font-bold tracking-tight text-enterprise-navy">Legal and trust</h1>
+  <p class="mt-2 text-gray-600">How Shadetree works with your business and your clients' data, in plain language where we can.</p>
+  <ul class="mt-8 divide-y divide-gray-200 rounded-lg border border-gray-200 bg-white" id="legal-documents">
+    <% @documents.each do |document| %>
+      <li class="p-5">
+        <%= link_to document.title, legal_document_path(document.slug), class: "font-semibold text-enterprise-navy hover:underline" %>
+        <p class="mt-1 text-sm text-gray-600"><%= document.description %> Effective <%= document.current.effective_on.to_fs(:long) %>.</p>
+      </li>
+    <% end %>
+  </ul>
+</div>

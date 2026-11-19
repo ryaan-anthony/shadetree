@@ -17,6 +17,7 @@ class SeoController < ApplicationController
   def sitemap
     base = helpers.public_base_url
     @urls = PAGES.map { "#{base}#{public_send(_1)}" }
+    @urls += [ legal_path, *LegalDocument::ALL.keys.excluding("terms", "privacy").map { legal_document_path(_1) } ].map { "#{base}#{_1}" } # MKT-03
     @urls += Business.active.where(request_form_enabled: true, request_form_indexable: true).order(:id).pluck(:handle)
                      .map { "#{base}#{public_request_path(_1)}" }
     expires_in 1.hour, public: true

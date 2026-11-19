@@ -1,5 +1,6 @@
 class Admin::BaseController < ApplicationController
   before_action :authenticate_user!
+  before_action :require_current_legal_terms # MKT-03: a material change to the Terms or Privacy is accepted first
   include BusinessContext
   include ConfirmedSender
   before_action :require_business_setup
@@ -8,6 +9,13 @@ class Admin::BaseController < ApplicationController
   before_action { response.set_header("X-Robots-Tag", "noindex, nofollow") } # MKT-04: never in search results
 
   private
+
+  def require_current_legal_terms
+    return if current_user.legal_documents_to_accept.none?
+
+    session[:after_legal_acceptance] = request.fullpath if request.get?
+    redirect_to legal_acceptance_path
+  end
 
   # ACC-05: a page opened from the setup checklist (from=setup) goes back to it when done.
   helper_method def from_setup? = params[:from] == "setup"
