@@ -51,10 +51,13 @@ cookie banner.
 Part 1 (search engines):
 - `page_meta description:` in each public view; the marketing layout adds the description,
   canonical address (public host from the mailer's URL options, no query string), Open Graph
-  and Twitter cards with `marketing/share.png` (1200×630, rendered from the brand). Titles and
-  descriptions are unique per page (tested).
+  and Twitter cards with `marketing/share.png` (1200×630 JPEG, rendered from
+  `docs/marketing/share-image.html` with headless Chrome). Titles and
+  descriptions are unique per page (tested). A page without `page_meta` is noindex. The public
+  host is `APP_HOST`, else the mailer's.
 - `/robots.txt` and `/sitemap.xml` come from `SeoController`: robots disallow the staff app,
-  operator console, account pages and client links; the sitemap lists the marketing and legal
+  account pages (sign-in and sign-up allowed), invitations and client links (the operator
+  console answers "not found", so it isn't named); the sitemap lists the marketing and legal
   pages and request pages whose business ticked "Let search engines find this page"
   (Settings → Request form). The staff app also sends `X-Robots-Tag: noindex`; client pages are
   noindex; account pages other than sign-in and sign-up are noindex.
@@ -63,6 +66,4 @@ Part 1 (search engines):
 
 ## Open questions
 
-- Analytics tool choice — must not require a cookie banner (11-marketing open question 3).
-- Should business request pages be indexable (local SEO benefit for businesses)? Recommend a
-  per-business toggle, default off.
+- None.

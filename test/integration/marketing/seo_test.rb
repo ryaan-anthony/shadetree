@@ -22,6 +22,27 @@ class MarketingSeoTest < ActionDispatch::IntegrationTest
     assert_equal seen.size, seen.map(&:last).uniq.size, "descriptions are unique"
   end
 
+  test "structured data escapes what operators type in plan names" do
+    Plan.listed.first.update!(name: "Evil</script><script>alert(1)</script>")
+    get root_path
+    assert_no_match %r{Evil</script>}, response.body
+    assert_equal "Evil</script><script>alert(1)</script>", JSON.parse(css_select("script[type='application/ld+json']").first.text).last["offers"].first["name"]
+  end
+
+  test "the sitemap leaves out suspended businesses and closed request forms" do
+    businesses(:one).update!(request_form_enabled: false, request_form_indexable: true)
+    businesses(:two).update!(request_form_enabled: true, request_form_indexable: true, active: false)
+    get "/sitemap.xml"
+    assert_not_includes response.body, "/request/"
+  end
+
+  test "pages without their own description aren't indexed" do
+    sign_in users(:one)
+    get edit_user_registration_path
+    assert_select "meta[name=robots][content=noindex]"
+    assert_select "link[rel=canonical]", false
+  end
+
   test "the canonical address ignores the query string" do
     get pricing_path(utm_source: "x")
     assert_select "link[rel=canonical][href=?]", "http://example.com/pricing"
@@ -37,7 +58,9 @@ class MarketingSeoTest < ActionDispatch::IntegrationTest
   test "robots keep the staff app, operator console, sign-in pages and client links out, and point to the sitemap" do
     get "/robots.txt"
     assert_response :success
-    %w[/admin /ops /c/ /users/].each { assert_includes response.body, "Disallow: #{_1}" }
+    %w[/admin /c/ /users/ /invitations/].each { assert_includes response.body, "Disallow: #{_1}" }
+    %w[/users/sign_in /users/sign_up].each { assert_includes response.body, "Allow: #{_1}" }
+    assert_not_includes response.body, "/ops", "the console isn't advertised"
     assert_includes response.body, "Sitemap: http://example.com/sitemap.xml"
   end
 

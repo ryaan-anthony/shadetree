@@ -14,17 +14,27 @@ module SeoHelper
   end
 
   def meta_description = @page_meta&.dig(:description) || DEFAULT_DESCRIPTION
-  def meta_index? = @page_meta.nil? || @page_meta[:index]
+  # Only pages that describe themselves (page_meta) are indexed; anything else is kept out.
+  def meta_index? = @page_meta.present? && @page_meta[:index]
+
+  # "Pricing · Shadetree", escaped once.
+  def page_title = safe_join([ content_for(:title).presence, SITE ].compact.uniq, " · ")
 
   # The address this page should be known by: the public host, the path, no query string.
   def canonical_url = "#{public_base_url}#{request.path == "/" ? "/" : request.path.chomp("/")}"
 
-  def share_image_url = "#{public_base_url}#{image_path(@page_meta&.dig(:image) || "marketing/share.png")}"
+  def share_image_url = URI.join("#{public_base_url}/", image_path(@page_meta&.dig(:image) || "marketing/share.jpg")).to_s
 
+  # The public host: APP_HOST (as PDFs use it), else the mailer's. A production app without a
+  # real host falls back to the request's rather than pointing search engines at example.com.
   def public_base_url
     options = Rails.application.config.action_mailer.default_url_options || {}
-    host = options[:host].presence or return request.base_url
-    port = options[:port] ? ":#{options[:port]}" : ""
+    host = ENV["APP_HOST"].presence || options[:host].presence
+    if host.nil? || (Rails.env.production? && host == "example.com")
+      Rails.logger.warn("[seo] APP_HOST isn't set; using the request's host") if Rails.env.production?
+      return request.base_url
+    end
+    port = options[:port] && !ENV["APP_HOST"].present? ? ":#{options[:port]}" : ""
     "#{options[:protocol] || request.protocol.delete_suffix("://")}://#{host}#{port}"
   end
 
@@ -37,7 +47,11 @@ module SeoHelper
       { "@context" => "https://schema.org", "@type" => "SoftwareApplication", "name" => SITE, "url" => "#{base}/",
         "applicationCategory" => "BusinessApplication", "operatingSystem" => "Web",
         "description" => DEFAULT_DESCRIPTION,
-        "offers" => plans.map { { "@type" => "Offer", "name" => _1.name, "price" => format("%.2f", _1.monthly_price_cents / 100.0), "priceCurrency" => _1.currency } } }
+        "offers" => plans.map do |plan|
+          { "@type" => "Offer", "name" => plan.name, "price" => plan.monthly_price.to_s, "priceCurrency" => plan.currency,
+            "priceSpecification" => { "@type" => "UnitPriceSpecification", "price" => plan.monthly_price.to_s,
+                                      "priceCurrency" => plan.currency, "billingDuration" => "P1M" } }
+        end }
     ]
     tag.script(data.to_json.html_safe, type: "application/ld+json", nonce: content_security_policy_nonce) # rubocop:disable Rails/OutputSafety -- JSON, escaped by to_json
   end

@@ -66,5 +66,5 @@ testimonials, blog, newsletter, demo booking, industry pages, and a knowledge ba
 1. ~~**Brand & domain (G8)**~~: decided, `getshadetree.com`.
 2. Who drafts the legal pages? Recommend a reputable template service reviewed by a lawyer before
    accepting payments. **(blocking for public launch)**
-3. Analytics tool choice — engineering/product decision; must not require a cookie banner.
+3. ~~Analytics tool choice~~: decided, Plausible self-hosted (cookieless, no banner; MKT-04).
 4. Should the marketing site move to a static site generator later for CMS-style editing?

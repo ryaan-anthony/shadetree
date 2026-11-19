@@ -3,10 +3,13 @@
 # businesses that chose to be found, are listed.
 class SeoController < ApplicationController
   PAGES = %i[root_path features_path pricing_path about_path contact_path terms_path privacy_path].freeze
-  PRIVATE = %w[/admin /ops /c/ /users/ /rails/ /up].freeze
+  # The operator console isn't listed: it answers "not found" to everyone else.
+  PRIVATE = %w[/admin /c/ /invitations/ /users/ /up$].freeze
+  FINDABLE = %w[/users/sign_in /users/sign_up].freeze
 
   def robots
-    lines = [ "User-agent: *", *PRIVATE.map { "Disallow: #{_1}" }, "", "Sitemap: #{helpers.public_base_url}/sitemap.xml" ]
+    lines = [ "User-agent: *", *FINDABLE.map { "Allow: #{_1}" }, *PRIVATE.map { "Disallow: #{_1}" }, "",
+              "Sitemap: #{helpers.public_base_url}/sitemap.xml" ]
     expires_in 1.hour, public: true
     render plain: lines.join("\n") + "\n"
   end
