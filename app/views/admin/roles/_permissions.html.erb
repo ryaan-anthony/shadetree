@@ -1,0 +1,27 @@
+<%# locals: (granted:, owner: false) -%>
+<%# ACC-07: what a role can do, in plain words, grouped by area. owner: also the Owner-only things. %>
+<% granted = granted.map(&:to_s) %>
+<dl class="space-y-3 text-sm">
+  <% Permissions::GROUPS.each do |area, permissions| %>
+    <div>
+      <dt class="text-xs font-semibold text-muted"><%= area %></dt>
+      <dd>
+        <ul class="mt-1 space-y-1">
+          <% permissions.each do |key, words| %>
+            <% on = granted.include?(key.to_s) %>
+            <li class="flex gap-2 <%= on ? "text-ink" : "text-faint" %>">
+              <%= icon(on ? "check" : "minus", class: "mt-0.5 size-4 shrink-0 #{on ? "text-canopy" : "text-faint"}") %>
+              <span><%= words %><span class="sr-only"><%= on ? " (yes)" : " (no)" %></span></span>
+            </li>
+          <% end %>
+        </ul>
+      </dd>
+    </div>
+  <% end %>
+  <% if owner %>
+    <div>
+      <dt class="text-xs font-semibold text-muted">Owner only</dt>
+      <dd><p class="mt-1 flex gap-2 text-ink"><%= icon "check", class: "mt-0.5 size-4 shrink-0 text-canopy" %>Billing and the plan, deleting the business, the payment account, and who's an Owner</p></dd>
+    </div>
+  <% end %>
+</dl>

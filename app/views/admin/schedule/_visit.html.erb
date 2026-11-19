@@ -11,7 +11,7 @@
       <% if visit.instructions %><div><dt class="text-sm2 text-muted">Instructions</dt><dd class="whitespace-pre-line text-ink"><%= visit.instructions %></dd></div><% end %>
     </dl>
     <div class="mt-4 flex flex-wrap gap-2">
-      <%= link_to "Open job", admin_job_path(job, anchor: "visit-#{visit.uid}"), class: button_classes(:secondary, :sm), data: { turbo_frame: "_top" } %>
+      <% if can?(:office) %><%= link_to "Open job", admin_job_path(job, anchor: "visit-#{visit.uid}"), class: button_classes(:secondary, :sm), data: { turbo_frame: "_top" } %><% end %>
       <% if visit.open? %>
         <%= render "admin/schedule/move", visit:, warnings: (@warnings if visit == @visit), proposed: (@proposed if visit == @visit) %>
         <%= link_to "Edit visit", edit_admin_job_visit_path(job, visit), class: button_classes(:ghost, :sm), data: { turbo_frame: "_top" } %>

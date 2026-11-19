@@ -20,10 +20,7 @@ module LayoutHelper
     name.to_s.split.map { |part| part[0] }.first(2).join.upcase
   end
 
-  def current_role_label
-    role = current_business&.business_users&.find_by(user: current_user)&.role
-    role ? role.humanize : ""
-  end
+  def current_role_label = (Current.membership || current_business&.business_users&.find_by(user: current_user))&.role_name.to_s
 
   # The business's logo, or its initials on its brand color (CAT-02 Branding).
   def business_mark(business, class: nil)

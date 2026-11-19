@@ -24,19 +24,19 @@ Let Owners create custom roles from a fixed catalog of permissions, alongside th
 
 ## Acceptance criteria
 
-- [ ] The permission catalog (the named capabilities behind ACC-04's capability table) is
+- [x] The permission catalog (the named capabilities behind ACC-04's capability table) is
       documented and shown in plain language, grouped by area.
-- [ ] Owners can create, edit, duplicate and delete custom roles by choosing permissions; the
+- [x] Owners can create, edit, duplicate and delete custom roles by choosing permissions; the
       built-in roles are shown read-only and can be duplicated as a starting point.
-- [ ] Some permissions are Owner-only and can't be granted to custom roles (billing, deleting
+- [x] Some permissions are Owner-only and can't be granted to custom roles (billing, deleting
       the business, managing Owners, connecting the payment account).
-- [ ] Members can be assigned a custom role wherever roles are chosen (invitations, team page).
-- [ ] Deleting a role in use requires choosing a replacement role for its members.
-- [ ] Permission changes take effect on the member's next request; changes are recorded.
-- [ ] Navigation, actions and notifications (NTF-02) follow the member's permissions.
-- [ ] Custom roles are a plan feature (entitlement from BIL-01); on downgrade, existing custom
+- [x] Members can be assigned a custom role wherever roles are chosen (invitations, team page).
+- [x] Deleting a role in use requires choosing a replacement role for its members.
+- [x] Permission changes take effect on the member's next request; changes are recorded.
+- [x] Navigation, actions and notifications (NTF-02) follow the member's permissions.
+- [x] Custom roles are a plan feature (entitlement from BIL-01); on downgrade, existing custom
       roles keep working but can't be edited or newly assigned.
-- [ ] Tests cover each permission's enforcement through a custom role, Owner-only permissions,
+- [x] Tests cover each permission's enforcement through a custom role, Owner-only permissions,
       role deletion with reassignment, and tenancy.
 
 ## Out of scope
@@ -44,7 +44,40 @@ Let Owners create custom roles from a fixed catalog of permissions, alongside th
 - Per-member permission overrides, record-level sharing rules, location-scoped roles (see
   CAT-07 open questions).
 
+## Decisions
+
+- **Pro and above** (recommendation accepted, M5 planning): the `custom_roles` plan feature.
+- **Location-scoped roles wait for CAT-07** (recommendation accepted).
+- **Owners manage roles; anyone who manages the team can give them**, within a rule: nobody
+  gives a role, or changes someone's role, carrying a permission they don't have themselves
+  (so nobody promotes themselves). (Admins hold every grantable permission, so for them
+  nothing changes; a custom "team lead" can hand out Technician but not Admin.)
+- **Owner-only, never in a custom role:** `billing` (plan, deleting the business, the payment
+  account) and `manage_owners`.
+
+## Implementation notes
+
+- `Permissions::GROUPS` holds the grantable permissions in plain words, by area (Work,
+  Business); `OWNER_ONLY` the rest. The capability table in 02-accounts stays the source.
+- `Role` (per business, up to 20, names unique ignoring case and never a built-in name) lists
+  permissions; a member or invitation with one has role "custom" and `role_id`.
+  `BusinessUser#can?` asks the role, so navigation, actions and notifications (all permission
+  based) follow it from the next request. `role_name` / `role_choice` replace `role` where
+  people see or pick roles (team page, invitations, emails, sidebar, the My day welcome, which
+  now greets anyone without office access).
+- Team → Roles (`manage_owners`): built-in roles read-only (Admin and Technician can be
+  duplicated), the business's own with member counts; new (blank or from another role), edit,
+  duplicate, and delete, which asks for a replacement when anyone (or a pending invitation) has
+  the role. `RoleEvent` records created / changed (name, permissions added and removed) /
+  assigned / deleted, shown as the role's history.
+- Plan gating: without the feature, roles are read-only (still deletable), can't be given to
+  anyone new (a pending invitation with one becomes Technician on acceptance), and keep
+  working; members who have one can still be deactivated and reactivated.
+- Pages follow the role: Home sends someone without office access to the first page they can
+  use (My day, the schedule, the team), the sidebar shows My day and Schedule by their own
+  permissions, the schedule hides job links from people without office access (and visit saves
+  return to the schedule), and only people who can work visits are offered as assignees.
+
 ## Open questions
 
-- Should custom roles be limited to paid plans? Recommended: Pro and above.
-- Should a role be scoped to specific locations (CAT-07)? Recommend deciding after CAT-07 ships.
+- None.

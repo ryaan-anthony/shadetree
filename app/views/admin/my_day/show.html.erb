@@ -4,9 +4,9 @@
 
 <div class="max-w-2xl space-y-4">
   <%# ACC-05: a technician's one-screen welcome. %>
-  <% if Current.membership&.role == "technician" && Current.membership.welcome_dismissed_at.nil? %>
+  <% if Current.membership && !Current.membership.can?(:office) && Current.membership.welcome_dismissed_at.nil? %>
     <%= card title: "Welcome to #{current_business.name}" do %>
-      <p class="text-sm text-body">You're on the team as a technician. Visits you're going on show up here, with the client's address, how to get in and what to do. Tap one to start it.</p>
+      <p class="text-sm text-body">You're on the team as <%= Current.membership.role_name.match?(/\A[AEIOU]/i) ? "an" : "a" %> <%= Current.membership.role_name.downcase %>. Visits you're going on show up here, with the client's address, how to get in and what to do. Tap one to start it.</p>
       <div class="mt-4"><%= button_to "Got it", admin_dismiss_welcome_path, method: :patch, class: button_classes(:secondary, :sm) %></div>
     <% end %>
   <% end %>

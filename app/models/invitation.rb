@@ -13,7 +13,10 @@ class Invitation < ApplicationRecord
   normalizes :email, with: ->(email) { email.to_s.strip.downcase }
 
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
-  validates :role, inclusion: { in: BusinessUser::ROLES }
+  belongs_to_business_record :custom_role, class_name: "Role", foreign_key: :role_id, optional: true # ACC-07
+
+  validates :role, inclusion: { in: BusinessUser::ROLES + [ BusinessUser::CUSTOM ] }
+  validates :custom_role, presence: true, if: -> { role == BusinessUser::CUSTOM }
   validates :invited_by, presence: true, on: :create
   validate :not_already_a_member, on: :create
   validate :not_already_invited, on: :create
@@ -93,13 +96,20 @@ class Invitation < ApplicationRecord
         raise NotAcceptable, "This invitation is no longer valid" unless pending?
 
         membership = BusinessUser.find_or_initialize_by(business:, user:)
-        membership.assign_attributes(role:, active: true, deactivated_at: nil) if membership.new_record? || !membership.active?
+        # ACC-07: on a plan without custom roles, nobody new gets one: the invitation's becomes Technician.
+        granted = role == BusinessUser::CUSTOM && !business.entitlements.feature?(:custom_roles) ? { role: "technician", role_id: nil } : { role:, role_id: }
+        membership.assign_attributes(**granted, active: true, deactivated_at: nil) if membership.new_record? || !membership.active?
         membership.save!
         update!(accepted_at: Time.current, accepted_by: user)
+        RoleEvent.record!(membership.custom_role_record, "assigned", by: user, member_id: user.id) if membership.custom_role? && membership.saved_change_to_role_id?
         membership
       end.tap { notify_accepted(user) }
     end
   end
+
+  # "Technician", or the custom role's name (ACC-07).
+  # Read across businesses: the invitation page has no current business.
+  def role_name = role == BusinessUser::CUSTOM ? Role.unscoped.find_by(id: role_id, business_id:)&.name.to_s : role.humanize
 
   private
 

@@ -4,19 +4,25 @@ class Admin::MembersController < Admin::BaseController
   before_action :set_member
 
   def update
-    role = params.require(:member).fetch(:role)
-    return deny_change unless current_membership.can_assign_role?(@member, role)
+    choice = params.require(:member).fetch(:role).to_s
+    return deny_change(choice) unless current_membership.can_assign_role?(@member, choice)
     return redirect_to(admin_team_path, alert: "That person deleted their Shadetree account.") if @member.user.deleted? # ACC-06
 
-    if @member.update(role:)
-      redirect_to admin_team_path, notice: "#{@member.user.full_name} is now #{role == "admin" ? "an" : "a"} #{role}."
+    previous = @member.custom_role_record
+    @member.assign_role_choice(choice)
+    if @member.save
+      if @member.saved_change_to_role_id?
+        RoleEvent.record!(previous, "unassigned", by: current_user, member_id: @member.user_id) if previous
+        RoleEvent.record!(@member.custom_role_record, "assigned", by: current_user, member_id: @member.user_id) if @member.custom_role?
+      end
+      redirect_to admin_team_path, notice: "#{@member.user.full_name} is now #{@member.role_name.match?(/\A[AEIOU]/i) ? "an" : "a"} #{@member.role_name}."
     else
       redirect_to admin_team_path, alert: @member.errors.full_messages.to_sentence
     end
   end
 
   def deactivate
-    return deny_change unless current_membership.can_assign_role?(@member, @member.role)
+    return deny_change unless current_membership.can_assign_role?(@member, @member.role_choice)
     return redirect_to(admin_team_path, alert: "You can't deactivate yourself.") if @member == current_membership
 
     if @member.deactivate!
@@ -27,14 +33,14 @@ class Admin::MembersController < Admin::BaseController
   end
 
   def reactivate
-    return deny_change unless current_membership.can_assign_role?(@member, @member.role)
+    return deny_change unless current_membership.can_assign_role?(@member, @member.role_choice)
     return redirect_to(admin_team_path, alert: "That person deleted their Shadetree account.") if @member.user.deleted? # ACC-06
     # BIL-01: a reactivated member counts toward the plan's team size again.
     entitlements = current_business.entitlements
     return redirect_to(admin_team_path, alert: entitlements.team_limit_message) unless entitlements.within?(:team_members)
 
     @member.reactivate!
-    redirect_to admin_team_path, notice: "#{@member.user.full_name} has access again as #{@member.role}."
+    redirect_to admin_team_path, notice: "#{@member.user.full_name} has access again as #{@member.role_name.downcase}."
   end
 
   private
@@ -44,5 +50,11 @@ class Admin::MembersController < Admin::BaseController
     @member = current_business.business_users.includes(:user).find_by!(uid: params[:id].to_s)
   end
 
-  def deny_change = redirect_to(admin_team_path, alert: "Only owners can change owners.")
+  def deny_change(choice = nil)
+    alert = if choice.to_s.start_with?("role:") && !current_business.entitlements.feature?(:custom_roles) then "Custom roles aren't included in your plan."
+    elsif @member.owner? || choice.to_s == "owner" then "Only owners can change owners."
+    else "You can only give roles, or change people, within what you can do yourself."
+    end
+    redirect_to admin_team_path, alert:
+  end
 end

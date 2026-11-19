@@ -214,6 +214,8 @@ Tenancy.with_business(business) do
                                     "Please leave the side gate unlocked.\n\nThanks!").find_or_create_by!(kind: "visit_reminder")
   # NTF-04: the quote follow-up recipe (Settings → Automations; runs need a plan with automations).
   AutomationRecipe.install!("quote_follow_up", by: owner) unless AutomationRule.exists?(recipe: "quote_follow_up")
+  # ACC-07: a role of the business's own (Team → Roles; giving it needs a plan with custom roles).
+  Role.create_with(permissions: %w[schedule field_work]).find_or_create_by!(name: "Dispatcher")
   puts "Request form: http://localhost:3000/request/#{business.handle}"
 end
 

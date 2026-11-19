@@ -8,12 +8,12 @@ class Admin::InvitationsController < Admin::BaseController
 
   def create
     # The role is checked against the inviter's own rights before it's used (ACC-04).
-    role = params.dig(:invitation, :role).to_s.presence_in(BusinessUser::ROLES) || "technician"
-    unless current_membership.can_assign_role?(BusinessUser.new(business: current_business, role: "technician"), role)
-      return redirect_to admin_team_path, alert: "Only owners can invite owners."
+    choice = params.dig(:invitation, :role).to_s.presence || "technician"
+    unless current_membership.can_assign_role?(BusinessUser.new(business: current_business, role: "technician"), choice)
+      return redirect_to admin_team_path, alert: choice == "owner" ? "Only owners can invite owners." : "That role can't be given here."
     end
 
-    @invitation = Invitation.new(invitation_params.merge(role:, invited_by: current_user))
+    @invitation = Invitation.new(invitation_params.merge(BusinessUser.role_attributes(choice, current_business)).merge(invited_by: current_user))
     if @invitation.save
       @invitation.deliver!
       redirect_to admin_team_path, notice: "Invitation sent to #{@invitation.email}."

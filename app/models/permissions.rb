@@ -20,6 +20,24 @@ module Permissions
     "technician" => %i[field_work]
   }.freeze
 
+  # ACC-07: what a custom role may include, grouped by area, in plain words. Owner-only
+  # permissions (billing and the plan, deleting the business, the payment account, who's an
+  # Owner) are never granted by a custom role.
+  OWNER_ONLY = %i[billing manage_owners].freeze
+  GROUPS = {
+    "Work" => {
+      office: "See and manage all clients, requests, quotes, jobs, invoices and payments",
+      schedule: "Schedule visits and assign them to people",
+      field_work: "Work their own assigned visits: see the client and property, add notes and photos, complete them"
+    },
+    "Business" => {
+      business_settings: "Change the business profile, branding, hours, catalog and taxes",
+      manage_team: "Invite people and change their roles (never Owners)",
+      export_data: "Export all the business's data, invoices and payments included"
+    }
+  }.freeze
+  GRANTABLE = GROUPS.values.flat_map(&:keys).freeze
+
   class UnknownPermission < ArgumentError; end
 
   def self.granted?(role, permission)

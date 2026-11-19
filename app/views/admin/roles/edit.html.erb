@@ -1,0 +1,19 @@
+<% content_for :title, @role.name %>
+<%= page_header @role.name, lede: "Changes apply to everyone with this role on their next click." do %>
+  <%= link_to admin_roles_path, class: button_classes(:ghost) do %><%= icon "arrow-left" %> Roles<% end %>
+<% end %>
+<%= render "form", role: @role, editable: @editable %>
+<% if @events.any? %>
+  <%= card title: "History", flush: true, class: "mt-6 max-w-2xl" do %>
+    <ul class="list">
+      <% @events.each do |event| %>
+        <li class="text-sm">
+          <div class="min-w-0 flex-1">
+            <p class="text-ink"><%= role_event_summary(event) %></p>
+            <p class="text-sm2 text-muted"><%= event.user&.full_name || "Someone" %> · <%= local_time(event.occurred_at) %></p>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+<% end %>

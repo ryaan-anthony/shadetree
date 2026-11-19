@@ -16,8 +16,11 @@ class BusinessUser < ApplicationRecord
   validates :user_id, presence: true, uniqueness: { scope: :business_id }
   validates :business_id, presence: true
   ROLES = %w[owner admin technician].freeze
+  CUSTOM = "custom" # ACC-07: a business's own role, in role_id
 
-  validates :role, presence: true, inclusion: { in: ROLES }
+  validates :role, presence: true, inclusion: { in: ROLES + [ CUSTOM ] }
+  validates :role_id, presence: true, if: :custom_role?
+  validate :custom_role_in_this_business
   validates :active, inclusion: { in: [ true, false ] }
 
   # A membership never moves between users or businesses.
@@ -50,25 +53,93 @@ class BusinessUser < ApplicationRecord
   def deactivate! = update!(active: false, deactivated_at: Time.current)
   def reactivate! = update!(active: true, deactivated_at: nil)
 
-  # Named permissions (ACC-04). Inactive memberships grant nothing.
-  def can?(permission) = active? && Permissions.granted?(role, permission)
+  # Named permissions (ACC-04). Inactive memberships grant nothing; a custom role grants what
+  # it lists, never an Owner-only permission (ACC-07).
+  def can?(permission)
+    return false unless active?
+    return Permissions.granted?(role, permission) unless custom_role?
+
+    Permissions::CATALOG.fetch(permission.to_sym) { raise Permissions::UnknownPermission, permission.inspect }
+    custom_role_record&.grants?(permission) || false
+  end
+
+  def custom_role? = role == CUSTOM
+
+  # The custom role, loaded within this membership's business whatever the current tenant.
+  def custom_role_record
+    return unless role_id
+
+    @custom_role_record = nil if @custom_role_record && @custom_role_record.id != role_id
+    @custom_role_record ||= Role.unscoped.find_by(id: role_id, business_id:)
+  end
+
+  # "Owner", "Technician", or the custom role's name.
+  def role_name = custom_role? ? custom_role_record&.name.to_s : role.humanize
+
+  # The value role pickers use: "admin", or "role:<uid>" for a custom role.
+  def role_choice = custom_role? ? custom_role_record&.choice : role
+
+  # Sets the role from a picker's value. Returns false for one that isn't valid here.
+  def assign_role_choice(choice)
+    attributes = BusinessUser.role_attributes(choice, business) or return false
+    assign_attributes(attributes)
+    true
+  end
+
+  # { role:, role_id: } for a picker's value in `business`, or nil.
+  def self.role_attributes(choice, business)
+    choice = choice.to_s
+    return { role: choice, role_id: nil } if ROLES.include?(choice)
+
+    uid = choice.delete_prefix("role:")
+    role = choice.start_with?("role:") && Role.unscoped.find_by(business_id: business.id, uid:)
+    role ? { role: CUSTOM, role_id: role.id } : nil
+  end
 
   # NTF-02: whether this member wants a notification type by email: their choice, else the type's default.
   def email_notification?(kind) = notification_emails.fetch(kind.to_s) { NotificationType.fetch(kind).email_by_default } == true
 
-  # May `self` give `target` the role `new_role`? Admins manage the team but never Owners.
+  # May `self` give `target` the role `new_role` (a picker's value)? Admins manage the team but
+  # never Owners. Nobody hands out, or changes the role of someone with, a permission they don't
+  # have themselves (a custom "team lead" can't make Admins, or promote themselves).
+  # A custom role needs the plan feature (ACC-07); on a plan without it, members keep theirs
+  # but nobody new is given one.
   def can_assign_role?(target, new_role)
-    return false unless can?(:manage_team) && ROLES.include?(new_role.to_s) && target.business_id == business_id
-    return can?(:manage_owners) if target.owner? || new_role.to_s == "owner"
+    new_role = new_role.to_s
+    return false unless can?(:manage_team) && target.business_id == business_id
+    return false unless covers?(target.permission_set) && covers?(BusinessUser.permissions_for(new_role, business))
+    keeping = target.persisted? && new_role == target.role_choice # deactivating or reactivating
+    return false unless ROLES.include?(new_role) || ((keeping || custom_roles_allowed?) && BusinessUser.role_attributes(new_role, business))
+    return can?(:manage_owners) if target.owner? || new_role == "owner"
 
     true
   end
+
+  def custom_roles_allowed? = business.entitlements.feature?(:custom_roles)
+
+  # The permissions this membership's role grants (ignoring whether it's active).
+  def permission_set = custom_role? ? Array(custom_role_record&.permissions).map(&:to_sym) : Permissions::ROLES.fetch(role, [])
+
+  # The permissions a picker's value would grant in `business` (nil for an unknown value).
+  def self.permissions_for(choice, business)
+    choice = choice.to_s
+    return Permissions::ROLES[choice] if ROLES.include?(choice)
+
+    role = choice.start_with?("role:") && Role.unscoped.find_by(business_id: business.id, uid: choice.delete_prefix("role:"))
+    role ? role.permissions.map(&:to_sym) : nil
+  end
+
+  private def covers?(permissions) = !permissions.nil? && permissions.all? { can?(_1) }
 
   def last_active_owner?
     owner? && active? && business.business_users.active.owners.where.not(id:).none?
   end
 
   private
+
+  def custom_role_in_this_business
+    errors.add(:role, "isn't available") if role_id && custom_role_record.nil?
+  end
 
   LAST_OWNER_MESSAGE = "is the last owner. Make someone else an owner first".freeze
 

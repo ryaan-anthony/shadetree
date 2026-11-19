@@ -1,4 +1,4 @@
-<%= @inviter&.full_name || @business.name %> invited you to <%= @business.name %> on Shadetree as <%= @invitation.role == "admin" ? "an" : "a" %> <%= @invitation.role.humanize.downcase %>.
+<%= @inviter&.full_name || @business.name %> invited you to <%= @business.name %> on Shadetree as <%= @invitation.role_name.match?(/\A[AEIOU]/i) ? "an" : "a" %> <%= @invitation.role_name.downcase %>.
 
 Accept: <%= @url %>
 

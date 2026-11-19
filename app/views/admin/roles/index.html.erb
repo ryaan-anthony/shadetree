@@ -1,0 +1,32 @@
+<% content_for :title, "Roles" %>
+<%= page_header "Roles", lede: "What each person on your team can do." do %>
+  <%= link_to admin_team_path, class: button_classes(:ghost) do %><%= icon "arrow-left" %> Team<% end %>
+  <% if @editable %><%= link_to new_admin_role_path, class: button_classes do %><%= icon "plus" %> New role<% end %><% end %>
+<% end %>
+
+<% unless @editable %>
+  <div class="banner banner-info mb-4 max-w-4xl" role="status"><%= icon "info" %>
+    <p>Roles of your own are part of a paid plan. <%= link_to "See plans", admin_plan_path, class: "font-semibold underline" %><%= ". The ones you have keep working, but can't be changed or given to anyone new." if @roles.any? %></p>
+  </div>
+<% end %>
+
+<div class="grid max-w-4xl gap-4 md:grid-cols-2">
+  <% { "owner" => "Runs the business. There's always at least one.", "admin" => "Runs the office: clients, quotes, the schedule, invoices and the team.",
+       "technician" => "Works their own visits from their phone." }.each do |key, lede| %>
+    <%= card title: key.humanize, subtitle: lede, id: "role-#{key}",
+             actions: (link_to("Duplicate", new_admin_role_path(from: key), class: button_classes(:ghost, :sm)) if @editable && key != "owner") do %>
+      <%= render "permissions", granted: Permissions::ROLES.fetch(key), owner: key == "owner" %>
+      <p class="mt-4 text-xs text-muted">Built in. Can't be changed.</p>
+    <% end %>
+  <% end %>
+  <% @roles.each do |role| %>
+    <%= card title: role.name, subtitle: pluralize(@counts.fetch(role.id, 0), "member"), id: "role-#{role.uid}",
+             actions: link_to((@editable ? "Edit" : "View"), edit_admin_role_path(role), class: button_classes(:secondary, :sm)) do %>
+      <%= render "permissions", granted: role.permissions %>
+      <div class="mt-4 flex gap-2">
+        <% if @editable %><%= link_to "Duplicate", new_admin_role_path(from: role.uid), class: button_classes(:ghost, :sm) %><% end %>
+        <%= link_to "Delete", delete_admin_role_path(role), class: button_classes(:ghost, :sm) + " text-danger" %>
+      </div>
+    <% end %>
+  <% end %>
+</div>
