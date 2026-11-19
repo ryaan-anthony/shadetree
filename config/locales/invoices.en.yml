@@ -1,0 +1,7 @@
+en:
+  activerecord:
+    attributes:
+      invoice:
+        issued_on: "Issue date"
+        due_on: "Due date"
+        payment_terms: "Payment terms"

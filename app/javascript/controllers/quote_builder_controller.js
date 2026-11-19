@@ -82,6 +82,19 @@ export default class extends Controller {
     if (!this.dirty && !this.conflict) Turbo.visit(href)
   }
 
+  // The invoice's payment terms (PAY-01): a custom date shows the date box; other terms show
+  // the date they give (filled in by the next autosave). The disabled box isn't submitted.
+  termsChanged(event) {
+    const custom = event.target.value === "custom"
+    const box = this.element.querySelector("[data-due-custom]")
+    const fixed = this.element.querySelector("[data-due-fixed]")
+    if (!box || !fixed) return
+    box.hidden = !custom
+    fixed.hidden = custom
+    box.querySelector("input").disabled = !custom
+    if (!custom) fixed.querySelector("#invoice_due_text").textContent = "…"
+  }
+
   // Preview as client: save first, so the preview shows the latest. The tab opens at once
   // (popup blockers allow that only during the click) and is pointed at the preview after.
   async preview(event) {
