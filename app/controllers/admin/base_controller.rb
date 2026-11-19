@@ -17,7 +17,7 @@ class Admin::BaseController < ApplicationController
     # returning to after accepting.
     return head(:forbidden) unless request.format.html? && !turbo_frame_request? && !request.xhr?
 
-    session[:after_legal_acceptance] = request.fullpath if request.get?
+    session[:after_legal_acceptance] = request.fullpath if request.get? || request.head?
     redirect_to legal_acceptance_path, status: :see_other
   end
 
