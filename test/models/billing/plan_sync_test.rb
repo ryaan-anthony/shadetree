@@ -8,7 +8,8 @@ class Billing::PlanSyncTest < ActiveSupport::TestCase
     assert_equal paid.map(&:stripe_product_id).sort, stripe.products.keys.sort
     assert_nil stripe.products["shadetree_free"]
     monthly = stripe.prices.find { _1[:lookup_key] == "shadetree_starter_monthly" }
-    assert_equal [ 1900, "usd", { interval: "month" }, "shadetree_starter" ], monthly.values_at(:unit_amount, :currency, :recurring, :product)
+    assert_equal [ 1900, "usd", { interval: "month" }, "shadetree_starter", "exclusive" ],
+                 monthly.values_at(:unit_amount, :currency, :recurring, :product, :tax_behavior)
     assert_equal 19000, stripe.prices.find { _1[:lookup_key] == "shadetree_starter_yearly" }[:unit_amount]
     assert_includes log, "starter: product created"
 
@@ -43,6 +44,17 @@ class Billing::PlanSyncTest < ActiveSupport::TestCase
     assert_not old[:active]
     assert_includes log, "shadetree_starter_monthly: new price (the old one is archived)"
     assert_equal current[:id], Billing.price_id(plans(:starter), "monthly")
+  end
+
+  test "a price made without a tax behavior is replaced by one before tax" do
+    Billing::PlanSync.new.run!
+    old = stripe.prices.find { _1[:lookup_key] == "shadetree_starter_monthly" }
+    old[:tax_behavior] = "unspecified"
+
+    Billing::PlanSync.new.run!
+
+    assert_not old[:active]
+    assert_equal "exclusive", stripe.prices.find { _1[:lookup_key] == "shadetree_starter_monthly" }[:tax_behavior]
   end
 
   test "a plan made free has its product archived, and a dropped yearly price is archived" do

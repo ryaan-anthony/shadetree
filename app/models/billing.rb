@@ -1,4 +1,4 @@
-# Subscription billing (BIL-04, ADR 0021): Shadetree's own revenue, through Stripe's hosted
+# Subscription billing (BIL-04, ADR 0022): Shadetree's own revenue, through Stripe's hosted
 # Checkout and customer portal. This module holds the settings and the price lookup; the
 # subscription state lives in Subscription, and every call to Stripe goes through StripeGateway.
 module Billing

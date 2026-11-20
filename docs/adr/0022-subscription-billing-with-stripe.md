@@ -1,4 +1,4 @@
-# 0021. Subscription billing with Stripe's hosted pages, mirrored from its events
+# 0022. Subscription billing with Stripe's hosted pages, mirrored from its events
 
 - **Status:** Accepted
 - **Date:** 2026-11-20

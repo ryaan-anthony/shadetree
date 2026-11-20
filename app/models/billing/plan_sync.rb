@@ -6,6 +6,9 @@
 # line each.
 class Billing::PlanSync
   PORTAL_KEY = "shadetree_default"
+  # Prices are before tax; Stripe Tax adds sales tax where it applies, as the plan and pricing
+  # pages say (09-billing open question 5). A price made without it is replaced on the next run.
+  TAX_BEHAVIOR = "exclusive"
 
   attr_reader :log
 
@@ -66,7 +69,7 @@ class Billing::PlanSync
     return if existing && same_price?(existing, plan, interval)
 
     gateway.create_price(product: plan.stripe_product_id, currency: plan.currency.downcase, unit_amount: plan.price_cents(interval),
-                         recurring: { interval: Plan::INTERVALS.fetch(interval) }, lookup_key: key, transfer_lookup_key: true,
+                         recurring: { interval: Plan::INTERVALS.fetch(interval) }, tax_behavior: TAX_BEHAVIOR, lookup_key: key, transfer_lookup_key: true,
                          nickname: "#{plan.name} #{interval}", metadata: { plan_key: plan.key, interval: })
     gateway.update_price(existing.id, active: false) if existing
     Billing.forget_prices([ key ])
@@ -75,7 +78,8 @@ class Billing::PlanSync
 
   def same_price?(price, plan, interval)
     price.unit_amount == plan.price_cents(interval) && price.currency == plan.currency.downcase &&
-      price.recurring&.interval == Plan::INTERVALS.fetch(interval) && price.product.to_s == plan.stripe_product_id
+      price.recurring&.interval == Plan::INTERVALS.fetch(interval) && price.product.to_s == plan.stripe_product_id &&
+      price.tax_behavior == TAX_BEHAVIOR
   end
 
   # Owners can update their card, see invoices, switch between public paid plans and intervals

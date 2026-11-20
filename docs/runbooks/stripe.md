@@ -1,7 +1,7 @@
 # Stripe runbook
 
 Shadetree bills businesses for their plan through Stripe (BIL-04, BIL-05,
-[ADR 0021](../adr/0021-subscription-billing-with-stripe.md)). Businesses' own client payments
+[ADR 0022](../adr/0022-subscription-billing-with-stripe.md)). Businesses' own client payments
 (PAY-03/04, Stripe Connect Standard) use the same Stripe account.
 
 ## Keys and settings
@@ -17,13 +17,17 @@ development, live-mode keys on production only.
 | `STRIPE_CONNECT_WEBHOOK_SECRET` | Signing secret of the connected-accounts endpoint (PAY-03) |
 | `STRIPE_AUTOMATIC_TAX` | `false` turns off Stripe Tax on subscriptions (default on) |
 
-Without `STRIPE_SECRET_KEY` the plan page shows plans but no checkout.
+Without `STRIPE_SECRET_KEY` the plan page still lists the plans, but choosing one or "Manage
+billing" says billing isn't available right now. API calls time out after 5 s to connect and
+15 s to read, with one retry (config/initializers/stripe.rb, shared with client payments).
 
 ## Setting up an environment (test and live mode alike)
 
-1. In the Stripe dashboard: turn on Stripe Tax and choose its default tax behavior (BIL-04 uses
-   automatic tax on subscriptions), and under Billing → Revenue recovery set retries and "if all
-   retries fail" to **cancel the subscription** (BIL-05's grace period runs alongside the retries).
+1. In the Stripe dashboard: turn on Stripe Tax (BIL-04 uses automatic tax on subscriptions;
+   prices are created tax-exclusive, so tax is added on top, as the pricing copy says); under
+   Billing → Revenue recovery set retries and "if all retries fail" to **cancel the
+   subscription**; and under Checkout settings turn on **limit customers to one subscription**,
+   so two checkouts can't both start one.
 2. Deploy, then run `bin/rails stripe:sync_plans` on the server (`bin/kamal app exec`). It makes
    a product per paid plan, monthly and yearly prices with lookup keys `shadetree_<plan>_monthly`
    and `shadetree_<plan>_yearly`, and the customer portal's settings. Run it again after
