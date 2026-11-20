@@ -22,7 +22,12 @@ class Admin::PaymentAccountsController < Admin::BaseController
   def create
     return redirect_to(admin_payment_account_path, alert: "Online payments aren't available yet.") unless gateway.configured?
 
-    @account ||= PaymentAccount.create!(account_id: gateway.create_account(business_uid: current_business.uid).fetch("id"), connected_by: current_user)
+    # One at a time per business: a second post (double click, another tab) waits, then finds
+    # the account the first one made.
+    current_business.with_lock do
+      set_account
+      @account ||= PaymentAccount.create!(account_id: gateway.create_account(business_uid: current_business.uid).fetch("id"), connected_by: current_user)
+    end
     send_to_onboarding
   rescue PaymentGateway::Error => error
     stripe_problem(error)
@@ -39,7 +44,7 @@ class Admin::PaymentAccountsController < Admin::BaseController
   def returned
     return redirect_to(admin_payment_account_path) unless @account
 
-    @account.sync!(gateway.retrieve_account(@account.account_id))
+    @account.sync!(gateway.retrieve_account(@account.account_id), at: Time.current)
     notice = case @account.status
     when "active" then "You're set up to take card payments."
     when "pending_verification" then "Thanks. Stripe is checking your details; that's usually quick."
@@ -66,9 +71,16 @@ class Admin::PaymentAccountsController < Admin::BaseController
 
   def set_account = @account = PaymentAccount.current
 
+  ONBOARDING_HOST = "https://connect.stripe.com".freeze
+
+  # Only ever to Stripe's own onboarding pages.
   def send_to_onboarding
-    url = gateway.onboarding_url(@account.account_id, return_url: return_admin_payment_account_url, refresh_url: resume_admin_payment_account_url)
-    redirect_to url, allow_other_host: true, status: :see_other
+    url = URI.parse(gateway.onboarding_url(@account.account_id, return_url: return_admin_payment_account_url, refresh_url: resume_admin_payment_account_url))
+    raise PaymentGateway::Error, "Unexpected onboarding address" unless url.scheme == "https" && url.host == "connect.stripe.com"
+
+    redirect_to "#{ONBOARDING_HOST}#{url.request_uri}", allow_other_host: true, status: :see_other
+  rescue URI::InvalidURIError
+    raise PaymentGateway::Error, "Unexpected onboarding address"
   end
 
   def stripe_problem(error)

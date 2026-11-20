@@ -72,6 +72,13 @@ class Admin::PaymentAccountSettingsTest < ActionDispatch::IntegrationTest
     assert_select "#connect-stripe"
   end
 
+  test "onboarding only ever redirects to Stripe" do
+    @gateway.define_singleton_method(:onboarding_url) { |*, **| "https://evil.example/setup" }
+    post admin_payment_account_path
+    assert_redirected_to admin_payment_account_path
+    assert_match "Stripe didn't respond", flash[:alert]
+  end
+
   test "Stripe failing changes nothing and says so" do
     @gateway.fail_next!
     post admin_payment_account_path

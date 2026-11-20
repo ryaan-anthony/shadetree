@@ -39,7 +39,7 @@
       <ul class="space-y-1.5 text-sm text-subtle">
         <li class="flex gap-2"><%= icon "check", class: "mt-0.5 size-4 text-success" %>Stripe asks for your business and bank details on its own secure pages.</li>
         <li class="flex gap-2"><%= icon "check", class: "mt-0.5 size-4 text-success" %>You're the merchant: payouts go to your bank on Stripe's schedule, and Stripe's card fees apply.</li>
-        <li class="flex gap-2"><%= icon "check", class: "mt-0.5 size-4 text-success" %>Already have a Stripe account? Sign in to it during setup.</li>
+        <li class="flex gap-2"><%= icon "check", class: "mt-0.5 size-4 text-success" %>Setup makes a new Stripe account for this business, even if you already use Stripe. You'll sign in to it at stripe.com.</li>
       </ul>
       <%= form_with url: admin_payment_account_path, class: "mt-4", data: { turbo: false } do %>
         <%= button_tag type: "submit", class: button_classes(:primary), id: "connect-stripe" do %><%= icon "credit-card" %> Set up payments with Stripe<% end %>
@@ -51,8 +51,8 @@
   <% end %>
 
   <% if @account && owner %>
-    <%= card title: "Disconnect Stripe", subtitle: "Clients stop seeing Pay buttons. Payments already made stay on your invoices, and your Stripe account, its money and history are untouched.", id: "disconnect" do %>
-      <%= button_to admin_payment_account_path, method: :delete, class: button_classes(:danger), form: { data: { turbo_confirm: "Disconnect Stripe? Clients won't be able to pay online until you connect again.", turbo_confirm_button: "Disconnect" } } do %>Disconnect<% end %>
+    <%= card title: "Disconnect Stripe", subtitle: "Clients stop seeing Pay buttons. Payments already made stay on your invoices, and your Stripe account, its money and history are untouched. Connecting again later makes a new Stripe account.", id: "disconnect" do %>
+      <%= button_to admin_payment_account_path, method: :delete, class: button_classes(:danger), form: { data: { turbo_confirm: "Disconnect Stripe? Clients won't be able to pay online. Connecting again later makes a new Stripe account.", turbo_confirm_button: "Disconnect" } } do %>Disconnect<% end %>
     <% end %>
   <% elsif @account %>
     <p class="text-sm2 text-muted">Only the business owner can change or disconnect the payment account.</p>

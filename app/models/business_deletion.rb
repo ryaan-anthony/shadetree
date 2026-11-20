@@ -56,7 +56,13 @@ class BusinessDeletion
   # business keeps its Stripe account, money and history. If Stripe can't be reached this
   # raises and nothing is deleted (the daily job tries again).
   def release_payment_accounts
-    Tenancy.with_business(@business) { PaymentAccount.connected.find_each { _1.disconnect!(reason: "business_deleted") } }
+    # Development without Connect set up (the demo business's made-up account): nothing to tell Stripe.
+    skip_stripe = Rails.env.development? && ENV["STRIPE_CONNECT_CLIENT_ID"].blank?
+    Tenancy.with_business(@business) do
+      PaymentAccount.connected.find_each do |account|
+        skip_stripe ? account.update!(disconnected_at: Time.current, disconnected_reason: "business_deleted") : account.disconnect!(reason: "business_deleted")
+      end
+    end
   end
 
   def business_tables

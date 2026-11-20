@@ -40,8 +40,8 @@ Shadetree never touches card data or holds funds.
 
 ## Follow-ups
 
-- Add Trial / Past due / payment-account status and billing history to the OPS-02 directory
-  and business page (OPS-02 shows Active, Suspended and Closed until then).
+- None from here: the payment-account status on the OPS-02 directory and business page is built.
+  (Trial, Past due and billing history there belong to BIL-04/05.)
 
 ## Out of scope
 
@@ -52,7 +52,7 @@ Shadetree never touches card data or holds funds.
 
 - Stripe Connect **Standard** accounts, US only at launch (owner accepted both recommendations).
   One payment account per business, for all its locations (CAT-07; per-location payouts aren't
-  built). See [ADR 0021](../../adr/0021-stripe-connect-standard-direct-charges.md).
+  built). See [ADR 0024](../../adr/0024-stripe-connect-standard-direct-charges.md).
 - Deleting a business (OPS-04) disconnects its account (Shadetree's access ends) and never
   deletes the business's Stripe account. If Stripe can't be reached, nothing is deleted and the
   daily job tries again.
@@ -65,13 +65,17 @@ Shadetree never touches card data or holds funds.
   in words, with a link back into onboarding to fix it). Pay buttons need charges enabled.
 - Settings → Payments (`/admin/payments`): Owners (`billing`) start onboarding (a Standard account,
   then an Account Link), come back to `return` (the status is fetched) or `resume` (a fresh
-  link), and disconnect (OAuth deauthorize); Admins (`business_settings`) see the status. Blocked
+  link; redirects only to Stripe's hosts), and disconnect (OAuth deauthorize; only "not
+  connected" counts as already done). Reconnecting makes a new account. Admins
+  (`business_settings`) see the status. Blocked
   while support views as a member (OPS-03). Only this page's CSP adds `connect.stripe.com` to
   `form-action` (PLT-13).
 - `POST /webhooks/stripe/connect`: signature-checked, each event stored once (`ConnectEvent`,
-  only the fields acted on, pruned after 90 days), processed by `ProcessConnectEventJob`:
-  `account.updated` syncs, `account.application.deauthorized` marks it disconnected. Unknown
-  accounts are ignored; a failed event is retried on Stripe's redelivery; nothing is logged.
+  only the fields acted on, pruned after 90 days), processed by `ProcessConnectEventJob` (retries
+  with backoff), then `RetryConnectEventsJob` every 10 minutes for failed or unprocessed events,
+  up to 8 tries, then one report. `account.updated` syncs (older events skipped),
+  `account.application.deauthorized` marks it disconnected. Unknown accounts and the other mode's
+  events (test vs live) are ignored; nothing is logged.
 - All Stripe calls go through `PaymentGateway`; tests use `FakePaymentGateway`. Keys, the Connect
   client id and endpoint setup: [docs/runbooks/stripe.md](../../runbooks/stripe.md).
 - OPS-02 shows the status (directory badge; business page with the account id and reason).

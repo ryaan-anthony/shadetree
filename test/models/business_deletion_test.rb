@@ -48,6 +48,20 @@ class BusinessDeletionTest < ActiveSupport::TestCase
     assert_equal [ [ :disconnect, account_id ] ], gateway.calls_to(:disconnect), "PAY-03: Stripe access ends; the account isn't deleted"
   end
 
+  test "PAY-03: in development without Connect set up, deleting skips telling Stripe" do
+    gateway = use_fake_payment_gateway
+    business = businesses(:one)
+    as_business(business) { PaymentAccount.create!(account_id: "acct_test1", charges_enabled: true) }
+    previous_env, previous_id = Rails.env, ENV.delete("STRIPE_CONNECT_CLIENT_ID")
+    Rails.env = "development"
+    BusinessDeletion.run!(business)
+    assert_not Business.exists?(business.id)
+    assert_empty gateway.calls_to(:disconnect)
+  ensure
+    Rails.env = previous_env
+    ENV["STRIPE_CONNECT_CLIENT_ID"] = previous_id if previous_id
+  end
+
   test "PAY-03: if Stripe can't disconnect the payment account, nothing is deleted and the job tries again later" do
     gateway = use_fake_payment_gateway
     business = businesses(:one)
