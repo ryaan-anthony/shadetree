@@ -147,8 +147,69 @@ class Admin::BillingTest < ActionDispatch::IntegrationTest
     stripe.prices.clear
     post admin_billing_checkout_path, params: { plan: "starter", interval: "monthly" }
     assert_match "Billing isn't available right now", flash[:alert]
+  end
 
-    post admin_billing_checkout_path, params: { plan: "nope" }
+  test "an unknown plan, Free with nothing to cancel, a hidden plan or an unknown interval isn't available" do
+    plans(:business).update!(public: false)
+    [ { plan: "nope", interval: "monthly" }, { plan: "free", interval: "monthly" }, { plan: "starter", interval: "weekly" },
+      { plan: "starter" }, { plan: "business", interval: "monthly" } ].each do |params|
+      post admin_billing_checkout_path, params: params
+      assert_redirected_to admin_plan_path
+      assert_equal "That plan isn't available.", flash[:alert], params.inspect
+    end
+    plans(:starter).update!(annual_price_cents: 0)
+    post admin_billing_checkout_path, params: { plan: "starter", interval: "yearly" }
     assert_equal "That plan isn't available.", flash[:alert]
+    assert_empty stripe.checkout_sessions
+  end
+
+  test "a live subscription Stripe has that hasn't reached us yet sends the Owner to the portal, not a second Checkout" do
+    customer = with_stripe_customer(@business)
+    id = stripe.add_subscription(customer:, plan: plans(:starter))
+
+    post admin_billing_checkout_path, params: { plan: "business", interval: "monthly" }
+
+    assert_empty stripe.checkout_sessions
+    assert_equal id, stripe.portal_sessions.last[:flow_data][:subscription_update_confirm][:subscription]
+    assert_equal plans(:starter), @business.reload.plan
+  end
+
+  test "back from Checkout, a failed lookup says the payment is being confirmed, never to pay again" do
+    with_stripe_customer(@business)
+    stripe.fail_with = Stripe::APIConnectionError.new("down")
+    get admin_billing_done_path(session_id: "cs_test1")
+    assert_redirected_to admin_plan_path
+    assert_equal "Your payment is being confirmed. Your plan will update in a minute or two.", flash[:notice]
+    assert_nil flash[:alert]
+  end
+
+  test "Stripe's return links use APP_HOST when it's set" do
+    ENV["APP_HOST"] = "app.getshadetree.com"
+    post admin_billing_checkout_path, params: { plan: "starter", interval: "monthly" }
+    session = stripe.checkout_sessions.values.sole
+    assert_equal [ "https://app.getshadetree.com/admin/plan/billing/done?session_id={CHECKOUT_SESSION_ID}", "https://app.getshadetree.com/admin/plan" ],
+                 session.values_at(:success_url, :cancel_url)
+  ensure
+    ENV.delete("APP_HOST")
+  end
+
+  test "a suspended business's Owner can see the plan and open the portal, nothing else; others can't" do
+    subscribe
+    @business.suspend!(reason: "spam")
+    get admin_plan_path
+    assert_response :success
+    assert_select "#choose-plan", 0
+    post admin_billing_portal_path
+    assert_redirected_to stripe.portal_sessions.last[:url]
+    post admin_billing_checkout_path, params: { plan: "business", interval: "monthly" }
+    assert_response :forbidden
+    get admin_root_path
+    assert_select "#business-suspended a[href='#{admin_plan_path}']"
+
+    admin = member_with_role(:admin, business: @business)
+    sign_in admin
+    post switch_admin_business_path, params: { business: @business.uid }
+    get admin_plan_path
+    assert_response :forbidden
   end
 end

@@ -12,7 +12,9 @@
   <% elsif !business.plan.free? %>
     <p class="text-subtle">This plan isn't billed through Shadetree.</p>
   <% end %>
-  <% if can?(:billing) %>
+  <% if impersonation %>
+    <p class="mt-2 text-sm2 text-muted">Billing is hidden while support views the account.</p>
+  <% elsif can?(:billing) %>
     <% if business.stripe_customer_id %>
       <%= button_to "Manage billing", admin_billing_portal_path, class: "#{button_classes(:secondary, :sm)} mt-3", form: { data: { turbo: false } } %>
       <p class="mt-2 text-sm2 text-muted">Update your card, download invoices, switch plan or cancel, on Stripe's secure page.</p>

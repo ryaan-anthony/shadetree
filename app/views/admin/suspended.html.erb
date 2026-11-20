@@ -5,6 +5,9 @@
     <%= empty_state title: "#{current_business.name} is suspended", icon: "lock",
                     text: "Nobody in this business can use Shadetree right now, and your clients see that its pages are unavailable. Your data is safe." do %>
       <%= mail_to ContactMailer.support_address, "Contact Shadetree support", class: button_classes, subject: "#{current_business.name} is suspended" %>
+      <% if Current.membership&.can?(:billing) %>
+        <p class="mt-3 text-sm2"><%= link_to "Your plan and billing", admin_plan_path, class: "text-ink underline-offset-2 hover:underline" %>: you can still cancel your subscription.</p>
+      <% end %>
     <% end %>
   <% end %>
 </div>

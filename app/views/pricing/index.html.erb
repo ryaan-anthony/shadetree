@@ -65,7 +65,7 @@
         </li>
       <% end %>
     </ul>
-    <p class="mt-4 text-center text-sm2 text-muted">Every account starts on Free. Owners choose a paid plan in Settings → Plan and pay by card; switch or cancel any time. Prices in <%= @plans.map(&:currency).uniq.to_sentence %>, plus sales tax where it applies.</p>
+    <p class="mt-4 text-center text-sm2 text-muted">Every account starts on Free. Owners choose a paid plan in Settings → Plan and pay by card; switch or cancel any time. Prices in <%= @plans.map(&:currency).uniq.to_sentence %><%= ", plus sales tax where it applies" if Billing.automatic_tax? %>.</p>
   </section>
 
   <section class="mx-auto max-w-6xl px-5 pt-14 sm:px-8" aria-labelledby="every-plan">

@@ -1,4 +1,4 @@
-# Sending an Owner to Stripe's hosted pages (BIL-04, ADR 0021), and back. Each method returns the
+# Sending an Owner to Stripe's hosted pages (BIL-04, ADR 0022), and back. Each method returns the
 # URL to redirect to.
 #
 #   checkout = Billing::Checkout.new(business, plan_url: "https://…/admin/plan", return_url: "https://…/admin/plan/billing/done")
@@ -8,6 +8,8 @@
 #   checkout.complete!(session_id)    # back from Checkout: applies the new subscription at once
 class Billing::Checkout
   class Unavailable < StandardError; end
+  # The plan or interval can't be chosen (unknown, hidden, no such price, Free with nothing to cancel).
+  class NotOffered < StandardError; end
 
   def initialize(business, plan_url:, return_url:)
     @business = business
@@ -16,13 +18,16 @@ class Billing::Checkout
   end
 
   def choose(plan, interval)
-    subscription = Tenancy.with_business(@business) { @business.subscription }
-    if subscription&.live?
+    raise NotOffered unless plan && Plan::INTERVALS.key?(interval.to_s) && (plan.public || plan == @business.plan)
+
+    subscription = live_subscription
+    if subscription
       return portal(flow: :cancel) if plan.free?
+      raise NotOffered unless plan.offers?(interval)
 
       switch(subscription, plan, interval)
     else
-      raise ArgumentError, "#{plan.key} has no #{interval} price" unless plan.offers?(interval)
+      raise NotOffered unless plan.offers?(interval)
 
       new_subscription(plan, interval)
     end
@@ -57,6 +62,17 @@ class Billing::Checkout
 
   def gateway = Billing.gateway
 
+  # The live subscription mirrored here or, failing that, one Stripe has for the customer that
+  # hasn't reached us yet (it's mirrored now), so a second Checkout never starts a second one.
+  def live_subscription
+    mirrored = Tenancy.with_business(@business) { @business.reload_subscription }
+    return mirrored if mirrored&.live?
+    return unless @business.stripe_customer_id
+
+    remote = gateway.customer_subscriptions(@business.stripe_customer_id).find { Subscription::LIVE_STATUSES.include?(_1.status) }
+    remote && Billing::SubscriptionSync.refresh!(@business, remote.id)
+  end
+
   attr_reader :plan_url
 
   def price_id(plan, interval) = Billing.price_id(plan, interval) || raise(Unavailable, "no Stripe price for #{plan.lookup_key(interval)}")
@@ -87,15 +103,14 @@ class Billing::Checkout
   end
 
   # One Stripe customer per business, made the first time it's needed, with the business's name
-  # only: Checkout collects the billing email. Changing the Owner changes nothing here.
+  # only: Checkout collects the billing email. Stripe is called without a lock; the idempotency
+  # key makes two requests at once get the same customer. Changing the Owner changes nothing here.
   def customer_id
-    @business.stripe_customer_id || @business.with_lock do
-      @business.stripe_customer_id || begin
-        customer = gateway.create_customer({ name: @business.name, metadata: { business_uid: @business.uid } },
-                                           idempotency_key: "shadetree-customer-#{@business.uid}")
-        @business.update_columns(stripe_customer_id: customer.id)
-        customer.id
-      end
-    end
+    return @business.stripe_customer_id if @business.stripe_customer_id
+
+    customer = gateway.create_customer({ name: @business.name, metadata: { business_uid: @business.uid } },
+                                       idempotency_key: "shadetree-customer-#{@business.uid}")
+    Business.where(id: @business.id, stripe_customer_id: nil).update_all(stripe_customer_id: customer.id, updated_at: Time.current)
+    @business.stripe_customer_id = Business.where(id: @business.id).pick(:stripe_customer_id)
   end
 end
