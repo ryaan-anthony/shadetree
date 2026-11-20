@@ -24,7 +24,7 @@ timer of the deploy user backs up the databases and uploads, then restore-drills
 | --- | --- | --- |
 | Deploys | Every push to `main`, once CI has passed on it | A pushed tag `vX.Y.Z` on a commit of `main` whose CI passed |
 | Public hostname (`APP_HOST`) | `staging.getshadetree.com` | `getshadetree.com` |
-| VM, container | the staging VM, `shadetree-staging` | the production VM, `shadetree-production` |
+| VM, container | `stg-shadetree-vm.hostilecity.net`, `shadetree-staging` | `shadetree-vm.hostilecity.net`, `shadetree-production` |
 | Databases | `shadetree_staging` (+ `_cache`, `_queue`, `_cable`) | `shadetree_production` (+ the same three) |
 | Uploads | volume `shadetree-staging_storage` | volume `shadetree-production_storage` |
 | Email | **Sandbox** (forced by the deploy): only `MAIL_ALLOWLIST` receives mail, copies go to `MAIL_SANDBOX_TO` | Real delivery |
@@ -39,16 +39,34 @@ timer of the deploy user backs up the databases and uploads, then restore-drills
 | What | Check |
 | --- | --- |
 | Linux with Docker; port 443 free | `docker version`; `ss -ltn 'sport = :443'` prints only the header |
-| A deploy user (`deploy` below) in the `docker` group (equivalent to root on the VM), with the runner's SSH key | from the runner: `ssh deploy@<vm> docker ps` |
-| Lingering for the deploy user, so its backup timer runs without a login: `loginctl enable-linger deploy` | `loginctl show-user deploy -p Linger` prints `Linger=yes` |
-| The PostgreSQL container (17), on a Docker network (`DB_NETWORK`), reachable there as `postgres` (or `DB_HOST`) | `docker run --rm --network <net> postgres:17 pg_isready -h postgres` |
+| The deploy user `engineer` in the `docker` group (equivalent to root on the VM), with the runner's SSH key | from the runner: `ssh engineer@<vm> docker ps` |
+| Lingering for the deploy user, so its backup timer runs without a login: `loginctl enable-linger engineer` | `loginctl show-user engineer -p Linger` prints `Linger=yes` |
+| The PostgreSQL container (17), on a Docker network (`DB_NETWORK`), reachable there as `postgres` (or `DB_HOST`) | `docker run --rm --network postgres_postgres_net postgres:17 pg_isready -h postgres` |
 | The role `shadetree`, `LOGIN CREATEDB` (the restore drill creates scratch databases), owning `shadetree_<env>`, `shadetree_<env>_cache`, `_queue` and `_cable` | `psql -U postgres -Atc "SELECT rolcreatedb FROM pg_roles WHERE rolname = 'shadetree'"` prints `t` |
 | An off-machine backup location mounted at `/var/backups/shadetree-<env>` (or `BACKUP_DIR`), owned by uid 1000, mode 0700 (uid 1000 is the app's user in its containers) | `mountpoint /var/backups/shadetree-production` |
 | A firewall rule: port 443 only from the tunnel connector (and the runner needs port 22) | |
 
+In op-works (Ansible, `remote_user: engineer`): add both VMs to the inventory
+(`shadetree-vm.hostilecity.net` for production, `stg-shadetree-vm.hostilecity.net` for staging)
+and to the playbook's `hosts:` line, and give each its database settings in host vars (the two
+need different names and passwords), for example
+`host_vars/shadetree-vm.hostilecity.net.yml`:
+
+```yaml
+postgres_app_user: shadetree
+postgres_app_password: "{{ lookup('env', 'SHADETREE_PRODUCTION_DB_PASSWORD') }}"
+postgres_app_databases: [shadetree_production, shadetree_production_cache, shadetree_production_queue, shadetree_production_cable]
+```
+
+and the same for staging with `shadetree_staging…` and its own password. The playbook's
+`createuser` doesn't grant `CREATEDB`; run once per VM:
+`docker exec postgres psql -U postgres -c 'ALTER ROLE shadetree CREATEDB;'`. Then, as root:
+`loginctl enable-linger engineer` and `install -d -m 0700 -o 1000 -g 1000 /var/backups/shadetree-<env>`
+(before mounting the backup location there).
+
 The database needs no published port: the app and the backups reach it on its Docker network. If
 the deploy user joined `docker` after lingering started its systemd instance, restart it once:
-`systemctl restart user@$(id -u deploy).service`.
+`systemctl restart user@$(id -u engineer).service`.
 
 ### Cloudflare
 
@@ -84,17 +102,17 @@ waits for your approval. Then set, in each:
 
 | Name | Kind | Staging | Production | What it is |
 | --- | --- | --- | --- | --- |
-| `DEPLOY_HOST` | var | staging VM | production VM | The VM, as the runner reaches it |
-| `DEPLOY_USER` | var | `deploy` | `deploy` | The deploy user |
+| `DEPLOY_HOST` | var | `stg-shadetree-vm.hostilecity.net` | `shadetree-vm.hostilecity.net` | The VM, as the runner reaches it |
+| `DEPLOY_USER` | var | `engineer` | `engineer` | The deploy user |
 | `DEPLOY_KNOWN_HOSTS` | var, recommended | `ssh-keyscan -H` lines, checked | same | Unset: each deploy trusts the key the VM presents (warned) |
 | `DEPLOY_DIR` | var, optional | `shadetree` | `shadetree` | Working directory under the deploy user's home |
 | `SSH_PRIVATE_KEY` | secret | | | The runner's key for the deploy user |
-| `ORIGIN_HOST` | var, optional | internal hostname | internal hostname | The tunnel's origin; the certificate must cover it. Default `DEPLOY_HOST` |
+| `ORIGIN_HOST` | var, optional | (`DEPLOY_HOST`) | (`DEPLOY_HOST`) | The tunnel's origin; the certificate must cover it. Default `DEPLOY_HOST` |
 | `PUBLISH_PORT` | var, optional | `443` | `443` | The VM port the tunnel connects to |
 | `TLS_CERT`, `TLS_KEY` | secrets | | | The Origin CA certificate and key, PEM |
 | `APP_HOST` | var | `staging.getshadetree.com` | `getshadetree.com` | Host for host authorization and links in email |
 | `TRUSTED_PROXIES` | var | connector address | connector address | Comma-separated IPs or CIDRs allowed to set `X-Forwarded-For` |
-| `DB_NETWORK` | var | | | The PostgreSQL container's Docker network |
+| `DB_NETWORK` | var | `postgres_postgres_net` | `postgres_postgres_net` | The PostgreSQL container's Docker network (op-works: compose project `postgres`, network `postgres_net`) |
 | `DB_HOST` | var, optional | `postgres` | `postgres` | The PostgreSQL container's name on it |
 | `DB_NAME` | var, optional | `shadetree_staging` | `shadetree_production` | The primary database; the others add `_cache`, `_queue`, `_cable` |
 | `DB_USER` | var, optional | `shadetree` | `shadetree` | |
@@ -109,7 +127,9 @@ waits for your approval. Then set, in each:
 | `STRIPE_SECRET_KEY` | secret | `sk_test_…` (enforced) | `sk_live_…` | Payments (PAY, BIL specs) |
 | `STRIPE_PUBLISHABLE_KEY` | var | `pk_test_…` (enforced) | `pk_live_…` | |
 | `STRIPE_WEBHOOK_SECRET`, `STRIPE_CONNECT_WEBHOOK_SECRET` | secrets | test-mode endpoints' | live endpoints' | Signing secrets of the two webhook endpoints |
+| `STRIPE_CONNECT_CLIENT_ID` | var | test-mode client id | live client id | Stripe Connect onboarding (PAY-03) |
 | `INBOUND_EMAIL_SECRET` | secret | | | Signs inbound support email (OPS-05) |
+| `INBOUND_EMAIL_ENABLED` | var, optional | | | Turns inbound support email on (OPS-05) |
 | `ANALYTICS_HOST`, `ANALYTICS_DOMAIN` | vars, optional | unset | Plausible's host, `getshadetree.com` | MKT-04; unset sends nothing |
 | `STRUCTURED_LOGS` | var, optional | `true` (default) | `true` | JSON log lines (PLT-10) |
 | `SLOW_REQUEST_MS`, `SLOW_QUERY_MS` | vars, optional | `1000`, `250` | same | PLT-10 thresholds |
