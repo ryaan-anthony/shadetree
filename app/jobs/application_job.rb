@@ -1,4 +1,6 @@
 class ApplicationJob < ActiveJob::Base
+  include ReportsUnhandledErrors # PLT-10
+
   # Automatically retry jobs that encountered a deadlock
   # retry_on ActiveRecord::Deadlocked
 
@@ -21,16 +23,6 @@ class ApplicationJob < ActiveJob::Base
     else
       block.call
     end
-  end
-
-  # PLT-10: a failure no retry_on/discard_on handles reaches Rails.error here, whichever adapter
-  # runs the job (Solid Queue reports it too; Rails.error reports each exception once).
-  # Observability::ErrorContext adds the job class, id and business.
-  def perform_now
-    super
-  rescue => error
-    Rails.error.report(error, handled: false, source: "application.active_job")
-    raise
   end
 
   def serialize

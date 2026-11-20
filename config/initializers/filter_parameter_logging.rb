@@ -8,6 +8,8 @@ Rails.application.config.filter_parameters += [
   # Client details (CLI-01): names, phones, contact values, addresses, notes and access codes.
   :phone, :display_name, :company_name, :address, :city, :region, :postal_code, :notes, :tag_list,
   /\Aclient\.contact_methods_attributes\.\d+\.value\z/,
+  # File addresses (PLT-10): Active Storage's never-expiring signed ids and the file's name.
+  :signed_id, :filename,
   # Search boxes (CLI-02 client search is by name, phone or address).
   /\Aq\z/,
   # Sending a quote (QTE-04): the client's address and the owner's note.

@@ -9,6 +9,16 @@ class ObservabilityTest < ActiveSupport::TestCase
     def perform(_client) = raise(ArgumentError, "No reply from maria@example.com or +1 (555) 010-0100")
   end
 
+  class RetryingJob < ApplicationJob
+    retry_on(IOError, wait: 1.minute, attempts: 3)
+    def perform = raise(IOError, "mail server 555-010-0100 busy")
+  end
+
+  class DiscardingJob < ApplicationJob
+    discard_on(IOError)
+    def perform = raise(IOError, "gone")
+  end
+
   setup do
     @reports = []
     Observability.tracker = ->(error, payload) { @reports << [ error, payload ] }
@@ -19,7 +29,7 @@ class ObservabilityTest < ActiveSupport::TestCase
 
   def capture_log
     io = StringIO.new
-    logger = ActiveSupport::Logger.new(io).tap { _1.level = :info }
+    logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(io, level: :info, formatter: Observability::JsonLogFormatter.new))
     Rails.logger.broadcast_to(logger)
     yield
     io.string
@@ -42,9 +52,12 @@ class ObservabilityTest < ActiveSupport::TestCase
     assert_equal "No reply from [EMAIL] or [NUMBER]", payload[:message]
     assert_nil payload[:job]
     assert_match %r{test/lib/observability_test.rb}, payload[:location]
+    assert_equal payload[:location], payload[:backtrace].first
+    assert_operator payload[:backtrace].size, :<=, 10
+    assert payload[:backtrace].none? { _1.include?("/gems/") }
 
-    line = log[/\{"event":"error".*\}/]
-    assert_equal [ "ObservabilityTest::FailingJob", payload[:job_id] ], JSON.parse(line).values_at("job_class", "job_id")
+    line = log.lines.grep(/"event":"error"/).sole
+    assert_equal [ "ObservabilityTest::FailingJob", payload[:job_id], "ERROR" ], JSON.parse(line).values_at("job_class", "job_id", "level")
     [ "maria", "010-0100", "Maria Lopez" ].each { assert_no_match _1, line }
   end
 
@@ -79,9 +92,44 @@ class ObservabilityTest < ActiveSupport::TestCase
     assert_match(/"event":"alert"/, log)
   end
 
-  test "scrubbing masks addresses, phone-like numbers and SQL literals" do
+  test "a database error's row and key details stay out of the report" do
+    error = assert_raises(ActiveRecord::NotNullViolation) do
+      ActiveRecord::Base.transaction(requires_new: true) do
+        ActiveRecord::Base.connection.execute(<<~SQL.squish)
+          INSERT INTO clients (business_id, display_name, notes, created_at, updated_at)
+          VALUES (#{@business.id}, 'Zelda Quartermaine', '99 Secret Lane', now(), now())
+        SQL
+      end
+    end
+    assert_match "99 Secret Lane", error.message # Postgres put the row in the message…
+    log = capture_log { Rails.error.report(error) }
+
+    assert_match(/\APG::NotNullViolation: ERROR:  null value in column "uid"/, @reports.sole.last[:message])
+    [ "Secret Lane", "Zelda", "DETAIL" ].each { assert_no_match _1, log } # …and none of it is logged
+  end
+
+  test "scrubbing masks addresses and phone-like numbers, and leaves dates, times, ids and IPs" do
     assert_equal "to [EMAIL], tel [NUMBER], id 42", Observability.scrub("to a.b+c@mail.example.co, tel 555-010-0100, id 42")
+    assert_equal "[EMAIL] or [NUMBER] or [NUMBER]", Observability.scrub("maria%40example.com or +1 (555) 010-0100 or 5550100100")
+    kept = "at 2026-11-19 10:00:00 UTC, id=12345678, from 10.0.0.12, job d129ad83-1137-4243-957c-63c7a13c75e4, client 1234567"
+    assert_equal kept, Observability.scrub(kept)
     assert_equal "SELECT 1 WHERE email = '?' AND id = $1", Observability.scrub_sql("SELECT 1 WHERE email = 'o''neil@example.com'  AND id = $1")
+  end
+
+  test "retries and discards are logged as warnings, with scrubbed messages" do
+    config = Rails.configuration.x.observability
+    config.structured_logs = true
+    log = capture_log { RetryingJob.perform_now; DiscardingJob.perform_now }
+    lines = log.lines.map { JSON.parse(_1) }.index_by { _1["event"] }
+
+    retry_line = lines.fetch("job_retry")
+    assert_equal [ "WARN", "ObservabilityTest::RetryingJob", "mail server [NUMBER] busy" ], retry_line.values_at("level", "job_class", "error_message")
+    assert_includes 60..70, retry_line["wait_seconds"] # a minute plus jitter
+    assert_equal [ "WARN", "IOError" ], lines.fetch("job_discarded").values_at("level", "error_class")
+    assert_equal "INFO", lines.fetch("job")["level"] # a handled failure isn't an error
+    assert_empty @reports
+  ensure
+    config.structured_logs = false
   end
 
   test "slow queries are logged with their source and without values" do

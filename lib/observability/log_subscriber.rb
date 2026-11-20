@@ -6,10 +6,27 @@
 #    "area":"client","status":200,"duration_ms":41.2,"db_ms":6.1,"view_ms":20.3,"business_id":12}
 module Observability
   class LogSubscriber
+    LOGGED = "shadetree.request_logged"
+    # Retries and discards are handled outcomes (warn); running out of retries is an error.
+    JOB_OUTCOMES = { "active_job.retry_scheduled" => [ "job_retry", :warn ], "active_job.discarded" => [ "job_discarded", :warn ],
+                     "active_job.retry_stopped" => [ "job_retries_exhausted", :error ] }.freeze
+
+    # A request no controller finished (unknown path, a middleware refused it), from SecretPathLogger.
+    def self.unhandled_request(request, status, started)
+      return if request.get_header(LOGGED) || !Observability.structured_logs?
+
+      error = request.get_header("action_dispatch.exception")
+      Observability.log(status.to_i >= 500 ? :error : :info, "request",
+        request_id: request.request_id, method: request.request_method, path: Observability.path(request),
+        status: status.to_i, duration_ms: ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round(2),
+        error_class: error&.class&.name)
+    end
+
     def emit(event)
       case event[:name]
       when "action_controller.request_completed" then request(event[:payload])
       when "active_job.completed" then job(event[:payload])
+      when *JOB_OUTCOMES.keys then job_outcome(*JOB_OUTCOMES.fetch(event[:name]), event[:payload])
       end
     end
 
@@ -31,10 +48,11 @@ module Observability
     end
 
     def request(payload)
+      controller = ActiveSupport::ExecutionContext.to_h[:controller]
+      controller&.request&.set_header(LOGGED, true)
       slow = payload[:duration_ms].to_f >= Observability.config.slow_request_ms
       return unless slow || Observability.structured_logs?
 
-      controller = ActiveSupport::ExecutionContext.to_h[:controller]
       Observability.log(slow ? :warn : :info, "request",
         **Observability.request_fields(controller),
         controller: "#{payload[:controller]}##{payload[:action]}", area: controller && Observability.area(controller),
@@ -42,14 +60,29 @@ module Observability
         view_ms: payload[:view_runtime]&.round(1), slow: slow || nil, **Observability.current_fields)
     end
 
+    # The job's own line: an exception here escaped every retry_on/discard_on, so it's an error.
     def job(payload)
       return unless Observability.structured_logs?
 
+      Observability.log(payload[:exception_class] ? :error : :info, "job", **job_fields(payload),
+        duration_ms: payload[:duration], **error_fields(payload))
+    end
+
+    def job_outcome(event, level, payload)
+      return unless Observability.structured_logs?
+
+      Observability.log(level, event, **job_fields(payload), wait_seconds: payload[:wait_seconds], **error_fields(payload))
+    end
+
+    def job_fields(payload)
       job = ActiveSupport::ExecutionContext.to_h[:job]
-      Observability.log(payload[:exception_class] ? :error : :info, "job",
-        job_class: payload[:job_class], job_id: payload[:job_id], queue: payload[:queue], duration_ms: payload[:duration],
-        executions: job&.executions, business_id: job.try(:business_id), error_class: payload[:exception_class],
-        error_message: payload[:exception_message] && Observability.scrub(payload[:exception_message]))
+      job = nil unless job&.job_id == payload[:job_id]
+      { job_class: payload[:job_class], job_id: payload[:job_id], queue: payload[:queue] || job&.queue_name,
+        executions: payload[:executions] || job&.executions, business_id: job.try(:business_id) }
+    end
+
+    def error_fields(payload)
+      { error_class: payload[:exception_class], error_message: payload[:exception_message]&.then { Observability.scrub(_1) } }
     end
   end
 end

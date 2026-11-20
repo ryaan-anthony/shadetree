@@ -16,7 +16,8 @@ class StructuredLogsTest < ActionDispatch::IntegrationTest
 
   def capture_log
     io = StringIO.new
-    logger = ActiveSupport::TaggedLogging.logger(io).tap { _1.level = :info } # production's level
+    # Production's level and formatter: every line must be a JSON object.
+    logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(io, level: :info, formatter: Observability::JsonLogFormatter.new))
     Rails.logger.broadcast_to(logger)
     yield
     io.string
@@ -25,7 +26,7 @@ class StructuredLogsTest < ActionDispatch::IntegrationTest
   end
 
   def json_lines(log, event)
-    log.lines.filter_map { _1[/\{"event".*\}/] }.map { JSON.parse(_1) }.select { _1["event"] == event }
+    log.lines.map { JSON.parse(_1) }.select { _1["event"] == event }
   end
 
   test "signing in logs one request line and neither the email nor the password" do
@@ -63,6 +64,33 @@ class StructuredLogsTest < ActionDispatch::IntegrationTest
     assert_no_match link.token, log
     line = json_lines(log, "request").sole
     assert_equal [ "/c/[FILTERED]", "client", @business.id, 200 ], line.values_at("path", "area", "business_id", "status")
+  end
+
+  test "file addresses are blanked: their signed ids never expire and file names can name a client" do
+    blob = ActiveStorage::Blob.create_and_upload!(io: StringIO.new("x"), filename: "zelda-quartermaine-invoice.pdf")
+    log = capture_log { get rails_blob_path(blob, disposition: "attachment") }
+    log = log.lines.grep_v(/Redirected to/).join # Rails' redirect line is off in production
+
+    assert_no_match "zelda", log
+    assert_no_match blob.signed_id, log
+    assert_equal "/rails/active_storage/blobs/[FILTERED]?disposition=attachment", json_lines(log, "request").sole["path"]
+  end
+
+  test "requests no controller finishes still get their line" do
+    # As in production: the error goes to the public 404 page, not the detailed one.
+    env_config = Rails.application.env_config
+    detailed = env_config["action_dispatch.show_detailed_exceptions"]
+    env_config["action_dispatch.show_detailed_exceptions"] = false
+    log = begin
+      capture_log { get "/no-such-page/zelda.q@example.net" }
+    ensure
+      env_config["action_dispatch.show_detailed_exceptions"] = detailed
+    end
+
+    assert_response :not_found
+    line = json_lines(log, "request").sole
+    assert_equal [ 404, "ActionController::RoutingError", response.headers["X-Request-Id"] ], line.values_at("status", "error_class", "request_id")
+    assert_equal "/no-such-page/[EMAIL]", line["path"] # Rails' own routing-error line is debug-level in production
   end
 
   test "with structured logs off only slow requests are logged, as warnings" do
