@@ -2,7 +2,7 @@
 <% else %>Thank you. We've received your payment.
 <% end %>
 Invoice <%= @invoice.number %><%= " - #{@invoice.title}" if @invoice.title %>
-<%= money(@payment.amount) %>: <%= @payment.method_label %><%= " #{@payment.reference}" if @payment.reference %>, received <%= l(@payment.received_on) %>
+<%= money(@payment.amount) %>: <%= @payment.method_detail || @payment.method_label %><%= " #{@payment.reference}" if @payment.reference && @payment.recorded? %>, received <%= l(@payment.received_on) %>
 <%= @balance.zero? ? "Paid in full" : "#{money(@balance)} left to pay" %>
 
 View the invoice: <%= client_link_url(@link.token) %>

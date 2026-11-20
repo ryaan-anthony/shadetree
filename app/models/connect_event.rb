@@ -18,8 +18,8 @@ class ConnectEvent < ApplicationRecord
     "account" => [ "id", "country", "details_submitted", "charges_enabled", "payouts_enabled",
                    { "requirements" => %w[currently_due past_due pending_verification disabled_reason current_deadline] } ],
     "checkout.session" => [ "id", "status", "payment_status", "amount_total", "currency", "payment_intent", "client_reference_id",
-                            { "metadata" => %w[shadetree_invoice shadetree_business] } ],
-    "payment_intent" => [ "id", "status", "amount_received", "currency", "latest_charge", { "metadata" => %w[shadetree_invoice shadetree_business] } ],
+                            { "metadata" => %w[shadetree_invoice shadetree_business shadetree_fee_cents] } ],
+    "payment_intent" => [ "id", "status", "amount_received", "currency", "latest_charge", { "metadata" => %w[shadetree_invoice shadetree_business shadetree_fee_cents] } ],
     "charge.dispute" => %w[id charge payment_intent amount currency status reason],
     "charge" => %w[id payment_intent amount amount_refunded refunded currency]
   }.freeze

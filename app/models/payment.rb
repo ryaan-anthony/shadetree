@@ -1,6 +1,8 @@
 # Money received against an invoice (PAY-05). Staff record cash, checks, bank transfers and
-# the like; online card payments arrive from PAY-04 and can't be changed here. Recording,
-# changing or deleting one recalculates the invoice (Invoice#apply_payments!).
+# the like; online card payments arrive from PAY-04 (Invoice#record_online_payment!) and can't be
+# changed here. Recording, changing or deleting one recalculates the invoice
+# (Invoice#apply_payments!). An online payment also carries what Stripe tells us later: refunds
+# and a dispute (lost, its amount no longer counts as paid).
 class Payment < ApplicationRecord
   include BusinessOwned
   include HasMoney
@@ -33,6 +35,9 @@ class Payment < ApplicationRecord
 
   scope :chronological, -> { order(:received_on, :created_at, :id) }
 
+  DISPUTE_STATUSES = { "open" => "Disputed", "won" => "Dispute won", "lost" => "Dispute lost" }.freeze
+  validates :dispute_status, inclusion: { in: DISPUTE_STATUSES.keys }, allow_nil: true
+
   before_validation { self.currency ||= invoice&.currency }
 
   delegate :client, to: :invoice
@@ -41,8 +46,21 @@ class Payment < ApplicationRecord
   def online? = source == "online"
   def method_label = METHODS.fetch(payment_method)
 
+  # What it counts towards the invoice: the amount, less refunds and a lost dispute.
+  def counted_cents = [ amount_cents - refunded_cents - (dispute_status == "lost" ? disputed_cents : 0), 0 ].max
+  def refunded = Money.new(refunded_cents, currency)
+
+  # "Refunded", "Partly refunded", "Disputed", …, or nil.
+  def adjustment_label
+    return DISPUTE_STATUSES.fetch(dispute_status) if dispute_status
+    return "Refunded" if refunded_cents.positive? && refunded_cents >= amount_cents
+
+    "Partly refunded" if refunded_cents.positive?
+  end
+
   # What the history records about it.
-  def summary = { "amount_cents" => amount_cents, "currency" => currency, "method" => payment_method, "received_on" => received_on&.iso8601, "reference" => reference }.compact
+  def summary = { "amount_cents" => amount_cents, "currency" => currency, "method" => payment_method, "received_on" => received_on&.iso8601, "reference" => reference,
+                  "detail" => method_detail }.compact
 
   private
 

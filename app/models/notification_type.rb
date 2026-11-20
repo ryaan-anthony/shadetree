@@ -39,6 +39,11 @@ class NotificationType
                    permission: :office, email_by_default: true, icon: "edit-3"),
     Definition.new(kind: "invoice_viewed", label: "Invoice opened", hint: "The first time a client opens an invoice.",
                    permission: :office, email_by_default: false, icon: "eye"),
+    # PAY-04: a client paid online, and a payment disputed with the card issuer.
+    Definition.new(kind: "online_payment", label: "Online payments", hint: "A client pays an invoice online.",
+                   permission: :office, email_by_default: true, icon: "dollar-sign"),
+    Definition.new(kind: "payment_disputed", label: "Payment disputes", hint: "A client disputes an online payment with their bank.",
+                   permission: :office, email_by_default: true, icon: "alert-triangle"),
     Definition.new(kind: "invitation_accepted", label: "Someone joins the team", hint: "An invitation you or a teammate sent is accepted.",
                    permission: :manage_team, email_by_default: false, icon: "user-plus"),
     # JOB-02: to the people going on a visit.

@@ -267,6 +267,47 @@ class Invoice < ApplicationRecord
     end
   end
 
+  # PAY-04: whether the client can pay online now, from the invoice's link: something left to
+  # pay on a sent invoice (not one being revised, a void one or an erased client's), and a
+  # business whose Stripe account takes charges.
+  def online_payable? = outstanding? && balance.positive? && !client.erased? && business.active? && business.accepts_online_payments?
+
+  # PAY-04: a payment Stripe confirmed (checkout.session.completed or payment_intent.succeeded).
+  # Recorded once per PaymentIntent, whichever notification comes first; the money has been
+  # taken, so it's recorded even if the invoice changed meanwhile: a revision being prepared is
+  # dropped (the client paid what they were sent), and a void invoice keeps its status.
+  # Returns [payment, new?].
+  def record_online_payment!(intent_id:, amount_cents:, currency:, checkout_id: nil, method_detail: nil, platform_fee_cents: 0)
+    transaction do
+      lock!
+      existing = Payment.find_by(provider_payment_id: intent_id)
+      next [ existing, false ] if existing
+
+      discard_revision!(by: nil) if revising?
+      payment = payments.create!(business:, source: "online", payment_method: "card", amount_cents:, currency: currency.upcase,
+                                 received_on: business.today, reference: intent_id, provider_payment_id: intent_id,
+                                 provider_checkout_id: checkout_id, method_detail:, platform_fee_cents:)
+      record!(:payment_received, payment: payment.uid, **payment.summary)
+      ClientEvent.record!(client, :payment_recorded, subject: payment, by: nil, via: "client", **payment.summary) # CLI-05, NTF-04 payment_received
+      if void?
+        update_columns(amount_paid_cents: amount_paid_cents + amount_cents, updated_at: Time.current)
+      else
+        apply_payments!
+      end
+      [ payment, true ]
+    end
+  end
+
+  # PAY-04: refunds and disputes on an online payment, as Stripe reports them (cumulative, so a
+  # repeat changes nothing). The invoice follows: a refund can take it back to Partly paid.
+  def reflect_refund!(payment, refunded_cents:)
+    adjust_online_payment(payment, :payment_refunded) { payment.refunded_cents = refunded_cents.clamp(0, payment.amount_cents) }
+  end
+
+  def reflect_dispute!(payment, status:, amount_cents:)
+    adjust_online_payment(payment, :payment_disputed) { payment.assign_attributes(dispute_status: status, disputed_cents: amount_cents.clamp(0, payment.amount_cents)) }
+  end
+
   # Corrects a recorded payment, with a reason; the history keeps what it was.
   def change_payment!(payment, by:, reason:, **attributes)
     adjust_payment(payment, by:, reason:) do
@@ -294,7 +335,8 @@ class Invoice < ApplicationRecord
   # (paid_at: then), Partly paid, or back to Sent. Active client links follow (PLT-12): a year
   # after payment once it's paid, no end while it isn't.
   def apply_payments!(by: nil)
-    paid_cents = payments.unscope(:order).sum(:amount_cents)
+    # PAY-04: refunds and lost disputes don't count as paid.
+    paid_cents = payments.unscope(:order).sum(Arel.sql("GREATEST(amount_cents - refunded_cents - CASE WHEN dispute_status = 'lost' THEN disputed_cents ELSE 0 END, 0)")).to_i
     status = if paid_cents >= total_cents then "paid" elsif paid_cents.positive? then "partially_paid" else "sent" end
     changed = status != self.status
     assign_attributes(amount_paid_cents: paid_cents, status:, paid_at: (status == "paid" ? (paid_at || Time.current) : nil))
@@ -418,6 +460,20 @@ class Invoice < ApplicationRecord
       result = yield
       apply_payments!(by:) if result.errors.empty?
       result
+    end
+  end
+
+  def adjust_online_payment(payment, kind)
+    transaction do
+      lock!
+      payment.lock!
+      yield
+      next payment unless payment.changed?
+
+      payment.save!
+      record!(kind, payment: payment.uid, refunded_cents: payment.refunded_cents, dispute: payment.dispute_status, **payment.summary)
+      apply_payments! unless void?
+      payment
     end
   end
 

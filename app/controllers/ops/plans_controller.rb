@@ -13,7 +13,7 @@ class Ops::PlansController < Ops::BaseController
   def edit; end
 
   def update
-    attributes = params.require(:plan).permit(:name, :description, :public, :position)
+    attributes = params.require(:plan).permit(:name, :description, :public, :position, :platform_fee_bps)
     @plan.assign_attributes(attributes)
     @plan.monthly_price_cents = price_cents(params.dig(:plan, :monthly_price)) if params.dig(:plan, :monthly_price)
     @plan.annual_price_cents = price_cents(params.dig(:plan, :annual_price)) if params.dig(:plan, :annual_price)
