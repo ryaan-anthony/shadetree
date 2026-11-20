@@ -303,7 +303,7 @@ jobs:
           sleep 2
           contains "a backup refuses during a restore" "busy with restore" "$("$tool" staging backup 2>&1 || true)"
           contains "so does the drill" "busy with restore" "$("$tool" staging restore-drill 2>&1 || true)"
-          cp "$RUNNER_TEMP/app.env" "$DEPLOY_DIR/$APP.env" # it stays for the recovery's deploy below
+          cp "$RUNNER_TEMP/app.env" "$DEPLOY_DIR/$APP.env"
           contains "and a deploy, before it touches the app" "a restore is in progress" \
             "$(bash "$DEPLOY_DIR/build-$GITHUB_SHA/ops/deploy/deploy.sh" staging "$DEPLOY_DIR" "$GITHUB_SHA" shadetree-db 8443 2>&1 || true)"
           contains "and install.sh" "a restore is in progress" "$(bash ops/backup/install.sh staging 2>&1 || true)"
@@ -319,6 +319,7 @@ jobs:
             dbs "CREATE DATABASE $db OWNER shadetree" > /dev/null
           done
           echo "-- 2. a deploy brings the app up, empty"
+          cp "$RUNNER_TEMP/app.env" "$DEPLOY_DIR/$APP.env"
           bash "$DEPLOY_DIR/build-$GITHUB_SHA/ops/deploy/deploy.sh" staging "$DEPLOY_DIR" "$GITHUB_SHA" shadetree-db 8443 | grep '==>'
           expect "the new app is empty" 0 "$(rails 'print Business.count')"
           echo "-- 3. the nightly backup refuses the empty database, so the good set stays the newest"
