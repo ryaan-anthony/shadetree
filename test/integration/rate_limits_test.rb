@@ -29,7 +29,12 @@ class RateLimitsTest < ActionDispatch::IntegrationTest
     business = businesses(:one)
     link = as_business(business) { ClientLink.issue!(create_test_document(business), actions: %w[approve]) }
     over_the_limit do
+      io = StringIO.new
+      logger = ActiveSupport::Logger.new(io)
+      Rails.logger.broadcast_to(logger)
       get client_link_path(link.token)
+      Rails.logger.stop_broadcasting_to(logger)
+      assert_match %r{\[abuse\] rate limited .*"path":"/c/\[FILTERED\]"}, io.string, "PLT-10: the abuse line keeps the IP, not the token"
       assert_response :too_many_requests
       assert_equal "60", response.headers["Retry-After"]
       assert_select "h1", /a lot of requests/
