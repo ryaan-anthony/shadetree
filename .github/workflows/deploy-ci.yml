@@ -122,7 +122,8 @@ jobs:
           deploy_dir="$RUNNER_TEMP/deploy"
           mkdir -p "$deploy_dir/build-$GITHUB_SHA"
           tar --exclude=./.git -cf - . | tar -xf - -C "$deploy_dir/build-$GITHUB_SHA"
-          # The lines deploy.yml writes for staging (kept for the recovery below, then deleted).
+          # The lines deploy.yml writes for staging, with the optional mail sandbox turned on (kept for the
+          # recovery below, then deleted).
           (umask 077 && printf '%s\n' SOLID_QUEUE_IN_PUMA=1 APP_ENVIRONMENT=staging "APP_REVISION=$GITHUB_SHA" MAIL_SANDBOX=true \
             "SECRET_KEY_BASE=$(openssl rand -hex 64)" "DATABASE_PASSWORD=$DB_PASSWORD" "APP_HOST=$APP_HOST" TRUSTED_PROXIES=192.0.2.20 \
             PGHOST=postgres DATABASE_NAME=shadetree_staging DATABASE_USER=shadetree MAIL_ALLOWLIST=@example.com \
@@ -166,7 +167,7 @@ jobs:
           for _ in $(seq 1 30); do [ "$(queue "SELECT count(*) FROM solid_queue_processes WHERE kind = 'Worker'")" -gt 0 ] && break; sleep 2; done
           expect "Solid Queue's workers run in the app (SOLID_QUEUE_IN_PUMA)" yes "$([ "$(queue "SELECT count(*) FROM solid_queue_processes WHERE kind = 'Worker'")" -gt 0 ] && echo yes || echo no)"
           expect "the scheduler runs (recurring tasks)" yes "$([ "$(queue "SELECT count(*) FROM solid_queue_processes WHERE kind = 'Scheduler'")" -gt 0 ] && echo yes || echo no)"
-          expect "staging's mail goes through the sandbox" true \
+          expect "with MAIL_SANDBOX=true, mail goes through the sandbox" true \
             "$(docker exec "$APP" bin/rails runner 'print Mail.class_variable_get(:@@delivery_interceptors).include?(MailSandbox)' | tail -n 1)"
           expect "uploads are stored in the volume" Disk "$(docker exec "$APP" bin/rails runner 'print ActiveStorage::Blob.service.class.name.demodulize.delete_suffix("Service")' | tail -n 1)"
           expect "PDFs render (Chrome on the read-only file system)" true \

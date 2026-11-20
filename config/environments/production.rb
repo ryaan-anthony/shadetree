@@ -68,7 +68,7 @@ Rails.application.configure do
 
   # Set host to be used by links generated in mailer templates.
   # Transactional email over SMTP (ADR 0017, NTF-01), configured per environment: production
-  # uses the provider's credentials, staging its sandbox credentials. Without SMTP_ADDRESS
+  # and staging each use their own credentials on the sending domain. Without SMTP_ADDRESS
   # nothing is sent (rather than trying localhost); client emails show "Couldn't send" and
   # config/initializers/mail_settings.rb warns at boot.
   if ENV["SMTP_ADDRESS"].present?

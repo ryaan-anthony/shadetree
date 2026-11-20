@@ -42,8 +42,9 @@ provider name. The provider appears only in production configuration.
 - **Platform email** (sign-up confirmation, password reset, invitations) is also sent in the
   background, so a slow server never holds up a request.
 - **Bounces and complaints after acceptance** stay in the provider's dashboard.
-- **Staging** uses the provider's sandbox SMTP credentials, which only deliver to authorized
-  recipients, so it can't email real clients. This is configuration, not code.
+- **Staging** has its own SMTP credentials on the same sending domain and sends real email. It's
+  a controlled environment that only emails known people (owner decision, 2026-11-20). The mail
+  sandbox (`MAIL_SANDBOX=true`, `MAIL_ALLOWLIST`, `MAIL_SANDBOX_TO`) is optional.
 - **Development** opens every email in the browser (letter_opener_web at `/letter_opener`).
   Tests never send.
 

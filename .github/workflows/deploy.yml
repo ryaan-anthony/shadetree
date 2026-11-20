@@ -234,6 +234,7 @@ jobs:
           SMTP_PORT: ${{ vars.SMTP_PORT }}
           MAIL_ALLOWLIST: ${{ vars.MAIL_ALLOWLIST }}
           MAIL_SANDBOX_TO: ${{ vars.MAIL_SANDBOX_TO }}
+          MAIL_SANDBOX: ${{ vars.MAIL_SANDBOX }}
           SUPPORT_EMAIL: ${{ vars.SUPPORT_EMAIL }}
           ANALYTICS_HOST: ${{ vars.ANALYTICS_HOST }}
           ANALYTICS_DOMAIN: ${{ vars.ANALYTICS_DOMAIN }}
@@ -258,8 +259,6 @@ jobs:
           # left out, so the app's defaults apply. Only names are ever printed.
           DATABASE_NAME="${DATABASE_NAME:-shadetree_$ENVIRONMENT}"
           lines=(SOLID_QUEUE_IN_PUMA=1 "APP_ENVIRONMENT=$ENVIRONMENT" "APP_REVISION=$DEPLOY_SHA")
-          # Staging can't email real clients: only MAIL_ALLOWLIST receives mail (MailSandbox).
-          if [ "$ENVIRONMENT" = staging ]; then lines+=(MAIL_SANDBOX=true); fi
           for name in SECRET_KEY_BASE DATABASE_PASSWORD APP_HOST TRUSTED_PROXIES; do
             [ -n "${!name}" ] || { echo "::error::set $name in the $ENVIRONMENT environment (docs/runbooks/operations.md)"; exit 1; }
           done
@@ -274,6 +273,8 @@ jobs:
           fi
           [[ "$STRIPE_AUTOMATIC_TAX" =~ ^(true|false)?$ ]] || { echo "::error::STRIPE_AUTOMATIC_TAX must be true, false, or unset"; exit 1; }
           [[ "$INBOUND_EMAIL_ENABLED" =~ ^(true|false)?$ ]] || { echo "::error::INBOUND_EMAIL_ENABLED must be true, false, or unset"; exit 1; }
+          # Optional: with MAIL_SANDBOX=true only MAIL_ALLOWLIST receives mail (MailSandbox). Off by default.
+          [[ "$MAIL_SANDBOX" =~ ^(true|false)?$ ]] || { echo "::error::MAIL_SANDBOX must be true, false, or unset"; exit 1; }
           [[ "$TRIAL_DAYS" =~ ^([0-9]{1,3})?$ ]] || { echo "::error::TRIAL_DAYS must be a whole number of days (0 turns trials off), or unset"; exit 1; }
           [[ "$BILLING_GRACE_DAYS" =~ ^([0-9]{1,3})?$ ]] || { echo "::error::BILLING_GRACE_DAYS must be a whole number of days, or unset"; exit 1; }
           [[ "$TRIAL_PLAN" =~ ^([a-z][a-z0-9_-]*)?$ ]] || { echo "::error::TRIAL_PLAN must be a plan's key, like pro, or unset"; exit 1; }
@@ -282,11 +283,11 @@ jobs:
           done
           settings=(SECRET_KEY_BASE DATABASE_PASSWORD SMTP_USERNAME SMTP_PASSWORD STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET
                     STRIPE_CONNECT_WEBHOOK_SECRET INBOUND_EMAIL_SECRET APP_HOST TRUSTED_PROXIES PGHOST DATABASE_NAME DATABASE_USER
-                    MAIL_FROM SMTP_ADDRESS SMTP_PORT MAIL_ALLOWLIST MAIL_SANDBOX_TO SUPPORT_EMAIL ANALYTICS_HOST ANALYTICS_DOMAIN
+                    MAIL_FROM SMTP_ADDRESS SMTP_PORT MAIL_SANDBOX MAIL_ALLOWLIST MAIL_SANDBOX_TO SUPPORT_EMAIL ANALYTICS_HOST ANALYTICS_DOMAIN
                     STRIPE_PUBLISHABLE_KEY STRIPE_CONNECT_CLIENT_ID INBOUND_EMAIL_ENABLED STRIPE_AUTOMATIC_TAX TRIAL_DAYS
                     TRIAL_PLAN BILLING_GRACE_DAYS STRUCTURED_LOGS SLOW_REQUEST_MS SLOW_QUERY_MS JOB_BACKLOG_THRESHOLD JOB_WAIT_THRESHOLD
                     JOB_CONCURRENCY BACKUP_MAX_AGE_HOURS RAILS_LOG_LEVEL)
-          written=("${settings[@]}" SOLID_QUEUE_IN_PUMA APP_ENVIRONMENT APP_REVISION MAIL_SANDBOX TLS_CERT_BASE64 TLS_KEY_BASE64)
+          written=("${settings[@]}" SOLID_QUEUE_IN_PUMA APP_ENVIRONMENT APP_REVISION TLS_CERT_BASE64 TLS_KEY_BASE64)
           for name in "${settings[@]}"; do
             [[ "${!name}" != *$'\n'* ]] || { echo "::error::$name holds a line break"; exit 1; }
             if [ -n "${!name}" ]; then lines+=("$name=${!name}"); fi

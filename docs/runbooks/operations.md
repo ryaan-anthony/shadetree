@@ -27,7 +27,7 @@ timer of the deploy user backs up the databases and uploads, then restore-drills
 | VM, container | `stg-shadetree-vm.hostilecity.net`, `shadetree-staging` | `shadetree-vm.hostilecity.net`, `shadetree-production` |
 | Databases | `shadetree_staging` (+ `_cache`, `_queue`, `_cable`) | `shadetree_production` (+ the same three) |
 | Uploads | volume `shadetree-staging_storage` | volume `shadetree-production_storage` |
-| Email | **Sandbox** (forced by the deploy): only `MAIL_ALLOWLIST` receives mail, copies go to `MAIL_SANDBOX_TO` | Real delivery |
+| Email | Real delivery, with its own SMTP credentials; staging only emails known people. Optional sandbox: `MAIL_SANDBOX=true` | Real delivery |
 | Third parties | Test mode only: the deploy refuses live Stripe keys | Live keys |
 | Data | Reference data the app seeds itself, plus accounts you sign up; never production data | Real |
 | Backups | Same as production (the mount may be local: `BACKUP_ALLOW_LOCAL=true`) | Nightly, off-machine |
@@ -194,10 +194,11 @@ Settings → Environments: **`staging`** (deployment branches: `main` only) and 
 | `DATABASE_PASSWORD` | secret | | | The role's password |
 | `SECRET_KEY_BASE` | secret | `openssl rand -hex 64` | another one | Signs sessions and derives client-link tokens (ADR 0016) |
 | `MAIL_FROM` | var | `Shadetree <no-reply@getshadetree.com>` | same | The platform sender |
-| `SMTP_ADDRESS`, `SMTP_PORT` | vars | the provider's **sandbox** relay | its relay | Port default 587 (STARTTLS); nothing is sent without an address |
-| `SMTP_USERNAME`, `SMTP_PASSWORD` | secrets | sandbox credentials | live credentials | |
-| `MAIL_ALLOWLIST` | var, staging | `you@example.com,@getshadetree.com` | | Addresses or `@domains` staging may email |
-| `MAIL_SANDBOX_TO` | var, staging | a shared test inbox | | Gets a copy of anything blocked |
+| `SMTP_ADDRESS`, `SMTP_PORT` | vars | the provider's relay | its relay | Port default 587 (STARTTLS); nothing is sent without an address |
+| `SMTP_USERNAME`, `SMTP_PASSWORD` | secrets | staging's own credentials | production's own credentials | |
+| `MAIL_SANDBOX` | var, optional | unset (off) | unset | `true` turns on the mail sandbox: only `MAIL_ALLOWLIST` receives mail |
+| `MAIL_ALLOWLIST` | var, optional | | | With the sandbox on: addresses or `@domains` that may receive mail |
+| `MAIL_SANDBOX_TO` | var, optional | | | With the sandbox on: gets a copy of anything blocked |
 | `SUPPORT_EMAIL` | var | `support-staging@getshadetree.com` | (unset: `support@getshadetree.com`) | The support address: contact-form mail, and the inbound address and reply-address domain (OPS-05) |
 | `STRIPE_SECRET_KEY` | secret | `sk_test_…` (enforced) | `sk_live_…` | Payments (PAY, BIL specs) |
 | `STRIPE_PUBLISHABLE_KEY` | var | `pk_test_…` (enforced) | `pk_live_…` | |
@@ -486,7 +487,7 @@ changes.
 | Hosting: the owner's homelab VMs, PostgreSQL, backup storage, runner | $0 (owner's hardware and power) |
 | Cloudflare: DNS, tunnel, Origin CA certificates (free plan) | $0 |
 | Domain `getshadetree.com` (annual ÷ 12) | *tbd* (about $1) |
-| Email: the SMTP provider (staging sandbox, production sending) | *tbd* |
+| Email: the SMTP provider (staging and production sending) | *tbd* |
 | Stripe | $0 fixed; per-transaction fees |
 | Analytics: self-hosted Plausible (MKT-04) | $0 if on the homelab |
 | GitHub (public repository, Actions) | $0 |

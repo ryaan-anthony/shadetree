@@ -39,8 +39,11 @@ promoted deliberately, with backups we have actually restored.
       nightly drill and Deploy CI restore automatically; the first manual restore waits for
       the VMs.*
 - [x] Background job processing and scheduled tasks run in both environments.
-- [x] Staging uses test-mode credentials for all third parties and cannot email real clients
-      (allow-list or sandbox). *The deploy forces the mail sandbox and refuses live Stripe keys.*
+- [x] Staging uses test-mode credentials for all third parties. *The deploy refuses live Stripe
+      keys. Owner decision 2026-11-20: staging is a controlled environment that only emails
+      known people, so it sends real email and the "cannot email real clients" requirement is
+      dropped. The mail sandbox stays available as an option (`MAIL_SANDBOX=true` with
+      `MAIL_ALLOWLIST` / `MAIL_SANDBOX_TO`), off by default.*
 - [x] A deploy/runbook document covers deploy, rollback, restore, and rotating secrets.
 - [ ] Monthly infrastructure cost is recorded against the < $50 pre-revenue target. *Hosting $0;
       domain and email still to fill in.*
@@ -49,8 +52,9 @@ promoted deliberately, with backups we have actually restored.
 
 Every variable and secret, per environment, is listed in
 [the runbook](../../runbooks/operations.md#github-environments). Email (NTF-01, ADR 0017):
-`APP_HOST`, `MAIL_FROM`, `SMTP_ADDRESS`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`; staging
-uses the provider's sandbox credentials and `MAIL_ALLOWLIST` / `MAIL_SANDBOX_TO`.
+`APP_HOST`, `MAIL_FROM`, `SMTP_ADDRESS`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, each
+environment with its own SMTP credentials. The optional mail sandbox is `MAIL_SANDBOX`,
+`MAIL_ALLOWLIST` and `MAIL_SANDBOX_TO`.
 
 ## Out of scope
 
