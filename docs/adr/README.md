@@ -44,5 +44,6 @@ approach, a hosting change. Small, local choices belong in the PR description.
 | [0019](0019-hand-built-operator-console.md) | Hand-built operator console, with in-app two-factor and an append-only audit log | Accepted |
 | [0020](0020-in-app-support-tickets.md) | Support tickets built into the app | Accepted |
 | [0021](0021-inbound-support-email.md) | Inbound support email through Cloudflare Email Routing and a signed Worker post | Accepted |
+| [0021](0021-subscription-billing-with-stripe.md) | Subscription billing with Stripe's hosted pages, mirrored from its events | Accepted |
 | [0023](0023-homelab-vms-and-cloudflare-tunnel.md) | Staging and production on the owner's homelab VMs, deployed by GitHub Actions, behind a Cloudflare tunnel | Accepted |
 | [0025](0025-staging-sends-real-email.md) | Staging sends real email; the mail sandbox is optional | Accepted |

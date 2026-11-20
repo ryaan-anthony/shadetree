@@ -35,6 +35,23 @@ class Plan < ApplicationRecord
 
   def self.default! = find_by!(default: true)
 
+  # BIL-04: billing intervals, and how the plan is named in Stripe. bin/rails stripe:sync_plans
+  # makes a product per paid plan and a price per interval, found by these lookup keys in test
+  # and live mode alike (no price ids are stored).
+  INTERVALS = { "monthly" => "month", "yearly" => "year" }.freeze
+  LOOKUP_KEY = /\Ashadetree_(?<key>[a-z0-9_]+)_(?<interval>monthly|yearly)\z/
+
+  def stripe_product_id = "shadetree_#{key}"
+  def lookup_key(interval) = "shadetree_#{key}_#{interval.to_s.tap { INTERVALS.fetch(_1) }}"
+  def price_cents(interval) = interval.to_s == "yearly" ? annual_price_cents : monthly_price_cents
+  def offers?(interval) = INTERVALS.key?(interval.to_s) && price_cents(interval).positive?
+
+  # [plan, interval] for a Stripe price's lookup key, or nil for one that isn't ours.
+  def self.for_lookup_key(lookup_key)
+    match = LOOKUP_KEY.match(lookup_key.to_s) or return
+    plan = find_by(key: match[:key]) and [ plan, match[:interval] ]
+  end
+
   def monthly_price = Money.new(monthly_price_cents, currency)
   def annual_price = Money.new(annual_price_cents, currency)
   def free? = monthly_price_cents.zero? && annual_price_cents.zero?
