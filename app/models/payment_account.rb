@@ -69,9 +69,9 @@ class PaymentAccount < ApplicationRecord
   # Whether onboarding (Stripe's hosted pages) is the way to fix the account.
   def fixable_in_onboarding? = connected? && !disabled_reason.to_s.start_with?("rejected") && status != "active"
 
-  # Copies what Stripe says about the account (an Account object, or its event payload).
-  # Changes of status are kept in the business's history.
-  def sync!(account)
+  # Copies what Stripe says about the account (an Account object, or its event payload, with when
+  # Stripe made it: an older event never overwrites it).
+  def sync!(account, at: Time.current)
     requirements = account["requirements"] || {}
     before = status
     update!(country: account["country"] || country,
@@ -82,7 +82,7 @@ class PaymentAccount < ApplicationRecord
             requirements_due: (Array(requirements["past_due"]) | Array(requirements["currently_due"])).sort,
             requirements_pending: Array(requirements["pending_verification"]).sort,
             requirements_deadline: requirements["current_deadline"].presence && Time.zone.at(requirements["current_deadline"].to_i),
-            synced_at: Time.current)
+            synced_at: Time.current, status_event_at: [ at, status_event_at ].compact.max)
     Rails.logger.info("[payments] account #{uid} is now #{status}") if status != before
     self
   end

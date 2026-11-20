@@ -16,8 +16,11 @@ class PaymentGateway
   end
 
   # Online payments need the platform's secret key; without it (development, a fresh staging)
-  # the app says payments aren't available rather than failing.
-  def configured? = ENV["STRIPE_SECRET_KEY"].present?
+  # the app says payments aren't available rather than failing. As StripeGateway (BIL-04) asks.
+  def configured? = ::Stripe.api_key.present?
+
+  # Live keys mean live mode; events from the other mode are ignored (ConnectEvent).
+  def self.live_mode? = ::Stripe.api_key.to_s.start_with?("sk_live_", "rk_live_")
 
   # A new Standard account for a business: Stripe asks the business for everything else during
   # onboarding. US only at launch (PAY-03).
@@ -33,14 +36,20 @@ class PaymentGateway
   end
 
   # Ends the platform's access to the account. The business keeps its Stripe account, its money
-  # and its history. An account that's already disconnected counts as done.
+  # and its history. An account that's no longer connected counts as done; any other refusal
+  # (a wrong client id, the other mode's key, an account Stripe won't let us deauthorize) raises.
   def disconnect(account_id)
     call { ::Stripe::OAuth.deauthorize({ client_id: ENV.fetch("STRIPE_CONNECT_CLIENT_ID"), stripe_user_id: account_id }) }
     true
   rescue Error => error
-    raise unless error.cause.is_a?(::Stripe::OAuth::InvalidClientError)
+    raise unless self.class.already_disconnected?(error.cause)
 
     true
+  end
+
+  # Stripe's answer for an account that isn't connected to the platform (any more).
+  def self.already_disconnected?(error)
+    error.is_a?(::Stripe::OAuth::InvalidClientError) && error.message.to_s.match?(/not connected to|already (been )?deauthorized/i)
   end
 
   # A hosted Checkout page on the business's account (a direct charge: the business is the

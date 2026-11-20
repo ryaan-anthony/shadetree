@@ -74,38 +74,51 @@ someone who can act on them.
 
 ## Connect (client payments)
 
-### Settings
+Businesses take card payments from their clients through their own Stripe accounts (Connect
+Standard, PAY-03 and PAY-04, [ADR 0024](../adr/0024-stripe-connect-standard-direct-charges.md)).
+Keys come from the environment only, never code or chat: test-mode keys on staging and
+development, live-mode keys on production only.
 
-| Variable | What it is | Where it comes from |
-| --- | --- | --- |
-| `STRIPE_SECRET_KEY` | The platform's secret key (`sk_test_…` on staging, `sk_live_…` in production) | Dashboard → Developers → API keys |
-| `STRIPE_PUBLISHABLE_KEY` | The publishable key (not needed by hosted pages; kept for BIL) | Same page |
-| `STRIPE_WEBHOOK_SECRET` | Signing secret of the platform endpoint (subscriptions, BIL-04/05) | The endpoint's page |
-| `STRIPE_CONNECT_WEBHOOK_SECRET` | Signing secret of the Connect endpoint below | The endpoint's page |
-| `STRIPE_CONNECT_CLIENT_ID` | The platform's Connect client id (`ca_…`), used to disconnect accounts | Settings → Connect → Onboarding options → OAuth |
+| Variable | What |
+| --- | --- |
+| `STRIPE_SECRET_KEY` | Secret (or restricted) API key; `sk_live_`/`rk_live_` means live mode, and events from the other mode are ignored |
+| `STRIPE_CONNECT_WEBHOOK_SECRET` | Signing secret of the connected-accounts endpoint (`/webhooks/stripe/connect`) |
+| `STRIPE_CONNECT_CLIENT_ID` | The platform's Connect client id (`ca_…`, Settings → Connect → Onboarding options → OAuth), used to disconnect accounts |
 
-Without `STRIPE_SECRET_KEY` the app says online payments aren't available yet; without a
-webhook secret the endpoint answers 503 and Stripe retries.
+Without `STRIPE_SECRET_KEY` Settings → Payments says online payments aren't available yet;
+without the webhook secret the endpoint answers 503 and Stripe retries. In development, deleting
+a business when `STRIPE_CONNECT_CLIENT_ID` isn't set skips the disconnect.
 
-### Connect setup (once per mode)
+### Setting up an environment (test and live mode alike)
 
-1. Connect → Settings: platform profile (name "Shadetree", icon, brand color, support email on
-   getshadetree.com, website https://getshadetree.com), and US as the only country.
+1. Connect → Settings: the platform profile (name "Shadetree", icon, brand color, a support
+   email on getshadetree.com, website https://getshadetree.com), and the United States as the
+   only country.
 2. Webhooks → Add endpoint → **Events on connected accounts**:
    `https://<host>/webhooks/stripe/connect` with `account.updated`,
    `account.application.deauthorized`, `checkout.session.completed`,
    `checkout.session.async_payment_succeeded`, `payment_intent.succeeded`, `charge.refunded`,
-   `charge.dispute.created`, `charge.dispute.updated`, `charge.dispute.closed`. Copy its signing
-   secret to `STRIPE_CONNECT_WEBHOOK_SECRET`.
-3. Locally: `stripe listen --forward-connect-to localhost:3000/webhooks/stripe/connect` prints a
+   `charge.dispute.created`, `charge.dispute.updated`, `charge.dispute.closed`. Put its signing
+   secret in `STRIPE_CONNECT_WEBHOOK_SECRET`.
+3. In test mode, connect a business, then disconnect it from Settings → Payments, and check the
+   account shows as disconnected in Stripe (Connect → Accounts). Accounts Shadetree creates
+   (`Account.create(type: "standard")`) are disconnected with OAuth deauthorize; if Stripe
+   refuses that for them, disconnecting fails with Stripe's message and nothing changes in the
+   app: remove the account from the platform in the Stripe dashboard instead, then mark it
+   disconnected (`docker exec shadetree-<env> bin/rails runner` with
+   `PaymentAccount#update!(disconnected_at:, disconnected_reason: "owner")`), and report it so
+   the code can follow.
+4. Locally: `stripe listen --forward-connect-to localhost:3000/webhooks/stripe/connect` prints a
    secret to use as `STRIPE_CONNECT_WEBHOOK_SECRET`.
 
 ### When something looks wrong
 
-- Events are kept for 90 days in `connect_events` (type, account, status, the fields the app
-  uses; no personal details). `ConnectEvent.where(status: "failed")` shows what didn't process
-  and why; Stripe redelivers failed events for up to three days, and each redelivery retries.
-- A business's account status is refreshed by `account.updated`, and whenever the owner comes
-  back from Stripe's onboarding.
+- Events are kept 90 days in `connect_events` (type, account, status, attempts, the fields the
+  app uses; no personal details). A failed event is retried by its job, then every 10 minutes by
+  `RetryConnectEventsJob`, up to 8 tries; after that it's reported once and left `failed`.
+  To look: `docker exec shadetree-<env> bin/rails runner 'pp ConnectEvent.where(status: "failed").pluck(:event_id, :event_type, :attempts, :error)'`.
+  To try one again after fixing the cause, set its `attempts` to 0; the sweeper picks it up.
+- A business's account status is refreshed by `account.updated` (older events are skipped) and
+  whenever the owner comes back from Stripe's onboarding.
 - Deleting a business (OPS-04) disconnects its account first; if Stripe can't be reached the
-  deletion is retried the next day. The business keeps its Stripe account.
+  deletion waits for the next day's run. The business keeps its Stripe account.

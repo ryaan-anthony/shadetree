@@ -1,4 +1,4 @@
-# 0021. Client payments through Stripe Connect Standard, with direct charges on Checkout
+# 0024. Client payments through Stripe Connect Standard, with direct charges on Checkout
 
 - **Status:** Accepted
 - **Date:** 2026-11-20
@@ -29,8 +29,12 @@ account (card only, which includes Apple Pay and Google Pay). Payments, refunds 
 recorded only from signed Connect notifications (`/webhooks/stripe/connect`), stored once per
 event id (`ConnectEvent`) and processed in a job; a payment is keyed by its PaymentIntent id, so
 repeats never double-record. Disconnecting calls OAuth deauthorize: the business keeps its Stripe
-account. All Stripe calls go through `PaymentGateway`, which tests replace with a fake. A
-platform fee, if one is ever set, is a per-plan setting (`application_fee_amount`), 0 for now.
+account. Stripe calls for connected accounts go through `PaymentGateway`, kept apart from
+BIL-04's `StripeGateway`, which calls Stripe as the platform itself (products, prices,
+subscriptions): the two share the key and initializer but not methods, webhooks or event tables,
+and each is swapped for a fake in tests. Notifications that fail are retried by the job and then
+by a sweeper (`RetryConnectEventsJob`) up to eight tries, then reported once. A platform fee, if
+one is ever set, is a per-plan setting (`application_fee_amount`), 0 for now.
 
 ## Consequences
 

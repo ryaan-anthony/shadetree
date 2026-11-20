@@ -66,4 +66,24 @@ class PaymentAccountTest < ActiveSupport::TestCase
     assert_nil PaymentAccount.for_account("acct_unknown")
     as_business(businesses(:two)) { assert_raises(ActiveRecord::RecordNotFound) { PaymentAccount.find_by_param!(@account.uid) } }
   end
+
+  test "disconnecting at Stripe: only 'not connected' counts as already done" do
+    not_connected = Stripe::OAuth::InvalidClientError.new("invalid_client", "This application is not connected to stripe account acct_1, or that account does not exist.")
+    wrong_client = Stripe::OAuth::InvalidClientError.new("invalid_client", "No such application: 'ca_wrong'")
+    assert PaymentGateway.already_disconnected?(not_connected)
+    assert_not PaymentGateway.already_disconnected?(wrong_client)
+    assert_not PaymentGateway.already_disconnected?(Stripe::OAuth::InvalidRequestError.new("invalid_request", "not connected to"))
+  end
+
+  test "live mode follows the secret key" do
+    previous = Stripe.api_key
+    Stripe.api_key = "sk_live_x"
+    assert PaymentGateway.live_mode?
+    Stripe.api_key = "rk_live_x"
+    assert PaymentGateway.live_mode?
+    Stripe.api_key = "sk_test_x"
+    assert_not PaymentGateway.live_mode?
+  ensure
+    Stripe.api_key = previous
+  end
 end

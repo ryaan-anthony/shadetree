@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_20_002000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_20_100100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -428,6 +428,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_002000) do
     t.string "event_type", null: false
     t.string "account_id"
     t.boolean "livemode", default: false, null: false
+    t.datetime "event_created_at"
+    t.integer "attempts", default: 0, null: false
     t.jsonb "data", default: {}, null: false
     t.string "status", default: "received", null: false
     t.string "error"
@@ -436,6 +438,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_002000) do
     t.datetime "updated_at", null: false
     t.index ["created_at"], name: "index_connect_events_on_created_at"
     t.index ["event_id"], name: "index_connect_events_on_event_id", unique: true
+    t.index ["status", "updated_at"], name: "index_connect_events_to_retry", where: "((status)::text = ANY ((ARRAY['received'::character varying, 'failed'::character varying])::text[]))"
     t.check_constraint "status::text = ANY (ARRAY['received'::character varying, 'processed'::character varying, 'ignored'::character varying, 'failed'::character varying]::text[])", name: "connect_events_status"
   end
 
@@ -898,6 +901,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_002000) do
     t.jsonb "requirements_pending", default: [], null: false
     t.datetime "requirements_deadline"
     t.datetime "synced_at"
+    t.datetime "status_event_at"
     t.bigint "connected_by_id"
     t.datetime "disconnected_at"
     t.string "disconnected_reason"

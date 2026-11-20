@@ -78,6 +78,15 @@ class Webhooks::StripeConnectTest < ActionDispatch::IntegrationTest
     assert_empty @gateway.calls_to(:disconnect)
   end
 
+  # Makes ConnectEventHandler fail (as a database blip would) while the block runs.
+  def with_failing_handler
+    original = ConnectEventHandler.method(:handle)
+    ConnectEventHandler.define_singleton_method(:handle) { |_event| raise ActiveRecord::ConnectionFailed, "database went away" }
+    yield
+  ensure
+    ConnectEventHandler.define_singleton_method(:handle, original)
+  end
+
   test "a failed event is retried when Stripe delivers it again; old events are pruned" do
     payload, signature = signed_connect_event("account.updated", account_object, id: "evt_4")
     assert_enqueued_jobs(1, only: ProcessConnectEventJob) { deliver(payload, signature) }
@@ -88,5 +97,68 @@ class Webhooks::StripeConnectTest < ActionDispatch::IntegrationTest
     ConnectEvent.find_by!(event_id: "evt_4").update!(created_at: 91.days.ago)
     PruneConnectEventsJob.perform_now
     assert_not ConnectEvent.exists?(event_id: "evt_4")
+  end
+
+  test "a failing event is retried by its job with backoff, then by the sweeper, and given up on with one report after 8 tries" do
+    with_failing_handler do
+      perform_enqueued_jobs(only: ProcessConnectEventJob) { deliver(*signed_connect_event("account.updated", account_object, id: "evt_5")) }
+    end
+    assert_response :ok, "Stripe gets its 200 either way"
+    event = ConnectEvent.find_by!(event_id: "evt_5")
+    assert_equal [ "failed", 5 ], [ event.status, event.attempts ], "the job's retries ran out quietly"
+    assert_match "database went away", event.error
+
+    RetryConnectEventsJob.perform_now
+    assert_equal 5, event.reload.attempts, "the sweeper waits 10 minutes since the last try"
+    with_failing_handler do
+      2.times do
+        event.update_columns(updated_at: 11.minutes.ago)
+        assert_no_error_reported { RetryConnectEventsJob.perform_now }
+      end
+      event.update_columns(updated_at: 11.minutes.ago)
+      assert_error_reported(ActiveRecord::ConnectionFailed) { RetryConnectEventsJob.perform_now }
+    end
+    assert_equal [ "failed", 8 ], [ event.reload.status, event.attempts ]
+    event.update_columns(updated_at: 11.minutes.ago)
+    assert_no_error_reported { RetryConnectEventsJob.perform_now }
+    assert_equal 8, event.reload.attempts, "given up on"
+    as_business(@business) { assert_equal "onboarding_incomplete", @account.reload.status }
+    ConnectEvent.receive!(JSON.parse(signed_connect_event("account.updated", account_object, id: "evt_5").first))
+    assert_equal 8, event.reload.attempts, "a redelivery doesn't restart it either"
+  end
+
+  test "an event stored but never processed (its job was lost) is picked up by the sweeper" do
+    deliver(*signed_connect_event("account.updated", account_object, id: "evt_6")) # the job is enqueued, never run
+    event = ConnectEvent.find_by!(event_id: "evt_6")
+    RetryConnectEventsJob.perform_now
+    assert_equal "received", event.reload.status
+    event.update_columns(updated_at: 11.minutes.ago)
+    RetryConnectEventsJob.perform_now
+    assert_equal [ "processed", 1 ], [ event.reload.status, event.attempts ]
+    as_business(@business) { assert_equal "active", @account.reload.status }
+  end
+
+  test "events from the other mode are ignored, by the job and the sweeper" do
+    payload = JSON.parse(signed_connect_event("account.updated", account_object, id: "evt_7").first).merge("livemode" => true).to_json
+    timestamp = Time.current
+    signature = Stripe::Webhook::Signature.generate_header(timestamp, Stripe::Webhook::Signature.compute_signature(timestamp, payload, "whsec_test"))
+    perform_enqueued_jobs { deliver(payload, signature) }
+    assert_equal "ignored", ConnectEvent.find_by!(event_id: "evt_7").status
+    as_business(@business) { assert_equal "onboarding_incomplete", @account.reload.status }
+
+    ConnectEvent.find_by!(event_id: "evt_7").update_columns(status: "received", updated_at: 11.minutes.ago)
+    RetryConnectEventsJob.perform_now
+    assert_equal "ignored", ConnectEvent.find_by!(event_id: "evt_7").status
+  end
+
+  test "an older account.updated arriving late doesn't overwrite a newer status" do
+    perform_enqueued_jobs do
+      deliver(*signed_connect_event("account.updated", account_object, id: "evt_new"))
+      payload = JSON.parse(signed_connect_event("account.updated", account_object(charges: false), id: "evt_old").first).merge("created" => 1.hour.ago.to_i).to_json
+      timestamp = Time.current
+      deliver(payload, Stripe::Webhook::Signature.generate_header(timestamp, Stripe::Webhook::Signature.compute_signature(timestamp, payload, "whsec_test")))
+    end
+    assert_equal "processed", ConnectEvent.find_by!(event_id: "evt_old").status
+    as_business(@business) { assert_equal "active", @account.reload.status }
   end
 end

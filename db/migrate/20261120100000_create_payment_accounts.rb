@@ -18,6 +18,7 @@ class CreatePaymentAccounts < ActiveRecord::Migration[8.1]
       t.jsonb :requirements_pending, null: false, default: []
       t.datetime :requirements_deadline
       t.datetime :synced_at
+      t.datetime :status_event_at # when Stripe made the event the status came from (older ones are skipped)
       t.references :connected_by, foreign_key: { to_table: :users, on_delete: :nullify }
       t.datetime :disconnected_at
       t.string :disconnected_reason
