@@ -9,7 +9,7 @@
 [ADR 0020](0020-in-app-support-tickets.md) left open how email to the support address reaches
 the app, and so how a sender is proven genuine: the From header can be forged by anyone.
 Outgoing email (ADR 0017) is plain SMTP, so whichever path is chosen for incoming mail is new.
-The domain's DNS is on Cloudflare, managed with Terraform in the separate ops-work repository.
+The domain's DNS is on Cloudflare, managed with Terraform in the separate op-works repository.
 
 ## Options considered
 
@@ -46,7 +46,7 @@ no reply, and logged without addresses. Each sender and business is rate limited
 - Members answer support by email and it lands in the ticket; the human inbox still gets a copy
   of everything, so an app outage loses nothing.
 - Cloudflare becomes a processor of incoming support email (sub-processors page).
-- The Worker and the Email Routing rules live in ops-work (Terraform); subaddressing (`+`) must
+- The Worker and the Email Routing rules live in op-works (Terraform); subaddressing (`+`) must
   be on for the zone. Rotating `INBOUND_EMAIL_SECRET` means updating the Worker secret and the
   app together.
 - Reply addresses don't expire; leaving the business, or losing sight of the ticket, ends them.

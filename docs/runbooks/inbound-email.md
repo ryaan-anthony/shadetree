@@ -11,9 +11,9 @@
    `support+<token>@getshadetree.com`) reaches **Cloudflare Email Routing**, which checks SPF,
    DKIM and DMARC and adds its own `Authentication-Results: mx.cloudflare.net; …` header at the
    top. Since July 2025 it only passes on mail that passes SPF or DKIM.
-2. The routing rule for `support@` runs the **support-email Worker** (ops-work:
-   `cloudflare/support-email-worker`, deployed with wrangler, its settings as Worker secrets;
-   the rules and subaddressing in Terraform `terraform/cloudflare`). It:
+2. The routing rule for `support@` runs the **shadetree-support-email Worker** (op-works:
+   `cloudflare-workers/shadetree-support-email`, deployed with the routing rules by Terraform
+   `tf-config/shadetree_email.tf`). It:
    - rejects anything over 25 MiB;
    - always forwards a copy to the human support inbox (a verified Email Routing destination,
      from the Worker's `HUMAN_INBOX` setting);
@@ -75,10 +75,10 @@ The app answers:
 ## Turning it on
 
 1. Generate the secret; set it as the app's `INBOUND_EMAIL_SECRET` and deploy.
-2. In ops-work (see its README): enable Email Routing, keep **one** merged SPF record (the
-   outgoing provider's plus `include:_spf.mx.cloudflare.net`), verify the human inbox, deploy
-   the Worker with the same secret, and apply `terraform/cloudflare`. Check that subaddressing
-   is **on**: without it every emailed reply bounces once step 4 is done.
+2. In op-works (README, "Shadetree support email"): enable Email Routing, keep **one** merged
+   SPF record (the outgoing provider's plus `include:_spf.mx.cloudflare.net`), turn on
+   subaddressing (a manual step; without it every emailed reply bounces once step 4 is done),
+   apply `tf-config` with the same secret, and verify the human inbox.
 3. Send a test email to `support@` from a member's address: the human inbox gets a copy, and a
    ticket opens in the app. Check the Worker's logs and the app's `inbound_email.*` lines.
 4. Set `INBOUND_EMAIL_ENABLED=true` and deploy; reply to a ticket and answer the email.
