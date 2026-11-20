@@ -318,3 +318,11 @@ Tenancy.with_business(business) do
   end
 end
 business.with_lock { Billing::PlanResolver.apply!(business) } # BIL-05: billing status from the above
+# PAY-03: a connected Stripe account (a made-up id; nothing calls Stripe until it's used), active,
+# so Settings → Payments shows its status and client invoices can offer Pay (PAY-04).
+Tenancy.with_business(business) do
+  unless PaymentAccount.exists?
+    PaymentAccount.create!(account_id: "acct_1DemoOaklineLawn", country: "US", details_submitted: true, charges_enabled: true,
+                           payouts_enabled: true, synced_at: Time.current, connected_by: owner)
+  end
+end

@@ -1,0 +1,5 @@
+<%# locals: (account:) -%>
+<%# PAY-03: the business's Stripe account status, for operators (OPS-02). %>
+<% if account&.connected? %>
+  <%= badge "Payments: #{account.status_label}", tone: { "active" => :success, "pending_verification" => :info, "onboarding_incomplete" => :warning, "restricted" => :danger }.fetch(account.status), dot: false %>
+<% end %>

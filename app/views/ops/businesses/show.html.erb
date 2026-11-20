@@ -117,8 +117,14 @@
     <dl class="space-y-2 text-sm">
       <div class="flex justify-between gap-3"><dt class="text-subtle">Setup checklist</dt><dd class="text-ink" id="setup-progress"><%= done == required ? "Complete" : "#{done} of #{required} steps" %><% if @business.onboarded_at %>, finished <%= local_date(@business.onboarded_at) %><% end %></dd></div>
       <div class="flex justify-between gap-3"><dt class="text-subtle">First quote sent</dt><dd class="text-ink"><%= @business.first_quote_sent_at ? local_date(@business.first_quote_sent_at) : "Not yet" %></dd></div>
-      <div class="flex justify-between gap-3"><dt class="text-subtle">Online payments account</dt><dd class="text-ink" id="payments-account">Not connected</dd></div>
+      <% account = @summary.payment_account %><%# PAY-03 %>
+      <div class="flex justify-between gap-3"><dt class="text-subtle">Online payments account</dt><dd class="text-right text-ink" id="payments-account">
+        <% if account&.connected? %><%= render "payment_account", account: %><span class="block text-sm2 text-muted break-all"><%= account.account_id %><%= ", updated #{time_ago_in_words(account.synced_at)} ago" if account.synced_at %></span>
+        <% elsif account %>Disconnected <%= local_date(account.disconnected_at) %> (<%= { "owner" => "by the owner", "provider" => "in Stripe", "business_deleted" => "business deleted" }.fetch(account.disconnected_reason, account.disconnected_reason) %>)
+        <% else %>Not connected<% end %>
+      </dd></div>
     </dl>
+    <% if account&.connected? && account.status == "restricted" %><p class="mt-2 text-sm2 text-subtle" id="payments-restriction"><%= account.restriction_reason %></p><% end %>
   <% end %>
   <%= card title: "Internal notes", subtitle: "Only operators see these.", flush: true, id: "notes" do %>
     <%= form_with model: [ :ops, @business, OperatorNote.new ], url: ops_business_notes_path(@business), class: "border-b border-line px-5 py-4" do |f| %>

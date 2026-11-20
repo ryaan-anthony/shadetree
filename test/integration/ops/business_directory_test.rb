@@ -76,6 +76,15 @@ class Ops::BusinessDirectoryTest < ActionDispatch::IntegrationTest
     assert_select "#count-clients", /1/
     assert_select "#setup-progress", /of 4 steps/
     assert_select "#payments-account", /Not connected/
+    account = as_business(@one) { PaymentAccount.create!(account_id: "acct_test1", details_submitted: true, disabled_reason: "requirements.past_due") }
+    get ops_business_path(@one)
+    assert_select "#payments-account", /Payments: Restricted.*acct_test1/m
+    assert_select "#payments-restriction", /needs more information/
+    get ops_businesses_path
+    assert_select "#business-#{@one.uid}", /Payments: Restricted/
+    as_business(@one) { account.update!(disconnected_at: Time.current, disconnected_reason: "provider") }
+    get ops_business_path(@one)
+    assert_select "#payments-account", /Disconnected .* \(in Stripe\)/
     assert_select "#billing-history li", 6
     assert_no_match "Ana Secret-Client", response.body, "no client personal data"
     assert_no_match "ana@private.example", response.body

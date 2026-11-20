@@ -1,0 +1,60 @@
+<%# PAY-03: Settings → Payments. The business's own Stripe account: connect, finish or fix setup,
+    the dashboard for payouts, refunds and disputes, and disconnecting. Owners act; Admins see. %>
+<% content_for :title, "Payments" %>
+<%= render "admin/businesses/settings_header", current: "payments" %>
+<% owner = can?(:billing) %>
+<% tones = { "active" => :success, "pending_verification" => :info, "onboarding_incomplete" => :warning, "restricted" => :danger } %>
+
+<div class="max-w-2xl space-y-4">
+  <%= card title: "Card payments", subtitle: "Clients pay invoices by card, Apple Pay or Google Pay from their invoice link. The money goes straight to your own Stripe account.", id: "payment-account" do %>
+    <% if @account %>
+      <div class="flex flex-wrap items-center gap-2" id="payment-status">
+        <span class="text-sm text-subtle">Stripe account</span>
+        <%= badge @account.status_label, tone: tones.fetch(@account.status) %>
+      </div>
+      <% case @account.status %>
+      <% when "active" %>
+        <p class="mt-3 text-sm text-subtle">Clients see a Pay button on invoices that have something left to pay.</p>
+      <% when "onboarding_incomplete" %>
+        <p class="mt-3 text-sm text-subtle">Stripe still needs your business and bank details. It takes a few minutes, and you can stop and come back.</p>
+      <% when "pending_verification" %>
+        <p class="mt-3 text-sm text-subtle">Stripe is checking the details you gave. We'll update this page as soon as it's done.</p>
+      <% else %>
+        <div class="banner banner-warning mt-3" role="status" id="restriction"><%= icon "alert-triangle" %><p><%= @account.restriction_reason %></p></div>
+      <% end %>
+      <% if @account.synced_at %><p class="mt-3 text-sm2 text-muted">Last updated by Stripe <%= local_time_ago(@account.synced_at) %>.</p><% end %>
+
+      <div class="mt-4 flex flex-wrap gap-2">
+        <% if owner && @account.fixable_in_onboarding? %>
+          <%= link_to resume_admin_payment_account_path, class: button_classes(:primary), data: { turbo: false, turbo_prefetch: false }, id: "continue-setup" do %><%= icon "external-link" %> <%= @account.status == "onboarding_incomplete" ? "Continue setup" : "Update details in Stripe" %><% end %>
+        <% end %>
+        <% if @account.details_submitted? %>
+          <%= link_to PaymentAccount::DASHBOARD_URL, class: button_classes(:secondary), target: "_blank", rel: "noopener", id: "stripe-dashboard" do %><%= icon "external-link" %> Stripe dashboard<% end %>
+        <% end %>
+      </div>
+      <% if @account.details_submitted? %><p class="mt-2 text-sm2 text-muted">Payouts, refunds and disputes are handled in your Stripe dashboard. Refunds you make there show on the invoice here.</p><% end %>
+    <% elsif !@gateway.configured? %>
+      <p class="text-sm text-subtle" id="payments-unavailable">Online payments aren't available yet. You can still record cash, check and other payments on each invoice.</p>
+    <% elsif owner %>
+      <ul class="space-y-1.5 text-sm text-subtle">
+        <li class="flex gap-2"><%= icon "check", class: "mt-0.5 size-4 text-success" %>Stripe asks for your business and bank details on its own secure pages.</li>
+        <li class="flex gap-2"><%= icon "check", class: "mt-0.5 size-4 text-success" %>You're the merchant: payouts go to your bank on Stripe's schedule, and Stripe's card fees apply.</li>
+        <li class="flex gap-2"><%= icon "check", class: "mt-0.5 size-4 text-success" %>Already have a Stripe account? Sign in to it during setup.</li>
+      </ul>
+      <%= form_with url: admin_payment_account_path, class: "mt-4", data: { turbo: false } do %>
+        <%= button_tag type: "submit", class: button_classes(:primary), id: "connect-stripe" do %><%= icon "credit-card" %> Set up payments with Stripe<% end %>
+      <% end %>
+      <p class="mt-2 text-sm2 text-muted">Available for businesses in the United States.</p>
+    <% else %>
+      <p class="text-sm text-subtle">Not connected. The business owner can set up card payments here.</p>
+    <% end %>
+  <% end %>
+
+  <% if @account && owner %>
+    <%= card title: "Disconnect Stripe", subtitle: "Clients stop seeing Pay buttons. Payments already made stay on your invoices, and your Stripe account, its money and history are untouched.", id: "disconnect" do %>
+      <%= button_to admin_payment_account_path, method: :delete, class: button_classes(:danger), form: { data: { turbo_confirm: "Disconnect Stripe? Clients won't be able to pay online until you connect again.", turbo_confirm_button: "Disconnect" } } do %>Disconnect<% end %>
+    <% end %>
+  <% elsif @account %>
+    <p class="text-sm2 text-muted">Only the business owner can change or disconnect the payment account.</p>
+  <% end %>
+</div>

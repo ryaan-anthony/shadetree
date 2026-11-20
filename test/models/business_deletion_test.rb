@@ -6,8 +6,10 @@ class BusinessDeletionTest < ActiveSupport::TestCase
   include ActionMailer::TestHelper
 
   test "every row and file of the business goes; other businesses and the audit log stay" do
+    gateway = use_fake_payment_gateway
     silence_stream { load Rails.root.join("db/seeds/development.rb") }
     business = Business.find_by!(name: "Oakline Lawn & Landscape")
+    account_id = business.payment_account.account_id
     png = file_fixture("logo.png")
     business.update!(logo: Rack::Test::UploadedFile.new(png, "image/png"))
     job = Tenancy.with_business(business) { Job.first }
@@ -43,6 +45,22 @@ class BusinessDeletionTest < ActiveSupport::TestCase
     assert_equal audit_before, AuditEntry.where(business_id: business.id).count, "the audit log keeps its entries"
     assert_equal [ businesses(:two).id ], FeatureFlag.find_by!(name: "beta").business_ids
     assert User.exists?(email: "owner@example.com"), "people keep their accounts"
+    assert_equal [ [ :disconnect, account_id ] ], gateway.calls_to(:disconnect), "PAY-03: Stripe access ends; the account isn't deleted"
+  end
+
+  test "PAY-03: if Stripe can't disconnect the payment account, nothing is deleted and the job tries again later" do
+    gateway = use_fake_payment_gateway
+    business = businesses(:one)
+    as_business(business) { PaymentAccount.create!(account_id: "acct_test1", charges_enabled: true) }
+    business.update_columns(deletion_scheduled_at: 31.days.ago, deletion_due_at: 1.day.ago)
+    gateway.fail_next!
+    DeleteScheduledBusinessesJob.perform_now
+    assert Business.exists?(business.id)
+    as_business(business) { assert PaymentAccount.current.connected? }
+
+    DeleteScheduledBusinessesJob.perform_now
+    assert_not Business.exists?(business.id)
+    assert_equal 1, gateway.calls_to(:disconnect).size, "the second run disconnected it"
   end
 
   test "the daily job deletes businesses past their date and emails the owner" do

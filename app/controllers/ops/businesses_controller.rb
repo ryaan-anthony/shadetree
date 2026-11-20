@@ -9,6 +9,10 @@ class Ops::BusinessesController < Ops::BaseController
     @page = params[:page].to_i.clamp(1, [ (@total.to_f / PER_PAGE).ceil, 1 ].max)
     @businesses = scope.offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
     @plans = Plan.order(:position, :id)
+    # PAY-03: each listed business's payment account status (account-level, no client data).
+    @payment_accounts = Tenancy.across_businesses(reason: "payment account status in the operator directory (OPS-02)") do
+      PaymentAccount.connected.where(business_id: @businesses.map(&:id)).index_by(&:business_id)
+    end
   end
 
   def show

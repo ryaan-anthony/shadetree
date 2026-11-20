@@ -1,5 +1,6 @@
 # OPS-04: permanently removes a business: every row of its data, and every file attached to it
-# (logo, photos, attachments, PDFs and their variants). The operator audit log keeps its
+# (logo, photos, attachments, PDFs and their variants). A connected Stripe account is
+# disconnected first (PAY-03), never deleted. The operator audit log keeps its
 # entries, as written (they have no foreign keys and can't be deleted).
 #
 #   blob_ids = BusinessDeletion.run!(business)  # the rows are gone once this returns
@@ -14,6 +15,7 @@ class BusinessDeletion
   end
 
   def run!
+    release_payment_accounts
     attachments = business_attachments
     blob_ids = (attachments.map(&:blob_id) + pdf_blob_ids).uniq
     Tenancy.across_businesses(reason: "deleting a business and all its data (OPS-04)") do
@@ -49,6 +51,13 @@ class BusinessDeletion
   private
 
   def connection = ApplicationRecord.connection
+
+  # PAY-03: Shadetree's access to the business's Stripe account ends before its records go; the
+  # business keeps its Stripe account, money and history. If Stripe can't be reached this
+  # raises and nothing is deleted (the daily job tries again).
+  def release_payment_accounts
+    Tenancy.with_business(@business) { PaymentAccount.connected.find_each { _1.disconnect!(reason: "business_deleted") } }
+  end
 
   def business_tables
     @business_tables ||= connection.tables.select { connection.column_exists?(_1, :business_id) } - KEPT_TABLES

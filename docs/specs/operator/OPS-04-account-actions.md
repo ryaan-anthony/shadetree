@@ -46,8 +46,8 @@ feature flags — each one audited and hard to do by accident.
 
 ## Follow-ups
 
-- Payment-account status on the OPS-02 directory and business page (PAY-03). Trial, Past due
-  and billing history came with BIL-04/05.
+- Trial, Past due and billing history came with BIL-04/05, and payment-account status with
+  PAY-03 (OPS-02).
 
 ## Out of scope
 
@@ -80,7 +80,8 @@ feature flags — each one audited and hard to do by accident.
   Rows go in one transaction; then the audit entry, the email, and files in the background
   (`PurgeDeletedFilesJob`); one failing business doesn't stop the rest; jobs queued for a deleted
   business are dropped. Operators' notes go with it (current behaviour); people keep their
-  accounts, even if it was their only business. The owner is emailed at schedule (with plain
+  accounts, even if it was their only business. A connected Stripe account is disconnected first
+  (PAY-03; never deleted); if Stripe fails, nothing is deleted that day. The owner is emailed at schedule (with plain
   values, skipped if it's no longer due then), on cancelling and on completion.
 - Suspend, reactivate, deletion, plan, override and flag changes need a code from the last 5
   minutes; every action is confirmed and audited. Tests: `test/integration/ops/account_actions_test.rb`,
