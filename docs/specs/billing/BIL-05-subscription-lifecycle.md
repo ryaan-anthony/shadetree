@@ -75,9 +75,15 @@ nobody loses data because a card expired.
 - Owners see the trial's days left and a failing renewal on Settings → Plan (with "Update
   payment method", the portal's card flow) and a banner on every page while past due (and in a
   trial's last three days).
-- Operators (OPS-04): comp a plan with an optional end date, set a trial's end, apply a Stripe
-  coupon or promotion code to the subscription; each needs a reason and a recent code, is
-  audited and in the billing history. The directory filters Trial and Past due (OPS-02).
+- Operators (OPS-04): comp a plan with an optional end date (refused while there's a live
+  subscription: a live subscription always decides the plan), set a trial's end, apply a
+  Stripe coupon or promotion code; each needs a reason and a recent code, is audited and in the
+  billing history. The directory filters Trial and Past due (OPS-02).
+- Subscribing during a trial with 48 hours or more left keeps billing until the trial's end.
+  Reminders go out from 9 am business time; the grace period starts at the invoice's first
+  failed attempt; emails are queued after the business's lock commits; the hourly check
+  re-cancels a closed business's live subscription. The migration keeps a paid plan set before
+  billing as a comp with no end date.
 - Dev seeds: the demo business's subscription sets its billing status; a business created in
   development starts the 14-day trial.
 - Tests: `test/models/billing/lifecycle_test.rb`, `test/integration/ops/billing_actions_test.rb`,

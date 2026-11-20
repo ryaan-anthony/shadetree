@@ -24,13 +24,34 @@ class Ops::BillingActionsTest < ActionDispatch::IntegrationTest
     assert_select "#comp", /Business, until/
 
     post ops_business_billing_comp_path(@business), params: { plan: "", reason: "Beta over" }
-    assert_equal [ plans(:free), "free" ], @business.reload.values_at(:plan, :billing_status)
+    assert_equal "Choose a paid plan to comp.", flash[:alert]
+    post ops_business_billing_comp_path(@business), params: { plan: "platinum", reason: "Beta over" }
+    assert_equal "Choose a paid plan to comp.", flash[:alert]
+    assert_equal plans(:business), @business.reload.plan, "only an explicit remove clears a comp"
+    post ops_business_billing_comp_path(@business), params: { remove_comp: "1", reason: "Beta over" }
+    assert_equal [ plans(:free), "free", nil ], @business.reload.values_at(:plan, :billing_status, :comp_plan)
 
     post ops_business_billing_comp_path(@business), params: { plan: "business", ends_on: "2020-01-01", reason: "x" }
     assert_match "in the future", flash[:alert]
     post ops_business_billing_comp_path(@business), params: { plan: "business", reason: " " }
     assert_equal "Give a reason.", flash[:alert]
     assert_equal plans(:free), @business.reload.plan
+  end
+
+  test "a comp is refused while the business has a live subscription, mirrored or only in Stripe" do
+    customer = with_stripe_customer(@business)
+    id = stripe.add_subscription(customer:, plan: plans(:starter))
+    post ops_business_billing_comp_path(@business), params: { plan: "business", reason: "Beta" }
+    assert_match "live Stripe subscription", flash[:alert]
+    assert_match "100%-off coupon", flash[:alert]
+    assert_nil @business.reload.comp_plan
+
+    Billing::SubscriptionSync.refresh!(@business, id)
+    get ops_business_path(@business)
+    assert_select "#comp-refused", /100%-off coupon/
+    assert_select "form[action='#{ops_business_billing_comp_path(@business)}'] select", 0
+    post ops_business_billing_comp_path(@business), params: { plan: "business", reason: "Beta" }
+    assert_equal plans(:starter), @business.reload.plan
   end
 
   test "extending a trial (or giving one) moves its end and its reminders" do
@@ -77,6 +98,8 @@ class Ops::BillingActionsTest < ActionDispatch::IntegrationTest
     assert_select "#business-#{@business.uid}", /Past due/
     get ops_businesses_path(status: "trial")
     assert_select "#businesses > li", 0
+    get ops_businesses_path(status: "active")
+    assert_select "#business-#{@business.uid}", 0, "Active excludes Trial and Past due"
   end
 
   test "billing actions need a recent code" do

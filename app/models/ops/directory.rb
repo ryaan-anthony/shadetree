@@ -55,7 +55,7 @@ class Ops::Directory
 
   def filter_status(scope)
     case status
-    when "active" then scope.where(active: true)
+    when "active" then scope.where(active: true).where.not(billing_status: %w[trialing past_due])
     when "trial" then scope.where(active: true, billing_status: "trialing")
     when "past_due" then scope.where(active: true, billing_status: "past_due")
     when "suspended" then scope.where.not(suspended_at: nil)

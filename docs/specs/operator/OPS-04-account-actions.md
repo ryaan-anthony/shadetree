@@ -26,10 +26,12 @@ feature flags — each one audited and hard to do by accident.
 - [x] Suspend/reactivate a business with a required reason: suspended businesses' members can't
       use the app (they see a contact-support page); client links show a neutral unavailable
       page; in-flight provider payments still settle and are recorded.
-- [x] Comp a plan (with optional end date), extend a trial, and apply a provider coupon, all
+- [ ] Comp a plan (with optional end date), extend a trial, and apply a provider coupon, all
       reflected in BIL-01 entitlements and the billing provider. *(BIL-05: the business page's
-      "Plan, trial and coupon" card. A comp or trial changes the plan, not what Stripe bills;
-      a coupon is applied to the Stripe subscription.)*
+      "Plan, trial and coupon" card. A comp or trial changes the plan, not what Stripe bills,
+      and a comp is refused while there's a live subscription; a coupon is applied to the
+      Stripe subscription.) Blocked on an owner decision: should comps and trials change what
+      Stripe bills?*
 - [x] For a user: resend confirmation, send password reset, unlock account.
 - [x] Schedule a business for deletion (typed confirmation of the business name); after a
       waiting period (default 30 days, expeditable) all its data and files are permanently

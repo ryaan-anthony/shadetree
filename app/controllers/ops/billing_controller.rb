@@ -7,16 +7,32 @@ class Ops::BillingController < Ops::BaseController
   before_action { @business = Business.find_by!(uid: params[:business_id].to_s) }
   before_action { redirect_back_to_business(alert: "Give a reason.") if reason.blank? }
 
+  # A comp is refused while the business has a live subscription: the plan always follows what
+  # Stripe charges. Apply a 100%-off coupon or cancel in Stripe instead. Only "remove comp"
+  # clears one; an unknown plan is refused.
   def comp
-    plan = params[:plan].presence && Plan.find_by(key: params[:plan].to_s)
+    if params[:remove_comp] == "1"
+      previous = @business.comp_plan&.key
+      return redirect_back_to_business(alert: "There's no comp to remove.") unless previous
+
+      resolve { @business.update!(comp_plan: nil, comp_ends_at: nil) }
+      history("comp_cleared", {})
+      audit!("business.plan_comped", business: @business, reason:, from: previous, to: nil)
+      return redirect_back_to_business(notice: "The comp is removed.")
+    end
+
+    plan = Plan.find_by(key: params[:plan].to_s)
+    return redirect_back_to_business(alert: "Choose a paid plan to comp.") unless plan && !plan.free?
+    return redirect_back_to_business(alert: LIVE_SUBSCRIPTION) if live_subscription?
+
     ends_at = end_of(params[:ends_on])
     return redirect_back_to_business(alert: "Choose an end date in the future, or none.") if ends_at == false || ends_at&.past?
 
     previous = @business.comp_plan&.key
-    resolve { @business.update!(comp_plan: plan, comp_ends_at: plan && ends_at) }
-    history(plan ? "comped" : "comp_cleared", "plan" => plan&.name, "ends_on" => ends_at&.to_date&.iso8601)
-    audit!("business.plan_comped", business: @business, reason:, from: previous, to: plan&.key, ends_on: ends_at&.to_date&.iso8601)
-    redirect_back_to_business(notice: plan ? "#{@business.name} is comped #{plan.name}." : "The comp is removed.")
+    resolve { @business.update!(comp_plan: plan, comp_ends_at: ends_at) }
+    history("comped", "plan" => plan.name, "ends_on" => ends_at&.to_date&.iso8601)
+    audit!("business.plan_comped", business: @business, reason:, from: previous, to: plan.key, ends_on: ends_at&.to_date&.iso8601)
+    redirect_back_to_business(notice: "#{@business.name} is comped #{plan.name}.")
   end
 
   def trial
@@ -48,7 +64,20 @@ class Ops::BillingController < Ops::BaseController
     redirect_back_to_business(alert: "Stripe refused it: #{error.message.to_s.first(200)}")
   end
 
+  LIVE_SUBSCRIPTION = "This business has a live Stripe subscription, so its plan follows what Stripe charges. " \
+                      "To give it away, apply a 100%-off coupon below, or cancel the subscription in Stripe first."
+
   private
+
+  # Mirrored here, or live in Stripe and not yet mirrored. If Stripe can't be asked, it counts.
+  def live_subscription?
+    return true if Tenancy.with_business(@business) { @business.reload_subscription }&.live?
+    return false unless @business.stripe_customer_id
+
+    Billing.gateway.customer_subscriptions(@business.stripe_customer_id).any? { Subscription::LIVE_STATUSES.include?(_1.status) }
+  rescue Stripe::StripeError, StripeGateway::NotConfigured
+    true
+  end
 
   def reason = params[:reason].to_s.strip.first(500)
 
