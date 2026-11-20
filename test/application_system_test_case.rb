@@ -92,6 +92,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
       click_button "Sign in" # the navigation has a "Sign in" link too (MKT-01)
     rescue Selenium::WebDriver::Error::UnknownError => error
       raise unless error.message.include?("does not belong to the document")
+      puts "\nDIAG-SIGNIN-CLICK-RAISED in #{name}"
     end
     assert_selector "html[data-controllers-loaded]", visible: :all, wait: 10
   end

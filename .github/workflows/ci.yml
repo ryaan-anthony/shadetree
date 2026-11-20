@@ -118,9 +118,9 @@ jobs:
           COVERAGE: "false"
         run: |
           pass=0; fail=0
-          for i in $(seq 1 14); do
+          for i in $(seq 1 1); do
             if bin/rails test > run.log 2>&1; then pass=$((pass+1)); else fail=$((fail+1)); echo "=== RUN $i FAILED"; grep -B2 -A12 -E "^(Failure|Error):" run.log; fi
-            grep -E "seed|runs," run.log
+            grep -E "seed|runs,|DIAG-SIGNIN" run.log
           done
           echo "SUMMARY pass=$pass fail=$fail"
       - name: Coverage summary
@@ -196,9 +196,9 @@ jobs:
         run: |
           google-chrome --version; chromedriver --version || true
           pass=0; fail=0
-          for i in $(seq 1 30); do
-            if bin/rails test:system > run.log 2>&1; then pass=$((pass+1)); else fail=$((fail+1)); echo "=== RUN $i FAILED"; cat run.log; fi
-            grep -E "seed|runs," run.log
+          for i in $(seq 1 70); do
+            if bin/rails test test/system/client_search_test.rb test/system/schedule_test.rb test/system/clients_test.rb > run.log 2>&1; then pass=$((pass+1)); else fail=$((fail+1)); echo "=== RUN $i FAILED"; cat run.log; fi
+            grep -E "seed|runs,|DIAG-SIGNIN" run.log
           done
           echo "SUMMARY pass=$pass fail=$fail"
       - name: Keep screenshots from failed system tests
