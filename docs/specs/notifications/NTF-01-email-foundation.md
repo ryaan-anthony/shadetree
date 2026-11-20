@@ -36,9 +36,9 @@ business branding, reply-to the business, delivery tracking and bounce handling.
 - [x] Addresses the mail server refuses suppress further sends to that address for that business
       and flag the client record; staff can clear the flag after fixing the address.
 - [x] Sending is asynchronous with retries; failures are visible on the related record.
-- [ ] Staging cannot email real clients (sandbox or allow-list). *Decided: staging gets the
-      provider's sandbox SMTP credentials, which only deliver to authorized recipients. Ticked
-      once the staging deploy sets them (PLT-09).*
+- ~~Staging cannot email real clients (sandbox or allow-list).~~ *Dropped by the owner
+      2026-11-20: staging is a controlled environment that only emails known people. The
+      optional mail sandbox (`MAIL_SANDBOX=true`, PLT-09, ADR 0025) remains for anyone who wants it.*
 - [x] The message catalog in 08-notifications is kept in a single place in the app; previews of
       each message are available in development.
 - [x] Platform emails (auth, invitations) use a Shadetree-branded variant of the layout.
@@ -56,5 +56,5 @@ business branding, reply-to the business, delivery tracking and bounce handling.
   letter_opener_web opens every email in the browser at `/letter_opener`.
 - ~~Sending domain?~~ Resolved: the root domain `getshadetree.com` (G8). Its DNS records are listed
   in ADR 0017.
-- ~~Staging sandbox?~~ Resolved: the provider's sandbox SMTP credentials on staging.
+- ~~Staging sandbox?~~ Resolved: none by default (owner, 2026-11-20); `MAIL_SANDBOX=true` is optional.
 - ~~Track opens?~~ Resolved: no (privacy, unreliable); client-link views (PLT-12) are the signal.

@@ -43,7 +43,8 @@ provider name. The provider appears only in production configuration.
   background, so a slow server never holds up a request.
 - **Bounces and complaints after acceptance** stay in the provider's dashboard.
 - **Staging** uses the provider's sandbox SMTP credentials, which only deliver to authorized
-  recipients, so it can't email real clients. This is configuration, not code.
+  recipients, so it can't email real clients. This is configuration, not code. (Amended by
+  [ADR 0025](0025-staging-sends-real-email.md): staging sends real email; the sandbox is optional.)
 - **Development** opens every email in the browser (letter_opener_web at `/letter_opener`).
   Tests never send.
 
