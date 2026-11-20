@@ -5,13 +5,14 @@
 #   gateway.accounts["acct_1"] = { "id" => "acct_1", "charges_enabled" => true, ... }
 #   gateway.fail_next!("Your card was declined.")
 class FakePaymentGateway
-  attr_reader :calls, :accounts, :payments
+  attr_reader :calls, :accounts, :payments, :completed_sessions
 
   def initialize(configured: true)
     @configured = configured
     @calls = []
     @accounts = {}
     @payments = {}
+    @completed_sessions = []
     @failure = nil
     @counter = 0
   end
@@ -48,6 +49,11 @@ class FakePaymentGateway
     record(:create_checkout_session, account_id, params, idempotency_key:)
     id = "cs_test_#{@counter += 1}"
     { "id" => id, "url" => "https://checkout.stripe.com/c/pay/#{id}" }
+  end
+
+  def expire_checkout_session(account_id, session_id)
+    record(:expire_checkout_session, account_id, session_id)
+    completed_sessions.include?(session_id) ? "complete" : "expired"
   end
 
   def payment_details(account_id, payment_intent_id)

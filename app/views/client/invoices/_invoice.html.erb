@@ -34,6 +34,8 @@
       </div>
       <% if invoice.online_payable? %>
         <%= render "client/invoices/pay", invoice:, client_link:, preview: %>
+      <% elsif invoice.balance.positive? && invoice.balance.cents < Invoice::ONLINE_MINIMUM_CENTS && @business.accepts_online_payments? %>
+        <p class="mt-3 text-sm2 text-muted" id="pay-too-small">Balances under <%= money(Money.new(Invoice::ONLINE_MINIMUM_CENTS, invoice.currency)) %> can't be paid online. Contact <%= @business.name %> to settle it.</p>
       <% end %>
     </div>
   <% end %>

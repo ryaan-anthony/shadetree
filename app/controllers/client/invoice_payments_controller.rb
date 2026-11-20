@@ -9,7 +9,8 @@ class Client::InvoicePaymentsController < ApplicationController
   include ClientLinkAccess
 
   # Each try starts a Checkout Session at Stripe: a few per link are plenty.
-  rate_limit to: 10, within: 10.minutes, by: -> { "#{params[:token]}:#{request.remote_ip}" }, with: -> { too_many_requests }, only: :create
+  rate_limit to: 10, within: 10.minutes, by: -> { "#{params[:token]}:#{request.remote_ip}" }, with: -> { too_many_requests }, only: :create, name: "pay-ip"
+  rate_limit to: 30, within: 10.minutes, by: -> { params[:token].to_s }, with: -> { too_many_requests }, only: :create, name: "pay-link"
 
   before_action :require_invoice
 
@@ -19,11 +20,12 @@ class Client::InvoicePaymentsController < ApplicationController
     amount = chosen_amount
     return back_to_invoice(@amount_error) unless amount
 
-    params = OnlinePayments.checkout_session_params(@document, amount_cents: amount,
-                                                   success_url: "#{client_invoice_paid_url(@client_link.token)}?session={CHECKOUT_SESSION_ID}",
-                                                   cancel_url: client_link_url(@client_link.token, payment: "cancelled"))
-    session = PaymentGateway.current.create_checkout_session(@business.payment_account.account_id, params)
-    redirect_to "#{CHECKOUT_HOST}#{checkout_path(session["url"])}", allow_other_host: true, status: :see_other
+    url = OnlinePayments.open_checkout!(@document, amount_cents: amount,
+                                        success_url: "#{client_invoice_paid_url(@client_link.token)}?session={CHECKOUT_SESSION_ID}",
+                                        cancel_url: client_link_url(@client_link.token, payment: "cancelled"))
+    redirect_to "#{CHECKOUT_HOST}#{checkout_path(url)}", allow_other_host: true, status: :see_other
+  rescue OnlinePayments::CheckoutInProgress
+    back_to_invoice("A payment for this invoice is already going through. It will show here in a moment.")
   rescue PaymentGateway::Error => error
     Rails.error.report(error, handled: true, context: { business_id: @business.id, invoice: @document.uid })
     back_to_invoice("We couldn't start the payment, and nothing was charged. Please try again in a minute.")
@@ -32,7 +34,7 @@ class Client::InvoicePaymentsController < ApplicationController
   # Back from Checkout. Stripe only sends the client here once the payment went through; the
   # page says whether the invoice shows it yet (the notification may take a moment).
   def show
-    @payment = Payment.find_by(provider_checkout_id: params[:session].to_s) if params[:session].to_s.start_with?("cs_")
+    @payment = @document.payments.find_by(provider_checkout_id: params[:session].to_s) if params[:session].to_s.start_with?("cs_")
   end
 
   private
@@ -55,17 +57,18 @@ class Client::InvoicePaymentsController < ApplicationController
 
   def back_to_invoice(alert) = redirect_to(client_link_path(@client_link.token), alert:)
 
-  # The balance, or a part of it the client chose (when the business allows part payments):
-  # from OnlinePayments::MINIMUM_PART (or the balance, if less) up to the balance.
+  # The balance, or a part of it the client chose (when the business allows part payments): at
+  # least OnlinePayments::MINIMUM_PART, leaving nothing or at least that much to pay.
   def chosen_amount
     balance = @document.balance.cents
     return balance unless @business.online_partial_payments? && params[:amount].present?
 
     cents = Money.parse(params[:amount].to_s.strip, @document.currency).cents
-    minimum = [ OnlinePayments::MINIMUM_PART, balance ].min
-    return cents if cents.between?(minimum, balance)
+    minimum = OnlinePayments::MINIMUM_PART
+    return cents if cents == balance || (cents >= minimum && balance - cents >= minimum)
 
-    @amount_error = "Enter an amount from #{Money.new(minimum, @document.currency).format} to #{@document.balance.format}."
+    @amount_error = "Enter the full #{@document.balance.format}, or #{Money.new(minimum, @document.currency).format} or more " \
+                    "that leaves at least #{Money.new(minimum, @document.currency).format} to pay."
     nil
   rescue ArgumentError
     @amount_error = "Enter an amount like 50 or 50.00."

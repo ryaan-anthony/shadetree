@@ -1,8 +1,9 @@
 <%# locals: (invoice:, client_link:, preview:) -%>
 <%# PAY-04: paying by card on Stripe's secure page: the balance, or part of it when the business
     allows. The staff preview shows the button without a working form. %>
-<% partial = @business.online_partial_payments? %>
-<% minimum = Money.new([ OnlinePayments::MINIMUM_PART, invoice.balance.cents ].min, invoice.currency) %>
+<% minimum = Money.new(OnlinePayments::MINIMUM_PART, invoice.currency) %>
+<%# A part needs room for itself and what it leaves: both at least the minimum. %>
+<% partial = @business.online_partial_payments? && invoice.balance.cents >= 2 * minimum.cents %>
 <div class="mt-4 border-t border-line pt-4" id="pay">
   <% if preview %>
     <span class="<%= button_classes(:brand, extra: "w-full justify-center sm:w-auto") %>" aria-disabled="true"><%= icon "credit-card" %> Pay <%= money(invoice.balance) %></span>
@@ -18,7 +19,7 @@
         <% end %>
         <%= button_tag type: "submit", class: button_classes(:brand, extra: "w-full justify-center sm:w-auto"), id: "pay-button" do %><%= icon "credit-card" %> <%= partial ? "Pay now" : "Pay #{money(invoice.balance)}" %><% end %>
       </div>
-      <% if partial %><p class="help mt-1.5" id="pay_amount_help">From <%= money(minimum) %> up to <%= money(invoice.balance) %>.</p><% end %>
+      <% if partial %><p class="help mt-1.5" id="pay_amount_help">The full <%= money(invoice.balance) %>, or from <%= money(minimum) %>, leaving at least <%= money(minimum) %> to pay.</p><% end %>
     <% end %>
     <p class="mt-2 flex items-center gap-1.5 text-sm2 text-muted"><%= icon "lock", class: "size-3.5" %> Card, Apple Pay or Google Pay, on Stripe's secure page. Paid to <%= @business.name %>.</p>
   <% end %>

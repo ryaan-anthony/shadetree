@@ -5,6 +5,7 @@ require "test_helper"
 # and nobody can pay when the business can't take payments, the client was erased or the
 # business is suspended.
 class Client::InvoicePaymentsTest < ActionDispatch::IntegrationTest
+  include ActiveJob::TestHelper
   setup do
     @business = businesses(:one)
     @gateway = use_fake_payment_gateway
@@ -22,6 +23,17 @@ class Client::InvoicePaymentsTest < ActionDispatch::IntegrationTest
   end
 
   def session_params = @gateway.calls_to(:create_checkout_session).last&.dig(2)
+
+  def new_sent_invoice
+    as_business(@business) do
+      invoice = Invoice.start(client: @invoice.client)
+      invoice.sync_line_items([ { "key" => "a", "name" => "X", "quantity" => "1", "unit_price" => "40", "taxable" => "0" } ])
+      invoice.tax_rates = []
+      invoice.save!
+      invoice.mark_sent!(by: users(:one), channel: "link")
+      [ invoice, invoice.client_link! ]
+    end
+  end
 
   test "the client pays the balance on Stripe Checkout and comes back to a thank-you page" do
     get client_link_path(@link.token)
@@ -64,20 +76,80 @@ class Client::InvoicePaymentsTest < ActionDispatch::IntegrationTest
     @business.update!(online_partial_payments: true)
     get client_link_path(@link.token)
     assert_select "#pay_amount[value=?]", "200.00"
-    assert_select "#pay_amount_help", /From \$1\.00 up to \$200\.00/
+    assert_select "#pay_amount_help", /The full \$200\.00, or from \$1\.00, leaving at least \$1\.00 to pay/
 
     post client_invoice_pay_path(@link.token), params: { amount: "75.50" }
     assert_equal 7_550, session_params[:line_items].first[:price_data][:unit_amount]
-    [ "0.50", "200.01", "lots" ].each do |amount|
+    [ "0.50", "199.50", "200.01" ].each do |amount|
       post client_invoice_pay_path(@link.token), params: { amount: }
       assert_redirected_to client_link_path(@link.token)
-      assert_match(/Enter an amount/, flash[:alert], amount)
+      assert_match(/Enter the full \$200\.00, or \$1\.00 or more that leaves at least \$1\.00/, flash[:alert], amount)
     end
+    post client_invoice_pay_path(@link.token), params: { amount: "lots" }
+    assert_match(/Enter an amount like 50/, flash[:alert])
     assert_equal 1, @gateway.calls_to(:create_checkout_session).size
 
     @business.update!(online_partial_payments: false)
     post client_invoice_pay_path(@link.token), params: { amount: "10" }
     assert_equal 20_000, session_params[:line_items].first[:price_data][:unit_amount], "the full balance when part payments are off"
+  end
+
+  test "under 50¢ left can't be paid online, and a small balance can only be paid in full" do
+    @business.update!(online_partial_payments: true)
+    as_business(@business) { @invoice.record_payment!(by: users(:one), amount: Money.new(19_850, "USD"), received_on: @business.today, payment_method: "cash") }
+    get client_link_path(@link.token)
+    assert_select "#pay-button", /Pay \$1\.50/
+    assert_select "#pay_amount", false, "no room for a part that leaves $1.00"
+    as_business(@business) { @invoice.record_payment!(by: users(:one), amount: Money.new(110, "USD"), received_on: @business.today, payment_method: "cash") }
+    get client_link_path(@link.token)
+    assert_select "#pay-button", false
+    assert_select "#pay-too-small", /under \$0\.50 can't be paid online/
+    assert_equal "'self'", response.headers["Content-Security-Policy"][/form-action ([^;]+)/, 1], "no Checkout in the policy without Pay"
+  end
+
+  test "two tabs, or a double tap, share one Checkout page; another amount closes it first" do
+    @business.update!(online_partial_payments: true)
+    post client_invoice_pay_path(@link.token)
+    first = response.location
+    post client_invoice_pay_path(@link.token)
+    assert_equal first, response.location, "the same page, not a second payment"
+    assert_equal 1, @gateway.calls_to(:create_checkout_session).size
+
+    post client_invoice_pay_path(@link.token), params: { amount: "50" }
+    assert_equal [ [ :expire_checkout_session, "acct_test1", "cs_test_1" ] ], @gateway.calls_to(:expire_checkout_session)
+    assert_equal 2, @gateway.calls_to(:create_checkout_session).size
+    assert_equal 5_000, as_business(@business) { @invoice.reload.checkout_amount_cents }
+
+    @gateway.completed_sessions << "cs_test_2"
+    post client_invoice_pay_path(@link.token)
+    assert_redirected_to client_link_path(@link.token)
+    assert_match "already going through", flash[:alert]
+    assert_equal 2, @gateway.calls_to(:create_checkout_session).size, "never a second payment while one completes"
+  end
+
+  test "recording a payment, voiding, revising or disconnecting closes the open Checkout page" do
+    post client_invoice_pay_path(@link.token)
+    assert_enqueued_with(job: ExpireCheckoutSessionJob, args: [ @invoice.id, "cs_test_1" ]) do
+      as_business(@business) { @invoice.record_payment!(by: users(:one), amount: Money.new(1_000, "USD"), received_on: @business.today, payment_method: "cash") }
+    end
+    perform_enqueued_jobs(only: ExpireCheckoutSessionJob)
+    assert_equal 1, @gateway.calls_to(:expire_checkout_session).size
+    assert_nil as_business(@business) { @invoice.reload.checkout_session_id }
+
+    voided, voided_link = new_sent_invoice
+    post client_invoice_pay_path(voided_link.token)
+    assert_enqueued_with(job: ExpireCheckoutSessionJob) { as_business(@business) { voided.reload.void!(reason: "Wrong client", by: users(:one)) } }
+
+    other, other_link = new_sent_invoice
+    post client_invoice_pay_path(other_link.token)
+    assert_enqueued_with(job: ExpireCheckoutSessionJob) { as_business(@business) { other.reload.revise!(by: users(:one)) } }
+    as_business(@business) { other.reload.discard_revision!(by: users(:one)) }
+
+    post client_invoice_pay_path(other_link.token)
+    session_id = as_business(@business) { other.reload.checkout_session_id }
+    as_business(@business) { @account.disconnect!(reason: "owner") }
+    assert_includes @gateway.calls_to(:expire_checkout_session), [ :expire_checkout_session, "acct_test1", session_id ]
+    assert_nil as_business(@business) { other.reload.checkout_session_id }
   end
 
   test "no Pay when the account can't take charges, it's disconnected, or the invoice is paid or void" do

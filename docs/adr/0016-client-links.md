@@ -34,6 +34,11 @@ revoked or re-issued without changing the document, and it has nowhere to record
 - **One-time actions** (`perform_once!`) write a uniquely indexed event in the same
   transaction as the action. A replayed or double-submitted approve or pay does nothing.
   Forms still carry Rails CSRF tokens.
+  - Amended by PAY-04: paying an invoice doesn't go through `client_link_action!`. An invoice
+    can be paid in parts, more than once, so "at most once per link" is the wrong rule; one
+    payment per Pay is kept by reusing the invoice's open Stripe Checkout page (or expiring it
+    first), and each payment is recorded once per Stripe PaymentIntent from Stripe's
+    notifications, never from the browser. "pay" stays in `ONE_TIME_ACTIONS` unused.
 - **No extra verification at launch** (such as the last four digits of a phone number) for
   links opened from SMS. Revisit if links are forwarded in practice.
 
