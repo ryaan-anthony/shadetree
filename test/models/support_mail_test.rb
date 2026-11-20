@@ -36,19 +36,26 @@ class SupportMailTest < ActiveSupport::TestCase
   end
 
   test "a forged From with a valid token, or a token that's been tampered with, is refused" do
-    assert_equal :forged_sender, receive(email(from: "user2@example.com")).outcome
+    cache, Rails.cache = Rails.cache, ActiveSupport::Cache::MemoryStore.new
+    assert_equal :forged_sender, receive(email(from: "user2@example.com", body: "Secret forged text")).outcome
     assert_equal :forged_sender, receive(email(from: "someone@evil.example")).outcome
+    notes = as_business(@business) { @ticket.messages.where(internal: true).to_a }
+    assert_equal [ SupportTicket::UNVERIFIED_EMAIL_NOTE ], notes.map(&:body), "one operator-only note an hour, with nothing from the email"
+    assert_equal "resolved", @ticket.reload.status
+    Rails.cache = cache
     tampered = @reply_to.sub(/-([0-9a-z]+)-/) { "-#{users(:two).id.to_s(36)}-" }
     assert_equal :bad_token, receive(email(from: "user2@example.com"), to: tampered).outcome
     assert_equal :bad_token, receive(to: @reply_to.sub(/([0-9a-f])@/) { "#{::Regexp.last_match(1) == "0" ? "1" : "0"}@" }).outcome
     assert_equal :bad_token, receive(to: "support+nonsense@getshadetree.com").outcome
-    assert_equal 1, message_count
+    assert_equal 2, message_count, "the opening message and the note"
+    assert_equal [ "Blurry" ], as_business(@business) { @ticket.visible_messages.map(&:body) }
   end
 
   test "missing, failed, unaligned or someone else's authentication results are refused" do
     [ "", "mx.cloudflare.net; spf=fail smtp.mailfrom=x@example.com; dkim=none; dmarc=fail header.from=example.com",
       "mx.cloudflare.net; spf=pass smtp.mailfrom=x@evil.example; dkim=pass header.d=evil.example; dmarc=fail header.from=example.com",
       'mx.cloudflare.net; dkim=fail header.d=example.com; dmarc=fail header.from=example.com; spf=pass smtp.mailfrom="x;dmarc=pass header.from=example.com"@evil.example',
+      "mx.cloudflare.net; dkim=none; dmarc=none, x y; dkim=pass header.d=example.com",
       "mx.evil.example; spf=pass smtp.mailfrom=x@example.com; dkim=pass header.d=example.com; dmarc=pass header.from=example.com" ].each do |auth|
       assert_equal :unauthenticated, receive(auth:).outcome, auth
     end
@@ -71,7 +78,7 @@ class SupportMailTest < ActiveSupport::TestCase
     assert_equal :not_member, receive(email(from: tech.email), to: SupportMail.reply_address(@ticket, tech)).outcome, "not their ticket"
     users(:one).business_users.find_by!(business: @business).update_columns(active: false)
     assert_equal :not_member, receive.outcome
-    assert_equal 1, message_count
+    assert_equal [ "Blurry" ], as_business(@business) { @ticket.visible_messages.map(&:body) }
   end
 
   test "a new ticket needs DMARC pass and an active member, in the business they last used" do
@@ -85,17 +92,40 @@ class SupportMailTest < ActiveSupport::TestCase
     assert_equal [ businesses(:two), "Can't log in on my phone", "Email" ], [ result.ticket.business, result.ticket.subject, result.ticket.browser ]
     assert as_business(businesses(:two)) { result.ticket.messages.first.files.attached? }
 
+    joined = "mx.cloudflare.net; dkim=none; spf=none, x y; dkim=pass header.d=example.com; dmarc=pass header.from=example.com"
+    assert_equal :unauthenticated, receive(email, to: "support@getshadetree.com", auth: joined).outcome, "a sender's header joined on"
     assert_equal :not_member, receive(email(from: "stranger@example.com"), to: "support@getshadetree.com").outcome
     assert_equal :empty, receive(email(body: "> only quoted"), to: "support@getshadetree.com").outcome
   end
 
   test "each sender is rate limited, counting only mail that proved its sender" do
-    cache, Rails.cache = Rails.cache, ActiveSupport::Cache::MemoryStore.new
-    5.times { receive(email(from: "user2@example.com")) } # forged: doesn't use up user one's allowance
-    outcomes = 11.times.map { receive(email(body: "Again #{_1}")).outcome }
-    assert_equal [ :replied ] * 10 + [ :rate_limited ], outcomes
-  ensure
-    Rails.cache = cache
+    with_counting_rate_limits do
+      5.times { receive(email(from: "user2@example.com")) } # forged: doesn't use up user one's allowance
+      outcomes = 11.times.map { receive(email(body: "Again #{_1}")).outcome }
+      assert_equal [ :replied ] * 10 + [ :rate_limited ], outcomes
+    end
+  end
+
+  test "unusable attachments are skipped, not the reply: inline, SVG, GIF and broken files" do
+    mail = email(body: "Screenshot attached")
+    mail.add_file(filename: "shot.png", content: file_fixture("logo.png").binread)
+    mail.add_file(filename: "broken.png", content: "not really a png")
+    mail.add_file(filename: "logo.svg", content: "<svg xmlns='http://www.w3.org/2000/svg'/>")
+    mail.add_file(filename: "anim.gif", content: "GIF89a")
+    mail.attachments.inline["sig.png"] = file_fixture("logo.png").binread
+    assert_equal :replied, receive(mail).outcome
+    files = as_business(@business) { @ticket.messages.last.files }
+    assert_equal [ "image/png" ], files.map(&:content_type)
+  end
+
+  test "HTML-only replies come through as text, entities decoded" do
+    mail = Mail.new do
+      from "user1@example.com"
+      subject "Re: Logo"
+      html_part { content_type "text/html; charset=UTF-8"; body "<p>Tom &amp; Jerry&#39;s &lt;invoice&gt;</p>" }
+    end
+    assert_equal :replied, receive(mail).outcome
+    assert_equal "Tom & Jerry's <invoice>", as_business(@business) { @ticket.messages.last.body }
   end
 
   test "bounces, auto-replies and list mail are ignored" do

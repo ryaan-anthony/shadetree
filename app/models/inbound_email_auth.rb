@@ -2,7 +2,8 @@
 # Authentication-Results header (the first one; the Worker sends only that, signed). For example
 #   mx.cloudflare.net; dkim=pass header.d=example.com …; dmarc=pass header.from=example.com …;
 #   spf=pass smtp.mailfrom=bounce@example.com
-# Anything else (missing, another server's header, unparseable) passes nothing.
+# Anything else (missing, another server's header, unparseable, or with a "," outside quotes and
+# comments, which means headers were joined) passes nothing.
 class InboundEmailAuth
   AUTHSERV_ID = "mx.cloudflare.net".freeze
 
@@ -13,6 +14,8 @@ class InboundEmailAuth
     # Quoted strings (a sender-chosen smtp.mailfrom local part) and comments can hold anything,
     # even "; dmarc=pass": blank them before splitting.
     text = value.to_s.gsub(/"(?:[^"\\]|\\.)*"/, '""').gsub(/\([^()]*\)/, " ")
+    return if text.include?(",")
+
     authserv, *methods = text.split(";").map(&:strip)
     return unless authserv.to_s.split.first&.downcase == AUTHSERV_ID
 
@@ -39,6 +42,8 @@ class InboundEmailAuth
 
   private
 
+  # Relaxed alignment by suffix, without a public-suffix list: good enough only because a reply
+  # also needs the signed reply address and the right From, and new tickets need DMARC pass.
   def aligned?(domain, from_domain)
     domain, from_domain = domain.to_s.downcase, from_domain.to_s.downcase
     return false if domain.blank? || from_domain.blank? || !domain.include?(".")

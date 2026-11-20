@@ -41,6 +41,7 @@ class SupportTicket < ApplicationRecord
   def self.auto_resolve_days(value) = Integer(value.to_s, 10, exception: false)&.then { _1.positive? ? _1 : nil } || 7
   AUTO_RESOLVE_AFTER = auto_resolve_days(ENV.fetch("SUPPORT_AUTO_RESOLVE_DAYS", "7")).days
   AUTO_RESOLVE_NOTICE = "We've marked this resolved because we haven't heard back. Reply any time to reopen it.".freeze
+  UNVERIFIED_EMAIL_NOTE = "An email reply from an unverified address arrived for this ticket; see the support inbox.".freeze
 
   # Run daily (ResolveStaleSupportTicketsJob). Returns how many were resolved.
   # Each ticket on its own: one that fails is reported and the rest go on.
@@ -100,6 +101,15 @@ class SupportTicket < ApplicationRecord
   def note!(operator, body) = add_message!(author: operator, body:, from_operator: true, internal: true, touch: false) { {} }
 
   def change_status!(status) = update!(status_changes(status))
+
+  # OPS-05: an email used this ticket's reply address but couldn't be proven to come from its
+  # member, so it was dropped. Operators get an internal note (nothing from the email), at most
+  # one an hour per ticket; the human inbox has the message.
+  def note_unverified_email!
+    return unless Rails.cache.write("support-unverified-email:#{id}", 1, unless_exist: true, expires_in: 1.hour)
+
+    add_message!(body: UNVERIFIED_EMAIL_NOTE, from_operator: true, internal: true, source: "system", touch: false) { {} }
+  end
 
   # Resolved with a notice in the thread, after the member didn't answer.
   def resolve_unanswered! = add_message!(body: AUTO_RESOLVE_NOTICE, from_operator: true, source: "system") { status_changes("resolved") }

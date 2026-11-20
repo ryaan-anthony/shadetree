@@ -17,6 +17,7 @@ module SupportMail
   TOKEN = /\A([0-9a-z]{1,13})-([0-9a-z]{1,13})-([0-9a-f]{20})\z/
   AUTOMATED_SENDERS = /\A(mailer-daemon|postmaster|no-?reply|do-?not-?reply)\b/i
   BULK_PRECEDENCE = %w[bulk junk list auto_reply].freeze
+  IMAGE_TYPES = %w[image/png image/jpeg image/webp].freeze
 
   module_function
 
@@ -47,8 +48,8 @@ module SupportMail
   def reply(mail, from, auth, token)
     ticket, user = from_token(token)
     return result(:bad_token) unless ticket && user && !user.deleted?
-    return result(:forged_sender) unless user.email.to_s.downcase == from
-    return result(:unauthenticated) unless auth.aligned_pass?(domain_of(from))
+    return unverified(ticket, :forged_sender) unless user.email.to_s.downcase == from
+    return unverified(ticket, :unauthenticated) unless auth.aligned_pass?(domain_of(from))
 
     membership = active_membership(user, ticket.business)
     visible = membership && Tenancy.with_business(ticket.business) { SupportTicket.visible_to(membership).exists?(ticket.id) }
@@ -78,6 +79,12 @@ module SupportMail
                           category: "question", body:, files: images(mail, user), browser: "Email")
     end
     Result.new(outcome: ticket.persisted? ? :opened : :invalid, ticket:)
+  end
+
+  # Dropped, with an operator-only note on the ticket so it isn't left to auto-resolve unseen.
+  def unverified(ticket, outcome)
+    Tenancy.with_business(ticket.business) { ticket.note_unverified_email! }
+    result(outcome)
   end
 
   # Bounces (empty envelope sender), auto-replies, mailing lists and delivery reports.
@@ -118,12 +125,12 @@ module SupportMail
     memberships.find_by(business_id: user.last_business_id) || memberships.order(created_at: :desc).first
   end
 
-  # The same limits as the in-app form, counted only for mail that proved its sender, so forged
-  # mail can't use up a member's allowance.
+  # The in-app form's own counters (shared, so the limits really are the same), counted only for
+  # mail that proved its sender, so forged mail can't use up a member's allowance.
   def over_limit?(user, business)
-    [ [ "user:#{user.id}", Admin::SupportTicketsController::PER_USER_PER_HOUR ],
-      [ "business:#{business.id}", Admin::SupportTicketsController::PER_BUSINESS_PER_HOUR ] ].map do |key, limit|
-      Rails.cache.increment("support-mail:#{key}", 1, expires_in: 1.hour).to_i > limit
+    store = Admin::SupportTicketsController.cache_store
+    Admin::SupportTicketsController.rate_limit_counters(user, business).map do |key, limit|
+      store.increment(key, 1, expires_in: 1.hour).to_i > limit
     end.any?
   end
 
@@ -131,20 +138,25 @@ module SupportMail
   def reply_text(mail)
     part = mail.multipart? ? (mail.text_part || mail.html_part) : mail
     text = part&.decoded.to_s
-    text = ActionController::Base.helpers.strip_tags(text) if part&.mime_type == "text/html"
+    text = CGI.unescapeHTML(ActionController::Base.helpers.strip_tags(text)) if part&.mime_type == "text/html"
     lines = text.lines
     cut = lines.index { |line| QUOTE_STARTS.any? { line.match?(_1) } } || lines.size
     lines.first(cut).join.strip.first(20_000)
   end
 
-  # Screenshots, as in the app: only from a confirmed account.
+  # Screenshots, as in the app: only from a confirmed account, only attached (not inline: logos
+  # in signatures) PNG, JPEG and WebP, and only those that clean up. One unusable file is skipped
+  # rather than costing the whole reply.
   def images(mail, user)
     return [] unless user.confirmed?
 
-    mail.attachments.select { _1.mime_type.to_s.start_with?("image/") }.first(SupportMessage::MAX_FILES).map do |attachment|
-      { io: StringIO.new(attachment.decoded), filename: attachment.filename }
-    end
+    candidates = mail.attachments.reject { inline?(_1) }.select { IMAGE_TYPES.include?(_1.mime_type.to_s.downcase) }
+    candidates.first(SupportMessage::MAX_FILES * 2).filter_map do |attachment|
+      LogoUpload.clean_photo({ io: StringIO.new(attachment.decoded), filename: attachment.filename }, max_bytes: SupportMessage::MAX_BYTES).attachable
+    end.first(SupportMessage::MAX_FILES)
   end
+
+  def inline?(part) = part.inline? || (part.header["Content-ID"].present? && !part.content_disposition.to_s.downcase.start_with?("attachment"))
 
   def domain_of(address) = address.to_s.split("@").last.to_s.downcase
 

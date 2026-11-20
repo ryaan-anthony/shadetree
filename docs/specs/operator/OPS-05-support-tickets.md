@@ -34,8 +34,9 @@ email, and nothing gets lost in a personal inbox.
       links to the business page (OPS-02).
 - [x] Replies reach the member by email and in the app (NTF-02). Replying to the email adds to
       the thread. Emails to the support address from a known member's email open or continue a
-      ticket. *(Built and tested in the app; live once the Cloudflare Worker and routing in
-      ops-work are applied and `INBOUND_EMAIL_ENABLED` is set: docs/runbooks/inbound-email.md.)*
+      ticket. *(Built and tested in the app. Met only once the Cloudflare Worker and routing in
+      ops-work are applied and `INBOUND_EMAIL_ENABLED` is set (docs/runbooks/inbound-email.md);
+      until then members reply in the app.)*
 - [x] Resolved tickets reopen when the member replies. Stale "Waiting on you" tickets
       auto-resolve after a set period, with notice.
 - [x] Tickets never expose client personal data to operators beyond what the member included.
@@ -74,7 +75,8 @@ email, and nothing gets lost in a personal inbox.
 - Inbound: the Worker's signed post to `/inbound/support_email` (HMAC, 5 minutes, 25 MiB) is
   stored by Action Mailbox (incinerated after 14 days), and `SupportMailbox` → `SupportMail`
   replies, opens or drops it quietly (bounces and auto-replies too), logging only the outcome.
-  Email counts against the same hourly limits per person and business.
+  Email shares the app form's hourly counters per person and business. A Cc'd support@ copy of
+  a reply is dropped; a reply that fails the sender checks leaves an operator-only note.
 - Limits: 10 messages an hour per person, 30 per business; screenshots need a confirmed account
   and open through a checked, 5-minute link. Replies reach every active member who wrote on the
   ticket (else the Owners). Operators opening a ticket is audited (`ticket.viewed`).
