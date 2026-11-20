@@ -21,8 +21,8 @@
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
             <tr>
               <td style="padding:0 4px 18px;">
-                <% if branding.logo? %>
-                  <img src="<%= url_for(branding.logo(:email)) %>" alt="<%= @business.name %>" height="48" style="display:block;height:48px;width:auto;max-width:240px;border:0;">
+                <% if (logo = attachments["logo.png"]) %>
+                  <img src="<%= logo.url %>" alt="<%= @business.name %>" height="48" style="display:block;height:48px;width:auto;max-width:240px;border:0;">
                 <% else %>
                   <table role="presentation" cellpadding="0" cellspacing="0"><tr>
                     <td style="background:<%= branding.color %>;color:<%= branding.ink %>;width:36px;height:36px;border-radius:8px;text-align:center;font-weight:700;font-size:14px;"><%= branding.initials %></td>

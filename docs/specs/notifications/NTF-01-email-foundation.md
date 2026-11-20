@@ -29,7 +29,9 @@ business branding, reply-to the business, delivery tracking and bounce handling.
       email as reply-to. *In place: sending from `getshadetree.com` over SMTP, the display name
       and reply-to. Still to do: the provider's DNS records (ADR 0017).*
 - [x] A shared branded layout (logo, brand color, business contact footer, plain-text part) is
-      used by all client-facing emails; it renders well in major clients and dark mode.
+      used by all client-facing emails; it renders well in major clients and dark mode. *The
+      logo is an inline image in the email (Content-ID), not a link back to the app, so it
+      shows without "load images" and opening an email sends nothing to Shadetree.*
 - [x] Every outbound email is recorded per business with type, recipient, related record, time
       and delivery outcome. *Outcome as the SMTP server reports it (sent, refused, failed); later
       bounces and complaints stay in the provider's dashboard (ADR 0017).*

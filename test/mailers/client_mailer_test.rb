@@ -45,7 +45,24 @@ class ClientMailerTest < ActionMailer::TestCase
 
     @business.update!(logo: { io: file_fixture("logo.png").open, filename: "logo.png" })
     perform_enqueued_jobs { send_test }
-    assert_match %r{<img src="http://example\.com/rails/active_storage/representations/redirect/[^"]+/logo\.png"}, ActionMailer::Base.deliveries.last.html_part.body.to_s
+    mail = ActionMailer::Base.deliveries.last
+    logo = mail.attachments.find(&:inline?)
+    assert logo, "the logo travels inside the email"
+    assert_equal "image/png", logo.mime_type
+    assert_operator logo.body.decoded.bytesize, :>, 0
+    html = mail.html_part.body.to_s
+    assert_includes html, %(<img src="cid:#{logo.cid}")
+    assert_not_includes html, "active_storage", "no link back to the app"
+    assert_not_includes html, ">TB</td>"
+  end
+
+  test "a logo that can't be read falls back to the wordmark, and the email still goes" do
+    @business.update!(logo: { io: file_fixture("logo.png").open, filename: "logo.png" })
+    @business.logo.blob.service.delete(@business.logo.blob.key)
+    perform_enqueued_jobs { send_test }
+    mail = ActionMailer::Base.deliveries.last
+    assert_nil mail.attachments.find(&:inline?)
+    assert_includes mail.html_part.body.to_s, ">TB</td>"
   end
 
   test "suppressed addresses aren't emailed" do
