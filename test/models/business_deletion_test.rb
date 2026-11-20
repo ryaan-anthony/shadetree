@@ -23,7 +23,10 @@ class BusinessDeletionTest < ActiveSupport::TestCase
     assert tables.values.sum > 30, "the demo business has data in many tables"
 
     blob_ids = BusinessDeletion.run!(business)
-    assert_empty blobs.first(2).map(&:id) - blob_ids, "the logo and the job's file (the variant goes with the logo)"
+    diag = "logo=#{business.logo.blob.id} job=#{job.id}/#{job.attachments.first.blob.id} variant=#{variant_blob.id} order=#{blobs.map(&:id)} returned=#{blob_ids.sort.last(6)} " \
+           "ctid=#{ActiveRecord::Base.connection.select_rows("select ctid::text, id from active_storage_blobs where id in (#{blobs.map(&:id).join(",")})")} " \
+           "plan=#{ActiveRecord::Base.connection.select_values("explain " + ActiveStorage::Blob.where(id: blobs.map(&:id)).to_sql).first}"
+    assert_empty blobs.first(2).map(&:id) - blob_ids, "the logo and the job's file (the variant goes with the logo) #{diag}"
     assert ActiveStorage::Blob.exists?(blobs.first.id), "files go afterwards, in the background"
     BusinessDeletion.purge_blobs(blob_ids)
 

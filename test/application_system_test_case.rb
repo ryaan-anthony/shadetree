@@ -50,6 +50,18 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
          typed: [...document.querySelectorAll("input[type=search], input[type=text], input[type=tel], input[type=email]")].map((i) => i.name + "=" + i.value) })
     JS
     puts "--- page state ---", state.inspect
+    diag = page.evaluate_script(<<~JS) rescue nil # rubocop:disable Style/RescueModifier
+      (() => { const d = window.__diag || {}; const b = [...document.querySelectorAll("button")].find((x) => x.textContent.trim() === "Move");
+        const r = b?.getBoundingClientRect(); const at = r && document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+        const pick = document.querySelector("[data-client-picker-target=input]"); const pr = pick?.getBoundingClientRect();
+        return { events: d.events, frames: d.frames, hasFocus: document.hasFocus(), vis: document.visibilityState, inner: [innerWidth, innerHeight, devicePixelRatio, scrollY],
+          dialogs: [...document.querySelectorAll("dialog")].map((x) => [x.id, x.open, getComputedStyle(x).opacity, getComputedStyle(x).display]),
+          move: r && [r.x, r.y, r.width, r.height, at?.outerHTML?.slice(0, 120)], pick: pr && [pr.x, pr.y, pick.value, document.elementFromPoint(pr.x + 5, pr.y + 5)?.outerHTML?.slice(0, 80)],
+          anims: document.getAnimations().map((a) => [a.animationName, a.playState, a.currentTime]) } })()
+    JS
+    puts "--- diag ---", diag.inspect
+    puts "--- window ---", page.current_window.size.inspect rescue nil # rubocop:disable Style/RescueModifier
+    puts "--- screenshot ---", page.driver.browser.screenshot_as(:base64), "--- end screenshot ---" if ENV["DIAG_SHOT"]
   rescue StandardError => e
     puts "--- diagnostics failed: #{e.class}: #{e.message}"
   end
@@ -62,6 +74,12 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     assert_selector "html[data-controllers-loaded]", visible: :all, wait: 10
     failed = page.evaluate_script("document.documentElement.dataset.controllersFailed")
     flunk "Controllers failed to load: #{failed}" if failed # fail here, at the cause, not on a later assertion
+    execute_script(<<~JS)
+      window.__diag = { events: [], frames: 0 }
+      ;["pointerdown", "mousedown", "mouseup", "click", "keydown", "input", "focusin", "focusout", "resize", "scroll"].forEach((t) => window.addEventListener(t, (e) => {
+        const el = e.target; window.__diag.events.push(`${(performance.now() / 1000).toFixed(2)} ${t}:${el?.tagName || "win"}:${(el?.textContent || "").trim().slice(0, 12)}`) }, true))
+      const tick = () => { window.__diag.frames++; requestAnimationFrame(tick) }; requestAnimationFrame(tick)
+    JS
   end
 
   # Signs in through the form. Signing in loads the next page in full (no Turbo: a new session

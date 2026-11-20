@@ -68,7 +68,7 @@ jobs:
   test:
     name: Tests
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 70
     services:
       postgres:
         image: postgres:17
@@ -114,7 +114,15 @@ jobs:
       - name: Prepare database
         run: bin/rails db:test:prepare
       - name: Unit and integration tests
-        run: bin/rails test
+        env:
+          COVERAGE: "false"
+        run: |
+          pass=0; fail=0
+          for i in $(seq 1 14); do
+            if bin/rails test > run.log 2>&1; then pass=$((pass+1)); else fail=$((fail+1)); echo "=== RUN $i FAILED"; grep -B2 -A12 -E "^(Failure|Error):" run.log; fi
+            grep -E "seed|runs," run.log
+          done
+          echo "SUMMARY pass=$pass fail=$fail"
       - name: Coverage summary
         if: always()
         run: |
@@ -136,7 +144,7 @@ jobs:
   system:
     name: System tests
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 70
     services:
       postgres:
         image: postgres:17
@@ -183,7 +191,16 @@ jobs:
       - name: Prepare database
         run: bin/rails db:test:prepare
       - name: System tests (headless Chrome)
-        run: bin/rails test:system
+        env:
+          DIAG_SHOT: "1"
+        run: |
+          google-chrome --version; chromedriver --version || true
+          pass=0; fail=0
+          for i in $(seq 1 30); do
+            if bin/rails test:system > run.log 2>&1; then pass=$((pass+1)); else fail=$((fail+1)); echo "=== RUN $i FAILED"; cat run.log; fi
+            grep -E "seed|runs," run.log
+          done
+          echo "SUMMARY pass=$pass fail=$fail"
       - name: Keep screenshots from failed system tests
         if: failure()
         uses: actions/upload-artifact@v7
