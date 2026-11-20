@@ -229,11 +229,16 @@ Tenancy.with_business(business) do
   puts "Request form: http://localhost:3000/request/#{business.handle}"
 end
 
-# MKT-02: a couple of contact-form messages, one flagged as spam.
+# MKT-02: a couple of contact-form messages, one flagged as spam (operators see them at /ops/messages).
 unless ContactMessage.exists?
   ContactMessage.create!(name: "Dana Whitfield", email: "dana@example.com", business_name: "Whitfield Cleaning", industry: "cleaning",
                          body: "We're a crew of four. Can each cleaner see only their own visits?", notified_at: Time.current)
   ContactMessage.create!(name: "SEO Pro", email: "seo@example.com", body: "Cheap backlinks for your site", spam_reason: "spam words")
+end
+# MKT-02 part 2: one already answered, for the console's Handled tab.
+unless ContactMessage.handled.exists?
+  ContactMessage.create!(name: "Luis Ortega", email: "luis@example.com", business_name: "Ortega Pool Care", industry: "other",
+                         body: "Do you support recurring weekly visits?", notified_at: 3.days.ago, created_at: 3.days.ago, handled_at: 2.days.ago)
 end
 
 puts "Demo data ready. Sign in as owner@example.com, admin@example.com or tech@example.com " \

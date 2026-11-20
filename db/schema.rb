@@ -399,6 +399,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002800) do
     t.datetime "notified_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "handled_at"
     t.index ["created_at"], name: "index_contact_messages_on_created_at"
     t.index ["email"], name: "index_contact_messages_on_email"
     t.index ["uid"], name: "index_contact_messages_on_uid", unique: true

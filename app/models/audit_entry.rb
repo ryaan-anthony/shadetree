@@ -33,7 +33,9 @@ class AuditEntry < ApplicationRecord
     "feature_flag.changed" => "Changed a release flag",
     "user.confirmation_resent" => "Resent a confirmation email",
     "user.password_reset_sent" => "Sent a password reset",
-    "user.unlocked" => "Unlocked an account"
+    "user.unlocked" => "Unlocked an account",
+    "contact_message.deleted" => "Deleted a contact message",
+    "contact_message.erased" => "Deleted everything from a contact-form sender"
   }.freeze
 
   belongs_to :operator_user, class_name: "User", optional: true
@@ -76,6 +78,14 @@ class AuditEntry < ApplicationRecord
   end
   # The business's name, from the entry if the business has since been deleted.
   def business_label = business&.name || (data["business_name"] && "#{data["business_name"]} (deleted)")
+
+  # A short, non-personal detail shown under the label (what the entry's data records).
+  def detail
+    case action
+    when "contact_message.deleted" then "Message #{data["message"]}#{" (spam)" if data["spam"]}"
+    when "contact_message.erased" then ActionController::Base.helpers.pluralize(data["count"].to_i, "message")
+    end
+  end
 
   # The database refuses to change, delete or truncate entries. schema.rb can't hold triggers,
   # so the migration adds this, and so does every schema load, db:prepare and test database

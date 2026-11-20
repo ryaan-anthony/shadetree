@@ -23,13 +23,13 @@ messages are stored, the team is notified, the sender gets a confirmation, and s
 
 - [x] The contact form collects name, email, optional business name and industry, and message;
       validation errors are clear and inline.
-- [ ] Submissions are stored and visible to operators (a simple list in the operator console, or
+- [x] Submissions are stored and visible to operators (a simple list in the operator console, or
       a temporary admin view until OPS-01 lands).
 - [x] The team receives an email per submission with reply-to set to the sender.
 - [x] The sender sees a confirmation page and receives a confirmation email.
 - [x] Invisible spam protection and rate limiting per PLT-13; obvious spam is discarded or
       flagged without notifying the team.
-- [ ] Submitted personal data is covered by the privacy policy and deletable on request.
+- [x] Submitted personal data is covered by the privacy policy and deletable on request.
 - [x] Tests cover success, validation, spam rejection and notification.
 
 ## Out of scope
@@ -57,11 +57,17 @@ Part 1 (the form, storage and email):
   per network per ten minutes. Errors are inline, in plain words. What people type is kept out
   of logs (parameter filtering).
 - Kept two years, spam 30 days, the IP address and browser 30 days (`PruneContactMessagesJob`,
-  daily). `bin/rails contact:erase EMAIL=…` removes a person's messages on request. The Privacy
-  Policy in MKT-03 (#204) states this retention; the criterion is ticked once it merges.
+  daily). The Privacy Policy (MKT-03) lists contact messages and this retention.
 
-Part 2 (after OPS-01 merges): the operator console lists messages (spam filter, mark handled,
-delete) — the remaining criterion.
+Part 2 (the operator console, OPS-01):
+- `/ops/messages`: Open, Handled and Spam tabs, newest first, 50 a page; a message opens to read
+  (shown as plain text), with reply by email and mark handled or open again (`handled_at`).
+- Deleting one message, or everything from its address (a request to be forgotten, like
+  `bin/rails contact:erase EMAIL=…`), needs a code from the last five minutes and is audited
+  (`contact_message.deleted` / `.erased`) with the message id or count only: the permanent log
+  keeps no name or address (the audit page shows the id or count). Deleting and auditing happen
+  in one transaction. The copies emailed to the support inbox are deleted there by hand; the
+  erase card and its confirmation say so. The console's home shows how many are open.
 
 ## Open questions
 
