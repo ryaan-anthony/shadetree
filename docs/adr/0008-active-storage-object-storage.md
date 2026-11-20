@@ -1,6 +1,6 @@
 # 0008. Active Storage on S3-compatible object storage
 
-- **Status:** Accepted
+- **Status:** Accepted; superseded in part by [0023](0023-homelab-vms-and-cloudflare-tunnel.md) (object storage)
 - **Date:** 2026-11-14
 - **Specs:** CAT-02, CLI-03, QTE-01, JOB-04, INS-02, PLT-09
 

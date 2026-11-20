@@ -14,7 +14,7 @@ class RestoreCheck
   end
 
   # The counts the backup records (ops/backup/backup.sh writes the same queries' results).
-  def self.counts = COUNTED.index_with { ActiveRecord::Base.connection.select_value("SELECT count(*) FROM #{_1}").to_i }
+  def self.counts = COUNTED.index_with { ActiveRecord::Base.connection.select_value(Arel::Table.new(_1).project(Arel.star.count)).to_i }
 
   def initialize(expected: {})
     @expected = expected.transform_values { Integer(_1.to_s, 10) }

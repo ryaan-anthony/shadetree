@@ -85,9 +85,10 @@ blanked in logs.
 - **Tests:** `StructuredLogsTest` signs in and creates a client with distinctive details and
   fails if any of them, or a link token, reaches the log; `ObservabilityTest` checks error
   reports and slow queries the same way.
-- **Known gaps:** development logs are verbose by design (local data only). kamal-proxy's
-  access log (PLT-09) records paths and client IPs on the host; check whether client-link
-  tokens appear there once hosting exists, and turn request-path logging off if so. A tracker
+- **Known gaps:** development logs are verbose by design (local data only). There is no proxy
+  log on the VMs (ADR 0023: Puma serves the tunnel directly). Cloudflare sees request paths,
+  client-link tokens included, at its edge; keep Cloudflare logging features that store full
+  URLs off. A tracker
   SDK that subscribes to `Rails.error` itself sees the raw exception; configure it to send
   `Observability.scrub(message)` instead.
 

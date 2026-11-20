@@ -67,7 +67,8 @@ COPY --from=build /rails /rails
 # log/. The code and gems belong to root, so a compromised app process can't change what it runs.
 RUN groupadd --system --gid 1000 rails && \
     useradd rails --uid 1000 --gid 1000 --create-home --shell /usr/sbin/nologin && \
-    chown -R rails:rails log storage tmp
+    chown -R rails:rails log storage tmp && \
+    chmod 755 "${BUNDLE_PATH}" # the Ruby image leaves it world-writable; nothing writes there at runtime
 USER 1000:1000
 
 # Entrypoint prepares the database.

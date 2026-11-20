@@ -72,10 +72,11 @@ the issue named.
   Rejections are logged as `[abuse]`, which is how to tell when a lockdown is needed. Limit: a
   bot with many IP addresses that waits out the timing gets through at the per-IP rate.
 - ticketed — the contact form says "thank you" but keeps nothing; MKT-02 (#111) builds it.
-- ✓ Per-IP limits rely on `request.remote_ip`: behind kamal-proxy and Thruster it's the
-  client's address and a forged `X-Forwarded-For` is ignored. **If a CDN such as Cloudflare is
-  put in front, set `config.action_dispatch.trusted_proxies` to its ranges**, or every visitor
-  shares the CDN's addresses.
+- ✓ Per-IP limits rely on `request.remote_ip`: behind the Cloudflare tunnel (ADR 0023) it's the
+  visitor's address from `X-Forwarded-For`, trusted only from the tunnel connector
+  (`TRUSTED_PROXIES`, `lib/forwarded_headers.rb`); anyone else's `X-Forwarded-For` is dropped, and
+  `X-Forwarded-Host` always is. Leave `TRUSTED_PROXIES` unset and every visitor shares the
+  connector's address.
 
 ### Outbound requests (SSRF)
 

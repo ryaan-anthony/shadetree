@@ -11,7 +11,7 @@ schedule → work → invoice → paid, from a phone, with a free plan. See
 
 Rails 8.1 on Ruby 4.0, PostgreSQL, server-rendered HTML with Hotwire (Turbo and Stimulus) and import maps,
 Devise for authentication, Solid Queue, Solid Cache and Solid Cable, Minitest and Capybara for
-tests, and Kamal for deploys.
+tests, and GitHub Actions deploying to the owner's homelab VMs.
 
 Decisions and their reasons are recorded as [architecture decision records](docs/adr/README.md):
 
@@ -23,8 +23,8 @@ Decisions and their reasons are recorded as [architecture decision records](docs
 | UI | Partials and helpers; Stimulus and Turbo for behavior ([0005](docs/adr/0005-ui-partials-and-stimulus.md)) |
 | Tests | Minitest, fixtures, Capybara ([0006](docs/adr/0006-minitest.md)) |
 | Background work | Solid Queue, no Redis ([0007](docs/adr/0007-solid-queue-jobs.md)) |
-| Files | Active Storage on S3-compatible storage ([0008](docs/adr/0008-active-storage-object-storage.md)) |
-| Hosting | Kamal 2 on a VPS, managed PostgreSQL ([0009](docs/adr/0009-hosting-kamal-vps.md)); deploy, rollback, backups and restore in the [operations runbook](docs/runbooks/operations.md) |
+| Files | Active Storage in a Docker volume on the VM, in the backups ([0008](docs/adr/0008-active-storage-object-storage.md), [0023](docs/adr/0023-homelab-vms-and-cloudflare-tunnel.md)) |
+| Hosting | One homelab VM per environment, PostgreSQL in a container, a Cloudflare tunnel in front ([0023](docs/adr/0023-homelab-vms-and-cloudflare-tunnel.md)); deploy, rollback, backups and restore in the [operations runbook](docs/runbooks/operations.md) |
 | PDFs | Same HTML as the web page, rendered by headless Chrome ([0010](docs/adr/0010-pdf-headless-chrome.md)) |
 | Email | Postmark via Action Mailer ([0011](docs/adr/0011-transactional-email-postmark.md)) |
 | Authentication | Devise, upgraded to 5.x in PLT-04 ([0012](docs/adr/0012-keep-devise.md)) |

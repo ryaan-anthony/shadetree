@@ -141,8 +141,8 @@ jobs:
           expect "Solid Queue's workers run in the app (SOLID_QUEUE_IN_PUMA)" yes "$([ "$(queue "SELECT count(*) FROM solid_queue_processes WHERE kind = 'Worker'")" -gt 0 ] && echo yes || echo no)"
           expect "the scheduler runs (recurring tasks)" yes "$([ "$(queue "SELECT count(*) FROM solid_queue_processes WHERE kind = 'Scheduler'")" -gt 0 ] && echo yes || echo no)"
           expect "staging's mail goes through the sandbox" true \
-            "$(docker exec "$APP" bin/rails runner 'print Mail.class_variable_get(:@@delivery_interceptors).include?(MailSandbox)')"
-          expect "uploads are stored in the volume" Disk "$(docker exec "$APP" bin/rails runner 'print ActiveStorage::Blob.service.class.name.demodulize.delete_suffix("Service")')"
+            "$(docker exec "$APP" bin/rails runner 'print Mail.class_variable_get(:@@delivery_interceptors).include?(MailSandbox)' | tail -n 1)"
+          expect "uploads are stored in the volume" Disk "$(docker exec "$APP" bin/rails runner 'print ActiveStorage::Blob.service.class.name.demodulize.delete_suffix("Service")' | tail -n 1)"
           if [ "$failed" -ne 0 ]; then docker logs --tail 100 "$APP"; exit 1; fi
 
       - name: Back up, drill, and recover a lost server, as deployed and as the runbook says
@@ -165,7 +165,8 @@ jobs:
           wait_up() { for _ in $(seq 1 60); do docker exec "$APP" curl -fsS -o /dev/null http://localhost:3000/up 2> /dev/null && return 0; sleep 3; done; return 1; }
           sets() { sudo find "$backups" -maxdepth 1 -name "$APP-*" -printf '%f\n' | sort; }
           dbs() { docker exec postgres psql -U postgres -Atc "$1"; }
-          rails() { docker exec "$APP" bin/rails runner "$1"; }
+          # The last line: boot warnings (no SMTP here) go to the same output.
+          rails() { docker exec "$APP" bin/rails runner "$1" | tail -n 1; }
           backups=/var/backups/shadetree-staging
           tool="$HOME/.local/share/$APP/backup/docker.sh"
           lock="$HOME/.local/state/$APP/backup.lock"

@@ -1,6 +1,6 @@
 # 0002. PostgreSQL is the primary database
 
-- **Status:** Accepted
+- **Status:** Accepted; superseded in part by [0023](0023-homelab-vms-and-cloudflare-tunnel.md) (managed PostgreSQL)
 - **Date:** 2026-11-14
 - **Specs:** PLT-01, PLT-06, PLT-07, PLT-09; global question G1
 

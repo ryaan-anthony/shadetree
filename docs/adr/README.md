@@ -24,14 +24,14 @@ approach, a hosting change. Small, local choices belong in the PR description.
 | # | Decision | Status |
 | --- | --- | --- |
 | [0001](0001-record-architecture-decisions.md) | Record architecture decisions | Accepted |
-| [0002](0002-postgresql.md) | PostgreSQL is the primary database | Accepted |
+| [0002](0002-postgresql.md) | PostgreSQL is the primary database | Accepted; managed hosting superseded by 0023 |
 | [0003](0003-tenancy-row-level-scoping.md) | Tenancy by row-level scoping in the application | Accepted |
 | [0004](0004-tailwind-compiled-css.md) | Tailwind CSS compiled at build time | Accepted |
 | [0005](0005-ui-partials-and-stimulus.md) | UI building blocks as partials and helpers, behavior in Stimulus | Accepted |
 | [0006](0006-minitest.md) | Minitest, fixtures and Capybara for tests | Accepted |
 | [0007](0007-solid-queue-jobs.md) | Solid Queue for background and scheduled work | Accepted |
-| [0008](0008-active-storage-object-storage.md) | Active Storage on S3-compatible object storage | Accepted |
-| [0009](0009-hosting-kamal-vps.md) | Kamal on a VPS, with managed PostgreSQL | Accepted |
+| [0008](0008-active-storage-object-storage.md) | Active Storage on S3-compatible object storage | Superseded in part by 0023 |
+| [0009](0009-hosting-kamal-vps.md) | Kamal on a VPS, with managed PostgreSQL | Superseded in part by 0023 |
 | [0010](0010-pdf-headless-chrome.md) | PDFs rendered from HTML with headless Chrome | Accepted |
 | [0011](0011-transactional-email-postmark.md) | Postmark for transactional email | Superseded by 0017 |
 | [0012](0012-keep-devise.md) | Keep Devise for authentication | Accepted |
@@ -43,3 +43,4 @@ approach, a hosting change. Small, local choices belong in the PR description.
 | [0018](0018-client-page-referrer-policy.md) | Client pages send Referrer-Policy: same-origin | Accepted |
 | [0019](0019-hand-built-operator-console.md) | Hand-built operator console, with in-app two-factor and an append-only audit log | Accepted |
 | [0020](0020-in-app-support-tickets.md) | Support tickets built into the app | Accepted |
+| [0023](0023-homelab-vms-and-cloudflare-tunnel.md) | Staging and production on the owner's homelab VMs, deployed by GitHub Actions, behind a Cloudflare tunnel | Accepted |
