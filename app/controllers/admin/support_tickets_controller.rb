@@ -8,6 +8,12 @@ class Admin::SupportTicketsController < Admin::BaseController
   PER_USER_PER_HOUR = 10
   PER_BUSINESS_PER_HOUR = 30
 
+  # The counters behind the two rate limits below, named as ActionController::RateLimiting names
+  # them, so email to support (SupportMail) counts against the very same ones.
+  def self.rate_limit_counters(user, business)
+    { "rate-limit:#{controller_path}:#{user.id}" => PER_USER_PER_HOUR, "rate-limit:#{controller_path}:business:#{business.id}" => PER_BUSINESS_PER_HOUR }
+  end
+
   allow_any_member
   before_action :set_ticket, only: %i[show reply]
   before_action :refuse_files_until_confirmed, only: %i[create reply]

@@ -11,8 +11,12 @@
    `support+<token>@getshadetree.com`) reaches **Cloudflare Email Routing**, which checks SPF,
    DKIM and DMARC and adds its own `Authentication-Results: mx.cloudflare.net; …` header at the
    top. Since July 2025 it only passes on mail that passes SPF or DKIM.
-2. The routing rule for `support@` runs the **support-email Worker** (ops-work:
-   `cloudflare/support-email-worker`, Terraform `terraform/cloudflare/email.tf`). It:
+2. The routing rule for the environment's support address runs that environment's
+   **shadetree-support-email Worker** (op-works: `cloudflare-workers/shadetree-support-email`,
+   deployed once per environment with the routing rules by Terraform `tf-config/shadetree_email.tf`).
+   Production is `support@getshadetree.com`; staging is `support-staging@getshadetree.com` (the
+   apex, since `staging.getshadetree.com` is the tunnel's CNAME). Each Worker posts to its own
+   environment with its own secret. It:
    - rejects anything over 25 MiB;
    - always forwards a copy to the human support inbox (a verified Email Routing destination,
      from the Worker's `HUMAN_INBOX` setting);
@@ -69,14 +73,15 @@ The app answers:
 | --- | --- |
 | `INBOUND_EMAIL_SECRET` | Shared with the Worker; at least 32 characters (`openssl rand -hex 32`). Without it the endpoint is "not found". Credentials key `inbound_email_secret` also works. |
 | `INBOUND_EMAIL_ENABLED` | `true` once Email Routing and the Worker are live: support emails then say "Reply to this email or in Shadetree" and carry the member's signed reply address as Reply-To. Otherwise they say "Reply in Shadetree" and reply to `support@`. |
-| `SUPPORT_EMAIL` | The support address (default `support@getshadetree.com`). |
+| `SUPPORT_EMAIL` | The support address (default `support@getshadetree.com`). Staging: `support-staging@getshadetree.com`, so its reply addresses (`support-staging+<token>@`) reach the staging Worker. |
 
 ## Turning it on
 
 1. Generate the secret; set it as the app's `INBOUND_EMAIL_SECRET` and deploy.
-2. In ops-work, apply `terraform/cloudflare` with the same secret, the app's inbound URL and the
-   human inbox (see its README). Turn on subaddressing for the zone (Email Routing settings) if
-   Terraform can't.
+2. In op-works (README, "Shadetree support email"): enable Email Routing, keep **one** merged
+   SPF record (the outgoing provider's plus `include:_spf.mx.cloudflare.net`), turn on
+   subaddressing (a manual step; without it every emailed reply bounces once step 4 is done),
+   apply `tf-config` with the same secret, and verify the human inbox.
 3. Send a test email to `support@` from a member's address: the human inbox gets a copy, and a
    ticket opens in the app. Check the Worker's logs and the app's `inbound_email.*` lines.
 4. Set `INBOUND_EMAIL_ENABLED=true` and deploy; reply to a ticket and answer the email.
@@ -98,5 +103,5 @@ only reach the human inbox.
 - A member's reply didn't thread: look up `support_mail.received` for the time; the `outcome`
   says why (`bad_token`, `forged_sender`, `unauthenticated`, `not_member`, `rate_limited`, `duplicate`,
   `automated`, …). The human inbox has the message.
-- Cap request bodies on this path at about 26 MiB at the host proxy or tunnel (25 MiB of mail
-  plus headroom); the app refuses anything larger than 25 MiB itself.
+- Request bodies are capped at 26 MiB by Puma (`http_content_length_limit`, PLT-09) and at
+  25 MiB by the app itself; nothing else in front of it needs a limit.

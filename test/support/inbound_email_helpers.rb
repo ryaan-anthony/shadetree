@@ -33,6 +33,17 @@ module InboundEmailHelpers
       "X-Shadetree-Signature" => InboundEmailIngress.signature(at.to_i, envelope, body, key: secret) }
   end
 
+  # The test cache is a null store; this counts like a real one, on the store the in-app support
+  # form's rate limits were declared with (the same object as Rails.cache).
+  def with_counting_rate_limits
+    store = Admin::SupportTicketsController.cache_store
+    counts = Hash.new(0)
+    store.define_singleton_method(:increment) { |key, amount = 1, **| counts[key] += amount }
+    yield counts
+  ensure
+    store.singleton_class.remove_method(:increment)
+  end
+
   def capture_json_log
     io = StringIO.new
     logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(io, level: :info, formatter: Observability::JsonLogFormatter.new))

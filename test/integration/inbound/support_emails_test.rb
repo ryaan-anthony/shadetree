@@ -93,6 +93,51 @@ class Inbound::SupportEmailsTest < ActionDispatch::IntegrationTest
     Rails.cache = cache
   end
 
+  test "a member's emailed reply reaches the ticket end to end, and the log names no one" do
+    ticket = as_business(businesses(:one)) { SupportTicket.open!(opened_by: users(:one), subject: "Logo", category: "bug", body: "Blurry") }
+    to = SupportMail.reply_address(ticket, users(:one))
+    with_inbound_email do
+      body = raw_email(to:, subject: "Re: Logo", body: "Distinctive reply text")
+      log = capture_json_log { perform_enqueued_jobs { deliver(body, inbound_headers(body, to:)) } }
+      assert_equal "Distinctive reply text", as_business(businesses(:one)) { ticket.messages.last.body }
+      assert_equal "delivered", ActionMailbox::InboundEmail.last.status
+      line = log.lines.map { JSON.parse(_1) }.find { _1["event"] == "support_mail.received" }
+      assert_equal [ "replied", ticket.uid ], [ line["outcome"], line["ticket"] ]
+      assert_no_match(/Distinctive|user1|@example\.com|support\+/, log)
+    end
+  end
+
+  test "a reply Cc'd to support@ threads once and opens nothing" do
+    ticket = as_business(businesses(:one)) { SupportTicket.open!(opened_by: users(:one), subject: "Logo", category: "bug", body: "Blurry") }
+    to = SupportMail.reply_address(ticket, users(:one))
+    with_inbound_email do
+      body = raw_email(to:, cc: "support@getshadetree.com", subject: "Re: Logo", body: "Cc'd reply")
+      assert_no_difference(-> { Tenancy.across_businesses(reason: "test") { SupportTicket.count } }) do
+        perform_enqueued_jobs do
+          deliver(body, inbound_headers(body, to: "support@getshadetree.com"))
+          deliver(body, inbound_headers(body, to:))
+        end
+      end
+      assert_equal [ "Blurry", "Cc'd reply" ], as_business(businesses(:one)) { ticket.messages.map(&:body) }
+    end
+  end
+
+  test "email and the in-app form share the same hourly limits" do
+    ticket = as_business(businesses(:one)) { SupportTicket.open!(opened_by: users(:one), subject: "Logo", category: "bug", body: "Blurry") }
+    to = SupportMail.reply_address(ticket, users(:one))
+    with_inbound_email do
+      with_counting_rate_limits do
+        Admin::SupportTicketsController::PER_USER_PER_HOUR.times do |n|
+          body = raw_email(to:, subject: "Re: Logo", body: "Email #{n}")
+          perform_enqueued_jobs { deliver(body, inbound_headers(body, to:)) }
+        end
+        sign_in users(:one)
+        post reply_admin_support_ticket_path(ticket), params: { support_message: { body: "And from the app" } }
+        assert_match "a lot of messages", flash[:alert]
+      end
+    end
+  end
+
   test "the log says what happened, never who sent it" do
     with_inbound_email do
       body = raw_email(from: "distinctive.sender@example.com", subject: "Private matter")
