@@ -69,7 +69,7 @@ and trust pages a small SaaS needs, wire acceptance into sign-up, and make updat
   app; "Privacy (Shadetree)" on client pages and "How your details are handled" in client
   emails, both to the Privacy Policy's section for clients of a business (`#clients`), shown
   even when "Powered by Shadetree" is hidden.
-- Requests go to mailboxes, not the contact form (which doesn't deliver yet):
+- Requests go to mailboxes (the contact form, MKT-02, reaches the support inbox too):
   privacy@getshadetree.com, legal@getshadetree.com and security@getshadetree.com must exist
   before launch.
 - Retention as written assumes PLT-09's backups: daily for 30 days, monthly for 12 months. Its

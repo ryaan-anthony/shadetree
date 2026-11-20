@@ -66,8 +66,9 @@ Part 2 (the operator console, OPS-01):
   `bin/rails contact:erase EMAIL=…`), needs a code from the last five minutes and is audited
   (`contact_message.deleted` / `.erased`) with the message id or count only: the permanent log
   keeps no name or address (the audit page shows the id or count). Deleting and auditing happen
-  in one transaction. The copies emailed to the support inbox are deleted there by hand (the privacy policy says so); the
-  erase card and its confirmation say so. The console's home shows how many are open.
+  in one transaction. The copies emailed to the support inbox (spam isn't emailed) are deleted
+  there by hand, as the privacy policy says; the erase card and its confirmation say so too.
+  The console's home shows how many are open.
 
 ## Open questions
 

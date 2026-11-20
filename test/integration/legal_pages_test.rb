@@ -44,7 +44,7 @@ class LegalPagesTest < ActionDispatch::IntegrationTest
   test "the privacy policy covers contact messages and their copies in the support inbox (MKT-02)" do
     get privacy_path
     assert_match "through the contact form: two years", response.body
-    assert_match "also emailed to our support inbox; when you ask us to delete your messages, we delete those emails too", response.body
+    assert_match "(except ones that look like spam) is also emailed to our support inbox; when you ask us to delete your messages, we delete those emails too", response.body
   end
 
   test "signing up records the versions accepted, and when" do
