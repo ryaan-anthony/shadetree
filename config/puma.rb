@@ -39,6 +39,10 @@ if (tls = ServerTls.from_env)
   ssl_bind "0.0.0.0", 3443, cert_pem: tls.cert_pem, key_pem: tls.key_pem, no_tlsv1: true, no_tlsv1_1: true, verify_mode: "none"
 end
 
+# The largest request body Puma accepts, chunked or not, refused with 413 before it reaches Rails:
+# 26 MiB, the inbound email cap plus room for its encoding (OPS-05). Deploy CI checks it.
+http_content_length_limit 26 * 1024 * 1024
+
 # Allow puma to be restarted by `bin/rails restart` command.
 plugin :tmp_restart
 

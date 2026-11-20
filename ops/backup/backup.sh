@@ -23,6 +23,7 @@
 #   BACKUP_DB_NAME         required: the app's database; the queue database is <name>_queue
 #   BACKUP_RETENTION_DAYS  default 30: daily sets older than this are deleted, except the oldest
 #                          set of each month, kept for a year; the newest 3 are always kept
+#   BACKUP_KEEP_MONTHLY    default true; false keeps no monthly sets (staging's default)
 #   BACKUP_FORCE           1: write the set even if it looks like an empty database (see above)
 # The database is reached with the libpq variables (PGHOST, PGUSER, PGPASSWORD).
 set -euo pipefail
@@ -102,7 +103,7 @@ for i in "${!sets[@]}"; do
   set="${sets[$i]}"
   age="$(age_of "$(basename "$set")")"
   if [ -z "$age" ] || [ "$age" -le $((retention_days * 86400)) ]; then continue; fi
-  if [ "${oldest_of_month[$(month_of "$set")]}" = "$set" ] && [ "$age" -lt $((366 * 86400)) ]; then continue; fi
+  if [ "${BACKUP_KEEP_MONTHLY:-true}" != false ] && [ "${oldest_of_month[$(month_of "$set")]}" = "$set" ] && [ "$age" -lt $((366 * 86400)) ]; then continue; fi
   rm -rf "$set"
   log "pruned $set"
 done

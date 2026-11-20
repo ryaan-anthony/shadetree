@@ -55,7 +55,8 @@ while IFS= read -r line || [ -n "$line" ]; do
   [[ "$line" =~ ^[[:space:]]*(#|$) ]] && continue
   name="${line%%=*}"
   case "$name" in
-    DB_NETWORK | BACKUP_DIR | BACKUP_ALLOW_LOCAL | BACKUP_RETENTION_DAYS | BACKUP_PG_IMAGE)
+    DB_NETWORK | BACKUP_DIR | BACKUP_ALLOW_LOCAL | BACKUP_RETENTION_DAYS | BACKUP_KEEP_MONTHLY | BACKUP_PG_IMAGE | \
+      BACKUP_DRILL_PGHOST | BACKUP_MIN_FREE_MB)
       printf -v "$name" '%s' "${line#*=}"
       export "${name?}"
       ;;
@@ -63,6 +64,7 @@ while IFS= read -r line || [ -n "$line" ]; do
 done < "$config"
 for name in DB_NETWORK BACKUP_DIR; do [ -n "${!name:-}" ] || die "$name is not set in $config"; done
 image="${BACKUP_PG_IMAGE:-postgres:17}"
+min_free_mb="${BACKUP_MIN_FREE_MB:-1024}"
 
 wait_for_docker() { # the timer may fire just after boot (Persistent=true)
   local out=""
@@ -84,6 +86,16 @@ check_backup_dir() {
     1 | true) ;;
     *) mountpoint -q "$BACKUP_DIR" || die "$BACKUP_DIR is not a mount point, so the sets would stay on this VM with the database. Mount an off-machine location there, or set the variable BACKUP_ALLOW_LOCAL=true to accept that" ;;
   esac
+}
+
+# Free space where a backup or drill writes (the backup location; Docker's disk for the scratch
+# databases and volume): a full disk on a small VM would fail half-way, or stop PostgreSQL itself.
+check_free_space() {
+  local path free
+  for path in "$@"; do
+    free="$(df -Pm "$path" | awk 'NR == 2 { print $4 }')"
+    [ "$free" -ge "$min_free_mb" ] || die "only $free MB free on $path (BACKUP_MIN_FREE_MB is $min_free_mb): free some space or grow the disk"
+  done
 }
 
 # The database connection and the app's image, from the app container (running or stopped).
@@ -138,11 +150,12 @@ set_counts() { pg_run -v "$BACKUP_DIR:/backups:ro" --entrypoint cat "$image" "/b
 
 do_backup() { # $1: 1 to force
   check_backup_dir
+  check_free_space "$BACKUP_DIR" "$(docker info -f '{{.DockerRootDir}}')"
   docker volume inspect "$volume" > /dev/null 2>&1 || die "the volume $volume does not exist: deploy the app first"
   log "backing up $db with $image on the Docker network $DB_NETWORK"
   pg_run --name "$app-backup" -v "$BACKUP_DIR:/backups" -v "$volume:/storage:ro" \
     -e BACKUP_DIR=/backups -e STORAGE_DIR=/storage -e SET_PREFIX="$app" -e BACKUP_DB_NAME="$db" \
-    -e BACKUP_FORCE="$1" -e BACKUP_RETENTION_DAYS --entrypoint bash "$image" /ops/backup.sh
+    -e BACKUP_FORCE="$1" -e BACKUP_RETENTION_DAYS -e BACKUP_KEEP_MONTHLY --entrypoint bash "$image" /ops/backup.sh
   touch_status last_success # only now, after the set is complete
 }
 
@@ -188,6 +201,11 @@ cmd_restore_drill() {
   set="$(resolve_set "${1:-}")"
   counts="$(set_counts "$set")" || die "$set has no counts file"
   log "restore drill: set $set: $(printf '%s' "$counts" | tr '\n' ' ')"
+  drill_host="${BACKUP_DRILL_PGHOST:-$PGHOST}"
+  live_size="$(pg_run --entrypoint psql "$image" -X -At -d "$db" -c \
+    "SELECT pg_size_pretty(sum(pg_database_size(datname))) FROM pg_database WHERE datname IN ('$db', '${db}_queue')")"
+  log "restore drill: the scratch databases need about $live_size of free space on $drill_host"
+  [ -n "${BACKUP_DRILL_PGHOST:-}" ] || check_free_space "$(docker info -f '{{.DockerRootDir}}')"
   stamp="$(date -u +%Y%m%d%H%M%S)"
   scratch="shadetree_restore_drill_${stamp}_$$"
   drill_volume="$app-drill-$stamp-$$"
@@ -195,17 +213,17 @@ cmd_restore_drill() {
   trap drill_cleanup EXIT
   docker volume create "$drill_volume" > /dev/null
   own_volume "$drill_volume"
-  log "restore drill: restoring into the scratch databases $scratch and ${scratch}_queue on $PGHOST"
-  pg_run -v "$BACKUP_DIR:/backups:ro" -v "$drill_volume:/drill" --entrypoint bash "$image" \
+  log "restore drill: restoring into the scratch databases $scratch and ${scratch}_queue on $drill_host"
+  PGHOST="$drill_host" pg_run -v "$BACKUP_DIR:/backups:ro" -v "$drill_volume:/drill" --entrypoint bash "$image" \
     /ops/restore.sh "/backups/$set" "$scratch" /drill
   # The app's settings, read from its container into a mode-0600 file removed on exit, pointed at
   # the scratch databases (DATABASE_NAME: all four names follow it) and the scratch volume. It only
   # reads, enqueues nothing and opens no cable.
   (umask 077 && docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$app" \
-    | grep -v -E '^(DATABASE_NAME|DATABASE_URL|COUNTS|SOLID_QUEUE_IN_PUMA)=' > "$tmp/app.env")
+    | grep -v -E '^(PGHOST|DATABASE_NAME|DATABASE_URL|COUNTS|SOLID_QUEUE_IN_PUMA)=' > "$tmp/app.env")
   log "restore drill: checking the restored data with $app_image"
   docker run --rm --init --network "$DB_NETWORK" --user 1000:1000 --cap-drop ALL --security-opt no-new-privileges \
-    --env-file "$tmp/app.env" -e DATABASE_NAME="$scratch" -e COUNTS="/backups/$set/counts" \
+    --env-file "$tmp/app.env" -e PGHOST="$drill_host" -e DATABASE_NAME="$scratch" -e COUNTS="/backups/$set/counts" \
     -v "$BACKUP_DIR:/backups:ro" -v "$drill_volume:/rails/storage:ro" --entrypoint /rails/bin/rails "$app_image" backup:verify_restore
   touch_status last_drill
 }
@@ -213,7 +231,7 @@ cmd_restore_drill() {
 drill_cleanup() {
   rm -rf "$tmp"
   # shellcheck disable=SC2016 # expanded by the container's shell
-  pg_run -e PGOPTIONS='-c client_min_messages=warning' --entrypoint sh "$image" \
+  PGHOST="$drill_host" pg_run -e PGOPTIONS='-c client_min_messages=warning' --entrypoint sh "$image" \
     -c 'for name do dropdb --if-exists "$name" || exit 1; done' sh "$scratch" "${scratch}_queue" \
     || echo "shadetree backup: could not drop the scratch databases $scratch*; drop them by hand" >&2
   docker volume rm "$drill_volume" > /dev/null 2>&1 || true

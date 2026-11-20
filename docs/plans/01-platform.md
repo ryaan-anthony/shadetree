@@ -128,4 +128,4 @@ Devise (0012), SMTP email (0017), homelab VMs behind a Cloudflare tunnel (0023, 
 of 0002, 0008 and 0009).
 
 1. ~~**Hosting provider**~~: decided by the owner (2026-11-20): their homelab VMs, provisioned in
-   their ops-work repository, one for staging and one for production (ADR 0023).
+   their op-works repository, one for staging and one for production (ADR 0023).

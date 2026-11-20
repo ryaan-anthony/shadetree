@@ -32,20 +32,23 @@ class BackupHealthEndpointTest < ActionDispatch::IntegrationTest
     assert_equal "ok", response.body
   end
 
-  test "stale and untested once older than BACKUP_MAX_AGE_HOURS" do
+  test "stale once the backup is older than BACKUP_MAX_AGE_HOURS" do
     touch "last_success", 27.hours.ago
-    touch "last_drill"
-    get backup_health_check_path
-    assert_equal "stale", response.body
-
-    touch "last_success"
     touch "last_drill", 27.hours.ago
     get backup_health_check_path
-    assert_equal "untested", response.body
+    assert_equal "stale", response.body
 
     ENV["BACKUP_MAX_AGE_HOURS"] = "48"
     get backup_health_check_path
     assert_equal "ok", response.body
+  end
+
+  test "untested when the last passing drill is older than the latest backup" do
+    touch "last_drill", 2.hours.ago
+    touch "last_success", 1.hour.ago
+    get backup_health_check_path
+    assert_response :service_unavailable
+    assert_equal "untested", response.body
   end
 
   private

@@ -12,7 +12,7 @@
 ## Context
 
 The owner decided (2026-11-20, on PR #134): "I have a homelab that runs my VMs, follow the same
-pattern for app deployments as fleet-cmdb. I'll set up the VMs in my ops-work repo and have it
+pattern for app deployments as fleet-cmdb. I'll set up the VMs in my op-works repo and have it
 provision both staging and production. … For shadetree, I will deploy merges to main to staging
 and tagged releases go to production."
 
@@ -31,7 +31,7 @@ itself; no forwarded host header is trusted.
    month, a second deployment pattern for the owner to run, and none of their homelab used.
 2. **fleet-cmdb's pattern**, adapted to two environments. Hosting costs nothing extra, the owner
    runs one pattern for both apps, and the VMs, PostgreSQL and tunnel are provisioned in their
-   ops-work repository.
+   op-works repository.
 
 ## Decision
 
@@ -50,7 +50,7 @@ Follow **fleet-cmdb's pattern**, with two GitHub environments and one VM each:
   onto an off-machine mount on the VM, then a restore drill of that set into scratch databases,
   checked by the app's own image; retention 30 days plus the oldest set of each month for a year.
   `/up/backup` answers 503 when either is more than a day old.
-- **Ingress:** the Cloudflare tunnel (configured in ops-work) publishes `getshadetree.com`
+- **Ingress:** the Cloudflare tunnel (configured in op-works) publishes `getshadetree.com`
   (production) and `staging.getshadetree.com` (staging). Its origin is
   `https://<VM internal hostname>:443`; Puma serves that with a Cloudflare Origin CA certificate
   (TLS 1.2+), and plain HTTP is never published. Thruster is dropped: Cloudflare compresses and
@@ -63,7 +63,7 @@ Follow **fleet-cmdb's pattern**, with two GitHub environments and one VM each:
 ## Consequences
 
 - No hosting bill; the owner keeps the VMs, PostgreSQL, the backup mount, the tunnel and the
-  runner running (ops-work). A homelab outage is a site outage: the uptime check watches `/up`.
+  runner running (op-works). A homelab outage is a site outage: the uptime check watches `/up`.
 - No point-in-time recovery: up to a day of data can be lost. WAL archiving is the next step if
   that becomes too much.
 - The runner is self-hosted on a public repository, so the deploy never runs for pull requests;
@@ -72,4 +72,13 @@ Follow **fleet-cmdb's pattern**, with two GitHub environments and one VM each:
   kamal-proxy's log would have; nothing on the VM logs paths outside the app's redacted log.
 - Deploy CI builds the image and exercises deploy, backup, drill and recovery on every PR that
   changes the app.
+- A deploy is not zero-downtime (roughly 30–90 s of 502s at the swap), but a bad release never
+  stays: a pre-flight and the migrations run before the swap, and the previous container comes
+  back if the new one doesn't answer.
+- fleet-cmdb's optional separate jobs container is left out: one small VM per environment and a
+  modest job load make one container (Solid Queue in Puma, ADR 0007) enough, and it halves the
+  memory. Bringing it back is a second `docker run` of the same image with `bin/jobs`.
+- The image is built on the VM, as in fleet-cmdb, which is slow on a 1-vCPU VM. Building on the
+  runner and shipping it with `docker save | ssh … docker load` is the later option if builds
+  become a problem; it moves the build cache to the runner.
 - **Cost:** $0 hosting (the owner's homelab); third parties as in the runbook.

@@ -75,8 +75,9 @@ the issue named.
 - ✓ Per-IP limits rely on `request.remote_ip`: behind the Cloudflare tunnel (ADR 0023) it's the
   visitor's address from `X-Forwarded-For`, trusted only from the tunnel connector
   (`TRUSTED_PROXIES`, `lib/forwarded_headers.rb`); anyone else's `X-Forwarded-For` is dropped, and
-  `X-Forwarded-Host` always is. Leave `TRUSTED_PROXIES` unset and every visitor shares the
-  connector's address.
+  `X-Forwarded-Host`, `Forwarded` and `Client-IP` always are. The deploy requires
+  `TRUSTED_PROXIES` and refuses anything but IP addresses or ranges no broader than /24 (IPv4) or
+  /64 (IPv6) (`ops/deploy/check.sh`).
 
 ### Outbound requests (SSRF)
 

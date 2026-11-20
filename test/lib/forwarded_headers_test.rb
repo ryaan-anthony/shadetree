@@ -26,6 +26,15 @@ class ForwardedHeadersTest < ActiveSupport::TestCase
     assert_equal "192.0.2.99", remote_ip(env)
   end
 
+  test "Client-IP is always dropped, so a mismatch with X-Forwarded-For can't raise IpSpoofAttackError" do
+    raw = Rack::MockRequest.env_for("/", "REMOTE_ADDR" => CONNECTOR, "HTTP_X_FORWARDED_FOR" => "203.0.113.9", "HTTP_CLIENT_IP" => "198.51.100.1")
+    assert_raises(ActionDispatch::RemoteIp::IpSpoofAttackError) { remote_ip(raw.dup, check_ip: true) }
+
+    env = call(raw)
+    assert_nil env["HTTP_CLIENT_IP"]
+    assert_equal "203.0.113.9", remote_ip(env, check_ip: true)
+  end
+
   test "a range counts, loopback is always trusted, a bad peer address is not" do
     assert call("REMOTE_ADDR" => "10.9.4.2", "HTTP_X_FORWARDED_FOR" => "203.0.113.9")["HTTP_X_FORWARDED_FOR"]
     assert call("REMOTE_ADDR" => "127.0.0.1", "HTTP_X_FORWARDED_FOR" => "203.0.113.9")["HTTP_X_FORWARDED_FOR"]
@@ -46,9 +55,9 @@ class ForwardedHeadersTest < ActiveSupport::TestCase
   end
 
   private
-    def call(env) = @app.call(Rack::MockRequest.env_for("/", env)).last.first
+    def call(env) = @app.call(env.key?("rack.input") ? env : Rack::MockRequest.env_for("/", env)).last.first
 
-    def remote_ip(env)
-      ActionDispatch::RemoteIp::GetIp.new(ActionDispatch::Request.new(env), false, @trusted).to_s
+    def remote_ip(env, check_ip: false)
+      ActionDispatch::RemoteIp::GetIp.new(ActionDispatch::Request.new(env), check_ip, @trusted).to_s
     end
 end

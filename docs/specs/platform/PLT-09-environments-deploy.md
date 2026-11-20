@@ -26,7 +26,7 @@ promoted deliberately, with backups we have actually restored.
 ## Acceptance criteria
 
 - [ ] Staging and production environments exist on the hosting chosen in PLT-01, with TLS on
-      their domains. *Pending the owner's VMs and tunnel (ops-work).*
+      their domains. *Pending the owner's VMs and tunnel (op-works).*
 - [x] A merge to `main` deploys to staging automatically after CI passes.
 - [x] Production deploys are triggered manually (or by tag/release) and support rollback to the
       previous release. *Tag `vX.Y.Z`; rollback re-runs an earlier deploy.*
@@ -68,7 +68,7 @@ uses the provider's sandbox credentials and `MAIL_ALLOWLIST` / `MAIL_SANDBOX_TO`
 
 ## Open questions
 
-- ~~Hosting target?~~ Resolved by the owner (2026-11-20): their homelab VMs, set up in ops-work,
+- ~~Hosting target?~~ Resolved by the owner (2026-11-20): their homelab VMs, set up in op-works,
   deployed the fleet-cmdb way (ADR 0023). Domains: `staging.getshadetree.com`, `getshadetree.com`.
 - ~~Staging data?~~ Resolved: seeded demo data only. Production data never goes to staging.
 - Is a nightly backup (up to a day of data lost) enough, or is point-in-time recovery wanted?

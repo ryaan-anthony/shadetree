@@ -47,8 +47,10 @@ Rails.application.configure do
   # Change to "debug" to log everything (including potentially personally-identifiable information!)
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
 
-  # Prevent health checks from clogging up the logs.
+  # Prevent health checks from clogging up the logs: /up here, and the uptime check's /up/jobs and
+  # /up/backup (PLT-09, PLT-10) the same way.
   config.silence_healthcheck_path = "/up"
+  %w[/up/jobs /up/backup].each { config.middleware.insert_before Rails::Rack::Logger, Rails::Rack::SilenceRequest, path: _1 }
 
   # Don't log any deprecations.
   config.active_support.report_deprecations = false
