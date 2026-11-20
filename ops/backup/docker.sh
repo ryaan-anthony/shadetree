@@ -214,7 +214,7 @@ drill_cleanup() {
   rm -rf "$tmp"
   # shellcheck disable=SC2016 # expanded by the container's shell
   pg_run -e PGOPTIONS='-c client_min_messages=warning' --entrypoint sh "$image" \
-    -c 'for name do dropdb --if-exists -d postgres "$name" || exit 1; done' sh "$scratch" "${scratch}_queue" \
+    -c 'for name do dropdb --if-exists "$name" || exit 1; done' sh "$scratch" "${scratch}_queue" \
     || echo "shadetree backup: could not drop the scratch databases $scratch*; drop them by hand" >&2
   docker volume rm "$drill_volume" > /dev/null 2>&1 || true
 }

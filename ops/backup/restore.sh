@@ -8,7 +8,7 @@
 # primary.dump goes into <database name> and queue.dump into <database name>_queue. Each database
 # is created, or reused only if it holds no table, view, sequence, function or type of its own (as
 # freshly provisioned ones are), and restored in one transaction, so whole or not at all. The
-# storage directory must be empty but for backup/ (the status file's directory).
+# storage directory must be empty but for backup/ (the status files) and the image's .keep.
 # Exit status: 0 restored; 64 refused, nothing changed; anything else failed part-way.
 # Needs createdb, dropdb, pg_restore, psql, tar, sha256sum and the libpq variables.
 set -euo pipefail
@@ -21,7 +21,7 @@ sql() { psql -X -At -v ON_ERROR_STOP=1 "$@"; }
 set_dir="$1" db="$2" storage_dir="$3"
 [ -d "$set_dir" ] || refuse "$set_dir is not a directory"
 [[ "$db" =~ ^[a-z][a-z0-9_]{0,56}$ ]] || refuse "the database name must be lowercase letters, digits and underscores (57 at most)"
-if [ -d "$storage_dir" ] && [ -n "$(find "$storage_dir" -mindepth 1 -maxdepth 1 ! -name backup -print -quit)" ]; then
+if [ -d "$storage_dir" ] && [ -n "$(find "$storage_dir" -mindepth 1 -maxdepth 1 ! -name backup ! -name .keep -print -quit)" ]; then
   refuse "$storage_dir is not empty"
 fi
 (cd "$set_dir" && sha256sum --check --quiet SHA256SUMS) || refuse "checksum mismatch: this backup set is damaged"
