@@ -1,0 +1,26 @@
+# BIL-05: telling a business's Owners about its plan: a trial about to end, and a move to Free
+# (trial over, subscription ended, renewal unpaid after the grace period, comp ended). One email
+# per Owner. Stripe sends receipts and failed-payment emails itself.
+class BillingMailer < ApplicationMailer
+  def self.notify_owners(business, action, **)
+    business.business_users.active.owners.includes(:user).each do |membership|
+      next if membership.user.deleted?
+
+      with(business:, user: membership.user, **).public_send(action).deliver_later
+    end
+  end
+
+  def trial_ending
+    @business, @user, @days_left = params.values_at(:business, :user, :days_left)
+    return if @business.billing_status != "trialing" # subscribed since it was queued
+
+    @plan = @business.trial_plan
+    mail to: @user.email, subject: "Your #{@plan.name} trial for #{@business.name} ends in #{@days_left} #{"day".pluralize(@days_left)}"
+  end
+
+  def moved_to_free
+    @business, @user, @from_plan, @reason = params.values_at(:business, :user, :from_plan, :reason)
+    @free = Plan.default!
+    mail to: @user.email, subject: "#{@business.name} is now on #{@free.name}"
+  end
+end

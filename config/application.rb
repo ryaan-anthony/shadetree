@@ -33,5 +33,10 @@ module Shadetree
 
     # MKT-04: analytics (Analytics) only outside development and test.
     config.x.analytics = !Rails.env.local?
+    # BIL-05: new businesses' trial of a paid plan (TRIAL_DAYS=0 turns it off) and the grace
+    # period after a renewal payment fails. Tests start with no trial (config/environments/test.rb).
+    config.x.billing.trial_days = Integer(ENV.fetch("TRIAL_DAYS", "14"), 10)
+    config.x.billing.trial_plan = ENV.fetch("TRIAL_PLAN", "pro")
+    config.x.billing.grace_days = Integer(ENV.fetch("BILLING_GRACE_DAYS", "7"), 10)
   end
 end

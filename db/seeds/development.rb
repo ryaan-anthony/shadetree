@@ -317,3 +317,4 @@ Tenancy.with_business(business) do
     end
   end
 end
+business.with_lock { Billing::PlanResolver.apply!(business) } # BIL-05: billing status from the above

@@ -5,6 +5,18 @@ module Billing
   PRICE_CACHE_TTL = 1.hour
 
   def self.gateway = StripeGateway.current
+
+  # BIL-05 settings (config/application.rb).
+  def self.settings = Rails.configuration.x.billing
+  def self.trial_days = settings.trial_days.to_i
+  def self.trial_plan = trial_days.positive? ? Plan.find_by(key: settings.trial_plan) : nil
+  def self.grace_period = settings.grace_days.to_i.days
+
+  # Why a business moved to Free (Billing::PlanResolver), in words.
+  LAPSES = {
+    "trial_ended" => "the trial ended", "subscription_ended" => "the subscription ended",
+    "unpaid" => "the renewal wasn't paid within the grace period", "comp_ended" => "the comped plan ended"
+  }.freeze
   def self.configured? = gateway.configured?
   def self.live_mode? = Stripe.api_key.to_s.include?("_live_")
 

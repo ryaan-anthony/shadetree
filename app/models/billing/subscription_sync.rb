@@ -56,6 +56,8 @@ class Billing::SubscriptionSync
         end
         before = row.attributes.slice(*%w[stripe_subscription_id status plan_id interval cancel_at_period_end])
         row.assign_attributes(attributes)
+        # BIL-05: the grace period runs from the first failure of this subscription's renewal.
+        row.past_due_since = row.past_due? ? (before["status"] == "past_due" && row.past_due_since) || Time.current : nil
         record_changes(before, row)
         row.save!
         Billing::PlanResolver.apply!(@business)
