@@ -1,5 +1,5 @@
-# An optional guard for a non-production environment (PLT-09; off unless MAIL_SANDBOX=true, and
-# not used on staging by default since 2026-11-20). With MAIL_SANDBOX=true, only allow-listed
+# An optional guard for a non-production environment (PLT-09, ADR 0025): off unless
+# MAIL_SANDBOX=true, and refused on production by the deploy. With it on, only allow-listed
 # recipients (exact addresses or "@domain") get a message. When anyone was blocked, the sandbox
 # inbox (MAIL_SANDBOX_TO) also gets it, with the blocked To/Cc addresses in the subject; blocked
 # Bcc addresses are never shown.

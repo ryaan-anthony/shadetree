@@ -196,7 +196,7 @@ Settings → Environments: **`staging`** (deployment branches: `main` only) and 
 | `MAIL_FROM` | var | `Shadetree <no-reply@getshadetree.com>` | same | The platform sender |
 | `SMTP_ADDRESS`, `SMTP_PORT` | vars | the provider's relay | its relay | Port default 587 (STARTTLS); nothing is sent without an address |
 | `SMTP_USERNAME`, `SMTP_PASSWORD` | secrets | staging's own credentials | production's own credentials | |
-| `MAIL_SANDBOX` | var, optional | unset (off) | unset | `true` turns on the mail sandbox: only `MAIL_ALLOWLIST` receives mail |
+| `MAIL_SANDBOX` | var, optional | unset (off) | leave unset (`true` is refused) | `true` turns on the mail sandbox: only `MAIL_ALLOWLIST` receives mail (ADR 0025) |
 | `MAIL_ALLOWLIST` | var, optional | | | With the sandbox on: addresses or `@domains` that may receive mail |
 | `MAIL_SANDBOX_TO` | var, optional | | | With the sandbox on: gets a copy of anything blocked |
 | `SUPPORT_EMAIL` | var | `support-staging@getshadetree.com` | (unset: `support@getshadetree.com`) | The support address: contact-form mail, and the inbound address and reply-address domain (OPS-05) |
