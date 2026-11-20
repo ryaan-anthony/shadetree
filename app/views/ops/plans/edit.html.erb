@@ -1,0 +1,32 @@
+<% content_for :title, "Edit #{@plan.name}" %>
+<p class="text-sm2"><%= link_to "← Plans", ops_plans_path, class: "text-muted hover:underline" %></p>
+<h1 class="page-title mt-1">Edit <%= @plan.name %></h1>
+<p class="page-lede">Key <code><%= @plan.key %></code>. Limits and features apply to every business on it at once.</p>
+<%= card class: "mt-4 max-w-2xl" do %>
+  <%= form_with model: @plan, url: ops_plan_path(@plan), method: :patch, data: { turbo_confirm: "Save #{@plan.name}? Every business on it changes now." } do |f| %>
+    <% if @plan.errors.any? %><div class="banner banner-warning mb-4" role="alert"><p><%= @plan.errors.full_messages.to_sentence %></p></div><% end %>
+    <div class="space-y-4">
+      <%= f.field :name %>
+      <%= f.field :description, as: :textarea, rows: 2, optional: true %>
+      <div class="grid gap-4 sm:grid-cols-3">
+        <div class="field"><label class="label" for="plan_monthly_price">Monthly price</label><%= text_field_tag "plan[monthly_price]", format("%.2f", @plan.monthly_price.amount), class: "input", id: "plan_monthly_price", inputmode: "decimal" %></div>
+        <div class="field"><label class="label" for="plan_annual_price">Annual price</label><%= text_field_tag "plan[annual_price]", format("%.2f", @plan.annual_price.amount), class: "input", id: "plan_annual_price", inputmode: "decimal" %></div>
+        <%= f.field :position, as: :number, label: "Order" %>
+      </div>
+      <%= f.check :public, label: "Listed on the pricing and plan pages" %>
+      <fieldset><legend class="label">Limits <span class="font-normal text-muted">(empty means unlimited)</span></legend>
+        <div class="grid gap-3 sm:grid-cols-3">
+          <% Plan::LIMITS.each do |key, label| %>
+            <div class="field"><label class="label font-normal" for="limit_<%= key %>"><%= label %></label><%= number_field_tag "plan[limits][#{key}]", @plan.limits[key], min: 0, class: "input", id: "limit_#{key}" %></div>
+          <% end %>
+        </div>
+      </fieldset>
+      <fieldset><legend class="label">Features</legend>
+        <% Plan::FEATURES.each do |key, label| %>
+          <label class="flex items-center gap-2 py-1 text-sm"><%= hidden_field_tag "plan[features][#{key}]", "0", id: nil %><%= check_box_tag "plan[features][#{key}]", "1", @plan.features[key] == true, class: "checkbox", id: "feature_#{key}" %> <%= label %></label>
+        <% end %>
+      </fieldset>
+    </div>
+    <div class="mt-4 flex gap-2"><%= f.submit_button "Save plan" %><%= link_to "Cancel", ops_plans_path, class: button_classes(:ghost) %></div>
+  <% end %>
+<% end %>

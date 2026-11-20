@@ -18,6 +18,7 @@
             <%= link_to "Home", ops_root_path, class: "hover:underline", "aria-current": ("page" if controller_name == "dashboard") %>
             <%= link_to "Businesses", ops_businesses_path, class: "hover:underline", "aria-current": ("page" if controller_name == "businesses") %>
             <%= link_to "People", ops_users_path, class: "hover:underline", "aria-current": ("page" if controller_name == "users") %>
+            <%= link_to "Plans", ops_plans_path, class: "hover:underline", "aria-current": ("page" if controller_name == "plans") %>
             <%= link_to "Operators", ops_operators_path, class: "hover:underline", "aria-current": ("page" if controller_name == "operators") %>
             <%= link_to "Audit log", ops_audit_entries_path, class: "hover:underline", "aria-current": ("page" if controller_name == "audit_entries") %>
           </nav>

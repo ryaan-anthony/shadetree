@@ -1,0 +1,33 @@
+<% content_for :title, "Limits and features for #{@business.name}" %>
+<% overrides = @business.plan_overrides %>
+<% plan = @business.plan %>
+<p class="text-sm2"><%= link_to "← #{@business.name}", ops_business_path(@business, anchor: "plan"), class: "text-muted hover:underline" %></p>
+<h1 class="page-title mt-1">Comp limits or features</h1>
+<p class="page-lede"><%= @business.name %> is on <%= plan.name %>. Anything left on “<%= plan.name %>'s” follows the plan. Nothing is billed or changed in the billing provider.</p>
+<%= card class: "mt-4 max-w-2xl" do %>
+  <%= form_with url: ops_business_plan_overrides_path(@business), method: :patch, data: { turbo_confirm: "Save these limits and features for #{@business.name}?" } do %>
+    <fieldset><legend class="label">Limits</legend>
+      <% Plan::LIMITS.each do |key, label| %>
+        <% set = overrides.fetch("limits", {}) %>
+        <% mode = !set.key?(key) ? "" : (set[key].nil? ? "unlimited" : "custom") %>
+        <div class="grid gap-2 py-2 sm:grid-cols-3 sm:items-end" id="override-limit-<%= key %>">
+          <p class="text-sm text-ink sm:pb-2"><%= label %></p>
+          <div class="field"><label class="sr-only" for="limits_<%= key %>_mode"><%= label %></label>
+            <%= select_tag "limits[#{key}][mode]", options_for_select([ [ "#{plan.name}'s (#{plan.limits[key] || "unlimited"})", "" ], [ "Custom", "custom" ], [ "Unlimited", "unlimited" ] ], mode), class: "select", id: "limits_#{key}_mode" %></div>
+          <div class="field"><label class="sr-only" for="limits_<%= key %>_value"><%= label %>, custom</label><%= number_field_tag "limits[#{key}][value]", (set[key] if mode == "custom"), min: 0, class: "input", id: "limits_#{key}_value", placeholder: "Custom limit" %></div>
+        </div>
+      <% end %>
+    </fieldset>
+    <fieldset class="mt-4"><legend class="label">Features</legend>
+      <% Plan::FEATURES.each do |key, label| %>
+        <% set = overrides.fetch("features", {}) %>
+        <div class="grid gap-2 py-1.5 sm:grid-cols-3 sm:items-center">
+          <label class="text-sm text-ink sm:col-span-2" for="features_<%= key %>"><%= label %></label>
+          <%= select_tag "features[#{key}]", options_for_select([ [ "#{plan.name}'s (#{plan.features[key] ? "on" : "off"})", "" ], [ "On", "on" ], [ "Off", "off" ] ], set.key?(key) ? (set[key] ? "on" : "off") : ""), class: "select", id: "features_#{key}" %>
+        </div>
+      <% end %>
+    </fieldset>
+    <div class="field mt-4"><label class="label" for="reason">Reason</label><%= text_field_tag :reason, nil, class: "input", id: "reason", required: true, maxlength: 500, placeholder: "e.g. Beta customer: automations until launch" %></div>
+    <div class="mt-4 flex gap-2"><%= submit_tag "Save overrides", class: button_classes, name: nil %><%= link_to "Cancel", ops_business_path(@business, anchor: "plan"), class: button_classes(:ghost) %></div>
+  <% end %>
+<% end %>

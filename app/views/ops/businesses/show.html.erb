@@ -65,6 +65,11 @@
         <div class="flex justify-between gap-3" id="usage-<%= key %>"><dt class="text-subtle"><%= label %></dt><dd class="font-semibold text-ink"><%= limit ? "#{entitlements.used(key)} of #{limit}" : "#{entitlements.used(key)}, no limit" %></dd></div>
       <% end %>
     </dl>
+    <% if @business.plan_overrides.present? %>
+      <p class="mt-3 text-sm2 text-subtle" id="overrides">Overrides: <%= [ *@business.plan_overrides.fetch("limits", {}).map { |key, value| "#{Plan::LIMITS[key]} #{value || "unlimited"}" },
+                                                                        *@business.plan_overrides.fetch("features", {}).map { |key, value| "#{Plan::FEATURES[key]} #{value ? "on" : "off"}" } ].join("; ") %></p>
+    <% end %>
+    <%= link_to "Comp limits or features", edit_ops_business_plan_overrides_path(@business), class: "#{button_classes(:secondary, :sm)} mt-3" %>
     <p class="mt-3 text-sm2 text-muted">This period runs <%= local_date(entitlements.period.starts_at) %> to <%= local_date(entitlements.period.ends_at - 1.second) %> (<%= entitlements.period.billing_cycle? ? "billing cycle" : "calendar month" %>).</p>
   <% end %>
   <%= card title: "Activity", id: "counts" do %>
