@@ -83,6 +83,7 @@ class Ops::SupportInboxTest < ActionDispatch::IntegrationTest
   end
 
   test "replies reach everyone in the business who wrote on the ticket, or its Owners when they've gone" do
+    @ticket.update_columns(category: "question") # billing tickets are Owner-only (see support_ticket_test)
     @business.add_user(users(:two), role: "admin")
     as_business(@business) { @ticket.reply_from_member!(users(:two), "Same problem here") }
     assert_equal [ users(:one), users(:two) ].to_set, SupportNotifier.recipients(@ticket).to_set

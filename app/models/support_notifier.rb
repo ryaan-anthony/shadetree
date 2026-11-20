@@ -1,6 +1,7 @@
 # OPS-05: tells a ticket's people about support's reply, in the app and by email (NTF-02's
 # "support_reply", which each can turn off by email in their settings): every active member who
-# wrote on the ticket, or, when none of them is left, the business's Owners.
+# wrote on the ticket, or, when none of them is left, the business's Owners. Only people who may
+# still see the ticket (SupportTicket.visible_to): a role change or a billing ticket keeps others out.
 module SupportNotifier
   module_function
 
@@ -18,7 +19,8 @@ module SupportNotifier
   def recipients(ticket)
     memberships = ticket.business.business_users.active.includes(:user).to_a.reject { _1.user.deleted? }
     writers = Tenancy.with_business(ticket.business) { ticket.messages.unscope(:order).where(from_operator: false).distinct.pluck(:author_id) }
-    took_part = memberships.select { writers.include?(_1.user_id) }
-    (took_part.presence || memberships.select(&:owner?)).map(&:user)
+    can_see = ->(membership) { Tenancy.with_business(ticket.business) { SupportTicket.visible_to(membership).exists?(ticket.id) } }
+    took_part = memberships.select { writers.include?(_1.user_id) && can_see.(_1) }
+    (took_part.presence || memberships.select { _1.owner? && can_see.(_1) }).map(&:user)
   end
 end

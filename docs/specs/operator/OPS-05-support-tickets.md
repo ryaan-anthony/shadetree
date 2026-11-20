@@ -27,8 +27,8 @@ email, and nothing gets lost in a personal inbox.
 - [x] Any member can open a ticket from a Help menu: subject, category (question, bug, billing,
       feature request), message and attachments (screenshots). The page they were on and their
       browser details are attached automatically.
-- [x] Members see their business's tickets with status (Open, Waiting on you, Resolved) and
-      threaded replies.
+- [x] Members see their business's tickets (as their role allows) with status (Open, Waiting on
+      you, Resolved) and threaded replies.
 - [x] Operators get a ticket inbox in the console: filter by status, category, plan and
       assignee; assign to an operator; reply; add internal notes; change status. Each ticket
       links to the business page (OPS-02).
@@ -52,8 +52,10 @@ email, and nothing gets lost in a personal inbox.
 - Tickets are only between a business and Shadetree, never a helpdesk for a business's own
   clients (product owner).
 - Built in the app, like the console ([ADR 0020](../../adr/0020-in-app-support-tickets.md)).
-- Any member, technicians included, opens and sees the business's tickets. "Waiting on you"
-  tickets auto-resolve after 7 days (`SUPPORT_AUTO_RESOLVE_DAYS`).
+- Any member, technicians included, can open a ticket. People without office access see only
+  the tickets they opened, and billing tickets need the billing permission; everyone sees their
+  own (owner's decision; `SupportTicket.visible_to`). "Waiting on you" tickets auto-resolve
+  after 7 days (`SUPPORT_AUTO_RESOLVE_DAYS`).
 
 ## Implementation notes
 

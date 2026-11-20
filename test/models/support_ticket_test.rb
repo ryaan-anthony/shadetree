@@ -2,6 +2,7 @@ require "test_helper"
 
 # OPS-05: stale "Waiting on you" tickets are resolved with a notice to the member.
 class SupportTicketTest < ActiveSupport::TestCase
+  include PermissionHelpers
   include ActionMailer::TestHelper
 
   test "tickets waiting too long are resolved, with a notice in the thread, the app and email" do
@@ -51,6 +52,20 @@ class SupportTicketTest < ActiveSupport::TestCase
     assert_equal 2, calls, "the second ticket was still handled"
   ensure
     SupportNotifier.define_singleton_method(:replied, original) if original
+  end
+
+  test "reply notices only go to people who may still see the ticket" do
+    business = businesses(:one)
+    helper = member_with_role("admin", business:)
+    billing = as_business(business) { SupportTicket.open!(opened_by: users(:one), subject: "Card", category: "billing", body: "Declined") }
+    as_business(business) { billing.reply_from_member!(helper, "I'll add the new card") } # before visibility rules, or before a demotion
+    assert_equal [ users(:one) ], SupportNotifier.recipients(billing), "the admin wrote on it but can't see billing tickets"
+
+    question = as_business(business) { SupportTicket.open!(opened_by: users(:one), subject: "Export", category: "question", body: "?") }
+    as_business(business) { question.reply_from_member!(helper, "Me too") }
+    assert_includes SupportNotifier.recipients(question), helper
+    business.business_users.find_by!(user: helper).update!(role: "technician")
+    assert_not_includes SupportNotifier.recipients(question), helper, "demoted: it isn't their ticket any more"
   end
 
   test "a bad SUPPORT_AUTO_RESOLVE_DAYS falls back to 7" do

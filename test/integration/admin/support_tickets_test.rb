@@ -79,6 +79,45 @@ class Admin::SupportTicketsTest < ActionDispatch::IntegrationTest
     assert_select "#ticket-#{theirs.uid}", 0
   end
 
+  test "technicians see only their own tickets, and billing tickets need the billing permission" do
+    tech = member_with_role("technician")
+    admin = member_with_role("admin")
+    billing, question = as_business(@business) do
+      [ SupportTicket.open!(opened_by: users(:one), subject: "Card declined", category: "billing", body: "Help",
+                            files: [ fixture_file_upload("logo.png", "image/png") ]),
+        SupportTicket.open!(opened_by: users(:one), subject: "How do I export?", category: "question", body: "Hi") ]
+    end
+    own = as_business(@business) { SupportTicket.open!(opened_by: tech, subject: "My plan?", category: "billing", body: "Hi") }
+    file = as_business(@business) { billing.messages.first.files.first }
+
+    sign_in tech
+    get admin_support_tickets_path
+    assert_select "#ticket-#{own.uid}", 1, "their own, billing or not"
+    assert_select "#ticket-#{question.uid}", 0
+    assert_select "#ticket-#{billing.uid}", 0
+    [ admin_support_ticket_path(question), admin_support_ticket_path(billing), admin_support_ticket_file_path(billing, file) ].each do |path|
+      get path
+      assert_response :not_found
+    end
+    post reply_admin_support_ticket_path(question), params: { support_message: { body: "x" } }
+    assert_response :not_found
+    sign_out :user
+
+    sign_in admin
+    get admin_support_tickets_path
+    assert_select "#ticket-#{question.uid}", 1
+    assert_select "#ticket-#{billing.uid}", 0, "billing is owner-only"
+    assert_select "#ticket-#{own.uid}", 0, "another member's billing ticket"
+    get admin_support_ticket_path(billing)
+    assert_response :not_found
+    sign_out :user
+
+    sign_in users(:one)
+    post switch_admin_business_path, params: { business: @business.uid }
+    get admin_support_tickets_path
+    [ billing, question, own ].each { assert_select "#ticket-#{_1.uid}", 1 }
+  end
+
   test "screenshots are served only to members of the business, through a short-lived link" do
     ticket = as_business(@business) { SupportTicket.open!(opened_by: users(:one), subject: "Logo", category: "bug", body: "See", files: [ fixture_file_upload("logo.png", "image/png") ]) }
     file = as_business(@business) { ticket.messages.first.files.first }

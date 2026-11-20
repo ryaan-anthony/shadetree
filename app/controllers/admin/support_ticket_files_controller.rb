@@ -10,7 +10,7 @@ class Admin::SupportTicketFilesController < Admin::BaseController
   allow_any_member
 
   def show
-    ticket = SupportTicket.find_by_param!(params[:support_ticket_id])
+    ticket = SupportTicket.visible_to(current_membership).find_by_param!(params[:support_ticket_id])
     file = ActiveStorage::Attachment.where(record_type: "SupportMessage", name: "files",
                                            record_id: ticket.messages.where(internal: false).select(:id)).find_by!(id: params[:id])
     expires_in URL_LIFETIME - 1.minute, public: false

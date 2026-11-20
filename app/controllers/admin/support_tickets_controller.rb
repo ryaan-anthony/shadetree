@@ -1,5 +1,5 @@
 # OPS-05: asking Shadetree for help. Any member opens a ticket (the page they came from and their
-# browser go with it) and sees the business's tickets and their replies.
+# browser go with it) and sees the tickets SupportTicket.visible_to allows, with their replies.
 class Admin::SupportTicketsController < Admin::BaseController
   impersonation :read_only # OPS-03: support sees the member's tickets; replies go through the console
   PER_PAGE = 25
@@ -16,7 +16,7 @@ class Admin::SupportTicketsController < Admin::BaseController
   rate_limit to: PER_BUSINESS_PER_HOUR, within: 1.hour, by: -> { current_business.id }, only: %i[create reply], with: slow_down, name: "business"
 
   def index
-    scope = SupportTicket.includes(:opened_by).recent
+    scope = SupportTicket.visible_to(current_membership).includes(:opened_by).recent
     @total = scope.count
     @page = params[:page].to_i.clamp(1, [ (@total.to_f / PER_PAGE).ceil, 1 ].max)
     @tickets = scope.offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
@@ -51,7 +51,7 @@ class Admin::SupportTicketsController < Admin::BaseController
   private
 
   def set_ticket
-    @ticket = SupportTicket.includes(messages: [ :author, { files_attachments: :blob } ]).find_by_param!(params[:id])
+    @ticket = SupportTicket.visible_to(current_membership).includes(messages: [ :author, { files_attachments: :blob } ]).find_by_param!(params[:id])
   end
 
   # Screenshots are uploads, so (as with sending to clients) they need a confirmed account.

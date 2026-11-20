@@ -22,7 +22,19 @@ class SupportTicket < ApplicationRecord
   validates :page, length: { maximum: 500 }
 
   scope :recent, -> { order(last_message_at: :desc, id: :desc) }
+
   scope :unresolved, -> { where.not(status: "resolved") }
+
+  # Which of the business's tickets a member sees (owner's decision): people without office access
+  # see only the tickets they opened, and billing tickets need the billing permission. Everyone
+  # always sees their own.
+  def self.visible_to(membership)
+    user = membership.user
+    scope = all
+    scope = scope.where(opened_by: user) unless membership.can?(:office)
+    scope = scope.where.not(category: "billing").or(scope.where(opened_by: user)) unless membership.can?(:billing)
+    scope
+  end
 
   # "Waiting on you" tickets with no answer after this long are resolved, with a notice.
   # A whole number of days from SUPPORT_AUTO_RESOLVE_DAYS; anything else means 7, never a failed boot.
