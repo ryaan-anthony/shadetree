@@ -1,49 +1,53 @@
 require "test_helper"
 
-# PLT-09: /up/backup tells the external uptime check when backups have stopped.
+# PLT-09: /up/backup tells the external uptime check when backups, or their nightly restore
+# drill, have stopped.
 class BackupHealthEndpointTest < ActionDispatch::IntegrationTest
   setup do
     @dir = Dir.mktmpdir
-    @file = File.join(@dir, "last_success")
-    @previous = ENV["BACKUP_STATUS_FILE"]
-    ENV["BACKUP_STATUS_FILE"] = @file
+    @previous = %w[BACKUP_STATUS_DIR BACKUP_MAX_AGE_HOURS].index_with { ENV[_1] }
+    ENV["BACKUP_STATUS_DIR"] = @dir
   end
 
   teardown do
-    ENV["BACKUP_STATUS_FILE"] = @previous
+    @previous.each { ENV[_1] = _2 }
     FileUtils.rm_rf(@dir)
   end
 
-  test "503 until a backup has been taken, saying nothing more" do
+  test "503 stale until a backup has been taken, saying nothing more" do
     get backup_health_check_path
     assert_response :service_unavailable
     assert_equal "stale", response.body
   end
 
-  test "ok after a recent backup" do
-    FileUtils.touch(@file)
+  test "503 untested after a backup whose drill hasn't passed, ok once it has" do
+    touch "last_success"
+    get backup_health_check_path
+    assert_response :service_unavailable
+    assert_equal "untested", response.body
+
+    touch "last_drill"
     get backup_health_check_path
     assert_response :success
     assert_equal "ok", response.body
   end
 
-  test "503 once the last backup is older than BACKUP_MAX_AGE_HOURS" do
-    FileUtils.touch(@file, mtime: 27.hours.ago.to_time)
+  test "stale and untested once older than BACKUP_MAX_AGE_HOURS" do
+    touch "last_success", 27.hours.ago
+    touch "last_drill"
     get backup_health_check_path
-    assert_response :service_unavailable
+    assert_equal "stale", response.body
 
-    with_env("BACKUP_MAX_AGE_HOURS" => "48") do
-      get backup_health_check_path
-      assert_response :success
-    end
+    touch "last_success"
+    touch "last_drill", 27.hours.ago
+    get backup_health_check_path
+    assert_equal "untested", response.body
+
+    ENV["BACKUP_MAX_AGE_HOURS"] = "48"
+    get backup_health_check_path
+    assert_equal "ok", response.body
   end
 
   private
-    def with_env(values)
-      previous = values.keys.index_with { ENV[_1] }
-      values.each { ENV[_1] = _2 }
-      yield
-    ensure
-      previous.each { ENV[_1] = _2 }
-    end
+    def touch(name, at = Time.current) = FileUtils.touch(File.join(@dir, name), mtime: at.to_time)
 end

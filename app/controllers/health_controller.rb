@@ -7,7 +7,7 @@
 # cheap boot check the deploy uses. Says only "ok" or "stalled"; no counts or job names.
 #
 # PLT-09: /up/backup, 503 "stale" when no complete backup has been taken within
-# BACKUP_MAX_AGE_HOURS (BackupStatus).
+# BACKUP_MAX_AGE_HOURS, or "untested" when no restore drill has passed since (BackupStatus).
 class HealthController < ActionController::Base
   def jobs
     stalled = JobHealth.available? && JobHealth.oldest_wait > JobHealth.wait_threshold
@@ -15,7 +15,7 @@ class HealthController < ActionController::Base
   end
 
   def backup
-    fresh = BackupStatus.fresh?
-    render plain: fresh ? "ok" : "stale", status: fresh ? :ok : :service_unavailable
+    state = BackupStatus.state
+    render plain: state, status: state == "ok" ? :ok : :service_unavailable
   end
 end

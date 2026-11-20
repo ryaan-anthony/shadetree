@@ -6,7 +6,8 @@
 #
 # - copies ops/backup to ~/.local/share/shadetree-<environment>/backup, where the timer runs it;
 # - installs the template units shadetree-backup@.service and .timer into ~/.config/systemd/user
-#   and enables shadetree-backup@<environment>.timer (daily at 07:30 UTC, caught up after a missed run);
+#   and enables shadetree-backup@<environment>.timer (daily at 07:30 UTC, caught up after a missed run:
+#   a backup, then the restore drill on it);
 # - pulls the PostgreSQL client image (a failure only warns).
 # It refuses while a restore runs or an unfinished restore left its marker. The deploy user's
 # systemd instance must run without a login: once, as root, `loginctl enable-linger <user>`.

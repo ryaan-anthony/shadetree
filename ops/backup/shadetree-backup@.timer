@@ -1,5 +1,5 @@
 [Unit]
-Description=Daily Shadetree %i backup (PLT-09)
+Description=Daily Shadetree %i backup and restore drill (PLT-09)
 
 [Timer]
 OnCalendar=*-*-* 07:30:00 UTC

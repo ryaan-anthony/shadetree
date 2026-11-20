@@ -154,7 +154,7 @@ jobs:
           unit=shadetree-backup@staging.service
           journal() { sudo journalctl --no-pager -n "${1:-40}" _SYSTEMD_USER_UNIT="$unit" || true; }
           stop() { echo "FAIL $1"; journal 60; docker logs --tail 60 "$APP" || true; exit 1; }
-          health() { docker exec "$APP" curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/up/backup; }
+          health() { docker exec "$APP" curl -s -w ' %{http_code}' http://localhost:3000/up/backup; }
           wait_unit() {
             for _ in $(seq 1 120); do
               [ -n "$(systemctl --user list-jobs --no-legend "$unit")" ] && { sleep 2; continue; }
@@ -193,16 +193,17 @@ jobs:
           contains "a location that is not a mount point is refused" "not a mount point" "$("$tool" staging backup 2>&1 || true)"
           sudo mount -t tmpfs -o size=512m,mode=0700,uid=1000,gid=1000 tmpfs "$backups" # stands in for the off-machine mount
 
-          echo "== the deploy's first backup, through the systemd unit in the background"
+          echo "== the deploy's first backup, through the systemd unit in the background: a backup, then the drill"
           contains "the first backup starts" "first backup started" "$("$tool" staging first-backup 2>&1)"
           expect "and succeeds" success "$(wait_unit)"
-          journal 20
+          journal 30
+          contains "the unit drilled the new set" "Restore drill passed." "$(journal 40)"
           good="$(sets)"
           expect "one backup set" 1 "$(grep -c . <<< "$good")"
           expect "it holds both dumps, the uploads, the counts and checksums" "SHA256SUMS counts primary.dump queue.dump storage.tar" "$(sudo ls "$backups/$good" | xargs)"
           expect "the uploaded file is in it" 1 "$(sudo tar -tf "$backups/$good/storage.tar" | grep -c "/$key$" || true)"
           expect "the counts include the business" businesses=1 "$(sudo grep '^businesses=' "$backups/$good/counts")"
-          expect "/up/backup is ok" 200 "$(health)"
+          expect "/up/backup is ok" "ok 200" "$(health)"
           expect "the database password is not in the backup's log" 0 "$(sudo journalctl --no-pager _SYSTEMD_USER_UNIT="$unit" | grep -cF "$DB_PASSWORD" || true)"
           contains "a later deploy takes no first backup" "already holds sets" "$("$tool" staging first-backup 2>&1)"
 
@@ -257,7 +258,9 @@ jobs:
           expect "the restored app has the business" 1 "$(rails 'print Business.where(name: "Deploy CI").count')"
           expect "and the uploaded file" 4096 "$(rails "print ActiveStorage::Blob.find_by!(key: '$key').download.bytesize")"
           expect "the restore's own backup is the newest set" 2 "$(sets | grep -c .)"
-          expect "/up/backup is ok again" 200 "$(health)"
+          expect "/up/backup waits for a drill of the restored state" "untested 503" "$(health)"
+          "$tool" staging restore-drill | tail -n 1
+          expect "/up/backup is ok after it" "ok 200" "$(health)"
           contains "the newest set cannot be deleted" "is the newest set" "$("$tool" staging delete "$(sets | tail -n 1)" 2>&1 || true)"
           rm -f "$RUNNER_TEMP/app.env"
           if [ "$failed" -ne 0 ]; then docker logs --tail 100 "$APP"; exit 1; fi

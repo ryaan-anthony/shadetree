@@ -3,7 +3,9 @@
 # environment's VM as the deploy user (in the docker group), from the copy ops/backup/install.sh
 # keeps in ~/.local/share/shadetree-<environment>/backup:
 #
-#   docker.sh <environment> backup [--force]    one backup now (the timer runs this daily)
+#   docker.sh <environment> nightly             a backup, then the restore drill on it (the timer
+#                                               runs this daily)
+#   docker.sh <environment> backup [--force]    one backup now
 #   docker.sh <environment> first-backup        start the timer's backup in the background if the
 #                                               location holds no set yet (the deploy runs this)
 #   docker.sh <environment> restore-drill [SET] restore the newest set (or SET) into scratch
@@ -18,8 +20,9 @@
 # <environment> is staging or production. The PostgreSQL tools run in a throwaway container of
 # BACKUP_PG_IMAGE (default postgres:17) on the database's Docker network, as uid 1000 with no
 # capabilities, so the database needs no published port and the VM no PostgreSQL client. A backup
-# mounts the app's storage volume read-only; the status file /up/backup reads is then written by
-# the app's own image, in a container with no network.
+# mounts the app's storage volume read-only. After a backup, and after a drill that passed, a status
+# file /up/backup reads (storage/backup/last_success, last_drill) is touched by the app's own image,
+# in a container with no network.
 #
 # No secret is stored for the backup: the database host, name, user and password are read when it
 # runs from the app container's settings (docker inspect works on a stopped container too) and
@@ -140,11 +143,14 @@ do_backup() { # $1: 1 to force
   pg_run --name "$app-backup" -v "$BACKUP_DIR:/backups" -v "$volume:/storage:ro" \
     -e BACKUP_DIR=/backups -e STORAGE_DIR=/storage -e SET_PREFIX="$app" -e BACKUP_DB_NAME="$db" \
     -e BACKUP_FORCE="$1" -e BACKUP_RETENTION_DAYS --entrypoint bash "$image" /ops/backup.sh
-  # The status file /up/backup reads: only now, after the set is complete. It holds no data.
+  touch_status last_success # only now, after the set is complete
+}
+
+# The status files /up/backup reads (BackupStatus). They hold no data.
+touch_status() {
   docker run --rm --network none --user 1000:1000 --cap-drop ALL --security-opt no-new-privileges \
-    -v "$volume:/rails/storage" --entrypoint sh "$app_image" \
-    -c 'mkdir -p storage/backup && touch storage/backup/last_success'
-  log "status file updated"
+    -v "$volume:/rails/storage" --entrypoint sh "$app_image" -c 'mkdir -p storage/backup && touch "storage/backup/$1"' sh "$1"
+  log "status file $1 updated"
 }
 
 cmd_backup() {
@@ -201,6 +207,7 @@ cmd_restore_drill() {
   docker run --rm --init --network "$DB_NETWORK" --user 1000:1000 --cap-drop ALL --security-opt no-new-privileges \
     --env-file "$tmp/app.env" -e DATABASE_NAME="$scratch" -e COUNTS="/backups/$set/counts" \
     -v "$BACKUP_DIR:/backups:ro" -v "$drill_volume:/rails/storage:ro" --entrypoint /rails/bin/rails "$app_image" backup:verify_restore
+  touch_status last_drill
 }
 
 drill_cleanup() {
@@ -250,7 +257,7 @@ cmd_restore() {
   # been restored on purpose): it becomes the newest set, and /up/backup turns ok.
   log "restored. Backing up the restored state"
   do_backup 1
-  log "done. Start the app: docker start $app (or run the Deploy workflow)"
+  log "done. Start the app: docker start $app (or run the Deploy workflow); the next nightly run drills the new set"
 }
 
 cmd_list() {
@@ -284,6 +291,13 @@ cmd_pull() {
 command="${1:-}"
 [ "$#" -gt 0 ] && shift
 case "$command" in
+  nightly)
+    cmd_backup
+    # The drill in a process of its own, which takes the lock afresh and cleans up on exit: release
+    # this one's first (closing the descriptor releases the flock).
+    exec 9>&-
+    "$0" "$environment" restore-drill
+    ;;
   backup) cmd_backup "$@" ;;
   first-backup) cmd_first_backup ;;
   restore-drill) cmd_restore_drill "${1:-}" ;;
@@ -291,5 +305,5 @@ case "$command" in
   list) cmd_list ;;
   delete) cmd_delete "${1:-}" ;;
   pull) cmd_pull ;;
-  *) die "usage: docker.sh $environment backup [--force] | first-backup | restore-drill [SET] | restore SET [--force] | list | delete SET | pull" ;;
+  *) die "usage: docker.sh $environment nightly | backup [--force] | first-backup | restore-drill [SET] | restore SET [--force] | list | delete SET | pull" ;;
 esac
