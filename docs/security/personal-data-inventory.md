@@ -2,7 +2,7 @@
 
 > PLT-10 (R22). Where personal data lives in Shadetree, how long it stays, and what keeps it out
 > of logs, monitoring and analytics. Update it in the same PR as any feature that stores,
-> sends or logs personal data. Last reviewed: 2026-11-19.
+> sends or logs personal data. Last reviewed: 2026-11-20.
 
 **Clients** are a business's customers (no accounts). **Users** are business staff and
 operators. **Visitors** use the public site and forms. A client's data belongs to the business;
@@ -29,12 +29,13 @@ erasing a client (INS-02, `ClientErasure`) removes or scrubs everything listed u
 | User | `user_sessions`: ip_address, user_agent; `audit_entries`: operator_email, ip_address, user_agent | Sessions until signed out or expired; the audit log is append-only |
 | User | `data_exports.requested_by_email`; `operator_notes.body`, `support_messages.body` (may quote client details a business pasted) | With the business |
 | Business | `businesses` / `locations`: email, phone, address (business contact details, often a sole trader's own) | With the business |
+| User / anyone | `action_mailbox_inbound_emails`: envelope_from, envelope_to, auth_results (sender's domain and address), plus the raw message file (OPS-05 support email: whatever the sender wrote) | 14 days after processing (Action Mailbox incineration); `PurgeInboundEmailsJob` removes anything older than 14 days |
 | Visitor | `contact_messages`: name, email, business_name, body, ip_address, user_agent | IP and browser 30 days; spam 30 days; messages 2 years |
 
 ## Files (Active Storage, ADR 0008: local disk today; object storage in staging and production once PLT-09 lands)
 
 Visit photos, job and document attachments, request photos, stored quote and invoice PDFs and
-their revisions, client import uploads (CSV), full data-export zips (deleted when the 7-day link
+their revisions, raw support email (`message.eml`, 14 days, see above), client import uploads (CSV), full data-export zips (deleted when the 7-day link
 expires), support-ticket files, business logos. Photos are stripped of location metadata
 (PLT-13). File keys are random, but `active_storage_blobs.filename` keeps the uploaded name,
 which can name a client ("Smith invoice.pdf"); file addresses (signed ids, then that name) are
@@ -56,7 +57,11 @@ blanked in logs.
 - **Email:** outgoing email (quotes, invoices, visit notices, receipts) contains client names,
   addresses and document content and passes through the email provider (ADR 0017), named on
   the sub-processors page.
-- **Third parties:** hosting provider (everything above), email provider, Stripe (billing
+- **Incoming support email (OPS-05, ADR 0021):** passes through Cloudflare Email Routing and
+  an Email Worker, which forwards a copy to the human support inbox and posts it to the app.
+  The app logs only an outcome and record ids (`inbound_email.*`, `support_mail.received`),
+  never addresses, subjects or bodies (`test/integration/inbound/support_emails_test.rb`).
+- **Third parties:** hosting provider (everything above), Cloudflare (incoming support email), email provider, Stripe (billing
   contacts and payment details, once BIL-04/PAY online payments ship). See
   `/legal/subprocessors`. No other service receives client data.
 

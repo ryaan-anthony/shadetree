@@ -43,4 +43,5 @@ approach, a hosting change. Small, local choices belong in the PR description.
 | [0018](0018-client-page-referrer-policy.md) | Client pages send Referrer-Policy: same-origin | Accepted |
 | [0019](0019-hand-built-operator-console.md) | Hand-built operator console, with in-app two-factor and an append-only audit log | Accepted |
 | [0020](0020-in-app-support-tickets.md) | Support tickets built into the app | Accepted |
+| [0021](0021-inbound-support-email.md) | Inbound support email through Cloudflare Email Routing and a signed Worker post | Accepted |
 | [0023](0023-homelab-vms-and-cloudflare-tunnel.md) | Staging and production on the owner's homelab VMs, deployed by GitHub Actions, behind a Cloudflare tunnel | Accepted |
