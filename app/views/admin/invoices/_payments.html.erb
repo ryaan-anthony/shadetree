@@ -8,9 +8,13 @@
       <% payments.each do |payment| %>
         <li id="payment-<%= payment.uid %>" class="items-start text-sm">
           <div class="min-w-0 flex-1">
-            <p class="font-medium text-ink"><%= payment.method_label %><%= " #{payment.reference}" if payment.reference %>
-              <span class="font-normal text-muted">· <%= local_date(payment.received_on) %></span></p>
+            <p class="font-medium text-ink"><%= payment.online? ? (payment.method_detail || "Card") : payment.method_label %><%= " #{payment.reference}" if payment.reference && payment.recorded? %>
+              <span class="font-normal text-muted">· <%= local_date(payment.received_on) %></span>
+              <% if (adjustment = payment.adjustment_label) %><%= badge adjustment, tone: (payment.dispute_status.in?([ nil, "won" ]) ? :warning : :danger) %><% end %></p>
             <p class="text-sm2 text-muted"><%= payment.online? ? "Paid online" : "Recorded" %><%= " by #{payment.recorded_by.full_name}" if payment.recorded_by %>, <%= local_time(payment.created_at) %></p>
+            <% if payment.online? %><%# PAY-04: Stripe's reference, to find it in the Stripe dashboard (refunds, disputes) %>
+              <p class="break-all text-sm2 text-muted">Stripe <%= payment.reference %><%= ", #{money(payment.refunded)} refunded" if payment.refunded_cents.positive? %></p>
+            <% end %>
             <% if (receipt = payment.email_messages.max_by(&:created_at)) %>
               <p class="text-sm2 <%= receipt.problem? ? "font-medium text-danger" : "text-muted" %>">Receipt to <%= receipt.to %>: <%= receipt.status_label.downcase %></p>
             <% end %>

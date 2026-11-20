@@ -68,8 +68,8 @@ feature flags — each one audited and hard to do by accident.
 - Suspending sets `active: false` with `suspended_at` and the reason, so everything keyed on
   `active?` stops (client links "unavailable", request form, automations, reminders); queued
   client email isn't sent; members get a contact-support page (403) and can switch business.
-  There's no provider payment flow yet, so nothing in flight can be blocked; re-check that
-  provider payments still settle for a suspended business when BIL-05/PAY-04 land.
+  PAY-04: a suspended business's client links can't start a payment, but Stripe payments
+  already under way still settle and are recorded (re-check for BIL-05).
 - People: resend confirmation, password reset, unlock. Plans: name, description, listing, order,
   prices, limits, features (not key, default or provider prices). Per-business overrides need a
   reason. Presets: visit length and starter services. Flags: off, on, percentage or business IDs.

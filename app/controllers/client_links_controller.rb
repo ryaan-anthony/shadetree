@@ -4,6 +4,9 @@ class ClientLinksController < ApplicationController
   impersonation :read_only
   include ClientLinkAccess
   skip_before_action :load_client_link, only: :request_fresh
+  # PAY-04: an invoice's Pay form posts to us and is redirected to Stripe Checkout; the page's
+  # form-action has to allow where it ends up (PLT-13).
+  content_security_policy(only: :show) { |policy| policy.form_action :self, "https://checkout.stripe.com" }
   before_action :load_link_for_request, only: :request_fresh
 
   def show

@@ -61,6 +61,16 @@
              actions: button_to(admin_job_invoices_path(job), class: button_classes(invoices.any? ? :ghost : :secondary, :sm),
                                 form: { class: "contents", data: (invoices.reject(&:void?).any? ? { turbo_confirm: "#{job.number} already has #{invoices.reject(&:void?).map(&:number).to_sentence}. Create another invoice?", turbo_confirm_button: "Create invoice" } : {}) }) { icon("plus") + " Create invoice" } do %>
       <%= render "admin/invoices/list", invoices:, empty: "Not invoiced yet. Create invoice copies this job's items, discount and taxes." %>
+      <% job_payments = Payment.where(invoice_id: invoices.map(&:id)).includes(:invoice).chronological.to_a %>
+      <% if job_payments.any? %><%# PAY-04/PAY-05: what's been paid on them, online ones with Stripe's reference %>
+        <ul class="list border-t border-line" id="job-payments" aria-label="Payments">
+          <% job_payments.each do |payment| %>
+            <li class="text-sm2"><%= icon "dollar-sign", class: "size-4 text-faint" %>
+              <span class="min-w-0 flex-1 break-words text-subtle"><%= payment.online? ? "Paid online, #{payment.method_detail || "card"}" : payment.method_label %> · <%= payment.invoice.number %> · <%= local_date(payment.received_on) %><%= " · #{payment.reference}" if payment.reference %><%= " · #{payment.adjustment_label}" if payment.adjustment_label %></span>
+              <span class="money font-semibold text-ink"><%= money(payment.amount) %></span></li>
+          <% end %>
+        </ul>
+      <% end %>
     <% end %>
 
     <%= card title: "Work to do", subtitle: (job.quote ? "Copied from quote #{job.quote.number}." : nil), flush: true,
