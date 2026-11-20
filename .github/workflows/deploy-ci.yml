@@ -180,7 +180,7 @@ jobs:
           expect "a 1 MiB body is not" no "$([ "$(code -X POST -H "Host: $APP_HOST" --data-binary @"$RUNNER_TEMP/1m" "$url/up")" = 413 ] && echo yes || echo no)"
           rm -f "$RUNNER_TEMP/27m" "$RUNNER_TEMP/1m"
           code -H "Host: $APP_HOST" "$url/up/jobs" > /dev/null && code -H "Host: $APP_HOST" "$url/up/backup" > /dev/null && sleep 1
-          expect "the health checks stay out of the log" 0 "$(docker logs "$APP" 2>&1 | grep -c -e '/up/jobs' -e '/up/backup' -e '"path":"/up"' || true)"
+          expect "the health checks stay out of the log" 0 "$(docker logs "$APP" 2>&1 | grep -c -e '"method":"GET","path":"/up' || true)" # the POSTs above are not health checks
           if [ "$failed" -ne 0 ]; then docker logs --tail 100 "$APP"; exit 1; fi
 
       - name: A failed deploy leaves the site up; a re-deploy reuses the image
