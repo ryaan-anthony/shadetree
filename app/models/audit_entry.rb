@@ -25,6 +25,8 @@ class AuditEntry < ApplicationRecord
     "business.reactivated" => "Reactivated a business",
     "business.plan_overrides_changed" => "Changed a business's limits or features",
     "plan.updated" => "Edited a plan",
+    "preset.updated" => "Edited an industry preset",
+    "feature_flag.changed" => "Changed a release flag",
     "user.confirmation_resent" => "Resent a confirmation email",
     "user.password_reset_sent" => "Sent a password reset",
     "user.unlocked" => "Unlocked an account"
