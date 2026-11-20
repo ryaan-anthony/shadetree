@@ -14,19 +14,21 @@ module InboundEmailHelpers
     saved.each { ENV[_1] = _2 }
   end
 
-  def raw_email(from: "user1@example.com", to: "support@getshadetree.com", subject: "Help", body: "It spins forever.", **headers)
-    Mail.new do
+  # As Cloudflare hands it over: its own Authentication-Results prepended (auth: nil for none).
+  def raw_email(from: "user1@example.com", to: "support@getshadetree.com", subject: "Help", body: "It spins forever.", auth: CLOUDFLARE_PASS, **headers)
+    mail = Mail.new do
       from from
       to to
       subject subject
       body body
       message_id "<#{SecureRandom.hex(8)}@example.com>"
       headers.each { |name, value| self[name.to_s.tr("_", "-")] = value }
-    end.to_s
+    end
+    "#{"Authentication-Results: #{auth}\r\n" if auth}#{mail}"
   end
 
-  def inbound_headers(body, from: "bounce@example.com", to: "support@getshadetree.com", auth: CLOUDFLARE_PASS, at: Time.current, secret: INBOUND_SECRET)
-    envelope = Base64.urlsafe_encode64({ from:, to:, auth: }.to_json, padding: false)
+  def inbound_headers(body, from: "bounce@example.com", to: "support@getshadetree.com", at: Time.current, secret: INBOUND_SECRET)
+    envelope = Base64.urlsafe_encode64({ from:, to: }.to_json, padding: false)
     { "Content-Type" => "message/rfc822", "X-Shadetree-Timestamp" => at.to_i.to_s, "X-Shadetree-Envelope" => envelope,
       "X-Shadetree-Signature" => InboundEmailIngress.signature(at.to_i, envelope, body, key: secret) }
   end

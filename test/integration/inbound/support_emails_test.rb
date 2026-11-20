@@ -7,7 +7,7 @@ class Inbound::SupportEmailsTest < ActionDispatch::IntegrationTest
 
   def deliver(body, headers = inbound_headers(body)) = post(inbound_support_email_path, params: body, headers:)
 
-  test "a correctly signed email is stored once, with the envelope and Cloudflare's result, and routed" do
+  test "a correctly signed email is stored once per recipient, with the envelope and Cloudflare's result, and routed" do
     with_inbound_email do
       body = raw_email
       assert_difference -> { ActionMailbox::InboundEmail.count } do
@@ -20,6 +20,21 @@ class Inbound::SupportEmailsTest < ActionDispatch::IntegrationTest
 
       assert_no_difference(-> { ActionMailbox::InboundEmail.count }, "a retry of the same message") { deliver(body) }
       assert_response :no_content
+      assert_difference(-> { ActionMailbox::InboundEmail.count }, 1, "the Cc'd copy to a reply address is kept too") do
+        deliver(body, inbound_headers(body, to: "support+abc@getshadetree.com"))
+      end
+    end
+  end
+
+  test "Cloudflare's result is the first Authentication-Results in the raw message; later or foreign ones are ignored" do
+    with_inbound_email do
+      spoof = "Authentication-Results: x y; dkim=pass header.d=victim.example\r\n"
+      folded = "mx.cloudflare.net;\r\n dkim=none;\r\n\tdmarc=none header.from=example.com"
+      [ [ "Authentication-Results: #{folded}\r\n#{spoof}#{raw_email(auth: nil)}", "mx.cloudflare.net; dkim=none; dmarc=none header.from=example.com" ],
+        [ "#{spoof}#{raw_email}", "" ], [ raw_email(auth: nil), "" ] ].each do |body, expected|
+        deliver(body)
+        assert_equal expected, ActionMailbox::InboundEmail.order(:id).last.auth_results
+      end
     end
   end
 
@@ -62,15 +77,20 @@ class Inbound::SupportEmailsTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  test "posts are rate limited per IP address" do
-    store = Inbound::SupportEmailsController.cache_store
-    store.define_singleton_method(:increment) { |*, **| 10_000 } # the test cache is a null store
+  test "only failed verifications are rate limited, per IP; signed posts never are" do
+    cache, Rails.cache = Rails.cache, ActiveSupport::Cache::MemoryStore.new
     with_inbound_email do
-      post inbound_support_email_path, params: "x", headers: { "Content-Type" => "message/rfc822" }
+      body = raw_email
+      35.times { deliver(body) }
+      assert_response :no_content, "Cloudflare's shared addresses send a lot of genuine mail"
+      Inbound::SupportEmailsController::FAILURES_PER_MINUTE.times { deliver(body, inbound_headers(body, at: 1.hour.ago)) }
+      deliver(body)
       assert_response :too_many_requests
     end
+    with_inbound_email(secret: nil) { deliver(raw_email) }
+    assert_response :not_found, "an ingress that isn't configured says so before any limit"
   ensure
-    store.singleton_class.remove_method(:increment)
+    Rails.cache = cache
   end
 
   test "the log says what happened, never who sent it" do

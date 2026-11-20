@@ -25,9 +25,11 @@ The domain's DNS is on Cloudflare, managed with Terraform in the separate ops-wo
 ## Decision
 
 Option 3 (product owner, 2026-11-20). The Worker posts to `POST /inbound/support_email`, signed
-with HMAC-SHA256 over the timestamp, a base64url JSON envelope (envelope sender and recipient,
-Cloudflare's first Authentication-Results) and the raw body; the app refuses anything more than
-5 minutes off, wrongly signed or over 25 MiB (contract: `docs/runbooks/inbound-email.md`). The
+with HMAC-SHA256 over the timestamp, a base64url JSON envelope (envelope sender and recipient)
+and the raw body; the app refuses anything more than 5 minutes off, wrongly signed or over
+25 MiB (contract: `docs/runbooks/inbound-email.md`). Cloudflare's verdict is read from the
+signed raw message: its first `Authentication-Results` field, which Cloudflare prepends (the
+Worker's `Headers.get` joins repeated headers, so a sender's could be mistaken for it). The
 app stores the message with **Action Mailbox** (its own ingress; the built-in ones stay off)
 and incinerates it after 14 days. `SupportMail` then trusts a message only when:
 

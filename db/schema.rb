@@ -25,7 +25,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_000100) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["created_at"], name: "index_action_mailbox_inbound_emails_on_created_at"
-    t.index ["message_id", "message_checksum"], name: "index_action_mailbox_inbound_emails_uniqueness", unique: true
+    t.index ["message_id", "message_checksum", "envelope_to"], name: "index_action_mailbox_inbound_emails_uniqueness", unique: true
   end
 
   create_table "active_storage_attachments", force: :cascade do |t|

@@ -3,16 +3,19 @@
 # POST /inbound/support_email and signs it with INBOUND_EMAIL_SECRET:
 #
 #   X-Shadetree-Timestamp: <unix seconds>
-#   X-Shadetree-Envelope:  base64url(JSON {"from":…, "to":…, "auth":<Cloudflare's first Authentication-Results>})
+#   X-Shadetree-Envelope:  base64url(JSON {"from": envelope sender, "to": envelope recipient})
 #   X-Shadetree-Signature: v1=hex(HMAC-SHA256(secret, "<timestamp>.<envelope header>.<raw body>"))
 #
 # Requests more than 5 minutes off, with a bad signature, or over 25 MiB are refused; accepted
-# ones become an ActionMailbox::InboundEmail, routed to SupportMailbox.
+# ones become an ActionMailbox::InboundEmail, routed to SupportMailbox. What Cloudflare found
+# (SPF/DKIM/DMARC) is read from the signed raw message itself: the first Authentication-Results
+# field, which Cloudflare prepends, and only if it's Cloudflare's (first_authentication_results).
 module InboundEmailIngress
   MAX_BYTES = 25.megabytes # Cloudflare Email Routing's own limit (MiB)
   MAX_SKEW = 5.minutes
   SECRET_MIN_LENGTH = 32
-  Envelope = Data.define(:from, :to, :auth)
+  Envelope = Data.define(:from, :to)
+  AUTHSERV_ID = "mx.cloudflare.net".freeze
 
   module_function
 
@@ -38,7 +41,7 @@ module InboundEmailIngress
     return unless ActiveSupport::SecurityUtils.secure_compare(signature.to_s, signature(timestamp, envelope, body, key:))
 
     data = JSON.parse(Base64.urlsafe_decode64(envelope.to_s))
-    Envelope.new(from: data["from"].to_s.first(320), to: data["to"].to_s.first(320), auth: data["auth"].to_s.first(4_000)) if data.is_a?(Hash)
+    Envelope.new(from: data["from"].to_s.first(320), to: data["to"].to_s.first(320)) if data.is_a?(Hash)
   rescue ArgumentError, JSON::ParserError
     nil
   end
@@ -50,10 +53,23 @@ module InboundEmailIngress
     domain == base_domain && (local == base_local || local.to_s.start_with?("#{base_local}+"))
   end
 
-  # Stores it once (a retry of the same message is a no-op) and routes it to SupportMailbox.
-  def store!(source, envelope)
-    return if ActionMailbox::InboundEmail.exists?(message_checksum: OpenSSL::Digest::SHA1.hexdigest(source))
+  # Cloudflare's Authentication-Results: the first such field in the raw header block (Cloudflare
+  # prepends its own, so any later one may be the sender's), unfolded, and only if its
+  # authserv-id is mx.cloudflare.net; otherwise "".
+  def first_authentication_results(source)
+    head = source.b.split(/\r?\n\r?\n/, 2).first.to_s.force_encoding(Encoding::UTF_8).scrub("")
+    field = head.split(/\r?\n(?![ \t])/).find { _1.match?(/\Aauthentication-results[ \t]*:/i) }
+    value = field.to_s.sub(/\A[^:]*:/, "").gsub(/\s+/, " ").strip
+    value.split(";").first.to_s.split.first.to_s.casecmp?(AUTHSERV_ID) ? value.first(4_000) : ""
+  end
 
-    ActionMailbox::InboundEmail.create_and_extract_message_id!(source, envelope_from: envelope.from, envelope_to: envelope.to, auth_results: envelope.auth)
+  # Stores each copy once (a retry is a no-op). The same message to support+<token>@ and to
+  # support@ (a Cc) arrives as two copies, both kept; SupportMailbox drops the plain one.
+  def store!(source, envelope)
+    checksum = OpenSSL::Digest::SHA1.hexdigest(source)
+    return if ActionMailbox::InboundEmail.exists?(message_checksum: checksum, envelope_to: envelope.to)
+
+    ActionMailbox::InboundEmail.create_and_extract_message_id!(source, envelope_from: envelope.from, envelope_to: envelope.to,
+                                                                       auth_results: first_authentication_results(source))
   end
 end
