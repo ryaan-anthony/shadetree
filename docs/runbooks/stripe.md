@@ -71,3 +71,41 @@ email) when a business is deleted?
 When an Owner stops being an Owner (demoted, deactivated or their account deleted), the Stripe
 customer's email is changed to a remaining Owner's, so receipts and failed-payment emails reach
 someone who can act on them.
+
+## Connect (client payments)
+
+### Settings
+
+| Variable | What it is | Where it comes from |
+| --- | --- | --- |
+| `STRIPE_SECRET_KEY` | The platform's secret key (`sk_test_…` on staging, `sk_live_…` in production) | Dashboard → Developers → API keys |
+| `STRIPE_PUBLISHABLE_KEY` | The publishable key (not needed by hosted pages; kept for BIL) | Same page |
+| `STRIPE_WEBHOOK_SECRET` | Signing secret of the platform endpoint (subscriptions, BIL-04/05) | The endpoint's page |
+| `STRIPE_CONNECT_WEBHOOK_SECRET` | Signing secret of the Connect endpoint below | The endpoint's page |
+| `STRIPE_CONNECT_CLIENT_ID` | The platform's Connect client id (`ca_…`), used to disconnect accounts | Settings → Connect → Onboarding options → OAuth |
+
+Without `STRIPE_SECRET_KEY` the app says online payments aren't available yet; without a
+webhook secret the endpoint answers 503 and Stripe retries.
+
+### Connect setup (once per mode)
+
+1. Connect → Settings: platform profile (name "Shadetree", icon, brand color, support email on
+   getshadetree.com, website https://getshadetree.com), and US as the only country.
+2. Webhooks → Add endpoint → **Events on connected accounts**:
+   `https://<host>/webhooks/stripe/connect` with `account.updated`,
+   `account.application.deauthorized`, `checkout.session.completed`,
+   `checkout.session.async_payment_succeeded`, `payment_intent.succeeded`, `charge.refunded`,
+   `charge.dispute.created`, `charge.dispute.updated`, `charge.dispute.closed`. Copy its signing
+   secret to `STRIPE_CONNECT_WEBHOOK_SECRET`.
+3. Locally: `stripe listen --forward-connect-to localhost:3000/webhooks/stripe/connect` prints a
+   secret to use as `STRIPE_CONNECT_WEBHOOK_SECRET`.
+
+### When something looks wrong
+
+- Events are kept for 90 days in `connect_events` (type, account, status, the fields the app
+  uses; no personal details). `ConnectEvent.where(status: "failed")` shows what didn't process
+  and why; Stripe redelivers failed events for up to three days, and each redelivery retries.
+- A business's account status is refreshed by `account.updated`, and whenever the owner comes
+  back from Stripe's onboarding.
+- Deleting a business (OPS-04) disconnects its account first; if Stripe can't be reached the
+  deletion is retried the next day. The business keeps its Stripe account.

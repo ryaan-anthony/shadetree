@@ -31,6 +31,7 @@ class Business < ApplicationRecord
   has_many :locations # CAT-07; likewise
   has_many :operator_notes # OPS-02; internal, and the database removes them with the business
   has_one :subscription # BIL-04: mirrored from Stripe; read it with the business's tenancy set
+  has_many :payment_accounts # PAY-03; one connected at a time (see #payment_account)
 
   # Callbacks
   before_validation { self.uid ||= SecureRandom.base58(BusinessOwned::UID_LENGTH) if new_record? }
@@ -44,9 +45,19 @@ class Business < ApplicationRecord
   def entitlements = @entitlements ||= Entitlements.for(self)
 
   def reload_entitlements = @entitlements = nil
+  # PAY-03: the connected Stripe account, if any (one per business, for all its locations).
+  def payment_account
+    return @payment_account if defined?(@payment_account)
+
+    @payment_account = Tenancy.with_business(self) { PaymentAccount.current }
+  end
+
+  # PAY-04: whether clients can pay this business's invoices online.
+  def accepts_online_payments? = payment_account&.accepts_payments? == true
 
   def reload(...)
     @entitlements = @primary_location = nil
+    remove_instance_variable(:@payment_account) if defined?(@payment_account)
     remove_instance_variable(:@multiple_locations) if defined?(@multiple_locations)
     super
   end

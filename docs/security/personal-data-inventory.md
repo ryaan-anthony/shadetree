@@ -31,6 +31,8 @@ erasing a client (INS-02, `ClientErasure`) removes or scrubs everything listed u
 | Business | `businesses` / `locations`: email, phone, address (business contact details, often a sole trader's own) | With the business |
 | User / anyone | `action_mailbox_inbound_emails`: envelope_from, envelope_to, auth_results (sender's domain and address), plus the raw message file (OPS-05 support email: whatever the sender wrote) | 14 days after processing (Action Mailbox incineration); `PurgeInboundEmailsJob` removes anything older than 14 days. By design these survive account or business deletion and client erasure for up to those 14 days |
 | Business | Stripe (BIL-04) holds the billing email, address and card; Shadetree keeps only `businesses.stripe_customer_id`, `subscriptions` and `billing_events` (plan names, amounts, invoice numbers) | With the business; Stripe keeps its invoices |
+| Business | `payment_accounts`: the Stripe account id and its status (no names or bank details; Stripe holds those) | With the business; deleting it disconnects the account first |
+| — | `connect_events`: Stripe event id, type, account id and the few fields acted on (amounts, ids, status); no names, emails or card details, and the raw payload isn't stored or logged | 90 days |
 | Visitor | `contact_messages`: name, email, business_name, body, ip_address, user_agent | IP and browser 30 days; spam 30 days; messages 2 years |
 
 ## Files (Active Storage, ADR 0008: local disk today; object storage in staging and production once PLT-09 lands)
