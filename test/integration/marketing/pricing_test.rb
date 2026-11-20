@@ -82,8 +82,20 @@ class MarketingPricingTest < ActionDispatch::IntegrationTest
     assert_select "#faq ~ div details summary", text: /per person/
     assert_select "#faq ~ div details summary", text: /cancel/
     assert_select "#faq ~ div details summary", text: /take my data/
-    assert_no_match(/trial|most popular|card payments|pay online|read-only|move to a paid plan from Settings/i, response.body)
+    assert_no_match(/most popular|card payments|pay online|read-only|move to a paid plan from Settings/i, response.body)
     assert_select "a[href=?]", contact_path, text: "Ask us"
+  end
+
+  test "says a new business starts with the trial (BIL-05), or on Free when there's none" do
+    settings = Rails.configuration.x.billing
+    settings.trial_days, settings.trial_plan = 14, "business"
+    get pricing_path
+    assert_match "A new business starts with a 14-day Business trial, no card needed", response.body
+    settings.trial_days = 0
+    get pricing_path
+    assert_match "Every account starts on Free.", response.body
+  ensure
+    settings.trial_days = 0
   end
 
   test "says where Owners choose a paid plan (BIL-04), and what cancelling means" do

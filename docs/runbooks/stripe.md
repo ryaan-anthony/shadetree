@@ -18,6 +18,9 @@ Shadetree bills businesses for their plan through Stripe Billing (BIL-04, BIL-05
 | `STRIPE_PUBLISHABLE_KEY` | Publishable key (hosted pages only today; kept for later) |
 | `STRIPE_WEBHOOK_SECRET` | Signing secret of the subscriptions endpoint (`/webhooks/stripe`) |
 | `STRIPE_AUTOMATIC_TAX` | `false` turns off Stripe Tax on subscriptions (default on) |
+| `TRIAL_DAYS` | Length of a new business's trial (BIL-05; default 14, `0` turns trials off) |
+| `TRIAL_PLAN` | The plan trialled (default `pro`) |
+| `BILLING_GRACE_DAYS` | Days a failed renewal keeps the plan before Free (default 7) |
 
 Without `STRIPE_SECRET_KEY` the plan page still lists the plans, but choosing one or "Manage
 billing" says billing isn't available right now.
@@ -27,7 +30,8 @@ billing" says billing isn't available right now.
 1. In the Stripe dashboard: turn on Stripe Tax (BIL-04 uses automatic tax on subscriptions;
    prices are created tax-exclusive, so tax is added on top, as the pricing copy says); under
    Billing → Revenue recovery set retries and "if all retries fail" to **cancel the
-   subscription**; and under Checkout settings turn on **limit customers to one subscription**,
+   subscription**, with the retry window at least as long as `BILLING_GRACE_DAYS` (so a
+   payment can still succeed during the grace period); and under Checkout settings turn on **limit customers to one subscription**,
    so two checkouts can't both start one.
 2. Deploy, then on the VM run `docker exec shadetree-<env> bin/rails stripe:sync_plans`. It
    makes a product per paid plan, monthly and yearly prices with lookup keys

@@ -12,14 +12,15 @@ class Billing::SubscriptionSync
   # The subscription isn't this business's (another customer, or another business's metadata).
   class Mismatch < StandardError; end
 
-  def self.refresh!(business, id)
+  # failed_at: when a renewal's first payment attempt failed (BIL-05's grace period starts then).
+  def self.refresh!(business, id, failed_at: nil)
     fetched_at = Time.current
     remote = Billing.gateway.retrieve_subscription(id)
     remote = other_live(business, remote) || remote unless Subscription::LIVE_STATUSES.include?(remote.status)
-    apply!(business, remote, fetched_at:)
+    apply!(business, remote, fetched_at:, failed_at:)
   end
 
-  def self.apply!(business, remote, fetched_at: Time.current) = new(business, remote, fetched_at).apply!
+  def self.apply!(business, remote, fetched_at: Time.current, failed_at: nil) = new(business, remote, fetched_at, failed_at).apply!
 
   # When the subscription mirrored here has ended, another live one on the same customer (a
   # second checkout) takes its place rather than the business dropping to Free.
@@ -30,10 +31,11 @@ class Billing::SubscriptionSync
            .find { _1.id != remote.id && Subscription::LIVE_STATUSES.include?(_1.status) }
   end
 
-  def initialize(business, remote, fetched_at)
+  def initialize(business, remote, fetched_at, failed_at = nil)
     @business = business
     @remote = remote
     @fetched_at = fetched_at
+    @failed_at = failed_at
   end
 
   def apply!
@@ -56,8 +58,9 @@ class Billing::SubscriptionSync
         end
         before = row.attributes.slice(*%w[stripe_subscription_id status plan_id interval cancel_at_period_end])
         row.assign_attributes(attributes)
-        # BIL-05: the grace period runs from the first failure of this subscription's renewal.
-        row.past_due_since = row.past_due? ? (before["status"] == "past_due" && row.past_due_since) || Time.current : nil
+        # BIL-05: the grace period runs from the renewal's first failed attempt (or, without the
+        # invoice to say when, from when we first saw it past due).
+        row.past_due_since = row.past_due? ? [ (row.past_due_since if before["status"] == "past_due"), @failed_at ].compact.min || Time.current : nil
         record_changes(before, row)
         row.save!
         Billing::PlanResolver.apply!(@business)

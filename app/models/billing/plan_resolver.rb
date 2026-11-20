@@ -1,9 +1,11 @@
 # The plan a business is on, worked out in one place from its billing state (ADR 0022, BIL-05).
 # In order:
 #
-# 1. A plan an operator comped (OPS-04), until its end date if it has one.
-# 2. A live Stripe subscription's plan: paying, Stripe trialing, cancelled but not yet at the end
-#    of the paid period, or a failed renewal still within the grace period.
+# 1. A live Stripe subscription's plan: paying, Stripe trialing, cancelled but not yet at the end
+#    of the paid period, or a failed renewal still within the grace period. It wins over a comp,
+#    so what the business gets always matches what Stripe charges (operators can't comp a
+#    business that has one, Ops::BillingController).
+# 2. A plan an operator comped (OPS-04), until its end date if it has one.
 # 3. The business's own trial (BIL-05), until it ends.
 # 4. Otherwise the default plan (Free). Nothing is deleted; BIL-03's downgrade rules apply.
 #
@@ -26,7 +28,7 @@ class Billing::PlanResolver
   def subscription = @subscription ||= Tenancy.with_business(@business) { @business.reload_subscription }
 
   def outcome
-    @outcome ||= comp || from_subscription || trial || Outcome.new(plan: Plan.default!, status: free_status, reason: lapse_reason, check_at: nil)
+    @outcome ||= from_subscription || comp || trial || Outcome.new(plan: Plan.default!, status: free_status, reason: lapse_reason, check_at: nil)
   end
 
   def plan = outcome.plan
@@ -85,8 +87,8 @@ class Billing::PlanResolver
   # When the next "your trial ends in N days" email is due (TrialReminders).
   def next_reminder
     Billing::TrialReminders::DAYS.filter_map do |days|
-      at = @business.trial_ends_at - days.days
-      at if at > @now && (@business.trial_reminded_days.nil? || @business.trial_reminded_days > days)
+      at = Billing::TrialReminders.due_at(@business, days)
+      at if at > @now && at < @business.trial_ends_at && (@business.trial_reminded_days.nil? || @business.trial_reminded_days > days)
     end.min
   end
 

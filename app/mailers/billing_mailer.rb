@@ -2,11 +2,11 @@
 # (trial over, subscription ended, renewal unpaid after the grace period, comp ended). One email
 # per Owner. Stripe sends receipts and failed-payment emails itself.
 class BillingMailer < ApplicationMailer
+  # Queued once the surrounding transaction (the business's lock) commits, never before.
   def self.notify_owners(business, action, **)
-    business.business_users.active.owners.includes(:user).each do |membership|
-      next if membership.user.deleted?
-
-      with(business:, user: membership.user, **).public_send(action).deliver_later
+    users = business.business_users.active.owners.includes(:user).map(&:user).reject(&:deleted?)
+    ActiveRecord.after_all_transactions_commit do
+      users.each { with(business:, user: _1, **).public_send(action).deliver_later }
     end
   end
 
