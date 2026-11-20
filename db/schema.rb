@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_20_000100) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_20_001000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -127,6 +127,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_000100) do
     t.index ["subject_type", "subject_id"], name: "index_automation_runs_on_subject"
   end
 
+  create_table "billing_events", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.string "kind", null: false
+    t.jsonb "details", default: {}, null: false
+    t.string "dedupe_key"
+    t.datetime "occurred_at", null: false
+    t.datetime "created_at", null: false
+    t.index ["business_id", "dedupe_key"], name: "index_billing_events_on_business_id_and_dedupe_key", unique: true, where: "(dedupe_key IS NOT NULL)"
+    t.index ["business_id", "occurred_at"], name: "index_billing_events_on_business_id_and_occurred_at"
+    t.index ["uid"], name: "index_billing_events_on_uid", unique: true
+  end
+
   create_table "business_users", force: :cascade do |t|
     t.bigint "business_id", null: false
     t.bigint "user_id", null: false
@@ -200,12 +213,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_000100) do
     t.text "suspension_reason"
     t.datetime "deletion_scheduled_at"
     t.datetime "deletion_due_at"
+    t.string "stripe_customer_id"
     t.index ["active"], name: "index_businesses_on_active"
     t.index ["deletion_due_at"], name: "index_businesses_on_deletion_due_at", where: "(deletion_due_at IS NOT NULL)"
     t.index ["handle"], name: "index_businesses_on_handle", unique: true
     t.index ["industry"], name: "index_businesses_on_industry"
     t.index ["owner_id"], name: "index_businesses_on_owner_id"
     t.index ["plan_id"], name: "index_businesses_on_plan_id"
+    t.index ["stripe_customer_id"], name: "index_businesses_on_stripe_customer_id", unique: true, where: "(stripe_customer_id IS NOT NULL)"
     t.index ["uid"], name: "index_businesses_on_uid", unique: true
   end
 
@@ -562,7 +577,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_000100) do
     t.index ["catalog_item_id"], name: "index_invoice_line_items_on_catalog_item_id"
     t.index ["invoice_id", "key"], name: "index_invoice_line_items_on_invoice_id_and_key", unique: true
     t.index ["invoice_id", "position"], name: "index_invoice_line_items_on_invoice_id_and_position"
-    t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying, 'amount'::character varying]::text[]))", name: "invoice_lines_discount_kind"
+    t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying::text, 'amount'::character varying::text]))", name: "invoice_lines_discount_kind"
     t.check_constraint "quantity >= 0::numeric", name: "invoice_lines_quantity_nonnegative"
   end
 
@@ -597,7 +612,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_000100) do
     t.index ["email_message_id"], name: "index_invoice_sends_on_email_message_id"
     t.index ["invoice_id"], name: "index_invoice_sends_on_invoice_id"
     t.index ["user_id"], name: "index_invoice_sends_on_user_id"
-    t.check_constraint "channel::text = ANY (ARRAY['email'::character varying, 'link'::character varying]::text[])", name: "invoice_sends_channel"
+    t.check_constraint "channel::text = ANY (ARRAY['email'::character varying::text, 'link'::character varying::text])", name: "invoice_sends_channel"
   end
 
   create_table "invoices", force: :cascade do |t|
@@ -656,11 +671,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_000100) do
     t.index ["voided_by_id"], name: "index_invoices_on_voided_by_id"
     t.check_constraint "amount_paid_cents >= 0", name: "invoices_amount_paid_nonnegative"
     t.check_constraint "discount_amount_cents IS NULL OR discount_amount_cents >= 0", name: "invoices_discount_amount_nonnegative"
-    t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying, 'amount'::character varying]::text[]))", name: "invoices_discount_kind"
+    t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying::text, 'amount'::character varying::text]))", name: "invoices_discount_kind"
     t.check_constraint "discount_percent IS NULL OR discount_percent >= 0::numeric AND discount_percent <= 100::numeric", name: "invoices_discount_percent_range"
     t.check_constraint "due_on >= issued_on", name: "invoices_due_after_issue"
-    t.check_constraint "payment_terms::text = ANY (ARRAY['due_on_receipt'::character varying, 'net_7'::character varying, 'net_15'::character varying, 'net_30'::character varying, 'custom'::character varying]::text[])", name: "invoices_payment_terms"
-    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying, 'sent'::character varying, 'partially_paid'::character varying, 'paid'::character varying, 'void'::character varying]::text[])", name: "invoices_status"
+    t.check_constraint "payment_terms::text = ANY (ARRAY['due_on_receipt'::character varying::text, 'net_7'::character varying::text, 'net_15'::character varying::text, 'net_30'::character varying::text, 'custom'::character varying::text])", name: "invoices_payment_terms"
+    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying::text, 'sent'::character varying::text, 'partially_paid'::character varying::text, 'paid'::character varying::text, 'void'::character varying::text])", name: "invoices_status"
   end
 
   create_table "job_line_items", force: :cascade do |t|
@@ -681,7 +696,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_000100) do
     t.datetime "updated_at", null: false
     t.index ["catalog_item_id"], name: "index_job_line_items_on_catalog_item_id"
     t.index ["job_id", "position"], name: "index_job_line_items_on_job_id_and_position"
-    t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying, 'amount'::character varying]::text[]))", name: "job_lines_discount_kind"
+    t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying::text, 'amount'::character varying::text]))", name: "job_lines_discount_kind"
   end
 
   create_table "jobs", force: :cascade do |t|
@@ -726,8 +741,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_000100) do
     t.index ["property_id"], name: "index_jobs_on_property_id"
     t.index ["quote_id"], name: "index_jobs_on_quote_id", unique: true
     t.index ["uid"], name: "index_jobs_on_uid", unique: true
-    t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying, 'amount'::character varying]::text[]))", name: "jobs_discount_kind"
-    t.check_constraint "status::text = ANY (ARRAY['unscheduled'::character varying, 'scheduled'::character varying, 'in_progress'::character varying, 'completed'::character varying, 'cancelled'::character varying]::text[])", name: "jobs_status"
+    t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying::text, 'amount'::character varying::text]))", name: "jobs_discount_kind"
+    t.check_constraint "status::text = ANY (ARRAY['unscheduled'::character varying::text, 'scheduled'::character varying::text, 'in_progress'::character varying::text, 'completed'::character varying::text, 'cancelled'::character varying::text])", name: "jobs_status"
   end
 
   create_table "location_members", force: :cascade do |t|
@@ -864,8 +879,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_000100) do
     t.index ["invoice_id"], name: "index_payments_on_invoice_id"
     t.index ["recorded_by_id"], name: "index_payments_on_recorded_by_id"
     t.check_constraint "amount_cents > 0", name: "payments_amount_positive"
-    t.check_constraint "payment_method::text = ANY (ARRAY['cash'::character varying, 'check'::character varying, 'bank_transfer'::character varying, 'other'::character varying, 'card'::character varying]::text[])", name: "payments_payment_method"
-    t.check_constraint "source::text = ANY (ARRAY['recorded'::character varying, 'online'::character varying]::text[])", name: "payments_source"
+    t.check_constraint "payment_method::text = ANY (ARRAY['cash'::character varying::text, 'check'::character varying::text, 'bank_transfer'::character varying::text, 'other'::character varying::text, 'card'::character varying::text])", name: "payments_payment_method"
+    t.check_constraint "source::text = ANY (ARRAY['recorded'::character varying::text, 'online'::character varying::text])", name: "payments_source"
   end
 
   create_table "plans", force: :cascade do |t|
@@ -1133,8 +1148,42 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_000100) do
     t.index ["created_by_id"], name: "index_service_requests_on_created_by_id"
     t.index ["property_id"], name: "index_service_requests_on_property_id"
     t.index ["uid"], name: "index_service_requests_on_uid", unique: true
-    t.check_constraint "source::text = ANY (ARRAY['form'::character varying, 'phone'::character varying, 'email'::character varying, 'walk_in'::character varying, 'other'::character varying]::text[])", name: "service_requests_source"
-    t.check_constraint "status::text = ANY (ARRAY['new'::character varying, 'in_progress'::character varying, 'quoted'::character varying, 'archived'::character varying]::text[])", name: "service_requests_status"
+    t.check_constraint "source::text = ANY (ARRAY['form'::character varying::text, 'phone'::character varying::text, 'email'::character varying::text, 'walk_in'::character varying::text, 'other'::character varying::text])", name: "service_requests_source"
+    t.check_constraint "status::text = ANY (ARRAY['new'::character varying::text, 'in_progress'::character varying::text, 'quoted'::character varying::text, 'archived'::character varying::text])", name: "service_requests_status"
+  end
+
+  create_table "stripe_events", force: :cascade do |t|
+    t.string "stripe_event_id", null: false
+    t.string "event_type", null: false
+    t.string "stripe_object_id", null: false
+    t.string "customer_id"
+    t.boolean "livemode", default: false, null: false
+    t.datetime "stripe_created_at", null: false
+    t.datetime "processed_at"
+    t.datetime "created_at", null: false
+    t.index ["created_at"], name: "index_stripe_events_unprocessed", where: "(processed_at IS NULL)"
+    t.index ["stripe_event_id"], name: "index_stripe_events_on_stripe_event_id", unique: true
+  end
+
+  create_table "subscriptions", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.string "stripe_subscription_id", null: false
+    t.bigint "plan_id"
+    t.string "interval"
+    t.string "status", null: false
+    t.datetime "current_period_start"
+    t.datetime "current_period_end"
+    t.boolean "cancel_at_period_end", default: false, null: false
+    t.datetime "canceled_at"
+    t.datetime "ended_at"
+    t.datetime "billing_cycle_anchor"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id"], name: "index_subscriptions_on_business_id", unique: true
+    t.index ["plan_id"], name: "index_subscriptions_on_plan_id"
+    t.index ["stripe_subscription_id"], name: "index_subscriptions_on_stripe_subscription_id", unique: true
+    t.index ["uid"], name: "index_subscriptions_on_uid", unique: true
   end
 
   create_table "support_messages", force: :cascade do |t|
@@ -1172,8 +1221,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_000100) do
     t.index ["opened_by_id"], name: "index_support_tickets_on_opened_by_id"
     t.index ["status", "last_message_at"], name: "index_support_tickets_on_status_and_last_message_at"
     t.index ["uid"], name: "index_support_tickets_on_uid", unique: true
-    t.check_constraint "category::text = ANY (ARRAY['question'::character varying, 'bug'::character varying, 'billing'::character varying, 'feature'::character varying]::text[])", name: "support_tickets_category"
-    t.check_constraint "status::text = ANY (ARRAY['open'::character varying, 'waiting'::character varying, 'resolved'::character varying]::text[])", name: "support_tickets_status"
+    t.check_constraint "category::text = ANY (ARRAY['question'::character varying::text, 'bug'::character varying::text, 'billing'::character varying::text, 'feature'::character varying::text])", name: "support_tickets_category"
+    t.check_constraint "status::text = ANY (ARRAY['open'::character varying::text, 'waiting'::character varying::text, 'resolved'::character varying::text])", name: "support_tickets_status"
   end
 
   create_table "tax_rates", force: :cascade do |t|
@@ -1266,7 +1315,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_000100) do
     t.jsonb "data", default: {}, null: false
     t.datetime "occurred_at", null: false
     t.index ["visit_id"], name: "index_visit_events_on_visit_id"
-    t.check_constraint "kind::text = ANY (ARRAY['scheduled'::character varying, 'rescheduled'::character varying, 'reassigned'::character varying, 'updated'::character varying, 'cancelled'::character varying, 'restored'::character varying, 'started'::character varying, 'completed'::character varying, 'reopened'::character varying]::text[])", name: "visit_events_kind"
+    t.check_constraint "kind::text = ANY (ARRAY['scheduled'::character varying::text, 'rescheduled'::character varying::text, 'reassigned'::character varying::text, 'updated'::character varying::text, 'cancelled'::character varying::text, 'restored'::character varying::text, 'started'::character varying::text, 'completed'::character varying::text, 'reopened'::character varying::text])", name: "visit_events_kind"
   end
 
   create_table "visit_notes", force: :cascade do |t|
@@ -1307,8 +1356,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_000100) do
     t.index ["uid"], name: "index_visits_on_uid", unique: true
     t.check_constraint "(timing::text = 'anytime'::text) = (starts_at IS NULL) AND (timing::text = 'window'::text) = (window_ends_at IS NOT NULL)", name: "visits_times"
     t.check_constraint "duration_minutes >= 5 AND duration_minutes <= 1440", name: "visits_duration"
-    t.check_constraint "status::text = ANY (ARRAY['scheduled'::character varying, 'in_progress'::character varying, 'completed'::character varying, 'cancelled'::character varying]::text[])", name: "visits_status"
-    t.check_constraint "timing::text = ANY (ARRAY['exact'::character varying, 'window'::character varying, 'anytime'::character varying]::text[])", name: "visits_timing"
+    t.check_constraint "status::text = ANY (ARRAY['scheduled'::character varying::text, 'in_progress'::character varying::text, 'completed'::character varying::text, 'cancelled'::character varying::text])", name: "visits_status"
+    t.check_constraint "timing::text = ANY (ARRAY['exact'::character varying::text, 'window'::character varying::text, 'anytime'::character varying::text])", name: "visits_timing"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
@@ -1319,6 +1368,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_000100) do
   add_foreign_key "automation_rules", "users", column: "created_by_id", on_delete: :nullify
   add_foreign_key "automation_runs", "automation_rules", column: "rule_id", on_delete: :nullify
   add_foreign_key "automation_runs", "businesses", on_delete: :cascade
+  add_foreign_key "billing_events", "businesses"
   add_foreign_key "business_users", "businesses"
   add_foreign_key "business_users", "locations", column: "default_location_id", on_delete: :nullify
   add_foreign_key "business_users", "roles"
@@ -1457,6 +1507,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_000100) do
   add_foreign_key "service_requests", "locations"
   add_foreign_key "service_requests", "properties", on_delete: :nullify
   add_foreign_key "service_requests", "users", column: "created_by_id", on_delete: :nullify
+  add_foreign_key "subscriptions", "businesses"
+  add_foreign_key "subscriptions", "plans"
   add_foreign_key "support_messages", "businesses", on_delete: :cascade
   add_foreign_key "support_messages", "support_tickets", on_delete: :cascade
   add_foreign_key "support_messages", "users", column: "author_id", on_delete: :nullify

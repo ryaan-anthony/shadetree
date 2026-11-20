@@ -20,5 +20,16 @@ module Billing
     end
   end
 
+  # [plan, interval] for a Stripe price: from its product ("shadetree_<plan>") and recurring
+  # interval, which outlive the lookup key when a price is replaced.
+  def self.plan_for_price(price)
+    return [ nil, nil ] unless price
+
+    product = price.product.respond_to?(:id) ? price.product.id : price.product.to_s
+    interval = Plan::INTERVALS.key(price.recurring&.interval)
+    plan = Plan.find_by(key: product.delete_prefix("shadetree_")) if product.start_with?("shadetree_")
+    plan ? [ plan, interval ] : Array(Plan.for_lookup_key(price.lookup_key)).then { _1.any? ? _1 : [ nil, interval ] }
+  end
+
   def self.forget_prices(keys) = keys.each { Rails.cache.delete([ "stripe-price", _1 ]) }
 end

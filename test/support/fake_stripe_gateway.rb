@@ -100,7 +100,7 @@ class FakeStripeGateway
       billing_cycle_anchor: period_start.to_i, start_date: period_start.to_i, trial_end: nil, metadata:, discounts: [], latest_invoice: nil,
       items: { object: "list", data: [ { object: "subscription_item", id: "si_#{id}", current_period_start: period_start.to_i,
                                          current_period_end: period_end.to_i, quantity: 1,
-                                         price: { object: "price", id: price[:id], lookup_key: price[:lookup_key], unit_amount: plan.price_cents(interval),
+                                         price: { object: "price", id: price[:id], lookup_key: price[:lookup_key], product: plan.stripe_product_id, unit_amount: plan.price_cents(interval),
                                                   currency: plan.currency.downcase, recurring: { interval: Plan::INTERVALS.fetch(interval) } } } ] },
       **extra
     }
@@ -152,6 +152,23 @@ module StripeTestHelpers
   end
 
   def stripe = StripeGateway.current
+
+  WEBHOOK_SECRET = "whsec_test_secret"
+
+  # A Stripe event body, and the Stripe-Signature header Stripe would send with it.
+  def stripe_event_json(type, object, id: "evt_#{SecureRandom.hex(8)}", created: Time.current)
+    { id:, object: "event", api_version: Stripe.api_version, type:, created: created.to_i, livemode: false, data: { object: } }.to_json
+  end
+
+  def stripe_signature(payload, secret: WEBHOOK_SECRET, at: Time.current)
+    Stripe::Webhook::Signature.generate_header(at, Stripe::Webhook::Signature.compute_signature(at, payload, secret))
+  end
+
+  # Gives a business a Stripe customer, as starting checkout does.
+  def with_stripe_customer(business, id: "cus_#{business.uid}")
+    business.update_columns(stripe_customer_id: id)
+    id
+  end
 end
 
 ActiveSupport.on_load(:active_support_test_case) { include StripeTestHelpers }
