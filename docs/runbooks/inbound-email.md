@@ -11,9 +11,12 @@
    `support+<token>@getshadetree.com`) reaches **Cloudflare Email Routing**, which checks SPF,
    DKIM and DMARC and adds its own `Authentication-Results: mx.cloudflare.net; …` header at the
    top. Since July 2025 it only passes on mail that passes SPF or DKIM.
-2. The routing rule for `support@` runs the **shadetree-support-email Worker** (op-works:
-   `cloudflare-workers/shadetree-support-email`, deployed with the routing rules by Terraform
-   `tf-config/shadetree_email.tf`). It:
+2. The routing rule for the environment's support address runs that environment's
+   **shadetree-support-email Worker** (op-works: `cloudflare-workers/shadetree-support-email`,
+   deployed once per environment with the routing rules by Terraform `tf-config/shadetree_email.tf`).
+   Production is `support@getshadetree.com`; staging is `support-staging@getshadetree.com` (the
+   apex, since `staging.getshadetree.com` is the tunnel's CNAME). Each Worker posts to its own
+   environment with its own secret. It:
    - rejects anything over 25 MiB;
    - always forwards a copy to the human support inbox (a verified Email Routing destination,
      from the Worker's `HUMAN_INBOX` setting);
@@ -70,7 +73,7 @@ The app answers:
 | --- | --- |
 | `INBOUND_EMAIL_SECRET` | Shared with the Worker; at least 32 characters (`openssl rand -hex 32`). Without it the endpoint is "not found". Credentials key `inbound_email_secret` also works. |
 | `INBOUND_EMAIL_ENABLED` | `true` once Email Routing and the Worker are live: support emails then say "Reply to this email or in Shadetree" and carry the member's signed reply address as Reply-To. Otherwise they say "Reply in Shadetree" and reply to `support@`. |
-| `SUPPORT_EMAIL` | The support address (default `support@getshadetree.com`). |
+| `SUPPORT_EMAIL` | The support address (default `support@getshadetree.com`). Staging: `support-staging@getshadetree.com`, so its reply addresses (`support-staging+<token>@`) reach the staging Worker. |
 
 ## Turning it on
 
