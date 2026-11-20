@@ -9,8 +9,8 @@ other.
 ## Current state (Nov 2026)
 
 - Rails 8.1, Ruby 3.4.5, SQLite for all databases, Solid Queue/Cache/Cable, Propshaft, importmap,
-  Hotwire, Devise (with confirmable), Minitest + Capybara, Kamal deploy config with placeholder
-  hosts.
+  Hotwire, Devise (with confirmable), Minitest + Capybara, a deploy config with placeholder hosts
+  (since replaced by the homelab deployment, ADR 0023).
 - Tailwind is loaded from a CDN at runtime in every layout, with config inlined per layout.
 - 27 tables exist; most (locations, service prices/taxes/fees per location, staff roles,
   notification triggers, service area restrictions, customer notification preferences) back no

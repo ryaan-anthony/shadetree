@@ -37,6 +37,19 @@ class ObservabilityTest < ActiveSupport::TestCase
     Rails.logger.stop_broadcasting_to(logger)
   end
 
+  test "release and environment come from the deploy's APP_REVISION and APP_ENVIRONMENT (PLT-09)" do
+    previous = %w[APP_REVISION APP_ENVIRONMENT].index_with { ENV[_1] }
+    ENV.update("APP_REVISION" => "0123abc", "APP_ENVIRONMENT" => "staging")
+    Rails.error.report(RuntimeError.new("boom"), handled: true)
+    assert_equal %w[0123abc staging], @reports.sole.last.values_at(:release, :environment)
+
+    ENV.delete("APP_REVISION")
+    ENV.delete("APP_ENVIRONMENT")
+    assert_equal "development", Observability.release
+  ensure
+    previous.each { ENV[_1] = _2 }
+  end
+
   test "an unhandled job error is reported with the job, business and release, and no personal data" do
     client = as_business(@business) { Client.create!(display_name: "Maria Lopez", contact_methods_attributes: [ { kind: "phone", value: "555-010-0100" } ]) }
     log = capture_log do
