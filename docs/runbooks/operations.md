@@ -381,6 +381,79 @@ Special cases:
 - **Stripe, SMTP and inbound-email secrets:** roll them in the provider's dashboard (Stripe can
   keep the old webhook secret valid for a while), update, redeploy.
 
+## Monitoring
+
+What the app reports about itself (PLT-10). Code: `lib/observability.rb`,
+`config/initializers/observability.rb`; what may and may not appear in logs:
+the personal-data inventory (`docs/security/personal-data-inventory.md`, PLT-10 part 3).
+
+### Logs
+
+Staging and production write every log line as one JSON object to stdout (`STRUCTURED_LOGS=true`
+is the production default), which Docker keeps for the container: on the VM,
+`docker logs shadetree-production` (or `shadetree-staging`). Lines the app didn't write itself look
+like `{"time":…,"level":…,"tags":[…],"message":…}`; ours add an `event`:
+
+| `event` | When | Fields |
+| --- | --- | --- |
+| `request` | Every request, including unknown paths (`warn` and `"slow":true` over `SLOW_REQUEST_MS`) | request_id, method, path (tokens, file addresses and emails blanked), controller, area, status, duration_ms, db_ms, view_ms, business_id, user_id; error_class when no controller handled it |
+| `job` | Every job run (`error` if an exception escaped every retry and discard rule) | job_class, job_id, queue, duration_ms, executions, business_id, error_class, error_message (scrubbed) |
+| `job_retry` / `job_discarded` | A handled failure: retry scheduled, or discarded on purpose (`warn`) | job fields, wait_seconds, error_class, error_message |
+| `job_retries_exhausted` | A job ran out of retries (`error`) | job fields, error_class, error_message |
+| `slow_query` | A query over `SLOW_QUERY_MS` | duration_ms, sql (no literals), source, request_id, business_id |
+| `error` | Any exception reported to `Rails.error` (unhandled ones at `error`) | error_class, message (scrubbed, no database row details), location, backtrace (10 app frames), handled, source, release (`APP_REVISION`, the deployed commit), environment (`APP_ENVIRONMENT`: staging or production), request or job fields, business_id |
+| `alert` | An operational problem (below), at `warn` | message, counts |
+
+Find things: `docker logs shadetree-production 2>&1 | grep '"event":"alert"'`, or grep for a
+request id (the `X-Request-Id` response header) to get a request's line and its error. Add
+`--since 1h` to narrow it. Abuse lines (`[abuse] …`: rate limits, bot checks) carry the IP
+address on purpose. Docker's default `json-file` log driver keeps logs until the container is
+replaced (each deploy starts a new one); ops-work can set log rotation in the Docker daemon.
+
+Tuning (environment variables in the GitHub environment, all optional): `SLOW_REQUEST_MS` (1000),
+`SLOW_QUERY_MS` (250), `JOB_BACKLOG_THRESHOLD` (100 jobs waiting), `JOB_WAIT_THRESHOLD` (600
+seconds the oldest has waited). Change one and re-run the last deploy.
+
+### Alerts
+
+| Alert | Raised by | Meaning | What to do |
+| --- | --- | --- | --- |
+| `error` (unhandled) | A request or job failed | A bug, or a dependency down | Find the request or job id in the logs; fix, or retry the job |
+| `Background jobs failed` | `JobHealthCheckJob`, every 10 minutes | Jobs failed for good since the last alert (the classes of those jobs listed) | See "Failed jobs" below |
+| `Job queue backlog over threshold` | Same | Too many jobs waiting, or the oldest due job has waited too long | Check Solid Queue's supervisor in the logs, then load: raise `JOB_CONCURRENCY` |
+| Jobs stalled | External uptime check on `/up/jobs` (503) | The oldest due job has waited over `JOB_WAIT_THRESHOLD`: workers or dispatcher down, so the check above can't run either | `docker restart shadetree-production`; if it persists, re-run the last deploy |
+| Backups stale or untested | External uptime check on `/up/backup` (503) | No backup in `BACKUP_MAX_AGE_HOURS`, or its nightly restore drill failed | `journalctl --user -u shadetree-backup@production` on the VM ("Backups" above) |
+| Site down | External uptime check | `/up` or a client-link page isn't answering | Check the VM, the container (`docker ps`) and the tunnel; roll back the last deploy if it's the cause |
+
+**Where they go today:** the log only, plus the "Background jobs" card on the operator
+console's home. Nobody is notified yet.
+
+**Once an error tracker is chosen** (PLT-10 open question: hosted or self-hosted, recorded in
+an ADR): set `Observability.tracker` in `config/initializers/observability.rb` (or let the
+tracker's SDK subscribe to `Rails.error`, with its own request and user capture turned off, and
+messages passed through `Observability.scrub`). Errors and alerts then arrive with release,
+environment and business id. Route `error` (unhandled) and `alert` to the maintainer by email;
+leave handled warnings as dashboard-only. Add its keys to the GitHub environments (and the
+deploy's env file list) and the cost table.
+
+**Once an uptime service is chosen:** monitor `https://<APP_HOST>/up` (no redirect, no log
+noise), `/up/jobs` (200 "ok", 503 "stalled") and `/up/backup` (200 "ok", 503 "stale" or
+"untested"; nothing else is disclosed) and one client-link page, every 1–5 minutes from outside
+the homelab, alerting the maintainer by email after two failures. The client-link page needs a
+link that stays valid for a document of a Shadetree-owned demo business; how to keep one alive is
+decided when this is set up.
+
+### Failed jobs
+
+Failed jobs stay in Solid Queue until retried or discarded. From a console on the VM
+(`docker exec -it shadetree-production bin/rails console`):
+
+```ruby
+SolidQueue::FailedExecution.includes(:job).last(20).map { [_1.id, _1.job.class_name, _1.error["exception_class"]] }
+SolidQueue::FailedExecution.find(id).retry     # after fixing the cause
+SolidQueue::FailedExecution.find(id).discard   # when it's no longer wanted
+```
+
 ## Monthly cost
 
 Pre-revenue target: under **$50/month** (vision constraint). Update this table when anything
@@ -395,4 +468,5 @@ changes.
 | Stripe | $0 fixed; per-transaction fees |
 | Analytics: self-hosted Plausible (MKT-04) | $0 if on the homelab |
 | GitHub (public repository, Actions) | $0 |
+| Monitoring (error tracker, uptime check; PLT-10) | *tbd* |
 | **Total** | **target < $50** |
