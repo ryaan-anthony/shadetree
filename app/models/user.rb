@@ -147,7 +147,7 @@ class User < ApplicationRecord
   def deleted_email = "deleted-user-#{id}@#{DELETED_EMAIL_DOMAIN}"
 
   # Nobody else is in it and it has no records: closed, without its contact details (often the
-  # owner's own), logo, or pending invitations.
+  # owner's own), logo, or pending invitations, and with its subscription cancelled.
   def close_empty_business(business)
     Tenancy.with_business(business) do
       Invitation.pending.update_all(revoked_at: Time.current)
@@ -159,6 +159,8 @@ class User < ApplicationRecord
       Location.update_all(email: nil, phone: nil, address_line1: nil, address_line2: nil, city: nil, region: nil, postal_code: nil, updated_at: Time.current)
       Location.where(primary: true).update_all(name: Location::PRIMARY_NAME) unless Location.exists?(primary: false, name: Location::PRIMARY_NAME)
     end
+    # BIL-04: nobody is left to use a paid plan, so its subscription is cancelled (once committed).
+    ActiveRecord.after_all_transactions_commit { CancelSubscriptionsJob.perform_later(business.id) } if business.stripe_customer_id
   end
 
   # The name and email written into other records: visit crew changes, teammates'

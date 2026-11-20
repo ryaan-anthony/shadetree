@@ -59,6 +59,21 @@ class BusinessDeletionTest < ActiveSupport::TestCase
     assert_equal "Test Business One (deleted)", entry.business_label
   end
 
+  test "a business's Stripe subscriptions are cancelled before it's deleted; if Stripe is down it waits (BIL-04)" do
+    business = businesses(:one)
+    customer = with_stripe_customer(business)
+    live = stripe.add_subscription(customer:, plan: plans(:starter))
+    business.update_columns(deletion_scheduled_at: 31.days.ago, deletion_due_at: 1.day.ago)
+    stripe.fail_with = Stripe::APIConnectionError.new("down")
+    DeleteScheduledBusinessesJob.perform_now
+    assert Business.exists?(business.id), "kept until billing has stopped"
+
+    stripe.fail_with = nil
+    DeleteScheduledBusinessesJob.perform_now
+    assert_equal "canceled", stripe.subscriptions[live][:status]
+    assert_not Business.exists?(business.id)
+  end
+
   test "one business that can't be deleted is reported and the others still go" do
     first, second = businesses(:one), businesses(:two)
     [ first, second ].each { _1.update_columns(deletion_scheduled_at: 31.days.ago, deletion_due_at: 1.day.ago) }

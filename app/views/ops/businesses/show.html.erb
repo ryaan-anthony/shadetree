@@ -79,7 +79,18 @@
   <%= card title: "Plan and usage", id: "plan" do %>
     <dl class="space-y-2 text-sm">
       <div class="flex justify-between gap-3"><dt class="text-subtle">Plan</dt><dd class="font-semibold text-ink"><%= entitlements.plan.name %><%= " (with overrides)" if @business.plan_overrides.present? %></dd></div>
-      <div class="flex justify-between gap-3"><dt class="text-subtle">Subscription</dt><dd class="text-ink" id="subscription-status"><%= entitlements.plan.free? ? "None (free plan)" : "Not billed through Shadetree yet" %></dd></div>
+      <% subscription = @summary.subscription %>
+      <div class="flex justify-between gap-3"><dt class="text-subtle">Subscription</dt><dd class="text-right text-ink" id="subscription-status">
+        <% if subscription %>
+          <%= subscription.status_label %><% if subscription.plan %> · <%= subscription.plan.name %>, <%= subscription.interval %><% end %>
+          <% if subscription.live? && subscription.current_period_end %><span class="block text-sm2 text-muted"><%= subscription.cancel_at_period_end ? "Ends" : "Renews" %> <%= local_date(subscription.current_period_end) %></span><% end %>
+        <% else %>
+          <%= entitlements.plan.free? ? "None (free plan)" : "Not billed through Shadetree" %>
+        <% end %>
+      </dd></div>
+      <% if @business.stripe_customer_id %>
+        <div class="flex justify-between gap-3"><dt class="text-subtle">Stripe customer</dt><dd class="break-all text-right" id="stripe-customer"><%= link_to @business.stripe_customer_id, stripe_dashboard_url("customers/#{@business.stripe_customer_id}"), class: "text-ink underline-offset-2 hover:underline", target: "_blank", rel: "noopener" %></dd></div>
+      <% end %>
       <% Plan::LIMITS.each do |key, label| %>
         <% limit = entitlements.limit(key) %>
         <div class="flex justify-between gap-3" id="usage-<%= key %>"><dt class="text-subtle"><%= label %></dt><dd class="font-semibold text-ink"><%= limit ? "#{entitlements.used(key)} of #{limit}" : "#{entitlements.used(key)}, no limit" %></dd></div>
@@ -117,7 +128,17 @@
     <ul class="list"><%= render partial: "ops/notes/note", collection: @notes, as: :note %></ul>
   <% end %>
   <%= card title: "Billing history", flush: true, id: "billing-history" do %>
-    <p class="px-5 pt-4 text-sm2 text-muted">No subscription payments yet. Quotes sent in each usage period:</p>
+    <% events = @summary.billing_events %>
+    <% if events.any? %>
+      <ul class="list" id="billing-events">
+        <% events.each do |event| %>
+          <li class="flex-wrap text-sm"><span class="flex-1 text-ink"><%= event.label %><% if (summary = event.summary).present? %><span class="text-subtle">: <%= summary %></span><% end %></span><span class="text-sm2 text-muted"><%= local_time(event.occurred_at) %></span></li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="px-5 pt-4 text-sm2 text-muted" id="billing-events">No subscription activity yet.</p>
+    <% end %>
+    <p class="border-t border-line px-5 pt-4 text-sm2 text-muted">Quotes sent in each usage period:</p>
     <ul class="list">
       <% @summary.usage_history.each do |period, used| %>
         <li class="text-sm"><span class="flex-1 text-subtle"><%= local_date(period.starts_at) %> – <%= local_date(period.ends_at - 1.second) %></span><span class="tabular font-semibold text-ink"><%= used %></span></li>

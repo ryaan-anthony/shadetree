@@ -79,7 +79,7 @@ Part 2 (deletion):
   their name or email where it was written into other records (crew names in visit history,
   teammates' notifications about them, invitations they accepted, test emails they sent
   themselves). A business only they owned with nothing in it is closed, with its contact
-  details, logo and pending invitations removed. A deleted account can't sign in and shows as
+  details, logo and pending invitations removed, and its Stripe subscription cancelled (BIL-04). A deleted account can't sign in and shows as
   "Former member"; invitations they sent name the business instead; the team page says "deleted
   their account" and won't reactivate it or change its role.
 - It locks the businesses they own first (as role changes do), so two Owners deleting at once,

@@ -84,6 +84,23 @@ class Ops::BusinessDirectoryTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "a business page shows the Stripe subscription and the billing history (BIL-04)" do
+    customer = with_stripe_customer(@one)
+    id = stripe.add_subscription(customer:, plan: plans(:starter), interval: "yearly")
+    Billing::SubscriptionSync.refresh!(@one, id)
+    as_business(@one) { BillingEvent.record!("payment_succeeded", details: { "amount_cents" => 19000, "currency" => "usd", "invoice" => "SHADE-1" }) }
+    sign_in_operator
+
+    get ops_business_path(@one)
+
+    assert_select "#subscription-status", /Active · Starter, yearly\s+Renews/
+    assert_select "#stripe-customer a[href='https://dashboard.stripe.com/test/customers/#{customer}']", customer
+    assert_select "#billing-events li", 3
+    assert_select "#billing-events", /Payment received: \$190\.00 · invoice SHADE-1/
+    assert_select "#billing-events", /Plan changed: Free → Starter/
+    assert_select "#billing-events", /Subscribed: Starter, yearly/
+  end
+
   test "an operator who hasn't set up or entered a code is sent to do that first" do
     Operator.grant!(users(:one))
     sign_in users(:one)

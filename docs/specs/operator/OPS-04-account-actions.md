@@ -31,10 +31,10 @@ feature flags — each one audited and hard to do by accident.
       (BIL-01 overrides) are done; a comped plan with an end date, trials and coupons wait on
       BIL-05 and the billing provider.)*
 - [x] For a user: resend confirmation, send password reset, unlock account.
-- [ ] Schedule a business for deletion (typed confirmation of the business name); after a
+- [x] Schedule a business for deletion (typed confirmation of the business name); after a
       waiting period (default 30 days, expeditable) all its data and files are permanently
       removed, provider subscription canceled; the owner is notified at schedule and completion.
-      *(Done except cancelling the provider subscription, which comes with BIL-04/05.)*
+      *(Subscriptions are cancelled before the rows go, BIL-04.)*
 - [x] Simple forms let operators edit plans (BIL-01), industry presets (CAT-05) and feature flags
       (PLT-11), replacing console-only management.
 - [x] Every action is confirmed, recorded in the audit log, and reversible where possible

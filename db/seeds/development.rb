@@ -297,3 +297,23 @@ Tenancy.with_business(business) do
     ticket.reply_from_member!(owner, "Found it, thanks. Can I make that the default for Westgate?", source: "email")
   end
 end
+
+# BIL-04: the demo business's Starter plan as a mirrored Stripe subscription, with its billing
+# history (Settings → Plan, and the operator's business page). The ids are made up: they aren't
+# in any Stripe account, so with test keys try Checkout from a new business instead.
+Tenancy.with_business(business) do
+  unless Subscription.exists?
+    anchor = business.billing_cycle_anchor || 40.days.ago.change(hour: 15)
+    business.update_columns(stripe_customer_id: "cus_demo_oakline") if business.stripe_customer_id.nil?
+    starts = anchor.advance(months: ((Time.current.year * 12 + Time.current.month) - (anchor.year * 12 + anchor.month)))
+    starts = starts.advance(months: -1) if starts > Time.current
+    Subscription.create!(stripe_subscription_id: "sub_demo_oakline", status: "active", plan: Plan.find_by!(key: "starter"), interval: "monthly",
+                         current_period_start: starts, current_period_end: starts.advance(months: 1), billing_cycle_anchor: anchor)
+    BillingEvent.record!("subscribed", details: { "plan" => "Starter", "interval" => "monthly" }, at: anchor)
+    BillingEvent.record!("plan_changed", details: { "from" => "Free", "to" => "Starter" }, at: anchor)
+    [ anchor, anchor.advance(months: 1) ].select { _1 <= Time.current }.each_with_index do |paid_at, index|
+      BillingEvent.record!("payment_succeeded", details: { "amount_cents" => 1900, "currency" => "usd", "invoice" => "DEMO-000#{index + 1}" },
+                                                dedupe_key: "paid:demo#{index}", at: paid_at + 1.minute)
+    end
+  end
+end
