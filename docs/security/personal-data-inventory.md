@@ -17,7 +17,8 @@ erasing a client (INS-02, `ClientErasure`) removes or scrubs everything listed u
 | Client | `properties`: address lines, city, region, postal_code, access_notes | Same |
 | Client | `client_notes.body`, `client_events.data`, `client_link_events.device` (coarse, e.g. "Phone · Safari") | Same |
 | Client | `service_requests`: contact_name, contact_email, contact_phone, address, description, timing; `service_request_notes.body` | Same |
-| Client | `quotes`, `invoices`, `jobs`, `visits`: title, message, terms, instructions, internal_notes, client_note; line items; `*_revisions.snapshot` | Same (financial records keep their numbers and totals after erasure) |
+| Client | `quotes` / `invoices`: title, message, terms, internal_notes; `jobs`: title, instructions, internal_notes; `visits`: instructions, client_note; line items; `*_revisions.snapshot` | Same (financial records keep their numbers and totals after erasure) |
+| Client | `visit_notes.body` (technicians' notes, can describe the client or property) | Same |
 | Client | `quote_responses`: signer_name, email, message, ip_address, user_agent, signature, snapshot | Same |
 | Client | `quote_sends` / `invoice_sends`: recipient, cc; `email_messages`: to, subject, error; `payments`: reference, note | Same |
 | Client | `email_suppressions.email` | Kept after erasure, so a bounced or complaining address isn't mailed again (privacy notice) |
@@ -30,12 +31,14 @@ erasing a client (INS-02, `ClientErasure`) removes or scrubs everything listed u
 | Business | `businesses` / `locations`: email, phone, address (business contact details, often a sole trader's own) | With the business |
 | Visitor | `contact_messages`: name, email, business_name, body, ip_address, user_agent | IP and browser 30 days; spam 30 days; messages 2 years |
 
-## Files (Active Storage: object storage in staging/production, ADR 0008)
+## Files (Active Storage, ADR 0008: local disk today; object storage in staging and production once PLT-09 lands)
 
 Visit photos, job and document attachments, request photos, stored quote and invoice PDFs and
 their revisions, client import uploads (CSV), full data-export zips (deleted when the 7-day link
 expires), support-ticket files, business logos. Photos are stripped of location metadata
-(PLT-13). File keys are random; nothing personal is in a key.
+(PLT-13). File keys are random, but `active_storage_blobs.filename` keeps the uploaded name,
+which can name a client ("Smith invoice.pdf"); file addresses (signed ids, then that name) are
+blanked in logs.
 
 ## Other stores
 
@@ -43,6 +46,9 @@ expires), support-ticket files, business logos. Photos are stripped of location 
   emails carry their one-time token, and `AnalyticsEventJob` carries a visitor's IP and browser,
   until the job finishes (finished jobs are cleared after a day; failed ones stay until retried
   or discarded). Client email jobs don't log their arguments.
+  `solid_queue_failed_executions.error` keeps a failed job's raw exception message and
+  backtrace, which can include database row details or an address; only operators reach it, and
+  retrying or discarding the job removes it.
 - **Cache and cable databases:** no personal data is written deliberately; rebuildable.
 - **Backups (PLT-09, PR #134, not live yet):** nightly `pg_dump` of the primary database and a copy of the files
   bucket, in a separate backup bucket: 30 daily dumps, 12 monthly. An erased client stays in
@@ -60,14 +66,20 @@ expires), support-ticket files, business logos. Photos are stripped of location 
   passwords, tokens, secrets, emails, phones, names, addresses (including region), notes, tags,
   search terms, and every free-text field of the public forms, quote sends and answers.
   The same list masks those attributes in `inspect` and in Rails' structured events.
-- **Link tokens** in paths (`/c/:token`, `/invitations/:token`) are blanked (`SecretPathLogger`).
-- **Structured logs (production):** one JSON line per request (request id, method, filtered
-  path, controller, status, durations, business and user ids) and per job; no parameters, no IP
-  address. Rails' text lines, which can quote exception messages, a mail server's reply or the
-  client's IP, are switched off (`config/initializers/observability.rb`).
+- **Link tokens and file addresses** in paths (`/c/:token`, `/invitations/:token`,
+  `/rails/active_storage/…`) are blanked, and email addresses in paths masked (`SecretPathLogger`,
+  `Observability.path`).
+- **Structured logs (production):** every line is JSON; one per request (request id, method,
+  filtered path, controller, status, durations, business and user ids) and per job, retry and
+  discard; no parameters and no IP address. Rails' text lines, which can quote exception
+  messages, a mail server's reply or the client's IP, are switched off
+  (`config/initializers/observability.rb`). The one deliberate exception: abuse lines (rate
+  limits, bot checks; `AbuseProtection`) log the IP address and path (tokens blanked), to
+  investigate attacks.
 - **Errors and alerts** (`Observability::ErrorContext`, `ErrorSubscriber`): context is ids,
   global ids and class names only (controller and job objects are dropped); keys on the filter
-  list are masked; exception messages have email addresses and phone-like numbers replaced.
+  list are masked; exception messages lose Postgres' DETAIL/HINT (the failing row or key values)
+  and have email addresses and phone-like numbers replaced.
   The same sanitized payload is what the error tracker will receive once one is chosen (PLT-10
   open question). Slow-query lines have literal strings removed from the SQL.
 - **Tests:** `StructuredLogsTest` signs in and creates a client with distinctive details and
@@ -75,7 +87,9 @@ expires), support-ticket files, business logos. Photos are stripped of location 
   reports and slow queries the same way.
 - **Known gaps:** development logs are verbose by design (local data only). kamal-proxy's
   access log (PLT-09) records paths and client IPs on the host; check whether client-link
-  tokens appear there once hosting exists, and turn request-path logging off if so.
+  tokens appear there once hosting exists, and turn request-path logging off if so. A tracker
+  SDK that subscribes to `Rails.error` itself sees the raw exception; configure it to send
+  `Observability.scrub(message)` instead.
 
 ## Analytics (MKT-04)
 

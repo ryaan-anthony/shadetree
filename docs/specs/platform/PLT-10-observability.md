@@ -47,27 +47,30 @@ it, without leaking client personal data into third-party tools.
 
 ## Implementation notes
 
-- **Errors:** everything goes through Rails' own reporter, `Rails.error`. Unhandled request
-  errors arrive from Rails' executor; unhandled job errors from `ApplicationJob#perform_now`
-  (and Solid Queue; each exception is reported once). `Observability::ErrorContext` adds release
+- **Errors:** everything goes through `Rails.error`: request errors from Rails' executor, job
+  errors from `ReportsUnhandledErrors#perform_now` (ApplicationJob and both mail delivery jobs;
+  Solid Queue reports too, each exception once). `Observability::ErrorContext` adds release
   (`KAMAL_VERSION`), environment, request id/method/path, job class/id, business and user ids,
-  drops controller and job objects, masks filtered keys and scrubs emails and phone numbers from
-  messages; `ErrorSubscriber` logs each as a JSON line and calls `Observability.tracker`, the
-  single hook for the tracker (unset; see `config/initializers/observability.rb`).
-- **Logs:** Rails 8.1's structured events (`Rails.event`), no new gem. `STRUCTURED_LOGS` (on in
-  production) gives one JSON line per request and job and turns off Rails' text lines and the
-  "Started … for <IP>" line. `region` joined the filter list.
-- **Performance:** `SLOW_REQUEST_MS` (1000) and `SLOW_QUERY_MS` (250) log warnings in every
-  environment; requests carry `area` (staff, client, operator, public); queries their source line
-  and SQL without literals.
-- **Jobs:** `JobHealthCheckJob` every 10 minutes alerts (through `Observability.alert`, so the
-  same hook) on failures in the last 10 minutes and on a backlog over `JOB_BACKLOG_THRESHOLD`
-  (100) or `JOB_WAIT_THRESHOLD` seconds (600). The console home shows a "Background jobs" card.
+  drops controller and job objects and masks filtered keys; messages lose Postgres' DETAIL/HINT
+  and email/phone-like values. `ErrorSubscriber` logs a JSON line (with 10 app backtrace frames)
+  and calls `Observability.tracker`, the one hook for the tracker (unset).
+- **Logs:** Rails 8.1's structured events, no new gem. `STRUCTURED_LOGS` (on in production):
+  every line is JSON (`JsonLogFormatter`, tags in a field), one per request (requests no
+  controller finished get theirs from `SecretPathLogger`) and per job, retry and discard; Rails'
+  text lines and the "Started … for <IP>" line are off. Paths blank link tokens and Active
+  Storage addresses; `region`, `signed_id` and `filename` joined the filter list.
+- **Performance:** `SLOW_REQUEST_MS` (1000) and `SLOW_QUERY_MS` (250) log warnings everywhere;
+  requests carry `area` (staff, client, operator, public); queries their source and literal-free SQL.
+- **Jobs:** `JobHealthCheckJob` (every 10 minutes, priority -10) alerts through the same hook on
+  failures newer than the last one alerted on (watermark in the cache) and on a backlog over
+  `JOB_BACKLOG_THRESHOLD` (100) or a due job waiting over `JOB_WAIT_THRESHOLD` (600 s). Workers
+  being down stops that check, so `/up/jobs` answers 503 for the uptime check; `/up` is unchanged.
+  Console home: "Background jobs" card. `MIN(created_at)` on ready executions has no index (Solid
+  Queue owns that schema; the table is small); revisit if it grows.
 - **Inventory:** [docs/security/personal-data-inventory.md](../../security/personal-data-inventory.md).
-- **Not done, waiting on decisions:** the tracker (open question below), so alerts reach the log
-  and console only; the external uptime check (needs PLT-09 hosting and a service choice); the
-  cost record (with PLT-09's monthly cost table). The job criterion stays open until alerts
-  reach the maintainer.
+- **Waiting on decisions:** the tracker (open question), so alerts reach the log and console
+  only; the uptime check (PLT-09 hosting and a service); the cost record. The job criterion stays
+  open until alerts reach the maintainer.
 
 ## Open questions
 
