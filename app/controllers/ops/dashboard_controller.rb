@@ -4,5 +4,6 @@ class Ops::DashboardController < Ops::BaseController
     @recent = AuditEntry.newest_first.includes(:business, :target_user).limit(10)
     @append_only = AuditEntry.append_only?
     @open_messages = ContactMessage.not_spam.unhandled.count # MKT-02
+    @job_health = JobHealth.current # PLT-10
   end
 end
