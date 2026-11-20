@@ -37,6 +37,7 @@ production:
   job_health_check: # PLT-10: failed jobs and a backlog raise an alert
     class: JobHealthCheckJob
     schedule: every 10 minutes
+    priority: -10 # ahead of the backlog it reports on (lower runs first; jobs default to 0)
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
