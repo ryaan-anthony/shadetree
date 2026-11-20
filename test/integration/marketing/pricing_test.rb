@@ -83,6 +83,13 @@ class MarketingPricingTest < ActionDispatch::IntegrationTest
     assert_select "#faq ~ div details summary", text: /cancel/
     assert_select "#faq ~ div details summary", text: /take my data/
     assert_no_match(/trial|most popular|card payments|pay online|read-only|move to a paid plan from Settings/i, response.body)
-    assert_select "a[href=?]", contact_path, text: "ask us"
+    assert_select "a[href=?]", contact_path, text: "Ask us"
+  end
+
+  test "says where Owners choose a paid plan (BIL-04), and what cancelling means" do
+    get pricing_path
+    assert_match "Owners choose a paid plan in Settings → Plan", response.body
+    assert_no_match(/coming soon; until then/, response.body)
+    assert_select "#faq ~ div details p", text: /runs to the end of what you’ve paid for, then you’re on Free/
   end
 end

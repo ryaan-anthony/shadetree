@@ -23,11 +23,29 @@
         </li>
       <% end %>
     </ul>
-    <p class="mt-4 text-sm2 text-muted" id="usage-resets">Your quote count resets on <%= local_date(@entitlements.period.resets_on) %>. Changing plan is coming soon.</p>
+    <p class="mt-4 text-sm2 text-muted" id="usage-resets">Your quote count resets on <%= local_date(@entitlements.period.resets_on) %>.</p>
+    <%= render "billing", subscription: @subscription, business: @business %>
   <% end %>
 </div>
 
-<h2 class="mb-3 mt-8 text-base font-semibold text-ink">Compare plans</h2>
+<% choosing = can?(:billing) %>
+<% yearly = @plans.any? { plan_yearly?(_1) } %>
+<div class="group/interval">
+<div class="mb-3 mt-8 flex flex-wrap items-center justify-between gap-3">
+  <h2 class="text-base font-semibold text-ink">Compare plans</h2>
+  <% if choosing && yearly %>
+    <% savings = @plans.filter_map { plan_annual_saving(_1) }.uniq %>
+    <fieldset class="inline-flex rounded-control border border-line bg-sunken p-1 text-sm" id="interval-choice">
+      <legend class="sr-only">Pay</legend>
+      <label class="cursor-pointer rounded-[4px] px-3 py-1 font-medium text-subtle has-[:checked]:bg-surface has-[:checked]:text-ink has-[:checked]:shadow-card has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-canopy">
+        <input type="radio" name="interval" value="monthly" class="sr-only" <%= "checked" unless @subscription&.live? && @subscription.yearly? %>> Monthly
+      </label>
+      <label class="cursor-pointer rounded-[4px] px-3 py-1 font-medium text-subtle has-[:checked]:bg-surface has-[:checked]:text-ink has-[:checked]:shadow-card has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-canopy">
+        <input type="radio" name="interval" value="yearly" class="sr-only" id="interval-yearly" <%= "checked" if @subscription&.live? && @subscription.yearly? %>> Yearly<%= ", #{savings.first}" if savings.one? %>
+      </label>
+    </fieldset>
+  <% end %>
+</div>
 <div class="overflow-x-auto rounded-card border border-line bg-surface" tabindex="0" role="region" aria-label="Compare plans">
   <table class="w-full min-w-[40rem] text-sm" id="compare-plans">
     <caption class="sr-only">Limits and features of each plan</caption>
@@ -59,5 +77,22 @@
         </tr>
       <% end %>
     </tbody>
+    <% if choosing %>
+      <tfoot>
+        <tr class="border-t border-line" id="choose-plan">
+          <th scope="row" class="p-3 text-left font-normal text-subtle"><span class="sr-only">Choose a plan</span></th>
+          <% @plans.each do |option| %>
+            <td class="p-3 align-top <%= "bg-sunken" if option == plan %>" id="choose-<%= option.key %>">
+              <%= render "choose", option:, plan:, subscription: @subscription, interval: "monthly", yearly: %>
+              <% if yearly %><%= render "choose", option:, plan:, subscription: @subscription, interval: "yearly", yearly: %><% end %>
+            </td>
+          <% end %>
+        </tr>
+      </tfoot>
+    <% end %>
   </table>
+</div>
+<% if choosing %>
+  <p class="mt-3 text-sm2 text-muted">You pay on Stripe's secure page; Shadetree never sees your card. Upgrades start straight away; a switch is prorated, and a cancelled plan runs to the end of what you've paid for, then you're on Free. Prices plus sales tax where it applies.</p>
+<% end %>
 </div>
