@@ -11,10 +11,13 @@ class BusinessDeletionTest < ActiveSupport::TestCase
     png = file_fixture("logo.png")
     business.update!(logo: Rack::Test::UploadedFile.new(png, "image/png"))
     job = Tenancy.with_business(business) { Job.first }
-    Tenancy.with_business(business) { job.attachments.attach(io: png.open, filename: "before.png", content_type: "image/png") }
+    job_blob = ActiveStorage::Blob.create_and_upload!(io: png.open, filename: "before.png", content_type: "image/png")
+    Tenancy.with_business(business) { job.attachments.attach(job_blob) }
     variant_blob = ActiveStorage::Blob.create_and_upload!(io: png.open, filename: "v.png")
     ActiveStorage::VariantRecord.create!(blob: business.logo.blob, variation_digest: "x").image.attach(variant_blob)
-    blobs = ActiveStorage::Blob.where(id: [ business.logo.blob.id, job.attachments.first.blob.id, variant_blob.id ]).to_a
+    # Named, not read back with where(id:): Postgres returns rows in no set order, so "the first
+    # two" of a query weren't always the logo and the job's file.
+    blobs = [ business.logo.blob, job_blob, variant_blob ]
     AuditEntry.record!(operator: users(:one), action: "business.viewed", business:)
     audit_before = AuditEntry.where(business_id: business.id).count # incl. the seeded support visit (OPS-03)
     FeatureFlag.create!(name: "beta", state: "businesses", business_ids: [ business.id, businesses(:two).id ])
