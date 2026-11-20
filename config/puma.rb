@@ -30,6 +30,15 @@ threads threads_count, threads_count
 # Specifies the `port` that Puma will listen on to receive requests; default is 3000.
 port ENV.fetch("PORT", 3000)
 
+# HTTPS with the Cloudflare Origin CA certificate (ADR 0023, lib/server_tls.rb) on 3443, the port the
+# deployment publishes for the tunnel, when TLS_CERT_BASE64 and TLS_KEY_BASE64 are set. Fixed, so the
+# deploy's port mapping and its readiness check always match it. TLS 1.2 and later only. A bad
+# certificate or key stops the server with a message rather than serving without it.
+require_relative "../lib/server_tls"
+if (tls = ServerTls.from_env)
+  ssl_bind "0.0.0.0", 3443, cert_pem: tls.cert_pem, key_pem: tls.key_pem, no_tlsv1: true, no_tlsv1_1: true, verify_mode: "none"
+end
+
 # Allow puma to be restarted by `bin/rails restart` command.
 plugin :tmp_restart
 

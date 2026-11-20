@@ -3,8 +3,11 @@
 # Development and test connect to a local server. Override with DATABASE_URL, or with
 # PGHOST / PGUSER / PGPASSWORD, which libpq reads automatically.
 #
-# Production uses one managed server with four databases: the app's primary database
-# plus one each for Solid Cache, Solid Queue and Solid Cable. Their URLs come from secrets.
+# Production (staging and production alike, ADR 0023) uses the PostgreSQL container on the VM,
+# reached on its Docker network: four databases owned by one role, the app's primary database plus
+# one each for Solid Cache, Solid Queue and Solid Cable. The deploy sets PGHOST, DATABASE_NAME
+# (shadetree_staging or shadetree_production), DATABASE_USER and DATABASE_PASSWORD. DATABASE_URL,
+# when set, replaces the primary only (the restore drill points it at a scratch database).
 default: &default
   adapter: postgresql
   encoding: unicode
@@ -22,16 +25,19 @@ test:
 production:
   primary: &primary_production
     <<: *default
-    url: <%= ENV["DATABASE_URL"] %>
+    host: <%= ENV.fetch("PGHOST", "postgres") %>
+    database: <%= ENV.fetch("DATABASE_NAME", "shadetree_production") %>
+    username: <%= ENV.fetch("DATABASE_USER", "shadetree") %>
+    password: <%= ENV["DATABASE_PASSWORD"] %>
   cache:
     <<: *primary_production
-    url: <%= ENV["CACHE_DATABASE_URL"] %>
+    database: <%= ENV.fetch("DATABASE_NAME", "shadetree_production") %>_cache
     migrations_paths: db/cache_migrate
   queue:
     <<: *primary_production
-    url: <%= ENV["QUEUE_DATABASE_URL"] %>
+    database: <%= ENV.fetch("DATABASE_NAME", "shadetree_production") %>_queue
     migrations_paths: db/queue_migrate
   cable:
     <<: *primary_production
-    url: <%= ENV["CABLE_DATABASE_URL"] %>
+    database: <%= ENV.fetch("DATABASE_NAME", "shadetree_production") %>_cable
     migrations_paths: db/cable_migrate

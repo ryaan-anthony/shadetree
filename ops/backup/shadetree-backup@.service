@@ -1,0 +1,11 @@
+[Unit]
+Description=Shadetree %i backup (PLT-09)
+Documentation=https://github.com/ryaan-anthony/shadetree/blob/main/docs/runbooks/operations.md
+
+[Service]
+Type=oneshot
+# A user unit of the deploy user, installed by ops/backup/install.sh (the Deploy workflow runs it);
+# %i is the environment. Settings are in ~/.config/shadetree-%i/backup.env (none secret); docker.sh
+# reads the database password from the app container.
+ExecStart=%h/.local/share/shadetree-%i/backup/docker.sh %i backup
+TimeoutStartSec=3h

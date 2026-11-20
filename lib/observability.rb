@@ -36,8 +36,8 @@ module Observability
     def env_integer(name, default) = ENV[name].present? ? Integer(ENV[name], 10) : default
     def env_flag(name, default) = ENV[name].present? ? ActiveModel::Type::Boolean.new.cast(ENV[name]) : default
 
-    # The deployed version: Kamal sets KAMAL_VERSION (the commit) in the container (PLT-09).
-    def release = ENV["APP_REVISION"].presence || ENV["KAMAL_VERSION"].presence || "development"
+    # The deployed version: the deploy sets APP_REVISION to the commit (PLT-09, ops/deploy).
+    def release = ENV["APP_REVISION"].presence || "development"
 
     # STRUCTURED_LOGS: one JSON line per request and job replaces Rails' text lines, whose
     # messages can carry values (an exception message, a mail server's reply quoting an address)

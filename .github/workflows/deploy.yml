@@ -1,10 +1,20 @@
-# Deploys (PLT-09, docs/runbooks/operations.md).
-#  - Staging: automatically, after CI passes on a push to main.
-#  - Production: when a GitHub release is published, or by running this workflow by hand.
-#    It promotes the image already built and tested on staging for that commit.
-#  - Rollback: run by hand with "rollback_to" set to a previous release's commit SHA.
-# Jobs skip themselves until the repository-level switches STAGING_READY / PRODUCTION_READY are
-# "true" (job conditions can't see environment-scoped variables). See docs/runbooks/operations.md.
+# Deploy (PLT-09, ADR 0023, docs/runbooks/operations.md): builds and runs Shadetree on the VM of
+# the environment it deploys to. A self-hosted runner on the owner's LAN connects to the VM over
+# SSH, ships the commit (tar), builds the image there and replaces the shadetree-<environment>
+# container, which joins the existing PostgreSQL container's Docker network, keeps uploads in a
+# Docker volume and publishes HTTPS (the Cloudflare Origin CA certificate) for the Cloudflare
+# tunnel. Settings come from the GitHub environment; secret values travel only on SSH standard
+# input into a mode-0600 env file for `docker run --env-file`, never on a command line.
+#
+#   staging     every push to main, once CI has passed on it (workflow_run); or Run workflow on main
+#   production  a pushed tag vX.Y.Z on a commit of main whose CI passed; or Run workflow on that tag
+#
+# Rollback: re-run an earlier Deploy run (it redeploys its own commit), or push a new tag. Before
+# the app is replaced, the daily backup is installed on the VM (ops/backup/install.sh), and the
+# deploy waits for a running backup (ops/deploy/deploy.sh). Jobs run inside Puma.
+#
+# This runs on a self-hosted runner, so it never runs for pull requests: only for pushes to main
+# (through CI's completed run, checked to be a push to this repository), tags and manual runs.
 name: Deploy
 
 on:
@@ -12,134 +22,259 @@ on:
     workflows: [ CI ]
     types: [ completed ]
     branches: [ main ]
-  release:
-    types: [ published ]
+  push:
+    tags: [ "v*" ]
   workflow_dispatch:
-    inputs:
-      environment:
-        description: Where to deploy
-        type: choice
-        options: [ staging, production ]
-        default: staging
-      rollback_to:
-        description: "Optional: roll back to this commit SHA (a previously deployed version)"
-        type: string
-        required: false
 
 permissions:
   contents: read
-  packages: write
+  actions: read # the gate reads CI's runs
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
-  staging:
-    name: Staging
+  gate:
+    name: Pick the environment and commit
+    # A completed CI run deploys only if it passed on a push to main of this repository (never a fork).
     if: >-
-      vars.STAGING_READY == 'true' && (
-        (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push') ||
-        (github.event_name == 'workflow_dispatch' && inputs.environment == 'staging'))
+      github.event_name != 'workflow_run' || (
+        github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-24.04
-    environment:
-      name: staging
-      url: https://${{ vars.STAGING_DOMAIN }}
-    concurrency: { group: deploy-staging, cancel-in-progress: false }
-    env:
-      KAMAL_REGISTRY_USERNAME: ${{ github.repository_owner }}
-      KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-      KAMAL_IMAGE: ${{ github.repository }}
-      RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      CACHE_DATABASE_URL: ${{ secrets.CACHE_DATABASE_URL }}
-      QUEUE_DATABASE_URL: ${{ secrets.QUEUE_DATABASE_URL }}
-      CABLE_DATABASE_URL: ${{ secrets.CABLE_DATABASE_URL }}
-      STORAGE_ACCESS_KEY_ID: ${{ secrets.STORAGE_ACCESS_KEY_ID }}
-      STORAGE_SECRET_ACCESS_KEY: ${{ secrets.STORAGE_SECRET_ACCESS_KEY }}
-      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
-      STORAGE_BUCKET: ${{ vars.STORAGE_BUCKET }}
-      SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-      MAIL_FROM: ${{ vars.MAIL_FROM }}
-      STAGING_HOST: ${{ vars.STAGING_HOST }}
-      STAGING_DOMAIN: ${{ vars.STAGING_DOMAIN }}
-      STAGING_MAIL_ALLOWLIST: ${{ vars.STAGING_MAIL_ALLOWLIST }}
-      STAGING_MAIL_SANDBOX_TO: ${{ vars.STAGING_MAIL_SANDBOX_TO }}
-      PRODUCTION_HOST: ${{ vars.PRODUCTION_HOST }}
-      PRODUCTION_DOMAIN: ${{ vars.PRODUCTION_DOMAIN }}
+    timeout-minutes: 5
+    outputs:
+      environment: ${{ steps.pick.outputs.environment }}
+      sha: ${{ steps.pick.outputs.sha }}
     steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
-      - uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
-      - uses: webfactory/ssh-agent@v0.9.1
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      - uses: docker/setup-buildx-action@v3
-      - name: Trust the host key
-        run: mkdir -p ~/.ssh && echo "${{ vars.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
-      - name: Deploy
+      - name: Pick and check
+        id: pick
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          RUN_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
-          if [ -n "${{ inputs.rollback_to }}" ]; then
-            bin/kamal rollback "${{ inputs.rollback_to }}" -d staging
-          else
-            bin/kamal deploy -d staging
-          fi
+          case "$EVENT:$GITHUB_REF" in
+            workflow_run:*) environment=staging sha="$RUN_SHA" ;;
+            workflow_dispatch:refs/heads/main) environment=staging sha="$GITHUB_SHA" ;;
+            push:refs/tags/* | workflow_dispatch:refs/tags/*)
+              [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::production deploys tags like v1.2.3, not $GITHUB_REF_NAME"; exit 1; }
+              environment=production
+              sha="$(gh api "repos/$REPO/commits/$GITHUB_REF_NAME" -q .sha)" ;; # the commit, also for an annotated tag
+            *) echo "::error::run this workflow on main (staging) or on a tag vX.Y.Z (production), not $GITHUB_REF"; exit 1 ;;
+          esac
+          [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::could not resolve the commit"; exit 1; }
+          # The commit is on main, and CI passed on it there.
+          on_main="$(gh api "repos/$REPO/compare/$sha...main" -q .status)"
+          [[ "$on_main" =~ ^(ahead|identical)$ ]] || { echo "::error::$sha is not on main"; exit 1; }
+          passed="$(gh api "repos/$REPO/actions/workflows/ci.yml/runs?head_sha=$sha&event=push&status=success" -q .total_count)"
+          [ "${passed:-0}" -gt 0 ] || { echo "::error::CI has not passed on main for $sha"; exit 1; }
+          echo "Deploying $sha to $environment" | tee -a "$GITHUB_STEP_SUMMARY"
+          { echo "environment=$environment"; echo "sha=$sha"; } >> "$GITHUB_OUTPUT"
 
-  production:
-    name: Production
-    if: >-
-      vars.PRODUCTION_READY == 'true' && (
-        github.event_name == 'release' ||
-        (github.event_name == 'workflow_dispatch' && inputs.environment == 'production'))
-    runs-on: ubuntu-24.04
+  deploy:
+    name: Deploy to ${{ needs.gate.outputs.environment }}
+    needs: gate
+    runs-on: self-hosted
     environment:
-      # Protect this environment with required reviewers in the repository settings.
-      name: production
-      url: https://${{ vars.PRODUCTION_DOMAIN }}
-    concurrency: { group: deploy-production, cancel-in-progress: false }
+      name: ${{ needs.gate.outputs.environment }}
+      url: https://${{ vars.APP_HOST }}
+    concurrency:
+      group: deploy-${{ needs.gate.outputs.environment }}
+      cancel-in-progress: false
+    # Above deploy.sh's 20-minute wait for a running backup plus the build.
+    timeout-minutes: 60
     env:
-      KAMAL_REGISTRY_USERNAME: ${{ github.repository_owner }}
-      KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-      KAMAL_IMAGE: ${{ github.repository }}
-      RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      CACHE_DATABASE_URL: ${{ secrets.CACHE_DATABASE_URL }}
-      QUEUE_DATABASE_URL: ${{ secrets.QUEUE_DATABASE_URL }}
-      CABLE_DATABASE_URL: ${{ secrets.CABLE_DATABASE_URL }}
-      STORAGE_ACCESS_KEY_ID: ${{ secrets.STORAGE_ACCESS_KEY_ID }}
-      STORAGE_SECRET_ACCESS_KEY: ${{ secrets.STORAGE_SECRET_ACCESS_KEY }}
-      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
-      STORAGE_BUCKET: ${{ vars.STORAGE_BUCKET }}
-      SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-      MAIL_FROM: ${{ vars.MAIL_FROM }}
-      STAGING_HOST: ${{ vars.STAGING_HOST }}
-      STAGING_DOMAIN: ${{ vars.STAGING_DOMAIN }}
-      STAGING_MAIL_ALLOWLIST: ${{ vars.STAGING_MAIL_ALLOWLIST }}
-      STAGING_MAIL_SANDBOX_TO: ${{ vars.STAGING_MAIL_SANDBOX_TO }}
-      PRODUCTION_HOST: ${{ vars.PRODUCTION_HOST }}
-      PRODUCTION_DOMAIN: ${{ vars.PRODUCTION_DOMAIN }}
+      ENVIRONMENT: ${{ needs.gate.outputs.environment }}
+      DEPLOY_SHA: ${{ needs.gate.outputs.sha }}
+      DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+      DEPLOY_DIR: ${{ vars.DEPLOY_DIR || 'shadetree' }}
+      ORIGIN_HOST: ${{ vars.ORIGIN_HOST || vars.DEPLOY_HOST }}
+      PUBLISH_PORT: ${{ vars.PUBLISH_PORT || '443' }}
+      DB_NETWORK: ${{ vars.DB_NETWORK }}
+      BACKUP_DIR: ${{ vars.BACKUP_DIR }}
+      BACKUP_ALLOW_LOCAL: ${{ vars.BACKUP_ALLOW_LOCAL || 'false' }}
+      BACKUP_RETENTION_DAYS: ${{ vars.BACKUP_RETENTION_DAYS }}
+      BACKUP_PG_IMAGE: ${{ vars.BACKUP_PG_IMAGE || 'postgres:17' }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: ruby/setup-ruby@v1
+      - uses: actions/checkout@v7
         with:
-          bundler-cache: true
-      - uses: webfactory/ssh-agent@v0.9.1
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      - name: Trust the host key
-        run: mkdir -p ~/.ssh && echo "${{ vars.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
-      - uses: docker/setup-buildx-action@v3
-      - name: Sign in to the registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-      - name: Deploy or roll back
+          ref: ${{ needs.gate.outputs.sha }}
+          persist-credentials: false
+
+      - name: Check the deploy settings
+        env:
+          # Only to warn: values that must be secrets, set as variables (and so visible), and the reverse.
+          VISIBLE_SECRET_KEY_BASE: ${{ vars.SECRET_KEY_BASE }}
+          VISIBLE_DATABASE_PASSWORD: ${{ vars.DATABASE_PASSWORD }}
+          VISIBLE_TLS_KEY: ${{ vars.TLS_KEY }}
+          VISIBLE_SMTP_PASSWORD: ${{ vars.SMTP_PASSWORD }}
+          VISIBLE_STRIPE_SECRET_KEY: ${{ vars.STRIPE_SECRET_KEY }}
+          HIDDEN_APP_HOST: ${{ secrets.APP_HOST }}
+          HIDDEN_DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          HIDDEN_DB_NETWORK: ${{ secrets.DB_NETWORK }}
         run: |
-          if [ -n "${{ inputs.rollback_to }}" ]; then
-            bin/kamal rollback "${{ inputs.rollback_to }}" -d production
+          for name in SECRET_KEY_BASE DATABASE_PASSWORD TLS_KEY SMTP_PASSWORD STRIPE_SECRET_KEY; do
+            visible="VISIBLE_$name"
+            [ -z "${!visible}" ] || { echo "::error::$name is set as a variable, which anyone with read access can see: delete it, rotate it, and set it as a secret of the $ENVIRONMENT environment"; exit 1; }
+          done
+          for name in APP_HOST DEPLOY_HOST DB_NETWORK; do
+            hidden="HIDDEN_$name"
+            [ -z "${!hidden}" ] || echo "::warning::$name is set as a secret, which the deploy does not read: set it as a variable of the $ENVIRONMENT environment"
+          done
+          [[ "$DEPLOY_HOST" =~ ^[A-Za-z0-9][A-Za-z0-9.:-]*$ ]] || { echo "::error::set the variable DEPLOY_HOST"; exit 1; }
+          [[ "$DEPLOY_USER" =~ ^[a-z_][a-z0-9_-]*$ ]] || { echo "::error::set the variable DEPLOY_USER"; exit 1; }
+          [[ "$DEPLOY_DIR" =~ ^[A-Za-z0-9._/-]+$ && "$DEPLOY_DIR" != *..* ]] || { echo "::error::DEPLOY_DIR is not a plain path"; exit 1; }
+          [[ "$ORIGIN_HOST" =~ ^[A-Za-z0-9][A-Za-z0-9.-]*$ ]] || { echo "::error::ORIGIN_HOST is not a host name"; exit 1; }
+          [[ "$PUBLISH_PORT" =~ ^[0-9]{1,5}$ ]] || { echo "::error::PUBLISH_PORT must be a port number"; exit 1; }
+          [[ "$DB_NETWORK" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]] || { echo "::error::set the variable DB_NETWORK"; exit 1; }
+          BACKUP_DIR="${BACKUP_DIR:-/var/backups/shadetree-$ENVIRONMENT}"
+          [[ "$BACKUP_DIR" =~ ^/[A-Za-z0-9._/-]+$ && "$BACKUP_DIR" != *..* ]] || { echo "::error::BACKUP_DIR must be an absolute plain path"; exit 1; }
+          [[ "$BACKUP_ALLOW_LOCAL" =~ ^(true|false)$ ]] || { echo "::error::BACKUP_ALLOW_LOCAL must be true, false, or unset"; exit 1; }
+          [[ "$BACKUP_RETENTION_DAYS" =~ ^([1-9][0-9]*)?$ ]] || { echo "::error::BACKUP_RETENTION_DAYS must be a whole number of days, or unset"; exit 1; }
+          [[ "$BACKUP_PG_IMAGE" =~ ^[a-z0-9][a-z0-9._/:@-]*$ ]] || { echo "::error::BACKUP_PG_IMAGE is not an image name"; exit 1; }
+          echo "BACKUP_DIR=$BACKUP_DIR" >> "$GITHUB_ENV"
+          echo "Deploying $DEPLOY_SHA to $ENVIRONMENT on $DEPLOY_HOST"
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ vars.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          # In this job's temporary directory, removed at the end; never in the runner user's ~/.ssh.
+          [ -n "$SSH_PRIVATE_KEY" ] || { echo "::error::set the secret SSH_PRIVATE_KEY in the $ENVIRONMENT environment"; exit 1; }
+          dir="$RUNNER_TEMP/deploy-ssh"
+          rm -rf "$dir" && (umask 077 && mkdir "$dir" && printf '%s\n' "$SSH_PRIVATE_KEY" > "$dir/key")
+          if [ -n "$DEPLOY_KNOWN_HOSTS" ]; then printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$dir/known_hosts"
           else
-            # Promote only the image staging built and ran for this commit. If it doesn't exist
-            # (the commit never reached staging), fail rather than build an untested image.
-            image="ghcr.io/${{ github.repository }}:${{ github.sha }}"
-            docker manifest inspect "$image" > /dev/null || { echo "::error::$image was never deployed to staging"; exit 1; }
-            bin/kamal deploy -d production --skip-push --version="${{ github.sha }}"
+            echo "::warning::DEPLOY_KNOWN_HOSTS is not set, so this deploy trusts whatever host key $DEPLOY_HOST presents"
+            ssh-keyscan -H -T 10 "$DEPLOY_HOST" > "$dir/known_hosts" 2> /dev/null
           fi
+          printf 'Host server\n  HostName %s\n  User %s\n  IdentityFile %s/key\n  IdentitiesOnly yes\n  UserKnownHostsFile %s/known_hosts\n  StrictHostKeyChecking yes\n  BatchMode yes\n' \
+            "$DEPLOY_HOST" "$DEPLOY_USER" "$dir" "$dir" > "$dir/config"
+          echo "SSH_CONFIG=$dir/config" >> "$GITHUB_ENV"
+
+      - name: Check the origin certificate
+        env:
+          TLS_CERT: ${{ secrets.TLS_CERT }}
+          TLS_KEY: ${{ secrets.TLS_KEY }}
+        run: |
+          # The tunnel checks the certificate against ORIGIN_HOST; one that doesn't cover it, doesn't
+          # match its key, or has expired would take the site down, so it stops the deploy here.
+          for name in TLS_CERT TLS_KEY; do [ -n "${!name}" ] || { echo "::error::set the secret $name in the $ENVIRONMENT environment (the Cloudflare Origin CA certificate and its key, PEM)"; exit 1; }; done
+          dir="$RUNNER_TEMP/tls" && rm -rf "$dir" && (umask 077 && mkdir "$dir" && printf '%s\n' "$TLS_CERT" > "$dir/cert.pem" && printf '%s\n' "$TLS_KEY" > "$dir/key.pem")
+          trap 'rm -rf "$dir"' EXIT
+          openssl x509 -in "$dir/cert.pem" -noout -checkhost "$ORIGIN_HOST" | grep -q 'does match' \
+            || { echo "::error::TLS_CERT does not cover ORIGIN_HOST ($ORIGIN_HOST)"; exit 1; }
+          [ "$(openssl x509 -in "$dir/cert.pem" -noout -pubkey | openssl pkey -pubin -outform DER | sha256sum)" = "$(openssl pkey -in "$dir/key.pem" -pubout -outform DER | sha256sum)" ] \
+            || { echo "::error::TLS_KEY does not match TLS_CERT"; exit 1; }
+          openssl x509 -in "$dir/cert.pem" -noout -checkend 0 > /dev/null || { echo "::error::TLS_CERT has expired"; exit 1; }
+          openssl x509 -in "$dir/cert.pem" -noout -checkend $((30 * 86400)) > /dev/null || echo "::warning::TLS_CERT expires within 30 days: issue a new Origin certificate"
+          openssl x509 -in "$dir/cert.pem" -noout -subject -ext subjectAltName -enddate
+
+      - name: Ship the code
+        run: |
+          tar --exclude=./.git -cf - . | ssh -F "$SSH_CONFIG" server \
+            "rm -rf '$DEPLOY_DIR/build-$DEPLOY_SHA' && mkdir -p '$DEPLOY_DIR/build-$DEPLOY_SHA' && tar -xf - -C '$DEPLOY_DIR/build-$DEPLOY_SHA'"
+
+      - name: Write the app's env file on the server
+        env:
+          SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE }}
+          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+          TLS_CERT: ${{ secrets.TLS_CERT }}
+          TLS_KEY: ${{ secrets.TLS_KEY }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          STRIPE_CONNECT_WEBHOOK_SECRET: ${{ secrets.STRIPE_CONNECT_WEBHOOK_SECRET }}
+          INBOUND_EMAIL_SECRET: ${{ secrets.INBOUND_EMAIL_SECRET }}
+          APP_HOST: ${{ vars.APP_HOST }}
+          TRUSTED_PROXIES: ${{ vars.TRUSTED_PROXIES }}
+          PGHOST: ${{ vars.DB_HOST || 'postgres' }}
+          DATABASE_NAME: ${{ vars.DB_NAME }}
+          DATABASE_USER: ${{ vars.DB_USER || 'shadetree' }}
+          MAIL_FROM: ${{ vars.MAIL_FROM }}
+          SMTP_ADDRESS: ${{ vars.SMTP_ADDRESS }}
+          SMTP_PORT: ${{ vars.SMTP_PORT }}
+          MAIL_ALLOWLIST: ${{ vars.MAIL_ALLOWLIST }}
+          MAIL_SANDBOX_TO: ${{ vars.MAIL_SANDBOX_TO }}
+          SUPPORT_EMAIL: ${{ vars.SUPPORT_EMAIL }}
+          ANALYTICS_HOST: ${{ vars.ANALYTICS_HOST }}
+          ANALYTICS_DOMAIN: ${{ vars.ANALYTICS_DOMAIN }}
+          STRIPE_PUBLISHABLE_KEY: ${{ vars.STRIPE_PUBLISHABLE_KEY }}
+          STRUCTURED_LOGS: ${{ vars.STRUCTURED_LOGS }}
+          SLOW_REQUEST_MS: ${{ vars.SLOW_REQUEST_MS }}
+          SLOW_QUERY_MS: ${{ vars.SLOW_QUERY_MS }}
+          JOB_BACKLOG_THRESHOLD: ${{ vars.JOB_BACKLOG_THRESHOLD }}
+          JOB_WAIT_THRESHOLD: ${{ vars.JOB_WAIT_THRESHOLD }}
+          JOB_CONCURRENCY: ${{ vars.JOB_CONCURRENCY }}
+          BACKUP_MAX_AGE_HOURS: ${{ vars.BACKUP_MAX_AGE_HOURS }}
+          RAILS_LOG_LEVEL: ${{ vars.RAILS_LOG_LEVEL }}
+          EXTRA_SETTINGS: ${{ vars.EXTRA_SETTINGS }}
+        run: |
+          # One NAME=value per line (docker takes the value literally). Unset optional settings are
+          # left out, so the app's defaults apply. Only names are ever printed.
+          DATABASE_NAME="${DATABASE_NAME:-shadetree_$ENVIRONMENT}"
+          lines=(SOLID_QUEUE_IN_PUMA=1 "APP_ENVIRONMENT=$ENVIRONMENT" "APP_REVISION=$DEPLOY_SHA")
+          # Staging can't email real clients: only MAIL_ALLOWLIST receives mail (MailSandbox).
+          if [ "$ENVIRONMENT" = staging ]; then lines+=(MAIL_SANDBOX=true); fi
+          for name in SECRET_KEY_BASE DATABASE_PASSWORD APP_HOST TRUSTED_PROXIES; do
+            [ -n "${!name}" ] || { echo "::error::set $name in the $ENVIRONMENT environment (docs/runbooks/operations.md)"; exit 1; }
+          done
+          [[ "$APP_HOST" =~ ^[a-z0-9][a-z0-9.-]*\.[a-z]+$ ]] || { echo "::error::APP_HOST must be a lowercase host name, like staging.getshadetree.com"; exit 1; }
+          [[ "$DATABASE_NAME" =~ ^[a-z][a-z0-9_]{0,56}$ ]] || { echo "::error::DB_NAME must be lowercase letters, digits and underscores"; exit 1; }
+          if [ "$ENVIRONMENT" = staging ]; then
+            # Test-mode third parties only on staging.
+            [[ -z "$STRIPE_SECRET_KEY" || "$STRIPE_SECRET_KEY" =~ ^(sk|rk)_test_ ]] || { echo "::error::staging's STRIPE_SECRET_KEY must be a test-mode key (sk_test_ or rk_test_)"; exit 1; }
+            [[ -z "$STRIPE_PUBLISHABLE_KEY" || "$STRIPE_PUBLISHABLE_KEY" =~ ^pk_test_ ]] || { echo "::error::staging's STRIPE_PUBLISHABLE_KEY must be a test-mode key (pk_test_)"; exit 1; }
+          fi
+          for name in SECRET_KEY_BASE DATABASE_PASSWORD SMTP_USERNAME SMTP_PASSWORD STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET \
+                      STRIPE_CONNECT_WEBHOOK_SECRET INBOUND_EMAIL_SECRET APP_HOST TRUSTED_PROXIES PGHOST DATABASE_NAME DATABASE_USER \
+                      MAIL_FROM SMTP_ADDRESS SMTP_PORT MAIL_ALLOWLIST MAIL_SANDBOX_TO SUPPORT_EMAIL ANALYTICS_HOST ANALYTICS_DOMAIN \
+                      STRIPE_PUBLISHABLE_KEY STRUCTURED_LOGS SLOW_REQUEST_MS SLOW_QUERY_MS JOB_BACKLOG_THRESHOLD JOB_WAIT_THRESHOLD \
+                      JOB_CONCURRENCY BACKUP_MAX_AGE_HOURS RAILS_LOG_LEVEL; do
+            [[ "${!name}" != *$'\n'* ]] || { echo "::error::$name holds a line break"; exit 1; }
+            if [ -n "${!name}" ]; then lines+=("$name=${!name}"); fi
+          done
+          # The certificate and key are PEM, with line breaks; docker takes one line per value.
+          lines+=("TLS_CERT_BASE64=$(printf '%s\n' "$TLS_CERT" | base64 -w0)" "TLS_KEY_BASE64=$(printf '%s\n' "$TLS_KEY" | base64 -w0)")
+          while IFS= read -r line; do # EXTRA_SETTINGS: further non-secret settings, NAME=value per line
+            [[ "$line" =~ ^[[:space:]]*(#|$) ]] && continue
+            [[ "$line" =~ ^[A-Z][A-Z0-9_]*= ]] || { echo "::error::EXTRA_SETTINGS: a line is not NAME=value"; exit 1; }
+            [[ ! "$line" =~ ^(MAIL_SANDBOX|APP_ENVIRONMENT|APP_REVISION|SOLID_QUEUE_IN_PUMA)= ]] || { echo "::error::EXTRA_SETTINGS may not set ${line%%=*}"; exit 1; }
+            lines+=("$line")
+          done <<< "$EXTRA_SETTINGS"
+          printf '%s\n' "${lines[@]}" | ssh -F "$SSH_CONFIG" server "umask 077 && cat > '$DEPLOY_DIR/shadetree-$ENVIRONMENT.env'"
+
+      - name: Set up backups on the server
+        # Before the app is replaced, so a missing one-time step (lingering) stops the deploy with the old app running.
+        run: |
+          # No secret here: the backup reads the database settings from the app container when it runs.
+          lines=("DB_NETWORK=$DB_NETWORK" "BACKUP_DIR=$BACKUP_DIR" "BACKUP_PG_IMAGE=$BACKUP_PG_IMAGE")
+          if [ "$BACKUP_ALLOW_LOCAL" = true ]; then lines+=(BACKUP_ALLOW_LOCAL=true); fi
+          if [ -n "$BACKUP_RETENTION_DAYS" ]; then lines+=("BACKUP_RETENTION_DAYS=$BACKUP_RETENTION_DAYS"); fi
+          printf '%s\n' "${lines[@]}" | ssh -F "$SSH_CONFIG" server \
+            "umask 077 && mkdir -p ~/.config/shadetree-$ENVIRONMENT && cat > ~/.config/shadetree-$ENVIRONMENT/backup.env && chmod 0600 ~/.config/shadetree-$ENVIRONMENT/backup.env"
+          ssh -F "$SSH_CONFIG" server "bash '$DEPLOY_DIR/build-$DEPLOY_SHA/ops/backup/install.sh' '$ENVIRONMENT'"
+
+      - name: Build and run on the server
+        run: |
+          ssh -F "$SSH_CONFIG" server "bash '$DEPLOY_DIR/build-$DEPLOY_SHA/ops/deploy/deploy.sh' '$ENVIRONMENT' '$DEPLOY_DIR' '$DEPLOY_SHA' '$DB_NETWORK' '$PUBLISH_PORT'"
+
+      - name: Take the first backup
+        run: |
+          # Only when the backup location holds no set at all, in the background.
+          ssh -F "$SSH_CONFIG" server "bash ~/.local/share/shadetree-$ENVIRONMENT/backup/docker.sh '$ENVIRONMENT' first-backup" \
+            || echo "::warning::the first backup could not start (above), so /up/backup stays 503: see docs/runbooks/operations.md"
+
+      - name: Clean up
+        if: always()
+        run: |
+          if [ -n "${SSH_CONFIG:-}" ]; then
+            ssh -F "$SSH_CONFIG" server "rm -rf '$DEPLOY_DIR/build-$DEPLOY_SHA' '$DEPLOY_DIR/shadetree-$ENVIRONMENT.env'" || true
+          fi
+          rm -rf "$RUNNER_TEMP/deploy-ssh" "$RUNNER_TEMP/tls"

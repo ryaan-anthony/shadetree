@@ -21,12 +21,18 @@ Rails.application.configure do
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"
 
-  # Store uploaded files on the local file system (see config/storage.yml for options).
-  # Object storage when configured (ADR 0008); local disk otherwise (e.g. a smoke-test container).
-  config.active_storage.service = ENV["STORAGE_BUCKET"].present? ? :remote : :local
+  # Uploaded files on local disk: storage/ is a Docker volume on the VM, included in the backups
+  # (ADR 0023, ops/backup).
+  config.active_storage.service = :local
 
-  # Assume all access to the app is happening through a SSL-terminating reverse proxy.
+  # All access comes through the Cloudflare tunnel over HTTPS (ADR 0023).
   config.assume_ssl = true
+
+  # Only the tunnel connector (TRUSTED_PROXIES) may say who the visitor is; nobody may name another
+  # host (lib/forwarded_headers.rb). Without it every visitor would share the connector's address.
+  require Rails.root.join("lib/forwarded_headers").to_s
+  config.action_dispatch.trusted_proxies = ForwardedHeaders.proxies(ENV["TRUSTED_PROXIES"])
+  config.middleware.insert_before 0, ForwardedHeaders, trusted: config.action_dispatch.trusted_proxies
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
   config.force_ssl = true
@@ -89,10 +95,10 @@ Rails.application.configure do
   # Only use :id for inspections in production.
   config.active_record.attributes_for_inspect = [ :id ]
 
-  # Enable DNS rebinding protection and other `Host` header attacks.
-  # Only answer for our own domain (DNS rebinding protection); the health check is exempt.
+  # Only answer for our own domain (DNS rebinding protection). The health checks (/up, /up/jobs,
+  # /up/backup) answer on any host: the deploy checks them on localhost inside the container.
   if ENV["APP_HOST"].present?
     config.hosts << ENV["APP_HOST"]
-    config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+    config.host_authorization = { exclude: ->(request) { request.path == "/up" || request.path.start_with?("/up/") } }
   end
 end
