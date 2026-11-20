@@ -34,10 +34,7 @@ an incoming email into the right ticket, or opens one for a known member.
 ## Consequences
 
 - One stack, one audit log, no extra cost; the console stays small and purpose-built.
-- **How email to the support address reaches the app isn't decided** (the provider's inbound
-  routing posting to the app, or a mailbox the app reads). That choice also decides how a
-  sender is proven genuine, which matters because `SupportMail.receive` trusts the From
-  address. Until it's decided, members reply in the app; email replies arrive in the support
-  mailbox as before. Follow-up: OPS-05.
+- How email to the support address reaches the app, and how a sender is proven genuine, is
+  [ADR 0021](0021-inbound-support-email.md) (Cloudflare Email Routing and a signed Worker post).
 - Live chat, a knowledge base and response-time reporting would be new work (backlog).
 - **Cost:** none.

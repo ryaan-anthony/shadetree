@@ -31,6 +31,9 @@ production:
   resolve_stale_support_tickets: # OPS-05: "Waiting on you" tickets nobody answered
     class: ResolveStaleSupportTicketsJob
     schedule: every day at 5:20am
+  purge_inbound_emails: # OPS-05: raw support email older than 14 days
+    class: PurgeInboundEmailsJob
+    schedule: every day at 5:35am
   visit_reminders: # JOB-05: the day-before reminders, as each business's clock reaches the hour
     class: VisitRemindersJob
     schedule: every hour at minute 7

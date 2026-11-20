@@ -318,6 +318,7 @@ Rails.application.routes.draw do
   get "up/jobs" => "health#jobs", as: :job_health_check # PLT-10: for the external uptime check
   get "up/backup" => "health#backup", as: :backup_health_check # PLT-09: a backup within the last day
   post "csp-reports" => "csp_reports#create", as: :csp_reports # PLT-13
+  post "inbound/support_email", to: "inbound/support_emails#create", as: :inbound_support_email # OPS-05: the Email Worker
 
   # Render dynamic PWA files from app/views/pwa/*
   get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
