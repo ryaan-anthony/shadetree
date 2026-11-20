@@ -26,10 +26,10 @@ feature flags — each one audited and hard to do by accident.
 - [x] Suspend/reactivate a business with a required reason: suspended businesses' members can't
       use the app (they see a contact-support page); client links show a neutral unavailable
       page; in-flight provider payments still settle and are recorded.
-- [ ] Comp a plan (with optional end date), extend a trial, and apply a provider coupon, all
-      reflected in BIL-01 entitlements and the billing provider. *(Comped limits and features
-      (BIL-01 overrides) are done; a comped plan with an end date, trials and coupons wait on
-      BIL-05 and the billing provider.)*
+- [x] Comp a plan (with optional end date), extend a trial, and apply a provider coupon, all
+      reflected in BIL-01 entitlements and the billing provider. *(BIL-05: the business page's
+      "Plan, trial and coupon" card. A comp or trial changes the plan, not what Stripe bills;
+      a coupon is applied to the Stripe subscription.)*
 - [x] For a user: resend confirmation, send password reset, unlock account.
 - [x] Schedule a business for deletion (typed confirmation of the business name); after a
       waiting period (default 30 days, expeditable) all its data and files are permanently
@@ -44,8 +44,8 @@ feature flags — each one audited and hard to do by accident.
 
 ## Follow-ups
 
-- Add Trial / Past due / payment-account status and billing history to the OPS-02 directory
-  and business page (OPS-02 shows Active, Suspended and Closed until then).
+- Payment-account status on the OPS-02 directory and business page (PAY-03). Trial, Past due
+  and billing history came with BIL-04/05.
 
 ## Out of scope
 

@@ -4,7 +4,7 @@
 #
 #   Ops::Directory.new(params).businesses  # => a relation with last_active_at on each row
 class Ops::Directory
-  STATUSES = { "active" => "Active", "suspended" => "Suspended", "closed" => "Closed" }.freeze
+  STATUSES = { "active" => "Active", "trial" => "Trial", "past_due" => "Past due", "suspended" => "Suspended", "closed" => "Closed" }.freeze
   FILTERS = STATUSES.merge("deleting" => "Scheduled for deletion").freeze
   SORTS = { "signup" => "Newest sign-ups", "activity" => "Recently active", "inactive" => "Least recently active" }.freeze
   LAST_ACTIVE_SQL = "(SELECT MAX(bu.last_active_at) FROM business_users bu WHERE bu.business_id = businesses.id)".freeze
@@ -35,9 +35,11 @@ class Ops::Directory
   # The first active Owner (the creator may have left, or deleted their account).
   def self.owner_of(business) = business.business_users.select { _1.active? && _1.owner? }.min_by(&:created_at)&.user
 
-  # The status shown beside a business. Trial and past due come with subscriptions (BIL-04/05).
+  # The status shown beside a business: trial and past due from its billing (BIL-05).
   def self.status_of(business)
-    if business.active? then "active"
+    if business.active? && business.billing_status == "trialing" then "trial"
+    elsif business.active? && business.billing_status == "past_due" then "past_due"
+    elsif business.active? then "active"
     elsif business.suspended? then "suspended"
     else "closed"
     end
@@ -54,6 +56,8 @@ class Ops::Directory
   def filter_status(scope)
     case status
     when "active" then scope.where(active: true)
+    when "trial" then scope.where(active: true, billing_status: "trialing")
+    when "past_due" then scope.where(active: true, billing_status: "past_due")
     when "suspended" then scope.where.not(suspended_at: nil)
     when "deleting" then scope.where.not(deletion_due_at: nil)
     else scope.where(active: false, suspended_at: nil)

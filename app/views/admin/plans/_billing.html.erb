@@ -1,11 +1,25 @@
 <%# BIL-04: how the plan is paid for, and the Owner's way into Stripe's customer portal. %>
 <div class="mt-4 border-t border-line pt-4 text-sm" id="billing">
-  <% if subscription&.live? %>
+  <% grace_ends = subscription&.past_due? && subscription.past_due_since && subscription.past_due_since + Billing.grace_period %>
+  <% if business.billing_status == "trialing" %>
+    <% days = ((business.trial_ends_at - Time.current) / 1.day).ceil %>
+    <p class="text-ink" id="trial-status"><strong class="font-semibold"><%= business.trial_plan.name %> trial: <%= pluralize(days, "day") %> left.</strong>
+      It ends on <%= local_date(business.trial_ends_at) %>; choose a plan to keep <%= business.trial_plan.name %>, or you'll move to Free with nothing deleted.</p>
+  <% elsif business.billing_status == "comped" %>
+    <p class="text-ink" id="comp-status">Shadetree has given you <%= business.comp_plan.name %><%= business.comp_ends_at ? " until #{local_date(business.comp_ends_at)}" : "" %>.</p>
+  <% end %>
+  <% if grace_ends %>
+    <div class="banner banner-warning mb-3" role="status" id="past-due">
+      <p><% if grace_ends > Time.current %>Your last payment failed. Stripe will try again; update your card by <%= local_date(grace_ends) %> to keep <%= subscription.plan&.name %>.<% else %>Your renewal wasn't paid, so you're on Free for now. Update your card and your plan comes back as soon as a payment goes through.<% end %></p>
+    </div>
+    <% if can?(:billing) %><%= button_to "Update payment method", admin_billing_portal_path, params: { flow: "payment" }, class: button_classes(:primary, :sm), form: { data: { turbo: false }, class: "mb-3" } %><% end %>
+  <% end %>
+  <% if subscription&.live? && !(grace_ends && grace_ends <= Time.current) %>
     <p class="text-ink">
       <% if (price = subscription.price) %><%= money(price) %> <%= subscription.yearly? ? "a year" : "a month" %>, billed <%= subscription.yearly? ? "yearly" : "monthly" %>.<% end %>
       <% if subscription.cancel_at_period_end %>
         <strong class="font-semibold">Cancelled:</strong> your plan runs until <%= local_date(subscription.current_period_end) %>, then you're on Free. Nothing is deleted.
-      <% elsif subscription.current_period_end %>
+      <% elsif subscription.current_period_end && !subscription.past_due? %>
         Renews on <%= local_date(subscription.current_period_end) %>.
       <% end %>
     </p>
