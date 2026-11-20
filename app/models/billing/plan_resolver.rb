@@ -1,4 +1,4 @@
-# The plan a business is on, worked out in one place from its billing state (ADR 0021): the
+# The plan a business is on, worked out in one place from its billing state (ADR 0022): the
 # subscription's plan while it's live (paying, trialing, or a failed renewal being retried),
 # otherwise the default plan (Free). Every change of plan is written to the billing history.
 # Call with the business locked; returns the plan.

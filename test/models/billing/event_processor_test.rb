@@ -111,6 +111,75 @@ class Billing::EventProcessorTest < ActiveSupport::TestCase
     assert_equal plans(:business), @business.reload.plan
   end
 
+  test "a subscription of another customer or business is reported and never mirrored" do
+    reports = []
+    subscriber = Class.new { define_method(:report) { |error, **| reports << error.class } }.new
+    Rails.error.subscribe(subscriber)
+    foreign = stripe.add_subscription(customer: "cus_someone_else", plan: plans(:business))
+    process("customer.subscription.updated", foreign) # the event claims our customer
+    other_uid = stripe.add_subscription(customer: @customer, plan: plans(:business), metadata: { business_uid: businesses(:two).uid })
+    process("customer.subscription.created", other_uid)
+    session = stripe.create_checkout_session(customer: @customer, client_reference_id: businesses(:two).uid)
+    stripe.checkout_sessions[session.id][:subscription] = stripe.add_subscription(customer: @customer, plan: plans(:business))
+    process("checkout.session.completed", session.id)
+
+    assert_equal plans(:free), @business.reload.plan
+    assert_nil subscription
+    assert_equal [ Billing::SubscriptionSync::Mismatch ] * 3, reports
+    assert StripeEvent.where(processed_at: nil).none?
+  ensure
+    Rails.error.unsubscribe(subscriber) if subscriber
+  end
+
+  test "when the mirrored subscription ends, another live one on the customer takes over instead of Free" do
+    first = stripe.add_subscription(customer: @customer, plan: plans(:starter))
+    process("customer.subscription.created", first)
+    second = stripe.add_subscription(customer: @customer, plan: plans(:business))
+    stripe.subscriptions[first].merge!(status: "canceled", ended_at: Time.current.to_i)
+
+    process("customer.subscription.deleted", first)
+
+    assert_equal [ second, plans(:business) ], [ subscription.stripe_subscription_id, @business.reload.plan ]
+  end
+
+  test "a state fetched before the one already applied is ignored" do
+    id = stripe.add_subscription(customer: @customer, plan: plans(:starter))
+    stale = Billing.gateway.retrieve_subscription(id)
+    stripe.subscriptions[id].merge!(status: "canceled", ended_at: Time.current.to_i)
+    Billing::SubscriptionSync.refresh!(@business, id)
+
+    Billing::SubscriptionSync.apply!(@business, stale, fetched_at: 1.minute.ago)
+
+    assert_equal "canceled", subscription.status
+  end
+
+  test "the sweep backs off, gives up after #{StripeEvent::MAX_ATTEMPTS} attempts with one report, and processes inline" do
+    id = stripe.add_subscription(customer: @customer, plan: plans(:starter))
+    stuck = event("customer.subscription.created", id)
+    stuck.update_columns(created_at: 1.hour.ago)
+    stripe.fail_with = Stripe::APIConnectionError.new("down")
+    alerts = []
+    subscriber = Class.new { define_method(:report) { |error, **| alerts << error.message if error.is_a?(Observability::Alert) } }.new
+    Rails.error.subscribe(subscriber)
+
+    ProcessStripeEventsJob.perform_now
+    assert_equal 1, stuck.reload.attempts
+    ProcessStripeEventsJob.perform_now
+    assert_equal 1, stuck.reload.attempts, "tried within its backoff"
+    travel 1.day do
+      (StripeEvent::MAX_ATTEMPTS + 2).times do
+        ProcessStripeEventsJob.perform_now
+        stuck.update_columns(last_attempted_at: 1.day.ago)
+      end
+    end
+
+    assert_equal StripeEvent::MAX_ATTEMPTS, stuck.reload.attempts
+    assert_equal [ "Gave up on a Stripe event after #{StripeEvent::MAX_ATTEMPTS} attempts" ], alerts
+    assert_nil stuck.processed_at
+  ensure
+    Rails.error.unsubscribe(subscriber) if subscriber
+  end
+
   test "events for a customer that isn't a business here are ignored" do
     id = stripe.add_subscription(customer: "cus_elsewhere", plan: plans(:starter))
     process("customer.subscription.created", id, customer: "cus_elsewhere")

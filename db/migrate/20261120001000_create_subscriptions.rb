@@ -19,6 +19,7 @@ class CreateSubscriptions < ActiveRecord::Migration[8.1]
       t.datetime :canceled_at
       t.datetime :ended_at
       t.datetime :billing_cycle_anchor
+      t.datetime :synced_at # when the state held here was fetched from Stripe
       t.timestamps
     end
 
@@ -42,6 +43,8 @@ class CreateSubscriptions < ActiveRecord::Migration[8.1]
       t.boolean :livemode, null: false, default: false
       t.datetime :stripe_created_at, null: false
       t.datetime :processed_at
+      t.integer :attempts, null: false, default: 0
+      t.datetime :last_attempted_at
       t.datetime :created_at, null: false
       t.index :created_at, where: "processed_at IS NULL", name: "index_stripe_events_unprocessed"
     end

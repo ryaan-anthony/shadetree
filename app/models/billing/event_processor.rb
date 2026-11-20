@@ -1,4 +1,4 @@
-# What a Stripe event means for a business (BIL-04/05, ADR 0021). The event only says what
+# What a Stripe event means for a business (BIL-04/05, ADR 0022). The event only says what
 # changed; the current state is fetched from Stripe, so duplicates and out-of-order events
 # leave the same result. Events for customers that aren't a business here are ignored.
 class Billing::EventProcessor
@@ -15,6 +15,10 @@ class Billing::EventProcessor
     case @event.event_type
     when "checkout.session.completed"
       session = gateway.retrieve_checkout_session(@event.stripe_object_id)
+      if session.client_reference_id.present? && session.client_reference_id != business.uid
+        raise Billing::SubscriptionSync::Mismatch, "Checkout session #{session.id} names another business"
+      end
+
       subscription = session.subscription.respond_to?(:id) ? session.subscription.id : session.subscription
       Billing::SubscriptionSync.refresh!(business, subscription) if subscription
     when /\Acustomer\.subscription\./
@@ -26,6 +30,9 @@ class Billing::EventProcessor
       subscription = subscription.id if subscription.respond_to?(:id)
       Billing::SubscriptionSync.refresh!(business, subscription) if subscription
     end
+  rescue Billing::SubscriptionSync::Mismatch => error
+    # Never mirrored; an operator looks into it. The event is done (trying again can't help).
+    Rails.error.report(error, handled: true, context: { stripe_event_id: @event.stripe_event_id, business_id: business&.id })
   end
 
   private

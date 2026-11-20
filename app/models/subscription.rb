@@ -1,4 +1,4 @@
-# A business's Stripe subscription (BIL-04, ADR 0021), as Stripe last described it. Written only
+# A business's Stripe subscription (BIL-04, ADR 0022), as Stripe last described it. Written only
 # by Billing::SubscriptionSync from what Stripe returns; the business's plan follows from it
 # (Billing::PlanResolver). One per business: a new subscription after an old one ended takes
 # its place.

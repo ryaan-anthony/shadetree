@@ -1160,6 +1160,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_001000) do
     t.boolean "livemode", default: false, null: false
     t.datetime "stripe_created_at", null: false
     t.datetime "processed_at"
+    t.integer "attempts", default: 0, null: false
+    t.datetime "last_attempted_at"
     t.datetime "created_at", null: false
     t.index ["created_at"], name: "index_stripe_events_unprocessed", where: "(processed_at IS NULL)"
     t.index ["stripe_event_id"], name: "index_stripe_events_on_stripe_event_id", unique: true
@@ -1178,6 +1180,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_001000) do
     t.datetime "canceled_at"
     t.datetime "ended_at"
     t.datetime "billing_cycle_anchor"
+    t.datetime "synced_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["business_id"], name: "index_subscriptions_on_business_id", unique: true

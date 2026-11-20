@@ -1,4 +1,4 @@
-# POST /webhooks/stripe (BIL-04, ADR 0021): Stripe's events about our subscriptions. A plain Rack
+# POST /webhooks/stripe (BIL-04, ADR 0022): Stripe's events about our subscriptions. A plain Rack
 # endpoint rather than a controller, so Rails never parses the body into params or logs it
 # (PLT-10). Checks Stripe's signature with STRIPE_WEBHOOK_SECRET, stores the event's id and
 # queues it (StripeEvent.receive!), and answers 200 at once; a bad signature gets 400.
