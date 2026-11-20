@@ -80,6 +80,46 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
         const el = e.target; window.__diag.events.push(`${(performance.now() / 1000).toFixed(2)} ${t}:${el?.tagName || "win"}:${(el?.textContent || "").trim().slice(0, 12)}`) }, true))
       const tick = () => { window.__diag.frames++; requestAnimationFrame(tick) }; requestAnimationFrame(tick)
     JS
+    probe_input("visit")
+  end
+
+  def input_reaches_page?(seconds)
+    execute_script("window.__moved = 0; document.addEventListener('mousemove', () => window.__moved++, { capture: true })") unless evaluate_script("typeof window.__moved === 'number'")
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + seconds
+    flip = false
+    loop do
+      flip = !flip
+      page.driver.browser.action.move_to_location(flip ? 3 : 9, flip ? 3 : 9).perform
+      return true if evaluate_script("window.__moved") > 0
+      return false if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+      sleep 0.1
+    end
+  end
+
+  def probe_input(where)
+    t = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    if input_reaches_page?(3)
+      el = Process.clock_gettime(Process::CLOCK_MONOTONIC) - t
+      puts "\nDIAG-PROBE ok #{el.round(2)}s #{where} #{name}" if el > 0.3
+      return
+    end
+    puts "\nDIAG-PROBE DEAD #{where} #{name} #{current_path}"
+    page.driver.browser.action.release_actions
+    return puts("DIAG-PROBE recovered-by release_actions") if input_reaches_page?(3)
+    page.driver.browser.navigate.refresh
+    assert_selector "html[data-controllers-loaded]", visible: :all, wait: 10
+    return puts("DIAG-PROBE recovered-by refresh") if input_reaches_page?(3)
+    visit_url = current_url
+    page.driver.browser.navigate.to("about:blank")
+    page.driver.browser.navigate.to(visit_url)
+    assert_selector "html[data-controllers-loaded]", visible: :all, wait: 10
+    return puts("DIAG-PROBE recovered-by blank-and-back") if input_reaches_page?(3)
+    handle = page.current_window.handle
+    page.driver.browser.switch_to.new_window(:tab)
+    page.driver.browser.navigate.to(visit_url)
+    assert_selector "html[data-controllers-loaded]", visible: :all, wait: 10
+    return puts("DIAG-PROBE recovered-by new-tab") if input_reaches_page?(3)
+    puts "DIAG-PROBE not recovered"
   end
 
   # Signs in through the form. Signing in loads the next page in full (no Turbo: a new session
