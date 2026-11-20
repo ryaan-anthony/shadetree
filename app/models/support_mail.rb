@@ -32,7 +32,8 @@ module SupportMail
 
     files = images(mail)
     ticket = ticket_for(mail)
-    if ticket && user.business_users.active.exists?(business_id: ticket.business_id)
+    membership = ticket && user.business_users.active.find_by(business_id: ticket.business_id)
+    if membership && Tenancy.with_business(ticket.business) { SupportTicket.visible_to(membership).exists?(ticket.id) }
       Tenancy.with_business(ticket.business) { ticket.reply_from_member!(user, body, files:, source: "email") }
       return Result.new(outcome: :replied, ticket:)
     end

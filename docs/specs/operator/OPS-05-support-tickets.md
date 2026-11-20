@@ -27,8 +27,8 @@ email, and nothing gets lost in a personal inbox.
 - [x] Any member can open a ticket from a Help menu: subject, category (question, bug, billing,
       feature request), message and attachments (screenshots). The page they were on and their
       browser details are attached automatically.
-- [x] Members see their business's tickets (as their role allows) with status (Open, Waiting on you, Resolved) and
-      threaded replies.
+- [x] Members see their business's tickets (as their role allows) with status (Open, Waiting on
+      you, Resolved) and threaded replies.
 - [x] Operators get a ticket inbox in the console: filter by status, category, plan and
       assignee; assign to an operator; reply; add internal notes; change status. Each ticket
       links to the business page (OPS-02).

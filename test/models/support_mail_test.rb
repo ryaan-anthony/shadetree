@@ -3,6 +3,7 @@ require "test_helper"
 # OPS-05: email to support threads into tickets: answers to a ticket reopen it, other email from
 # a member opens one, anyone else's is ignored.
 class SupportMailTest < ActiveSupport::TestCase
+  include PermissionHelpers
   setup do
     @business = businesses(:one)
     @ticket = as_business(@business) { SupportTicket.open!(opened_by: users(:one), subject: "Logo", category: "bug", body: "Blurry") }
@@ -28,6 +29,14 @@ class SupportMailTest < ActiveSupport::TestCase
 
     assert_equal :replied, SupportMail.receive(email(subject: "Re: Logo [##{@ticket.uid}]", body: "And another thing")).outcome
     assert_equal 3, as_business(@business) { @ticket.messages.count }
+  end
+
+  test "an emailed reply only reaches a ticket the sender may see (OPS-05 visibility)" do
+    tech = member_with_role("technician")
+    tech.update_columns(last_business_id: @business.id)
+    result = SupportMail.receive(email(from: tech.email, in_reply_to: "<ticket-#{@ticket.uid}-1-abcd@getshadetree.com>"))
+    assert_not_equal @ticket, result.ticket, "a technician can't add to the owner's ticket by email"
+    assert_equal 1, as_business(@business) { @ticket.messages.count }
   end
 
   test "other email from a member opens a ticket in the business they last used, with screenshots" do
