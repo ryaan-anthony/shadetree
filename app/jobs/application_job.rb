@@ -1,4 +1,6 @@
 class ApplicationJob < ActiveJob::Base
+  include ReportsUnhandledErrors # PLT-10
+
   # Automatically retry jobs that encountered a deadlock
   # retry_on ActiveRecord::Deadlocked
 

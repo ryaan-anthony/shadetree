@@ -9,6 +9,7 @@
 # Most relays accept any well-formed recipient and bounce later; those bounces stay in the
 # provider's dashboard. The server's reply text, which can name the address, isn't stored or logged.
 class ClientMailDeliveryJob < ActionMailer::MailDeliveryJob
+  include ReportsUnhandledErrors # PLT-10
   ATTEMPTS = 10 # polynomial backoff: about four hours in all
   # Enhanced status codes that mean "this mailbox can't receive" (RFC 3463): bad mailbox, bad
   # system, bad address syntax, mailbox moved, no MX; mailbox disabled.

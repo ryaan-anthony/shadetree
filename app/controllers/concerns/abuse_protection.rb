@@ -84,7 +84,8 @@ module AbuseProtection
   end
 
   def log_abuse(what, **details)
-    Rails.logger.info("[abuse] #{what} #{details.merge(path: request.path, ip: request.remote_ip).to_json}")
+    # The IP is logged on purpose (abuse investigation); link tokens in the path are not (PLT-10).
+    Rails.logger.info("[abuse] #{what} #{details.merge(path: SecretPathLogger.redact(request.path), ip: request.remote_ip).to_json}")
     true
   end
 
