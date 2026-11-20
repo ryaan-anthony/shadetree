@@ -11,10 +11,13 @@ class BusinessDeletionTest < ActiveSupport::TestCase
     png = file_fixture("logo.png")
     business.update!(logo: Rack::Test::UploadedFile.new(png, "image/png"))
     job = Tenancy.with_business(business) { Job.first }
-    Tenancy.with_business(business) { job.attachments.attach(io: png.open, filename: "before.png", content_type: "image/png") }
+    job_blob = ActiveStorage::Blob.create_and_upload!(io: png.open, filename: "before.png", content_type: "image/png")
+    Tenancy.with_business(business) { job.attachments.attach(job_blob) }
     variant_blob = ActiveStorage::Blob.create_and_upload!(io: png.open, filename: "v.png")
     ActiveStorage::VariantRecord.create!(blob: business.logo.blob, variation_digest: "x").image.attach(variant_blob)
-    blobs = ActiveStorage::Blob.where(id: [ business.logo.blob.id, job.attachments.first.blob.id, variant_blob.id ]).to_a
+    # Named, not read back with where(id:): Postgres returns rows in no set order, so "the first
+    # two" of a query weren't always the logo and the job's file.
+    blobs = [ business.logo.blob, job_blob, variant_blob ]
     AuditEntry.record!(operator: users(:one), action: "business.viewed", business:)
     audit_before = AuditEntry.where(business_id: business.id).count # incl. the seeded support visit (OPS-03)
     FeatureFlag.create!(name: "beta", state: "businesses", business_ids: [ business.id, businesses(:two).id ])
@@ -23,10 +26,7 @@ class BusinessDeletionTest < ActiveSupport::TestCase
     assert tables.values.sum > 30, "the demo business has data in many tables"
 
     blob_ids = BusinessDeletion.run!(business)
-    diag = "logo=#{business.logo.blob.id} job=#{job.id}/#{job.attachments.first.blob.id} variant=#{variant_blob.id} order=#{blobs.map(&:id)} returned=#{blob_ids.sort.last(6)} " \
-           "ctid=#{ActiveRecord::Base.connection.select_rows("select ctid::text, id from active_storage_blobs where id in (#{blobs.map(&:id).join(",")})")} " \
-           "plan=#{ActiveRecord::Base.connection.select_values("explain " + ActiveStorage::Blob.where(id: blobs.map(&:id)).to_sql).first}"
-    assert_empty blobs.first(2).map(&:id) - blob_ids, "the logo and the job's file (the variant goes with the logo) #{diag}"
+    assert_empty blobs.first(2).map(&:id) - blob_ids, "the logo and the job's file (the variant goes with the logo)"
     assert ActiveStorage::Blob.exists?(blobs.first.id), "files go afterwards, in the background"
     BusinessDeletion.purge_blobs(blob_ids)
 

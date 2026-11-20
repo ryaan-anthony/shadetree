@@ -50,18 +50,6 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
          typed: [...document.querySelectorAll("input[type=search], input[type=text], input[type=tel], input[type=email]")].map((i) => i.name + "=" + i.value) })
     JS
     puts "--- page state ---", state.inspect
-    diag = page.evaluate_script(<<~JS) rescue nil # rubocop:disable Style/RescueModifier
-      (() => { const d = window.__diag || {}; const b = [...document.querySelectorAll("button")].find((x) => x.textContent.trim() === "Move");
-        const r = b?.getBoundingClientRect(); const at = r && document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
-        const pick = document.querySelector("[data-client-picker-target=input]"); const pr = pick?.getBoundingClientRect();
-        return { events: d.events, frames: d.frames, hasFocus: document.hasFocus(), vis: document.visibilityState, inner: [innerWidth, innerHeight, devicePixelRatio, scrollY],
-          dialogs: [...document.querySelectorAll("dialog")].map((x) => [x.id, x.open, getComputedStyle(x).opacity, getComputedStyle(x).display]),
-          move: r && [r.x, r.y, r.width, r.height, at?.outerHTML?.slice(0, 120)], pick: pr && [pr.x, pr.y, pick.value, document.elementFromPoint(pr.x + 5, pr.y + 5)?.outerHTML?.slice(0, 80)],
-          anims: document.getAnimations().map((a) => [a.animationName, a.playState, a.currentTime]) } })()
-    JS
-    puts "--- diag ---", diag.inspect
-    puts "--- window ---", page.current_window.size.inspect rescue nil # rubocop:disable Style/RescueModifier
-    puts "--- screenshot ---", page.driver.browser.screenshot_as(:base64), "--- end screenshot ---" if ENV["DIAG_SHOT"]
   rescue StandardError => e
     puts "--- diagnostics failed: #{e.class}: #{e.message}"
   end
@@ -74,52 +62,37 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     assert_selector "html[data-controllers-loaded]", visible: :all, wait: 10
     failed = page.evaluate_script("document.documentElement.dataset.controllersFailed")
     flunk "Controllers failed to load: #{failed}" if failed # fail here, at the cause, not on a later assertion
-    execute_script(<<~JS)
-      window.__diag = { events: [], frames: 0 }
-      ;["pointerdown", "mousedown", "mouseup", "click", "keydown", "input", "focusin", "focusout", "resize", "scroll"].forEach((t) => window.addEventListener(t, (e) => {
-        const el = e.target; window.__diag.events.push(`${(performance.now() / 1000).toFixed(2)} ${t}:${el?.tagName || "win"}:${(el?.textContent || "").trim().slice(0, 12)}`) }, true))
-      const tick = () => { window.__diag.frames++; requestAnimationFrame(tick) }; requestAnimationFrame(tick)
-    JS
-    probe_input("visit")
+    ensure_input_reaches_page
+  end
+
+  # On CI, Chrome 157 sometimes opens a page that never receives WebDriver's keys or clicks: no
+  # keydown, pointerdown or click event arrives for as long as a test waits, while the page
+  # renders, has focus and runs its scripts. Typing left boxes empty and clicks opened nothing
+  # (the flaky schedule and client search tests). Reloading doesn't help; going to a blank page
+  # and back does. So check with a harmless key press (Shift) that input arrives, and if it
+  # doesn't, load the page afresh once.
+  def ensure_input_reaches_page
+    return if input_reaches_page?(2)
+
+    puts "\nDIAG-RECOVER #{name} #{current_path}"
+
+    url = current_url
+    page.driver.browser.navigate.to("about:blank")
+    page.driver.browser.navigate.to(url)
+    assert_selector "html[data-controllers-loaded]", visible: :all, wait: 10
+    flunk "The browser isn't delivering keys or clicks to #{URI(url).path}" unless input_reaches_page?(3)
   end
 
   def input_reaches_page?(seconds)
-    execute_script("window.__moved = 0; document.addEventListener('mousemove', () => window.__moved++, { capture: true })") unless evaluate_script("typeof window.__moved === 'number'")
+    execute_script("window.__inputSeen = false; addEventListener('keydown', () => { window.__inputSeen = true }, { capture: true })")
     deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + seconds
-    flip = false
     loop do
-      flip = !flip
-      page.driver.browser.action.move_to_location(flip ? 3 : 9, flip ? 3 : 9).perform
-      return true if evaluate_script("window.__moved") > 0
+      page.driver.browser.action.key_down(:shift).key_up(:shift).perform
+      return true if evaluate_script("window.__inputSeen")
       return false if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+
       sleep 0.1
     end
-  end
-
-  def probe_input(where)
-    t = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-    if input_reaches_page?(3)
-      el = Process.clock_gettime(Process::CLOCK_MONOTONIC) - t
-      puts "\nDIAG-PROBE ok #{el.round(2)}s #{where} #{name}" if el > 0.3
-      return
-    end
-    puts "\nDIAG-PROBE DEAD #{where} #{name} #{current_path}"
-    page.driver.browser.action.release_actions
-    return puts("DIAG-PROBE recovered-by release_actions") if input_reaches_page?(3)
-    page.driver.browser.navigate.refresh
-    assert_selector "html[data-controllers-loaded]", visible: :all, wait: 10
-    return puts("DIAG-PROBE recovered-by refresh") if input_reaches_page?(3)
-    visit_url = current_url
-    page.driver.browser.navigate.to("about:blank")
-    page.driver.browser.navigate.to(visit_url)
-    assert_selector "html[data-controllers-loaded]", visible: :all, wait: 10
-    return puts("DIAG-PROBE recovered-by blank-and-back") if input_reaches_page?(3)
-    handle = page.current_window.handle
-    page.driver.browser.switch_to.new_window(:tab)
-    page.driver.browser.navigate.to(visit_url)
-    assert_selector "html[data-controllers-loaded]", visible: :all, wait: 10
-    return puts("DIAG-PROBE recovered-by new-tab") if input_reaches_page?(3)
-    puts "DIAG-PROBE not recovered"
   end
 
   # Signs in through the form. Signing in loads the next page in full (no Turbo: a new session
@@ -132,7 +105,6 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
       click_button "Sign in" # the navigation has a "Sign in" link too (MKT-01)
     rescue Selenium::WebDriver::Error::UnknownError => error
       raise unless error.message.include?("does not belong to the document")
-      puts "\nDIAG-SIGNIN-CLICK-RAISED in #{name}"
     end
     assert_selector "html[data-controllers-loaded]", visible: :all, wait: 10
   end

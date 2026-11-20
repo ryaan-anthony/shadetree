@@ -87,6 +87,7 @@ class ClientSearchSystemTest < ApplicationSystemTestCase
     within("#picker-demo") do
       input = find("input[type=search]")
       input.fill_in(with: "sam")
+      assert_equal "sam", input.value # the typing arrived (it didn't, on CI, when keys weren't delivered)
       # Focus leaves before the debounced search fires; it used to be dropped here.
       execute_script("arguments[0].blur()", input)
       assert_no_selector "[role=option]"

@@ -196,7 +196,7 @@ jobs:
         run: |
           google-chrome --version; chromedriver --version || true
           pass=0; fail=0
-          for i in $(seq 1 70); do
+          for i in $(seq 1 80); do
             if bin/rails test test/system/client_search_test.rb test/system/schedule_test.rb test/system/clients_test.rb > run.log 2>&1; then pass=$((pass+1)); else fail=$((fail+1)); echo "=== RUN $i FAILED"; cat run.log; fi
             grep -E "seed|runs,|DIAG-" run.log
           done
