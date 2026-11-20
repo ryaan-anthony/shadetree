@@ -103,5 +103,5 @@ only reach the human inbox.
 - A member's reply didn't thread: look up `support_mail.received` for the time; the `outcome`
   says why (`bad_token`, `forged_sender`, `unauthenticated`, `not_member`, `rate_limited`, `duplicate`,
   `automated`, …). The human inbox has the message.
-- Cap request bodies on this path at about 26 MiB at the host proxy or tunnel (25 MiB of mail
-  plus headroom); the app refuses anything larger than 25 MiB itself.
+- Request bodies are capped at 26 MiB by Puma (`http_content_length_limit`, PLT-09) and at
+  25 MiB by the app itself; nothing else in front of it needs a limit.
