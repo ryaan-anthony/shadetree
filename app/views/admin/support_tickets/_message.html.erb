@@ -1,0 +1,18 @@
+<%# locals: (message:, operator_view: false) -%>
+<li class="items-start <%= "bg-amber-50" if message.internal? %>" id="message-<%= message.id %>">
+  <div class="min-w-0 flex-1">
+    <p class="text-sm2 text-muted">
+      <span class="font-semibold text-ink"><%= operator_view && message.from_operator? ? (message.author&.email || "A former operator") : message.author_label %></span>
+      <% if message.internal? %>· <%= badge "Internal note", tone: :warning, dot: false %><% end %>
+      · <%= local_time(message.created_at) %><%= " · by email" if message.source == "email" %>
+    </p>
+    <div class="mt-1 whitespace-pre-line break-words text-sm text-body"><%= message.body %></div>
+    <% if message.files.attached? %>
+      <ul class="mt-2 flex flex-wrap gap-2" aria-label="Screenshots">
+        <% message.files.each do |file| %>
+          <li><%= link_to file.filename.to_s, admin_support_ticket_file_path(message.support_ticket, file), target: "_blank", rel: "noopener", class: "inline-flex items-center gap-1 text-sm2 text-ink underline-offset-2 hover:underline" %></li>
+        <% end %>
+      </ul>
+    <% end %>
+  </div>
+</li>

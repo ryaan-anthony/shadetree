@@ -75,7 +75,7 @@ Part 2 (everything in one zip):
   as clients see it (drafts in `drafts/`; a busy renderer is retried), every attached file and
   photo (quotes, invoices, jobs, visits, requests) with its own date, and the logo. The last part
   has a README: the layout, what's never in an export (catalog, team, settings, billing,
-  timelines), and anything that couldn't be included. File names are made safe for any unzip
+  timelines, support tickets), and anything that couldn't be included. File names are made safe for any unzip
   tool ("..", leading dots, separators; extensions kept; unique ignoring case).
 - The requester gets a notification and email (`data_export_ready`, theirs alone). Owners and
   Admins download each part for 7 days, streamed from storage, and every download is logged.

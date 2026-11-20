@@ -1,0 +1,22 @@
+<% content_for :title, "Ask for help" %>
+<%= page_header "Ask for help", lede: "Tell us what's going on. We'll see which page you came from, and your browser, so you don't need to." %>
+<%= card class: "max-w-2xl" do %>
+  <%= form_with model: @ticket, url: admin_support_tickets_path, multipart: true do |f| %>
+    <% if @ticket.errors.any? %><div class="banner banner-warning mb-4" role="alert"><p><%= @ticket.errors.full_messages.to_sentence %></p></div><% end %>
+    <%= f.hidden_field :page %>
+    <div class="space-y-4">
+      <%= f.field :subject, maxlength: 150, placeholder: "e.g. How do I take tax off one invoice?" %>
+      <%= f.field :category, as: :select, choices: SupportTicket::CATEGORIES.invert %>
+      <div class="field">
+        <label class="label" for="support_ticket_body">Message</label>
+        <%= text_area_tag "support_ticket[body]", @body, id: "support_ticket_body", rows: 6, class: "textarea", required: true, maxlength: 20_000 %>
+      </div>
+      <div class="field">
+        <label class="label" for="support_ticket_files">Screenshots <span class="font-normal text-muted">(optional, up to <%= SupportMessage::MAX_FILES %>)</span></label>
+        <%= file_field_tag "support_ticket[files][]", id: "support_ticket_files", multiple: true, accept: "image/png,image/jpeg,image/webp", class: "input" %>
+        <p class="help">Please leave out your clients' details unless they matter to the question.</p>
+      </div>
+    </div>
+    <div class="mt-4 flex gap-2"><%= f.submit_button "Send" %><%= link_to "Cancel", admin_support_tickets_path, class: button_classes(:ghost) %></div>
+  <% end %>
+<% end %>

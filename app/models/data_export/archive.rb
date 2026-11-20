@@ -13,7 +13,8 @@ class DataExport::Archive
   NOT_INCLUDED = [
     "Your catalog, tax rates, team and settings (see them in the app)",
     "Plan and billing history (from your billing emails and the billing page)",
-    "Activity timelines and email logs"
+    "Activity timelines and email logs",
+    "Your questions to Shadetree support (see them under Help)" # OPS-05
   ].freeze
 
   # heartbeat: called now and then while writing, so a long build shows it's alive.

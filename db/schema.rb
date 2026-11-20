@@ -1123,6 +1123,45 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002800) do
     t.check_constraint "status::text = ANY (ARRAY['new'::character varying, 'in_progress'::character varying, 'quoted'::character varying, 'archived'::character varying]::text[])", name: "service_requests_status"
   end
 
+  create_table "support_messages", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "support_ticket_id", null: false
+    t.bigint "author_id"
+    t.boolean "from_operator", default: false, null: false
+    t.boolean "internal", default: false, null: false
+    t.string "source", default: "app", null: false
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["author_id"], name: "index_support_messages_on_author_id"
+    t.index ["business_id"], name: "index_support_messages_on_business_id"
+    t.index ["support_ticket_id"], name: "index_support_messages_on_support_ticket_id"
+  end
+
+  create_table "support_tickets", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.bigint "opened_by_id"
+    t.bigint "assignee_id"
+    t.string "subject", null: false
+    t.string "category", null: false
+    t.string "status", default: "open", null: false
+    t.string "page"
+    t.string "browser"
+    t.datetime "last_message_at", null: false
+    t.datetime "waiting_since"
+    t.datetime "resolved_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignee_id"], name: "index_support_tickets_on_assignee_id"
+    t.index ["business_id"], name: "index_support_tickets_on_business_id"
+    t.index ["opened_by_id"], name: "index_support_tickets_on_opened_by_id"
+    t.index ["status", "last_message_at"], name: "index_support_tickets_on_status_and_last_message_at"
+    t.index ["uid"], name: "index_support_tickets_on_uid", unique: true
+    t.check_constraint "category::text = ANY (ARRAY['question'::character varying, 'bug'::character varying, 'billing'::character varying, 'feature'::character varying]::text[])", name: "support_tickets_category"
+    t.check_constraint "status::text = ANY (ARRAY['open'::character varying, 'waiting'::character varying, 'resolved'::character varying]::text[])", name: "support_tickets_status"
+  end
+
   create_table "tax_rates", force: :cascade do |t|
     t.bigint "business_id", null: false
     t.string "uid", null: false
@@ -1404,6 +1443,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002800) do
   add_foreign_key "service_requests", "locations"
   add_foreign_key "service_requests", "properties", on_delete: :nullify
   add_foreign_key "service_requests", "users", column: "created_by_id", on_delete: :nullify
+  add_foreign_key "support_messages", "businesses", on_delete: :cascade
+  add_foreign_key "support_messages", "support_tickets", on_delete: :cascade
+  add_foreign_key "support_messages", "users", column: "author_id", on_delete: :nullify
+  add_foreign_key "support_tickets", "businesses", on_delete: :cascade
+  add_foreign_key "support_tickets", "users", column: "assignee_id", on_delete: :nullify
+  add_foreign_key "support_tickets", "users", column: "opened_by_id", on_delete: :nullify
   add_foreign_key "tax_rates", "businesses", on_delete: :cascade
   add_foreign_key "usage_events", "businesses"
   add_foreign_key "user_sessions", "users", on_delete: :cascade
