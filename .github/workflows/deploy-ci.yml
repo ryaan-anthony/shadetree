@@ -272,6 +272,8 @@ jobs:
           sudo install -d -m 0700 -o 1000 -g 1000 "$backups"
           contains "a location that is not a mount point is refused" "not a mount point" "$("$tool" staging backup 2>&1 || true)"
           sudo mount -t tmpfs -o size=512m,mode=0700,uid=1000,gid=1000 tmpfs "$backups" # stands in for the off-machine mount
+          contains "a location with too little free space is refused" "MB free on $backups" "$("$tool" staging backup 2>&1 || true)"
+          echo BACKUP_MIN_FREE_MB=256 >> "$HOME/.config/$APP/backup.env" # the 512 MB stand-in holds this test's sets
 
           echo "== the deploy's first backup, through the systemd unit in the background: a backup, then the drill"
           contains "the first backup starts" "first backup started" "$("$tool" staging first-backup 2>&1)"
