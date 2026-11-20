@@ -23,20 +23,23 @@ feature flags — each one audited and hard to do by accident.
 
 ## Acceptance criteria
 
-- [ ] Suspend/reactivate a business with a required reason: suspended businesses' members can't
+- [x] Suspend/reactivate a business with a required reason: suspended businesses' members can't
       use the app (they see a contact-support page); client links show a neutral unavailable
       page; in-flight provider payments still settle and are recorded.
 - [ ] Comp a plan (with optional end date), extend a trial, and apply a provider coupon, all
-      reflected in BIL-01 entitlements and the billing provider.
-- [ ] For a user: resend confirmation, send password reset, unlock account.
+      reflected in BIL-01 entitlements and the billing provider. *(Comped limits and features
+      (BIL-01 overrides) are done; a comped plan with an end date, trials and coupons wait on
+      BIL-05 and the billing provider.)*
+- [x] For a user: resend confirmation, send password reset, unlock account.
 - [ ] Schedule a business for deletion (typed confirmation of the business name); after a
       waiting period (default 30 days, expeditable) all its data and files are permanently
       removed, provider subscription canceled; the owner is notified at schedule and completion.
-- [ ] Simple forms let operators edit plans (BIL-01), industry presets (CAT-05) and feature flags
+      *(Done except cancelling the provider subscription, which comes with BIL-04/05.)*
+- [x] Simple forms let operators edit plans (BIL-01), industry presets (CAT-05) and feature flags
       (PLT-11), replacing console-only management.
-- [ ] Every action is confirmed, recorded in the audit log, and reversible where possible
+- [x] Every action is confirmed, recorded in the audit log, and reversible where possible
       (deletion is cancellable during the waiting period).
-- [ ] Tests cover each action's effects, client-link behavior under suspension, deletion
+- [x] Tests cover each action's effects, client-link behavior under suspension, deletion
       completeness (no orphaned records or files) and audit entries.
 
 ## Follow-ups
@@ -48,7 +51,32 @@ feature flags — each one audited and hard to do by accident.
 
 - Self-serve business deletion by owners (backlog). Refunds (provider dashboard).
 
-## Open questions
+## Decisions
 
-- Should suspension pause the business's subscription billing automatically? Recommend operator
-  decides per case via the provider dashboard.
+- Suspension doesn't pause subscription billing; the operator decides per case in the provider
+  dashboard (recommendation accepted).
+- Deletion waits 30 days and can be expedited or cancelled (10-operator open question 2). The
+  business works as normal until then.
+
+## Implementation notes
+
+- Suspending sets `active: false` with `suspended_at` and the reason, so everything keyed on
+  `active?` stops (client links "unavailable", request form, automations, reminders); queued
+  client email isn't sent; members get a contact-support page (403) and can switch business.
+  There's no provider payment flow yet, so nothing in flight can be blocked; re-check that
+  provider payments still settle for a suspended business when BIL-05/PAY-04 land.
+- People: resend confirmation, password reset, unlock. Plans: name, description, listing, order,
+  prices, limits, features (not key, default or provider prices). Per-business overrides need a
+  reason. Presets: visit length and starter services. Flags: off, on, percentage or business IDs.
+- Deletion: typed name and a reason; `DeleteScheduledBusinessesJob` (daily, or at once when
+  expedited) runs `BusinessDeletion`: every table with `business_id` (children first, from the
+  foreign keys), attached files with their variants and stored PDFs, flag lists; the audit log
+  keeps its entries (each keeps the business's name and id, so it still reads and filters).
+  Rows go in one transaction; then the audit entry, the email, and files in the background
+  (`PurgeDeletedFilesJob`); one failing business doesn't stop the rest; jobs queued for a deleted
+  business are dropped. Operators' notes go with it (current behaviour); people keep their
+  accounts, even if it was their only business. The owner is emailed at schedule (with plain
+  values, skipped if it's no longer due then), on cancelling and on completion.
+- Suspend, reactivate, deletion, plan, override and flag changes need a code from the last 5
+  minutes; every action is confirmed and audited. Tests: `test/integration/ops/account_actions_test.rb`,
+  `plans_test.rb`, `presets_and_flags_test.rb`, `test/models/business_deletion_test.rb`.

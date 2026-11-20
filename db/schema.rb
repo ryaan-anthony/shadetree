@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_19_002700) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_19_002800) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -185,7 +185,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_002700) do
     t.boolean "request_form_indexable", default: false, null: false
     t.datetime "suspended_at"
     t.text "suspension_reason"
+    t.datetime "deletion_scheduled_at"
+    t.datetime "deletion_due_at"
     t.index ["active"], name: "index_businesses_on_active"
+    t.index ["deletion_due_at"], name: "index_businesses_on_deletion_due_at", where: "(deletion_due_at IS NOT NULL)"
     t.index ["handle"], name: "index_businesses_on_handle", unique: true
     t.index ["industry"], name: "index_businesses_on_industry"
     t.index ["owner_id"], name: "index_businesses_on_owner_id"

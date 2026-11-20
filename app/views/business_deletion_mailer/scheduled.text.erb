@@ -1,0 +1,5 @@
+Hi <%= @first_name.presence || "there" %>,
+
+<%= @business_name %> is scheduled to be permanently deleted on <%= @due_on.to_fs(:long) %>, as asked. Its clients, quotes, jobs, invoices, payments, files and settings will be removed and can't be recovered.
+
+<% if @suspended %>To get a copy of your data first, or to cancel, write to <%= @support %> before that date.<% else %>To keep anything, download it from Settings → Your data before then. To cancel, write to <%= @support %> before that date.<% end %>

@@ -103,4 +103,52 @@ class Ops::AccountActionsTest < ActionDispatch::IntegrationTest
     assert_equal %w[user.confirmation_resent user.password_reset_sent user.unlocked], AuditEntry.order(:id).where("action LIKE 'user.%'").pluck(:action)
     assert_equal users(:two), AuditEntry.find_by!(action: "user.unlocked").target_user
   end
+
+  test "deleting a business: typed name and reason to schedule, the owner emailed; cancel or delete now" do
+    sign_in_operator
+    post ops_business_deletion_path(@business), params: { reason: "Owner asked", confirm_name: "Test Business" }
+    assert_match "Type the business's name", flash[:alert]
+    post ops_business_deletion_path(@business), params: { reason: "", confirm_name: @business.name }
+    assert_match "Give a reason", flash[:alert]
+    assert_nil @business.reload.deletion_due_at
+
+    assert_enqueued_email_with BusinessDeletionMailer, :scheduled, params: ->(params) { params[:business_name] == @business.name && params[:due_on] == 30.days.from_now.to_date } do
+      post ops_business_deletion_path(@business), params: { reason: "Owner asked by email", confirm_name: @business.name }
+    end
+    assert_in_delta 30.days.from_now, @business.reload.deletion_due_at, 5.seconds
+    assert AuditEntry.exists?(action: "business.deletion_scheduled", reason: "Owner asked by email")
+    get ops_business_path(@business)
+    assert_select "#deletion", /Scheduled for deletion/
+
+    assert_enqueued_email_with BusinessDeletionMailer, :cancelled, params: ->(params) { params[:email] == "user2@example.com" } do
+      delete ops_business_deletion_path(@business), params: { reason: "Changed their mind" }
+    end
+    assert_nil @business.reload.deletion_due_at
+    assert AuditEntry.exists?(action: "business.deletion_cancelled")
+
+    post ops_business_deletion_path(@business), params: { reason: "Privacy request", confirm_name: @business.name }
+    assert_enqueued_with(job: DeleteScheduledBusinessesJob, args: [ @business.id ]) do
+      patch ops_business_deletion_path(@business), params: { reason: "Privacy request: now", confirm_name: @business.name }
+    end
+    assert_redirected_to ops_businesses_path
+    perform_enqueued_jobs(only: DeleteScheduledBusinessesJob)
+    assert_not Business.exists?(@business.id)
+    assert_nil BusinessDeletionMailer.with(**BusinessDeletionMailer.params_for(@business).merge(due_on: 30.days.from_now.to_date)).scheduled.message.to,
+               "the earlier 'will be deleted on' email isn't sent once it's gone"
+    get ops_audit_entries_path(business: @business.uid)
+    assert_select "#audit-entries li", minimum: 3
+    assert_select "#audit-entries", /Test Business Two \(deleted\)/
+  end
+
+  test "the directory lists businesses scheduled for deletion, and a suspended owner is told to ask for an export" do
+    @business.update_columns(deletion_scheduled_at: Time.current, deletion_due_at: 30.days.from_now)
+    sign_in_operator
+    get ops_businesses_path(status: "deleting")
+    assert_select "#businesses > li", 1
+    assert_select "#business-#{@business.uid}", /Deletion scheduled/
+    @business.suspend!(reason: "spam")
+    mail = BusinessDeletionMailer.with(**BusinessDeletionMailer.params_for(@business.reload)).scheduled
+    assert_match "write to support@getshadetree.com", mail.text_part.body.to_s
+    assert_no_match "Settings", mail.text_part.body.to_s
+  end
 end

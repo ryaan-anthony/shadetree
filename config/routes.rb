@@ -59,6 +59,7 @@ Rails.application.routes.draw do
       resource :impersonation, only: :create # OPS-03: view the app as a member
       resource :suspension, only: %i[create destroy] # OPS-04
       resource :plan_overrides, only: %i[edit update], path: "overrides" # OPS-04: comped limits and features
+      resource :deletion, only: %i[create update destroy] # OPS-04: schedule, expedite, cancel
     end
     resource :impersonation, only: %i[edit update destroy]
     resources :plans, only: %i[index edit update] # OPS-04

@@ -5,7 +5,7 @@
 <%= form_with url: ops_businesses_path, method: :get, class: "mt-4 grid gap-3 sm:grid-cols-6 sm:items-end", id: "directory-filters" do %>
   <div class="field sm:col-span-2"><label class="label" for="q">Name or email</label><%= search_field_tag :q, @directory.query, class: "input", id: "q", autocomplete: "off" %></div>
   <div class="field"><label class="label" for="plan">Plan</label><%= select_tag :plan, options_from_collection_for_select(@plans, :id, :name, @directory.plan_id), include_blank: "Any", class: "select", id: "plan" %></div>
-  <div class="field"><label class="label" for="status">Status</label><%= select_tag :status, options_for_select(Ops::Directory::STATUSES.invert, @directory.status), include_blank: "Any", class: "select", id: "status" %></div>
+  <div class="field"><label class="label" for="status">Status</label><%= select_tag :status, options_for_select(Ops::Directory::FILTERS.invert, @directory.status), include_blank: "Any", class: "select", id: "status" %></div>
   <div class="field"><label class="label" for="from">Signed up from</label><%= date_field_tag :from, @directory.from, class: "input", id: "from" %></div>
   <div class="field"><label class="label" for="to">to (UTC)</label><%= date_field_tag :to, @directory.to, class: "input", id: "to" %></div>
   <div class="field sm:col-span-2"><label class="label" for="sort">Sort</label><%= select_tag :sort, options_for_select(Ops::Directory::SORTS.invert, @directory.sort), class: "select", id: "sort" %></div>
