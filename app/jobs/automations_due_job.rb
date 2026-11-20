@@ -28,9 +28,7 @@ class AutomationsDueJob < ApplicationJob
 
   def fire_overdue(business)
     AutomationRule.active.where(trigger: "invoice_overdue").find_each do |rule|
-      Invoice.where(status: %w[sent partially_paid], due_on: rule.created_at.in_time_zone(business.time_zone).to_date...business.today)
-             .where.not(id: AutomationRun.where(rule:, subject_type: "Invoice").select(:subject_id))
-             .find_each { Automation.start(rule, _1) }
+      Automation.overdue_without_run(rule, business).find_each { Automation.start(rule, _1) }
     end
   end
 end

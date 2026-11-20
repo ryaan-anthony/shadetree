@@ -57,6 +57,9 @@ feature flags — each one audited and hard to do by accident.
   dashboard (recommendation accepted).
 - Deletion waits 30 days and can be expedited or cancelled (10-operator open question 2). The
   business works as normal until then.
+- While any of their businesses is suspended, a member can't create another business (they can
+  still switch to the others). On reactivation, automations that came due during the
+  suspension are skipped rather than sent late (owner's decisions).
 
 ## Implementation notes
 

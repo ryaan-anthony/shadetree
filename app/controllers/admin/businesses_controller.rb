@@ -6,6 +6,7 @@ class Admin::BusinessesController < Admin::BaseController
   allow_without_business only: %i[new create]
   allow_any_member only: :switch
   requires_permission :business_settings, only: %i[edit update request_form_qr]
+  before_action :refuse_while_suspended, only: %i[new create]
 
   # First business after sign-up, or another one from the switcher. Only name and industry.
   def new
@@ -67,6 +68,13 @@ class Admin::BusinessesController < Admin::BaseController
   end
 
   private
+
+  # OPS-04: someone whose business is suspended can't start a fresh one to carry on (owner's
+  # decision); they can still switch to another business they already belong to.
+  def refuse_while_suspended
+    @suspended_business = current_user.businesses.merge(BusinessUser.active).where.not(suspended_at: nil).first
+    render "admin/businesses/suspended_new", status: :forbidden if @suspended_business
+  end
 
   SETTINGS_TABS = %w[business documents branding request_form].freeze
 

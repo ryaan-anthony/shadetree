@@ -66,8 +66,9 @@ build custom rules from a fixed list of triggers, conditions and actions.
   moment it's switched on.
 - **Logs and notices name the record (Q-1042), never the client**, so client erasure (INS-02)
   has nothing to scrub there; runs for an erased client are skipped.
-- **While a business is suspended**, new events start nothing and waiting runs stay waiting;
-  they go ahead (conditions re-checked) once it's active again.
+- **While a business is suspended**, new events start nothing and waiting runs stay waiting.
+  On reactivation, runs that came due meanwhile (and invoices that fell overdue meanwhile) are
+  skipped with a note; later runs go ahead as usual (owner's decision, OPS-04).
 
 ## Implementation notes
 
@@ -81,7 +82,8 @@ build custom rules from a fixed list of triggers, conditions and actions.
     "done", "skipped" with why, or "failed". Anything unexpected marks the run failed.
 - Safeguards: events recorded while an automation acts trigger nothing (the flag is taken when
   the event is created). A template reaches a client once per document (`AutomationDelivery`).
-  Runs wait while the business is suspended, and `AutomationMailer` respects suppression.
+  Runs wait while the business is suspended (skipped if they came due meanwhile), and
+  `AutomationMailer` respects suppression.
 - Pages: Settings → Automations (`Admin::AutomationsController`, `business_settings`) lists rules
   described in a sentence (`automation_summary`) with Turn on / off, the recipes
   (`AutomationRecipe`, which brings its template once) and recent activity. The form

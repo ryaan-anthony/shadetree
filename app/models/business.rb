@@ -252,7 +252,13 @@ class Business < ApplicationRecord
   def reactivate!
     raise ArgumentError, "only a suspended business can be reactivated" unless suspended?
 
-    update_columns(active: true, suspended_at: nil, suspension_reason: nil, updated_at: Time.current)
+    since = suspended_at
+    # One transaction: other processes only see the business active once the missed runs are
+    # skipped, so the sweep can't send them in between (NTF-04: nothing weeks old goes out).
+    transaction do
+      Automation.skip_missed_during_suspension(self, since:)
+      update_columns(active: true, suspended_at: nil, suspension_reason: nil, updated_at: Time.current)
+    end
   end
 
   def user_role(user)
