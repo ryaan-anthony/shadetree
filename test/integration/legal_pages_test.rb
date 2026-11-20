@@ -41,6 +41,12 @@ class LegalPagesTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "the privacy policy covers contact messages and their copies in the support inbox (MKT-02)" do
+    get privacy_path
+    assert_match "through the contact form: two years", response.body
+    assert_match "also emailed to our support inbox; when you ask us to delete your messages, we delete those emails too", response.body
+  end
+
   test "signing up records the versions accepted, and when" do
     post user_registration_path, params: { user: { first_name: "Ana", last_name: "Silva", email: "ana@example.com", password: "long enough phrase", terms_of_service: "1" }, **form_guard_params("sign-up") }
     user = User.find_by!(email: "ana@example.com")
