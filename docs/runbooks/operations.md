@@ -115,7 +115,9 @@ prunes build cache older than a week; `docker system df` shows what's used.
 
 ### Cloudflare
 
-1. **Origin certificate**, per VM: SSL/TLS → Origin Server → Create Certificate, key type ECC,
+1. **Origin certificate**, per VM, created in the zone that owns the VM's hostname
+   (**hostilecity.net**, not getshadetree.com: Origin CA only issues for the zone you're in): SSL/TLS →
+   Origin Server → Create Certificate, key type ECC,
    hostnames: **only** the VM's internal hostname (`ORIGIN_HOST`). Copy the certificate into the
    secret `TLS_CERT` and the key into `TLS_KEY` (shown once).
 2. **Tunnel public hostnames** (op-works):
