@@ -139,6 +139,21 @@ class Users::AccountDeletionTest < ActionDispatch::IntegrationTest
     assert_no_enqueued_jobs(only: CancelSubscriptionsJob) { users(:two).delete_account! }
   end
 
+  test "when an Owner leaves, Stripe's billing email becomes a remaining Owner's (BIL-04)" do
+    business = businesses(:one)
+    customer = with_stripe_customer(business)
+    co_owner = users(:two)
+    business.business_users.create!(user: co_owner, role: "owner", active: true)
+    perform_enqueued_jobs(only: UpdateBillingEmailJob) { assert users(:one).delete_account! }
+    assert_equal co_owner.email, stripe.customers[customer][:email]
+
+    third = User.create!(email: "third@example.com", password: "password123", first_name: "Tia", confirmed_at: Time.current)
+    business.business_users.create!(user: third, role: "owner", active: true)
+    perform_enqueued_jobs(only: UpdateBillingEmailJob) { business.business_users.find_by(user: co_owner).update!(role: "admin") }
+    assert_equal "third@example.com", stripe.customers[customer][:email]
+    assert_no_enqueued_jobs(only: UpdateBillingEmailJob) { business.business_users.find_by(user: co_owner).update!(role: "technician") }
+  end
+
   test "closing an empty business revokes its pending invitations and clears its contact details" do
     owner = users(:one)
     business_users(:one_member_of_two).destroy!

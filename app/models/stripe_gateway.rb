@@ -33,6 +33,7 @@ class StripeGateway
 
   # Customers, checkout and the customer portal.
   def create_customer(params, idempotency_key:) = call { Stripe::Customer.create(params, { idempotency_key: }) }
+  def update_customer(id, params) = call { Stripe::Customer.update(id, params) }
   def create_checkout_session(params) = call { Stripe::Checkout::Session.create(params) }
   def retrieve_checkout_session(id) = call { Stripe::Checkout::Session.retrieve(id) }
   def create_portal_session(params) = call { Stripe::BillingPortal::Session.create(params) }

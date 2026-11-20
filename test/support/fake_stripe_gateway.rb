@@ -59,6 +59,10 @@ class FakeStripeGateway
     end
   end
 
+  def update_customer(id, params)
+    record(:update_customer, id, params) { object((customers[id] ||= { object: "customer", id: }).merge!(params)) }
+  end
+
   def create_checkout_session(params)
     record(:create_checkout_session, params) do
       id = next_id("cs")

@@ -51,3 +51,19 @@ change plan (move them in the dashboard if needed).
 Suspending a business (OPS-04) doesn't pause its subscription. Its Owners can still open
 Settings → Plan and "Manage billing" (Stripe's portal) to update their card or cancel; nothing
 else in the app opens for them. Pause or cancel billing in the Stripe dashboard if needed.
+
+### Deleting a business
+
+Scheduling a deletion (OPS-04) sets the business's live subscriptions to end with the paid
+period; cancelling the deletion undoes only that (not a cancellation the Owner chose). When
+the deletion runs, any subscription still live is cancelled at once. The Stripe customer, with
+its billing email and invoices, is kept.
+
+**Decision needed:** should Shadetree also delete the Stripe customer (who holds the billing
+email) when a business is deleted?
+
+### Billing email
+
+When an Owner stops being an Owner (demoted, deactivated or their account deleted), the Stripe
+customer's email is changed to a remaining Owner's, so receipts and failed-payment emails reach
+someone who can act on them.

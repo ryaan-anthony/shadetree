@@ -53,7 +53,7 @@ portal; Shadetree mirrors the resulting subscription state reliably.
 
 - Stripe, the same provider as client payments; annual plans at about two months free; Stripe
   Tax on our subscriptions (owner accepted the recommendations). See
-  [ADR 0021](../../adr/0021-subscription-billing-with-stripe.md).
+  [ADR 0022](../../adr/0022-subscription-billing-with-stripe.md).
 - The platform fee on client payments isn't decided (09-billing open question 3; PAY-04).
 
 ## Implementation notes
@@ -75,7 +75,12 @@ portal; Shadetree mirrors the resulting subscription state reliably.
   `ProcessStripeEventsJob` (every 15 minutes) re-runs unfinished events. `Billing::PlanResolver`
   sets the plan and `billing_cycle_anchor`; `BillingEvent` is the billing history (operators'
   business page). A second live subscription raises an operator alert.
-- Deleting a business (OPS-04) cancels its subscriptions first; closing an empty business when
-  its last Owner deletes their account (ACC-06) cancels them in the background.
+- Scheduling a business's deletion (OPS-04) stops its subscription renewing (undone if the
+  deletion is cancelled); the deletion cancels anything still live first. Closing an empty
+  business when its last Owner deletes their account (ACC-06) cancels it in the background.
+  When an Owner leaves, Stripe's billing email becomes a remaining Owner's.
+- Stripe is never called with a row locked (5 s / 15 s timeouts, one retry); a subscription of
+  another customer or business is reported, not mirrored; events are retried with backoff and
+  given up after 8 attempts with one report. Suspended Owners can still open the portal.
 - Tests use `FakeStripeGateway` (`StripeGateway.current`); nothing calls Stripe.
 - Dev seeds: the demo business's Starter as a mirrored subscription with history (made-up ids).

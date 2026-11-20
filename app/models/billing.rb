@@ -44,5 +44,27 @@ module Billing
     end
   end
 
+  # OPS-04: while a business waits to be deleted, its live subscriptions end at the end of the
+  # paid period (marked in Stripe's metadata); cancelling the deletion undoes only what this
+  # set, not a cancellation the Owner chose. Returns the subscription ids changed.
+  DELETION_MARK = "shadetree_deletion"
+
+  def self.cancel_for_deletion!(business, cancel: true)
+    return [] unless business.stripe_customer_id
+
+    changed = gateway.customer_subscriptions(business.stripe_customer_id).filter_map do |subscription|
+      next unless Subscription::LIVE_STATUSES.include?(subscription.status)
+
+      marked = subscription.metadata&.[](DELETION_MARK) == "1"
+      if cancel && !subscription.cancel_at_period_end
+        gateway.update_subscription(subscription.id, cancel_at_period_end: true, metadata: { DELETION_MARK => "1" })
+      elsif !cancel && marked
+        gateway.update_subscription(subscription.id, cancel_at_period_end: false, metadata: { DELETION_MARK => "" })
+      end&.id
+    end
+    changed.each { Billing::SubscriptionSync.refresh!(business, _1) }
+    changed
+  end
+
   def self.forget_prices(keys) = keys.each { Rails.cache.delete([ "stripe-price", _1 ]) }
 end

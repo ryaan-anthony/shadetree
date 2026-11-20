@@ -81,6 +81,10 @@ class User < ApplicationRecord
       return false if deleted? || businesses_blocking_deletion.any?
 
       sole_owner_memberships.each { |membership| close_empty_business(membership.business) }
+      # BIL-04: businesses that carry on with other Owners get one of them as Stripe's billing email.
+      handed_over = business_users.active.owners.joins(:business).where.not(businesses: { stripe_customer_id: nil })
+                                  .where.not(business_id: sole_owner_memberships.map(&:business_id)).pluck(:business_id)
+      ActiveRecord.after_all_transactions_commit { handed_over.each { UpdateBillingEmailJob.perform_later(_1) } } if handed_over.any?
       scrub_names_left_elsewhere
       business_users.active.update_all(active: false, deactivated_at: Time.current, updated_at: Time.current)
       user_sessions.delete_all
