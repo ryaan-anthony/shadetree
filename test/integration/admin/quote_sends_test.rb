@@ -52,7 +52,7 @@ class Admin::QuoteSendsTest < ActionDispatch::IntegrationTest
       perform_enqueued_jobs
       mail = ActionMailer::Base.deliveries.last
       assert_equal [ [ "maria@example.com" ], [ "partner@example.com" ], "Your quote" ], [ mail.to, mail.cc, mail.subject ]
-      assert_equal "Quote #{quote.number}.pdf", mail.attachments.first.filename
+      assert mail.attachments["Quote #{quote.number}.pdf"], "the quote PDF is attached"
       link = as_business(@business) { ClientLink.active.find_by!(linkable: quote) }
       assert_match "/c/#{link.token}", mail.html_part.body.to_s
       assert_match "Hi Maria", mail.text_part.body.to_s
@@ -61,6 +61,23 @@ class Admin::QuoteSendsTest < ActionDispatch::IntegrationTest
       get edit_admin_quote_path(@quote)
       assert_redirected_to admin_quotes_path
     end
+  end
+
+  test "with a logo, the email nests the inline logo with the HTML and keeps the PDF a separate attachment" do
+    @business.update!(logo: { io: file_fixture("logo.png").open, filename: "logo.png" })
+    send_email
+    perform_enqueued_jobs
+    mail = ActionMailer::Base.deliveries.last
+    assert_equal "multipart/mixed", mail.mime_type
+    related = mail.parts.find { _1.mime_type == "multipart/related" }
+    assert related, "the HTML and its inline logo sit together in multipart/related"
+    logo = related.parts.find(&:inline?)
+    assert_equal [ "image/png", "logo.png" ], [ logo.mime_type, logo.filename ]
+    assert_includes mail.html_part.body.to_s, %(src="cid:#{logo.cid}")
+    pdf = mail.attachments["Quote #{fresh.number}.pdf"]
+    assert pdf, "the quote PDF is attached"
+    assert_not pdf.inline?
+    assert_equal "application/pdf", pdf.mime_type
   end
 
   test "sending again records another send, but no new usage" do

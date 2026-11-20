@@ -64,8 +64,10 @@ class Business < ApplicationRecord
   # CAT-02: the uploaded logo. Branding::LOGO_SIZES are the sizes pages, emails and PDFs use.
   LOGO_TYPES = LogoUpload::FORMATS.values.map(&:first).freeze
   LOGO_MAX_BYTES = LogoUpload::MAX_BYTES
+  # Every size is made in the background right after upload, so emails and PDFs never resize a
+  # large original while they're being sent.
   has_one_attached :logo do |attachable|
-    Branding::LOGO_SIZES.each { |name, transform| attachable.variant name, **transform, saver: { strip: true } }
+    Branding::LOGO_SIZES.each { |name, transform| attachable.variant name, **transform, saver: { strip: true }, preprocessed: true }
   end
   validate { errors.add(:logo, @logo_error) if @logo_error }
   attr_accessor :remove_logo

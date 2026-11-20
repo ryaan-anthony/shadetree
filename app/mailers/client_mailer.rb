@@ -7,7 +7,8 @@
 # delivers in the background with retries. Each message:
 # - comes from the platform address as "<Business> via Shadetree", with the business's
 #   email as reply-to, so replies reach the owner;
-# - uses the branded layout (logo, color, contact footer) with a plain-text part;
+# - uses the branded layout (logo, color, contact footer) with a plain-text part; the logo
+#   travels inside the email (see #attach_logo);
 # - isn't sent to an address the business has suppressed (the mail server refused it).
 class ClientMailer < ApplicationMailer
   layout "mailer_client"
@@ -68,8 +69,24 @@ class ClientMailer < ApplicationMailer
     end
 
     headers["X-Shadetree-Email"] = @email_message&.uid
+    attach_logo
     mail(to:, subject:, from: email_address_with_name(self.class.sending_address, "#{@business.name} via Shadetree"),
          reply_to: @contact.contact_email.presence, **options)
+  end
+
+  # The logo is an inline part the HTML points to by Content-ID, not a link back to the app:
+  # mail clients show it without "load images", opening the email sends us nothing (no open
+  # signal), it works where the app isn't publicly reachable (staging behind a login), and
+  # old emails keep the logo they were sent with. If it can't be read, the layout falls back
+  # to the wordmark rather than failing the email.
+  def attach_logo
+    return unless @branding.logo?
+
+    image = @branding.logo(:email).processed.image
+    attachments.inline["logo.png"] = { mime_type: image.content_type, content: image.download }
+    @logo_url = attachments.inline["logo.png"].url
+  rescue StandardError => e
+    Rails.error.report(e, handled: true, context: { business_id: @business.id, logo: "email" })
   end
 
   def record_sent
