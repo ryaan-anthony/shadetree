@@ -59,7 +59,7 @@ class ClientMailerTest < ActionMailer::TestCase
   test "a logo that can't be read falls back to the wordmark, and the email still goes" do
     @business.update!(logo: { io: file_fixture("logo.png").open, filename: "logo.png" })
     @business.logo.blob.service.delete(@business.logo.blob.key)
-    perform_enqueued_jobs { send_test }
+    assert_error_reported { perform_enqueued_jobs { send_test } }
     mail = ActionMailer::Base.deliveries.last
     assert_nil mail.attachments.find(&:inline?)
     assert_includes mail.html_part.body.to_s, ">TB</td>"

@@ -84,6 +84,7 @@ class ClientMailer < ApplicationMailer
 
     image = @branding.logo(:email).processed.image
     attachments.inline["logo.png"] = { mime_type: image.content_type, content: image.download }
+    @logo_url = attachments.inline["logo.png"].url
   rescue StandardError => e
     Rails.error.report(e, handled: true, context: { business_id: @business.id, logo: "email" })
   end

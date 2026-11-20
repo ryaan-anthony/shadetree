@@ -84,7 +84,8 @@ Rails.application.configure do
   else
     config.action_mailer.perform_deliveries = false
   end
-  # Links and images in email (logos, "View quote") point at the public app host (PLT-09).
+  # Links in email ("View quote", client pages) point at the public app host (PLT-09). Logos are
+  # attached inline, not linked (NTF-01).
   config.action_mailer.default_url_options = { host: ENV.fetch("APP_HOST", "example.com"), protocol: "https" }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
