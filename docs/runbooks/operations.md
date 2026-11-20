@@ -407,12 +407,34 @@ like `{"time":…,"level":…,"tags":[…],"message":…}`; ours add an `event`:
 Find things: `docker logs shadetree-production 2>&1 | grep '"event":"alert"'`, or grep for a
 request id (the `X-Request-Id` response header) to get a request's line and its error. Add
 `--since 1h` to narrow it. Abuse lines (`[abuse] …`: rate limits, bot checks) carry the IP
-address on purpose. Docker's default `json-file` log driver keeps logs until the container is
-replaced (each deploy starts a new one); ops-work can set log rotation in the Docker daemon.
+address on purpose. The health checks (`/up`, `/up/jobs`, `/up/backup`) are not logged.
+
+**Where logs are kept.** The container keeps Docker's `json-file` log, capped at 10 MB × 5 files
+(`--log-opt`, set by the deploy), so roughly the last 50 MB. A deploy replaces the container,
+which would lose its log, so before removing the old container (or a new one that failed and was
+rolled back) `ops/deploy/deploy.sh` saves its log to
+`~/.local/state/shadetree-<env>/logs/shadetree-<env>-<commit>-<UTC time>.log` on the VM and keeps
+the newest five. To search across a deploy:
+
+```sh
+grep -h '"event":"error"' ~/.local/state/shadetree-production/logs/*.log
+docker logs shadetree-production 2>&1 | grep '"event":"error"'
+```
+
+Why files rather than the journald driver: the deploy user can read them without root or the
+`systemd-journal` group, they survive the container exactly as long as we keep them, and the cap
+is explicit. The journal would make `journalctl CONTAINER_NAME=…` work across containers, at the
+cost of the host's journal settings deciding retention; switch with `--log-driver journald` in
+`deploy.sh` if you prefer that.
 
 Tuning (environment variables in the GitHub environment, all optional): `SLOW_REQUEST_MS` (1000),
 `SLOW_QUERY_MS` (250), `JOB_BACKLOG_THRESHOLD` (100 jobs waiting), `JOB_WAIT_THRESHOLD` (600
 seconds the oldest has waited). Change one and re-run the last deploy.
+
+`JOB_CONCURRENCY` is the number of Solid Queue worker processes (default 1, three threads each).
+Each extra process is another copy of the app in memory, about 150–250 MB, inside the
+container's `APP_MEMORY` (1 GB) together with Puma (about 250–350 MB) and Chrome while it prints a
+PDF (100–200 MB). On the 2 GB VMs keep it at 1; raise `APP_MEMORY` with it.
 
 ### Alerts
 
