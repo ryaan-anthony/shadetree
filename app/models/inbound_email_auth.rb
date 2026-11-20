@@ -10,7 +10,9 @@ class InboundEmailAuth
 
   def initialize(value)
     @results = Hash.new { |hash, key| hash[key] = [] }
-    text = value.to_s.gsub(/\([^()]*\)/, " ") # comments can hold anything
+    # Quoted strings (a sender-chosen smtp.mailfrom local part) and comments can hold anything,
+    # even "; dmarc=pass": blank them before splitting.
+    text = value.to_s.gsub(/"(?:[^"\\]|\\.)*"/, '""').gsub(/\([^()]*\)/, " ")
     authserv, *methods = text.split(";").map(&:strip)
     return unless authserv.to_s.split.first&.downcase == AUTHSERV_ID
 
@@ -18,20 +20,21 @@ class InboundEmailAuth
       name, result = method[/\A([a-z]+)=([a-z]+)/i] && [ $1.downcase, $2.downcase ]
       next unless name
 
-      props = method.scan(/([a-z]+\.[a-z-]+)=("[^"]*"|\S+)/i).to_h { [ _1.downcase, _2.delete('"').downcase ] }
+      props = method.scan(/([a-z]+\.[a-z-]+)=(\S+)/i).to_h { [ _1.downcase, _2.delete('"').downcase ] }
       @results[name] << props.merge("result" => result)
     end
   end
 
   # DMARC passed for this From domain (DMARC pass means SPF or DKIM passed, aligned with it).
-  def dmarc_pass?(from_domain) = @results["dmarc"].any? { _1["result"] == "pass" && _1["header.from"] == from_domain.to_s.downcase }
+  # Only Cloudflare's first DMARC and SPF results count (there is one of each).
+  def dmarc_pass?(from_domain) = @results["dmarc"].first(1).any? { _1["result"] == "pass" && _1["header.from"] == from_domain.to_s.downcase }
 
   # DMARC passed, or DKIM or SPF passed for a domain aligned with the From domain (relaxed).
   def aligned_pass?(from_domain)
     return true if dmarc_pass?(from_domain)
 
     @results["dkim"].any? { _1["result"] == "pass" && aligned?(_1["header.d"], from_domain) } ||
-      @results["spf"].any? { _1["result"] == "pass" && aligned?(_1["smtp.mailfrom"].to_s.split("@").last, from_domain) }
+      @results["spf"].first(1).any? { _1["result"] == "pass" && aligned?(_1["smtp.mailfrom"].to_s.split("@").last, from_domain) }
   end
 
   private

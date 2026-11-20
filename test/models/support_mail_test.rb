@@ -48,6 +48,7 @@ class SupportMailTest < ActiveSupport::TestCase
   test "missing, failed, unaligned or someone else's authentication results are refused" do
     [ "", "mx.cloudflare.net; spf=fail smtp.mailfrom=x@example.com; dkim=none; dmarc=fail header.from=example.com",
       "mx.cloudflare.net; spf=pass smtp.mailfrom=x@evil.example; dkim=pass header.d=evil.example; dmarc=fail header.from=example.com",
+      'mx.cloudflare.net; dkim=fail header.d=example.com; dmarc=fail header.from=example.com; spf=pass smtp.mailfrom="x;dmarc=pass header.from=example.com"@evil.example',
       "mx.evil.example; spf=pass smtp.mailfrom=x@example.com; dkim=pass header.d=example.com; dmarc=pass header.from=example.com" ].each do |auth|
       assert_equal :unauthenticated, receive(auth:).outcome, auth
     end
