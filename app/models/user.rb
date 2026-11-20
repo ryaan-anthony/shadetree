@@ -152,7 +152,8 @@ class User < ApplicationRecord
     Tenancy.with_business(business) do
       Invitation.pending.update_all(revoked_at: Time.current)
       business.logo.purge_later if business.logo.attached?
-      business.update_columns(active: false, email: nil, phone: nil, address_line1: nil, address_line2: nil, city: nil,
+      # A closed business is no longer suspended (OPS-04), so it can't be "reactivated" by mistake.
+      business.update_columns(active: false, suspended_at: nil, suspension_reason: nil, email: nil, phone: nil, address_line1: nil, address_line2: nil, city: nil,
                               region: nil, postal_code: nil, updated_at: Time.current)
       # CAT-07: its locations' details too, and a main location named after the city.
       Location.update_all(email: nil, phone: nil, address_line1: nil, address_line2: nil, city: nil, region: nil, postal_code: nil, updated_at: Time.current)

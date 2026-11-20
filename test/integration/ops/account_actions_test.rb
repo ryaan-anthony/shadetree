@@ -58,11 +58,22 @@ class Ops::AccountActionsTest < ActionDispatch::IntegrationTest
       post ops_business_suspension_path(@business), params: { reason: "x" }
       assert_redirected_to new_ops_two_factor_verification_path(recent: 1)
     end
-    @business.update_columns(active: false)
+    @business.suspend!(reason: "spam")
+    @business.update_columns(active: false, suspended_at: nil) # then closed, as account deletion does (ACC-06)
+    assert_raises(ArgumentError) { @business.reactivate! }
     post ops_business_suspension_path(@business), params: { reason: "x" }
     assert_match "Only an active business", flash[:alert]
     delete ops_business_suspension_path(@business), params: { reason: "x" }
     assert_match "isn't suspended", flash[:alert]
+  end
+
+  test "a suspended business closed by its owner deleting their account is no longer suspended" do
+    owner = User.create!(email: "solo@example.com", password: "password123", first_name: "Solo", last_name: "Owner", confirmed_at: Time.current)
+    business = Business.create!(name: "Solo Co", owner:)
+    business.suspend!(reason: "spam")
+    owner.delete_account!
+    business.reload
+    assert_equal [ false, nil ], [ business.active?, business.suspended_at ]
   end
 
   test "email queued for a business that's since suspended isn't sent" do
