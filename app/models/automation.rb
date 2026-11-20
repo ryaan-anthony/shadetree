@@ -37,9 +37,9 @@ module Automation
   # OPS-04 (owner's decision): on reactivation, runs that came due during the suspension are
   # skipped rather than all firing at once, and invoices that fell overdue meanwhile get a skipped
   # run so the hourly sweep doesn't chase them. Later events run as usual.
-  def skip_missed_during_suspension(business)
+  def skip_missed_during_suspension(business, since:)
     Tenancy.with_business(business) do
-      AutomationRun.where(status: "scheduled", run_at: ..Time.current).find_each do |run|
+      AutomationRun.where(status: "scheduled", run_at: since..Time.current).find_each do |run|
         run.with_lock do
           next unless run.status == "scheduled"
 
@@ -47,8 +47,10 @@ module Automation
           run.update!(status: "skipped", finished_at: Time.current)
         end
       end
-      AutomationRule.active.where(trigger: "invoice_overdue").find_each do |rule|
-        overdue_without_run(rule, business).find_each do |invoice|
+      # Every overdue rule, switched on or not: one turned back on later mustn't chase these.
+      fell_due_from = since.in_time_zone(business.time_zone).to_date - 1 # before the sweep reached them
+      AutomationRule.where(trigger: "invoice_overdue").find_each do |rule|
+        overdue_without_run(rule, business).where(due_on: fell_due_from..).find_each do |invoice|
           AutomationRun.create_or_find_by!(rule:, subject: invoice) do |run|
             run.assign_attributes(rule_name: rule.name, trigger: rule.trigger, run_at: Time.current, status: "skipped", finished_at: Time.current,
                                   log: [ { "action" => "run", "result" => "skipped", "detail" => MISSED_WHILE_SUSPENDED } ])

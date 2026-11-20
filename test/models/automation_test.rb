@@ -207,19 +207,37 @@ class AutomationTest < ActiveSupport::TestCase
     assert_equal "done", AutomationRun.find_by!(subject: later).status, "a short suspension doesn't stop what comes after it"
   end
 
-  test "invoices that fell overdue while the business was suspended aren't chased on reactivation" do
-    AutomationRule.create!(name: "Overdue", trigger: "invoice_overdue", actions: [ { "type" => "notify_team", "team" => "office" } ]).update_columns(created_at: 30.days.ago)
+  test "invoices that fell overdue while the business was suspended aren't chased, even by a rule switched back on later" do
+    on = AutomationRule.create!(name: "Overdue", trigger: "invoice_overdue", actions: [ { "type" => "notify_team", "team" => "office" } ])
+    off = AutomationRule.create!(name: "Overdue (off)", trigger: "invoice_overdue", enabled: false, actions: [ { "type" => "notify_team", "team" => "office" } ])
+    [ on, off ].each { _1.update_columns(created_at: 30.days.ago) }
     invoice = Invoice.start(client: @maria).tap { _1.sync_line_items([ { "key" => "a", "name" => "Work", "quantity" => "1", "unit_price" => "100" } ]); _1.update!(tax_rates: []) }
     invoice.mark_sent!(by: @owner, channel: "link")
-    invoice.update_columns(issued_on: @business.today - 20, due_on: @business.today - 5)
+    invoice.update_columns(issued_on: @business.today - 5, due_on: @business.today + 2)
     @business.suspend!(reason: "Dispute")
-    @business.reload.reactivate!
-    Current.reset
-    AutomationsDueJob.perform_now
-    Current.business = @business
-    run = AutomationRun.find_by!(subject: invoice)
-    assert_equal [ "skipped", Automation::MISSED_WHILE_SUSPENDED ], [ run.status, run.log.last["detail"] ]
+    travel(6.days) do
+      @business.reload.reactivate!
+      off.update!(enabled: true)
+      Current.reset
+      AutomationsDueJob.perform_now
+      Current.business = @business
+    end
+    [ on, off ].each do |rule|
+      run = AutomationRun.find_by!(rule:, subject: invoice)
+      assert_equal [ "skipped", Automation::MISSED_WHILE_SUSPENDED ], [ run.status, run.log.last["detail"] ]
+    end
     assert_not Notification.exists?(kind: "automation"), "nobody is notified about an invoice that went overdue during the suspension"
+  end
+
+  test "a run that came due before a short suspension isn't called missed" do
+    rule
+    q = quote
+    q.mark_sent!(by: @owner, channel: "link")
+    travel(3.days + 10.minutes) do
+      @business.suspend!(reason: "Checking")
+      @business.reload.reactivate!
+      assert_equal "scheduled", AutomationRun.find_by!(subject: q).status, "it was due before the suspension began"
+    end
   end
 
   test "another business's rules never run for this business's records" do
