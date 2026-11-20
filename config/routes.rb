@@ -57,9 +57,16 @@ Rails.application.routes.draw do
     resources :businesses, only: %i[index show] do # OPS-02
       resources :notes, only: %i[create edit update destroy]
       resource :impersonation, only: :create # OPS-03: view the app as a member
+      resource :suspension, only: %i[create destroy] # OPS-04
     end
     resource :impersonation, only: %i[edit update destroy]
-    resources :users, only: :index # OPS-02: lookup by email
+    resources :users, only: :index do # OPS-02: lookup by email
+      member do # OPS-04: sign-in help
+        post :confirmation, to: "user_actions#confirmation"
+        post :password_reset, to: "user_actions#password_reset"
+        post :unlock, to: "user_actions#unlock"
+      end
+    end
   end
 
   namespace :admin do

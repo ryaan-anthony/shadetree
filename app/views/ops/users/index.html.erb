@@ -17,6 +17,17 @@
             Signed up <%= local_date(user.created_at) %> ·
             <%= user.confirmed? ? "email confirmed" : "email not confirmed" %><%= " · locked" if user.access_locked? %><%= " · account deleted" if user.deleted? %>
           </p>
+          <% unless user.deleted? %>
+            <div class="flex flex-wrap gap-2 px-5 pt-3" id="user-actions-<%= user.id %>">
+              <% if !user.confirmed? || user.unconfirmed_email.present? %>
+                <%= button_to "Resend confirmation", confirmation_ops_user_path(user), class: button_classes(:secondary, :sm), form: { data: { turbo_confirm: "Email #{user.unconfirmed_email.presence || user.email} a new confirmation link?" } } %>
+              <% end %>
+              <%= button_to "Send password reset", password_reset_ops_user_path(user), class: button_classes(:secondary, :sm), form: { data: { turbo_confirm: "Email #{user.email} a password reset link?" } } %>
+              <% if user.access_locked? %>
+                <%= button_to "Unlock", unlock_ops_user_path(user), class: button_classes(:secondary, :sm), form: { data: { turbo_confirm: "Unlock #{user.email}'s account?" } } %>
+              <% end %>
+            </div>
+          <% end %>
           <% if user.business_users.any? %>
             <ul class="list">
               <% user.business_users.sort_by(&:created_at).each do |membership| %>
