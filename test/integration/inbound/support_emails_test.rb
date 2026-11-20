@@ -93,6 +93,20 @@ class Inbound::SupportEmailsTest < ActionDispatch::IntegrationTest
     Rails.cache = cache
   end
 
+  test "a member's emailed reply reaches the ticket end to end, and the log names no one" do
+    ticket = as_business(businesses(:one)) { SupportTicket.open!(opened_by: users(:one), subject: "Logo", category: "bug", body: "Blurry") }
+    to = SupportMail.reply_address(ticket, users(:one))
+    with_inbound_email do
+      body = raw_email(to:, subject: "Re: Logo", body: "Distinctive reply text")
+      log = capture_json_log { perform_enqueued_jobs { deliver(body, inbound_headers(body, to:)) } }
+      assert_equal "Distinctive reply text", as_business(businesses(:one)) { ticket.messages.last.body }
+      assert_equal "delivered", ActionMailbox::InboundEmail.last.status
+      line = log.lines.map { JSON.parse(_1) }.find { _1["event"] == "support_mail.received" }
+      assert_equal [ "replied", ticket.uid ], [ line["outcome"], line["ticket"] ]
+      assert_no_match(/Distinctive|user1|@example\.com|support\+/, log)
+    end
+  end
+
   test "the log says what happened, never who sent it" do
     with_inbound_email do
       body = raw_email(from: "distinctive.sender@example.com", subject: "Private matter")

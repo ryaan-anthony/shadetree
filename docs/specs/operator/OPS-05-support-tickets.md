@@ -32,10 +32,10 @@ email, and nothing gets lost in a personal inbox.
 - [x] Operators get a ticket inbox in the console: filter by status, category, plan and
       assignee; assign to an operator; reply; add internal notes; change status. Each ticket
       links to the business page (OPS-02).
-- [ ] Replies reach the member by email and in the app (NTF-02). Replying to the email adds to
+- [x] Replies reach the member by email and in the app (NTF-02). Replying to the email adds to
       the thread. Emails to the support address from a known member's email open or continue a
-      ticket. *(Replies by email and in the app are done, and threading is built and tested
-      (`SupportMail.receive`); getting email into the app waits on the open question below.)*
+      ticket. *(Built and tested in the app; live once the Cloudflare Worker and routing in
+      ops-work are applied and `INBOUND_EMAIL_ENABLED` is set: docs/runbooks/inbound-email.md.)*
 - [x] Resolved tickets reopen when the member replies. Stale "Waiting on you" tickets
       auto-resolve after a set period, with notice.
 - [x] Tickets never expose client personal data to operators beyond what the member included.
@@ -56,6 +56,10 @@ email, and nothing gets lost in a personal inbox.
   the tickets they opened, and billing tickets need the billing permission; everyone sees their
   own (owner's decision; `SupportTicket.visible_to`). "Waiting on you" tickets auto-resolve
   after 7 days (`SUPPORT_AUTO_RESOLVE_DAYS`).
+- Email reaches the app through Cloudflare Email Routing and an Email Worker (owner, 2026-11-20;
+  [ADR 0021](../../adr/0021-inbound-support-email.md)). Replies thread only through a signed
+  per-member reply address, from that member, with Cloudflare's SPF/DKIM/DMARC pass; new
+  tickets need DMARC pass and an active member. Subject lines and Message-IDs are never trusted.
 
 ## Implementation notes
 
@@ -64,8 +68,13 @@ email, and nothing gets lost in a personal inbox.
   screenshots are re-encoded without metadata. A member's reply reopens the ticket.
 - Operators: `/ops/tickets` (filters; open count in the nav), the business beside each ticket;
   assign, reply with the next status, note, set status; all audited as `ticket.*`.
-- Replies: NTF-02 `support_reply` to the opener; `SupportMailer#reply` with reply-to the
-  support address, `[#uid]` in the subject and a `ticket-<uid>-…` Message-ID.
+- Replies: NTF-02 `support_reply` to the opener; `SupportMailer#reply` with `[#uid]` in the
+  subject; reply-to is the member's `support+<token>@` address once `INBOUND_EMAIL_ENABLED` is on
+  (copy: "Reply to this email or in Shadetree"), else the support address ("Reply in Shadetree").
+- Inbound: the Worker's signed post to `/inbound/support_email` (HMAC, 5 minutes, 25 MiB) is
+  stored by Action Mailbox (incinerated after 14 days), and `SupportMailbox` → `SupportMail`
+  replies, opens or drops it quietly (bounces and auto-replies too), logging only the outcome.
+  Email counts against the same hourly limits per person and business.
 - Limits: 10 messages an hour per person, 30 per business; screenshots need a confirmed account
   and open through a checked, 5-minute link. Replies reach every active member who wrote on the
   ticket (else the Owners). Operators opening a ticket is audited (`ticket.viewed`).
@@ -73,14 +82,10 @@ email, and nothing gets lost in a personal inbox.
   meantime wins, and resolves it with a notice in the thread, app and email.
 - Data: tickets and screenshots are kept while the business exists and go with it; they aren't in
   INS-02 exports and client erasure doesn't scan them (members are asked to leave client details out).
-- Dev seeds: a ticket with a reply and a note. Tests: `test/integration/admin/support_tickets_test.rb`,
-  `test/integration/ops/support_inbox_test.rb`, `test/models/support_{mail,ticket}_test.rb`.
+- Dev seeds: a ticket with a reply, a note and an answer by email. Tests: `test/integration/admin/support_tickets_test.rb`,
+  `test/integration/ops/support_inbox_test.rb`, `test/models/support_{mail,ticket}_test.rb`,
+  `test/integration/inbound/support_emails_test.rb`.
 
 ## Open questions
 
-- **(blocking for email threading)** How does email to the support address reach the app: the
-  provider's inbound routing posting each message to the app, or a mailbox the app reads?
-  `SupportMail.receive` stays unconnected until then. Before wiring it: prove the sender (the
-  provider's verified DKIM/SPF result, or a signed per-recipient reply address
-  `support+<token>@`), no matching by subject alone, and a rate limit per sender and business.
-  Until then emails say "Reply in Shadetree".
+- None. The email path (above) was settled on 2026-11-20.
