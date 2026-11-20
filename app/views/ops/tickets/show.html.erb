@@ -1,0 +1,51 @@
+<%# OPS-05: one ticket, the whole thread with internal notes, and the business beside it. %>
+<% content_for :title, @ticket.subject %>
+<% business = @ticket.business %>
+<p class="text-sm2"><%= link_to "← Support", ops_tickets_path, class: "text-muted hover:underline" %></p>
+<div class="mt-1 flex flex-wrap items-center gap-2"><h1 class="page-title break-words"><%= @ticket.subject %></h1><%= render "admin/support_tickets/status", ticket: @ticket %></div>
+<p class="page-lede"><%= @ticket.category_label %> · <%= @ticket.reference %> · opened <%= local_time(@ticket.created_at) %> by <%= @ticket.opened_by&.full_name || "a former member" %></p>
+<div class="mt-4 grid gap-4 lg:grid-cols-3">
+  <div class="space-y-4 lg:col-span-2">
+    <%= card flush: true do %>
+      <ul class="list" id="messages"><%= render partial: "admin/support_tickets/message", collection: @messages, as: :message, locals: { operator_view: true } %></ul>
+    <% end %>
+    <%= card title: "Reply or add a note", id: "reply" do %>
+      <%= form_with url: reply_ops_ticket_path(@ticket), class: "space-y-3" do %>
+        <div class="field"><label class="label" for="body">Message</label><%= text_area_tag :body, nil, rows: 5, class: "textarea", id: "body", required: true, maxlength: 20_000 %></div>
+        <div class="flex flex-wrap items-end gap-2">
+          <div class="field"><label class="label" for="reply_status">Then mark it</label><%= select_tag :status, options_for_select(SupportTicket::STATUSES.invert, "waiting"), class: "select", id: "reply_status" %></div>
+          <%= submit_tag "Send reply", class: button_classes, name: nil %>
+          <%= submit_tag "Add internal note", class: button_classes(:secondary), name: nil, formaction: note_ops_ticket_path(@ticket) %>
+        </div>
+        <p class="text-sm2 text-muted">Replies go to <%= @recipients.any? ? @recipients.map(&:full_name).to_sentence : "nobody (the business has no active members)" %> in the app and by email. Notes stay with operators.</p>
+      <% end %>
+    <% end %>
+  </div>
+  <div class="space-y-4">
+    <%= card title: business.name, subtitle: "#{business.plan.name} · #{Ops::Directory.status_of(business).capitalize}", id: "ticket-business" do %>
+      <dl class="space-y-2 text-sm">
+        <% Ops::BusinessSummary::COUNTS.each do |key, label| %>
+          <div class="flex justify-between gap-3"><dt class="text-subtle"><%= label %></dt><dd class="tabular text-ink"><%= @summary.counts.fetch(key) %></dd></div>
+        <% end %>
+        <div class="flex justify-between gap-3"><dt class="text-subtle">Last active</dt><dd class="text-ink"><%= (last = @summary.last_active_at) ? local_time_ago(last) : "Never" %></dd></div>
+      </dl>
+      <%= link_to "Business page", ops_business_path(business), class: "#{button_classes(:secondary, :sm)} mt-3" %>
+    <% end %>
+    <%= card title: "Details" do %>
+      <dl class="space-y-2 text-sm">
+        <div><dt class="text-subtle">Opened from</dt><dd class="break-all text-ink"><%= @ticket.page || "Not known" %></dd></div>
+        <div><dt class="text-subtle">Browser</dt><dd class="break-words text-sm2 text-ink"><%= @ticket.browser || "Not known" %></dd></div>
+      </dl>
+    <% end %>
+    <%= card title: "Assign and status" do %>
+      <%= form_with url: assign_ops_ticket_path(@ticket), method: :patch, class: "flex items-end gap-2" do %>
+        <div class="field flex-1"><label class="label" for="assignee">Assignee</label><%= select_tag :assignee, options_for_select(@operators.map { [ _1.email, _1.id ] }, @ticket.assignee_id), include_blank: "Nobody", class: "select", id: "assignee" %></div>
+        <%= submit_tag "Assign", class: button_classes(:secondary), name: nil %>
+      <% end %>
+      <%= form_with url: status_ops_ticket_path(@ticket), method: :patch, class: "mt-3 flex items-end gap-2" do %>
+        <div class="field flex-1"><label class="label" for="status">Status</label><%= select_tag :status, options_for_select(SupportTicket::STATUSES.invert, @ticket.status), class: "select", id: "status" %></div>
+        <%= submit_tag "Set", class: button_classes(:secondary), name: nil %>
+      <% end %>
+    <% end %>
+  </div>
+</div>

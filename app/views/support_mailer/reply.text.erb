@@ -1,0 +1,9 @@
+Hi <%= @user.first_name.presence || "there" %>,
+
+<%= @message.body %>
+
+Shadetree Support, about "<%= @ticket.subject %>" (<%= @ticket.reference %>). Reply to this email or in Shadetree.
+
+Open in Shadetree: <%= @url %>
+
+<%= render "shared/mailer/notification_settings" %>
