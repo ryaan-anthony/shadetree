@@ -39,9 +39,8 @@
 # Ignore CI service files.
 /.github
 
-# Ignore Kamal files.
-/config/deploy*.yml
-/.kamal
+# Deployment scripts run on the VM, not in the image.
+/ops
 
 # Ignore development files
 /.devcontainer

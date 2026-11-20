@@ -316,6 +316,7 @@ Rails.application.routes.draw do
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
   get "up/jobs" => "health#jobs", as: :job_health_check # PLT-10: for the external uptime check
+  get "up/backup" => "health#backup", as: :backup_health_check # PLT-09: a backup within the last day
   post "csp-reports" => "csp_reports#create", as: :csp_reports # PLT-13
 
   # Render dynamic PWA files from app/views/pwa/*

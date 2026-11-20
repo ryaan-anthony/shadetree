@@ -1,0 +1,349 @@
+# Deploy CI (PLT-09): checks the production image the way .github/workflows/deploy.yml runs it, on
+# a GitHub-hosted runner (never the self-hosted one). Runs ops/deploy/deploy.sh against a throwaway
+# PostgreSQL 17 set up as on the VMs (the role shadetree, with CREATEDB, owning four databases),
+# with the env file the deploy writes for staging and a throwaway certificate authority standing in
+# for Cloudflare's Origin CA; checks HTTPS, the host rules, security headers, the container's
+# hardening (read-only, memory and log caps), PDFs, Puma's body limit, quiet health checks, jobs and
+# the mail sandbox; that a deploy with settings the app can't boot with, or a release that doesn't
+# answer, leaves the old container serving; and that a re-deploy reuses the image. Then sets up backups as the deploy does (the runner user
+# stands in for the deploy user), takes the first backup through the systemd user unit, runs the
+# restore drill, checks the backup lock, and recovers a lost server in the runbook's order.
+# Also lints the workflows (actionlint) and the ops scripts (shellcheck), fails if a workflow a pull
+# request triggers uses a self-hosted runner, and checks ops/deploy/check.sh's refusals.
+#
+# Branch protection may require the "Image check" job: it always runs, and passes at once when only
+# documentation changed.
+name: Deploy CI
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  pull-requests: read # paths-filter lists the PR's files through the API
+
+concurrency:
+  group: deploy-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  image:
+    name: Image check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      APP_HOST: staging.example.com
+      ORIGIN: shadetree-vm.example.lan
+      APP: shadetree-staging
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: dorny/paths-filter@v4
+        id: changes
+        if: github.event_name == 'pull_request'
+        with:
+          predicate-quantifier: every
+          filters: |
+            deploy:
+              - '**'
+              - '!docs/**'
+              - '!**/*.md'
+
+      - name: Lint the workflows and ops scripts
+        if: github.event_name == 'push' || steps.changes.outputs.deploy == 'true'
+        run: |
+          shellcheck -x ops/deploy/*.sh ops/backup/*.sh # -x: docker.sh sources lock.sh
+          curl -sSfL --retry 5 --retry-all-errors --retry-delay 5 -o "$RUNNER_TEMP/actionlint.tar.gz" \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_amd64.tar.gz
+          echo "023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757  $RUNNER_TEMP/actionlint.tar.gz" | sha256sum --check
+          tar -xzf "$RUNNER_TEMP/actionlint.tar.gz" -C "$RUNNER_TEMP" actionlint
+          "$RUNNER_TEMP/actionlint"
+          script/ci/check_self_hosted # no workflow a pull request triggers may use the LAN runner
+
+      - name: Check the deploy's setting checks (TRUSTED_PROXIES, the origin certificate)
+        if: github.event_name == 'push' || steps.changes.outputs.deploy == 'true'
+        run: |
+          failed=0
+          expect() { if [ "$2" = "$3" ]; then echo "ok   $1"; else echo "FAIL $1: expected '$2', got '$3'"; failed=1; fi; }
+          rc() { "$@" > /dev/null 2>&1 && echo 0 || echo 1; }
+          for list in 192.0.2.20 "192.0.2.0/24, 2001:db8::7" 2001:db8::/64; do expect "TRUSTED_PROXIES=$list is accepted" 0 "$(rc ops/deploy/check.sh proxies "$list")"; done
+          for list in 10.0.0.0/8 0.0.0.0/0 ::/0 2001:db8::/48 tunnel-vm 300.1.1.1 ""; do expect "TRUSTED_PROXIES='$list' is refused" 1 "$(rc ops/deploy/check.sh proxies "$list")"; done
+          tls="$RUNNER_TEMP/check-tls" && mkdir -p "$tls" && cd "$tls"
+          openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:P-256 -nodes -days 2 -subj "/CN=Check CA" -keyout ca.key -out ca.pem 2> /dev/null
+          openssl req -newkey ec -pkeyopt ec_paramgen_curve:P-256 -nodes -subj "/CN=$ORIGIN" -keyout s.key -out s.csr 2> /dev/null
+          printf 'subjectAltName=DNS:%s\nbasicConstraints=CA:FALSE\nextendedKeyUsage=serverAuth\n' "$ORIGIN" > ext
+          openssl x509 -req -in s.csr -CA ca.pem -CAkey ca.key -CAcreateserial -days 2 -extfile ext -out s.pem 2> /dev/null
+          cd "$GITHUB_WORKSPACE"
+          c=ops/deploy/check.sh
+          expect "a certificate not from Cloudflare's Origin CA is refused" 1 "$(rc $c cert staging "$tls/s.pem" "$tls/s.key" "$ORIGIN")"
+          expect "Deploy CI's own CA is accepted for staging (ORIGIN_CA_EXTRA)" 0 "$(ORIGIN_CA_EXTRA="$tls/ca.pem" rc $c cert staging "$tls/s.pem" "$tls/s.key" "$ORIGIN")"
+          expect "but never for production" 1 "$(ORIGIN_CA_EXTRA="$tls/ca.pem" rc $c cert production "$tls/s.pem" "$tls/s.key" "$ORIGIN")"
+          expect "a certificate for another host is refused" 1 "$(ORIGIN_CA_EXTRA="$tls/ca.pem" rc $c cert staging "$tls/s.pem" "$tls/s.key" other.example.lan)"
+          expect "a key that doesn't match is refused" 1 "$(ORIGIN_CA_EXTRA="$tls/ca.pem" rc $c cert staging "$tls/s.pem" "$tls/ca.key" "$ORIGIN")"
+          [ "$failed" -eq 0 ]
+
+      - name: Start PostgreSQL as on the VMs
+        if: github.event_name == 'push' || steps.changes.outputs.deploy == 'true'
+        run: |
+          password="$(openssl rand -hex 24)"
+          echo "DB_PASSWORD=$password" >> "$GITHUB_ENV"
+          docker network create shadetree-db
+          docker run -d --name postgres --network shadetree-db -e POSTGRES_PASSWORD="$(openssl rand -hex 24)" postgres:17
+          for _ in $(seq 1 60); do docker exec postgres pg_isready -q -U postgres && break; sleep 1; done
+          docker exec -i postgres psql -q -v ON_ERROR_STOP=1 -U postgres <<SQL
+          CREATE ROLE shadetree LOGIN CREATEDB PASSWORD '$password';
+          CREATE DATABASE shadetree_staging OWNER shadetree;
+          CREATE DATABASE shadetree_staging_cache OWNER shadetree;
+          CREATE DATABASE shadetree_staging_queue OWNER shadetree;
+          CREATE DATABASE shadetree_staging_cable OWNER shadetree;
+          SQL
+
+      - name: Make a throwaway certificate authority and an origin certificate
+        if: github.event_name == 'push' || steps.changes.outputs.deploy == 'true'
+        run: |
+          tls="$RUNNER_TEMP/tls" && mkdir -p "$tls" && cd "$tls"
+          openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:P-256 -nodes -days 2 -subj "/CN=Deploy CI CA" -keyout ca.key -out ca.pem 2> /dev/null
+          openssl req -newkey ec -pkeyopt ec_paramgen_curve:P-256 -nodes -subj "/CN=$ORIGIN" -keyout server.key -out server.csr 2> /dev/null
+          printf 'subjectAltName=DNS:%s\nbasicConstraints=CA:FALSE\nextendedKeyUsage=serverAuth\n' "$ORIGIN" > ext
+          openssl x509 -req -in server.csr -CA ca.pem -CAkey ca.key -CAcreateserial -days 2 -extfile ext -out server.pem 2> /dev/null
+          echo "TLS_DIR=$tls" >> "$GITHUB_ENV"
+
+      - name: Deploy with ops/deploy/deploy.sh, as the workflow does
+        if: github.event_name == 'push' || steps.changes.outputs.deploy == 'true'
+        run: |
+          deploy_dir="$RUNNER_TEMP/deploy"
+          mkdir -p "$deploy_dir/build-$GITHUB_SHA"
+          tar --exclude=./.git -cf - . | tar -xf - -C "$deploy_dir/build-$GITHUB_SHA"
+          # The lines deploy.yml writes for staging (kept for the recovery below, then deleted).
+          (umask 077 && printf '%s\n' SOLID_QUEUE_IN_PUMA=1 APP_ENVIRONMENT=staging "APP_REVISION=$GITHUB_SHA" MAIL_SANDBOX=true \
+            "SECRET_KEY_BASE=$(openssl rand -hex 64)" "DATABASE_PASSWORD=$DB_PASSWORD" "APP_HOST=$APP_HOST" TRUSTED_PROXIES=192.0.2.20 \
+            PGHOST=postgres DATABASE_NAME=shadetree_staging DATABASE_USER=shadetree MAIL_ALLOWLIST=@example.com \
+            "TLS_CERT_BASE64=$(base64 -w0 "$TLS_DIR/server.pem")" "TLS_KEY_BASE64=$(base64 -w0 "$TLS_DIR/server.key")" \
+            > "$RUNNER_TEMP/app.env" && cp "$RUNNER_TEMP/app.env" "$deploy_dir/$APP.env")
+          bash "$deploy_dir/build-$GITHUB_SHA/ops/deploy/deploy.sh" staging "$deploy_dir" "$GITHUB_SHA" shadetree-db 8443
+          [ ! -e "$deploy_dir/$APP.env" ] || { echo "the env file was not deleted"; exit 1; }
+          echo "DEPLOY_DIR=$deploy_dir" >> "$GITHUB_ENV"
+
+      - name: Check HTTPS, hosts, headers, hardening, jobs and the mail sandbox
+        if: github.event_name == 'push' || steps.changes.outputs.deploy == 'true'
+        run: |
+          failed=0
+          expect() { if [ "$2" = "$3" ]; then echo "ok   $1"; else echo "FAIL $1: expected '$2', got '$3'"; failed=1; fi; }
+          # As cloudflared connects: to the origin hostname, verifying its certificate, with the visitor's Host.
+          get() { curl -s --cacert "$TLS_DIR/ca.pem" --resolve "$ORIGIN:8443:127.0.0.1" "$@"; }
+          code() { get -o /dev/null -w '%{http_code}' "$@"; }
+          url="https://$ORIGIN:8443"
+          expect "/up answers over HTTPS with the origin certificate" 200 "$(code -H "Host: $APP_HOST" "$url/up")"
+          expect "the home page renders" 200 "$(code -H "Host: $APP_HOST" "$url/")"
+          expect "the sign-in page renders" 200 "$(code -H "Host: $APP_HOST" "$url/users/sign_in")"
+          expect "the staff app redirects to sign-in on APP_HOST" "302 https://$APP_HOST/users/sign_in" \
+            "$(get -o /dev/null -w '%{http_code} %{redirect_url}' -H "Host: $APP_HOST" "$url/admin")"
+          expect "a forged X-Forwarded-Host is ignored" "302 https://$APP_HOST/users/sign_in" \
+            "$(get -o /dev/null -w '%{http_code} %{redirect_url}' -H "Host: $APP_HOST" -H "X-Forwarded-Host: evil.example" "$url/admin")"
+          expect "another host is refused" 403 "$(code "$url/")"
+          expect "the health checks answer on any host" "200 200" "$(code "$url/up") $(code "$url/up/jobs")"
+          expect "/up/backup is 503 until a backup exists" 503 "$(code "$url/up/backup")"
+          headers="$(get -D - -o /dev/null -H "Host: $APP_HOST" "$url/" | tr -d '\r' | tr '[:upper:]' '[:lower:]')"
+          expect "a Content-Security-Policy (PLT-13)" 1 "$(grep -c '^content-security-policy: ' <<< "$headers")"
+          expect "Strict-Transport-Security" 1 "$(grep -c '^strict-transport-security: ' <<< "$headers")"
+          expect "TLS 1.1 and older are refused" 35 "$(get -o /dev/null --tls-max 1.1 "$url/up"; echo $?)"
+          expect "plain HTTP is not published" 7 "$(curl -s -o /dev/null http://127.0.0.1:3000/up; echo $?)"
+          expect "the app runs as uid 1000" 1000 "$(docker exec "$APP" id -u)"
+          expect "the app has no capabilities" 0000000000000000 "$(docker exec "$APP" sed -n 's/^CapEff:[[:space:]]*//p' /proc/1/status)"
+          expect "the app cannot gain privileges" 1 "$(docker exec "$APP" sed -n 's/^NoNewPrivs:[[:space:]]*//p' /proc/1/status)"
+          writable() { docker exec "$APP" sh -c 'if touch "$1/.probe" 2> /dev/null; then rm -f "$1/.probe"; echo yes; else echo no; fi' sh "$1"; }
+          for dir in /rails/app /rails/config /rails/db /usr/local/bundle; do expect "the app cannot write $dir" no "$(writable "$dir")"; done
+          for dir in /rails/storage /rails/tmp /rails/log; do expect "the app can write $dir" yes "$(writable "$dir")"; done
+          queue() { docker exec postgres psql -U postgres -d shadetree_staging_queue -Atc "$1"; }
+          for _ in $(seq 1 30); do [ "$(queue "SELECT count(*) FROM solid_queue_processes WHERE kind = 'Worker'")" -gt 0 ] && break; sleep 2; done
+          expect "Solid Queue's workers run in the app (SOLID_QUEUE_IN_PUMA)" yes "$([ "$(queue "SELECT count(*) FROM solid_queue_processes WHERE kind = 'Worker'")" -gt 0 ] && echo yes || echo no)"
+          expect "the scheduler runs (recurring tasks)" yes "$([ "$(queue "SELECT count(*) FROM solid_queue_processes WHERE kind = 'Scheduler'")" -gt 0 ] && echo yes || echo no)"
+          expect "staging's mail goes through the sandbox" true \
+            "$(docker exec "$APP" bin/rails runner 'print Mail.class_variable_get(:@@delivery_interceptors).include?(MailSandbox)' | tail -n 1)"
+          expect "uploads are stored in the volume" Disk "$(docker exec "$APP" bin/rails runner 'print ActiveStorage::Blob.service.class.name.demodulize.delete_suffix("Service")' | tail -n 1)"
+          expect "PDFs render (Chrome on the read-only file system)" true \
+            "$(docker exec "$APP" bin/rails runner 'print PdfRenderer.render("<p>Deploy CI</p>").to_s.start_with?("%PDF")' | tail -n 1)"
+          expect "the root file system is read-only" true "$(docker inspect -f '{{.HostConfig.ReadonlyRootfs}}' "$APP")"
+          expect "memory is capped (APP_MEMORY, 1g)" 1073741824 "$(docker inspect -f '{{.HostConfig.Memory}}' "$APP")"
+          expect "the log is capped" "10m 5" "$(docker inspect -f '{{index .HostConfig.LogConfig.Config "max-size"}} {{index .HostConfig.LogConfig.Config "max-file"}}' "$APP")"
+          head -c $((27 * 1024 * 1024)) /dev/zero > "$RUNNER_TEMP/27m"
+          expect "a body over 26 MiB is refused by Puma" 413 "$(code -X POST -H "Host: $APP_HOST" --data-binary @"$RUNNER_TEMP/27m" "$url/up")"
+          head -c $((1024 * 1024)) /dev/zero > "$RUNNER_TEMP/1m"
+          expect "a 1 MiB body is not" no "$([ "$(code -X POST -H "Host: $APP_HOST" --data-binary @"$RUNNER_TEMP/1m" "$url/up")" = 413 ] && echo yes || echo no)"
+          rm -f "$RUNNER_TEMP/27m" "$RUNNER_TEMP/1m"
+          code -H "Host: $APP_HOST" "$url/up/jobs" > /dev/null && code -H "Host: $APP_HOST" "$url/up/backup" > /dev/null && sleep 1
+          expect "the health checks stay out of the log" 0 "$(docker logs "$APP" 2>&1 | grep -c -e '"method":"GET","path":"/up' || true)" # the POSTs above are not health checks
+          if [ "$failed" -ne 0 ]; then docker logs --tail 100 "$APP"; exit 1; fi
+
+      - name: A failed deploy leaves the site up; a re-deploy reuses the image
+        if: github.event_name == 'push' || steps.changes.outputs.deploy == 'true'
+        run: |
+          failed=0
+          expect() { if [ "$2" = "$3" ]; then echo "ok   $1"; else echo "FAIL $1: expected '$2', got '$3'"; failed=1; fi; }
+          contains() { if [[ "$3" == *"$2"* ]]; then echo "ok   $1"; else echo "FAIL $1: '$2' not in: $3"; failed=1; fi; }
+          deploy() { bash "$DEPLOY_DIR/build-$GITHUB_SHA/ops/deploy/deploy.sh" staging "$DEPLOY_DIR" "$GITHUB_SHA" shadetree-db 8443 2>&1; }
+          up() { curl -s -o /dev/null -w '%{http_code}' --cacert "$TLS_DIR/ca.pem" --resolve "$ORIGIN:8443:127.0.0.1" -H "Host: $APP_HOST" "https://$ORIGIN:8443/up"; }
+          id="$(docker inspect -f '{{.Id}}' "$APP")"
+
+          echo "== a setting the app can't boot with: the pre-flight stops the deploy before anything changes"
+          (umask 077 && sed 's/^TRUSTED_PROXIES=.*/TRUSTED_PROXIES=tunnel-vm/' "$RUNNER_TEMP/app.env" > "$DEPLOY_DIR/$APP.env")
+          out="$(deploy)" && rc=0 || rc=$?
+          echo "$out" | tail -n 5
+          expect "the deploy fails" 1 "$rc"
+          contains "and says the site is up" "The site is UP" "$out"
+          expect "the old container is untouched" "$id true" "$(docker inspect -f '{{.Id}} {{.State.Running}}' "$APP")"
+          expect "and serving" 200 "$(up)"
+          expect "the env file is gone" no "$([ -e "$DEPLOY_DIR/$APP.env" ] && echo yes || echo no)"
+
+          echo "== a release that boots but doesn't answer (its TLS key doesn't match): the previous one comes back"
+          other="$(openssl ecparam -name prime256v1 -genkey -noout | base64 -w0)"
+          (umask 077 && sed "s/^TLS_KEY_BASE64=.*/TLS_KEY_BASE64=$other/" "$RUNNER_TEMP/app.env" > "$DEPLOY_DIR/$APP.env")
+          out="$(deploy)" && rc=0 || rc=$?
+          echo "$out" | tail -n 5
+          expect "the deploy fails" 1 "$rc"
+          contains "and says it rolled back with the site up" "rolled back. The site is UP" "$out"
+          expect "the previous container is back" "$id true" "$(docker inspect -f '{{.Id}} {{.State.Running}}' "$APP")"
+          expect "and serving" 200 "$(up)"
+          expect "the failed release's log was kept" 1 "$(find "$HOME/.local/state/$APP/logs" -name "$APP-*.log" | wc -l)"
+          expect "no leftover container" "" "$(docker ps -aq --filter name="^$APP-previous\$")"
+
+          echo "== deploying the same commit again (a rollback re-run) reuses its image"
+          cp "$RUNNER_TEMP/app.env" "$DEPLOY_DIR/$APP.env"
+          out="$(deploy)" || { echo "$out"; exit 1; }
+          contains "no build" "is already built: reusing it" "$out"
+          contains "and it's up" "The site is UP" "$out"
+          expect "a new container" yes "$([ "$(docker inspect -f '{{.Id}}' "$APP")" != "$id" ] && echo yes || echo no)"
+          expect "the old container's log was kept" 2 "$(find "$HOME/.local/state/$APP/logs" -name "$APP-*.log" | wc -l)"
+          [ "$failed" -eq 0 ] || { docker logs --tail 100 "$APP"; exit 1; }
+
+      - name: Back up, drill, and recover a lost server, as deployed and as the runbook says
+        if: github.event_name == 'push' || steps.changes.outputs.deploy == 'true'
+        run: |
+          failed=0
+          expect() { if [ "$2" = "$3" ]; then echo "ok   $1"; else echo "FAIL $1: expected '$2', got '$3'"; failed=1; fi; }
+          contains() { if [[ "$3" == *"$2"* ]]; then echo "ok   $1"; else echo "FAIL $1: '$2' not in: $3"; failed=1; fi; }
+          unit=shadetree-backup@staging.service
+          journal() { sudo journalctl --no-pager -n "${1:-40}" _SYSTEMD_USER_UNIT="$unit" || true; }
+          stop() { echo "FAIL $1"; journal 60; docker logs --tail 60 "$APP" || true; exit 1; }
+          health() { docker exec "$APP" curl -s -w ' %{http_code}' http://localhost:3000/up/backup; }
+          wait_unit() {
+            for _ in $(seq 1 120); do
+              [ -n "$(systemctl --user list-jobs --no-legend "$unit")" ] && { sleep 2; continue; }
+              case "$(systemctl --user is-active "$unit")" in active | activating) sleep 2 ;; *) break ;; esac
+            done
+            systemctl --user show -p Result --value "$unit"
+          }
+          wait_up() { for _ in $(seq 1 60); do docker exec "$APP" curl -fsS -o /dev/null http://localhost:3000/up 2> /dev/null && return 0; sleep 3; done; return 1; }
+          sets() { sudo find "$backups" -maxdepth 1 -name "$APP-*" -printf '%f\n' | sort; }
+          dbs() { docker exec postgres psql -U postgres -Atc "$1"; }
+          # The last line: boot warnings (no SMTP here) go to the same output.
+          rails() { docker exec "$APP" bin/rails runner "$1" | tail -n 1; }
+          backups=/var/backups/shadetree-staging
+          tool="$HOME/.local/share/$APP/backup/docker.sh"
+          lock="$HOME/.local/state/$APP/backup.lock"
+          XDG_RUNTIME_DIR="/run/user/$(id -u)" && export XDG_RUNTIME_DIR
+
+          echo "== data for the drill: an owner, a business and an uploaded file"
+          rails '
+            u = User.new(email: "owner@deploy-ci.example.com", first_name: "Deploy", last_name: "CI", password: SecureRandom.hex(16))
+            u.skip_confirmation!
+            u.save!
+            Business.create!(name: "Deploy CI", owner: u)
+            ActiveStorage::Blob.create_and_upload!(io: StringIO.new(Random.bytes(4096)), filename: "deploy-ci.bin")'
+          key="$(rails 'print ActiveStorage::Blob.last.key')"
+
+          echo "== set up as deploy.yml does: the backup env file (no secret), then install.sh"
+          (umask 077 && mkdir -p "$HOME/.config/$APP" && printf '%s\n' DB_NETWORK=shadetree-db "BACKUP_DIR=$backups" BACKUP_PG_IMAGE=postgres:17 > "$HOME/.config/$APP/backup.env")
+          sudo loginctl enable-linger "$USER" # the owner's one-time step on the VM
+          bash ops/backup/install.sh staging
+          expect "the timer is enabled" enabled "$(systemctl --user is-enabled shadetree-backup@staging.timer)"
+          expect "the backup env file holds no password" 0 "$(grep -c -e PASSWORD -e "$DB_PASSWORD" "$HOME/.config/$APP/backup.env" || true)"
+
+          echo "== the backup location is checked on the VM"
+          contains "a missing location is refused" "does not exist" "$("$tool" staging backup 2>&1 || true)"
+          sudo install -d -m 0700 -o 1000 -g 1000 "$backups"
+          contains "a location that is not a mount point is refused" "not a mount point" "$("$tool" staging backup 2>&1 || true)"
+          sudo mount -t tmpfs -o size=512m,mode=0700,uid=1000,gid=1000 tmpfs "$backups" # stands in for the off-machine mount
+          contains "a location with too little free space is refused" "MB free on $backups" "$("$tool" staging backup 2>&1 || true)"
+          echo BACKUP_MIN_FREE_MB=256 >> "$HOME/.config/$APP/backup.env" # the 512 MB stand-in holds this test's sets
+
+          echo "== the deploy's first backup, through the systemd unit in the background: a backup, then the drill"
+          contains "the first backup starts" "first backup started" "$("$tool" staging first-backup 2>&1)"
+          expect "and succeeds" success "$(wait_unit)"
+          journal 30
+          contains "the unit drilled the new set" "Restore drill passed." "$(journal 40)"
+          good="$(sets)"
+          expect "one backup set" 1 "$(grep -c . <<< "$good")"
+          expect "it holds both dumps, the uploads, the counts and checksums" "SHA256SUMS counts primary.dump queue.dump storage.tar" "$(sudo ls "$backups/$good" | xargs)"
+          expect "the uploaded file is in it" 1 "$(sudo tar -tf "$backups/$good/storage.tar" | grep -c "/$key$" || true)"
+          expect "the counts include the business" businesses=1 "$(sudo grep '^businesses=' "$backups/$good/counts")"
+          expect "/up/backup is ok" "ok 200" "$(health)"
+          expect "the database password is not in the backup's log" 0 "$(sudo journalctl --no-pager _SYSTEMD_USER_UNIT="$unit" | grep -cF "$DB_PASSWORD" || true)"
+          contains "a later deploy takes no first backup" "already holds sets" "$("$tool" staging first-backup 2>&1)"
+
+          echo "== the restore drill"
+          out="$("$tool" staging restore-drill 2>&1)" && rc=0 || rc=$?
+          echo "$out"
+          expect "the restore drill passes" 0 "$rc"
+          contains "with the uploaded file" "ok   files: 1 of the newest 1 uploads" "$out"
+          expect "no scratch database is left" 0 "$(dbs "SELECT count(*) FROM pg_database WHERE datname LIKE 'shadetree_restore_drill%'")"
+          expect "no scratch volume is left" "" "$(docker volume ls -q --filter name="$APP-drill")"
+
+          echo "== one lock: a restore holds it against backups, drills and deploys"
+          # shellcheck disable=SC2016 # expanded by sh
+          flock "$lock" sh -c 'echo "restore of a set (Deploy CI)" > "$1"; sleep 30' sh "$lock" & holder=$!
+          sleep 2
+          contains "a backup refuses during a restore" "busy with restore" "$("$tool" staging backup 2>&1 || true)"
+          contains "so does the drill" "busy with restore" "$("$tool" staging restore-drill 2>&1 || true)"
+          cp "$RUNNER_TEMP/app.env" "$DEPLOY_DIR/$APP.env"
+          contains "and a deploy, before it touches the app" "a restore is in progress" \
+            "$(bash "$DEPLOY_DIR/build-$GITHUB_SHA/ops/deploy/deploy.sh" staging "$DEPLOY_DIR" "$GITHUB_SHA" shadetree-db 8443 2>&1 || true)"
+          contains "and install.sh" "a restore is in progress" "$(bash ops/backup/install.sh staging 2>&1 || true)"
+          expect "the app is still running" true "$(docker inspect -f '{{.State.Running}}' "$APP")"
+          wait "$holder" || true
+
+          echo "== recover a lost server, in the runbook's order"
+          echo "-- 1. the VM and PostgreSQL come back: the four databases, empty"
+          docker rm -f "$APP" > /dev/null
+          docker volume rm "${APP}_storage" > /dev/null
+          for db in shadetree_staging shadetree_staging_cache shadetree_staging_queue shadetree_staging_cable; do
+            dbs "DROP DATABASE $db WITH (FORCE)" > /dev/null
+            dbs "CREATE DATABASE $db OWNER shadetree" > /dev/null
+          done
+          echo "-- 2. a deploy brings the app up, empty"
+          cp "$RUNNER_TEMP/app.env" "$DEPLOY_DIR/$APP.env"
+          bash "$DEPLOY_DIR/build-$GITHUB_SHA/ops/deploy/deploy.sh" staging "$DEPLOY_DIR" "$GITHUB_SHA" shadetree-db 8443 | grep '==>'
+          expect "the new app is empty" 0 "$(rails 'print Business.count')"
+          echo "-- 3. the nightly backup refuses the empty database, so the good set stays the newest"
+          systemctl --user start "$unit" && rc=0 || rc=1
+          expect "the timer's backup fails" 1 "$rc"
+          contains "because the database holds no business" "refused: the database holds no business" "$(journal 10)"
+          expect "no set was written" "$good" "$(sets)"
+          echo "-- 4. stop the app, drop the app's two restored databases, restore the good set, start the app"
+          contains "the restore refuses while the app runs" "stop it first" "$("$tool" staging restore "$good" 2>&1 || true)"
+          docker stop "$APP" > /dev/null
+          contains "and into migrated databases" "holds data" "$("$tool" staging restore "$good" 2>&1 || true)"
+          expect "a restore that refused leaves no marker" no "$([ -e "$HOME/.local/state/$APP/restore-incomplete" ] && echo yes || echo no)"
+          dbs "DROP DATABASE shadetree_staging WITH (FORCE)" > /dev/null
+          dbs "DROP DATABASE shadetree_staging_queue WITH (FORCE)" > /dev/null
+          out="$("$tool" staging restore "$good" 2>&1)" || { echo "$out"; stop "docker.sh restore failed"; }
+          echo "$out"
+          docker start "$APP" > /dev/null
+          wait_up || stop "the restored app did not start"
+          expect "the restored app has the business" 1 "$(rails 'print Business.where(name: "Deploy CI").count')"
+          expect "and the uploaded file" 4096 "$(rails "print ActiveStorage::Blob.find_by!(key: '$key').download.bytesize")"
+          expect "the restore's own backup is the newest set" 2 "$(sets | grep -c .)"
+          expect "/up/backup waits for a drill of the restored state" "untested 503" "$(health)"
+          "$tool" staging restore-drill | tail -n 1
+          expect "/up/backup is ok after it" "ok 200" "$(health)"
+          contains "the newest set cannot be deleted" "is the newest set" "$("$tool" staging delete "$(sets | tail -n 1)" 2>&1 || true)"
+          rm -f "$RUNNER_TEMP/app.env"
+          if [ "$failed" -ne 0 ]; then docker logs --tail 100 "$APP"; exit 1; fi

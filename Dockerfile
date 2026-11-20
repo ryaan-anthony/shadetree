@@ -1,9 +1,10 @@
 # syntax=docker/dockerfile:1
 # check=error=true
 
-# This Dockerfile is designed for production, not development. Use with Kamal or build'n'run by hand:
+# This Dockerfile is designed for production, not development. The Deploy workflow
+# (.github/workflows/deploy.yml, ops/deploy/deploy.sh) builds and runs it on each environment's VM;
+# Deploy CI (.github/workflows/deploy-ci.yml) builds and checks it on every relevant PR. Build by hand:
 # docker build -t shadetree .
-# docker run -d -p 80:80 -e RAILS_MASTER_KEY=<value from config/master.key> --name shadetree shadetree
 
 # For a containerized dev environment, see Dev Containers: https://guides.rubyonrails.org/getting_started_with_devcontainer.html
 
@@ -42,6 +43,9 @@ RUN bundle install && \
 
 # Copy application code
 COPY . .
+# Uploaded files and the backup status file live under storage/, a Docker volume in the deployment
+# (ADR 0023). Created here so a new volume starts owned by the app user.
+RUN mkdir -p storage/backup
 
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile app/ lib/
@@ -59,15 +63,20 @@ FROM base
 COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --from=build /rails /rails
 
-# Run and own only the runtime files as a non-root user for security
+# Run as a non-root user that owns only what it writes at runtime: storage/ (the volume), tmp/ and
+# log/. The code and gems belong to root, so a compromised app process can't change what it runs.
 RUN groupadd --system --gid 1000 rails && \
-    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
-    chown -R rails:rails db log storage tmp
+    useradd rails --uid 1000 --gid 1000 --create-home --shell /usr/sbin/nologin && \
+    chown -R rails:rails log storage tmp && \
+    chmod 755 "${BUNDLE_PATH}" # the Ruby image leaves it world-writable; nothing writes there at runtime
 USER 1000:1000
 
 # Entrypoint prepares the database.
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 
-# Start server via Thruster by default, this can be overwritten at runtime
-EXPOSE 80
-CMD ["./bin/thrust", "./bin/rails", "server"]
+# Puma directly (ADR 0023): it serves HTTPS on 3443 with the Cloudflare Origin CA certificate for
+# the tunnel when TLS_CERT_BASE64 and TLS_KEY_BASE64 are set (config/puma.rb); 3000 is plain HTTP
+# for health checks inside the container and is never published.
+ENV PORT="3000"
+EXPOSE 3000 3443
+CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]

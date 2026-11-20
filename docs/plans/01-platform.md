@@ -9,8 +9,8 @@ other.
 ## Current state (Nov 2026)
 
 - Rails 8.1, Ruby 3.4.5, SQLite for all databases, Solid Queue/Cache/Cable, Propshaft, importmap,
-  Hotwire, Devise (with confirmable), Minitest + Capybara, Kamal deploy config with placeholder
-  hosts.
+  Hotwire, Devise (with confirmable), Minitest + Capybara, a deploy config with placeholder hosts
+  (since replaced by the homelab deployment, ADR 0023).
 - Tailwind is loaded from a CDN at runtime in every layout, with config inlined per layout.
 - 27 tables exist; most (locations, service prices/taxes/fees per location, staff roles,
   notification triggers, service area restrictions, customer notification preferences) back no
@@ -124,7 +124,8 @@ other.
 Decided in [`docs/adr`](../adr/README.md): PostgreSQL (0002), row-level tenancy (0003),
 compiled Tailwind (0004), partials + Stimulus (0005), Minitest (0006), Solid Queue (0007), object
 storage (0008), Kamal on a VPS with managed PostgreSQL (0009), headless-Chrome PDFs (0010),
-Devise (0012), SMTP email (0017).
+Devise (0012), SMTP email (0017), homelab VMs behind a Cloudflare tunnel (0023, replacing parts
+of 0002, 0008 and 0009).
 
-1. **Hosting provider** for the VPS and managed PostgreSQL (ADR 0009 sets the shape). Picked in
-   PLT-09; can staging share the production database server to stay under budget?
+1. ~~**Hosting provider**~~: decided by the owner (2026-11-20): their homelab VMs, provisioned in
+   their op-works repository, one for staging and one for production (ADR 0023).

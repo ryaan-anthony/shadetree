@@ -44,6 +44,6 @@ revoked or re-issued without changing the document, and it has nowhere to record
 - Rotating `secret_key_base` needs a plan to re-issue open links: lookups re-derive the token
   and reject old URLs. The runbook (PLT-09) records this.
 - Tokens sit in URL paths. The Rails request log redacts them (`SecretPathLogger`) and
-  controller logs filter `:token`. kamal-proxy's access log also records paths, so production
-  keeps proxy logs off or on short retention (PLT-09/PLT-10).
+  controller logs filter `:token`. No proxy in front of the app logs paths on the VMs (ADR 0023);
+  Cloudflare sees them at its edge, so its URL-logging features stay off (PLT-09/PLT-10).
 - **Cost:** none.

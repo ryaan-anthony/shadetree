@@ -1,0 +1,38 @@
+#!/usr/bin/env ruby
+# Fails if a workflow that a pull request can trigger runs any job on a self-hosted runner
+# (PLT-09, ADR 0023). The deploy runner sits on the owner's LAN with SSH access to the VMs; a fork's
+# pull request must never get code onto it. Run by Deploy CI; usage: script/ci/check_self_hosted [files]
+require "yaml"
+
+PR_EVENTS = %w[pull_request pull_request_target].freeze
+
+def triggers(workflow)
+  on = workflow.key?("on") ? workflow["on"] : workflow[true] # YAML 1.1 reads a bare `on:` as true
+  case on
+  when String then [ on ]
+  when Array then on
+  when Hash then on.keys
+  else []
+  end
+end
+
+def self_hosted?(runs_on)
+  case runs_on
+  when String then runs_on.include?("self-hosted") || runs_on.include?("vars.") # a variable could name one
+  when Array then runs_on.any? { self_hosted?(_1) }
+  when Hash then self_hosted?(runs_on["labels"]) || runs_on.key?("group")
+  else false
+  end
+end
+
+files = ARGV.empty? ? Dir[".github/workflows/*.{yml,yaml}"] : ARGV
+failures = files.sort.flat_map do |file|
+  workflow = YAML.safe_load_file(file, aliases: true) || {}
+  next [] if (triggers(workflow) & PR_EVENTS).empty?
+
+  (workflow["jobs"] || {}).filter_map do |name, job|
+    "#{file}: job #{name} runs on a self-hosted runner, and a pull request triggers this workflow" if self_hosted?(job["runs-on"])
+  end
+end
+abort failures.join("\n") unless failures.empty?
+puts "ok: no workflow a pull request triggers uses a self-hosted runner (#{files.size} checked)"

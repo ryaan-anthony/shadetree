@@ -81,7 +81,7 @@ Part 2 (analytics and speed):
   merges second adds it. The privacy policy (MKT-03) describes it.
 - Speed: screenshots come with half-size versions (`srcset`), one low-contrast label is fixed.
   Measured on a development server (no compression, unminified): 87–89 performance, 100 for
-  accessibility, best practices and SEO; production adds compression (Thruster).
+  accessibility, best practices and SEO; production adds compression (Cloudflare, ADR 0023).
   `script/lighthouse_check URL` checks the pages (90 or more in every category), and the
   Lighthouse workflow runs it weekly against `MARKETING_URL` once that variable is set. The
   criterion is ticked once that run passes against the live site.

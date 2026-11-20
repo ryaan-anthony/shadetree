@@ -1,6 +1,6 @@
 # 0009. Kamal on a VPS, with managed PostgreSQL
 
-- **Status:** Accepted
+- **Status:** Accepted; superseded in part by [0023](0023-homelab-vms-and-cloudflare-tunnel.md) (Kamal, VPSs and the registry)
 - **Date:** 2026-11-14
 - **Specs:** PLT-09, PLT-10
 

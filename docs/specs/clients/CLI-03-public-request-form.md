@@ -43,7 +43,7 @@ threads. Each submission becomes a client (or matches one) and a request in the 
 - [x] Settings show the link with copy and a QR code download.
 - [x] Spam protection is invisible to normal users; excessive submissions are rate limited.
       *Hidden field, minimum 3 s on the page, 5 per IP per 10 minutes, 60 per business per hour.*
-- [x] The page is fast on mobile (≥ 90 Lighthouse) and accessible. *97–99 and 100 via Thruster.*
+- [x] The page is fast on mobile (≥ 90 Lighthouse) and accessible. *97–99 and 100 with compression (then Thruster; now Cloudflare, ADR 0023).*
 - [x] Tests cover matching, disabled form, spam rejection and tenant isolation.
 
 ## Out of scope

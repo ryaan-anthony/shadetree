@@ -23,7 +23,7 @@ protection off and test requests carry no Origin.
 ## Consequences
 
 - Tokens still never reach another site's `Referer`. Our own requests now carry a `Referer`
-  with the token; the Rails request log doesn't record `Referer`, and kamal-proxy's access log
-  is already kept off or short-lived for the token-in-path reason in ADR 0016.
+  with the token; the Rails request log doesn't record `Referer`, and no proxy log on the VMs
+  records it either (ADR 0023; Cloudflare's URL logging stays off, as ADR 0016 says).
 - Forms on client pages work whether or not Turbo submits them.
 - **Cost:** none.

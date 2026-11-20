@@ -6,8 +6,9 @@ if [ -z "${LD_PRELOAD+x}" ]; then
     export LD_PRELOAD
 fi
 
-# If running the rails server then create or migrate existing database
-if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
+# If running the server (Puma with its config, as the image does, or rails server), create or
+# migrate the databases first.
+if [ "$*" == "bundle exec puma -C config/puma.rb" ] || [ "$*" == "./bin/rails server" ]; then
   ./bin/rails db:prepare
 fi
 

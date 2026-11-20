@@ -50,7 +50,7 @@ it, without leaking client personal data into third-party tools.
 - **Errors:** everything goes through `Rails.error`: request errors from Rails' executor, job
   errors from `ReportsUnhandledErrors#perform_now` (ApplicationJob and both mail delivery jobs;
   Solid Queue reports too, each exception once). `Observability::ErrorContext` adds release
-  (`KAMAL_VERSION`), environment, request id/method/path, job class/id, business and user ids,
+  (`APP_REVISION`), environment, request id/method/path, job class/id, business and user ids,
   drops controller and job objects and masks filtered keys; messages lose Postgres' DETAIL/HINT
   and email/phone-like values. `ErrorSubscriber` logs a JSON line (with 10 app backtrace frames)
   and calls `Observability.tracker`, the one hook for the tracker (unset).
