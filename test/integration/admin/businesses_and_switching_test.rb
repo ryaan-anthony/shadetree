@@ -102,4 +102,23 @@ class Admin::BusinessesAndSwitchingTest < ActionDispatch::IntegrationTest
     get admin_root_path
     assert_no_match "Stranger Co", response.body
   end
+
+  test "while one of your businesses is suspended you can't start another, but can switch to the others (OPS-04)" do
+    businesses(:two).suspend!(reason: "Spam")
+    sign_in @user
+    get new_admin_business_path
+    assert_response :forbidden
+    assert_select "#business-suspended-new", /#{businesses(:two).name} is suspended/
+    assert_no_difference -> { Business.count } do
+      post admin_business_path, params: { business: { name: "Fresh Start", industry: "cleaning" } }
+    end
+    assert_response :forbidden
+    post switch_admin_business_path, params: { business: businesses(:one).uid }
+    get admin_root_path
+    assert_response :success, "their other business still works"
+
+    businesses(:two).reactivate!
+    get new_admin_business_path
+    assert_response :success
+  end
 end

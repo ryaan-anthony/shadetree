@@ -253,6 +253,7 @@ class Business < ApplicationRecord
     raise ArgumentError, "only a suspended business can be reactivated" unless suspended?
 
     update_columns(active: true, suspended_at: nil, suspension_reason: nil, updated_at: Time.current)
+    Automation.skip_missed_during_suspension(self) # NTF-04: nothing weeks old goes out
   end
 
   def user_role(user)

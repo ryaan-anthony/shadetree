@@ -6,8 +6,9 @@
 # or when its delay ends (AutomationRunJob, and AutomationsDueJob as a sweep). Running re-checks
 # the conditions and does the actions, each logged. Safeguards: nothing triggers while an
 # automation is acting (no loops: the flag is taken when the event is recorded, see ClientEvent
-# and Job#complete!), runs wait while a business is suspended, and a client never gets the same
-# template twice about one document (AutomationDelivery). Runs always go through a job, so a
+# and Job#complete!), runs wait while a business is suspended (those that came due meanwhile are
+# skipped when it's reactivated), and a client never gets the same template twice about one
+# document (AutomationDelivery). Runs always go through a job, so a
 # failing automation never breaks the request that triggered it.
 module Automation
   module_function
@@ -29,6 +30,38 @@ module Automation
     end
   rescue StandardError => e
     Rails.error.report(e, context: { automation_trigger: trigger, subject: subject&.to_global_id&.to_s })
+  end
+
+  MISSED_WHILE_SUSPENDED = "It came due while the business was suspended.".freeze
+
+  # OPS-04 (owner's decision): on reactivation, runs that came due during the suspension are
+  # skipped rather than all firing at once, and invoices that fell overdue meanwhile get a skipped
+  # run so the hourly sweep doesn't chase them. Later events run as usual.
+  def skip_missed_during_suspension(business)
+    Tenancy.with_business(business) do
+      AutomationRun.where(status: "scheduled", run_at: ..Time.current).find_each do |run|
+        run.with_lock do
+          next unless run.status == "scheduled"
+
+          run.note!("run", "skipped", MISSED_WHILE_SUSPENDED)
+          run.update!(status: "skipped", finished_at: Time.current)
+        end
+      end
+      AutomationRule.active.where(trigger: "invoice_overdue").find_each do |rule|
+        overdue_without_run(rule, business).find_each do |invoice|
+          AutomationRun.create_or_find_by!(rule:, subject: invoice) do |run|
+            run.assign_attributes(rule_name: rule.name, trigger: rule.trigger, run_at: Time.current, status: "skipped", finished_at: Time.current,
+                                  log: [ { "action" => "run", "result" => "skipped", "detail" => MISSED_WHILE_SUSPENDED } ])
+          end
+        end
+      end
+    end
+  end
+
+  # Invoices an overdue rule would fire for now: fell due after the rule was made, no run yet.
+  def overdue_without_run(rule, business)
+    Invoice.where(status: %w[sent partially_paid], due_on: rule.created_at.in_time_zone(business.time_zone).to_date...business.today)
+           .where.not(id: AutomationRun.where(rule:, subject_type: "Invoice").select(:subject_id))
   end
 
   # One run of a rule for a record (never two), handed to a job for when its delay ends.
