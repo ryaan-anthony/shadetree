@@ -268,38 +268,41 @@ class Invoice < ApplicationRecord
   end
 
   # PAY-04: whether the client can pay online now, from the invoice's link: something left to
-  # pay on a sent invoice (not one being revised, a void one or an erased client's), and a
-  # business whose Stripe account takes charges.
-  def online_payable? = outstanding? && balance.positive? && !client.erased? && business.active? && business.accepts_online_payments?
+  # pay on a sent invoice (not one being revised, a void one or an erased client's), at least
+  # Stripe's smallest charge, and a business whose Stripe account takes charges.
+  ONLINE_MINIMUM_CENTS = 50
+  def online_payable? = outstanding? && balance.cents >= ONLINE_MINIMUM_CENTS && !client.erased? && business.active? && business.accepts_online_payments?
 
   # PAY-04: a payment Stripe confirmed (checkout.session.completed or payment_intent.succeeded).
   # Recorded once per PaymentIntent, whichever notification comes first; the money has been
   # taken, so it's recorded even if the invoice changed meanwhile: a revision being prepared is
-  # dropped (the client paid what they were sent), and a void invoice keeps its status.
-  # Returns [payment, new?].
-  def record_online_payment!(intent_id:, amount_cents:, currency:, checkout_id: nil, method_detail: nil, platform_fee_cents: 0)
+  # dropped (the client paid what they were sent), and a void invoice keeps its status. What
+  # Stripe already knows about the charge (refunded, disputed) comes with it, so an earlier
+  # refund or dispute notification isn't lost. Returns [payment, new?, overpaid_cents].
+  def record_online_payment!(intent_id:, amount_cents:, currency:, received_on: business.today, checkout_id: nil, method_detail: nil,
+                             platform_fee_cents: 0, refunded_cents: 0, dispute: nil)
     transaction do
       lock!
       existing = Payment.find_by(provider_payment_id: intent_id)
-      next [ existing, false ] if existing
+      next [ existing, false, 0 ] if existing
 
       discard_revision!(by: nil) if revising?
+      owed = void? ? 0 : balance.cents
       payment = payments.create!(business:, source: "online", payment_method: "card", amount_cents:, currency: currency.upcase,
-                                 received_on: business.today, reference: intent_id, provider_payment_id: intent_id,
-                                 provider_checkout_id: checkout_id, method_detail:, platform_fee_cents:)
+                                 received_on:, reference: intent_id, provider_payment_id: intent_id,
+                                 provider_checkout_id: checkout_id, method_detail:, platform_fee_cents:,
+                                 refunded_cents: refunded_cents.to_i.clamp(0, amount_cents),
+                                 dispute_status: dispute&.fetch("status"), disputed_cents: dispute ? dispute["amount_cents"].to_i.clamp(0, amount_cents) : 0)
       record!(:payment_received, payment: payment.uid, **payment.summary)
       ClientEvent.record!(client, :payment_recorded, subject: payment, by: nil, via: "client", **payment.summary) # CLI-05, NTF-04 payment_received
-      if void?
-        update_columns(amount_paid_cents: amount_paid_cents + amount_cents, updated_at: Time.current)
-      else
-        apply_payments!
-      end
-      [ payment, true ]
+      apply_payments!
+      [ payment, true, [ amount_cents - owed, 0 ].max ]
     end
   end
 
   # PAY-04: refunds and disputes on an online payment, as Stripe reports them (cumulative, so a
-  # repeat changes nothing). The invoice follows: a refund can take it back to Partly paid.
+  # repeat changes nothing). The invoice follows: a refund can take it back to Partly paid or
+  # Sent. Returns the payment and whether that reopened the invoice (OnlinePayments warns).
   def reflect_refund!(payment, refunded_cents:)
     adjust_online_payment(payment, :payment_refunded) { payment.refunded_cents = refunded_cents.clamp(0, payment.amount_cents) }
   end
@@ -335,8 +338,11 @@ class Invoice < ApplicationRecord
   # (paid_at: then), Partly paid, or back to Sent. Active client links follow (PLT-12): a year
   # after payment once it's paid, no end while it isn't.
   def apply_payments!(by: nil)
-    # PAY-04: refunds and lost disputes don't count as paid.
-    paid_cents = payments.unscope(:order).sum(Arel.sql("GREATEST(amount_cents - refunded_cents - CASE WHEN dispute_status = 'lost' THEN disputed_cents ELSE 0 END, 0)")).to_i
+    # PAY-04: refunds and lost disputes don't count as paid. A void invoice stays void; only
+    # its amount paid follows (money taken online after it was voided).
+    paid_cents = payments.unscope(:order).counted_sum.to_i
+    return update_columns(amount_paid_cents: paid_cents, updated_at: Time.current) if void?
+
     status = if paid_cents >= total_cents then "paid" elsif paid_cents.positive? then "partially_paid" else "sent" end
     changed = status != self.status
     assign_attributes(amount_paid_cents: paid_cents, status:, paid_at: (status == "paid" ? (paid_at || Time.current) : nil))
@@ -468,12 +474,13 @@ class Invoice < ApplicationRecord
       lock!
       payment.lock!
       yield
-      next payment unless payment.changed?
+      next [ payment, false ] unless payment.changed?
 
+      counted_before = payment.counted_cents_was
       payment.save!
       record!(kind, payment: payment.uid, refunded_cents: payment.refunded_cents, dispute: payment.dispute_status, **payment.summary)
-      apply_payments! unless void?
-      payment
+      apply_payments!
+      [ payment, outstanding? && payment.counted_cents < counted_before ]
     end
   end
 

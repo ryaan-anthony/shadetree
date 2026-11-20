@@ -13,6 +13,7 @@ class AddOnlinePayments < ActiveRecord::Migration[8.1]
       t.string :dispute_status
       t.bigint :platform_fee_cents, null: false, default: 0
       t.index :provider_payment_id, unique: true, where: "provider_payment_id IS NOT NULL"
+      t.index :provider_checkout_id, where: "provider_checkout_id IS NOT NULL"
       t.check_constraint "refunded_cents >= 0 AND refunded_cents <= amount_cents", name: "payments_refund_within_amount"
       t.check_constraint "source = 'online' OR provider_payment_id IS NULL", name: "payments_provider_id_online"
     end

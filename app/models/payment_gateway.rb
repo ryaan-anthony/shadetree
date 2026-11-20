@@ -58,12 +58,18 @@ class PaymentGateway
     call { ::Stripe::Checkout::Session.create(params, { stripe_account: account_id, idempotency_key: }.compact) }.slice("id", "url")
   end
 
-  # How a payment was made, for the receipt: card brand and last four, and the wallet if any.
+  # A payment's charge as PAY-04 uses it: how it was paid (card brand and last four, the wallet
+  # if any), when, what's been refunded and any dispute ({ "status", "amount" }), and the
+  # PaymentIntent's metadata (whose payment it is).
   def payment_details(account_id, payment_intent_id)
-    intent = call { ::Stripe::PaymentIntent.retrieve({ id: payment_intent_id, expand: [ "latest_charge" ] }, { stripe_account: account_id }) }
+    options = { stripe_account: account_id }
+    intent = call { ::Stripe::PaymentIntent.retrieve({ id: payment_intent_id, expand: [ "latest_charge" ] }, options) }
     charge = intent["latest_charge"].is_a?(Hash) ? intent["latest_charge"] : {}
     card = charge.dig("payment_method_details", "card") || {}
-    { "charge_id" => charge["id"], "brand" => card["brand"], "last4" => card["last4"], "wallet" => card.dig("wallet", "type") }.compact
+    dispute = (call { ::Stripe::Dispute.list({ payment_intent: payment_intent_id, limit: 1 }, options) }["data"] || []).first if charge["disputed"]
+    { "charge_id" => charge["id"], "brand" => card["brand"], "last4" => card["last4"], "wallet" => card.dig("wallet", "type"),
+      "created" => charge["created"], "amount_refunded" => charge["amount_refunded"], "metadata" => intent["metadata"] || {},
+      "dispute" => dispute&.slice("status", "amount") }.compact
   end
 
   private

@@ -8,7 +8,8 @@
 #   and every revision's), client-link activity;
 # - scrubbed (their name, company, emails, phones and address replaced with "[erased]"): titles,
 #   line items, terms, revision and approval snapshots,
-#   document and visit histories, payment notes and references, notifications about them, email
+#   document and visit histories, payment notes and references (and online payments' card
+#   details), notifications about them, email
 #   subjects, and other clients' notes that mention them by full name, email, phone or address;
 # - closed: open requests are archived and visits not yet done are cancelled (nobody is told),
 #   and every client link stops working.
@@ -133,7 +134,12 @@ class ClientErasure
       scrub_events(document.events)
       stop_links(document)
     end
-    @invoices.each { |invoice| invoice.payments.each { scrub_columns(_1, :note, :reference) } }
+    @invoices.each do |invoice|
+      invoice.payments.each { scrub_columns(_1, :note, :reference) }
+      # PAY-04: the card's brand and last four digits, on the payment and in the invoice's history.
+      invoice.payments.update_all(method_detail: nil)
+      invoice.events.where("data ? 'detail'").find_each { InvoiceEvent.where(id: _1.id).update_all(data: _1.data.except("detail")) }
+    end
     @quotes.each { |quote| quote.responses.each { erase_response(_1) } }
   end
 

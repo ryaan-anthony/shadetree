@@ -50,8 +50,15 @@ class OnlinePaymentsTest < ActiveSupport::TestCase
   test "method details read well, and a Stripe failure leaves just the method" do
     account = as_business(@business) { PaymentAccount.create!(account_id: "acct_test1") }
     @gateway.payments["pi_1"] = { "brand" => "amex", "last4" => "0005" }
-    assert_equal "American Express ending 0005", OnlinePayments.method_detail(account, "pi_1")
+    assert_equal "American Express ending 0005", OnlinePayments.method_detail(OnlinePayments.charge_details(account, "pi_1"))
     @gateway.fail_next!
-    assert_nil OnlinePayments.method_detail(account, "pi_1")
+    assert_equal({}, OnlinePayments.charge_details(account, "pi_1"))
+    assert_nil OnlinePayments.method_detail({})
+  end
+
+  test "Stripe's dispute statuses, and how they read" do
+    assert_equal %w[open open won lost closed prevented], %w[needs_response warning_under_review won lost warning_closed prevented].map { OnlinePayments.dispute_status(_1) }
+    payment = as_business(@business) { Payment.new(amount_cents: 100, refunded_cents: 0, dispute_status: "closed") }
+    assert_equal "Inquiry closed", payment.adjustment_label
   end
 end

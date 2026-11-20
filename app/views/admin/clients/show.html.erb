@@ -172,7 +172,7 @@
         <p class="text-sm text-muted">Nothing owed.</p>
       <% end %>
       <%# CLI-05: everything they've paid, recorded or online. %>
-      <% paid = Payment.where(invoice_id: @client.invoices.select(:id)).group(:currency).order(:currency).sum(:amount_cents) %>
+      <% paid = Payment.where(invoice_id: @client.invoices.select(:id)).group(:currency).order(:currency).counted_sum %><%# PAY-04: less refunds and lost disputes %>
       <% if paid.any? %>
         <p class="mt-3 border-t border-line pt-3 text-sm2 text-muted" id="client-lifetime-paid">Paid in all: <span class="money font-semibold text-ink"><%= safe_join(paid.map { |currency, cents| money(Money.new(cents.to_i, currency)) }, " + ") %></span></p>
       <% end %>

@@ -35,7 +35,14 @@ class Payment < ApplicationRecord
 
   scope :chronological, -> { order(:received_on, :created_at, :id) }
 
-  DISPUTE_STATUSES = { "open" => "Disputed", "won" => "Dispute won", "lost" => "Dispute lost" }.freeze
+  # A card issuer's dispute (open, won, lost), or an inquiry that closed without one, or one
+  # prevented before it became a dispute.
+  DISPUTE_STATUSES = { "open" => "Disputed", "won" => "Dispute won", "lost" => "Dispute lost", "closed" => "Inquiry closed",
+                       "prevented" => "Dispute prevented" }.freeze
+
+  # What payments count towards what's been paid: their amounts, less refunds and lost disputes.
+  COUNTED_SQL = "GREATEST(payments.amount_cents - payments.refunded_cents - CASE WHEN payments.dispute_status = 'lost' THEN payments.disputed_cents ELSE 0 END, 0)".freeze
+  def self.counted_sum = sum(Arel.sql(COUNTED_SQL))
   validates :dispute_status, inclusion: { in: DISPUTE_STATUSES.keys }, allow_nil: true
 
   before_validation { self.currency ||= invoice&.currency }
@@ -50,12 +57,19 @@ class Payment < ApplicationRecord
   def counted_cents = [ amount_cents - refunded_cents - (dispute_status == "lost" ? disputed_cents : 0), 0 ].max
   def refunded = Money.new(refunded_cents, currency)
 
-  # "Refunded", "Partly refunded", "Disputed", …, or nil.
-  def adjustment_label
-    return DISPUTE_STATUSES.fetch(dispute_status) if dispute_status
-    return "Refunded" if refunded_cents.positive? && refunded_cents >= amount_cents
+  def counted = Money.new(counted_cents, currency)
 
-    "Partly refunded" if refunded_cents.positive?
+  # What it counted before the changes not yet saved (a refund or dispute being applied).
+  def counted_cents_was = [ amount_cents_was - refunded_cents_was - (dispute_status_was == "lost" ? disputed_cents_was : 0), 0 ].max
+
+  # "Refunded", "Partly refunded", "Disputed", …, or nil. A dispute that's still open or was
+  # lost says so first; otherwise a refund does.
+  def adjustment_label
+    return DISPUTE_STATUSES.fetch(dispute_status) if dispute_status.in?(%w[open lost])
+    return "Refunded" if refunded_cents.positive? && refunded_cents >= amount_cents
+    return "Partly refunded" if refunded_cents.positive?
+
+    DISPUTE_STATUSES[dispute_status]
   end
 
   # What the history records about it.

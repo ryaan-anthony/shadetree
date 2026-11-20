@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_20_100100) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_20_100200) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -221,6 +221,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_100100) do
     t.datetime "comp_ends_at"
     t.string "billing_status", default: "free", null: false
     t.datetime "billing_check_at"
+    t.boolean "online_partial_payments", default: false, null: false
     t.index ["active"], name: "index_businesses_on_active"
     t.index ["billing_check_at"], name: "index_businesses_on_billing_check_at", where: "(billing_check_at IS NOT NULL)"
     t.index ["billing_status"], name: "index_businesses_on_billing_status"
@@ -438,7 +439,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_100100) do
     t.datetime "updated_at", null: false
     t.index ["created_at"], name: "index_connect_events_on_created_at"
     t.index ["event_id"], name: "index_connect_events_on_event_id", unique: true
-    t.index ["status", "updated_at"], name: "index_connect_events_to_retry", where: "((status)::text = ANY ((ARRAY['received'::character varying, 'failed'::character varying])::text[]))"
+    t.index ["status", "updated_at"], name: "index_connect_events_to_retry", where: "((status)::text = ANY (ARRAY[('received'::character varying)::text, ('failed'::character varying)::text]))"
     t.check_constraint "status::text = ANY (ARRAY['received'::character varying, 'processed'::character varying, 'ignored'::character varying, 'failed'::character varying]::text[])", name: "connect_events_status"
   end
 
@@ -930,13 +931,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_100100) do
     t.bigint "recorded_by_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "provider_payment_id"
+    t.string "provider_checkout_id"
+    t.string "method_detail"
+    t.bigint "refunded_cents", default: 0, null: false
+    t.bigint "disputed_cents", default: 0, null: false
+    t.string "dispute_status"
+    t.bigint "platform_fee_cents", default: 0, null: false
     t.index ["business_id", "invoice_id"], name: "index_payments_on_business_id_and_invoice_id"
     t.index ["business_id", "received_on"], name: "index_payments_on_business_id_and_received_on"
     t.index ["business_id", "uid"], name: "index_payments_on_business_id_and_uid", unique: true
     t.index ["invoice_id"], name: "index_payments_on_invoice_id"
+    t.index ["provider_checkout_id"], name: "index_payments_on_provider_checkout_id", where: "(provider_checkout_id IS NOT NULL)"
+    t.index ["provider_payment_id"], name: "index_payments_on_provider_payment_id", unique: true, where: "(provider_payment_id IS NOT NULL)"
     t.index ["recorded_by_id"], name: "index_payments_on_recorded_by_id"
     t.check_constraint "amount_cents > 0", name: "payments_amount_positive"
     t.check_constraint "payment_method::text = ANY (ARRAY['cash'::character varying::text, 'check'::character varying::text, 'bank_transfer'::character varying::text, 'other'::character varying::text, 'card'::character varying::text])", name: "payments_payment_method"
+    t.check_constraint "refunded_cents >= 0 AND refunded_cents <= amount_cents", name: "payments_refund_within_amount"
+    t.check_constraint "source::text = 'online'::text OR provider_payment_id IS NULL", name: "payments_provider_id_online"
     t.check_constraint "source::text = ANY (ARRAY['recorded'::character varying::text, 'online'::character varying::text])", name: "payments_source"
   end
 
@@ -956,8 +968,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_100100) do
     t.jsonb "features", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "platform_fee_bps", default: 0, null: false
     t.index ["default"], name: "index_plans_one_default", unique: true, where: "\"default\""
     t.index ["key"], name: "index_plans_on_key", unique: true
+    t.check_constraint "platform_fee_bps >= 0 AND platform_fee_bps <= 1000", name: "plans_platform_fee_bps"
   end
 
   create_table "properties", force: :cascade do |t|
