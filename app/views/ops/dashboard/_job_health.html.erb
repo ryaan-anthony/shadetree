@@ -1,0 +1,16 @@
+<%# PLT-10: failed jobs and the queue, from Solid Queue. Alerts go out through Observability.alert. %>
+<div id="job-health">
+  <% if health.nil? %>
+    <p class="text-sm text-subtle">Shows once the app runs jobs on Solid Queue (staging and production). Here jobs run in the app itself.</p>
+  <% else %>
+    <p><%= health.healthy? ? badge("Healthy", tone: :success) : badge("Needs a look", tone: :warning) %></p>
+    <dl class="mt-3 space-y-2 text-sm">
+      <div class="flex justify-between gap-3"><dt class="text-subtle">Failed jobs</dt><dd class="tabular text-ink" id="job-health-failed"><%= health.failed %></dd></div>
+      <div class="flex justify-between gap-3"><dt class="text-subtle">Waiting to run</dt><dd class="tabular text-ink" id="job-health-backlog"><%= health.backlog %></dd></div>
+      <div class="flex justify-between gap-3"><dt class="text-subtle">Oldest has waited</dt><dd class="tabular text-ink"><%= health.oldest_wait.zero? ? "Nothing waiting" : distance_of_time_in_words(health.oldest_wait) %></dd></div>
+    </dl>
+    <% if health.failed_classes.any? %>
+      <p class="mt-3 text-sm2 text-muted">Most failures: <%= health.failed_classes.map { |name, count| "#{name} (#{count})" }.to_sentence %>. Retry or discard them as the operations runbook describes.</p>
+    <% end %>
+  <% end %>
+</div>

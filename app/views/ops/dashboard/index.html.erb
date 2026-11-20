@@ -16,6 +16,9 @@
     <p class="text-sm text-subtle" id="open-contact-messages"><%= @open_messages.zero? ? "No open messages from the website's contact form." : "#{pluralize(@open_messages, "open message")} from the website's contact form." %></p>
     <%= link_to "Contact messages", ops_contact_messages_path, class: "#{button_classes(:secondary)} mt-3" %>
   <% end %>
+  <%= card title: "Background jobs" do %>
+    <%= render "job_health", health: @job_health %>
+  <% end %>
   <%= card title: "Access" do %>
     <p class="text-sm text-subtle">Operators reach every business. Grant access only to people who run Shadetree.</p>
     <%= link_to "Operators", ops_operators_path, class: "#{button_classes(:secondary)} mt-3" %>

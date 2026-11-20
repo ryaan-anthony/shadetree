@@ -315,6 +315,7 @@ Rails.application.routes.draw do
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
+  get "up/jobs" => "health#jobs", as: :job_health_check # PLT-10: for the external uptime check
   post "csp-reports" => "csp_reports#create", as: :csp_reports # PLT-13
 
   # Render dynamic PWA files from app/views/pwa/*
