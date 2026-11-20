@@ -37,7 +37,7 @@
     <% end %>
     <%= card title: "Asked to be forgotten?" do %>
       <p class="text-sm text-subtle">Delete every message from <span class="break-words"><%= @message.email %></span> (<%= pluralize(@from_sender, "message") %>). The audit log records how many, not who.</p>
-      <p class="mt-2 text-sm text-subtle">Each message was also emailed to <%= ContactMailer.support_address %>: delete those emails there too.</p>
+      <p class="mt-2 text-sm text-subtle">Each message (apart from spam) was also emailed to <%= ContactMailer.support_address %>: delete those emails there too.</p>
       <%= button_to "Delete everything from this address", erase_ops_contact_message_path(@message), method: :delete, class: "#{button_classes(:danger)} mt-3 w-full", id: "erase-sender",
                     form: { data: { turbo_confirm: "Delete #{@from_sender == 1 ? "the only message" : "all #{@from_sender} messages"} from #{@message.email}? This can't be undone. Remember to delete their emails in the support inbox too.", turbo_confirm_button: "Delete all" } } %>
     <% end %>
