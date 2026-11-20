@@ -23,10 +23,10 @@ support — before helping or making decisions.
 
 ## Acceptance criteria
 
-- [x] A searchable, paginated list of businesses by name, owner/member email, plan, status
+- [ ] A searchable, paginated list of businesses by name, owner/member email, plan, status
       (active, trial, past due, suspended) and signup date range; sortable by signup and last
       activity.
-- [x] A business page shows: owner and members (role, last active), plan and subscription
+- [ ] A business page shows: owner and members (role, last active), plan and subscription
       status, current-period usage vs limits, counts (clients, quotes sent, jobs, invoices,
       payments), onboarding checklist progress, payment-account connection status, signup and
       last activity dates, and recent billing history.
@@ -45,11 +45,11 @@ support — before helping or making decisions.
 ## Decisions
 
 - Operator notes are internal only; the business never sees them (recommendation accepted).
-- Interim builder choice, pending BIL-04/05 (follow-ups noted there, in OPS-04 and PAY-03):
-  statuses are Active and Closed only (a business closed when its last member deleted their
-  account); Suspended comes with OPS-04, Trial and Past due with subscriptions. Until then
-  "recent billing history" shows quotes sent per usage period (BIL-02), and the payment-account
-  status reads "Not connected" (PAY-03).
+- The two criteria above stay unticked until BIL-04/05 and PAY-03 (owner's decision; #117
+  stays open). Built so far: name/email/plan/date search with Active, Suspended (OPS-04) and
+  Closed statuses; Trial and Past due come with subscriptions. "Recent billing history" shows
+  quotes sent per usage period (BIL-02) and the payment account reads "Not connected" (PAY-03)
+  until those exist. Follow-ups are noted in BIL-04, BIL-05, OPS-04 and PAY-03.
 
 ## Implementation notes
 

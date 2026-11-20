@@ -39,8 +39,8 @@ portal; Shadetree mirrors the resulting subscription state reliably.
 
 ## Follow-ups
 
-- Add Trial / Past due / Suspended / payment-account status and billing history to the OPS-02
-  directory and business page (OPS-02 shows Active and Closed only until then).
+- Add Trial / Past due / payment-account status and billing history to the OPS-02 directory
+  and business page (OPS-02 shows Active, Suspended and Closed until then).
 
 ## Out of scope
 
