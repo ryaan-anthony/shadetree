@@ -2,20 +2,32 @@
 <div class="mx-auto max-w-5xl px-4 py-8 text-sm sm:px-6">
   <header class="mb-8 flex flex-wrap items-end justify-between gap-4">
     <div>
-      <span class="logo"><span class="logo-mark"><%= logo_mark %></span><span>Shadetree</span></span>
+      <%= brand_logo %>
       <h1 class="mt-4 text-2xl font-bold tracking-tight text-ink">UI kit</h1>
       <p class="mt-1 max-w-prose text-muted">Every building block and state. Tokens live in
         <code>app/assets/tailwind/theme.css</code>, classes in <code>components.css</code>, markup in
         <code>app/views/components</code> and <code>ComponentsHelper</code>.</p>
     </div>
     <nav class="flex flex-wrap gap-x-4 gap-y-1 text-sm2 font-medium" aria-label="Sections">
-      <% %w[Colors Type Buttons Forms Badges Cards Tables Dialogs Feedback Navigation Icons Layouts].each do |name| %>
+      <% %w[Brand Colors Type Buttons Forms Badges Cards Tables Dialogs Feedback Navigation Icons Layouts].each do |name| %>
         <a class="text-canopy hover:underline" href="#<%= name.downcase %>"><%= name %></a>
       <% end %>
     </nav>
   </header>
 
   <div class="space-y-10">
+    <section id="brand" aria-labelledby="brand-h">
+      <h2 id="brand-h" class="mb-3 text-base font-bold text-ink">Brand</h2>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <div class="card flex h-24 items-center justify-center"><%= brand_logo %></div>
+        <div class="card flex h-24 items-center justify-center border-side-line bg-side"><%= brand_logo(on: :dark) %></div>
+      </div>
+      <p class="mt-2 max-w-prose text-sm2 text-muted">“Shadetree”, one word with a lower-case t, in copy and titles. The wordmark is
+        “Shade” in green (<code>#059669</code>) and “tree” in ink on light backgrounds, or white on dark ones (the marketing footer,
+        the app sidebar). Use <code>brand_logo</code>, <code>wordmark</code> or, in emails, <code>email_wordmark</code>
+        (<code>BrandHelper</code>); never retype it. Client pages and emails carry the business’s brand instead.</p>
+    </section>
+
     <section id="colors" aria-labelledby="colors-h">
       <h2 id="colors-h" class="mb-3 text-base font-bold text-ink">Colors</h2>
       <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">

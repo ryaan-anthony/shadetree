@@ -361,6 +361,9 @@ Rails.application.routes.draw do
   get "terms", to: "legal#show", defaults: { slug: "terms" }
   get "privacy", to: "legal#show", defaults: { slug: "privacy" }
   get "legal", to: "legal#index", as: :legal
+  # QA #274: short links people type or guess. /help asks for sign-in first when signed out.
+  get "security", to: redirect("/legal/security")
+  get "help", to: redirect("/admin/help", status: 302) # not permanent: a public help center may live here one day
   resource :legal_acceptance, only: %i[show create], path: "legal/accept", controller: "users/legal_acceptances"
   get "legal/:slug(/:version)", to: "legal#show", as: :legal_document, constraints: { slug: /[a-z-]+/, version: /\d{4}-\d{2}-\d{2}/ }
 

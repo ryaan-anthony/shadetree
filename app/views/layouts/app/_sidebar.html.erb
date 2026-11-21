@@ -26,9 +26,7 @@
         </div>
       </div>
     <% else %>
-      <%= link_to root_path, class: "logo logo-light px-2 py-1.5 text-[1.0625rem]" do %>
-        <span class="logo-mark"><%= logo_mark %></span><span>Shadetree</span>
-      <% end %>
+      <%= brand_logo(on: :dark, href: root_path, class: "px-2 py-1.5 text-[1.0625rem]") %>
     <% end %>
   </div>
 

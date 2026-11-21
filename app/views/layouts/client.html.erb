@@ -34,9 +34,9 @@
     </main>
     <footer class="client-powered flex-wrap gap-x-4">
       <% if branding.show_powered_by? %>
-        <%= link_to root_url, class: "logo text-[0.8125rem] text-subtle", target: "_blank", rel: "noopener" do %>
+        <%= link_to root_url, class: "inline-flex items-center gap-1.5 text-[0.8125rem] text-subtle", target: "_blank", rel: "noopener" do %>
           <span class="logo-mark size-4 rounded-sm [&_svg]:size-3"><%= logo_mark %></span>
-          <span>Powered by Shadetree</span>
+          <span>Powered by <%= wordmark %></span>
         <% end %>
       <% end %>
       <%# MKT-03: how the client's details are handled, shown even without "Powered by". %>
