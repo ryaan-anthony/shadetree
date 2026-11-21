@@ -37,5 +37,8 @@
       <% end %>
       <%= yield %>
     </main>
+    <footer class="mx-auto max-w-6xl border-t border-line px-4 py-4 text-xs text-muted">
+      <p>Shadetree operator console · <%= link_to "Terms", terms_path, class: "underline-offset-2 hover:underline" %> · <%= link_to "Privacy", privacy_path, class: "underline-offset-2 hover:underline" %> · <%= link_to "Legal", legal_path, class: "underline-offset-2 hover:underline" %></p>
+    </footer>
   </body>
 </html>

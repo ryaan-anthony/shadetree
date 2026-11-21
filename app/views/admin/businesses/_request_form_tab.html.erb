@@ -23,9 +23,13 @@
 <% end %>
 
 <%= card title: "Request form" do %>
-  <%= f.check :request_form_enabled, label: "Take requests online", hint: "When it's off, the page shows your phone and email instead." %>
-  <div class="mt-3"><%= f.check :request_form_indexable, label: "Let search engines find your request page",
-                             hint: "People searching for your business can land on your form. Only while you take requests online." %></div>
+  <div data-controller="dependent">
+    <%= f.check :request_form_enabled, label: "Take requests online", hint: "When it's off, the page shows your phone and email instead.",
+                data: { dependent_target: "source", action: "dependent#update" } %>
+    <%# Only means something while requests are on: off (and ignored on save) otherwise. %>
+    <div class="mt-3 has-[:disabled]:opacity-70" data-dependent-target="field"><%= f.check :request_form_indexable, label: "Let search engines find your request page", disabled: !@business.request_form_enabled?,
+                               hint: "People searching for your business can land on your form. Only while you take requests online." %></div>
+  </div>
   <div class="mt-4">
     <%= f.field :request_form_intro, as: :textarea, label: "Intro", optional: true, rows: 3, maxlength: 500,
                 placeholder: "Tell us what you need and #{@business.name} will get back to you.",

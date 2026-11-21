@@ -24,6 +24,5 @@
   </nav>
 <% end %>
 
-<%= turbo_frame_tag "invoice_results" do %>
-  <%= render "results" %>
-<% end %>
+<%# _results is its own frame (#invoice_results), on the page and as the search response. %>
+<%= render "results" %>

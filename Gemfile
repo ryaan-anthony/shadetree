@@ -73,6 +73,8 @@ group :test do
   gem "capybara"
   gem "selenium-webdriver"
   gem "rails-controller-testing"
+  # axe-core's script, run by the system tests' accessibility checks (QA #274)
+  gem "axe-core-api", "~> 4.14", require: false
 
   # Test coverage reporting (CI publishes a summary on every run)
   gem "simplecov", require: false

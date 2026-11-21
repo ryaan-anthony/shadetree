@@ -9,7 +9,7 @@
         <ul class="mt-1 space-y-1">
           <% permissions.each do |key, words| %>
             <% on = granted.include?(key.to_s) %>
-            <li class="flex gap-2 <%= on ? "text-ink" : "text-faint" %>">
+            <li class="flex gap-2 <%= on ? "text-ink" : "text-muted" %>">
               <%= icon(on ? "check" : "minus", class: "mt-0.5 size-4 shrink-0 #{on ? "text-canopy" : "text-faint"}") %>
               <span><%= words %><span class="sr-only"><%= on ? " (yes)" : " (no)" %></span></span>
             </li>

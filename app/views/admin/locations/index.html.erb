@@ -4,7 +4,7 @@
 
 <div class="max-w-3xl space-y-4">
   <% unless can_add %>
-    <div class="banner banner-info"><%= icon "info" %>
+    <div class="banner banner-info" role="status"><%= icon "info" %>
       <p><%= Location.plan_message %> <%= link_to "See plans", admin_plan_path, class: "font-semibold text-ink underline-offset-2 hover:underline" %></p></div>
   <% end %>
 

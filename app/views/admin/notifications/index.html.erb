@@ -18,13 +18,13 @@
           <li id="notification-<%= notification.uid %>" class="<%= "bg-info-50/40" unless notification.read? %>">
             <%= icon notification.type.icon, class: "size-4 shrink-0 #{notification.read? ? "text-faint" : "text-info-ink"}" %>
             <%= link_to open_admin_notification_path(notification), class: "min-w-0 flex-1", data: { turbo_prefetch: false } do %>
-              <span class="block <%= notification.read? ? "text-ink" : "font-semibold text-ink" %>"><%= notification.title %><%= tag.span(", unread", class: "sr-only") unless notification.read? %></span>
+              <span class="block <%= notification.read? ? "text-ink" : "font-semibold text-ink" %>"><%= notification.title %><% unless notification.read? %> <%= badge "Unread", tone: :info, dot: false, class: "ml-1 align-middle" %><% end %></span>
               <% if notification.body %><span class="block truncate text-sm2 text-muted"><%= notification.body %></span><% end %>
               <span class="block text-sm2 text-subtle"><%= local_time_ago(notification.created_at) %></span>
             <% end %>
             <% unless notification.read? %>
-              <%= button_to read_admin_notification_path(notification), method: :patch, class: button_classes(:ghost, :sm, :icon), form: { class: "contents" },
-                            "aria-label": "Mark “#{notification.title}” as read" do %><%= icon "check" %><% end %>
+              <%= button_to read_admin_notification_path(notification), method: :patch, class: "#{button_classes(:ghost, :sm)} shrink-0", form: { class: "contents" },
+                            "aria-label": "Mark as read: #{notification.title}" do %><%= icon "check" %> Mark as read<% end %>
             <% end %>
           </li>
         <% end %>

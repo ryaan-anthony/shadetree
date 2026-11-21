@@ -42,6 +42,27 @@ consistent screens quickly.
 Visual reference: [`docs/mockups/design-system.html`](../../mockups/design-system.html) and the
 screens in [`docs/mockups`](../../mockups/README.md). Treat them as design direction, not code.
 
+## Implementation notes
+
+Conventions from the QA/accessibility audit (#274), for every staff page:
+
+- **Landmarks:** the app layout has a `<header>` (top bar), the sidebar's `<nav>`, `<main>`, and
+  the sidebar's foot (you, sign out, legal links) as the `<footer>`; the operator console too.
+- **Headings:** one H1 per page (`page_header`). Empty states are H2 (`empty_state`), or
+  `level: 3` inside a titled card, whose title is an H2.
+- **Names:** a link or button repeated down a page names its row ("Download CSV: Clients",
+  "Add here: Lawn care"), starting with its visible words. Tabs mark the current one with
+  `aria-current="page"`; filter buttons use `aria-pressed`.
+- **Status messages:** toasts are `role="status"`, errors `role="alert"`; a status toast is
+  also read out through `#announcer`, a live region kept across Turbo visits. Banners that
+  inform are `role="status"`.
+- **Dates:** records, documents and emails always carry the year. Pages about now (today,
+  this week, what's coming up) leave it off while it's this year (`friendly_date`, or
+  `local_date`/`local_time` with `year: :auto`); today's and this week's pages never show it.
+- **Time zones:** a page with times on one day names the zone once ("Times in Eastern Time
+  (US & Canada)"), never on each time.
+- **Checks:** `test/system/accessibility_test.rb` runs axe-core (WCAG 2.1 A/AA) on key pages.
+
 ## Out of scope
 
 - Brand color application per business beyond the client layout hook (CAT-02).

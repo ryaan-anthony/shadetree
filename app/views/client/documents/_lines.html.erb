@@ -16,7 +16,7 @@
           <% if line.description %><p class="quote-doc-line-description"><%= line.description %></p><% end %>
           <% if result.discount.positive? %><p class="quote-doc-line-discount">Includes <%= money(result.discount) %> off<%= " (#{line.discount_value}%)" if line.discount_kind == "percent" %></p><% end %>
         </td>
-        <td role="cell" class="num"><%= line.quantity.to_d.round(4).to_s("F").sub(/\.?0+\z/, "") %><% if line.unit %> <span class="quote-doc-unit"><%= line.unit %></span><% end %></td>
+        <td role="cell" class="num"><%= line.quantity_number %><% if line.unit %> <span class="quote-doc-unit"><%= line.unit_for_quantity %></span><% end %></td>
         <td role="cell" class="num"><%= money(line.unit_price || Money.zero(document.currency)) %></td>
         <td role="cell" class="num"><%= money(result.subtotal) %></td>
       </tr>
