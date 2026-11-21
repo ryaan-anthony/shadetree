@@ -47,6 +47,7 @@ product screenshots, and pricing that can never drift from what the app enforces
 - **Brand** (owner, 2026-11-21): "Shadetree", one word, lower-case t, everywhere. Wordmark: "Shade"
   in green #059669, "tree" in ink on light or white on dark (footer, sidebar); `BrandHelper`,
   shown in `/styleguide` and `docs/mockups/design-system.html`. Client pages stay business-branded.
+  Green is 3.77:1 on white, 4.96:1 on navy: a logotype is exempt (WCAG 1.4.3), and large in the nav.
 - **The site only promises what's built.** Online card payments (PAY-03/04) and automatic
   follow-ups (NTF-04) aren't mentioned until they ship; plans aren't described as "never per
   seat" because they limit team members.
@@ -90,7 +91,7 @@ Part 3 (Pricing):
   plan, cancelling (no contract or fee; downgrades are BIL-04's), and taking your data (INS-02). The old pricing page's
   invented tiers, toggle script and comparison table are gone, as is its test.
 
-QA #274: Shadetree's own 404/422/500 are static files in `public/` (they must show when the app
+QA #274: Shadetree's own 400/404/406/422/500 are static files in `public/` (they must show when the app
 can't run), with the layout's skip link, header, main and footer; `/security` and `/help` redirect.
 
 ## Open questions
