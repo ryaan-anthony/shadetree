@@ -65,6 +65,7 @@ class SecurityHeadersTest < ActionDispatch::IntegrationTest
     link = as_business(business) { ClientLink.issue!(create_test_document(business), actions: %w[approve]) }
     get client_link_path(link.token)
     assert_csp_clean("client page")
+    assert_equal "'self'", csp[/form-action ([^;]+)/, 1], "PAY-04: only an invoice with Pay allows Stripe Checkout"
     assert_select "head style[nonce=?]", nonce, /--color-brand: #9a3412/
 
     sign_in users(:one)

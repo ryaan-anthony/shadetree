@@ -58,6 +58,17 @@ class PaymentGateway
     call { ::Stripe::Checkout::Session.create(params, { stripe_account: account_id, idempotency_key: }.compact) }.slice("id", "url")
   end
 
+  # Closes an open Checkout page so it can't be paid. Returns the session's status after:
+  # "expired", or "complete" when the client already paid (too late to close it).
+  def expire_checkout_session(account_id, session_id)
+    options = { stripe_account: account_id }
+    call { ::Stripe::Checkout::Session.expire(session_id, {}, options) }.fetch("status")
+  rescue Error => error
+    raise unless error.cause.is_a?(::Stripe::InvalidRequestError)
+
+    call { ::Stripe::Checkout::Session.retrieve(session_id, options) }.fetch("status")
+  end
+
   # A payment's charge as PAY-04 uses it: how it was paid (card brand and last four, the wallet
   # if any), when, what's been refunded and any dispute ({ "status", "amount" }), and the
   # PaymentIntent's metadata (whose payment it is).

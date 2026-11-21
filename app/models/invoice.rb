@@ -157,6 +157,7 @@ class Invoice < ApplicationRecord
       assign_attributes(status: "draft", revision: revision + 1, pdf_blob_id: nil, pdf_digest: nil)
       save!(validate: false)
       record!(:revised, by:, revision:)
+      close_checkout_later # PAY-04: the client can't pay the old version meanwhile
     end
   end
 
@@ -195,6 +196,7 @@ class Invoice < ApplicationRecord
       assign_attributes(status: "void", voided_at: Time.current, voided_by: by, void_reason: reason.first(200))
       save!(validate: false)
       record!(:voided, by:, reason: void_reason)
+      close_checkout_later # PAY-04
     end
   end
 
@@ -260,6 +262,7 @@ class Invoice < ApplicationRecord
         ClientEvent.record!(client, :invoice_sent, subject: self, by:, channel: "payment", revision:) # CLI-05
       end
       payment.save!
+      close_checkout_later # PAY-04: the balance changed under an open Checkout page
       record!(:payment_recorded, by:, payment: payment.uid, **payment.summary)
       ClientEvent.record!(client, :payment_recorded, subject: payment, by:, **payment.summary) # CLI-05
       apply_payments!(by:)
@@ -287,6 +290,8 @@ class Invoice < ApplicationRecord
       next [ existing, false, 0 ] if existing
 
       discard_revision!(by: nil) if revising?
+      # This payment's Checkout page is done; another one still open is for an old balance.
+      checkout_session_id == checkout_id ? clear_checkout : close_checkout_later
       owed = void? ? 0 : balance.cents
       payment = payments.create!(business:, source: "online", payment_method: "card", amount_cents:, currency: currency.upcase,
                                  received_on:, reference: intent_id, provider_payment_id: intent_id,
@@ -298,6 +303,25 @@ class Invoice < ApplicationRecord
       apply_payments!
       [ payment, true, [ amount_cents - owed, 0 ].max ]
     end
+  end
+
+  # PAY-04: the Checkout page open for this invoice, if it can still be paid for a while.
+  def open_checkout?(within: 5.minutes) = checkout_session_id.present? && checkout_expires_at.present? && checkout_expires_at > within.from_now
+
+  def remember_checkout!(session, amount_cents:, expires_at:)
+    update_columns(checkout_session_id: session.fetch("id"), checkout_session_url: session.fetch("url"), checkout_amount_cents: amount_cents,
+                   checkout_expires_at: expires_at)
+  end
+
+  def clear_checkout = update_columns(checkout_session_id: nil, checkout_session_url: nil, checkout_amount_cents: nil, checkout_expires_at: nil)
+
+  # Closes the open Checkout page once this change commits (a payment recorded, voided, revised),
+  # so it can't be paid for an amount that's no longer right.
+  def close_checkout_later
+    return unless (session_id = checkout_session_id)
+
+    clear_checkout
+    ActiveRecord.after_all_transactions_commit { ExpireCheckoutSessionJob.perform_later(id, session_id) }
   end
 
   # PAY-04: refunds and disputes on an online payment, as Stripe reports them (cumulative, so a

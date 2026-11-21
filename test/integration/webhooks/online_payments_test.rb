@@ -100,6 +100,12 @@ class Webhooks::OnlinePaymentsTest < ActionDispatch::IntegrationTest
     assert_equal [ "partially_paid", 15_000 ], [ invoice.status, invoice.amount_paid_cents ]
     deliver("charge.refunded", { id: "ch_1", object: "charge", payment_intent: "pi_1", amount_refunded: 5_000 })
     as_business(@business) { assert_equal 1, @invoice.events.where(kind: "payment_refunded").count, "a repeat changes nothing" }
+    sign_in users(:one)
+    post switch_admin_business_path, params: { business: @business.uid }
+    get admin_invoice_path(@invoice)
+    assert_select "#payment-#{payment.uid}", /Partly refunded.*Paid online.*Stripe pi_1, \$50\.00 refunded/m
+    assert_select "#payment-#{payment.uid} a[aria-label^=Change]", false, "online payments can't be changed here"
+    assert_match(/Refund in Stripe: \$50\.00 of \$200\.00, Visa ending 4242 \(pi_1\)/, response.body)
 
     deliver("charge.dispute.created", { id: "dp_1", object: "dispute", charge: "ch_1", payment_intent: "pi_1", amount: 15_000, status: "needs_response", reason: "fraudulent" })
     assert_equal "Disputed", payments.first.adjustment_label

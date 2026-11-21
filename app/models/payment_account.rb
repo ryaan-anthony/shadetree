@@ -92,12 +92,23 @@ class PaymentAccount < ApplicationRecord
   def disconnect!(reason:, by: nil, gateway: PaymentGateway.current)
     return self unless connected?
 
+    expire_open_checkouts(gateway) unless reason == "provider" # PAY-04: while we still can
     gateway.disconnect(account_id) unless reason == "provider"
     update!(disconnected_at: Time.current, disconnected_reason: reason, disconnected_by: by, charges_enabled: false, payouts_enabled: false)
     self
   end
 
   private
+
+  # PAY-04: no client can pay through a Checkout page left open on an account we're leaving.
+  def expire_open_checkouts(gateway)
+    Invoice.where.not(checkout_session_id: nil).find_each do |invoice|
+      gateway.expire_checkout_session(account_id, invoice.checkout_session_id)
+      invoice.clear_checkout
+    rescue PaymentGateway::Error => error
+      Rails.error.report(error, handled: true, context: { invoice: invoice.uid })
+    end
+  end
 
   def pending_verification_reason? = disabled_reason.to_s.include?("pending_verification") || disabled_reason.to_s == "under_review"
 end

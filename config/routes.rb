@@ -39,6 +39,8 @@ Rails.application.routes.draw do
   get "c/:token/quote/files/:id", to: "client/document_files#show", as: :client_quote_file, defaults: { kind: "quote" }
   get "c/:token/invoice/files/:id", to: "client/document_files#show", as: :client_invoice_file, defaults: { kind: "invoice" } # PAY-02
   get "c/:token/invoice/pdf", to: "client/invoices#pdf", as: :client_invoice_pdf
+  post "c/:token/invoice/pay", to: "client/invoice_payments#create", as: :client_invoice_pay # PAY-04: to Stripe Checkout
+  get "c/:token/invoice/paid", to: "client/invoice_payments#show", as: :client_invoice_paid # PAY-04: back from it
   get "c/:token/quote/pdf", to: "client/quotes#pdf", as: :client_quote_pdf # QTE-03
   post "c/:token/quote/approve", to: "client/quotes#approve", as: :approve_client_quote # QTE-05
   post "c/:token/quote/decline", to: "client/quotes#decline", as: :decline_client_quote
@@ -287,7 +289,7 @@ Rails.application.routes.draw do
     end
     # Settings → Payments (PAY-03): connecting the business's Stripe account. Stripe sends the
     # owner back to return (done or left) or resume (the link expired: a fresh one).
-    resource :payment_account, only: %i[show create destroy], path: "payments" do
+    resource :payment_account, only: %i[show create update destroy], path: "payments" do
       get :resume
       get :return, action: :returned
     end

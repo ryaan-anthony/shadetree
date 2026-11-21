@@ -1,6 +1,7 @@
 <%# locals: (document:, client_link: nil, preview: false) -%>
 <%# The client's invoice page (PAY-02), from a client link (PLT-12) or as the staff preview:
-    what's owed and when, the document, files, and a PDF. Paying online comes with PAY-04. %>
+    what's owed and when, a Pay button when the business takes card payments (PAY-04), the
+    document, files, and a PDF. %>
 <% client_link = nil if preview %>
 <% invoice = document %>
 <% totals = invoice.totals %>
@@ -18,14 +19,24 @@
   <% elsif invoice.paid? %>
     <div class="banner banner-success mb-4" role="status"><%= icon "check-circle" %><p class="font-semibold">Paid in full. Thank you!</p></div>
   <% else %>
-    <%# What's owed, first. %>
-    <div class="client-card mb-4 flex flex-wrap items-end justify-between gap-3 p-5 sm:p-6">
-      <div>
-        <p class="text-sm2 text-muted"><%= invoice.payments? ? "Balance due" : "Amount due" %></p>
-        <p class="money text-3xl font-bold text-ink"><%= money(invoice.balance) %></p>
+    <% if params[:payment] == "cancelled" && !preview %>
+      <div class="banner banner-info mb-4" role="status" id="payment-cancelled"><%= icon "info" %><p>Your payment wasn't finished, so nothing was charged. You can try again below.</p></div>
+    <% end %>
+    <%# What's owed, first, and paying it (PAY-04). %>
+    <div class="client-card mb-4 p-5 sm:p-6" id="amount-due">
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p class="text-sm2 text-muted"><%= invoice.payments? ? "Balance due" : "Amount due" %></p>
+          <p class="money text-3xl font-bold text-ink"><%= money(invoice.balance) %></p>
+        </div>
+        <p class="text-sm <%= invoice.overdue?(@business.today) ? "font-semibold text-danger" : "text-subtle" %>">
+          <%= safe_join([ invoice.overdue?(@business.today) ? "Overdue: was due " : "Due ", local_date(invoice.due_on) ]) %></p>
       </div>
-      <p class="text-sm <%= invoice.overdue?(@business.today) ? "font-semibold text-danger" : "text-subtle" %>">
-        <%= safe_join([ invoice.overdue?(@business.today) ? "Overdue: was due " : "Due ", local_date(invoice.due_on) ]) %></p>
+      <% if invoice.online_payable? %>
+        <%= render "client/invoices/pay", invoice:, client_link:, preview: %>
+      <% elsif invoice.balance.positive? && invoice.balance.cents < Invoice::ONLINE_MINIMUM_CENTS && @business.accepts_online_payments? %>
+        <p class="mt-3 text-sm2 text-muted" id="pay-too-small">Balances under <%= money(Money.new(Invoice::ONLINE_MINIMUM_CENTS, invoice.currency)) %> can't be paid online. Contact <%= @business.name %> to settle it.</p>
+      <% end %>
     </div>
   <% end %>
 

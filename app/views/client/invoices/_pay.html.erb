@@ -1,0 +1,26 @@
+<%# locals: (invoice:, client_link:, preview:) -%>
+<%# PAY-04: paying by card on Stripe's secure page: the balance, or part of it when the business
+    allows. The staff preview shows the button without a working form. %>
+<% minimum = Money.new(OnlinePayments::MINIMUM_PART, invoice.currency) %>
+<%# A part needs room for itself and what it leaves: both at least the minimum. %>
+<% partial = @business.online_partial_payments? && invoice.balance.cents >= 2 * minimum.cents %>
+<div class="mt-4 border-t border-line pt-4" id="pay">
+  <% if preview %>
+    <span class="<%= button_classes(:brand, extra: "w-full justify-center sm:w-auto") %>" aria-disabled="true"><%= icon "credit-card" %> Pay <%= money(invoice.balance) %></span>
+    <p class="mt-2 text-sm2 text-muted">Clients pay by card, Apple Pay or Google Pay here.</p>
+  <% else %>
+    <%= form_with url: client_invoice_pay_path(client_link.token), data: { turbo: false } do %>
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+        <% if partial %>
+          <div class="field sm:w-48">
+            <label class="label" for="pay_amount">Amount to pay</label>
+            <%= text_field_tag :amount, format("%.2f", invoice.balance.amount), class: "input money", id: "pay_amount", inputmode: "decimal", required: true, "aria-describedby": "pay_amount_help" %>
+          </div>
+        <% end %>
+        <%= button_tag type: "submit", class: button_classes(:brand, extra: "w-full justify-center sm:w-auto"), id: "pay-button" do %><%= icon "credit-card" %> <%= partial ? "Pay now" : "Pay #{money(invoice.balance)}" %><% end %>
+      </div>
+      <% if partial %><p class="help mt-1.5" id="pay_amount_help">The full <%= money(invoice.balance) %>, or from <%= money(minimum) %>, leaving at least <%= money(minimum) %> to pay.</p><% end %>
+    <% end %>
+    <p class="mt-2 flex items-center gap-1.5 text-sm2 text-muted"><%= icon "lock", class: "size-3.5" %> Card, Apple Pay or Google Pay, on Stripe's secure page. Paid to <%= @business.name %>.</p>
+  <% end %>
+</div>

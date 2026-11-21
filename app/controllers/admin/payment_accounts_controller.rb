@@ -56,6 +56,12 @@ class Admin::PaymentAccountsController < Admin::BaseController
     stripe_problem(error)
   end
 
+  # PAY-04: whether clients may pay part of an invoice online (off by default).
+  def update
+    current_business.update!(online_partial_payments: params.dig(:business, :online_partial_payments) == "1")
+    redirect_to admin_payment_account_path, notice: current_business.online_partial_payments? ? "Clients can now choose how much to pay." : "Clients pay the full balance."
+  end
+
   def destroy
     return redirect_to(admin_payment_account_path) unless @account
 

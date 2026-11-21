@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_20_100200) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_20_100300) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -686,6 +686,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_100200) do
     t.datetime "paid_at"
     t.bigint "location_id", null: false
     t.bigint "priced_for_location_id"
+    t.string "checkout_session_id"
+    t.string "checkout_session_url"
+    t.bigint "checkout_amount_cents"
+    t.datetime "checkout_expires_at"
     t.index ["business_id", "location_id"], name: "index_invoices_on_business_id_and_location_id"
     t.index ["business_id", "number"], name: "index_invoices_on_business_id_and_number", unique: true
     t.index ["business_id", "status", "due_on"], name: "index_invoices_on_business_id_and_status_and_due_on"

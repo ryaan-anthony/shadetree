@@ -50,6 +50,20 @@
     <% end %>
   <% end %>
 
+  <% if @account %>
+    <%# PAY-04 %>
+    <%= card title: "Paying invoices", id: "payment-options" do %>
+      <%= form_with model: current_business, url: admin_payment_account_path, method: :patch do |f| %>
+        <%= f.check :online_partial_payments, label: "Let clients pay part of an invoice", hint: "They choose an amount from #{money(Money.new(OnlinePayments::MINIMUM_PART, current_business.currency_code))} up to the balance. Off: they pay the full balance." %>
+        <%= f.submit_button "Save", variant: :secondary, class: "btn-sm mt-3" %>
+      <% end %>
+      <% fee = current_business.plan.platform_fee_bps %>
+      <p class="mt-3 border-t border-line pt-3 text-sm2 text-muted" id="platform-fee">
+        <%= fee.positive? ? "On your #{current_business.plan.name} plan, Shadetree's fee is #{number_to_percentage(fee / 100.0, strip_insignificant_zeros: true)} of each online payment, on top of Stripe's card fees." : "Stripe's card fees apply to each payment." %>
+      </p>
+    <% end %>
+  <% end %>
+
   <% if @account && owner %>
     <%= card title: "Disconnect Stripe", subtitle: "Clients stop seeing Pay buttons. Payments already made stay on your invoices, and your Stripe account, its money and history are untouched. Connecting again later makes a new Stripe account.", id: "disconnect" do %>
       <%= button_to admin_payment_account_path, method: :delete, class: button_classes(:danger), form: { data: { turbo_confirm: "Disconnect Stripe? Clients won't be able to pay online. Connecting again later makes a new Stripe account.", turbo_confirm_button: "Disconnect" } } do %>Disconnect<% end %>

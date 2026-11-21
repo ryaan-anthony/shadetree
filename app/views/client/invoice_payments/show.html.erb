@@ -1,0 +1,18 @@
+<%# PAY-04: back from Stripe Checkout. The payment went through; the invoice shows it once
+    Stripe's confirmation arrives (usually within seconds). %>
+<% content_for :title, "Payment received" %>
+<% invoice = @document %>
+<div class="client-card p-6 text-center sm:p-8" role="status" id="payment-thanks">
+  <span class="empty-icon"><%= icon "check-circle" %></span>
+  <h1 class="text-lg font-bold text-ink">Thank you for your payment</h1>
+  <% if @payment %>
+    <p class="mx-auto mt-2 max-w-sm text-sm text-subtle">
+      <%= money(@payment.amount) %> paid on invoice <%= invoice.number %><%= " with #{@payment.method_detail}" if @payment.method_detail %>.
+      <%= invoice.paid? ? "It's paid in full." : "#{money(invoice.balance)} is left to pay." %>
+    </p>
+    <% if invoice.client.primary_email %><p class="mx-auto mt-1 max-w-sm text-sm2 text-muted">A receipt is on its way by email.</p><% end %>
+  <% else %>
+    <p class="mx-auto mt-2 max-w-sm text-sm text-subtle">Your payment to <%= @business.name %> went through. Invoice <%= invoice.number %> will show it in a moment, and you'll get a receipt by email.</p>
+  <% end %>
+  <%= link_to "View the invoice", client_link_path(@client_link.token), class: "#{button_classes(:secondary)} mt-5" %>
+</div>

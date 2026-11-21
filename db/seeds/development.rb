@@ -326,3 +326,14 @@ Tenancy.with_business(business) do
                            payouts_enabled: true, synced_at: Time.current, connected_by: owner)
   end
 end
+
+# PAY-04: part payments allowed, and $50 of the approved quote's invoice paid online by card
+# (recorded as Stripe's notification would; nothing calls Stripe).
+business.update!(online_partial_payments: true)
+Tenancy.with_business(business) do
+  invoice = Invoice.where(status: "partially_paid").order(:id).first
+  if invoice && !Payment.exists?(provider_payment_id: "pi_demoOakline0001") && invoice.balance.cents > 5_000
+    invoice.record_online_payment!(intent_id: "pi_demoOakline0001", amount_cents: 5_000, currency: invoice.currency, checkout_id: "cs_demoOakline0001",
+                                   method_detail: "Visa ending 4242 (Apple Pay)")
+  end
+end

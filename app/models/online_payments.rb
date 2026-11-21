@@ -5,7 +5,8 @@
 module OnlinePayments
   module_function
 
-  # The smallest part payment a client may choose (when the business allows them).
+  # The smallest part payment a client may choose (when the business allows them), and the
+  # least a part payment may leave owing (so nothing under Stripe's 50¢ is left to pay).
   MINIMUM_PART = 100 # cents
 
   BRANDS = { "amex" => "American Express", "diners" => "Diners Club", "jcb" => "JCB", "unionpay" => "UnionPay", "mastercard" => "Mastercard" }.freeze
@@ -23,7 +24,31 @@ module OnlinePayments
     { mode: "payment", payment_method_types: [ "card" ], client_reference_id: invoice.uid, metadata:,
       line_items: [ { quantity: 1, price_data: { currency: invoice.currency.downcase, unit_amount: amount_cents, product_data: { name: } } } ],
       payment_intent_data: { description: "#{name} (#{invoice.business.name})", metadata:, application_fee_amount: (fee if fee.positive?) }.compact,
-      success_url:, cancel_url:, expires_at: 1.hour.from_now.to_i }
+      success_url:, cancel_url:, expires_at: CHECKOUT_LIFETIME.from_now.to_i }
+  end
+
+  CHECKOUT_LIFETIME = 1.hour
+
+  # The client already paid through the Checkout page that's open (it's completing now).
+  class CheckoutInProgress < StandardError; end
+
+  # The Checkout page to send the client to for `amount_cents`: the one already open for that
+  # amount (another tab, a double tap), or a new one, after closing any other first. One
+  # payment, never two.
+  def open_checkout!(invoice, amount_cents:, success_url:, cancel_url:)
+    account = invoice.business.payment_account
+    gateway = PaymentGateway.current
+    invoice.with_lock do
+      if invoice.open_checkout?
+        next invoice.checkout_session_url if invoice.checkout_amount_cents == amount_cents
+        raise CheckoutInProgress if gateway.expire_checkout_session(account.account_id, invoice.checkout_session_id) == "complete"
+      end
+      expires_at = CHECKOUT_LIFETIME.from_now
+      params = checkout_session_params(invoice, amount_cents:, success_url:, cancel_url:).merge(expires_at: expires_at.to_i)
+      session = gateway.create_checkout_session(account.account_id, params)
+      invoice.remember_checkout!(session, amount_cents:, expires_at:)
+      session.fetch("url")
+    end
   end
 
   # A refund or dispute for one of our payments arrived before the payment itself: raised so the
