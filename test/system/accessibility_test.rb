@@ -32,7 +32,8 @@ class AccessibilityTest < ApplicationSystemTestCase
   test "key app pages pass axe" do
     @business.update!(weekly_hours: WeeklyHours::WEEKDAYS_8_TO_5) # so Hours has its time inputs
     assert_accessible admin_root_path, admin_roles_path, admin_service_requests_path, admin_my_day_path, admin_hours_path,
-                      edit_admin_business_path(tab: "documents"), edit_admin_business_path(tab: "request_form"), admin_plan_path,
+                      edit_admin_business_path(tab: "documents"), edit_admin_business_path(tab: "request_form"),
+                      edit_admin_business_path(tab: "branding"), admin_plan_path,
                       admin_notifications_path, admin_data_exports_path
   end
 
