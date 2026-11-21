@@ -9,7 +9,7 @@ class MarketingAccessibilityTest < ActionDispatch::IntegrationTest
     PAGES.each do |path|
       get path
       assert_response :success, path
-      assert_select "body > a[href='#main']:first-of-type", "Skip to content"
+      assert_select "body > a[href='#main']:first-child[class*='focus:z-[200]']", "Skip to content" # first, above the banner
       assert_select "body > header nav[aria-label=Main] a.logo[aria-label='Shadetree home'] .wordmark:not(.wordmark-dark)", 1, path
       assert_select "main#main", 1
       assert_select "body > footer .logo .wordmark.wordmark-dark .wordmark-shade", "Shade"
