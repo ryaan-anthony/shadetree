@@ -38,6 +38,17 @@ class MarketingTest < ApplicationSystemTestCase
       assert_text "$190 billed yearly"
       assert_no_text "billed monthly"
     end
+    # QA #274: screen readers are told what changed.
+    assert_selector "[role=status]", text: /Showing yearly prices: Starter \$15\.83 a month, \$190 billed yearly/, visible: :all
+    find("label", text: /Monthly/).click
+    assert_selector "[role=status]", text: /Showing monthly prices: Starter \$19 a month/, visible: :all
+  end
+
+  test "the skip link is the first stop, and an open FAQ question shows a minus" do
+    visit pricing_path
+    find("body").send_keys(:tab)
+    assert_equal "Skip to content", evaluate_script("document.activeElement.textContent.trim()")
+    within("details[open]") { assert_selector "summary svg", count: 1 } # the plus is hidden while it's open
   end
 
   test "on a phone the links fold into a menu" do

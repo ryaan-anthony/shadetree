@@ -36,7 +36,7 @@ class ClientLinksTest < ActionDispatch::IntegrationTest
     get client_link_path(@link.token)
     assert_response :gone
     assert_select "h1", /no longer active/
-    assert_select "a[href='tel:(555) 010-4477']"
+    assert_select "a[href='tel:+15550104477']"
     assert_equal 0, @link.reload.views_count
 
     post request_fresh_client_link_path(@link.token)

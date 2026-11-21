@@ -63,6 +63,7 @@
   .field + .field { margin-top: 1rem; }
   .label { display: block; margin-bottom: 0.375rem; font-size: 0.8125rem; font-weight: 600; color: var(--color-ink); }
   .label-optional { font-weight: 400; color: var(--color-muted); }
+  .label-required { font-weight: 600; color: var(--color-danger); }
   .help { margin-top: 0.375rem; font-size: 0.8125rem; color: var(--color-muted); }
   .error-text { display: flex; gap: 0.375rem; align-items: center; margin-top: 0.375rem; font-size: 0.8125rem; color: var(--color-danger); }
   .error-text svg { width: 0.875rem; height: 0.875rem; flex: none; }
@@ -540,7 +541,7 @@
 
   .save-status { font-size: 0.8125rem; color: var(--color-muted); white-space: nowrap; }
 
-  .client-logo-image { display: block; flex: none; height: 2.5rem; width: auto; max-width: 12rem; object-fit: contain; object-position: left center; }
+  .client-logo-image { display: block; flex: none; height: 2.5rem; width: auto; min-width: 2.5rem; max-width: 12rem; object-fit: contain; object-position: left center; }
   .client-card { background: #fff; border: 1px solid var(--color-line); border-radius: var(--radius-dialog); box-shadow: var(--shadow-raised); }
   .client-powered { display: flex; justify-content: center; align-items: center; gap: 0.375rem; padding: 1.75rem 0 2.5rem; font-size: 0.75rem; color: var(--color-muted); }
 }
@@ -618,9 +619,14 @@
   .legal-text { color: var(--color-body); font-size: 0.9375rem; line-height: 1.7; }
   .legal-text h2 { margin-top: 2rem; font-size: 1.125rem; font-weight: 700; color: var(--color-ink); }
   .legal-text h3 { margin-top: 1.25rem; font-weight: 600; color: var(--color-ink); }
-  .legal-text p, .legal-text ul, .legal-text table { margin-top: 0.75rem; }
+  .legal-text p, .legal-text ul, .legal-text ol, .legal-text table { margin-top: 0.75rem; }
   .legal-text ul { padding-left: 1.25rem; list-style: disc; }
   .legal-text li + li { margin-top: 0.25rem; }
+  /* Terms and what they mean (Privacy: what we collect), set like the bulleted lists: the term in bold, run in. */
+  .legal-text dl { margin-top: 0.75rem; }
+  .legal-text dl > div + div { margin-top: 0.25rem; }
+  .legal-text dt { display: inline; font-weight: 700; }
+  .legal-text dd { display: inline; }
   .legal-text a { text-decoration: underline; }
   .legal-text table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
   .legal-text th, .legal-text td { border-bottom: 1px solid var(--color-line); padding: 0.5rem; text-align: left; vertical-align: top; }

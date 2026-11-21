@@ -83,7 +83,7 @@ class MarketingPricingTest < ActionDispatch::IntegrationTest
     assert_select "#faq ~ div details summary", text: /cancel/
     assert_select "#faq ~ div details summary", text: /take my data/
     assert_no_match(/most popular|card payments|pay online|read-only|move to a paid plan from Settings/i, response.body)
-    assert_select "a[href=?]", contact_path, text: "Ask us"
+    assert_select "a[href=?]", contact_path, text: "Contact us about choosing a plan"
   end
 
   test "says a new business starts with the trial (BIL-05), or on Free when there's none" do

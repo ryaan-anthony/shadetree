@@ -44,7 +44,7 @@ class Client::InvoicePageTest < ActionDispatch::IntegrationTest
     assert_select ".quote-doc-terms", /Late fee after 30 days\./
     assert_select "img[alt=yard]"
     assert_select "a[href=?]", client_invoice_pdf_path(@link.token), /Download PDF/
-    assert_select "a[href='tel:555-380-0000']"
+    assert_select "a[href='tel:+15553800000']"
     assert_no_match "Gate code 1234", response.body
     assert_equal "noindex, nofollow", response.headers["X-Robots-Tag"]
     assert_nil @link.expires_at, "an unpaid invoice's link doesn't run out"

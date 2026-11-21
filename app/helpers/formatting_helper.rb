@@ -30,4 +30,43 @@ module FormattingHelper
 
     tag.time(l(date.to_date, format:), datetime: date.to_date.iso8601)
   end
+
+  # phone_number("2155551212")      => "(215) 555-1212"
+  # phone_number("+1 215-555-1212") => "(215) 555-1212"
+  # North American numbers (10 digits, or 11 with a leading 1) get the usual format; anything
+  # else (international numbers, extensions) is shown as typed.
+  def phone_number(value)
+    digits = north_american_digits(value)
+    digits ? "(#{digits[0, 3]}) #{digits[3, 3]}-#{digits[6, 4]}" : value.to_s.strip.presence
+  end
+
+  # The tel: href: +1 and ten digits for North American numbers, otherwise the digits (keeping
+  # a leading +), so phones dial it whatever punctuation was typed. Extensions are left off.
+  def phone_href(value)
+    number = value.to_s.strip[/\A[^a-z]*/i].strip # an extension isn't dialled
+    digits = north_american_digits(number)
+    return "tel:+1#{digits}" if digits
+
+    "tel:#{number.start_with?("+") ? "+" : ""}#{number.gsub(/\D/, "")}"
+  end
+
+  # A tel: link showing the formatted number (or the block's content).
+  def phone_link(value, **attributes, &)
+    return if value.blank?
+
+    block_given? ? link_to(phone_href(value), **attributes, &) : link_to(phone_number(value), phone_href(value), **attributes)
+  end
+
+  private
+
+  def north_american_digits(value)
+    text = value.to_s.strip
+    return if text.match?(/[a-z]/i) # extensions ("x12", "ext. 4") and anything that isn't just a number
+
+    digits = text.gsub(/\D/, "")
+    if text.start_with?("+") then digits[1..] if digits.length == 11 && digits.start_with?("1")
+    elsif digits.length == 11 && digits.start_with?("1") then digits[1..]
+    elsif digits.length == 10 then digits
+    end
+  end
 end

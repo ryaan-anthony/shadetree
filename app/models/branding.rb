@@ -61,6 +61,17 @@ class Branding
   # A sized logo for :web, :email or :pdf, or nil without one.
   def logo(size = :web) = logo_attachment&.variant(size)
 
+  # The sized logo's width and height, worked out from the original's (once the upload has been
+  # analyzed), so pages can reserve its space before it loads. Nil when they aren't known yet.
+  def logo_dimensions(size = :web)
+    width, height = logo_attachment&.blob&.metadata&.values_at("width", "height")
+    return unless width.to_i.positive? && height.to_i.positive?
+
+    max_width, max_height = LOGO_SIZES.fetch(size).fetch(:resize_to_limit)
+    scale = [ max_width.fdiv(width), max_height.fdiv(height), 1 ].min
+    [ (width * scale).round, (height * scale).round ]
+  end
+
   # The saved logo. A new upload waiting on a save that failed validation isn't shown; the
   # logo already saved is, until the new one is.
   def logo_attachment

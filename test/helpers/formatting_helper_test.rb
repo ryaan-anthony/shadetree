@@ -19,4 +19,17 @@ class FormattingHelperTest < ActionView::TestCase
     html = Time.use_zone("Pacific/Kiritimati") { local_date(Date.new(2026, 12, 1)) }
     assert_dom_equal '<time datetime="2026-12-01">Dec 1, 2026</time>', html
   end
+
+  test "phone numbers: North American ones formatted and dialled with +1, others as typed (QA #274)" do
+    assert_equal "(215) 555-1212", phone_number("2155551212")
+    assert_equal "(215) 555-1212", phone_number("+1 215.555.1212")
+    assert_equal "tel:+12155551212", phone_href("1 (215) 555-1212")
+    assert_equal "+44 20 7946 0958", phone_number("+44 20 7946 0958")
+    assert_equal "tel:+442079460958", phone_href("+44 20 7946 0958")
+    assert_equal "215-555-1212 x12", phone_number("215-555-1212 x12")
+    assert_equal "tel:+12155551212", phone_href("215-555-1212 x12"), "the extension isn't dialled"
+    assert_dom_equal '<a class="x" href="tel:+12155551212">(215) 555-1212</a>', phone_link("2155551212", class: "x")
+    assert_nil phone_link("")
+    assert_nil phone_number(nil)
+  end
 end

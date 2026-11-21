@@ -4,7 +4,7 @@
 <% if contact.contact_phone.present? || contact.contact_email.present? %>
   <div class="mt-5 flex flex-wrap justify-center gap-2">
     <% if contact.contact_phone.present? %>
-      <%= link_to "tel:#{contact.contact_phone}", class: button_classes(:secondary) do %><%= icon "phone" %> Call <%= contact.contact_phone %><% end %>
+      <%= phone_link contact.contact_phone, class: button_classes(:secondary) do %><%= icon "phone" %> Call <%= phone_number(contact.contact_phone) %><% end %>
     <% end %>
     <% if contact.contact_email.present? %>
       <%= mail_to contact.contact_email, class: button_classes(:secondary) do %><%= icon "mail" %> Email us<% end %>

@@ -1,7 +1,7 @@
 require "test_helper"
 
 # QA/accessibility audit #274, marketing and public pages: the Shadetree wordmark, landmarks,
-# short links and branded error pages.
+# real lists, short links, branded error pages, the contact form and pricing.
 class MarketingAccessibilityTest < ActionDispatch::IntegrationTest
   PAGES = %w[/ /features /pricing /about /contact /legal /terms /privacy /legal/security /users/sign_in /users/sign_up].freeze
 
@@ -22,6 +22,36 @@ class MarketingAccessibilityTest < ActionDispatch::IntegrationTest
       get path
       assert_no_match(/Shade[ -]?Tree|SHADETREE|shade tree/, response.body, path)
     end
+  end
+
+  test "the hero quote is text, with the subtotal, tax and total that add up" do
+    get root_path
+    assert_select "figure figcaption.sr-only"
+    assert_select "figure[aria-hidden]", false
+    assert_select "figure ul li", 4
+    assert_select "figure dl" do
+      assert_select "dt", "Subtotal"
+      assert_select "dd", "$1,243.00"
+      assert_select "dt", "Sales tax (7.25%)"
+      assert_select "dd", "$90.12"
+      assert_select "dd", "$1,333.12"
+    end
+    assert_equal BigDecimal("1333.12"), (BigDecimal("1243.00") * BigDecimal("1.0725")).round(2)
+  end
+
+  test "home page lists are lists" do
+    get root_path
+    assert_select "ul[aria-labelledby=made-for] li", Industry.all.size # every industry but "other", and "other crews"
+    assert_select "dl > div > dt", "Your data is yours"
+  end
+
+  test "legal pages use real lists, and Privacy's terms are a description list" do
+    get terms_path
+    assert_select "article.legal-text ul > li", minimum: 7
+    get privacy_path
+    assert_select "article.legal-text dl > div > dt", "Your account:"
+    assert_select "article.legal-text dl > div > dd", /your name, email, a hashed password/
+    assert_select "article.legal-text li strong", false, "term lists are <dl>, not bold list items"
   end
 
   test "short links go where people expect" do
@@ -51,6 +81,35 @@ class MarketingAccessibilityTest < ActionDispatch::IntegrationTest
       assert_match(/ · Shadetree\z/, page.at_css("title").text)
       assert_no_match(/rails|application owner|logs/i, page.text, code)
     end
+  end
+
+  test "contact: one title, spaced optional labels, one Something else, and marked required fields" do
+    get contact_path
+    assert_select "title", "Contact · Shadetree"
+    assert_select "label[for=contact_message_business_name]", "Business name (optional)"
+    assert_select "#contact_message_industry option[value=other]", 1
+    assert_select "#contact_message_industry option", text: "Other", count: 0
+    assert_select "p", "Fields marked * are required."
+    %w[name email body].each do |field|
+      assert_select "label[for=contact_message_#{field}] .label-required[aria-hidden=true]", "*"
+      assert_select "#contact_message_#{field}[required]"
+    end
+    assert_select "label[for=contact_message_business_name] .label-required", false
+  end
+
+  test "pricing: a descriptive contact link, a status region for the switch, and FAQ cues" do
+    get pricing_path
+    assert_select "a[href=?]", contact_path, text: "Contact us about choosing a plan"
+    assert_select "a", text: "Ask us", count: 0
+    assert_select "[data-controller=billing-switch][data-billing-switch-yearly-value*='billed yearly']"
+    assert_select "p.sr-only[role=status][data-billing-switch-target=status]"
+    assert_select "input[name=billing][data-action='billing-switch#announce']", 2
+    assert_select "details summary.group-open\\:text-canopy", minimum: 4
+  end
+
+  test "the Free plan's quota matches the features screenshot (3 of 5 quotes sent)" do
+    free = YAML.safe_load_file(Rails.root.join("db/seeds/plans.yml")).fetch("free")
+    assert_equal 5, free.dig("limits", "quotes_sent"), "retake app/assets/images/marketing/builder*.webp (MKT-01) when this changes"
   end
 
   test "staff emails carry the wordmark" do

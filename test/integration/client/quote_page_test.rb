@@ -42,7 +42,7 @@ class Client::QuotePageTest < ActionDispatch::IntegrationTest
     assert_select ".quote-doc-terms", /Net 15\./
     assert_select "img[alt=yard][loading=lazy]"
     assert_select "#quote-actions", /Total \$208\.25.*Valid until/m
-    assert_select "a[href='tel:555-380-0000']"
+    assert_select "a[href='tel:+15553800000']"
     assert_no_match "Gate code 1234", response.body
     assert_equal "noindex, nofollow", response.headers["X-Robots-Tag"]
   end

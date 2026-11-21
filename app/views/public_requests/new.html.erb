@@ -86,7 +86,11 @@
 <% else %>
   <div class="client-card p-6 text-center sm:p-8">
     <h1 class="text-lg font-bold text-ink">Get in touch with <%= @business.name %></h1>
-    <p class="mx-auto mt-2 max-w-sm text-sm text-subtle">Online requests are off right now. Call or email and we'll help.</p>
+    <% if @business.contact_phone.present? || @business.contact_email.present? %>
+      <p class="mx-auto mt-2 max-w-sm text-sm text-subtle">Online requests are off right now. Call or email and we'll help.</p>
+    <% else %>
+      <p class="mx-auto mt-2 max-w-sm text-sm text-subtle">Online requests are off right now. Please check back soon.</p>
+    <% end %>
     <%= render "client_links/business_contact" %>
   </div>
 <% end %>
