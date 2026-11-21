@@ -28,6 +28,7 @@ class Business < ApplicationRecord
   has_many :closures # CAT-06; the database removes them with the business
   has_many :locations # CAT-07; likewise
   has_many :operator_notes # OPS-02; internal, and the database removes them with the business
+  has_one :subscription # BIL-04: mirrored from Stripe; read it with the business's tenancy set
 
   # Callbacks
   before_validation { self.uid ||= SecureRandom.base58(BusinessOwned::UID_LENGTH) if new_record? }
@@ -39,6 +40,8 @@ class Business < ApplicationRecord
 
   # One per loaded business, so a page counts usage once (reload starts afresh).
   def entitlements = @entitlements ||= Entitlements.for(self)
+
+  def reload_entitlements = @entitlements = nil
 
   def reload(...)
     @entitlements = @primary_location = nil
