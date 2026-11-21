@@ -1,4 +1,4 @@
 <%# locals: (business:) -%>
 <% status = Ops::Directory.status_of(business) %>
 <% if business.deletion_due_at %><%= badge "Deletion scheduled", tone: :warning %><% end %>
-<%= badge Ops::Directory::STATUSES.fetch(status), tone: { "active" => :success, "closed" => :neutral, "suspended" => :danger }.fetch(status, :neutral) %>
+<%= badge Ops::Directory::STATUSES.fetch(status), tone: { "active" => :success, "trial" => :info, "past_due" => :warning, "closed" => :neutral, "suspended" => :danger }.fetch(status, :neutral) %>

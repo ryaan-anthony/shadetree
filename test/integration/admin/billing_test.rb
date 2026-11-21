@@ -223,3 +223,59 @@ class Admin::BillingTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 end
+
+# BIL-05: what Owners see of a trial and a failing renewal.
+class Admin::BillingLifecycleTest < ActionDispatch::IntegrationTest
+  setup do
+    @business = businesses(:one)
+    sign_in users(:one)
+    post switch_admin_business_path, params: { business: @business.uid }
+  end
+
+  test "a trial shows its days left on the plan page, and a banner in its last days" do
+    @business.update_columns(trial_plan_id: plans(:business).id, trial_ends_at: 5.days.from_now)
+    Billing::PlanResolver.apply!(@business)
+    get admin_plan_path
+    assert_select "#trial-status", /Business trial: 5 days left/
+    assert_select "#billing-banner", 0
+    @business.update_columns(trial_ends_at: 2.days.from_now)
+    get admin_root_path
+    assert_select "#billing-banner", /Business trial ends on/
+    @business.update_columns(trial_ends_at: 3.days.from_now)
+    get admin_plan_path
+    assert_select "#trial-status", /first payment is on/
+    assert_select "#billing", { text: /isn't billed through Shadetree/, count: 0 }
+    @business.update_columns(trial_ends_at: 47.hours.from_now)
+    get admin_plan_path
+    assert_select "#trial-status", /the trial ends and billing starts straight away/
+  end
+
+  test "a failing renewal shows a banner on every page for Owners, with a way to update the card" do
+    customer = with_stripe_customer(@business)
+    id = stripe.add_subscription(customer:, plan: plans(:starter), status: "past_due")
+    Billing::SubscriptionSync.refresh!(@business, id)
+    get admin_root_path
+    assert_select "#billing-banner a[href='#{admin_plan_path(anchor: "billing")}']", /Update payment/
+    get admin_plan_path
+    assert_select "#past-due", /update your card by/
+    assert_select "#billing form[action='#{admin_billing_portal_path}'] input[name=flow][value=payment]"
+
+    admin = member_with_role(:admin, business: @business)
+    sign_in admin
+    post switch_admin_business_path, params: { business: @business.uid }
+    get admin_root_path
+    assert_select "#billing-banner", 0, "Owners only"
+  end
+
+  test "after the grace period the banner says the plan is on Free until a payment goes through" do
+    customer = with_stripe_customer(@business)
+    id = stripe.add_subscription(customer:, plan: plans(:starter), status: "past_due")
+    Billing::SubscriptionSync.refresh!(@business, id)
+    travel 8.days do
+      BillingChecksJob.perform_now
+      get admin_root_path
+      assert_select "#billing-banner", /renewal wasn't paid, so you're on Free/
+      assert_select "#billing-banner", { text: /to keep your plan/, count: 0 }
+    end
+  end
+end

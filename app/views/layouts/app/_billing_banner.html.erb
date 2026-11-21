@@ -1,0 +1,22 @@
+<%# BIL-05: Owners see a failing renewal on every page until it's fixed, and a trial's last days. %>
+<% business = current_business %>
+<% if business.billing_status == "past_due" %>
+  <% lapsed = business.plan.default %>
+  <div class="banner banner-warning mb-5 flex-wrap items-center" role="status" id="billing-banner">
+    <%= icon "credit-card" %>
+    <p class="min-w-0 flex-1">
+      <% if lapsed %>
+        <span class="font-semibold">Your renewal wasn't paid, so you're on <%= business.plan.name %> for now.</span> Update your card and your plan comes back as soon as a payment goes through.
+      <% else %>
+        <span class="font-semibold">A payment for your plan failed.</span> Update your card to keep your plan; Stripe will try again.
+      <% end %>
+    </p>
+    <%= link_to "Update payment", admin_plan_path(anchor: "billing"), class: "#{button_classes(:secondary, :sm)} shrink-0" %>
+  </div>
+<% elsif business.billing_status == "trialing" && business.trial_ends_at && business.trial_ends_at <= 3.days.from_now %>
+  <div class="banner banner-info mb-5 flex-wrap items-center" role="status" id="billing-banner">
+    <%= icon "clock" %>
+    <p class="min-w-0 flex-1">Your <%= business.trial_plan&.name %> trial ends on <%= local_date(business.trial_ends_at) %>. Choose a plan to keep it.</p>
+    <%= link_to "See plans", admin_plan_path, class: "#{button_classes(:secondary, :sm)} shrink-0" %>
+  </div>
+<% end %>

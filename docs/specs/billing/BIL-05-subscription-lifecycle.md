@@ -23,32 +23,68 @@ nobody loses data because a card expired.
 
 ## Acceptance criteria
 
-- [ ] New businesses can start with a trial of a configured paid plan (length configurable,
+- [x] New businesses can start with a trial of a configured paid plan (length configurable,
       0 disables); trial status and days remaining are visible; reminders are emailed before it
       ends; at the end without payment the business moves to Free.
-- [ ] When a renewal payment fails, Owners see a persistent banner with a link to update
+- [x] When a renewal payment fails, Owners see a persistent banner with a link to update
       payment; the plan continues through a configurable grace period while the provider
       retries.
-- [ ] If the subscription ends (canceled or unpaid after grace), the business moves to Free at
+- [x] If the subscription ends (canceled or unpaid after grace), the business moves to Free at
       the end of the paid period; Owners are emailed; limits and features follow BIL-03
       downgrade rules; nothing is deleted.
-- [ ] Reactivating (paying again) restores the paid plan immediately.
-- [ ] All transitions are driven by provider events or scheduled checks, are idempotent, and are
+- [x] Reactivating (paying again) restores the paid plan immediately.
+- [x] All transitions are driven by provider events or scheduled checks, are idempotent, and are
       recorded in a per-business billing history visible to operators.
-- [ ] Tests cover trial expiry, grace, downgrade at period end, reactivation and duplicate
+- [x] Tests cover trial expiry, grace, downgrade at period end, reactivation and duplicate
       events.
 
 ## Follow-ups
 
 - Add Trial / Past due / payment-account status and billing history to the OPS-02 directory
-  and business page (OPS-02 shows Active, Suspended and Closed until then).
+  and business page. *Done here except the payment-account status (PAY-03).*
 
 ## Out of scope
 
 - Dunning emails (provider handles retries and payment-failure emails).
 - Win-back campaigns (backlog).
 
+## Decisions
+
+- A 14-day Pro trial without a card, and 7 days' grace after the first failed renewal (owner
+  accepted the recommendations). Both are settings: `TRIAL_DAYS` (0 turns trials off),
+  `TRIAL_PLAN`, `BILLING_GRACE_DAYS`.
+- Every new business starts the trial; a trialing business counts toward the three free
+  businesses per owner.
+
 ## Open questions
 
-- Trial design: 14-day Pro trial without card (recommended) vs no trial (Free is the trial).
-- Grace period length — recommend 7 days after first failure.
+- Should one person get a trial on every business they create, or only their first?
+  (Today: every new business; the free-business cap limits it to three at a time.)
+
+## Implementation notes
+
+- `Billing::PlanResolver` works the plan out in one order: an operator's comp (until its end
+  date), a live Stripe subscription (to the end of a cancelled period; while past due, until
+  the grace period from `subscriptions.past_due_since` ends), the business's trial, then Free.
+  It keeps `businesses.billing_status` (free, trialing, active, past_due, comped) and
+  `billing_check_at`; `BillingChecksJob` (hourly) re-resolves businesses that are due and sends
+  trial reminders (3 days and 1 day before, once each, `Billing::TrialReminders`).
+- A move to Free is in the billing history with its reason and emailed to each Owner
+  (`BillingMailer#moved_to_free`); BIL-03's rules apply and nothing is deleted. Paying again
+  (Stripe's retry, or a new Checkout) restores the plan as soon as the event or return arrives.
+- Owners see the trial's days left and a failing renewal on Settings → Plan (with "Update
+  payment method", the portal's card flow) and a banner on every page while past due (and in a
+  trial's last three days).
+- Operators (OPS-04): comp a plan with an optional end date (refused while there's a live
+  subscription: a live subscription always decides the plan), set a trial's end, apply a
+  Stripe coupon or promotion code; each needs a reason and a recent code, is audited and in the
+  billing history. The directory filters Trial and Past due (OPS-02).
+- Subscribing during a trial with 48 hours or more left keeps billing until the trial's end.
+  Reminders go out from 9 am business time; the grace period starts at the invoice's first
+  failed attempt; emails are queued after the business's lock commits; the hourly check
+  re-cancels a closed business's live subscription. The migration keeps a paid plan set before
+  billing as a comp with no end date.
+- Dev seeds: the demo business's subscription sets its billing status; a business created in
+  development starts the 14-day trial.
+- Tests: `test/models/billing/lifecycle_test.rb`, `test/integration/ops/billing_actions_test.rb`,
+  `test/integration/admin/billing_test.rb`.
