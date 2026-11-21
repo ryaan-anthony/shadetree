@@ -16,10 +16,10 @@
 <% end %>
 
 <% if invoice.void? %>
-  <div class="banner banner-warning mb-4" role="status"><%= icon "x-circle" %>
+  <div class="banner banner-warning mb-4"><%= icon "x-circle" %>
     <p>Voided <%= local_time(invoice.voided_at) %><%= " by #{invoice.voided_by.full_name}" if invoice.voided_by %>: “<%= invoice.void_reason %>”</p></div>
 <% elsif invoice.payments? && !invoice.paid? %>
-  <div class="banner banner-info mb-4" role="status"><%= icon "info" %><p>It has payments, so its items can't change and it can't be voided.</p></div>
+  <div class="banner banner-info mb-4"><%= icon "info" %><p>It has payments, so its items can't change and it can't be voided.</p></div>
 <% end %>
 
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
