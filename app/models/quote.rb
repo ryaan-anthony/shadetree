@@ -87,7 +87,9 @@ class Quote < ApplicationRecord
 
   def draft? = status == "draft"
   def sent? = status == "sent"
-  def awaiting_client? = sent?
+  # QA #274: an expired quote can't be answered as is; it's renewed with a revision (QTE-06),
+  # whose own send is what counts, so an undelivered email isn't warned about meanwhile.
+  def awaiting_client? = sent? && !expired?
   def approved? = status == "approved"
   # Only drafts change. A sent quote is revised (QTE-06); an approved one is locked for good.
   def editable? = draft?

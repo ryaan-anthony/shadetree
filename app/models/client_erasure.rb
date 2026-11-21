@@ -185,7 +185,8 @@ class ClientErasure
   def erase_mentions
     subjects = { "Quote" => @quotes.map(&:id), "Invoice" => @invoices.map(&:id), "Job" => @client.jobs.ids,
                  "Visit" => Visit.joins(:job).where(jobs: { client_id: @client.id }).ids,
-                 "ServiceRequest" => @client.service_requests.ids, "Client" => [ @client.id ] }
+                 "ServiceRequest" => @client.service_requests.ids, "Client" => [ @client.id ],
+                 "Payment" => Payment.where(invoice_id: @invoices.map(&:id)).ids } # receipts, and their delivery notices (QA #274)
     subjects.each do |type, ids|
       next if ids.empty?
 

@@ -44,6 +44,7 @@ class ClientEvent < ApplicationRecord
     subjects = events.filter_map(&:subject)
     ActiveRecord::Associations::Preloader.new(records: subjects.grep(Visit), associations: :job).call
     ActiveRecord::Associations::Preloader.new(records: subjects.grep(Payment), associations: :invoice).call
+    ActiveRecord::Associations::Preloader.new(records: subjects.grep(EmailMessage), associations: :related).call # QA #274
     [ events.first(PAGE_SIZE), events.size > PAGE_SIZE ]
   end
 end

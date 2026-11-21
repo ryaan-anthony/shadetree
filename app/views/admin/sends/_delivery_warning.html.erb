@@ -9,8 +9,9 @@
   <div class="min-w-0 flex-1">
     <h2 id="<%= id %>-h" class="font-semibold">Email not delivered</h2>
     <p class="mt-1">The email to <span class="break-all"><%= email.to %></span> on <%= local_time(email.problem_at) %> didn't arrive. <%= email.problem_reason %></p>
-    <p class="mt-1">The <%= noun %> is still <%= document.status == "partially_paid" ? "partly paid" : "sent" %> and its link still works. Check the address and resend, or send the link yourself.</p>
+    <p class="mt-1">The <%= noun %> is still <%= document.status == "partially_paid" ? "partly paid" : "sent" %> and its link still works. <%= email.our_side? ? "Resend in a while" : "Check the address and resend" %>, or send the link yourself.</p>
     <% if (code = email.reply_code) %><p class="mt-1 text-sm2">Mail server code: <span class="font-mono"><%= code %></span></p><% end %>
+    <%# Defensive: the quote and invoice pages already need office, as does the send page. %>
     <% if can?(:office) && document.sendable? %>
       <%= link_to resend_path, class: "#{button_classes(:secondary, :sm)} mt-2" do %><%= icon "send" %> Resend<% end %>
     <% end %>

@@ -24,20 +24,28 @@ class EmailMessage < ApplicationRecord
   def self.hourly_limit_reached? = where(created_at: 1.hour.ago..).count >= CLIENT_EMAILS_PER_HOUR
   scope :problems, -> { where(status: PROBLEMS) }
 
+  # Reported to operators when a client email fails on Shadetree's side (QA #274).
+  class UndeliveredOnOurSide < StandardError; end
+
   def problem? = status.in?(PROBLEMS)
 
   # announce: the mail server refused it or it couldn't be sent (ClientMailDeliveryJob), so it's
-  # put on the client's timeline and the team is told. Emails skipped before sending (the
-  # document changed, a blocked address) are only marked.
+  # announced (see #announce_undelivered), once, when its status changes. Emails skipped before
+  # sending (the document changed, a blocked address) are only marked.
   def mark!(status, at: Time.current, announce: status == "bounced", **attributes)
     stamp = { "sent" => :sent_at, "bounced" => :bounced_at, "failed" => :failed_at }[status]
     Tenancy.with_business(business) do
       transaction do
         update!(status:, **(stamp ? { stamp => at } : {}), **attributes)
-        announce_undelivered(at) if announce && problem?
+        announce_undelivered(at) if announce && problem? && saved_change_to_status?
       end
     end
   end
+
+  # The failure is Shadetree's, not the client's address: our mail server rejected our
+  # credentials, or there's no reply from a receiving server at all (a relay outage past the
+  # retries, an unexpected error).
+  def our_side? = status == "failed" && (error.to_s.include?("credentials rejected") || reply_code.nil?)
 
   # When it went wrong, for the "not delivered" warnings.
   def problem_at = bounced_at || failed_at || updated_at
@@ -56,7 +64,8 @@ class EmailMessage < ApplicationRecord
       else "The receiving mail server says this address doesn't exist or can't take email."
       end
     else
-      if text.include?("credentials rejected") then "Shadetree's mail server wouldn't take it. This is on our side; try again later."
+      if our_side? && (text.include?("credentials rejected") || text.start_with?("The mail server", "Something went wrong"))
+        "Something went wrong on Shadetree's side, not with the address. We've been told; try again later."
       elsif text.include?("refused the email") then "The receiving mail server rejected the email."
       elsif text.include?("couldn't take the email") then "The mail server didn't take it, even after trying again for about four hours."
       else text.presence || "It couldn't be sent."
@@ -73,18 +82,47 @@ class EmailMessage < ApplicationRecord
   private
 
   # CLI-05: an email that didn't arrive shows on the client's timeline; NTF-02: the team is told,
-  # so someone fixes the address and resends.
+  # so someone fixes the address and resends. Not for a test email (staff's own address), nor
+  # for an old send that a later one has replaced (the document's page has nothing to warn
+  # about). A failure on Shadetree's side goes to operators, once, instead of every team.
   def announce_undelivered(at)
-    client = related.try(:client)
+    return if kind == "test_message" || superseded?
+
+    client = related.is_a?(Payment) ? related.invoice.client : related.try(:client)
     ClientEvent.record!(client, :email_bounced, subject: self, at:) if client
-    NotificationType.deliver("email_not_delivered", business:, subject: related || self, title: "An email#{" to #{client.display_name}" if client} wasn't delivered",
-                             body: [ document_label, problem_reason ].compact.join(": "), path: staff_path(client))
+    if our_side?
+      Rails.error.report(UndeliveredOnOurSide.new("client email failed on our side: #{error}"), handled: true,
+                         context: { record_type: "EmailMessage", record_id: id, business_id:, kind: }) # "email" keys are filtered
+    else
+      NotificationType.deliver("email_not_delivered", business:, subject: notification_subject, title: "An email#{" to #{client.display_name}" if client} wasn't delivered",
+                               body: "#{about}: #{problem_reason}", path: staff_path(client))
+    end
+  end
+
+  # A send of a quote or invoice whose document has been sent by email again since.
+  def superseded?
+    sends = related.try(:sends) or return false
+    emailed = sends.unscope(:order).where(channel: "email")
+    emailed.exists?(email_message_id: id) && emailed.order(created_at: :desc, id: :desc).pick(:email_message_id) != id
+  end
+
+  # Receipts are about a payment; the notice is filed under its invoice (so erasing the client
+  # scrubs it, INS-02).
+  def notification_subject = related.is_a?(Payment) ? related.invoice : (related || self)
+
+  # What the email was: the quote or invoice itself when that's what was sent, otherwise its
+  # kind ("Automated message for Quote Q-0001", "Payment receipt for Invoice INV-0001").
+  def about
+    return document_label if kind.in?(%w[quote_sent invoice_sent]) && document_label
+
+    [ EmailCatalog.find(kind).name, document_label ].compact.join(" for ")
   end
 
   def document_label
     case related
     when Quote then "Quote #{related.number}"
     when Invoice then "Invoice #{related.number}"
+    when Payment then "Invoice #{related.invoice.number}"
     end
   end
 
@@ -93,6 +131,7 @@ class EmailMessage < ApplicationRecord
     case related
     when Quote then routes.admin_quote_path(related)
     when Invoice then routes.admin_invoice_path(related)
+    when Payment then routes.admin_invoice_path(related.invoice)
     else client ? routes.admin_client_path(client) : routes.admin_root_path
     end
   end
