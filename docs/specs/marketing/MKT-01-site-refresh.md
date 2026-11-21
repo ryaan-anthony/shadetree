@@ -94,6 +94,7 @@ Part 3 (Pricing):
 
 QA #274: Shadetree's own 400/404/406/422/429/500 are static files in `public/` (they must show when the app
 can't run), with the layout's skip link, header, main and footer; `/security` and `/help` redirect.
+The hero quote is real text with its subtotal and tax; client pages have a skip link.
 
 ## Open questions
 

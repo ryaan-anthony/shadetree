@@ -56,7 +56,8 @@ and trust pages a small SaaS needs, wire acceptance into sign-up, and make updat
   Summary, Sub-processors, Security & Trust) and their versions (effective date, summary,
   `material`, `draft`). Each version's text is its own view, never edited once published;
   `/legal/<slug>/<version>` keeps earlier ones readable (not indexed). Pages show the effective
-  date and the change history.
+  date and the change history. Lists are `<ul>`, terms with meanings `<dl>` (QA #274 changed
+  only the draft's markup); `/security` redirects to Security & Trust.
 - Sign-up (and sign-up through an invitation) records `terms_version` and `privacy_version`
   with `terms_accepted_at`. A material version in force sends people who accepted an older
   one to "We've updated our terms" on their next visit to the app; accepting records the new

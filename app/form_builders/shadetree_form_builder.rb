@@ -12,6 +12,10 @@
 #     <%= f.check :reminders, label: "Send reminders", hint: "A day before each visit." %>
 #     <%= f.submit_button "Save client" %>
 #   <% end %>
+#
+# Most forms mark only the optional fields. A public form where most fields are optional can
+# also mark the required ones: `<%= f.required_legend %>` before the fields shows "Fields marked
+# * are required." and puts a * after the label of every required field that follows.
 class ShadetreeFormBuilder < ActionView::Helpers::FormBuilder
   INPUT_TYPES = {
     text: :text_field, email: :email_field, password: :password_field, phone: :telephone_field,
@@ -31,7 +35,16 @@ class ShadetreeFormBuilder < ActionView::Helpers::FormBuilder
     input = build_input(method, as, choices, currency, options)
     @template.render "components/field",
                      id:, input:, help:, errors:, optional:,
+                     required_mark: @mark_required && options[:required].present?,
                      label: label || label_text(method)
+  end
+
+  # The legend for required-field marks; required fields after it get a *.
+  def required_legend
+    @mark_required = true
+    @template.tag.p(class: "help mt-0") do
+      @template.safe_join([ "Fields marked ", @template.tag.span("*", class: "label-required"), " are required." ])
+    end
   end
 
   def check(method, label: nil, hint: nil, **options)

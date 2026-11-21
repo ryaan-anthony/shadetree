@@ -1,5 +1,5 @@
 <%# Wraps every auth screen. locals: (title:, lede: nil, footer: nil) %>
-<% content_for :title, title %>
+<% content_for :title, title unless content_for?(:title) %><%# a page can name itself (Contact: "Contact · Shadetree") %>
 <%# MKT-04: sign-in and sign-up can be found; the other account pages (reset, unlock, confirm) are kept out. %>
 <% if devise_controller? %><%# other pages using the card (contact) describe themselves %>
   <% page_meta description: local_assigns[:lede].presence || "Sign in to your Shadetree account to run your quotes, schedule and invoices.",
