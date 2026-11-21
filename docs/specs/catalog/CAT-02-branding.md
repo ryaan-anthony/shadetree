@@ -43,7 +43,7 @@ surface one consistent way to apply that branding.
   used as chosen for accents. Link text uses it darkened (same hue, 1% steps toward black) to
   4.5:1 on the client page (`Branding#link_color`, `--color-brand-link`); a button whose text
   can't reach 4.5:1 in white or ink gets a darkened background with white text
-  (`#button_color`, `--color-brand-button`). Colors that pass are unchanged; the settings note
+  (`#button_color`, `--color-brand-button`; hover only raises contrast). Colors that pass are unchanged; the settings note
   says what happens. Emails get the same values inline, and the preview computes them live.
 
 ## Out of scope

@@ -51,6 +51,8 @@ class Branding
   def link_color = self.class.readable(color, on: CLIENT_PAGE)
   def button_color = ink_contrast >= MIN_TEXT_CONTRAST ? color : self.class.readable(color, on: WHITE)
   def button_ink = button_color == color ? ink : WHITE
+  # Hover: 6% darker under white text, 12% lighter under ink text, so contrast only goes up.
+  def button_hover_color = button_ink == WHITE ? self.class.mix(button_color, "#000000", 0.06) : self.class.mix(button_color, WHITE, 0.12)
 
   # Plain-language notes about the color, for the settings page.
   def contrast_warnings
@@ -63,7 +65,7 @@ class Branding
   # CSS variables for client pages. Only validated #rrggbb values reach the style attribute.
   def css_variables
     "--color-brand: #{color}; --color-brand-button: #{button_color}; --color-brand-ink: #{button_ink}; " \
-      "--color-brand-link: #{link_color}; --color-brand-soft: color-mix(in srgb, #{color} 10%, white);"
+      "--color-brand-hover: #{button_hover_color}; --color-brand-link: #{link_color}; --color-brand-soft: color-mix(in srgb, #{color} 10%, white);"
   end
 
   # The color darkened toward black (same hue) in 1% steps until text in it reaches 4.5:1 on
@@ -74,6 +76,13 @@ class Branding
       candidate = format("#%02x%02x%02x", *rgb.map { (_1 * (100 - step) / 100.0).round })
       return candidate if contrast(candidate, on) >= min
     end
+    "#000000"
+  end
+
+  # `hex` moved `amount` (0..1) of the way toward `target`, per channel.
+  def self.mix(hex, target, amount)
+    from, to = [ hex, target ].map { |value| value.delete("#").scan(/../).map { _1.to_i(16) } }
+    format("#%02x%02x%02x", *from.zip(to).map { |a, b| (a + ((b - a) * amount)).round })
   end
 
   def logo? = logo_attachment.present?
@@ -119,7 +128,7 @@ class Branding
 
   def self.luminance(hex)
     hex.delete("#").scan(/../).map { _1.to_i(16) / 255.0 }
-       .map { _1 <= 0.03928 ? _1 / 12.92 : ((_1 + 0.055) / 1.055)**2.4 }
+       .map { _1 <= 0.04045 ? _1 / 12.92 : ((_1 + 0.055) / 1.055)**2.4 }
        .zip([ 0.2126, 0.7152, 0.0722 ]).sum { |channel, weight| channel * weight }
   end
 end
