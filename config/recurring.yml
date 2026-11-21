@@ -25,6 +25,12 @@ production:
   prune_data_exports: # INS-02: expired export zips
     class: PruneDataExportsJob
     schedule: every day at 5:05am
+  retry_connect_events: # PAY-03: Stripe notifications that failed or were never processed
+    class: RetryConnectEventsJob
+    schedule: every 10 minutes
+  prune_connect_events: # PAY-03: old Stripe notifications
+    class: PruneConnectEventsJob
+    schedule: every day at 5:35am
   delete_scheduled_businesses: # OPS-04: businesses whose deletion waiting period is over
     class: DeleteScheduledBusinessesJob
     schedule: every day at 3:40am

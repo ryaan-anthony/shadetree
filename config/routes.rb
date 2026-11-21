@@ -327,6 +327,7 @@ Rails.application.routes.draw do
   post "csp-reports" => "csp_reports#create", as: :csp_reports # PLT-13
   post "inbound/support_email", to: "inbound/support_emails#create", as: :inbound_support_email # OPS-05: the Email Worker
   post "webhooks/stripe", to: ->(env) { Billing::WebhookEndpoint.call(env) }, as: :stripe_webhook # BIL-04 (not a controller: no params logged)
+  post "webhooks/stripe/connect" => "webhooks/stripe_connect#create", as: :stripe_connect_webhook # PAY-03, PAY-04
 
   # Render dynamic PWA files from app/views/pwa/*
   get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker

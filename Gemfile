@@ -42,6 +42,9 @@ gem "csv"
 # QR codes for the request form link (CLI-03); pure Ruby.
 gem "rqrcode", "~> 3.1"
 
+# Stripe: plans and subscriptions (BIL-04) and client payments through Connect (PAY-03, PAY-04)
+gem "stripe", "~> 21.1"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
@@ -76,5 +79,3 @@ group :test do
 end
 
 gem "tailwindcss-rails", "~> 4.7"
-
-gem "stripe", "~> 21.1"

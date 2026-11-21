@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_20_002000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_20_100100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -421,6 +421,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_002000) do
     t.index ["uid"], name: "index_closures_on_uid", unique: true
     t.check_constraint "(start_minute IS NULL) = (end_minute IS NULL) AND (start_minute IS NULL OR start_minute >= 0 AND start_minute < end_minute AND end_minute <= 1440)", name: "closures_minutes"
     t.check_constraint "ends_on >= starts_on", name: "closures_date_order"
+  end
+
+  create_table "connect_events", force: :cascade do |t|
+    t.string "event_id", null: false
+    t.string "event_type", null: false
+    t.string "account_id"
+    t.boolean "livemode", default: false, null: false
+    t.datetime "event_created_at"
+    t.integer "attempts", default: 0, null: false
+    t.jsonb "data", default: {}, null: false
+    t.string "status", default: "received", null: false
+    t.string "error"
+    t.datetime "processed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_connect_events_on_created_at"
+    t.index ["event_id"], name: "index_connect_events_on_event_id", unique: true
+    t.index ["status", "updated_at"], name: "index_connect_events_to_retry", where: "((status)::text = ANY ((ARRAY['received'::character varying, 'failed'::character varying])::text[]))"
+    t.check_constraint "status::text = ANY (ARRAY['received'::character varying, 'processed'::character varying, 'ignored'::character varying, 'failed'::character varying]::text[])", name: "connect_events_status"
   end
 
   create_table "contact_messages", force: :cascade do |t|
@@ -866,6 +885,35 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_002000) do
     t.index ["granted_by_id"], name: "index_operators_on_granted_by_id"
     t.index ["revoked_by_id"], name: "index_operators_on_revoked_by_id"
     t.index ["user_id"], name: "index_operators_on_user_id", unique: true
+  end
+
+  create_table "payment_accounts", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.string "provider", default: "stripe", null: false
+    t.string "account_id", null: false
+    t.string "country"
+    t.boolean "details_submitted", default: false, null: false
+    t.boolean "charges_enabled", default: false, null: false
+    t.boolean "payouts_enabled", default: false, null: false
+    t.string "disabled_reason"
+    t.jsonb "requirements_due", default: [], null: false
+    t.jsonb "requirements_pending", default: [], null: false
+    t.datetime "requirements_deadline"
+    t.datetime "synced_at"
+    t.datetime "status_event_at"
+    t.bigint "connected_by_id"
+    t.datetime "disconnected_at"
+    t.string "disconnected_reason"
+    t.bigint "disconnected_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_payment_accounts_on_account_id", unique: true
+    t.index ["business_id", "uid"], name: "index_payment_accounts_on_business_id_and_uid", unique: true
+    t.index ["business_id"], name: "index_payment_accounts_one_connected", unique: true, where: "(disconnected_at IS NULL)"
+    t.index ["connected_by_id"], name: "index_payment_accounts_on_connected_by_id"
+    t.index ["disconnected_by_id"], name: "index_payment_accounts_on_disconnected_by_id"
+    t.check_constraint "disconnected_reason IS NULL OR (disconnected_reason::text = ANY (ARRAY['owner'::character varying, 'provider'::character varying, 'business_deleted'::character varying]::text[]))", name: "payment_accounts_disconnected_reason"
   end
 
   create_table "payments", force: :cascade do |t|
@@ -1475,6 +1523,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_002000) do
   add_foreign_key "operators", "users"
   add_foreign_key "operators", "users", column: "granted_by_id", on_delete: :nullify
   add_foreign_key "operators", "users", column: "revoked_by_id", on_delete: :nullify
+  add_foreign_key "payment_accounts", "businesses"
+  add_foreign_key "payment_accounts", "users", column: "connected_by_id", on_delete: :nullify
+  add_foreign_key "payment_accounts", "users", column: "disconnected_by_id", on_delete: :nullify
   add_foreign_key "payments", "businesses"
   add_foreign_key "payments", "invoices"
   add_foreign_key "payments", "users", column: "recorded_by_id"
