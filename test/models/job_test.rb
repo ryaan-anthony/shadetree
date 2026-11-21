@@ -34,7 +34,7 @@ class JobTest < ActiveSupport::TestCase
       assert_equal [ @maria, @maria.properties.first, quote, "Spring cleanup", "Bring the big mower", "unscheduled" ],
                    [ job.client, job.property, job.quote, job.title, job.internal_notes, job.status ]
       assert_match(/\AJ-\d{4}\z/, job.number)
-      assert_equal [ [ "Leaf cleanup", "2 hour", 9_000, true ], [ "Mulch", "6 cu yd", 7_800, false ] ],
+      assert_equal [ [ "Leaf cleanup", "2 hours", 9_000, true ], [ "Mulch", "6 cu yd", 7_800, false ] ],
                    job.line_items.map { [ _1.name, _1.quantity_label, _1.unit_price_cents, _1.taxable ] }
       assert_equal [ "yard.png" ], job.attachments.map { _1.filename.to_s }
       assert_equal quote.total_cents, job.total_cents, "same items, discount and tax as the quote"

@@ -60,7 +60,7 @@ class Admin::MyDayTest < ActionDispatch::IntegrationTest
     assert_select "a[href='tel:5550100100']", /Call/
     assert_select "a[href='sms:5550100100']", /Text/
     assert_select "main", /Bag the leaves.*This visit:.*Front beds first/m
-    assert_select "#visit-work", /Leaf cleanup.*2 hour/m
+    assert_select "#visit-work", /Leaf cleanup.*2 hours/m
     assert_select "#visit-work .money", 0
     @business.update!(technicians_see_prices: true)
     get admin_my_visit_path(@morning)

@@ -9,11 +9,11 @@
             <p class="font-medium text-ink"><%= table.label %></p>
             <p class="text-sm2 text-muted"><%= table.description %></p>
             <details class="mt-1 text-sm2 text-muted">
-              <summary class="cursor-pointer">Columns</summary>
+              <summary class="cursor-pointer" aria-label="Columns: <%= table.label %>">Columns</summary>
               <p class="mt-1"><%= table.columns.map(&:header).join(", ") %></p>
             </details>
           </div>
-          <%= link_to "Download CSV", download_admin_data_exports_path(table.key), class: button_classes(:secondary, :sm), data: { turbo: false } %>
+          <%= link_to "Download CSV", download_admin_data_exports_path(table.key), class: button_classes(:secondary, :sm), data: { turbo: false }, "aria-label": "Download CSV: #{table.label}" %>
         </li>
       <% end %>
     </ul>

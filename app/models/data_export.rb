@@ -71,7 +71,7 @@ class DataExport < ApplicationRecord
       column("Billing address", &:billing)
       column("Access notes", &:access_notes)
     end,
-    Table.new("locations", "Locations", "Your locations (CAT-07); the main one's details are your business profile's.", scope: -> { Location.all }) do
+    Table.new("locations", "Locations", "Your locations; the main one's details are your business profile's.", scope: -> { Location.all }) do
       column("Location ID", &:uid)
       column("Name", &:name)
       column("Main location", &:primary)

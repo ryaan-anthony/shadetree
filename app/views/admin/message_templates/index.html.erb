@@ -19,7 +19,7 @@
             </p>
             <p class="text-sm2 text-muted"><%= definition.hint %></p>
           </div>
-          <%= link_to (@editable ? "Edit" : "View"), edit_admin_message_template_path(definition.kind), class: button_classes(:secondary, :sm) %>
+          <%= link_to (@editable ? "Edit" : "View"), edit_admin_message_template_path(definition.kind), class: button_classes(:secondary, :sm), "aria-label": "#{@editable ? "Edit" : "View"}: #{entry.name}" %>
         </li>
       <% end %>
     </ul>
@@ -37,7 +37,7 @@
               <p class="font-semibold text-ink"><%= link_to template.name, edit_admin_custom_message_template_path(template), class: "hover:underline" %></p>
               <p class="truncate text-sm2 text-muted"><%= template.subject %></p>
             </div>
-            <%= link_to (@editable ? "Edit" : "View"), edit_admin_custom_message_template_path(template), class: button_classes(:secondary, :sm) %>
+            <%= link_to (@editable ? "Edit" : "View"), edit_admin_custom_message_template_path(template), class: button_classes(:secondary, :sm), "aria-label": "#{@editable ? "Edit" : "View"}: #{template.name}" %>
           </li>
         <% end %>
       </ul>

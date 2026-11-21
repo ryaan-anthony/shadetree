@@ -61,6 +61,8 @@ Part 1 (search engines):
   pages and request pages whose business ticked "Let search engines find this page"
   (Settings → Request form). The staff app also sends `X-Robots-Tag: noindex`; client pages are
   noindex; account pages other than sign-in and sign-up are noindex.
+- While requests are off, that setting is disabled and the server ignores it: it keeps its saved
+  value, so turning requests back on restores the business's choice (QA #274).
 - The home page carries Organization and SoftwareApplication structured data, its offers from
   the listed plans.
 

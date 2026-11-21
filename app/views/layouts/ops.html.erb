@@ -8,8 +8,9 @@
     <meta name="turbo-prefetch" content="false">
   </head>
   <body class="bg-canvas text-sm text-body">
+    <%# The skip link is the first tab stop, before the support banner; z-[200] keeps it above that sticky banner. %>
+    <a href="#main" class="btn btn-secondary sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[200]">Skip to content</a>
     <%= render "layouts/impersonation_banner" %>
-    <a href="#main" class="btn btn-secondary sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50">Skip to content</a>
     <header class="border-b border-slate-800 bg-slate-900 text-white">
       <div class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
         <p class="font-semibold">Shadetree operator console</p>
@@ -32,10 +33,16 @@
       </div>
     </header>
     <main id="main" class="mx-auto max-w-6xl px-4 py-6">
+      <%# Alerts announce themselves; notices are read through #announcer, kept across Turbo visits. %>
+      <div id="announcer" class="sr-only" role="status" aria-live="polite" aria-atomic="true" data-turbo-permanent></div>
       <% flash.each do |type, message| %>
-        <div class="banner <%= type.to_s == "alert" ? "banner-warning" : "banner-success" %> mb-4" role="<%= type.to_s == "alert" ? "alert" : "status" %>"><p><%= message %></p></div>
+        <% alert = type.to_s == "alert" %>
+        <div class="banner <%= alert ? "banner-warning" : "banner-success" %> mb-4" <%= tag.attributes(role: ("alert" if alert), data: { controller: ("announce" unless alert) }) %> data-turbo-temporary><p><%= message %></p></div>
       <% end %>
       <%= yield %>
     </main>
+    <footer class="mx-auto max-w-6xl border-t border-line px-4 py-4 text-xs text-muted">
+      <p>Shadetree operator console · <%= link_to "Terms", terms_path, class: "underline-offset-2 hover:underline" %> · <%= link_to "Privacy", privacy_path, class: "underline-offset-2 hover:underline" %> · <%= link_to "Legal", legal_path, class: "underline-offset-2 hover:underline" %></p>
+    </footer>
   </body>
 </html>

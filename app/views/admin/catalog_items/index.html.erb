@@ -38,7 +38,7 @@
   <div class="space-y-4">
     <% @groups.each do |category, items| %>
       <%= card title: category&.name || "Uncategorized", subtitle: pluralize(items.size, "item"), flush: true,
-               actions: (link_to("Add here", new_admin_catalog_item_path(category: category&.uid), class: button_classes(:ghost, :sm)) unless @showing_archived) do %>
+               actions: (link_to("Add here", new_admin_catalog_item_path(category: category&.uid), class: button_classes(:ghost, :sm), "aria-label": "Add here: #{category&.name || "Uncategorized"}") unless @showing_archived) do %>
         <ul class="list">
           <% items.each_with_index do |item, index| %>
             <li id="item-<%= item.uid %>" class="flex-wrap">

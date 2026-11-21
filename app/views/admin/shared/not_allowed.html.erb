@@ -1,6 +1,6 @@
 <% content_for :title, "Not available" %>
 <div class="card mx-auto mt-6 max-w-lg">
-  <%= empty_state title: "This isn't available with your role",
+  <%= empty_state level: 1, title: "This isn't available with your role",
                   text: "Ask an owner or admin of #{current_business&.name || "this business"} if you need access.",
                   icon: "lock" do %>
     <%= link_to "Go to home", admin_root_path, class: button_classes(:secondary) %>

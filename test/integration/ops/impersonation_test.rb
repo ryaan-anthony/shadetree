@@ -36,8 +36,10 @@ class Ops::ImpersonationTest < ActionDispatch::IntegrationTest
     assert_select "#impersonation-banner", /Viewing as Jane Smith.*Owner.*Test Business Two/m
     assert_select "#impersonation-mode", "Read-only"
     assert_select "#impersonation-banner", /user1@example.com/
+    assert_select "body > a[href='#main']:first-child ~ #impersonation-banner", 1, "Skip to content is the first tab stop, before the banner"
     get ops_business_path(@business)
     assert_select "#impersonation-banner"
+    assert_select "body > a[href='#main']:first-child ~ #impersonation-banner", 1
     assert_select "#view-as", /Stop that first/
 
     start

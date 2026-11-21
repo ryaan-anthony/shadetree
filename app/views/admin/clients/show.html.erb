@@ -38,7 +38,7 @@
   <div class="space-y-4">
     <%= card title: "Properties", subtitle: (pluralize(@client.properties.size, "property", plural: "properties") if @client.properties.any?), flush: true do %>
       <% if @client.properties.empty? %>
-        <%= empty_state title: "No properties yet", text: "Add the address where the work happens.", icon: "home" do %>
+        <%= empty_state title: "No properties yet", text: "Add the address where the work happens.", level: 3, icon: "home" do %>
           <%= link_to "Add a property", edit_admin_client_path(@client), class: button_classes(:secondary, :sm) %>
         <% end %>
       <% else %>
