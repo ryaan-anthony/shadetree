@@ -42,6 +42,12 @@ account, no clutter, instant load.
       *Dev Lighthouse: accessibility 100, performance 88 (uncompressed assets); re-check on staging.*
 - [x] Tests cover states, preview mode, expiry and link isolation.
 
+## Implementation notes
+
+- One document partial serves the client page and PDF (title an H1, items a real table with
+  column headers) and the staff quote page, where the title is an H2 under the page's own H1
+  (QA #274).
+
 ## Decisions
 
 - A quote's link expires 30 days after the quote does, never sooner than the 90-day default.
