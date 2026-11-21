@@ -23,6 +23,9 @@ class Admin::BrandingTest < ActionDispatch::IntegrationTest
     assert_select "button[data-brand-preview-target=swatch]", Branding::PRESETS.size
     assert_select "input#business_brand_color"
     assert_select "aside[aria-label=Preview] [data-brand-preview-target=preview]", /Approve quote/
+    # QA #274: the same sample quote as the Features page, and labelled a sample.
+    assert_select "aside[aria-label=Preview]", /Quote Q-0001\s*Sample.*Spring cleanup.*\$622\.05/m
+    assert_select "aside[aria-label=Preview] .wordmark.wordmark-small", "Shadetree" # 11px: one colour (owner, 2026-11-21)
   end
 
   test "uploading a logo and picking a color" do

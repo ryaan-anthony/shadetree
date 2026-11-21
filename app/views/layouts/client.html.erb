@@ -11,20 +11,24 @@
     <%= inline_style_rule("body.client", branding.css_variables) %>
   </head>
   <body class="client">
+    <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[200] btn btn-secondary">Skip to content</a><%# first, above the banner %>
     <%= render "layouts/impersonation_banner" %>
     <header class="client-head">
       <div class="client-wrap flex h-[4.25rem] items-center gap-3">
         <% if branding.logo? %>
-          <%= image_tag branding.logo(:web), alt: branding.name, class: "client-logo-image" %>
+          <%# The logo's size is set up front, so the header doesn't wait on it (QA #274: it showed as 0 × 40 while the
+              resized copy was still being made); its alt text is the business's name. %>
+          <% width, height = branding.logo_dimensions(:web) %>
+          <%= image_tag branding.logo(:web), alt: branding.name, class: "client-logo-image", width:, height: %>
         <% else %>
           <span class="client-logo" aria-hidden="true"><%= branding.initials %></span>
         <% end %>
         <div class="min-w-0">
-          <p class="truncate font-bold text-ink <%= "sr-only" if branding.logo? %>"><%= branding.name %></p>
+          <% unless branding.logo? %><p class="truncate font-bold text-ink"><%= branding.name %></p><% end %>
           <% contact = @contact || @business %><%# CAT-07: the location the client deals with %>
           <% if contact&.contact_label %><p class="truncate text-sm2 font-medium text-subtle"><%= contact.contact_label %></p><% end %>
           <% if contact&.contact_phone.present? %>
-            <p class="text-sm2 text-muted"><%= link_to contact.contact_phone, "tel:#{contact.contact_phone}", class: "hover:text-ink" %></p>
+            <p class="text-sm2 text-muted"><%= phone_link contact.contact_phone, class: "hover:text-ink" %></p>
           <% end %>
         </div>
       </div>

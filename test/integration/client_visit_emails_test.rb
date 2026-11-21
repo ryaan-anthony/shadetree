@@ -49,7 +49,7 @@ class ClientVisitEmailsTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", @day.strftime("%A, %B %-d")
     assert_select "main", text: /Arrive 8–10 am.*Spring cleanup.*12 Elm St.*Please leave the side gate unlocked/m
-    assert_select "a[href='tel:555-380-0000']"
+    assert_select "a[href='tel:+15553800000']"
     assert_select "main", text: /Bag the leaves|Gate code/, count: 0
 
     visit = as_business(@business) { @job.visits.first }

@@ -1,8 +1,11 @@
 <%# MKT-01: the product doing the loop: the quote as the client sees it on their phone, and the
     owner hearing it was approved. Drawn in the app's own styles, not a stock illustration. %>
-<div class="relative mx-auto w-full max-w-md sm:mb-16 lg:mb-0 lg:max-w-none" aria-hidden="true">
+<%# QA #274: the quote is real text, so screen readers get it too; the browser frame, the phone (the same quote
+    again) and the dots are decoration. The tax line makes the total add up: $1,243.00 plus 7.25% is $1,333.12. %>
+<figure class="relative mx-auto w-full max-w-md sm:mb-16 lg:mb-0 lg:max-w-none">
+  <figcaption class="sr-only">An example quote in Shadetree, then the client approving it.</figcaption>
   <div class="rounded-[14px] border border-line bg-surface shadow-pop">
-    <div class="flex items-center gap-1.5 border-b border-line px-4 py-2.5">
+    <div class="flex items-center gap-1.5 border-b border-line px-4 py-2.5" aria-hidden="true">
       <span class="size-2.5 rounded-full bg-line"></span><span class="size-2.5 rounded-full bg-line"></span><span class="size-2.5 rounded-full bg-line"></span>
       <span class="ml-3 truncate rounded bg-sunken px-3 py-0.5 text-[0.6875rem] text-subtle">getshadetree.com/admin/quotes</span>
     </div>
@@ -12,15 +15,19 @@
         <%= badge "Sent", tone: :info %>
       </div>
       <p class="mt-1 text-sm2 text-muted">Spring cleanup and bed refresh · 12 Maple Street</p>
-      <ul class="mt-4 divide-y divide-line-2 text-sm">
+      <ul class="mt-3 divide-y divide-line-2 text-sm">
         <% [ [ "Spring cleanup", "$385.00" ], [ "Mulch install, 6 cu yd", "$468.00" ], [ "Bed edging, 90 ft", "$202.50" ], [ "Hedge trimming, 2.5 h", "$187.50" ] ].each do |name, price| %>
-          <li class="flex justify-between gap-3 py-2"><span class="text-subtle"><%= name %></span><span class="money text-ink"><%= price %></span></li>
+          <li class="flex justify-between gap-3 py-1.5"><span class="text-subtle"><%= name %></span> <span class="money text-ink"><%= price %></span></li>
         <% end %>
       </ul>
-      <p class="mt-2 flex justify-between border-t border-line pt-3 text-sm font-bold text-ink"><span>Total with tax</span><span class="money">$1,333.12</span></p>
+      <dl class="mt-1 border-t border-line pt-2 text-sm">
+        <div class="flex justify-between gap-3 py-0.5 text-subtle"><dt>Subtotal</dt> <dd class="money">$1,243.00</dd></div>
+        <div class="flex justify-between gap-3 py-0.5 text-subtle"><dt>Sales tax (7.25%)</dt> <dd class="money">$90.12</dd></div>
+        <div class="mt-1 flex justify-between gap-3 font-bold text-ink"><dt>Total</dt> <dd class="money">$1,333.12</dd></div>
+      </dl>
     </div>
   </div>
-  <div class="absolute -bottom-10 right-2 hidden w-44 rounded-[26px] border-[6px] border-ink bg-surface shadow-pop sm:block lg:-right-4">
+  <div class="absolute -bottom-10 right-2 hidden w-44 rounded-[26px] border-[6px] border-ink bg-surface shadow-pop sm:block lg:-right-4" aria-hidden="true">
     <div class="px-3.5 pb-3.5 pt-4">
       <p class="text-[0.6875rem] text-muted">Quote for Hannah Brooks</p>
       <p class="text-sm font-bold text-ink">Spring cleanup</p>
@@ -29,7 +36,7 @@
     </div>
   </div>
   <div class="relative mt-3 flex w-fit items-center gap-3 rounded-card border border-line bg-surface p-3 pr-4 shadow-pop sm:absolute sm:-bottom-16 sm:-left-6 sm:mt-0">
-    <span class="flex size-8 items-center justify-center rounded-control bg-canopy text-white"><%= icon "check" %></span>
-    <span><span class="block text-sm font-semibold text-ink">Hannah approved your quote</span><span class="block text-xs text-muted">$1,333.12, just now</span></span>
+    <span class="flex size-8 items-center justify-center rounded-control bg-canopy text-white" aria-hidden="true"><%= icon "check" %></span>
+    <span><span class="block text-sm font-semibold text-ink">Hannah approved your quote</span> <span class="block text-xs text-muted">$1,333.12, just now</span></span>
   </div>
-</div>
+</figure>

@@ -225,7 +225,7 @@ class PublicRequestsTest < ActionDispatch::IntegrationTest
     @business.update!(request_form_enabled: false)
     get public_request_path("oakline")
     assert_select "form[action='/request/oakline']", false
-    assert_select "a[href=?]", "tel:#{@business.phone}"
+    assert_select "a[href=?]", "tel:#{@business.phone.delete("^0-9")}" # dialable digits (QA #274)
     submit
     assert_response :unprocessable_content
     assert_empty requests

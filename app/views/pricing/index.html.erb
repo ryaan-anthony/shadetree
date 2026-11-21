@@ -6,7 +6,10 @@
 
 <%# MKT-01: every price, limit and feature here comes from the plans (BIL-01). The monthly/yearly
     switch is two radio buttons and CSS, so it works without script. %>
-<div class="group/billing">
+<% paid = @plans.select { plan_yearly?(_1) } %>
+<div class="group/billing" data-controller="billing-switch"
+     data-billing-switch-monthly-value="Showing monthly prices: <%= paid.map { "#{_1.name} #{plan_price(_1.monthly_price)} a month" }.join(", ") %>."
+     data-billing-switch-yearly-value="Showing yearly prices: <%= paid.map { "#{_1.name} #{plan_annual_monthly(_1)} a month, #{plan_price(_1.annual_price)} billed yearly" }.join(", ") %>.">
   <section class="mx-auto max-w-6xl px-5 pb-10 pt-14 text-center sm:px-8 sm:pt-20">
     <h1 class="text-4xl font-extrabold tracking-[-0.04em] text-ink sm:text-6xl">Free until it’s paying for itself.</h1>
     <p class="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-subtle">Every plan has the whole workflow, from request to payment. Paid plans are about how many quotes you send each month and how many people are on your team.</p>
@@ -14,12 +17,13 @@
       <fieldset class="mx-auto mt-8 inline-flex rounded-control border border-line bg-sunken p-1 text-sm">
         <legend class="sr-only">Billing</legend>
         <label class="cursor-pointer rounded-[4px] px-3.5 py-1.5 font-medium text-subtle has-[:checked]:bg-surface has-[:checked]:text-ink has-[:checked]:shadow-card has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-canopy">
-          <input type="radio" name="billing" value="monthly" class="sr-only" checked> Monthly
+          <input type="radio" name="billing" value="monthly" class="sr-only" checked data-action="billing-switch#announce"> Monthly
         </label>
         <label class="cursor-pointer rounded-[4px] px-3.5 py-1.5 font-medium text-subtle has-[:checked]:bg-surface has-[:checked]:text-ink has-[:checked]:shadow-card has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-canopy">
-          <input type="radio" name="billing" value="yearly" class="sr-only" id="billing-yearly"> Yearly<%= ", #{savings.first}" if savings.one? && savings.first %>
+          <input type="radio" name="billing" value="yearly" class="sr-only" id="billing-yearly" data-action="billing-switch#announce"> Yearly<%= ", #{savings.first}" if savings.one? && savings.first %>
         </label>
       </fieldset>
+      <p class="sr-only" role="status" data-billing-switch-target="status"></p>
     <% end %>
   </section>
 
@@ -102,12 +106,14 @@
            "Yes, on every plan. Download your clients, quotes, jobs, invoices and payments as spreadsheets, or everything at once with your PDFs and photos." ]
        ].each_with_index do |(question, answer), index| %>
       <details class="group py-1" <%= "open" if index.zero? %>>
-        <summary class="flex cursor-pointer list-none items-center justify-between gap-4 py-4 font-semibold text-ink">
-          <%= question %><%= icon "plus", class: "size-4 shrink-0 text-muted transition-transform group-open:rotate-45" %>
+        <%# QA #274: a focus ring around the whole question, and the open one is shown by a minus and green text. %>
+        <summary class="-mx-2 flex cursor-pointer list-none items-center justify-between gap-4 rounded-control px-2 py-4 font-semibold text-ink hover:text-canopy focus-visible:outline-offset-0 group-open:text-canopy [&::-webkit-details-marker]:hidden">
+          <%= question %>
+          <%= icon "plus", class: "size-4 shrink-0 text-muted group-open:hidden" %><%= icon "minus", class: "hidden size-4 shrink-0 text-canopy group-open:block" %>
         </summary>
         <p class="pb-5 text-[0.9375rem] leading-relaxed text-subtle"><%= answer %></p>
       </details>
     <% end %>
   </div>
-  <p class="mt-8 text-center text-sm text-subtle">Something else? <%= link_to "Ask us", contact_path, class: "font-semibold text-canopy hover:underline" %>.</p>
+  <p class="mt-8 text-center text-sm text-subtle">Something else? <%= link_to "Contact us about choosing a plan", contact_path, class: "font-semibold text-canopy hover:underline" %>.</p>
 </section>

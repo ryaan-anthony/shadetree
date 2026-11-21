@@ -1,7 +1,9 @@
-<%# Rendered by ShadetreeFormBuilder#field. locals: (id:, label:, optional:, help:, errors:, input:) %>
+<%# Rendered by ShadetreeFormBuilder#field. locals: (id:, label:, optional:, help:, errors:, input:, required_mark: false) %>
+<%# The space before "(optional)" is part of the label's text, so it survives any layout (QA #274). The * is
+    only shown: the field itself is announced as required. %>
 <div class="field">
   <% if label %>
-    <label class="label" for="<%= id %>"><%= label %><% if optional %> <span class="label-optional">(optional)</span><% end %></label>
+    <label class="label" for="<%= id %>"><%= label %><% if optional %><span class="label-optional"> (optional)</span><% end %><% if local_assigns[:required_mark] %><span class="label-required" aria-hidden="true"> *</span><% end %></label>
   <% end %>
   <%= input %>
   <% if help %><p class="help" id="<%= id %>_help"><%= help %></p><% end %>

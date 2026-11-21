@@ -92,8 +92,8 @@ Part 3 (Pricing):
   plan, cancelling (no contract or fee; downgrades are BIL-04's), and taking your data (INS-02). The old pricing page's
   invented tiers, toggle script and comparison table are gone, as is its test.
 
-QA #274: Shadetree's own 400/404/406/422/429/500 are static files in `public/` (they must show when the app
-can't run), with the layout's skip link, header, main and footer; `/security` and `/help` redirect.
+QA #274: our 400/404/406/422/429/500 are static `public/` files (shown when the app can't run),
+with skip link and landmarks; `/security`, `/help` redirect; the hero quote is text, with its tax.
 
 ## Open questions
 
