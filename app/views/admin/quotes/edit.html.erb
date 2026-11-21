@@ -36,7 +36,7 @@
 <% if @quote.revising? && (previous = @quote.revisions.last) %>
   <%# What this revision answers: the client's last words on the previous one. %>
   <% answer = @quote.responses.reverse.find { _1.revision == previous.number } %>
-  <div class="banner banner-info mb-4"><%= icon "edit-3" %>
+  <div class="banner banner-info mb-4" role="status"><%= icon "edit-3" %>
     <div class="min-w-0 flex-1">
       <p><% if answer %><span class="font-semibold"><%= answer.label %></span> on revision <%= previous.number %><%= answer.message ? ":" : "." %><% else %>Revising revision <%= previous.number %>.<% end %>
         <%= link_to "See what was sent", revision_admin_quote_path(@quote, number: previous.number), class: "font-semibold underline-offset-2 hover:underline" %></p>

@@ -29,6 +29,5 @@
   <noscript><%= submit_tag "Search", class: button_classes(:secondary), name: nil %></noscript>
 <% end %>
 
-<%= turbo_frame_tag "client_results" do %>
-  <%= render "results" %>
-<% end %>
+<%# _results is its own frame (#client_results), on the page and as the search response. %>
+<%= render "results" %>

@@ -37,7 +37,7 @@ class Admin::JobLineItemsTest < ActionDispatch::IntegrationTest
            "2" => { name: "", description: "", unit_price: "", quantity: "1", taxable: "1", catalog_item_uid: "" }, # added, left empty
            "3" => { name: "", description: "", unit_price: "0.00", quantity: "1", taxable: "1" } })
     assert_redirected_to admin_job_path(@job)
-    assert_equal [ [ "Leaf cleanup", "3 hour", 9_000 ], [ "Mulch", "6 cu yd", 7_800 ] ], lines
+    assert_equal [ [ "Leaf cleanup", "3 hours", 9_000 ], [ "Mulch", "6 cu yd", 7_800 ] ], lines
     assert_equal 27_000 + 46_800, as_business(@business) { @job.reload.total_cents }
     assert_equal @mulch, as_business(@business) { @job.line_items.last.catalog_item }
     assert_equal 18_000, as_business(@business) { @quote.reload.total_cents }, "the quote doesn't change"

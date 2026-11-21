@@ -4,7 +4,6 @@
 <% problems = @place.errors.full_messages_for(:weekly_hours) %>
 <% problem_days = problems.any? ? hours.problems_by_day : {} %>
 <% zone = @place.time_zone %>
-<% zone_name = ActiveSupport::TimeZone::MAPPING.key(zone.tzinfo.identifier) || zone.tzinfo.identifier.split("/").last.tr("_", " ") %>
 
 <div class="max-w-3xl space-y-4">
   <% if @business.multiple_locations? %><%# CAT-07: each location has its own hours and closures %>
@@ -16,11 +15,11 @@
     </nav>
   <% end %>
   <% unless @place.weekly_hours_was || problems.any? %>
-    <div class="banner banner-info"><%= icon "clock" %>
+    <div class="banner banner-info" role="status"><%= icon "clock" %>
       <p>Your hours aren't set yet. Once they are, the schedule shades the times you're closed and warns you about visits booked then.</p></div>
   <% end %>
 
-  <%= card title: "Weekly hours", subtitle: "In #{zone_name} time. One opening and one closing time per day; close at 12:00 AM to stay open until midnight.",
+  <%= card title: "Weekly hours", subtitle: "Times are in #{time_zone_label(zone)}. One opening and one closing time per day; close at 12:00 AM to stay open until midnight.",
            actions: button_to("Use weekdays 8–5", hours_path, method: :patch, params: { preset: "weekdays" }, class: button_classes(:secondary, :sm),
                               form: { data: ({ turbo_confirm: "Replace your hours with Monday to Friday, 8 am to 5 pm?", turbo_confirm_button: "Replace" } if @place.weekly_hours_was) }) do %>
     <%= form_with url: hours_path, method: :patch, id: "weekly-hours" do %>
@@ -39,13 +38,14 @@
           <li><div class="group flex min-h-14 flex-wrap items-center gap-x-4 gap-y-2 py-2" role="group" aria-label="<%= name %>">
             <label class="check w-32 items-center">
               <%= check_box_tag "hours[#{wday}][open]", "1", open, id: "hours_#{wday}_open" %>
-              <span class="font-medium text-ink"><%= name %><span class="sr-only">, open</span></span>
+              <%# Named "Open on Monday": ticked means open that day. %>
+              <span class="font-medium text-ink"><span class="sr-only">Open on </span><%= name %></span>
             </label>
             <div class="hidden flex-wrap items-center gap-2 group-has-checked:flex">
-              <label class="sr-only" for="hours_<%= wday %>_opens"><%= name %> opens</label>
+              <label class="sr-only" for="hours_<%= wday %>_opens"><%= name %> opening time</label>
               <%= time_field_tag "hours[#{wday}][opens]", open ? opens : "08:00", id: "hours_#{wday}_opens", class: "input w-32", step: 300, "aria-invalid": invalid %>
               <span class="text-sm2 text-muted">to</span>
-              <label class="sr-only" for="hours_<%= wday %>_closes"><%= name %> closes</label>
+              <label class="sr-only" for="hours_<%= wday %>_closes"><%= name %> closing time</label>
               <%= time_field_tag "hours[#{wday}][closes]", open ? closes : "17:00", id: "hours_#{wday}_closes", class: "input w-32", step: 300, "aria-invalid": invalid %>
             </div>
             <span class="text-sm2 text-muted group-has-checked:hidden">Closed</span>
@@ -59,7 +59,7 @@
   <%= card title: "Closures", subtitle: "Holidays, vacation and half days. The schedule warns about visits booked then.", flush: true,
            actions: link_to(new_admin_closure_path(location: @location), class: button_classes(:secondary, :sm)) { icon("plus") + " Add closure" } do %>
     <% if @closures.empty? %>
-      <%= empty_state title: "No closures coming up", text: "Add the holidays and days off you know about, like Thanksgiving or a week's vacation.", icon: "calendar" %>
+      <%= empty_state title: "No closures coming up", text: "Add the holidays and days off you know about, like Thanksgiving or a week's vacation.", level: 3, icon: "calendar" %>
     <% else %>
       <ul class="list"><%= render partial: "admin/closures/closure", collection: @closures %></ul>
     <% end %>

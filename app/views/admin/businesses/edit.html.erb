@@ -15,7 +15,7 @@
     <% end %>
 
     <% if tab == "documents" %>
-      <div class="banner banner-info"><%= icon "info" %>
+      <div class="banner banner-info" role="status"><%= icon "info" %>
         <p>These are starting points for <span class="font-semibold">new</span> quotes and invoices. Documents you've already created or sent keep what they had.</p>
       </div>
 
@@ -23,9 +23,9 @@
         <div class="grid gap-4 sm:grid-cols-2">
           <%= f.field :quote_expiry_days, as: :number, label: "Valid for (days)", min: 1, max: 365,
                       help: "After this, the client can't approve without asking you." %>
-          <%= f.field :quote_number_prefix, label: "Number prefix", maxlength: 8, help: "Quotes are numbered #{@business.quote_number_prefix.presence || "Q"}-0001, -0002…" %>
+          <%= f.field :quote_number_prefix, label: "Quote number prefix", maxlength: 8, help: "Quotes are numbered #{@business.quote_number_prefix.presence || "Q"}-0001, -0002…" %>
         </div>
-        <%= f.field :quote_terms, as: :textarea, label: "Terms", optional: true, rows: 5,
+        <%= f.field :quote_terms, as: :textarea, label: "Quote terms", optional: true, rows: 5,
                     placeholder: "e.g. Prices include materials and disposal. 50% deposit to schedule.",
                     help: "Shown at the bottom of every new quote. You can edit it on each quote." %>
         <%= f.field :quote_approved_message, as: :textarea, label: "After a client approves", optional: true, rows: 2, maxlength: 500,
@@ -61,9 +61,9 @@
         <div class="grid gap-4 sm:grid-cols-2">
           <%= f.field :invoice_due_days, as: :number, label: "Payment due (days after sending)", min: 0, max: 365,
                       help: "0 means due on receipt." %>
-          <%= f.field :invoice_number_prefix, label: "Number prefix", maxlength: 8, help: "Invoices are numbered #{@business.invoice_number_prefix.presence || "INV"}-0001…" %>
+          <%= f.field :invoice_number_prefix, label: "Invoice number prefix", maxlength: 8, help: "Invoices are numbered #{@business.invoice_number_prefix.presence || "INV"}-0001…" %>
         </div>
-        <%= f.field :invoice_terms, as: :textarea, label: "Terms", optional: true, rows: 5,
+        <%= f.field :invoice_terms, as: :textarea, label: "Invoice terms", optional: true, rows: 5,
                     placeholder: "e.g. Thank you for your business. Late payments may incur a fee." %>
       <% end %>
     <% elsif tab == "request_form" %>

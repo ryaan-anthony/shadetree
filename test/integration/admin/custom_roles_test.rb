@@ -187,7 +187,7 @@ class Admin::CustomRolesTest < ActionDispatch::IntegrationTest
     as_member(nobody)
     get admin_root_path
     assert_response :success
-    assert_select "h3, p", /Nothing here for your role yet/
+    assert_select "h2, p", /Nothing here for your role yet/
   end
 
   test "only people who can work visits are offered as assignees" do
@@ -255,7 +255,7 @@ class Admin::CustomRolesTest < ActionDispatch::IntegrationTest
     assert_equal [ "custom", role.id ], membership.slice(:role, :role_id).values
     as_member(user)
     get admin_my_day_path
-    assert_select ".side-foot, aside", /Dispatcher/
+    assert_select "#app-sidebar", /Dispatcher/
     assert_select "p", /on the team as a dispatcher/
   end
 

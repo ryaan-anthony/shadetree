@@ -26,6 +26,5 @@
   </nav>
 <% end %>
 
-<%= turbo_frame_tag "quote_results" do %>
-  <%= render "results" %>
-<% end %>
+<%# _results is its own frame (#quote_results), on the page and as the search response. %>
+<%= render "results" %>

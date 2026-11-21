@@ -56,8 +56,20 @@ module DocumentLine
     set_discount(row["discount_kind"], row["discount_value"]) if row.key?("discount_kind")
   end
 
-  # "2.5 hour", "6 cu yd", or just "3" without a unit.
-  def quantity_label = [ quantity.to_d.round(4).to_s("F").sub(/\.?0+\z/, ""), unit ].compact.join(" ")
+  # The catalog's own units, said for a quantity other than one ("2 visits"). Typed units are
+  # shown as typed: "6 cu yd" mustn't become "6 cu yds".
+  PLURAL_UNITS = { "hour" => "hours", "visit" => "visits" }.freeze
+
+  # "2.5 hours", "1 visit", "6 cu yd", or just "3" without a unit.
+  def quantity_label = [ quantity_number, unit_for_quantity ].compact.join(" ")
+
+  def quantity_number = quantity.to_d.round(4).to_s("F").sub(/\.?0+\z/, "")
+
+  def unit_for_quantity
+    return unit if unit.blank? || quantity.to_d == 1
+
+    PLURAL_UNITS.fetch(unit, unit)
+  end
 
   private
 
