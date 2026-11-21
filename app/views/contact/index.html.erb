@@ -9,12 +9,13 @@
       <div class="banner banner-warning" role="alert"><%= icon "alert-circle" %><p><%= f.object.errors[:base].to_sentence %></p></div>
     <% end %>
     <%= render "shared/form_guard", purpose: "contact" %>
+    <%= f.required_legend %>
     <%= f.field :name, label: "Your name", autocomplete: "name", maxlength: 120, required: true %>
     <%= f.field :email, as: :email, label: "Email", autocomplete: "email", maxlength: 254, required: true,
                 help: "We'll reply to this address." %>
     <%= f.field :business_name, label: "Business name", optional: true, autocomplete: "organization", maxlength: 120 %>
     <%= f.field :industry, as: :select, label: "Industry", optional: true, include_blank: "Choose one",
-                choices: Industry.options + [ [ "Other", "other" ] ] %>
+                choices: Industry.options %><%# its last option, "Something else", is the "other" key %>
     <%= f.field :body, as: :textarea, label: "Message", rows: 6, maxlength: 5_000, required: true,
                 placeholder: "What would you like to know?" %>
     <%= f.submit_button "Send message", class: "w-full btn-lg" %>

@@ -28,9 +28,11 @@
 
 <section class="border-b border-line" aria-label="Who it's for">
   <div class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-7 gap-y-2 px-5 py-6 text-[0.9375rem] sm:px-8">
-    <span class="text-muted">Made for</span>
-    <% Industry.all.reject { _1.key == "other" }.each do |industry| %><span class="font-medium text-subtle"><%= industry.name %></span><% end %>
-    <span class="text-subtle">and other crews of 1 to 10</span>
+    <p class="text-muted" id="made-for">Made for</p>
+    <ul class="flex flex-wrap items-center gap-x-7 gap-y-2" aria-labelledby="made-for">
+      <% Industry.all.reject { _1.key == "other" }.each do |industry| %><li class="font-medium text-subtle"><%= industry.name %></li><% end %>
+      <li class="text-subtle">and other crews of 1 to 10</li>
+    </ul>
   </div>
 </section>
 

@@ -48,11 +48,13 @@ messages are stored, the team is notified, the sender gets a confirmation, and s
 
 Part 1 (the form, storage and email):
 - `ContactMessage` (platform-level, no business): name, email, optional business name and
-  industry (the setup list plus Other), message, and the sender's IP and browser for abuse
+  industry (the setup list, which ends with "Something else"), message, and the sender's IP and browser for abuse
   checks. Names and business names lose control characters, so they can't reach mail headers.
 - The team's email has reply-to set to the sender. The sender's confirmation holds nothing they
   typed (not even their name) and goes at most once an hour per mailbox (+tags ignored), so the
   form can't flood someone's inbox or carry a message to them. The "Message sent" page only mentions it when one was sent.
+- Required fields show a * explained by "Fields marked * are required." (`f.required_legend`,
+  QA #274); optional ones say "(optional)".
 - Guards (PLT-13): hidden field, single-use form token with a minimum fill time, five attempts
   per network per ten minutes. Errors are inline, in plain words. What people type is kept out
   of logs (parameter filtering).
