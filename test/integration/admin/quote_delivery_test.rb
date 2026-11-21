@@ -121,6 +121,69 @@ class Admin::QuoteDeliveryTest < ActionDispatch::IntegrationTest
     assert_select "#quote-delivery-problem", 0
   end
 
+  def undelivered_notes = as_business(@business) { Notification.where(kind: "email_not_delivered").to_a }
+  def bounce_events = as_business(@business) { ClientEvent.where(kind: "email_bounced").count }
+
+  test "an old email that fails after a later send went out tells nobody; an automation email about the quote does, saying what it was" do
+    old = emailed
+    emailed("sent", error: nil)
+    as_business(@business) { old.mark!("failed", error: "The mail server refused the email (554 5.7.1).", announce: true) }
+    assert_empty undelivered_notes
+    assert_equal 0, bounce_events
+    get admin_quote_path(@quote)
+    assert_select "#quote-delivery-problem", 0
+
+    as_business(@business) do
+      EmailMessage.create!(kind: "automated_message", to: "maria@example.com", related: @quote)
+                  .mark!("failed", error: "The mail server refused the email (554 5.7.1).", announce: true)
+    end
+    assert_equal [ "Automated message for Quote #{@quote.number}: The receiving mail server rejected the email." ], undelivered_notes.map(&:body).uniq
+    assert_equal 1, bounce_events
+  end
+
+  test "marking the same failure twice announces it once" do
+    email = emailed
+    2.times { as_business(@business) { email.reload.mark!("failed", error: "The mail server refused the email (554 5.7.1).", announce: true) } }
+    assert_equal as_business(@business) { @business.business_users.active.count { _1.can?(:office) } }, undelivered_notes.size
+    assert_equal 1, bounce_events
+  end
+
+  test "a failure on Shadetree's side is reported to operators once, not to the team; the page says it's on our side" do
+    { "The mail server refused the email (credentials rejected, 535 5.7.8)." => "535 5.7.8", "The mail server couldn't take the email (OpenTimeout)." => nil,
+      "Something went wrong sending this email." => nil }.each do |error, code|
+      email = emailed
+      reports = capture_error_reports(EmailMessage::UndeliveredOnOurSide) { as_business(@business) { email.mark!("failed", error:, announce: true) } }
+      assert_equal 1, reports.size, error
+      assert_equal email.id, reports.first.context[:record_id]
+      assert_empty undelivered_notes, error
+      get admin_quote_path(@quote)
+      assert_select "#quote-delivery-problem", /Something went wrong on Shadetree's side, not with the address/
+      assert_select "#quote-delivery-problem", /Resend in a while, or send the link yourself/
+      assert_select "#quote-delivery-problem .font-mono", code ? code : { count: 0 }
+    end
+  end
+
+  test "a link copied after the failed email replaces the warning with a quiet note, and the badge goes" do
+    emailed("bounced")
+    travel 1.minute do
+      as_business(@business) { @quote.reload.mark_sent!(by: @owner, channel: "link") }
+    end
+    get admin_quote_path(@quote)
+    assert_select "#quote-delivery-problem", 0
+    assert_select "#quote-link-after-undelivered", /The email to maria@example.com wasn't delivered; the link was copied .* to send yourself/
+    get admin_quotes_path
+    assert_select "#quote-#{@quote.uid} .badge-danger", 0
+  end
+
+  test "an expired quote isn't warned about: it's renewed with a revision" do
+    emailed("bounced")
+    as_business(@business) { @quote.update_columns(expires_on: @business.today - 1) }
+    get admin_quote_path(@quote)
+    assert_select "#quote-delivery-problem", 0
+    get admin_quotes_path(filter: "expired")
+    assert_select "#quote-#{@quote.uid} .badge-danger", 0
+  end
+
   test "an invoice warns the same way, in its page and list" do
     invoice = as_business(@business) do
       invoice = Invoice.start(client: @maria)

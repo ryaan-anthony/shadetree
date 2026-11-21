@@ -10,5 +10,6 @@
       <%= link_to new_admin_quote_send_path(quote), class: button_classes(:secondary, :sm) do %><%= icon "send" %> Send again<% end %>
     <% end %>
   </div>
+  <%= render "admin/sends/link_after_undelivered", document: quote %>
   <div class="mt-3"><%= render "admin/sends/history", sends: quote.sends %></div>
 </section>

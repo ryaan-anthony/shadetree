@@ -32,7 +32,8 @@ noise.
       *Done for the events that exist: new request, quote first viewed, approved, declined,
       changes requested, invitation accepted. Visits (JOB-02) and ready to invoice (JOB-04)
       are added; payments (PAY-*) add theirs when they're built. "Client email not delivered"
-      (QA #274): a client email refused or not sent, emailed by default.*
+      (QA #274): a client email refused or not sent, emailed by default (not test emails or
+      failures on Shadetree's side, which go to operators).*
 - [x] Recipients are role-aware: Owners/Admins get business events; Technicians only get events
       about their own visits. *By permission; `to:` names the people for visit events (JOB-02).*
 - [x] Each member can turn email on/off per type (in-app always on) in personal settings;

@@ -47,6 +47,7 @@ class Admin::QuotesController < Admin::BaseController
     return redirect_to(edit_admin_quote_path(@quote)) if @quote.editable?
 
     @activity = QuoteActivity.for(@quote)
+    @sends_by_revision = @quote.sends_by_revision # QA #274: the Revisions list and the responses
   end
 
   def archive

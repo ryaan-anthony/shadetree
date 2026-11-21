@@ -14,6 +14,7 @@ class Admin::QuoteApprovalsController < Admin::BaseController
     @approval_form = error.record
     @quote.reload
     @activity = QuoteActivity.for(@quote)
+    @sends_by_revision = @quote.sends_by_revision
     render "admin/quotes/show", status: :unprocessable_content
   rescue Quote::NotOpen
     reason = @quote.reload.past_expiry? ? "it has expired" : "it's #{@quote.state_label.downcase}"

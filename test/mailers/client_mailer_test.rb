@@ -131,20 +131,18 @@ class ClientMailerTest < ActionMailer::TestCase
     end
   end
 
-  # QA #274: the audit's case, a recipient refused with 554 and a policy status.
-  test "an email the mail server refuses tells the team, in plain words, with the reply code kept" do
+  # QA #274: the audit's case, a recipient refused with 554 and a policy status. A test email goes
+  # to staff's own address, so it's marked but the team isn't told.
+  test "a 554 policy refusal is put in plain words with the reply code kept; a failed test email tells nobody" do
     message = send_test
     deliver_over_smtp(rcpt: "554 5.7.1 <dana@example.com>: Recipient address rejected: Access denied") { perform_enqueued_jobs(only: ClientMailDeliveryJob) }
     as_business(@business) do
       message.reload
       assert_equal [ "failed", "554 5.7.1", "The receiving mail server rejected the email." ], [ message.status, message.reply_code, message.problem_reason ]
-      notes = Notification.where(kind: "email_not_delivered")
-      assert_equal @business.business_users.active.count { _1.can?(:office) }, notes.count
-      assert_equal [ "An email wasn't delivered" ], notes.map(&:title).uniq
-      assert_match "rejected the email", notes.first.body
-      assert_no_match "dana@example.com", notes.first.body
+      assert_not message.our_side?
+      assert_empty Notification.where(kind: "email_not_delivered")
     end
-    assert_enqueued_jobs 1, only: PlatformMailDeliveryJob # the team's email (NotificationMailer)
+    assert_no_enqueued_jobs only: PlatformMailDeliveryJob
   end
 
   test "rejected credentials fail at once; a temporary AUTH reply is retried" do

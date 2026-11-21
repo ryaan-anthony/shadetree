@@ -54,6 +54,10 @@ their own phone. This is the moment that counts toward plan usage.
   (the usual send page, `office` permission). The quotes list and the client's timeline show an
   "Email not delivered" badge; the team gets an "email not delivered" notification (NTF-02).
   The Revisions list shows each send and whether its email arrived. Invoices do the same.
+  A link copied since replaces the warning with a quiet note; an expired quote isn't warned
+  about (it's renewed with a revision, QTE-06). Only the document's latest email (or one not
+  tied to a send, like an automation's) is announced, once; a failure on Shadetree's side (no
+  receiving server's reply, rejected credentials) is reported to operators, not to the team.
 - **What's known:** only what the SMTP conversation says while the delivery job sends (ADR
   0017). Bounces after the relay accepts an email stay in the provider's dashboard; capturing
   them needs the provider's event notifications (a configuration-set event destination posting
