@@ -57,7 +57,8 @@ the business's financial records.
 
 Part 1 (CSV downloads, the log):
 - Settings → Your data (`export_data`: Owners and Admins): a CSV for clients, properties,
-  requests, quotes, quote / job / invoice line items, jobs, visits, invoices, payments, and the
+  requests, quotes, quote / job / invoice line items, quote responses (with their evidence,
+  including the IP address, QA #274), jobs, visits, invoices, payments, and the
   client, request and visit notes, each with its columns listed. Documents carry their property,
   per-rate taxes ("State 6.25%: 15.00; County 1%: 2.40"), whether prices include tax, and
   internal notes; lines carry their discount and total. Definitions live in `DataExport::TABLES`

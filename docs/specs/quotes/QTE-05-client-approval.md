@@ -51,6 +51,13 @@ response is recorded with strong evidence and the business is told immediately.
 - Converting to a job (JOB-01). Deposits and self-scheduling after approval (backlog).
 - Drawn signatures (backlog).
 
+## Implementation notes
+
+- The client's IP address is stored with the response, part of its signed evidence, and in the
+  "Quote responses" CSV (INS-02), but shown on no page: staff see the device ("Phone · Safari").
+  *Owner decision, 2026-11-21 (QA #274).* The operator audit log (operators' own IPs) and a
+  user's own session list are unaffected.
+
 ## Open questions
 
 - ~~Should the client be able to approve and request changes at once?~~ No: approve, decline
