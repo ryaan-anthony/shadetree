@@ -37,7 +37,8 @@ connected — lets the client pay.
       records payments.)
 - [x] The invoice PDF reuses the QTE-02 rendering approach and shows payments and balance.
 - [x] Client views are recorded (first view notifies staff in-app via NTF-02 when available).
-- [x] Bounced emails surface on the invoice.
+- [x] Bounced emails surface on the invoice. *As on quotes (QA #274, QTE-04): an "Email not
+      delivered" warning with the reason and Resend, a badge in the list; the status stays.*
 - [x] Tests cover send paths, page states, PDF content and link isolation.
 
 ## Out of scope

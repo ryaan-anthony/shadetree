@@ -14,6 +14,7 @@ class Invoice < ApplicationRecord
   include BuiltDocument
   include DocumentAttachments
   include HasPdf
+  include EmailedDocument # QTE-04, PAY-02: delivery warnings
 
   STATUSES = %w[draft sent partially_paid paid void].freeze
   STATUS_LABELS = { "draft" => "Draft", "sent" => "Sent", "partially_paid" => "Partly paid", "paid" => "Paid", "void" => "Void" }.freeze
@@ -100,6 +101,7 @@ class Invoice < ApplicationRecord
 
   def draft? = status == "draft"
   def void? = status == "void"
+  def awaiting_client? = status.in?(%w[sent partially_paid])
   def paid? = status == "paid"
   def status_label = revising? ? "Revising" : STATUS_LABELS.fetch(status)
   def terms_label = TERM_LABELS.fetch(payment_terms)

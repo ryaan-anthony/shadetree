@@ -30,7 +30,15 @@ module ClientEventsHelper
       [ "edit-3", "Payment changed: #{payment_summary_text(data["before"])} → #{payment_summary_text(data["after"])}", subject && admin_invoice_path(subject.invoice) ]
     when "payment_deleted" then [ "trash", "Payment deleted: #{payment_summary_text(data)} on #{subject&.number}", subject && admin_invoice_path(subject) ]
     when "email_bounced"
-      [ "alert-triangle", "An email#{" (“#{subject.subject}”)" if subject&.subject} wasn't delivered: the mail server refused an address", nil ]
+      # Bounces and (QA #274) other emails that couldn't be sent, linked to what they were about.
+      # The line also carries an "Email not delivered" badge (the timeline partial).
+      related = subject&.related
+      about, path = case related
+      when Quote then [ "Quote #{related.number}", staff_quote_path(related) ]
+      when Invoice then [ "Invoice #{related.number}", staff_invoice_path(related) ]
+      else [ ("“#{subject.subject}”" if subject&.subject), nil ]
+      end
+      [ "alert-triangle", subject ? "#{about || "An email"} to #{subject.to}: #{subject.problem_reason}" : "An email wasn't delivered", path ]
     when "note_added" then [ "message-square", subject&.body || "Note deleted", nil ]
     end
   end

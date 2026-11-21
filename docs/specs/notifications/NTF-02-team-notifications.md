@@ -31,7 +31,8 @@ noise.
       invoice; invoice paid; online payment failed; team invitation accepted.
       *Done for the events that exist: new request, quote first viewed, approved, declined,
       changes requested, invitation accepted. Visits (JOB-02) and ready to invoice (JOB-04)
-      are added; payments (PAY-*) add theirs when they're built.*
+      are added; payments (PAY-*) add theirs when they're built. "Client email not delivered"
+      (QA #274): a client email refused or not sent, emailed by default.*
 - [x] Recipients are role-aware: Owners/Admins get business events; Technicians only get events
       about their own visits. *By permission; `to:` names the people for visit events (JOB-02).*
 - [x] Each member can turn email on/off per type (in-app always on) in personal settings;

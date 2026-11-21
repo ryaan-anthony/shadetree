@@ -6,6 +6,7 @@
 # - a temporary reply (4xx), a timeout or a dropped connection: retried with backoff for about
 #   four hours, then marked failed.
 # Any other error is a bug: the email is marked failed and the error re-raised for reporting.
+# Each of these puts the email on the client's timeline and tells the team (QA #274, NTF-02).
 # Most relays accept any well-formed recipient and bounce later; those bounces stay in the
 # provider's dashboard. The server's reply text, which can name the address, isn't stored or logged.
 class ClientMailDeliveryJob < ActionMailer::MailDeliveryJob
@@ -28,12 +29,12 @@ class ClientMailDeliveryJob < ActionMailer::MailDeliveryJob
   self.enqueue_after_transaction_commit = true
 
   retry_on Temporary, wait: :polynomially_longer, attempts: ATTEMPTS do |job, error|
-    job.email_message&.mark!("failed", error: "The mail server couldn't take the email (#{error.message}).", attempts: ATTEMPTS)
+    job.email_message&.mark!("failed", error: "The mail server couldn't take the email (#{error.message}).", attempts: ATTEMPTS, announce: true)
   end
 
   # Handlers are tried last-declared first, so the specific ones win.
   rescue_from Permanent do |error|
-    email_message&.mark!("failed", error: "The mail server refused the email (#{error.message}).")
+    email_message&.mark!("failed", error: "The mail server refused the email (#{error.message}).", announce: true)
   end
   rescue_from RecipientRefused do |error|
     message = email_message or next
@@ -66,7 +67,7 @@ class ClientMailDeliveryJob < ActionMailer::MailDeliveryJob
   rescue ActiveRecord::RecordNotFound
     raise
   rescue => error
-    email_message&.mark!("failed", error: "Something went wrong sending this email.")
+    email_message&.mark!("failed", error: "Something went wrong sending this email.", announce: true)
     raise error
   end
 
