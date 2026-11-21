@@ -40,4 +40,20 @@ module ScheduleHelper
   def schedule_column_label(column)
     [ column.date.strftime("%A, %B %-d"), (column.member == :none ? "Nobody yet" : column.member&.full_name) ].compact.join(", ")
   end
+
+  # QA #274: an empty hour on the grid, as a link to a new visit then (and with that person).
+  def schedule_slot_label(column, hour)
+    who = column.member.respond_to?(:full_name) ? ", with #{column.member.full_name}" : ""
+    "New visit, #{column.date.strftime("%A, %B %-d")}, #{format("%d:00 %s", ((hour - 1) % 12) + 1, hour < 12 ? "AM" : "PM")}#{who}"
+  end
+
+  # The slot's day, time and person (?crew=, or the person the calendar is filtered to), what the
+  # calendar shows (view, filter) and the slot itself, to focus again on coming back.
+  def schedule_slot_params(column, hour, schedule)
+    crew = column.member.respond_to?(:id) ? column.member.id : (schedule.member unless schedule.member == "unassigned")
+    { on: column.date.iso8601, at: format("%02d:00", hour), crew:, view: schedule.view, member: schedule.member, slot: schedule_slot_key(column, hour) }.compact_blank
+  end
+
+  # A slot's focus key: "slot-2026-11-24-09-all" (its day, hour and column's person).
+  def schedule_slot_key(column, hour) = "slot-#{column.date.iso8601}-#{format("%02d", hour)}-#{column.member_key.presence || "all"}"
 end

@@ -32,6 +32,8 @@ or one person — spot gaps, and move work around quickly, on a desktop or a pho
       JOB-02 and undo; on mobile, a quick-edit sheet offers the same changes.
 - [x] On mobile, the default view is an agenda list grouped by day.
 - [x] Opening a visit shows its details and links to the job.
+- [x] Everything done with a pointer can be done with the keyboard alone: booking a visit at a
+      day and time, opening a visit, and moving it (WCAG 2.1.1).
 - [x] The calendar loads quickly with 200 visits in a week for 10 members.
 - [x] Technicians do not see the team calendar; they use their day view (JOB-04).
 - [x] Tests cover filtering, rescheduling, warnings and tenancy (system tests for drag/quick-edit).
@@ -47,6 +49,20 @@ or one person — spot gaps, and move work around quickly, on a desktop or a pho
   a sheet with the day, start and who's going. Both send the same request, so both get the
   JOB-02 warnings ("Move anyway") and a toast with **Undo** (which skips the warnings and puts
   the day, time and crew back, unless someone changed the visit since).
+- Keyboard (QA #274): each empty hour from today on is a link named like "New visit, Tuesday,
+  November 24, 9:00 AM" (with the person, in a day split by person). The slots are one tab stop
+  (a roving tabindex at its column's place in the tab order: arrows move by hour and day or
+  person, Home/End, Enter or Space opens), not 7 × 9 stops; without JavaScript each is its own
+  stop. A slot (or the header's **New visit**) asks which open job (the first 200, saying so past
+  that), then opens that job's visit form with the day, start time and person (only someone who
+  does field work) filled in, on the job's own clock; booking it, or Cancel, comes back to the
+  calendar as it was (view, person filter). Visits open with Enter or Space; the panel's heading
+  gets focus, and its **Close** puts focus back on the visit or slot. After a booking, move or
+  undo, focus is on that visit; after a Cancel, on the slot. Focus rings are drawn inside blocks
+  so the scrolling grid can't clip them. Hour and "Anytime" labels are muted (4.5:1 or more).
+- The heading names the page and the year ("Schedule: November 23 – 29, 2026"); the lede names
+  the clock ("Times in Eastern Time (US & Canada)"). "Color by" is two pressed buttons in a GET
+  form, so it works without JavaScript; "Nobody yet" counts visits ("1 visit").
 - Times snap to 15 minutes; a window keeps its length; an anytime visit moves between anytime
   rows only, and a timed one keeps a time.
 - A window visit fills the grid from the window's start to its latest finish (window end plus

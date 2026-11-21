@@ -222,6 +222,7 @@ Rails.application.routes.draw do
     get "schedule", to: "schedule#show", as: :schedule
     get "schedule/visits/:id", to: "schedule#visit", as: :schedule_visit
     patch "schedule/visits/:id", to: "schedule#move", as: :schedule_move
+    get "schedule/new", to: "schedule#new_visit", as: :schedule_new_visit # QA #274: a visit at a slot
 
     # The day view for the people going on visits (JOB-04): only their own visits.
     get "my-day", to: "my_day#show", as: :my_day

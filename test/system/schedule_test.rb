@@ -1,7 +1,8 @@
 require "application_system_test_case"
 
 # JOB-03: moving visits on the team calendar in a real browser: dragged on desktop (then
-# undone), and from the quick-edit sheet, with a warning on the way.
+# undone), and from the quick-edit sheet, with a warning on the way. QA #274: booking a visit at
+# a slot and moving one with the keyboard alone.
 class ScheduleTest < ApplicationSystemTestCase
   setup do
     @business = businesses(:one)
@@ -53,5 +54,91 @@ class ScheduleTest < ApplicationSystemTestCase
     end
     assert_text "Moved: Maria Lopez"
     assert_equal @monday + 6, moved.scheduled_on
+  end
+
+  # What has focus: its text (a slot's is its name), id, value and focus key.
+  def focused = evaluate_script("(({ textContent: t, id, value, dataset: d }) => ({ text: t.trim().replace(/\\s+/g, ' '), id, value, key: d.scheduleFocus }))(document.activeElement)").symbolize_keys
+
+  # Keys typed wherever focus is, as a person would (an element's own send_keys can get stuck
+  # inside a date field's parts).
+  def press(*keys) = page.driver.browser.action.send_keys(*keys).perform
+
+  # Presses Tab until focus is where the block says (a real failure fails after `max` presses).
+  def tab_until(max: 150, &done)
+    max.times do
+      press(:tab)
+      return if done.(focused)
+    end
+    flunk "Tab never reached it; focus ended on #{focused.inspect}"
+  end
+
+  def assert_focus(message = nil, &done)
+    assert page.document.synchronize(5) { done.(focused) || raise(Capybara::ExpectationNotMet) }, message
+  rescue Capybara::ExpectationNotMet
+    flunk "#{message || "focus"}: on #{focused.inspect}"
+  end
+
+  test "book a visit at a slot, open it and move it, with the keyboard only" do
+    next_monday = @monday + 7
+    waiting = Tenancy.with_business(@business) { Job.create!(client: Client.find_by!(display_name: "Maria Lopez"), title: "Gutter cleaning") }
+    visit admin_schedule_path(date: next_monday.iso8601)
+    find("a[aria-label='Next week']").execute_script("this.focus()") # start in the page header, then Tab into the grid
+    tab_until { _1[:text].start_with?("New visit, ") }
+    assert focused[:text].start_with?("New visit, #{next_monday.strftime("%A, %B %-d")}, 9:00 AM"), "one tab stop into the slots: Monday at 9"
+
+    press(:down, :right)
+    assert_focus("arrow keys move between hours and days") { _1[:text].start_with?("New visit, #{(next_monday + 1).strftime("%A, %B %-d")}, 10:00 AM") }
+    press(:enter)
+    assert_focus("the panel's heading gets focus") { _1[:text] == "New visit" }
+    assert_text "#{(next_monday + 1).strftime("%A, %B %-d, %Y")} · 10:00 AM"
+    press(:tab, :tab)
+    assert_focus { _1[:text] == "Cancel" }
+    press(:enter)
+    assert_focus("Cancel goes back to the slot") { _1[:text].start_with?("New visit, #{(next_monday + 1).strftime("%A, %B %-d")}, 10:00 AM") }
+    assert_no_css "turbo-frame#schedule_visit h2"
+
+    slot_key = "slot-#{(next_monday + 1).iso8601}-10-all"
+    choose_job = lambda do
+      press(:space) # Space opens a slot, as Enter does
+      assert_focus { _1[:text] == "New visit" }
+      press(:tab)
+      assert_focus { _1[:id] == "new-visit-job" }
+      find("#new-visit-job option[value='#{waiting.uid}']").select_option
+      find("#new-visit-job").execute_script("this.focus()")
+      press(:tab, :tab, :enter) # Cancel, Continue
+      assert_text "Schedule a visit"
+    end
+    choose_job.()
+    tab_until { _1[:text] == "Cancel" }
+    press(:enter)
+    assert_focus("the form's Cancel comes back to the slot") { _1[:key] == slot_key }
+    assert_equal "0", find("[data-schedule-focus='#{slot_key}']")[:tabindex], "and makes it the slots' tab stop"
+
+    choose_job.()
+    assert_equal (next_monday + 1).iso8601, find_field("Date (or first day)").value
+    assert_equal "10:00", find_field("Start").value
+    tab_until { _1[:id] == "visit_duration_hours" }
+    press(:enter) # submits the form
+
+    assert_text "Visit scheduled for"
+    booked = Tenancy.with_business(@business) { waiting.visits.sole }
+    assert_equal [ next_monday + 1, "10:00" ], [ booked.scheduled_on, booked.start_time ]
+    assert_focus("back on the calendar, focus is on the new visit") { _1[:key] == booked.uid }
+    assert_no_current_path(/focus=/)
+
+    press(:space)
+    assert_focus("Space opens the visit; its heading gets focus") { _1[:text] == "Maria Lopez" }
+    tab_until { _1[:text] == "Move" }
+    press(:enter)
+    assert_css "dialog[open]"
+    tab_until { _1[:id] == "move-#{booked.uid}-on" }
+    fill_in "Day", with: next_monday + 2 # a date field's typing order depends on the locale
+    find_field("Day").execute_script("this.focus()")
+    tab_until { _1[:value] == "Move visit" }
+    press(:enter)
+
+    assert_text "Moved: Maria Lopez"
+    assert_equal next_monday + 2, Tenancy.with_business(@business) { booked.reload.scheduled_on }
+    assert_focus("focus is back on the moved visit") { _1[:key] == booked.uid }
   end
 end

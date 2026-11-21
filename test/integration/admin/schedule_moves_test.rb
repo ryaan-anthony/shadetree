@@ -56,7 +56,7 @@ class Admin::ScheduleMovesTest < ActionDispatch::IntegrationTest
     assert_equal [ @monday.iso8601, "09:00", @tech.id.to_s, "1", "week" ], fields.values_at("on", "at", "crew[]", "undo", "view")
 
     patch undo["action"], params: fields
-    assert_redirected_to admin_schedule_path(view: "week", date: @monday.iso8601)
+    assert_redirected_to admin_schedule_path(view: "week", date: @monday.iso8601, focus: @visit.uid), "focus goes back to the visit (QA #274)"
     assert_equal [ @monday, "09:00", "11:00" ], fresh.then { [ _1.scheduled_on, _1.start_time, _1.window_end_time ] }
     follow_redirect!
     assert_select "#flash", text: /Put back: Maria Lopez, Mon, Nov 23/
@@ -126,7 +126,7 @@ class Admin::ScheduleMovesTest < ActionDispatch::IntegrationTest
     assert_select "input[type=submit][value='Move anyway']"
 
     patch admin_schedule_move_path(@visit), params: form.merge(confirm: css_select("input[name=confirm]").sole["value"])
-    assert_redirected_to admin_schedule_path(date: (@monday + 5).iso8601)
+    assert_redirected_to admin_schedule_path(date: (@monday + 5).iso8601, focus: @visit.uid)
     assert_equal [ @monday + 5, "10:00", [ @other.id ] ], fresh.then { [ _1.scheduled_on, _1.start_time, _1.assignee_ids ] }
 
     patch admin_schedule_move_path(@visit), params: { on: (@monday + 1).iso8601, at: "10:00", crew: [ "" ], lock_version: fresh.lock_version }

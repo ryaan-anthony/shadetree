@@ -9,6 +9,9 @@
   <% problems = visit.errors.reject { _1.attribute.in?(%i[scheduled_on start_time window_end_time duration_minutes instructions]) }.map(&:full_message) %>
   <% if problems.any? %><div class="banner banner-danger" role="alert"><%= icon "alert-circle" %><p><%= problems.to_sentence %></p></div><% end %>
   <%= f.hidden_field :lock_version if visit.persisted? %>
+  <% if from_schedule? %><%# QA #274: booked from a slot on the calendar, so back there afterwards %>
+    <%= hidden_field_tag :from, "schedule", id: nil %><% calendar_params.each do |name, value| %><%= hidden_field_tag name, value, id: nil %><% end %>
+  <% end %>
   <% if @warnings.present? %>
     <div class="banner banner-warning" role="alert"><%= icon "alert-triangle" %>
       <div><p class="font-semibold">Before you <%= visit.new_record? ? "book" : "save" %> this</p>
@@ -92,7 +95,7 @@
   <% end %>
   <%= render "admin/visits/notify_client", job: @job, kind: visit.new_record? ? "scheduled" : "changed", id: "notify-client" %>
   <div class="flex items-center justify-end gap-2">
-    <%= link_to "Cancel", admin_job_path(@job), class: button_classes(:ghost) %>
+    <%= link_to "Cancel", (from_schedule? ? back_to_schedule(date: visit.scheduled_on) : admin_job_path(@job)), class: button_classes(:ghost) %>
     <%= f.submit_button "#{visit.new_record? ? "Schedule" : "Save"} #{@warnings.present? ? "anyway" : "visit"}" %>
   </div>
 <% end %>

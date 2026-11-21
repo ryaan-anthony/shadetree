@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 import { Turbo } from "@hotwired/turbo-rails"
 
 // JOB-03: drag a visit on the calendar to another day, time or person (mouse only; phones and
-// keyboards use "Move" in the visit's details). Times snap to 15 minutes. Warnings (hours,
+// keyboards open the visit, with Enter or Space, and use "Move" in its details, QA #274). Times snap to 15 minutes. Warnings (hours,
 // closures, someone already booked) are asked about first; after a move the calendar reloads
 // and its toast offers Undo.
 const SNAP_MINUTES = 15
@@ -155,6 +155,7 @@ export default class extends Controller {
       this.say("Not moved.")
       return
     }
+    try { sessionStorage.setItem("schedule-focus", element.dataset.visit) } catch {} // focus comes back to it (schedule_focus_controller)
     this.reload() // moved (the toast offers Undo), or refused (the toast says why)
   }
 

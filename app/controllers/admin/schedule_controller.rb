@@ -5,10 +5,18 @@ class Admin::ScheduleController < Admin::BaseController
   # OPS-03: what support may do while viewing as a member
   impersonation :allowed
   requires_permission :schedule
-  filters_by_location Visit, Job, only: :show # CAT-07
-  # The visit panel loads into its frame in the background; a load finishing after an Undo
-  # click mustn't overwrite that click's flash. (The full page, on phones, writes as usual.)
-  leaves_session_alone only: :visit, if: -> { turbo_frame_request? }
+  filters_by_location Visit, Job, only: %i[show new_visit] # CAT-07
+  # The visit panel (and a new visit's job choice) loads into its frame in the background; a load
+  # finishing after an Undo click mustn't overwrite that click's flash. (The full page, on
+  # phones or without JavaScript, writes as usual.)
+  leaves_session_alone only: %i[visit new_visit], if: -> { turbo_frame_request? }
+
+  NEW_VISIT_JOBS = 200 # the open jobs a new visit can be for; past that, schedule it from the job
+  # QA #274: what the calendar was showing, kept through booking a visit from it: its view, its
+  # person filter, and the slot the booking started from (focused again on Cancel).
+  CALENDAR_PARAMS = { view: /\A(day|week)\z/, member: /\A(\d+|unassigned)\z/, slot: /\Aslot-\d{4}-\d\d-\d\d-\d\d-(\d+|none|all)\z/ }.freeze
+
+  def self.calendar_params(params) = params.permit(*CALENDAR_PARAMS.keys).to_h.symbolize_keys.select { |key, value| CALENDAR_PARAMS.fetch(key).match?(value.to_s) }
 
   def show
     date = Visit.parse_date(params[:date])
@@ -64,6 +72,24 @@ class Admin::ScheduleController < Admin::BaseController
     refuse(error.message)
   end
 
+  # QA #274 (WCAG 2.1.1): a slot on the grid, or "New visit", asks which job the visit is for
+  # (beside the calendar, or on its own page), then opens that job's new-visit form with the
+  # day, time and person filled in. The slot's time is on the calendar's clock (CAT-07).
+  def new_visit
+    @on = [ Visit.parse_date(params[:on]), grid_place.today ].compact.max
+    @at = params[:at].to_s[/\A(?:[01]\d|2[0-3]):[0-5]\d\z/]
+    # The slot's person (?crew=), only someone who can be put on visits.
+    crew = current_business.business_users.active.includes(:user).find_by(user_id: params[:crew].to_i) if params[:crew].to_s.match?(/\A\d+\z/)
+    @crew = crew.user if crew&.can?(:field_work)
+    return redirect_to(new_job_visit_path(Job.find_by_param!(params[:job]))) if params[:job].present?
+
+    @jobs = Job.unfinished.includes(:client, :property).order(Arel.sql("CASE WHEN jobs.status = 'unscheduled' THEN 0 ELSE 1 END"), :created_at, :id).limit(NEW_VISIT_JOBS + 1).to_a
+    @more_jobs = @jobs.size > NEW_VISIT_JOBS
+    @jobs = @jobs.first(NEW_VISIT_JOBS)
+    @when_label = [ @on.strftime("%A, %B %-d, %Y"), (Time.zone.parse("2000-01-01 #{@at}").strftime("%-l:%M %p") if @at), ("with #{@crew.full_name}" if @crew) ].compact.join(" · ")
+    render partial: "admin/schedule/new_visit", layout: false if turbo_frame_request?
+  end
+
   # The details of one visit, for the panel beside the calendar.
   def visit
     @visit = Visit.includes(:assignees, job: %i[client property]).find_by_param!(params[:id])
@@ -72,14 +98,30 @@ class Admin::ScheduleController < Admin::BaseController
 
   private
 
+  # The new-visit form for a job, at the slot's day and time on the job's own clock, with the
+  # slot's person, and back to the calendar afterwards.
+  def new_job_visit_path(job)
+    on, at = shift_clock(@on, @at, from: grid_place.time_zone, to: job.location.time_zone)
+    new_admin_job_visit_path(job, { on: on.iso8601, at:, crew: @crew&.id, from: "schedule", **calendar_params }.compact_blank)
+  end
+
+  helper_method def calendar_params = self.class.calendar_params(params)
+
+  def grid_place = location_filter || current_business
+
   # CAT-07: a drag's day and time are on the calendar's clock (?grid_zone=); a visit keeps its
   # location's, so a visit in another zone gets the same moment on its own clock.
   def from_grid_clock(on, at)
     zone = ActiveSupport::TimeZone[params[:grid_zone].to_s] if params[:grid_zone].present?
-    return [ on, at ] unless zone && at.to_s.match?(/\A\d\d:\d\d/) && zone.tzinfo.identifier != @visit.time_zone.tzinfo.identifier
+    zone ? shift_clock(on, at, from: zone, to: @visit.time_zone) : [ on, at ]
+  end
+
+  # A day and "HH:MM" on one clock, as the same moment on another.
+  def shift_clock(on, at, from:, to:)
+    return [ on, at ] unless at.to_s.match?(/\A\d\d:\d\d/) && from.tzinfo.identifier != to.tzinfo.identifier
 
     hour, minute = at.to_s.split(":").map { Integer(_1, 10) }
-    local = zone.local(on.year, on.month, on.day, hour, minute).in_time_zone(@visit.time_zone)
+    local = from.local(on.year, on.month, on.day, hour, minute).in_time_zone(to)
     [ local.to_date, local.strftime("%H:%M") ]
   end
 
@@ -91,7 +133,8 @@ class Admin::ScheduleController < Admin::BaseController
     current_business.business_users.where(user_id: value.to_i).pick(:user_id) || raise(ArgumentError, "That person isn't on your team.")
   end
 
-  def back_to_calendar = admin_schedule_path({ view: params[:view], date: (@visit&.scheduled_on || current_business.today).iso8601, member: params[:member] }.compact_blank)
+  # Focus goes back to the visit that was moved (QA #274; schedule_focus_controller).
+  def back_to_calendar = admin_schedule_path({ view: params[:view], date: (@visit&.scheduled_on || current_business.today).iso8601, member: params[:member], focus: @visit&.uid }.compact_blank)
 
   def render_move(status, message = nil)
     flash[:notice] = message if message
