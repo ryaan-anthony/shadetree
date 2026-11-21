@@ -59,9 +59,45 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   # never ran and menus never opened.
   def visit(...)
     super
+    wait_for_controllers
+    ensure_input_reaches_page
+  end
+
+  def wait_for_controllers
     assert_selector "html[data-controllers-loaded]", visible: :all, wait: 10
     failed = page.evaluate_script("document.documentElement.dataset.controllersFailed")
     flunk "Controllers failed to load: #{failed}" if failed # fail here, at the cause, not on a later assertion
+  end
+
+  # On CI, Chrome 157 sometimes opens a page that never receives WebDriver's keys or clicks: no
+  # keydown, pointerdown or click event arrives for as long as a test waits, while the page
+  # renders, has focus and runs its scripts. Typing left boxes empty and clicks opened nothing
+  # (the flaky schedule and client search tests). Reloading doesn't help; going to a blank page
+  # and back does. So check with a harmless key press (Shift) that input arrives, and if it
+  # doesn't, load the page afresh once. The page is fetched again from its final URL: a flash
+  # set during a redirect is gone, and the GET's side effects (e.g. a client link's view) happen
+  # twice. A warning on stderr marks each recovery, so a recovery-only failure is traceable.
+  def ensure_input_reaches_page
+    return if input_reaches_page?(2)
+
+    url = current_url
+    warn "[system test] no input reached #{URI(url).path}; loading it again (#{name})"
+    page.driver.browser.navigate.to("about:blank")
+    page.driver.browser.navigate.to(url)
+    wait_for_controllers
+    flunk "The browser isn't delivering keys (and likely clicks) to #{URI(url).path}" unless input_reaches_page?(3)
+  end
+
+  def input_reaches_page?(seconds)
+    execute_script("window.__inputSeen = false; addEventListener('keydown', () => { window.__inputSeen = true }, { capture: true, once: true })")
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + seconds
+    loop do
+      page.driver.browser.action.key_down(:shift).key_up(:shift).perform
+      return true if evaluate_script("window.__inputSeen")
+      return false if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+
+      sleep 0.1
+    end
   end
 
   # Signs in through the form. Signing in loads the next page in full (no Turbo: a new session
@@ -75,6 +111,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     rescue Selenium::WebDriver::Error::UnknownError => error
       raise unless error.message.include?("does not belong to the document")
     end
-    assert_selector "html[data-controllers-loaded]", visible: :all, wait: 10
+    wait_for_controllers
+    ensure_input_reaches_page # a full page load outside visit
   end
 end
