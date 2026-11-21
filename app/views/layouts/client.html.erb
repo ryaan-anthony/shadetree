@@ -11,8 +11,8 @@
     <%= inline_style_rule("body.client", branding.css_variables) %>
   </head>
   <body class="client">
+    <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 btn btn-secondary">Skip to content</a><%# the first tab stop %>
     <%= render "layouts/impersonation_banner" %>
-    <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 btn btn-secondary">Skip to content</a>
     <header class="client-head">
       <div class="client-wrap flex h-[4.25rem] items-center gap-3">
         <% if branding.logo? %>

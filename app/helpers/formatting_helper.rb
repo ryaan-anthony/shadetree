@@ -34,35 +34,51 @@ module FormattingHelper
   # phone_number("2155551212")      => "(215) 555-1212"
   # phone_number("+1 215-555-1212") => "(215) 555-1212"
   # North American numbers (10 digits, or 11 with a leading 1) get the usual format; anything
-  # else (international numbers, extensions) is shown as typed.
+  # else (international numbers, extensions, vanity numbers) is shown as typed.
   def phone_number(value)
-    digits = north_american_digits(value)
-    digits ? "(#{digits[0, 3]}) #{digits[3, 3]}-#{digits[6, 4]}" : value.to_s.strip.presence
+    text = value.to_s.strip
+    number = phone_number_part(text)
+    digits = north_american_digits(number) unless number.match?(/[a-z]/i) || number != text
+    digits ? "(#{digits[0, 3]}) #{digits[3, 3]}-#{digits[6, 4]}" : text.presence
   end
 
-  # The tel: href: +1 and ten digits for North American numbers, otherwise the digits (keeping
-  # a leading +), so phones dial it whatever punctuation was typed. Extensions are left off.
+  PHONE_MIN_DIGITS = 7
+  KEYPAD = %w[ABC DEF GHI JKL MNO PQRS TUV WXYZ].each_with_index.to_h { |letters, index| [ letters, (index + 2).to_s ] }.freeze
+
+  # The tel: href, or nil when there's no number to dial (fewer than 7 digits, "call us").
+  # Extensions are left off (from x, ext, #, comma or semicolon) and vanity letters become keypad
+  # digits ("1-800-GOT-JUNK" => tel:+18004685865). North American numbers get +1 and ten digits.
+  # Other countries are best effort: a leading + is kept and the rest is digits, but a trunk 0
+  # isn't removed, and ten digits without a + are taken as a US number.
   def phone_href(value)
-    number = value.to_s.strip[/\A[^a-z]*/i].strip # an extension isn't dialled
-    digits = north_american_digits(number)
-    return "tel:+1#{digits}" if digits
+    number = phone_number_part(value.to_s.strip)
+    keyed = number.upcase.gsub(/[A-Z]/) { |letter| KEYPAD.find { |letters, _| letters.include?(letter) }.last }
+    digits = keyed.gsub(/\D/, "")
+    return if digits.length < PHONE_MIN_DIGITS
 
-    "tel:#{number.start_with?("+") ? "+" : ""}#{number.gsub(/\D/, "")}"
+    us = north_american_digits(keyed)
+    us ? "tel:+1#{us}" : "tel:#{keyed.start_with?("+") ? "+" : ""}#{digits}"
   end
 
-  # A tel: link showing the formatted number (or the block's content).
+  # A tel: link showing the formatted number (or the block's content); plain text when there's
+  # nothing to dial.
   def phone_link(value, **attributes, &)
     return if value.blank?
 
-    block_given? ? link_to(phone_href(value), **attributes, &) : link_to(phone_number(value), phone_href(value), **attributes)
+    href = phone_href(value)
+    return (block_given? ? capture(&) : phone_number(value)) unless href
+
+    block_given? ? link_to(href, **attributes, &) : link_to(phone_number(value), href, **attributes)
   end
 
   private
 
-  def north_american_digits(value)
-    text = value.to_s.strip
-    return if text.match?(/[a-z]/i) # extensions ("x12", "ext. 4") and anything that isn't just a number
+  # The part of a phone number that's dialled: everything before an extension marker.
+  def phone_number_part(text)
+    text.split(/[#,;]|(?:\b|(?<=\d))(?:ext(?:ension)?\.?|x)\s*\d/i, 2).first.to_s.strip
+  end
 
+  def north_american_digits(text)
     digits = text.gsub(/\D/, "")
     if text.start_with?("+") then digits[1..] if digits.length == 11 && digits.start_with?("1")
     elsif digits.length == 11 && digits.start_with?("1") then digits[1..]
