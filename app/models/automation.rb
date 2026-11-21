@@ -60,6 +60,20 @@ module Automation
     end
   end
 
+  # PAY-04: an invoice a refund or lost dispute reopened isn't chased: every overdue rule (on or
+  # off, as above) gets a skipped run for it, unless one already ran. Reuses the same "no run
+  # yet" rule as overdue_without_run, for this one invoice, whatever its due date.
+  def skip_overdue_for(invoice, detail)
+    AutomationRule.where(business_id: invoice.business_id, trigger: "invoice_overdue").find_each do |rule|
+      next if AutomationRun.exists?(rule:, subject: invoice)
+
+      AutomationRun.create_or_find_by!(rule:, subject: invoice) do |run|
+        run.assign_attributes(rule_name: rule.name, trigger: rule.trigger, run_at: Time.current, status: "skipped", finished_at: Time.current,
+                              log: [ { "action" => "run", "result" => "skipped", "detail" => detail } ])
+      end
+    end
+  end
+
   # Invoices an overdue rule would fire for now: fell due after the rule was made, no run yet.
   def overdue_without_run(rule, business)
     Invoice.where(status: %w[sent partially_paid], due_on: rule.created_at.in_time_zone(business.time_zone).to_date...business.today)

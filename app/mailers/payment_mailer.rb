@@ -7,7 +7,7 @@ class PaymentMailer < ClientMailer
 
     @invoice = @payment.invoice
     # What was left right after this payment, not when the email goes (a later one may be in).
-    paid = @invoice.payments.unscope(:order).where(id: ..@payment.id).sum(:amount_cents)
+    paid = @invoice.payments.unscope(:order).where(id: ..@payment.id).counted_sum.to_i # less refunds and lost disputes (PAY-04)
     @balance = Money.new([ @invoice.total_cents - paid, 0 ].max, @invoice.currency)
     @link = @invoice.client_link!
     subject = custom_subject("payment_receipt", MessageTemplate::Values.invoice(@invoice, link: @link, balance: @balance))

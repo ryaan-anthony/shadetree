@@ -58,7 +58,8 @@ class ActionDashboard
     kinds.empty? ? nil : (kinds.count("approved") * 100.0 / kinds.size).round
   end
 
-  def payments_this_month = Payment.where(received_on: month).group(:currency).order(:currency).sum(:amount_cents).map { |currency, cents| Money.new(cents.to_i, currency) }
+  # Less refunds and lost disputes (PAY-04).
+  def payments_this_month = Payment.where(received_on: month).group(:currency).order(:currency).counted_sum.map { |currency, cents| Money.new(cents.to_i, currency) }
 
   private
 

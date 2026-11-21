@@ -39,6 +39,13 @@ class Ops::PlansTest < ActionDispatch::IntegrationTest
     patch ops_plan_path(plan), params: { plan: { name: "", monthly_price: "lots" } }
     assert_response :unprocessable_content
     assert_equal "Starter+", plan.reload.name
+
+    # PAY-04: the platform fee on online payments, 0 until one is decided, at most 10%.
+    assert_equal 0, plan.platform_fee_bps
+    patch ops_plan_path(plan), params: { plan: { platform_fee_bps: "50" } }
+    assert_equal 50, plan.reload.platform_fee_bps
+    patch ops_plan_path(plan), params: { plan: { platform_fee_bps: "5000" } }
+    assert_response :unprocessable_content
   end
 
   test "operators comp one business's limits and features with a reason; entitlements follow" do

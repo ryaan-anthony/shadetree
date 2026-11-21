@@ -6,7 +6,15 @@
 class ConnectEventHandler
   HANDLERS = {
     "account.updated" => :account_updated,
-    "account.application.deauthorized" => :account_deauthorized
+    "account.application.deauthorized" => :account_deauthorized,
+    # PAY-04: payments, refunds and disputes on invoices paid online
+    "checkout.session.completed" => :checkout_completed,
+    "checkout.session.async_payment_succeeded" => :checkout_completed,
+    "payment_intent.succeeded" => :payment_succeeded,
+    "charge.refunded" => :charge_refunded,
+    "charge.dispute.created" => :dispute_changed,
+    "charge.dispute.updated" => :dispute_changed,
+    "charge.dispute.closed" => :dispute_changed
   }.freeze
 
   def self.handle(event) = new(event).handle
@@ -40,4 +48,19 @@ class ConnectEventHandler
 
   # The business disconnected Shadetree from its Stripe dashboard.
   def account_deauthorized(account) = account.disconnect!(reason: "provider")
+
+  def checkout_completed(account)
+    return unless object["payment_status"] == "paid"
+
+    OnlinePayments.record!(account, intent_id: object["payment_intent"], amount_cents: object["amount_total"], currency: object["currency"],
+                                    metadata: object["metadata"], checkout_id: object["id"])
+  end
+
+  def payment_succeeded(account)
+    OnlinePayments.record!(account, intent_id: object["id"], amount_cents: object["amount_received"], currency: object["currency"], metadata: object["metadata"])
+  end
+
+  def charge_refunded(account) = OnlinePayments.refund!(account, object["payment_intent"], refunded_cents: object["amount_refunded"])
+
+  def dispute_changed(account) = OnlinePayments.dispute!(account, object["payment_intent"], stripe_status: object["status"], amount_cents: object["amount"])
 end

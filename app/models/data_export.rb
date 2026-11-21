@@ -196,6 +196,8 @@ class DataExport < ApplicationRecord
       column("Method", &:payment_method)
       column("Source", &:source)
       column("Reference", &:reference)
+      column("Refunded", number: true) { money.(_1.refunded_cents, _1.currency) } # PAY-04
+      column("Dispute") { Payment::DISPUTE_STATUSES[_1.dispute_status] }
       column("Note", &:note)
       column("Recorded by") { name_of.(_1.recorded_by) }
     end,

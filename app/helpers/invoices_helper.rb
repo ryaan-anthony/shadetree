@@ -13,11 +13,13 @@ module InvoicesHelper
 
   EVENT_LABELS = { "created" => "Created", "sent" => "Sent", "revised" => "Revised", "revision_discarded" => "Changes discarded", "partially_paid" => "Partly paid",
                    "paid" => "Paid", "voided" => "Voided", "reopened" => "Awaiting payment again",
-                   "payment_recorded" => "Payment recorded", "payment_changed" => "Payment changed", "payment_deleted" => "Payment deleted", "repriced" => "Re-priced" }.freeze
+                   "payment_recorded" => "Payment recorded", "payment_changed" => "Payment changed", "payment_deleted" => "Payment deleted", "repriced" => "Re-priced",
+                   "payment_received" => "Paid online", "payment_refunded" => "Refund in Stripe", "payment_disputed" => "Dispute in Stripe" }.freeze
 
   # "$50.00, check (1042), received Nov 18, 2026", from Payment#summary.
   def payment_summary_text(summary)
     method = Payment::METHODS.fetch(summary["method"], summary["method"]).downcase
+    method = summary["detail"] if summary["detail"] # PAY-04: "Visa ending 4242"
     method = "#{method} (#{summary["reference"]})" if summary["reference"]
     "#{money(Money.new(summary["amount_cents"].to_i, summary["currency"]))}, #{method}, received #{l(Date.iso8601(summary["received_on"]))}"
   end
@@ -30,6 +32,8 @@ module InvoicesHelper
     how = { "email" => " by email", "link" => " as a link", "payment" => " (paid on the spot)" }[event.data["channel"]] if event.kind == "sent"
     how = ": #{payment_summary_text(event.data["after"] || event.data)}" if event.kind.start_with?("payment_")
     how = ": #{payment_summary_text(event.data["before"])} → #{payment_summary_text(event.data["after"])}" if event.kind == "payment_changed"
+    how = ": #{money(Money.new(event.data["refunded_cents"].to_i, event.data["currency"]))} of #{payment_summary_text(event.data)}" if event.kind == "payment_refunded"
+    how = ": #{Payment::DISPUTE_STATUSES.fetch(event.data["dispute"].to_s, "updated").downcase}, #{payment_summary_text(event.data)}" if event.kind == "payment_disputed"
     revision = " (revision #{event.data["revision"]})" if event.kind == "sent" && event.data["revision"].to_i > 1
     how = " for #{event.data["location"]} (#{Array(event.data["changed"]).join(" and ")})" if event.kind == "repriced"
     label = event.kind == "sent" && event.data["channel"] == "payment" ? "Marked sent" : EVENT_LABELS.fetch(event.kind)

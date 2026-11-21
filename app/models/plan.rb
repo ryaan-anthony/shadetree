@@ -26,6 +26,11 @@ class Plan < ApplicationRecord
   validates :key, presence: true, uniqueness: true, format: { with: /\A[a-z0-9_]+\z/ }
   validates :name, presence: true
   validates :monthly_price_cents, :annual_price_cents, numericality: { greater_than_or_equal_to: 0 }
+  # PAY-04: Shadetree's cut of client card payments, in basis points (100 = 1%). 0 on every plan
+  # until a fee is decided (09-billing open question 3).
+  validates :platform_fee_bps, numericality: { only_integer: true, in: 0..1000 }
+
+  def platform_fee_percent = platform_fee_bps.to_i / 100.0
   validate :known_keys
 
   scope :listed, -> { where(public: true).order(:position, :id) }

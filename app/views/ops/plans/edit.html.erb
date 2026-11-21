@@ -14,6 +14,8 @@
         <%= f.field :position, as: :number, label: "Order" %>
       </div>
       <%= f.check :public, label: "Listed on the pricing and plan pages" %>
+      <%# PAY-04: whether Shadetree takes a cut of client card payments is undecided; 0 means none. %>
+      <%= f.field :platform_fee_bps, as: :number, label: "Platform fee on online payments, in basis points", help: "100 is 1%. 0 means no fee (the default until a fee is decided). Applies to new payments.", min: 0, max: 1000 %>
       <fieldset><legend class="label">Limits <span class="font-normal text-muted">(empty means unlimited)</span></legend>
         <div class="grid gap-3 sm:grid-cols-3">
           <% Plan::LIMITS.each do |key, label| %>
