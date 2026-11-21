@@ -86,7 +86,7 @@
     <%= render "admin/quotes/responses", quote: %>
 
     <%= card do %>
-      <div class="quote-doc"><%= render "client/quotes/document", quote:, totals: %></div>
+      <div class="quote-doc"><%= render "client/quotes/document", quote:, totals:, heading: 2 %></div>
       <% if quote.internal_notes %>
         <div class="mt-5 rounded-control bg-sunken p-3 text-sm2">
           <p class="font-semibold text-ink">Internal notes</p>
