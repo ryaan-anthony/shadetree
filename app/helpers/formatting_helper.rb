@@ -43,18 +43,21 @@ module FormattingHelper
   end
 
   PHONE_MIN_DIGITS = 7
+  PHONE_MAX_DIGITS = 15 # E.164
   KEYPAD = %w[ABC DEF GHI JKL MNO PQRS TUV WXYZ].each_with_index.to_h { |letters, index| [ letters, (index + 2).to_s ] }.freeze
 
-  # The tel: href, or nil when there's no number to dial (fewer than 7 digits, "call us").
+  # The tel: href, or nil when there's no single number to dial (fewer than 7 digits, "call us",
+  # or more than 15, like two numbers in one field). Text before the first digit or + is a label
+  # ("Office: ") and is skipped.
   # Extensions are left off (from x, ext, #, comma or semicolon) and vanity letters become keypad
   # digits ("1-800-GOT-JUNK" => tel:+18004685865). North American numbers get +1 and ten digits.
   # Other countries are best effort: a leading + is kept and the rest is digits, but a trunk 0
   # isn't removed, and ten digits without a + are taken as a US number.
   def phone_href(value)
-    number = phone_number_part(value.to_s.strip)
+    number = phone_number_part(value.to_s.strip)[/[\d+].*/m].to_s # letters only count after the number starts
     keyed = number.upcase.gsub(/[A-Z]/) { |letter| KEYPAD.find { |letters, _| letters.include?(letter) }.last }
     digits = keyed.gsub(/\D/, "")
-    return if digits.length < PHONE_MIN_DIGITS
+    return unless digits.length.between?(PHONE_MIN_DIGITS, PHONE_MAX_DIGITS)
 
     us = north_american_digits(keyed)
     us ? "tel:+1#{us}" : "tel:#{keyed.start_with?("+") ? "+" : ""}#{digits}"
