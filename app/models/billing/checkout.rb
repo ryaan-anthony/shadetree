@@ -58,6 +58,15 @@ class Billing::Checkout
     subscription && Billing::SubscriptionSync.refresh!(@business, subscription)
   end
 
+  # BIL-05: subscribing during the business's trial keeps the rest of it (billing starts when it
+  # ends) if at least TRIAL_KEPT_MIN is left, Stripe's minimum; otherwise the trial ends on paying.
+  TRIAL_KEPT_MIN = 48.hours
+
+  def self.trial_kept_until(business, at: Time.current)
+    ends = business.trial_ends_at
+    ends if business.billing_status == "trialing" && ends && ends >= at + TRIAL_KEPT_MIN
+  end
+
   private
 
   def gateway = Billing.gateway
@@ -82,7 +91,8 @@ class Billing::Checkout
       mode: "subscription", customer: customer_id, client_reference_id: @business.uid,
       line_items: [ { price: price_id(plan, interval), quantity: 1 } ],
       success_url: "#{@return_url}?session_id={CHECKOUT_SESSION_ID}", cancel_url: plan_url,
-      subscription_data: { metadata: { business_uid: @business.uid } }, metadata: { business_uid: @business.uid },
+      subscription_data: { metadata: { business_uid: @business.uid }, trial_end: self.class.trial_kept_until(@business)&.to_i }.compact,
+      metadata: { business_uid: @business.uid },
       automatic_tax: { enabled: Billing.automatic_tax? }, customer_update: { address: "auto", name: "auto" }
     )
     session.url

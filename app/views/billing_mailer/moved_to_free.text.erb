@@ -1,0 +1,5 @@
+Hi <%= @user.first_name.presence || "there" %>,
+
+<%= @business.name %> moved from <%= @from_plan %> to <%= @free.name %> because <%= Billing::LAPSES.fetch(@reason, "its paid plan ended") %>. Nothing has been deleted: your clients, quotes, jobs and invoices are all there, and anything beyond <%= @free.name %>'s limits is read-only until you choose a paid plan again.
+
+Choose a plan: <%= admin_plan_url %>

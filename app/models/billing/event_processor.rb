@@ -28,7 +28,8 @@ class Billing::EventProcessor
       record_invoice(business, invoice)
       subscription = invoice.parent&.subscription_details&.subscription
       subscription = subscription.id if subscription.respond_to?(:id)
-      Billing::SubscriptionSync.refresh!(business, subscription) if subscription
+      failed_at = @event.stripe_created_at if @event.event_type == "invoice.payment_failed" && invoice.attempt_count.to_i == 1
+      Billing::SubscriptionSync.refresh!(business, subscription, failed_at:) if subscription
     end
   rescue Billing::SubscriptionSync::Mismatch => error
     # Never mirrored; an operator looks into it. The event is done (trying again can't help).

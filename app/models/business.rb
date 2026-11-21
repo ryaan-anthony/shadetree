@@ -23,6 +23,8 @@ class Business < ApplicationRecord
   # Relationships
   belongs_to :owner, class_name: "User"
   belongs_to :plan # BIL-01: new businesses start on the default plan (Free)
+  belongs_to :trial_plan, class_name: "Plan", optional: true # BIL-05
+  belongs_to :comp_plan, class_name: "Plan", optional: true # OPS-04
   has_many :business_users, dependent: :destroy
   has_many :users, through: :business_users
   has_many :closures # CAT-06; the database removes them with the business
@@ -54,6 +56,7 @@ class Business < ApplicationRecord
   before_save :set_default_brand_color
   after_create :add_owner_to_business_users
   after_create :create_primary_location # CAT-07
+  after_create :start_trial # BIL-05
 
   # Validations
   validates :name, presence: true, length: { maximum: 120 }
@@ -284,10 +287,20 @@ class Business < ApplicationRecord
     return unless owner && plan&.free?
 
     owner.lock! if owner.persisted? && self.class.connection.transaction_open?
-    count = Business.where(owner:, plan_id: Plan.free.select(:id)).count
+    # BIL-05: a business on a trial hasn't paid, so it counts as free.
+    count = Business.where(owner:).where(plan_id: Plan.free.select(:id)).or(Business.where(owner:, billing_status: "trialing")).count
     return if count < FREE_BUSINESSES_PER_OWNER
 
     errors.add(:base, "You already own #{FREE_BUSINESSES_PER_OWNER} businesses on the free plan. A paid plan on one of them makes room for another.")
+  end
+
+  # BIL-05: a new business tries the configured paid plan for Billing.trial_days (0: no trial).
+  def start_trial
+    plan = Billing.trial_plan or return
+
+    update_columns(trial_plan_id: plan.id, trial_ends_at: Billing.trial_days.days.from_now)
+    Billing::PlanResolver.apply!(self)
+    Tenancy.with_business(self) { BillingEvent.record!("trial_started", details: { "plan" => plan.name, "ends_on" => trial_ends_at.to_date.iso8601 }) }
   end
 
   def default_currency_from_country

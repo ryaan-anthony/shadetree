@@ -1,0 +1,5 @@
+Hi <%= @user.first_name.presence || "there" %>,
+
+The <%= @plan.name %> trial for <%= @business.name %> ends on <%= @business.trial_ends_at.in_time_zone(@business.time_zone).to_date.to_fs(:long) %>. To keep <%= @plan.name %>, choose a plan in Settings → Plan. Otherwise you'll move to <%= Plan.default!.name %>: nothing is deleted, and anything beyond its limits becomes read-only.
+
+See plans: <%= admin_plan_url %>

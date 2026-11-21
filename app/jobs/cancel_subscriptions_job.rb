@@ -6,6 +6,9 @@ class CancelSubscriptionsJob < ApplicationJob
 
   def perform(business_id)
     business = Business.find_by(id: business_id)
-    Billing.cancel_subscriptions!(business) if business
+    return unless business
+
+    # Mirrored at once (BIL-05), so the hourly safety net doesn't ask again before the webhook.
+    Billing.cancel_subscriptions!(business).each { Billing::SubscriptionSync.refresh!(business, _1) }
   end
 end

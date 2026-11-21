@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_20_001000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_20_002000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -214,7 +214,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_001000) do
     t.datetime "deletion_scheduled_at"
     t.datetime "deletion_due_at"
     t.string "stripe_customer_id"
+    t.bigint "trial_plan_id"
+    t.datetime "trial_ends_at"
+    t.integer "trial_reminded_days"
+    t.bigint "comp_plan_id"
+    t.datetime "comp_ends_at"
+    t.string "billing_status", default: "free", null: false
+    t.datetime "billing_check_at"
     t.index ["active"], name: "index_businesses_on_active"
+    t.index ["billing_check_at"], name: "index_businesses_on_billing_check_at", where: "(billing_check_at IS NOT NULL)"
+    t.index ["billing_status"], name: "index_businesses_on_billing_status"
     t.index ["deletion_due_at"], name: "index_businesses_on_deletion_due_at", where: "(deletion_due_at IS NOT NULL)"
     t.index ["handle"], name: "index_businesses_on_handle", unique: true
     t.index ["industry"], name: "index_businesses_on_industry"
@@ -1183,6 +1192,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_001000) do
     t.datetime "synced_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "past_due_since"
     t.index ["business_id"], name: "index_subscriptions_on_business_id", unique: true
     t.index ["plan_id"], name: "index_subscriptions_on_plan_id"
     t.index ["stripe_subscription_id"], name: "index_subscriptions_on_stripe_subscription_id", unique: true
@@ -1377,6 +1387,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_001000) do
   add_foreign_key "business_users", "roles"
   add_foreign_key "business_users", "users"
   add_foreign_key "businesses", "plans"
+  add_foreign_key "businesses", "plans", column: "comp_plan_id"
+  add_foreign_key "businesses", "plans", column: "trial_plan_id"
   add_foreign_key "businesses", "users", column: "owner_id"
   add_foreign_key "catalog_categories", "businesses", on_delete: :cascade
   add_foreign_key "catalog_items", "businesses", on_delete: :cascade

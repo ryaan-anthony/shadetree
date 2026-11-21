@@ -42,6 +42,16 @@ class Admin::BillingTest < ActionDispatch::IntegrationTest
     assert_equal 1, stripe.customers.size, "one customer per business"
   end
 
+  test "subscribing during a trial keeps the rest of it when 48 hours or more are left (BIL-05)" do
+    @business.update_columns(trial_plan_id: plans(:business).id, trial_ends_at: 5.days.from_now, billing_status: "trialing")
+    post admin_billing_checkout_path, params: { plan: "starter", interval: "monthly" }
+    assert_equal @business.trial_ends_at.to_i, stripe.checkout_sessions.values.last[:subscription_data][:trial_end]
+
+    @business.update_columns(trial_ends_at: 47.hours.from_now)
+    post admin_billing_checkout_path, params: { plan: "starter", interval: "monthly" }
+    assert_nil stripe.checkout_sessions.values.last[:subscription_data][:trial_end]
+  end
+
   test "back from Checkout, the new plan is active at once" do
     post admin_billing_checkout_path, params: { plan: "starter", interval: "monthly" }
     session = stripe.checkout_sessions.values.sole
