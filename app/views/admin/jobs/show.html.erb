@@ -32,14 +32,14 @@
 <% end %>
 
 <% if job.status == "completed" %>
-  <div class="banner banner-success mb-4" role="status"><%= icon "check-circle" %>
+  <div class="banner banner-success mb-4"><%= icon "check-circle" %>
     <% uninvoiced = job.invoices.none? %>
     <p class="flex-1">Completed <%= local_time(job.completed_at) %><%= " by #{job.completed_by.full_name}" if job.completed_by %>.<%= " Ready to invoice." if uninvoiced %></p>
     <% if uninvoiced %>
       <%= button_to admin_job_invoices_path(job), class: button_classes(:primary, :sm), form: { class: "contents" } do %><%= icon "invoice" %> Create invoice<% end %>
     <% end %></div>
 <% elsif job.status == "cancelled" %>
-  <div class="banner banner-warning mb-4" role="status"><%= icon "x-circle" %>
+  <div class="banner banner-warning mb-4"><%= icon "x-circle" %>
     <p>Cancelled <%= local_time(job.cancelled_at) %><%= " by #{job.cancelled_by.full_name}" if job.cancelled_by %><%= job.cancel_reason ? ": “#{job.cancel_reason}”" : "." %></p></div>
 <% end %>
 

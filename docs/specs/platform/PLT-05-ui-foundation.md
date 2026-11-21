@@ -48,14 +48,14 @@ Conventions from the QA/accessibility audit (#274), for every staff page:
 
 - **Landmarks:** the app layout has a `<header>` (top bar), the sidebar's `<nav>`, `<main>`, and
   the sidebar's foot (you, sign out, legal links) as the `<footer>`; the operator console too.
-- **Headings:** one H1 per page (`page_header`). Empty states are H2 (`empty_state`), or
-  `level: 3` inside a titled card, whose title is an H2.
+- **Headings:** one H1 per page (`page_header`). Empty states are H2 (`empty_state`),
+  `level: 3` inside a titled card (its title is an H2), `level: 1` when they are the page.
 - **Names:** a link or button repeated down a page names its row ("Download CSV: Clients",
   "Add here: Lawn care"), starting with its visible words. Tabs mark the current one with
   `aria-current="page"`; filter buttons use `aria-pressed`.
-- **Status messages:** toasts are `role="status"`, errors `role="alert"`; a status toast is
-  also read out through `#announcer`, a live region kept across Turbo visits. Banners that
-  inform are `role="status"`.
+- **Status messages:** error toasts are `role="alert"`; other toasts are read through
+  `#announcer`, a polite live region kept across Turbo visits (joined when several arrive,
+  emptied after a few seconds, silent on Back). `role="status"` only on content that updates.
 - **Dates:** records, documents and emails always carry the year. Pages about now (today,
   this week, what's coming up) leave it off while it's this year (`friendly_date`, or
   `local_date`/`local_time` with `year: :auto`); today's and this week's pages never show it.

@@ -32,7 +32,7 @@ class Admin::AccessibilityAuditTest < ActionDispatch::IntegrationTest
 
   test "Hours: day boxes and times are named by their day, and the zone sentence reads right" do
     get admin_hours_path
-    assert_select "label.check", /Open on\s*Monday/
+    assert_select "label.check input#hours_1_open[aria-label=?]", "Monday: open"
     assert_select "label[for=hours_1_opens]", "Monday opening time"
     assert_select "label[for=hours_1_closes]", "Monday closing time"
     assert_select ".card-subtitle", /Times are in Eastern Time \(US & Canada\)\./
@@ -123,7 +123,7 @@ class Admin::AccessibilityAuditTest < ActionDispatch::IntegrationTest
     patch admin_business_path(tab: "documents"), params: { business: { quote_expiry_days: "30" } }
     follow_redirect!
     assert_select "#announcer[role=status][aria-live=polite][data-turbo-permanent]"
-    assert_select "#flash .toast[role=status][data-controller~=announce]", /Settings saved/
+    assert_select "#flash .toast[data-turbo-temporary][data-controller~=announce]:not([role])", /Settings saved/
     post switch_admin_business_path, params: { business: "nope" }
     follow_redirect!
     assert_select "#flash .toast[role=alert]", /isn't available/
@@ -136,6 +136,19 @@ class Admin::AccessibilityAuditTest < ActionDispatch::IntegrationTest
     @owner.update_columns(confirmed_at: nil)
     get admin_root_path
     assert_select "#confirm-email-banner[role=status]", /Confirm your email/
+  end
+
+  test "pages that are only an empty state make it their H1" do
+    @business.update_columns(suspended_at: Time.current)
+    get admin_root_path
+    assert_select "h1.empty-title", /is suspended/
+  end
+
+  test "the operator console has a footer and a live region kept across visits" do
+    sign_in_operator(@owner)
+    follow_redirect! while response.redirect?
+    assert_select "body > footer a[href=?]", terms_path
+    assert_select "#announcer[role=status][aria-live=polite][data-turbo-permanent]"
   end
 
   test "the sample quote says visits for more than one" do

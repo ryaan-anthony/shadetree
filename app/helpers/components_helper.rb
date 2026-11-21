@@ -28,9 +28,10 @@ module ComponentsHelper
     render "components/card", title:, subtitle:, actions:, flush:, footer:, attributes:, body: capture(&block)
   end
 
-  # level: the heading level. 2 under a page's H1; 3 inside a titled card, whose title is an H2.
+  # level: the heading level. 2 under a page's H1; 3 inside a titled card, whose title is an H2;
+  # 1 when the empty state is the whole page (not allowed, suspended).
   def empty_state(title:, text: nil, icon: "inbox", level: 2, &actions)
-    raise ArgumentError, "Empty-state heading level must be 2 or 3, not #{level.inspect}" unless level.in?([ 2, 3 ])
+    raise ArgumentError, "Empty-state heading level must be 1, 2 or 3, not #{level.inspect}" unless level.in?([ 1, 2, 3 ])
 
     render "components/empty_state", title:, text:, icon:, level:, actions: (capture(&actions) if actions)
   end

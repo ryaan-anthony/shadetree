@@ -15,7 +15,7 @@
     </nav>
   <% end %>
   <% unless @place.weekly_hours_was || problems.any? %>
-    <div class="banner banner-info" role="status"><%= icon "clock" %>
+    <div class="banner banner-info"><%= icon "clock" %>
       <p>Your hours aren't set yet. Once they are, the schedule shades the times you're closed and warns you about visits booked then.</p></div>
   <% end %>
 
@@ -37,9 +37,9 @@
           <% invalid = problem_days.key?(wday) || nil %>
           <li><div class="group flex min-h-14 flex-wrap items-center gap-x-4 gap-y-2 py-2" role="group" aria-label="<%= name %>">
             <label class="check w-32 items-center">
-              <%= check_box_tag "hours[#{wday}][open]", "1", open, id: "hours_#{wday}_open" %>
-              <%# Named "Open on Monday": ticked means open that day. %>
-              <span class="font-medium text-ink"><span class="sr-only">Open on </span><%= name %></span>
+              <%# Named "Monday: open", the visible word first: ticked means open that day. %>
+              <%= check_box_tag "hours[#{wday}][open]", "1", open, id: "hours_#{wday}_open", "aria-label": "#{name}: open" %>
+              <span class="font-medium text-ink"><%= name %></span>
             </label>
             <div class="hidden flex-wrap items-center gap-2 group-has-checked:flex">
               <label class="sr-only" for="hours_<%= wday %>_opens"><%= name %> opening time</label>

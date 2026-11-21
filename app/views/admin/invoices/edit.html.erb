@@ -40,7 +40,7 @@
 
 <div id="builder_banner"></div>
 <% if @invoice.revising? && (previous = @invoice.revisions.last) %>
-  <div class="banner banner-info mb-4" role="status"><%= icon "edit-3" %>
+  <div class="banner banner-info mb-4"><%= icon "edit-3" %>
     <p class="flex-1">Revising what was sent as revision <%= previous.number %> (<%= money(previous.total) %>). Until it's sent again, the client's link says it's being updated.</p>
   </div>
 <% end %>
