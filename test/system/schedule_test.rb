@@ -97,14 +97,24 @@ class ScheduleTest < ApplicationSystemTestCase
     assert_focus("Cancel goes back to the slot") { _1[:text].start_with?("New visit, #{(next_monday + 1).strftime("%A, %B %-d")}, 10:00 AM") }
     assert_no_css "turbo-frame#schedule_visit h2"
 
+    slot_key = "slot-#{(next_monday + 1).iso8601}-10-all"
+    choose_job = lambda do
+      press(:space) # Space opens a slot, as Enter does
+      assert_focus { _1[:text] == "New visit" }
+      press(:tab)
+      assert_focus { _1[:id] == "new-visit-job" }
+      find("#new-visit-job option[value='#{waiting.uid}']").select_option
+      find("#new-visit-job").execute_script("this.focus()")
+      press(:tab, :tab, :enter) # Cancel, Continue
+      assert_text "Schedule a visit"
+    end
+    choose_job.()
+    tab_until { _1[:text] == "Cancel" }
     press(:enter)
-    assert_focus { _1[:text] == "New visit" }
-    press(:tab)
-    assert_focus { _1[:id] == "new-visit-job" }
-    press(:down) # the first job needing a visit
-    assert_equal waiting.uid, find("#new-visit-job").value
-    press(:tab, :tab, :enter) # Cancel, Continue
-    assert_text "Schedule a visit"
+    assert_focus("the form's Cancel comes back to the slot") { _1[:key] == slot_key }
+    assert_equal "0", find("[data-schedule-focus='#{slot_key}']")[:tabindex], "and makes it the slots' tab stop"
+
+    choose_job.()
     assert_equal (next_monday + 1).iso8601, find_field("Date (or first day)").value
     assert_equal "10:00", find_field("Start").value
     tab_until { _1[:id] == "visit_duration_hours" }
@@ -122,7 +132,8 @@ class ScheduleTest < ApplicationSystemTestCase
     press(:enter)
     assert_css "dialog[open]"
     tab_until { _1[:id] == "move-#{booked.uid}-on" }
-    press((next_monday + 2).strftime("%m%d%Y"))
+    fill_in "Day", with: next_monday + 2 # a date field's typing order depends on the locale
+    find_field("Day").execute_script("this.focus()")
     tab_until { _1[:value] == "Move visit" }
     press(:enter)
 

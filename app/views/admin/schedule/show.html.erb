@@ -11,7 +11,7 @@
     <%= link_to admin_schedule_path(schedule_link_params(s, date: s.next_date.iso8601)), class: button_classes(:secondary, :icon), "aria-label": "Next #{s.view}" do %><%= icon "chevron-right" %><% end %>
   </div>
   <%# QA #274: a keyboard's (and a phone's) way to book a visit without a slot on the grid. %>
-  <%= link_to admin_schedule_new_visit_path({ on: s.date.iso8601, view: s.view }.compact_blank), class: button_classes(:primary), data: { turbo_frame: "schedule_visit" } do %><%= icon "plus" %> New visit<% end %>
+  <%= link_to admin_schedule_new_visit_path({ on: s.date.iso8601, view: s.view, member: s.member }.compact_blank), class: button_classes(:primary), data: { turbo_frame: "schedule_visit" } do %><%= icon "plus" %> New visit<% end %>
   <nav class="tabs hidden md:flex" aria-label="View">
     <%= link_to "Day", admin_schedule_path(schedule_link_params(s, view: "day")), class: "tab", "aria-current": ("page" if s.view == "day") %>
     <%= link_to "Week", admin_schedule_path(schedule_link_params(s, view: "week")), class: "tab", "aria-current": ("page" if s.view == "week") %>
@@ -126,10 +126,10 @@
     <%# Desktop: the time grid, "anytime" visits in a row above it. A day for everyone has a column
         per person. Visits can be dragged to another day, time or person (schedule_drag_controller);
         on the keyboard, a visit opens with Enter or Space and has Move. Each empty hour is a link to
-        a new visit there, one tab stop moved through with the arrow keys (schedule_slots_controller). %>
+        a new visit there, one tab stop (at its column's place) moved with the arrow keys (schedule_slots_controller). %>
     <% params_now = { view: s.view, member: s.member }.compact_blank %>
     <div class="card hidden overflow-x-auto md:block <%= inline_style("--cal-days: #{s.columns.size}") %>" id="schedule-grid"
-         data-turbo-prefetch="false" data-controller="schedule-drag schedule-slots" data-action="keydown->schedule-slots#keydown click->schedule-slots#activate" data-schedule-drag-first-hour-value="<%= s.hours.first %>" data-schedule-drag-hour-px-value="<%= ScheduleView::HOUR_PX %>"
+         data-turbo-prefetch="false" data-controller="schedule-drag schedule-slots" data-action="keydown->schedule-slots#keydown focusin->schedule-slots#focused click->schedule-slots#focused" data-schedule-drag-first-hour-value="<%= s.hours.first %>" data-schedule-drag-hour-px-value="<%= ScheduleView::HOUR_PX %>"
          data-schedule-drag-url-value="<%= admin_schedule_move_path("ID") %>" data-schedule-drag-context-value="<%= params_now.merge(grid_zone: s.place.time_zone.tzinfo.identifier).to_json %>">
       <div class="cal-grid border-b border-line <%= "cal-wide" if s.columns.size > 7 %>">
         <div></div>
@@ -151,7 +151,7 @@
         <% end %>
       </div>
       <div class="cal-grid border-b border-line bg-sunken/40 <%= "cal-wide" if s.columns.size > 7 %>">
-        <div class="py-1.5 pr-2 text-right text-xs text-faint">Anytime</div>
+        <div class="py-1.5 pr-2 text-right text-xs text-muted">Anytime</div><%# QA #274: muted, 4.58:1 on this row (faint was 2.47:1) %>
         <% s.columns.each do |column| %>
           <% date = column.date %>
           <div class="min-h-9 min-w-0 space-y-1 border-l border-line-2 p-1" role="group" aria-label="Anytime, <%= schedule_column_label(column) %>"
@@ -178,7 +178,7 @@
               <% s.shades_on(date).each do |shade| %><div class="cal-shade <%= inline_style("top: #{shade.top}px; height: #{shade.height}px") %>"></div><% end %>
               <% if s.bookable?(date) %><% s.hours.each_with_index do |hour, row| %>
                 <%= link_to admin_schedule_new_visit_path(schedule_slot_params(column, hour, s)), class: "cal-slot #{inline_style("top: #{row * ScheduleView::HOUR_PX}px")}",
-                            data: { turbo_frame: "schedule_visit", schedule_slots_target: "slot", col:, row:, start: (col == start_col && row == start_row) }, "aria-describedby": "schedule-slots-help" do %>
+                            data: { turbo_frame: "schedule_visit", schedule_slots_target: "slot", schedule_focus: schedule_slot_key(column, hour), col:, row:, start: (col == start_col && row == start_row) } do %>
                   <span class="sr-only"><%= schedule_slot_label(column, hour) %></span><span class="cal-slot-hint" aria-hidden="true">+ New visit</span>
                 <% end %>
               <% end %><% end %>
@@ -196,7 +196,8 @@
           <% end %>
         </div>
       </div>
-      <p class="sr-only" id="schedule-slots-help">Arrow keys move between hours and <%= s.by_person? ? "people" : "days" %>. Enter starts a new visit at that time.</p>
+      <%# Described by from schedule_slots_controller, so it's only announced when the keys work. %>
+      <p class="sr-only" id="schedule-slots-help">Arrow keys move between hours and <%= s.by_person? ? "people" : "days" %>; Home and End go to the first and last hour. Enter or Space starts a new visit at that time.</p>
       <p class="sr-only" role="status" data-schedule-drag-target="status"></p>
       <%= inline_styles_tag %>
     </div>

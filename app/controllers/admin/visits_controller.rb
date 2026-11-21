@@ -11,7 +11,8 @@ class Admin::VisitsController < Admin::BaseController
 
   def new
     on = Visit.parse_date(params[:on]) # from the calendar's "Needs scheduling" (JOB-03); never a past day
-    @visit = @job.visits.new(scheduled_on: [ on, current_business.today ].compact.max, timing: "window", start_time: "08:00", window_end_time: "10:00",
+    # Today on the job's own clock (CAT-07), as the calendar's slots are.
+    @visit = @job.visits.new(scheduled_on: [ on, @job.location.today ].compact.max, timing: "window", start_time: "08:00", window_end_time: "10:00",
                              duration_minutes: @job.suggested_visit_minutes)
     prefill_from_schedule
   end
@@ -37,7 +38,7 @@ class Admin::VisitsController < Admin::BaseController
 
     Visit.schedule_all!(visits, by: current_user, notify_client: notify_client?)
     notice = visits.one? ? "Visit scheduled for #{@visit.when_label}." : "#{visits.size} visits scheduled, #{visits.first.scheduled_on.strftime("%b %-d")} to #{visits.last.scheduled_on.strftime("%b %-d")}."
-    redirect_to(from_schedule? ? admin_schedule_path({ date: @visit.scheduled_on.iso8601, view: params[:view], focus: @visit.uid }.compact_blank) : after_visit_path, notice:)
+    redirect_to(from_schedule? ? back_to_schedule(date: @visit.scheduled_on, focus: @visit.uid) : after_visit_path, notice:)
   rescue Visit::BadDates => error
     @visit.errors.add(:base, error.message)
     render :new, status: :unprocessable_content
@@ -75,17 +76,25 @@ class Admin::VisitsController < Admin::BaseController
   def after_visit_path(anchor: nil) = can?(:office) ? admin_job_path(@job, anchor:) : admin_schedule_path(date: @visit&.scheduled_on)
 
   # QA #274: a slot on the calendar (Admin::ScheduleController#new_visit) gives the time it was
-  # at (?at=HH:MM, a start time) and whose column it was in (?member=); afterwards the form goes
-  # back to the calendar (?from=schedule), with focus on the new visit.
+  # at (?at=HH:MM, a start time) and whose column it was in (?crew=); afterwards the form goes
+  # back to the calendar (?from=schedule) as it was (view, person filter), with focus on the new
+  # visit, or on Cancel the slot (falling back to the slot if the visit isn't shown there).
   def prefill_from_schedule
     if (at = params[:at].to_s[/\A(?:[01]\d|2[0-3]):[0-5]\d\z/])
       @visit.assign_attributes(timing: "exact", start_time: at, window_end_time: nil)
     end
-    member = current_business.business_users.active.find_by(user_id: params[:member].to_i) if params[:member].to_s.match?(/\A\d+\z/)
-    @visit.assignee_ids = [ member.user_id ] if member&.can?(:field_work)
+    crew = current_business.business_users.active.find_by(user_id: params[:crew].to_i) if params[:crew].to_s.match?(/\A\d+\z/)
+    @visit.assignee_ids = [ crew.user_id ] if crew&.can?(:field_work)
   end
 
   helper_method def from_schedule? = params[:from] == "schedule"
+  helper_method def calendar_params = Admin::ScheduleController.calendar_params(params)
+
+  helper_method def back_to_schedule(date:, focus: nil)
+    calendar = calendar_params
+    date = Date.iso8601(calendar[:slot][5, 10]) if focus.nil? && calendar[:slot] # Cancel: the slot's day, on the calendar's clock
+    admin_schedule_path({ date: date&.iso8601, view: calendar[:view], member: calendar[:member], focus: [ focus, calendar[:slot] ].compact.join(",") }.compact_blank)
+  end
 
   def set_job = @job = Job.includes(:client, :property).find_by_param!(params[:job_id])
 

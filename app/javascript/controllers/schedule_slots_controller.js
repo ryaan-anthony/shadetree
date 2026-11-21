@@ -3,8 +3,9 @@ import { Controller } from "@hotwired/stimulus"
 // QA #274 (WCAG 2.1.1): the calendar's empty time slots are links to a new visit at that day,
 // hour and person. They're one stop in the tab order (a roving tabindex): Tab reaches the
 // current slot, the arrow keys move between hours (up, down) and days or people (left,
-// right), Home and End go to the first and last hour, and Enter opens it. Without JavaScript
-// every slot is in the tab order. Space opens a visit on the grid, as Enter does.
+// right), Home and End go to the first and last hour, and Enter or Space opens it. The stop sits
+// at its column's place in the tab order (among that day's visits). Without JavaScript every
+// slot is in the tab order, and the arrow-key help isn't attached. Space opens a visit too.
 export default class extends Controller {
   static targets = ["slot"]
 
@@ -13,11 +14,31 @@ export default class extends Controller {
     this.slotTargets.forEach((slot) => { slot.tabIndex = slot === this.current ? 0 : -1 })
   }
 
+  // The help only describes the slots while the keys work; a link is natively draggable, and a
+  // drag of a slot would start the browser's own link drag (as visits, schedule_drag_controller).
+  slotTargetConnected(slot) {
+    slot.setAttribute("aria-describedby", "schedule-slots-help")
+    slot.draggable = false
+    slot.addEventListener("dragstart", this.noNativeDrag)
+  }
+
+  slotTargetDisconnected(slot) {
+    slot.removeEventListener("dragstart", this.noNativeDrag)
+  }
+
+  noNativeDrag = (event) => event.preventDefault()
+
+  // Focus arriving on a slot some other way (coming back to the calendar, a click) makes it the stop.
+  focused(event) {
+    const slot = event.target.closest?.("[data-schedule-slots-target=slot]")
+    if (slot && slot !== this.current) this.makeCurrent(slot)
+  }
+
   keydown(event) {
-    const visit = event.target.closest(".cal-visit, .cal-chip")
-    if (visit && event.key === " ") {
+    const link = event.target.closest(".cal-visit, .cal-chip, [data-schedule-slots-target=slot]")
+    if (link && event.key === " ") {
       event.preventDefault()
-      visit.click()
+      link.click()
       return
     }
     const slot = event.target.closest("[data-schedule-slots-target=slot]")
@@ -50,15 +71,13 @@ export default class extends Controller {
   }
 
   select(slot) {
-    if (this.current) this.current.tabIndex = -1
-    this.current = slot
-    slot.tabIndex = 0
+    this.makeCurrent(slot)
     slot.focus()
   }
 
-  // A click (or Enter) makes that slot the current one, so Tab comes back to it.
-  activate(event) {
-    const slot = event.target.closest("[data-schedule-slots-target=slot]")
-    if (slot && slot !== this.current) this.select(slot)
+  makeCurrent(slot) {
+    if (this.current) this.current.tabIndex = -1
+    this.current = slot
+    slot.tabIndex = 0
   }
 }
