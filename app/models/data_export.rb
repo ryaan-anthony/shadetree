@@ -122,11 +122,11 @@ class DataExport < ApplicationRecord
     Table.new("quote_lines", "Quote line items", "Each line on each quote.", scope: -> { QuoteLineItem.includes(:quote) }, cursor: %i[quote_id position id], &lines.("quote", "Quote number")),
     # QTE-05: each client answer with its evidence; the IP address is here, not on any page (QA #274).
     Table.new("quote_responses", "Quote responses", "Each approval, decline and change request, with who gave it and its evidence.",
-              scope: -> { QuoteResponse.includes(:quote, :recorded_by) }) do
+              scope: -> { QuoteResponse.includes(:quote, :recorded_by) }, cursor: %i[quote_id id]) do
       column("Quote number") { _1.quote.number }
       column("Revision", number: true, &:revision)
       column("Response", &:label)
-      column("At", &:created_at)
+      column("Answered at", &:created_at)
       column("Signed by", &:signer_name)
       column("Message", &:message)
       column("Recorded by") { name_of.(_1.recorded_by) }
