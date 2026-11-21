@@ -77,7 +77,7 @@ class Admin::BrandingTest < ActionDispatch::IntegrationTest
     render_client = -> { ApplicationController.render(html: "Quote", layout: "client", assigns: { business: @business.reload }) }
     html = render_client.call
     assert_includes html, %(class="client-logo" aria-hidden="true">TB</span>)
-    assert_match %r{Powered by <span class="wordmark"><span class="wordmark-shade">Shade</span>tree</span>}, html
+    assert_match %r{Powered by <span class="wordmark wordmark-small">Shadetree</span>}, html # 13px: one colour
     assert_includes html, "--color-brand: #{@business.branding.color}"
 
     @business.update!(logo: { io: file_fixture("logo.png").open, filename: "logo.png" })

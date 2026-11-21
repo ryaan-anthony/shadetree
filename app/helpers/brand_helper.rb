@@ -5,7 +5,8 @@
 #
 #   brand_logo(href: root_path)                 # mark and wordmark, on a light background
 #   brand_logo(on: :dark, href: root_path)      # on navy: "tree" in white
-#   wordmark                                    # the word alone, e.g. after "Powered by"
+#   wordmark                                    # the word alone
+#   wordmark(size: :small)                      # under 14px ("Powered by"): one colour, ink or white
 #   email_wordmark                              # inline-styled, for email layouts
 module BrandHelper
   NAME = "Shadetree"
@@ -13,10 +14,11 @@ module BrandHelper
   INK = "#0f172a"
 
   # The word. The halves are inline with no space between, so the text (and what screen readers
-  # and search engines read) is "Shadetree".
-  def wordmark(on: :light, **attributes)
-    classes = [ "wordmark", ("wordmark-dark" if on == :dark), attributes.delete(:class) ].compact.join(" ")
-    tag.span(class: classes, **attributes) { tag.span("Shade", class: "wordmark-shade") + "tree" }
+  # and search engines read) is "Shadetree". Under 14px (size: :small) it's one colour, ink on
+  # light or white on dark (owner, 2026-11-21): the green half is too thin to read that small.
+  def wordmark(on: :light, size: :regular, **attributes)
+    classes = [ "wordmark", ("wordmark-dark" if on == :dark), ("wordmark-small" if size == :small), attributes.delete(:class) ].compact.join(" ")
+    tag.span(class: classes, **attributes) { size == :small ? NAME : tag.span("Shade", class: "wordmark-shade") + "tree" }
   end
 
   # The mark and the word, as a link when given href:.

@@ -17,6 +17,12 @@ class BrandHelperTest < ActionView::TestCase
     assert_select "span.logo > span.logo-mark.logo-mark-dark + span.wordmark.wordmark-dark"
   end
 
+  test "under 14px the wordmark is one colour: ink, or white on dark" do
+    assert_dom_equal '<span class="wordmark wordmark-small">Shadetree</span>', wordmark(size: :small)
+    assert_dom_equal '<span class="wordmark wordmark-dark wordmark-small">Shadetree</span>', wordmark(on: :dark, size: :small)
+    assert_not_includes wordmark(size: :small), "wordmark-shade"
+  end
+
   test "the email wordmark is inline-styled" do
     html = email_wordmark
     assert_includes html, %(<span style="color:#059669;">Shade</span>tree)
