@@ -32,8 +32,11 @@
       </div>
     </header>
     <main id="main" class="mx-auto max-w-6xl px-4 py-6">
+      <%# Alerts announce themselves; notices are read through #announcer, kept across Turbo visits. %>
+      <div id="announcer" class="sr-only" role="status" aria-live="polite" aria-atomic="true" data-turbo-permanent></div>
       <% flash.each do |type, message| %>
-        <div class="banner <%= type.to_s == "alert" ? "banner-warning" : "banner-success" %> mb-4" role="<%= type.to_s == "alert" ? "alert" : "status" %>"><p><%= message %></p></div>
+        <% alert = type.to_s == "alert" %>
+        <div class="banner <%= alert ? "banner-warning" : "banner-success" %> mb-4" <%= tag.attributes(role: ("alert" if alert), data: { controller: ("announce" unless alert) }) %> data-turbo-temporary><p><%= message %></p></div>
       <% end %>
       <%= yield %>
     </main>

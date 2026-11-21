@@ -3,25 +3,45 @@ import { Controller } from "@hotwired/stimulus"
 // Reads a status message out to screen readers, through the page's polite live region
 // (#announcer, kept across Turbo visits). A live region that arrives already holding its text,
 // as a toast does after a Turbo visit, isn't announced; a change to one already there is.
+// Messages that arrive together are read as one; the region empties a few seconds later, so a
+// screen reader browsing the page doesn't meet old news. Turbo's cached preview of a page (on
+// Back) announces nothing, and toasts aren't cached (data-turbo-temporary) in the first place.
 //
-//   <div role="status" data-controller="announce"><span data-announce-target="text">Saved.</span></div>
+//   <div data-controller="announce" data-turbo-temporary><span data-announce-target="text">Saved.</span></div>
+const SETTLE = 150
+const CLEAR_AFTER = 5000
+let pending = []
+let flushTimer
+let clearTimer
+
+function flush() {
+  const announcer = document.getElementById("announcer")
+  const text = pending.join(" ")
+  pending = []
+  if (!announcer || !text) return
+
+  clearTimeout(clearTimer)
+  announcer.textContent = ""
+  // A moment between emptying and filling, so the change is noticed as new.
+  setTimeout(() => {
+    announcer.textContent = text
+    clearTimer = setTimeout(() => { if (announcer.textContent === text) announcer.textContent = "" }, CLEAR_AFTER)
+  }, 50)
+}
+
 export default class extends Controller {
   static targets = ["text"]
 
   connect() {
-    const text = (this.hasTextTarget ? this.textTarget : this.element).textContent.trim()
-    // Looked up when it's time to speak: during a Turbo render the kept announcer is swapped in
-    // after the new page's controllers connect. The wait also lets a just-loaded page's region
-    // register before its text changes.
-    this.timer = setTimeout(() => {
-      const announcer = document.getElementById("announcer")
-      if (!announcer) return
-      announcer.textContent = ""
-      this.timer = setTimeout(() => { announcer.textContent = text }, 50)
-    }, 150)
-  }
+    if (document.documentElement.hasAttribute("data-turbo-preview")) return
 
-  disconnect() {
-    clearTimeout(this.timer)
+    const text = (this.hasTextTarget ? this.textTarget : this.element).textContent.trim()
+    if (!text) return
+
+    pending.push(text)
+    // Spoken a moment later: during a Turbo render the kept announcer is swapped in after the
+    // new page's controllers connect, and a just-loaded page's region needs a moment to register.
+    clearTimeout(flushTimer)
+    flushTimer = setTimeout(flush, SETTLE)
   }
 }
