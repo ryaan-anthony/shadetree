@@ -11,6 +11,8 @@ class Branding
   # borders, large text).
   MIN_TEXT_CONTRAST = 4.5
   MIN_PAGE_CONTRAST = 3.0
+  # Client pages are #f4f5f7 behind white cards: link text has to read on the darker of the two.
+  CLIENT_PAGE = "#f4f5f7"
 
   PRESETS = {
     "Forest" => "#047857", "Ocean" => "#0369a1", "Indigo" => "#4338ca", "Plum" => "#7e22ce",
@@ -43,17 +45,35 @@ class Branding
   def ink_contrast = self.class.contrast(color, ink)
   def page_contrast = self.class.contrast(color, WHITE)
 
-  # Plain-language problems with the color, for the settings page.
+  # Owner, 2026-11-21: the business's color is used as chosen for accents (borders, the progress
+  # rail). Text keeps 4.5:1 automatically: link text uses link_color, and a button whose text
+  # can't reach 4.5:1 in white or ink uses button_color, both the same hue darkened just enough.
+  def link_color = self.class.readable(color, on: CLIENT_PAGE)
+  def button_color = ink_contrast >= MIN_TEXT_CONTRAST ? color : self.class.readable(color, on: WHITE)
+  def button_ink = button_color == color ? ink : WHITE
+
+  # Plain-language notes about the color, for the settings page.
   def contrast_warnings
     warnings = []
-    warnings << "Button text may be hard to read on this color. Pick a darker or lighter shade." if ink_contrast < MIN_TEXT_CONTRAST
-    warnings << "This color is light against a white page, so links and outlines may be hard to see." if page_contrast < MIN_PAGE_CONTRAST
+    warnings << "Neither white nor dark text reads well on this color, so buttons use a slightly darker shade." if ink_contrast < MIN_TEXT_CONTRAST
+    warnings << "This color is light against a white page: links use a darker shade, and outlines may be hard to see." if page_contrast < MIN_PAGE_CONTRAST
     warnings
   end
 
   # CSS variables for client pages. Only validated #rrggbb values reach the style attribute.
   def css_variables
-    "--color-brand: #{color}; --color-brand-ink: #{ink}; --color-brand-soft: color-mix(in srgb, #{color} 10%, white);"
+    "--color-brand: #{color}; --color-brand-button: #{button_color}; --color-brand-ink: #{button_ink}; " \
+      "--color-brand-link: #{link_color}; --color-brand-soft: color-mix(in srgb, #{color} 10%, white);"
+  end
+
+  # The color darkened toward black (same hue) in 1% steps until text in it reaches 4.5:1 on
+  # `on`; unchanged when it already does.
+  def self.readable(hex, on: WHITE, min: MIN_TEXT_CONTRAST)
+    rgb = hex.delete("#").scan(/../).map { _1.to_i(16) }
+    (0..100).each do |step|
+      candidate = format("#%02x%02x%02x", *rgb.map { (_1 * (100 - step) / 100.0).round })
+      return candidate if contrast(candidate, on) >= min
+    end
   end
 
   def logo? = logo_attachment.present?

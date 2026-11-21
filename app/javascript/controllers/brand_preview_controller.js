@@ -50,8 +50,12 @@ export default class extends Controller {
     const color = this.color()
     if (color) {
       const ink = contrast(color, WHITE) >= contrast(color, INK) ? WHITE : INK
+      // As Branding#button_color and #link_color: text stays at 4.5:1 (owner, 2026-11-21).
+      const button = contrast(color, ink) >= this.minTextValue ? color : readable(color, WHITE, this.minTextValue)
       this.previewTarget.style.setProperty("--color-brand", color)
-      this.previewTarget.style.setProperty("--color-brand-ink", ink)
+      this.previewTarget.style.setProperty("--color-brand-button", button)
+      this.previewTarget.style.setProperty("--color-brand-ink", button === color ? ink : WHITE)
+      this.previewTarget.style.setProperty("--color-brand-link", readable(color, CLIENT_PAGE, this.minTextValue))
       this.previewTarget.style.setProperty("--color-brand-soft", `color-mix(in srgb, ${color} 10%, white)`)
       if (this.pickerTarget.value !== color) this.pickerTarget.value = color
       this.swatchTargets.forEach((swatch) => swatch.setAttribute("aria-pressed", String(swatch.dataset.color === color)))
@@ -79,8 +83,8 @@ export default class extends Controller {
     const messages = []
     if (!color) messages.push("Enter a color like #047857.")
     else {
-      if (contrast(color, ink) < this.minTextValue) messages.push("Button text may be hard to read on this color. Pick a darker or lighter shade.")
-      if (contrast(color, WHITE) < this.minPageValue) messages.push("This color is light against a white page, so links and outlines may be hard to see.")
+      if (contrast(color, ink) < this.minTextValue) messages.push("Neither white nor dark text reads well on this color, so buttons use a slightly darker shade.")
+      if (contrast(color, WHITE) < this.minPageValue) messages.push("This color is light against a white page: links use a darker shade, and outlines may be hard to see.")
     }
     // Rewrite the live region only when the advice changes, so screen readers don't repeat it
     // on every keystroke or picker drag.
@@ -98,6 +102,18 @@ export default class extends Controller {
 
 const WHITE = "#ffffff"
 const INK = "#0f172a"
+const CLIENT_PAGE = "#f4f5f7"
+
+// The color darkened toward black (same hue) in 1% steps until text in it reaches `min` on
+// `background`; unchanged when it already does. Mirrors Branding.readable.
+function readable(hex, background, min) {
+  const rgb = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16))
+  for (let step = 0; step <= 100; step++) {
+    const candidate = "#" + rgb.map((c) => Math.round(c * (100 - step) / 100).toString(16).padStart(2, "0")).join("")
+    if (contrast(candidate, background) >= min) return candidate
+  }
+  return "#000000"
+}
 
 function luminance(hex) {
   const channels = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
