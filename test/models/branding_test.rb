@@ -62,6 +62,14 @@ class BrandingTest < ActiveSupport::TestCase
     assert_includes css, "--color-brand-link: #{grey.link_color}"
   end
 
+  test "hovering a button never lowers its text contrast" do
+    [ "#047857", "#facc15", "#7b7b7b", "#059669", "#fef08a", *Branding::PRESETS.values ].each do |hex|
+      b = branding(brand_color: hex)
+      assert_operator Branding.contrast(b.button_hover_color, b.button_ink), :>=, Branding.contrast(b.button_color, b.button_ink), hex
+    end
+    assert_equal "#000000", Branding.readable("#ffffff", on: "#000000", min: 22), "nothing reads: black"
+  end
+
   def hue(hex)
     r, g, b = hex.delete("#").scan(/../).map { _1.to_i(16) / 255.0 }
     max, min = [ r, g, b ].max, [ r, g, b ].min

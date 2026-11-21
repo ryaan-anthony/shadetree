@@ -33,9 +33,10 @@ module LayoutHelper
     end
   end
 
-  # The square business mark in the switcher uses the business's brand color.
+  # The square business mark in the switcher uses the business's brand color, darkened when
+  # neither white nor ink initials would read on it (Branding#button_color, QA #274).
   def business_mark_style(business)
     branding = Branding.new(business)
-    "background: #{branding.color}; color: #{branding.ink}"
+    "background: #{branding.button_color}; color: #{branding.button_ink}"
   end
 end

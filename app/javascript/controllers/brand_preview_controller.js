@@ -54,7 +54,9 @@ export default class extends Controller {
       const button = contrast(color, ink) >= this.minTextValue ? color : readable(color, WHITE, this.minTextValue)
       this.previewTarget.style.setProperty("--color-brand", color)
       this.previewTarget.style.setProperty("--color-brand-button", button)
-      this.previewTarget.style.setProperty("--color-brand-ink", button === color ? ink : WHITE)
+      const buttonInk = button === color ? ink : WHITE
+      this.previewTarget.style.setProperty("--color-brand-ink", buttonInk)
+      this.previewTarget.style.setProperty("--color-brand-hover", buttonInk === WHITE ? mix(button, "#000000", 0.06) : mix(button, WHITE, 0.12))
       this.previewTarget.style.setProperty("--color-brand-link", readable(color, CLIENT_PAGE, this.minTextValue))
       this.previewTarget.style.setProperty("--color-brand-soft", `color-mix(in srgb, ${color} 10%, white)`)
       if (this.pickerTarget.value !== color) this.pickerTarget.value = color
@@ -104,6 +106,13 @@ const WHITE = "#ffffff"
 const INK = "#0f172a"
 const CLIENT_PAGE = "#f4f5f7"
 
+// `hex` moved `amount` of the way toward `target`. Mirrors Branding.mix.
+function mix(hex, target, amount) {
+  const channels = (value) => [1, 3, 5].map((i) => parseInt(value.slice(i, i + 2), 16))
+  const [from, to] = [channels(hex), channels(target)]
+  return "#" + from.map((a, i) => Math.round(a + (to[i] - a) * amount).toString(16).padStart(2, "0")).join("")
+}
+
 // The color darkened toward black (same hue) in 1% steps until text in it reaches `min` on
 // `background`; unchanged when it already does. Mirrors Branding.readable.
 function readable(hex, background, min) {
@@ -117,7 +126,7 @@ function readable(hex, background, min) {
 
 function luminance(hex) {
   const channels = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
-    .map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
+    .map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
   return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722
 }
 
