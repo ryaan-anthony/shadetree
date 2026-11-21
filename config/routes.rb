@@ -278,6 +278,12 @@ Rails.application.routes.draw do
     # Business hours and closures (CAT-06)
     resource :hours, only: %i[show update], controller: "hours"
     resource :plan, only: :show, controller: "plans" # BIL-01
+    # BIL-04: Stripe Checkout and the customer portal (Owners)
+    scope "plan/billing", controller: "billing", as: :billing do
+      post "checkout", action: :checkout, as: :checkout
+      post "portal", action: :portal, as: :portal
+      get "done", action: :done, as: :done
+    end
     # OPS-05: asking Shadetree for help
     resources :support_tickets, only: %i[index new create show], path: "help" do
       post :reply, on: :member

@@ -45,3 +45,9 @@ Edit the plan (operator console), then run `docker exec shadetree-<env> bin/rail
 stripe:sync_plans` on the VM. Stripe prices can't be edited, so a new price takes over the
 lookup key and the old one is archived; existing subscribers keep the old price until they
 change plan (move them in the dashboard if needed).
+
+### Suspended businesses
+
+Suspending a business (OPS-04) doesn't pause its subscription. Its Owners can still open
+Settings → Plan and "Manage billing" (Stripe's portal) to update their card or cancel; nothing
+else in the app opens for them. Pause or cancel billing in the Stripe dashboard if needed.

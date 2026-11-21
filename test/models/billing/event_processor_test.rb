@@ -180,6 +180,22 @@ class Billing::EventProcessorTest < ActiveSupport::TestCase
     Rails.error.unsubscribe(subscriber) if subscriber
   end
 
+  test "a second live subscription replaces the first and alerts an operator" do
+    first = stripe.add_subscription(customer: @customer, plan: plans(:starter))
+    second = stripe.add_subscription(customer: @customer, plan: plans(:business))
+    process("customer.subscription.created", first)
+    reports = []
+    subscriber = Class.new { define_method(:report) { |error, **| reports << error.message } }.new
+    Rails.error.subscribe(subscriber)
+
+    process("customer.subscription.created", second)
+
+    assert_equal second, subscription.stripe_subscription_id
+    assert_includes reports, "A business has two live Stripe subscriptions"
+  ensure
+    Rails.error.unsubscribe(subscriber) if subscriber
+  end
+
   test "events for a customer that isn't a business here are ignored" do
     id = stripe.add_subscription(customer: "cus_elsewhere", plan: plans(:starter))
     process("customer.subscription.created", id, customer: "cus_elsewhere")

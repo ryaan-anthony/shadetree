@@ -65,7 +65,7 @@
         </li>
       <% end %>
     </ul>
-    <p class="mt-4 text-center text-sm2 text-muted">Every account starts on Free. Choosing a paid plan from Settings is coming soon; until then, <%= link_to "ask us", contact_path, class: "underline" %>. Prices in <%= @plans.map(&:currency).uniq.to_sentence %>.</p>
+    <p class="mt-4 text-center text-sm2 text-muted">Every account starts on Free. Owners choose a paid plan in Settings → Plan and pay by card; switch or cancel any time. Prices in <%= @plans.map(&:currency).uniq.to_sentence %><%= ", plus sales tax where it applies" if Billing.automatic_tax? %>.</p>
   </section>
 
   <section class="mx-auto max-w-6xl px-5 pt-14 sm:px-8" aria-labelledby="every-plan">
@@ -97,7 +97,7 @@
          [ "Do you charge per person?",
            "No. Each plan includes a number of team members#{" (#{plan_team(free).downcase} on #{free.name})" if free}. If you move to a plan with fewer, nobody is removed; you just can’t invite more until there’s room." ],
          [ "Can I cancel any time?",
-           "Yes. There’s no contract and no setup fee." ],
+           "Yes. There’s no contract and no setup fee. Cancel in Settings → Plan: your plan runs to the end of what you’ve paid for, then you’re on Free, with nothing deleted." ],
          [ "Can I take my data with me?",
            "Yes, on every plan. Download your clients, quotes, jobs, invoices and payments as spreadsheets, or everything at once with your PDFs and photos." ]
        ].each_with_index do |(question, answer), index| %>

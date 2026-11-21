@@ -1,0 +1,25 @@
+<%# BIL-04: how the plan is paid for, and the Owner's way into Stripe's customer portal. %>
+<div class="mt-4 border-t border-line pt-4 text-sm" id="billing">
+  <% if subscription&.live? %>
+    <p class="text-ink">
+      <% if (price = subscription.price) %><%= money(price) %> <%= subscription.yearly? ? "a year" : "a month" %>, billed <%= subscription.yearly? ? "yearly" : "monthly" %>.<% end %>
+      <% if subscription.cancel_at_period_end %>
+        <strong class="font-semibold">Cancelled:</strong> your plan runs until <%= local_date(subscription.current_period_end) %>, then you're on Free. Nothing is deleted.
+      <% elsif subscription.current_period_end %>
+        Renews on <%= local_date(subscription.current_period_end) %>.
+      <% end %>
+    </p>
+  <% elsif !business.plan.free? %>
+    <p class="text-subtle">This plan isn't billed through Shadetree.</p>
+  <% end %>
+  <% if impersonation %>
+    <p class="mt-2 text-sm2 text-muted">Billing is hidden while support views the account.</p>
+  <% elsif can?(:billing) %>
+    <% if business.stripe_customer_id %>
+      <%= button_to "Manage billing", admin_billing_portal_path, class: "#{button_classes(:secondary, :sm)} mt-3", form: { data: { turbo: false } } %>
+      <p class="mt-2 text-sm2 text-muted">Update your card, download invoices, switch plan or cancel, on Stripe's secure page.</p>
+    <% end %>
+  <% else %>
+    <p class="mt-2 text-sm2 text-muted">Only <%= business.owner.first_name.presence || "the owner" %> can change the plan or billing.</p>
+  <% end %>
+</div>

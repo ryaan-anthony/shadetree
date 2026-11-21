@@ -35,9 +35,13 @@ class Admin::BaseController < ApplicationController
   def picked_location(uid) = (Location.active.find_by(uid: uid.to_s) if uid.present?)
 
   # A suspended business's members see who to contact, and can still switch to another business.
+  # Its Owners can still see the plan and open Stripe's portal, so they can cancel (BIL-04).
+  OPEN_WHILE_SUSPENDED_FOR_BILLING = [ %w[admin/plans show], %w[admin/billing portal] ].freeze
+
   def refuse_suspended_business
     return unless current_business&.suspended?
     return if controller_path == "admin/businesses" && %w[switch new create].include?(action_name)
+    return if OPEN_WHILE_SUSPENDED_FOR_BILLING.include?([ controller_path, action_name ]) && Current.membership&.can?(:billing)
 
     render "admin/suspended", status: :forbidden
   end
