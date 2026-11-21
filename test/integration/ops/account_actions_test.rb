@@ -140,6 +140,32 @@ class Ops::AccountActionsTest < ActionDispatch::IntegrationTest
     assert_select "#audit-entries", /Test Business Two \(deleted\)/
   end
 
+  test "scheduling a deletion stops the subscription renewing; cancelling it undoes only that (BIL-04)" do
+    customer = with_stripe_customer(@business)
+    ours = stripe.add_subscription(customer:, plan: plans(:starter))
+    Billing::SubscriptionSync.refresh!(@business, ours)
+    sign_in_operator
+
+    post ops_business_deletion_path(@business), params: { reason: "Owner asked", confirm_name: @business.name }
+    assert_match "Its subscription won't renew.", flash[:notice]
+    assert stripe.subscriptions[ours][:cancel_at_period_end]
+    assert as_business(@business) { @business.reload.subscription.cancel_at_period_end }
+
+    delete ops_business_deletion_path(@business), params: { reason: "Changed their mind" }
+    assert_match "Its subscription renews again.", flash[:notice]
+    assert_not stripe.subscriptions[ours][:cancel_at_period_end]
+
+    stripe.subscriptions[ours][:cancel_at_period_end] = true # the Owner cancels themselves
+    post ops_business_deletion_path(@business), params: { reason: "Owner asked", confirm_name: @business.name }
+    delete ops_business_deletion_path(@business), params: { reason: "Changed their mind" }
+    assert stripe.subscriptions[ours][:cancel_at_period_end], "the Owner's own cancellation stays"
+
+    stripe.fail_with = Stripe::APIConnectionError.new("down")
+    post ops_business_deletion_path(@business), params: { reason: "Owner asked", confirm_name: @business.name }
+    assert_match "Stripe couldn't be reached", flash[:notice]
+    assert @business.reload.deletion_due_at
+  end
+
   test "the directory lists businesses scheduled for deletion, and a suspended owner is told to ask for an export" do
     @business.update_columns(deletion_scheduled_at: Time.current, deletion_due_at: 30.days.from_now)
     sign_in_operator

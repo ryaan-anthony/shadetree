@@ -6,6 +6,7 @@ module Billing
 
   def self.gateway = StripeGateway.current
   def self.configured? = gateway.configured?
+  def self.live_mode? = Stripe.api_key.to_s.include?("_live_")
 
   # Stripe Tax on our subscriptions (09-billing open question 5, recommendation accepted). It
   # needs Stripe Tax turned on in the Stripe account; STRIPE_AUTOMATIC_TAX=false turns it off.
@@ -29,6 +30,40 @@ module Billing
     interval = Plan::INTERVALS.key(price.recurring&.interval)
     plan = Plan.find_by(key: product.delete_prefix("shadetree_")) if product.start_with?("shadetree_")
     plan ? [ plan, interval ] : Array(Plan.for_lookup_key(price.lookup_key)).then { _1.any? ? _1 : [ nil, interval ] }
+  end
+
+  # Cancels every subscription the business's Stripe customer still has, at once (OPS-04 deleting
+  # a business, ACC-06 closing one). Raises if Stripe can't be reached, so the caller can retry.
+  def self.cancel_subscriptions!(business)
+    return [] unless business.stripe_customer_id
+
+    gateway.customer_subscriptions(business.stripe_customer_id).filter_map do |subscription|
+      next if %w[canceled incomplete_expired].include?(subscription.status)
+
+      gateway.cancel_subscription(subscription.id).id
+    end
+  end
+
+  # OPS-04: while a business waits to be deleted, its live subscriptions end at the end of the
+  # paid period (marked in Stripe's metadata); cancelling the deletion undoes only what this
+  # set, not a cancellation the Owner chose. Returns the subscription ids changed.
+  DELETION_MARK = "shadetree_deletion"
+
+  def self.cancel_for_deletion!(business, cancel: true)
+    return [] unless business.stripe_customer_id
+
+    changed = gateway.customer_subscriptions(business.stripe_customer_id).filter_map do |subscription|
+      next unless Subscription::LIVE_STATUSES.include?(subscription.status)
+
+      marked = subscription.metadata&.[](DELETION_MARK) == "1"
+      if cancel && !subscription.cancel_at_period_end
+        gateway.update_subscription(subscription.id, cancel_at_period_end: true, metadata: { DELETION_MARK => "1" })
+      elsif !cancel && marked
+        gateway.update_subscription(subscription.id, cancel_at_period_end: false, metadata: { DELETION_MARK => "" })
+      end&.id
+    end
+    changed.each { Billing::SubscriptionSync.refresh!(business, _1) }
+    changed
   end
 
   def self.forget_prices(keys) = keys.each { Rails.cache.delete([ "stripe-price", _1 ]) }

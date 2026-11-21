@@ -32,6 +32,10 @@ class BusinessUser < ApplicationRecord
   # under a lock on the business row, so concurrent demotions can't both pass.
   before_update :keeps_an_active_owner
   before_destroy :ensure_not_last_owner
+  # BIL-04: an Owner who leaves may be the billing contact, so Stripe gets a remaining Owner's email.
+  after_update_commit(if: -> { saved_change_to_role?(from: "owner") || (owner? && saved_change_to_active?(from: true)) }) do
+    UpdateBillingEmailJob.perform_later(business_id) if business.stripe_customer_id
+  end
 
   # Scopes
   scope :active, -> { where(active: true) }

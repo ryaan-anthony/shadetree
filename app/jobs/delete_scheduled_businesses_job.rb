@@ -1,5 +1,5 @@
 # OPS-04: deletes businesses whose waiting period is over (or one an operator expedited), and
-# tells the owner. Runs daily (config/recurring.yml). Each business on its own: the audit entry
+# tells the owner. Their Stripe subscriptions are cancelled first (BIL-04). Runs daily (config/recurring.yml). Each business on its own: the audit entry
 # and email follow its deletion at once, files are removed in the background, and one that
 # fails is reported without stopping the rest.
 class DeleteScheduledBusinessesJob < ApplicationJob
@@ -18,6 +18,8 @@ class DeleteScheduledBusinessesJob < ApplicationJob
     return unless business&.deletion_due_at && business.deletion_due_at <= Time.current
 
     owner = business.owner
+    # BIL-04: billing stops first; if Stripe can't be reached the deletion waits for the next run.
+    Billing.cancel_subscriptions!(business)
     blob_ids = BusinessDeletion.run!(business)
     AuditEntry.record!(operator: nil, operator_email: "system", action: "business.deleted", business:, user: owner)
     BusinessDeletionMailer.with(email: owner.email, first_name: owner.first_name, business_name: business.name).completed.deliver_later unless owner.deleted?

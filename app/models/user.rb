@@ -81,6 +81,10 @@ class User < ApplicationRecord
       return false if deleted? || businesses_blocking_deletion.any?
 
       sole_owner_memberships.each { |membership| close_empty_business(membership.business) }
+      # BIL-04: businesses that carry on with other Owners get one of them as Stripe's billing email.
+      handed_over = business_users.active.owners.joins(:business).where.not(businesses: { stripe_customer_id: nil })
+                                  .where.not(business_id: sole_owner_memberships.map(&:business_id)).pluck(:business_id)
+      ActiveRecord.after_all_transactions_commit { handed_over.each { UpdateBillingEmailJob.perform_later(_1) } } if handed_over.any?
       scrub_names_left_elsewhere
       business_users.active.update_all(active: false, deactivated_at: Time.current, updated_at: Time.current)
       user_sessions.delete_all
@@ -147,7 +151,7 @@ class User < ApplicationRecord
   def deleted_email = "deleted-user-#{id}@#{DELETED_EMAIL_DOMAIN}"
 
   # Nobody else is in it and it has no records: closed, without its contact details (often the
-  # owner's own), logo, or pending invitations.
+  # owner's own), logo, or pending invitations, and with its subscription cancelled.
   def close_empty_business(business)
     Tenancy.with_business(business) do
       Invitation.pending.update_all(revoked_at: Time.current)
@@ -159,6 +163,8 @@ class User < ApplicationRecord
       Location.update_all(email: nil, phone: nil, address_line1: nil, address_line2: nil, city: nil, region: nil, postal_code: nil, updated_at: Time.current)
       Location.where(primary: true).update_all(name: Location::PRIMARY_NAME) unless Location.exists?(primary: false, name: Location::PRIMARY_NAME)
     end
+    # BIL-04: nobody is left to use a paid plan, so its subscription is cancelled (once committed).
+    ActiveRecord.after_all_transactions_commit { CancelSubscriptionsJob.perform_later(business.id) } if business.stripe_customer_id
   end
 
   # The name and email written into other records: visit crew changes, teammates'

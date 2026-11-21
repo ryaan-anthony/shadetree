@@ -34,6 +34,10 @@ class Ops::BusinessSummary
     end
   end
 
+  # BIL-04: the Stripe subscription, and the billing history, newest first.
+  def subscription = @subscription ||= as_business { business.subscription }
+  def billing_events(limit: 20) = as_business { BillingEvent.recent.limit(limit).to_a }
+
   # Quotes sent per usage period (BIL-02), newest first.
   def usage_history(count: 6) = entitlements.period.history(count:).map { [ _1, _1.used ] }
 

@@ -8,8 +8,7 @@ namespace :stripe do
   task sync_plans: :environment do
     abort "Set STRIPE_SECRET_KEY first (see docs/runbooks/stripe.md)." unless Billing.configured?
 
-    mode = Stripe.api_key.to_s.include?("_live_") ? "live" : "test"
-    puts "Syncing plans to Stripe (#{mode} mode)…"
+    puts "Syncing plans to Stripe (#{Billing.live_mode? ? "live" : "test"} mode)…"
     host = ENV["APP_HOST"].presence
     log = Billing::PlanSync.new(return_url: host && "https://#{host}/admin/plan").run!
     puts log.any? ? log.map { "  #{_1}" } : "  Already up to date."
