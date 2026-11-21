@@ -1,111 +1,101 @@
-<!doctype html>
-
+<!DOCTYPE html>
 <html lang="en">
-
   <head>
-
-    <title>Too many requests (429)</title>
-
+    <!-- QA #274: Shadetree's own error page (429). A static file, so it shows even when the app can't run.
+         It follows the marketing layout (skip link, header, main, footer) and the wordmark (BrandHelper);
+         the styles are inline because nothing else can be relied on here. -->
     <meta charset="utf-8">
-    <meta name="viewport" content="initial-scale=1, width=device-width">
-    <meta name="robots" content="noindex, nofollow">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>Too many requests · Shadetree</title>
+    <link rel="icon" href="/icon.png" type="image/png">
     <style>
-
-      *, *::before, *::after {
-        box-sizing: border-box;
-      }
-
-      * {
-        margin: 0;
-      }
-
-      html {
-        font-size: 16px;
-      }
-
-      body {
-        background: #FFF;
-        color: #261B23;
-        display: grid;
-        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Aptos, Roboto, "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-        font-size: clamp(1rem, 2.5vw, 2rem);
-        -webkit-font-smoothing: antialiased;
-        font-style: normal;
-        font-weight: 400;
-        letter-spacing: -0.0025em;
-        line-height: 1.4;
-        min-height: 100vh;
-        place-items: center;
-        text-rendering: optimizeLegibility;
-        -webkit-text-size-adjust: 100%;
-      }
-
-      a {
-        color: inherit;
-        font-weight: 700;
-        text-decoration: underline;
-        text-underline-offset: 0.0925em;
-      }
-
-      b, strong {
-        font-weight: 700;
-      }
-
-      i, em {
-        font-style: italic;
-      }
-
-      main {
-        display: grid;
-        gap: 1em;
-        padding: 2em;
-        place-items: center;
-        text-align: center;
-      }
-
-      main header {
-        width: min(100%, 12em);
-      }
-
-      main header svg {
-        height: auto;
-        max-width: 100%;
-        width: 100%;
-      }
-
-      main article {
-        width: min(100%, 30em);
-      }
-
-      main article p {
-        font-size: 75%;
-      }
-
-      main article br {
-
-        display: none;
-
-        @media(min-width: 48em) {
-          display: inline;
-        }
-
-      }
-
+      *, *::before, *::after { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; background: #fff; color: #1e293b;
+             font-family: "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.5;
+             -webkit-font-smoothing: antialiased; }
+      a { color: inherit; }
+      :focus-visible { outline: 2px solid #047857; outline-offset: 2px; }
+      .wrap { width: 100%; max-width: 72rem; margin: 0 auto; padding: 0 1.25rem; }
+      .skip { position: absolute; left: -9999px; top: 1rem; z-index: 10; padding: 0.5rem 0.875rem; border: 1px solid #cbd5e1;
+              border-radius: 6px; background: #fff; color: #0f172a; font-weight: 600; text-decoration: none; }
+      .skip:focus { left: 1rem; }
+      .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+      header { border-bottom: 1px solid #e2e8f0; }
+      header nav { display: flex; align-items: center; gap: 1.5rem; height: 4rem; }
+      header ul { display: flex; gap: 1.5rem; margin: 0 0 0 auto; padding: 0; list-style: none; font-size: 0.875rem; font-weight: 500; }
+      header ul a { color: #475569; text-decoration: none; }
+      header ul a:hover { color: #0f172a; }
+      .logo { display: inline-flex; align-items: center; gap: 0.5625rem; font-size: 1.1875rem; font-weight: 800; letter-spacing: -0.03em;
+              color: #0f172a; text-decoration: none; white-space: nowrap; }
+      .logo-mark { display: inline-flex; align-items: center; justify-content: center; width: 1.75rem; height: 1.75rem; border-radius: 8px; background: #0f172a; }
+      .logo-mark svg { width: 1.25rem; height: 1.25rem; }
+      .shade { color: #059669; }
+      .logo-dark { color: #fff; }
+      .logo-dark .logo-mark { background: #fff; }
+      main { flex: 1; }
+      main .wrap { max-width: 40rem; padding-top: 5rem; padding-bottom: 5rem; }
+      .code { margin: 0; font-size: 0.875rem; font-weight: 600; color: #047857; }
+      h1 { margin: 0.5rem 0 0; font-size: 2.25rem; line-height: 1.15; font-weight: 800; letter-spacing: -0.035em; color: #0f172a; }
+      .lede { margin: 1rem 0 0; font-size: 1.125rem; color: #475569; }
+      .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; }
+      .btn { display: inline-flex; align-items: center; height: 2.75rem; padding: 0 1.125rem; border-radius: 8px; font-size: 0.9375rem;
+             font-weight: 600; text-decoration: none; border: 1px solid #cbd5e1; color: #0f172a; background: #fff; }
+      .btn-primary { background: #047857; border-color: #047857; color: #fff; }
+      .more { margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0; }
+      .more h2 { margin: 0; font-size: 0.875rem; font-weight: 600; color: #0f172a; }
+      .more ul { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; margin: 0.75rem 0 0; padding: 0; list-style: none; font-size: 0.9375rem; }
+      .more a { color: #047857; font-weight: 600; text-underline-offset: 2px; }
+      footer { background: #0b1221; color: #a3adbf; font-size: 0.875rem; }
+      footer .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding-top: 2rem; padding-bottom: 2rem; }
+      footer ul { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; margin: 0; padding: 0; list-style: none; }
+      footer ul a { text-decoration: none; }
+      footer ul a:hover { color: #fff; }
+      @media (max-width: 40rem) { header ul { display: none; } h1 { font-size: 1.875rem; } main .wrap { padding-top: 3rem; } }
     </style>
-
   </head>
-
   <body>
-
-    <!-- This file lives in public/429.html (PLT-13): rate limits that raise end up here. -->
-
-    <main>
-      <article>
-        <p><strong>That was a lot of requests in a short time.</strong> Wait a minute, then try again.</p>
-      </article>
+    <a class="skip" href="#main">Skip to content</a>
+    <header>
+      <nav class="wrap" aria-label="Main">
+        <a class="logo" href="/" aria-label="Shadetree home"><span class="logo-mark"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.5c-4.7 0-8.5 3.6-8.5 8.1 0 .5.4.9.9.9h15.2c.5 0 .9-.4.9-.9 0-4.5-3.8-8.1-8.5-8.1z" fill="#34d399"/><path d="M12 12.5v7" stroke="#cbd5e1" stroke-width="2.2" stroke-linecap="round"/><path d="M7.5 20.2h9" stroke="#cbd5e1" stroke-width="2.2" stroke-linecap="round"/></svg></span><span aria-hidden="true"><span class="shade">Shade</span>tree</span></a>
+        <ul>
+          <li><a href="/features">Features</a></li>
+          <li><a href="/pricing">Pricing</a></li>
+          <li><a href="/users/sign_in">Sign in</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main id="main">
+      <div class="wrap">
+        <p class="code">Error 429</p>
+        <h1>That was a lot of requests in a short time</h1>
+        <p class="lede">Wait a minute, then try again.</p>
+        <div class="actions">
+          <a class="btn btn-primary" href="/">Go to the home page</a>
+          <a class="btn" href="/contact">Contact us</a>
+        </div>
+        <section class="more" aria-labelledby="more-h">
+          <h2 id="more-h">Popular pages</h2>
+          <ul>
+            <li><a href="/features">Features</a></li>
+            <li><a href="/pricing">Pricing</a></li>
+            <li><a href="/admin/help">Help (signed in)</a></li>
+            <li><a href="/legal">Legal and trust</a></li>
+          </ul>
+        </section>
+      </div>
     </main>
-
+    <footer>
+      <div class="wrap">
+        <a class="logo logo-dark" href="/" aria-label="Shadetree home"><span class="logo-mark"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.5c-4.7 0-8.5 3.6-8.5 8.1 0 .5.4.9.9.9h15.2c.5 0 .9-.4.9-.9 0-4.5-3.8-8.1-8.5-8.1z" fill="#34d399"/><path d="M12 12.5v7" stroke="#cbd5e1" stroke-width="2.2" stroke-linecap="round"/><path d="M7.5 20.2h9" stroke="#cbd5e1" stroke-width="2.2" stroke-linecap="round"/></svg></span><span aria-hidden="true"><span class="shade">Shade</span>tree</span></a>
+        <ul>
+          <li><a href="/terms">Terms</a></li>
+          <li><a href="/privacy">Privacy</a></li>
+          <li><a href="/legal/security">Security</a></li>
+          <li><a href="/contact">Contact</a></li>
+        </ul>
+      </div>
+    </footer>
   </body>
-
 </html>

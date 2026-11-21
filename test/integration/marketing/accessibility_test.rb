@@ -39,7 +39,8 @@ class MarketingAccessibilityTest < ActionDispatch::IntegrationTest
 
   test "the static error pages are branded, with a skip link, landmarks, one H1 and a way home" do
     { "400" => "We couldn't read that request", "404" => "We can't find that page", "406-unsupported-browser" => "Your browser isn't supported",
-      "422" => "That didn't go through", "500" => "Something went wrong on our side" }.each do |code, heading|
+      "422" => "That didn't go through", "429" => "That was a lot of requests in a short time",
+      "500" => "Something went wrong on our side" }.each do |code, heading|
       page = Nokogiri::HTML5(Rails.public_path.join("#{code}.html").read)
       assert_equal "a", page.at_css("body > *:first-child").name, code
       assert_equal "#main", page.at_css("body > a.skip")["href"]
