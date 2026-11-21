@@ -11,7 +11,7 @@ class ClientLayoutTest < ActionDispatch::IntegrationTest
   test "the request page with requests off: landmarks, and how to get in touch" do
     get public_request_path("oakline")
     assert_response :success
-    assert_select "body > a[href='#main']", "Skip to content"
+    assert_select "body > a[href='#main']:first-child", "Skip to content" # before the impersonation banner
     assert_select "body > header.client-head", /#{Regexp.escape(@business.name)}/
     assert_select "main#main h1", "Get in touch with #{@business.name}"
     assert_select "body > footer a", /Powered by\s*Shadetree/

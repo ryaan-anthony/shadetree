@@ -107,7 +107,7 @@ class MarketingAccessibilityTest < ActionDispatch::IntegrationTest
     assert_select "details summary.group-open\\:text-canopy", minimum: 4
   end
 
-  test "the Free plan's quota matches the features screenshot (3 of 5 quotes sent)" do
+  test "the seeded Free plan allows 5 quotes a month, the limit the features screenshot shows" do
     free = YAML.safe_load_file(Rails.root.join("db/seeds/plans.yml")).fetch("free")
     assert_equal 5, free.dig("limits", "quotes_sent"), "retake app/assets/images/marketing/builder*.webp (MKT-01) when this changes"
   end
