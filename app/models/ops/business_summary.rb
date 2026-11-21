@@ -39,6 +39,9 @@ class Ops::BusinessSummary
   def billing_events(limit: 20) = as_business { BillingEvent.recent.limit(limit).to_a }
 
   # Quotes sent per usage period (BIL-02), newest first.
+  # PAY-03: the connected payment account, or the last one if it was disconnected.
+  def payment_account = as_business { PaymentAccount.current || PaymentAccount.order(:id).last }
+
   def usage_history(count: 6) = entitlements.period.history(count:).map { [ _1, _1.used ] }
 
   private

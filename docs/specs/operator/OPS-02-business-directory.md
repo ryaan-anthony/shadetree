@@ -26,7 +26,7 @@ support — before helping or making decisions.
 - [x] A searchable, paginated list of businesses by name, owner/member email, plan, status
       (active, trial, past due, suspended) and signup date range; sortable by signup and last
       activity.
-- [ ] A business page shows: owner and members (role, last active), plan and subscription
+- [x] A business page shows: owner and members (role, last active), plan and subscription
       status, current-period usage vs limits, counts (clients, quotes sent, jobs, invoices,
       payments), onboarding checklist progress, payment-account connection status, signup and
       last activity dates, and recent billing history.
@@ -45,9 +45,10 @@ support — before helping or making decisions.
 ## Decisions
 
 - Operator notes are internal only; the business never sees them (recommendation accepted).
-- The business-page criterion stays unticked until PAY-03 (owner's decision; #117 stays
-  open): the payment account reads "Not connected" until then. Trial and Past due statuses,
-  the subscription and billing history came with BIL-04/05.
+- Both criteria are now met: subscription status, Trial and Past due, and billing history came
+  with BIL-04/05, and the payment account's status (PAY-03) shows on the business page and as a
+  badge in the directory. "Recent billing history" also lists quotes sent per usage period
+  (BIL-02).
 
 ## Implementation notes
 

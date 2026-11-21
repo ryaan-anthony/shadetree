@@ -23,7 +23,7 @@
               <span class="block truncate text-sm2 text-muted"><%= Ops::Directory.owner_of(business)&.email || "No active owner" %></span>
             </span>
             <span class="flex flex-wrap items-center gap-2 text-sm2 text-muted sm:justify-end">
-              <%= render "status", business: %><%= badge business.plan.name, tone: :info, dot: false %>
+              <%= render "status", business: %><%= badge business.plan.name, tone: :info, dot: false %><%= render "payment_account", account: @payment_accounts[business.id] %>
               <span>Signed up <%= local_date(business.created_at) %></span>
               <span>· <%= business.last_active_at ? "active #{time_ago_in_words(business.last_active_at)} ago" : "never active" %></span>
             </span>

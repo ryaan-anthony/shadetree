@@ -285,6 +285,12 @@ Rails.application.routes.draw do
       post "portal", action: :portal, as: :portal
       get "done", action: :done, as: :done
     end
+    # Settings → Payments (PAY-03): connecting the business's Stripe account. Stripe sends the
+    # owner back to return (done or left) or resume (the link expired: a fresh one).
+    resource :payment_account, only: %i[show create destroy], path: "payments" do
+      get :resume
+      get :return, action: :returned
+    end
     # OPS-05: asking Shadetree for help
     resources :support_tickets, only: %i[index new create show], path: "help" do
       post :reply, on: :member
