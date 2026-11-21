@@ -6,7 +6,7 @@
 <% shown = interval == "monthly" ? (yearly ? "group-has-[#interval-yearly:checked]/interval:hidden" : "") : "hidden group-has-[#interval-yearly:checked]/interval:block" %>
 <div class="<%= shown %>">
   <% if current %>
-    <span class="text-sm2 font-medium text-subtle">Your plan</span>
+    <span class="text-sm2 font-medium text-muted">Your plan</span>
   <% elsif option.free? %>
     <% if live && !subscription.cancel_at_period_end %>
       <%# Stripe's portal asks to confirm the cancellation and says when the plan ends. %>
@@ -14,11 +14,11 @@
                     form: { data: { turbo: false } } %>
     <% end %>
   <% elsif !option.offers?(interval) %>
-    <span class="text-sm2 text-subtle"><%= interval == "yearly" ? "Monthly only" : "Yearly only" %></span>
+    <span class="text-sm2 text-muted"><%= interval == "yearly" ? "Monthly only" : "Yearly only" %></span>
   <% else %>
     <% label = live ? (option == plan ? "Switch to #{interval}" : "Switch to #{option.name}") : "Choose #{option.name}" %>
     <%= button_to label, admin_billing_checkout_path, params: { plan: option.key, interval: }, form: { data: { turbo: false } },
                   class: button_classes(live || option.position < plan.position ? :secondary : :primary, :sm) %>
-    <span class="mt-1 block text-xs text-subtle"><%= money(Money.new(option.price_cents(interval), option.currency)) %> <%= interval == "yearly" ? "a year" : "a month" %></span>
+    <span class="mt-1 block text-xs text-muted"><%= money(Money.new(option.price_cents(interval), option.currency)) %> <%= interval == "yearly" ? "a year" : "a month" %></span>
   <% end %>
 </div>

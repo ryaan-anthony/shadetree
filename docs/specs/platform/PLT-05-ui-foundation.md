@@ -61,6 +61,8 @@ Conventions from the QA/accessibility audit (#274), for every staff page:
   `local_date`/`local_time` with `year: :auto`); today's and this week's pages never show it.
 - **Time zones:** a page with times on one day names the zone once ("Times in Eastern Time
   (US & Canada)"), never on each time.
+- **Contrast:** `muted` is #5e6d82 (was #64748b, 4.44:1 on the page background): 5.27:1 on
+  white, 4.92 on canvas, 4.77 on sunken. `faint` is never text.
 - **Checks:** `test/system/accessibility_test.rb` runs axe-core (WCAG 2.1 A/AA) on key pages.
 
 ## Out of scope
