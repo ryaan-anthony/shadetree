@@ -2,6 +2,7 @@ class ApplicationMailer < ActionMailer::Base
   # The platform sender on the root sending domain (ADR 0017); set MAIL_FROM per environment.
   default from: ENV.fetch("MAIL_FROM", "Shadetree <no-reply@getshadetree.com>")
   layout "mailer"
+  helper BrandHelper # the wordmark in the layout
   self.delivery_job = PlatformMailDeliveryJob
   # INS-02: an email queued for a client whose details were erased since isn't sent.
   rescue_from(ClientLink::ClientErased) { Rails.logger.info("Skipped #{self.class.name}##{action_name}: client erased") }

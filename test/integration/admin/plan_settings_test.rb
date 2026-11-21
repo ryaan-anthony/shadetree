@@ -95,10 +95,10 @@ class Admin::PlanSettingsTest < ActionDispatch::IntegrationTest
     end
     link = as_business(@business) { quote.client_link! }
     get client_link_path(link.token)
-    assert_match "Powered by Shadetree", response.body
+    assert_select "footer", /Powered by\s*Shadetree/
     @business.update!(plan: plans(:starter))
     get client_link_path(link.token)
-    assert_no_match "Powered by Shadetree", response.body
+    assert_select "footer", text: /Powered by/, count: 0
     mail = ClientMailer.with(business_id: @business.id, to: "maria@example.com", recipient_name: "Maria").test_message
     assert_no_match "Sent with", mail.html_part.body.to_s
     @business.update!(plan: plans(:free))
