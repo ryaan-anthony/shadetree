@@ -111,6 +111,14 @@ Tenancy.with_business(business) do
     link = quote.client_link!
     puts "Client page for quote #{quote.number}: http://localhost:3000/c/#{link.token}"
   end
+  # QA #274: that quote then emailed, and the mail server refused it (recorded as the delivery
+  # job would; nothing is sent), so it shows the "Email not delivered" warning and Resend.
+  undelivered = sent_to && Quote.find_by(client: sent_to, status: "sent")
+  if undelivered && undelivered.sends.none? { _1.channel == "email" }
+    email = EmailMessage.create!(kind: "quote_sent", to: sent_to.primary_email&.value || "client@example.com", related: undelivered)
+    undelivered.mark_sent!(by: owner, channel: "email", recipient: email.to, email_message: email)
+    email.mark!("failed", error: "The mail server refused the email (554 5.7.1).", announce: true)
+  end
 
   # QTE-05: one quote the client approved through their link, one they asked to change. (The
   # team notices and the approval confirmation go to letter_opener when the queue runs.)

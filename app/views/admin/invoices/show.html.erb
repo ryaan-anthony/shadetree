@@ -22,6 +22,10 @@
   <div class="banner banner-info mb-4"><%= icon "info" %><p>It has payments, so its items can't change and it can't be voided.</p></div>
 <% end %>
 
+<% if (undelivered = invoice.undelivered_email) %>
+  <%= render "admin/sends/delivery_warning", email: undelivered, document: invoice, resend_path: new_admin_invoice_send_path(invoice), id: "invoice-delivery-problem" %>
+<% end %>
+
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
   <div class="min-w-0 space-y-4">
     <% if invoice.sends.any? %><%= render "sent_panel", invoice: %><% end %>

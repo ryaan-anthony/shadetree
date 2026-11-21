@@ -36,7 +36,8 @@ their own phone. This is the moment that counts toward plan usage.
 - [x] A billable "quote sent" usage event is recorded exactly once per quote (first send), for
       BIL-02 to count.
 - [x] Delivery problems (bounce) are surfaced on the quote. *Those the mail server reports
-      while sending (ADR 0017): on the quote and in the quotes list.*
+      while sending (ADR 0017): on the quote and in the quotes list. Later bounces aren't
+      captured yet (see Implementation notes).*
 - [x] Resending an unchanged quote doesn't create a new revision or usage event.
 - [x] Tests cover send paths, freezing, usage recording, unconfirmed users and tenancy.
 
@@ -44,6 +45,29 @@ their own phone. This is the moment that counts toward plan usage.
 
 - Revisions after sending (QTE-06). SMS sending by Shadetree (backlog). Follow-up reminders
   (backlog). Limit enforcement (BIL-03).
+
+## Implementation notes
+
+- **Undelivered email (QA #274).** When the latest email of a quote still waiting on the client
+  was refused or couldn't be sent, the page leads with an "Email not delivered" warning: the
+  address, when, the reason in plain words, the mail server's code ("554 5.7.1"), and Resend
+  (the usual send page, `office` permission). The quotes list and the client's timeline show an
+  "Email not delivered" badge; the team gets an "email not delivered" notification (NTF-02).
+  The Revisions list shows each send and whether its email arrived. Invoices do the same.
+  A link copied since replaces the warning with a quiet note; an expired quote isn't warned
+  about (it's renewed with a revision, QTE-06). Only the document's latest email (or one not
+  tied to a send, like an automation's) is announced, once; a failure on Shadetree's side (no
+  receiving server's reply, rejected credentials) is reported to operators, not to the team.
+- **What's known:** only what the SMTP conversation says while the delivery job sends (ADR
+  0017). Bounces after the relay accepts an email stay in the provider's dashboard; capturing
+  them needs the provider's event notifications (a configuration-set event destination posting
+  to an endpoint here) and a new ADR.
+
+## Decisions
+
+- Owner, 2026-11-21: an undelivered email doesn't change the status. The quote stays Sent (its
+  link still works), with the warning, the reason and Resend. An approval of a later revision
+  still counts; where that revision's own email didn't arrive, the response says so quietly.
 
 ## Open questions
 

@@ -125,6 +125,28 @@ class Admin::ClientErasuresTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # QA #274: a receipt the mail server refused tells the team, naming the client; erasing them
+  # scrubs that notice and the receipt's email record.
+  test "a failed receipt email's notification and record are scrubbed" do
+    email = as_business(@business) do
+      @invoice.mark_sent!(by: @owner, channel: "link")
+      payment = @invoice.reload.record_payment!(by: @owner, amount: "10", received_on: @business.today, payment_method: "check")
+      EmailMessage.create!(kind: "payment_receipt", to: "maria@example.com", subject: "Receipt for Maria Lopez", related: payment).tap do
+        _1.mark!("failed", error: "The mail server refused the email (554 5.7.1).", announce: true)
+      end
+    end
+    notes = -> { as_business(@business) { Notification.where(kind: "email_not_delivered").to_a } }
+    assert_not_empty notes.call
+    assert_equal [ "An email to Maria Lopez wasn't delivered" ], notes.call.map(&:title).uniq
+    assert_equal [ [ "Invoice", @invoice.id ] ], notes.call.map { [ _1.subject_type, _1.subject_id ] }.uniq
+
+    as_business(@business) { ClientErasure.new(@client, by: @owner).erase! }
+
+    notes.call.each { |note| assert_no_match(/Maria|Lopez/i, [ note.title, note.body ].join(" ")) }
+    as_business(@business) { email.reload }
+    assert_no_match(/Maria|Lopez|maria@/i, [ email.to, email.subject ].join(" "))
+  end
+
   test "an erased client's documents can't be sent, answered or linked again" do
     as_business(@business) do
       @quote.reload.sync_line_items([ { "key" => "a", "name" => "Cleanup", "quantity" => "1", "unit_price" => "300" } ])

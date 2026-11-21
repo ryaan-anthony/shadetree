@@ -1,8 +1,6 @@
 <%# locals: (invoice:) -%>
-<%# A sent invoice, for staff (PAY-02): when and how it went out, delivery problems (a bounce
-    shows here), send again. Only the latest email counts: a later resend that worked settles it. %>
-<% latest = invoice.sends.find { _1.channel == "email" }&.email_message %>
-<% problem = latest if latest&.problem? %>
+<%# A sent invoice, for staff (PAY-02): when and how it went out, what became of each email, send
+    again. An undelivered latest email is warned about above the page (admin/sends/_delivery_warning). %>
 <section class="card card-body" aria-labelledby="sent-panel-h">
   <div class="flex flex-wrap items-center justify-between gap-3">
     <h2 id="sent-panel-h" class="text-sm font-semibold text-ink">
@@ -12,11 +10,6 @@
       <%= link_to new_admin_invoice_send_path(invoice), class: button_classes(:secondary, :sm) do %><%= icon "send" %> Send again<% end %>
     <% end %>
   </div>
-  <% if problem %>
-    <p class="mt-3 text-sm2 font-medium text-danger" id="invoice-delivery-problem">
-      The email to <%= problem.to %> wasn't delivered: <%= problem.error.presence || problem.status_label.downcase %>.
-      Check the address, or send the link yourself.
-    </p>
-  <% end %>
+  <%= render "admin/sends/link_after_undelivered", document: invoice %>
   <div class="mt-3"><%= render "admin/sends/history", sends: invoice.sends %></div>
 </section>

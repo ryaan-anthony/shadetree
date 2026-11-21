@@ -37,6 +37,9 @@ class NotificationType
                    permission: :office, email_by_default: true, icon: "x-circle"),
     Definition.new(kind: "quote_changes_requested", label: "Changes requested", hint: "A client asks for changes to a quote.",
                    permission: :office, email_by_default: true, icon: "edit-3"),
+    # QA #274: a client email the mail server refused or that couldn't be sent, so it's resent.
+    Definition.new(kind: "email_not_delivered", label: "Client email not delivered", hint: "A quote, invoice or other email to a client is refused or can't be sent.",
+                   permission: :office, email_by_default: true, icon: "alert-triangle"),
     Definition.new(kind: "invoice_viewed", label: "Invoice opened", hint: "The first time a client opens an invoice.",
                    permission: :office, email_by_default: false, icon: "eye"),
     # PAY-04: a client paid online, a payment disputed with the card issuer, and invoices to look at.

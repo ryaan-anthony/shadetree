@@ -1,0 +1,19 @@
+<%# locals: (email:, document:, resend_path:, id:) -%>
+<%# QA #274: the latest email of a quote (QTE-04) or invoice (PAY-02) that's still waiting on the
+    client didn't arrive. Its status doesn't change (the link works), so it's said here, with the
+    reason in plain words, the mail server's code for anyone checking, and Resend (the usual
+    send page, for those who may send). %>
+<% noun = document.model_name.human.downcase %>
+<section class="banner banner-danger mb-4" id="<%= id %>" aria-labelledby="<%= id %>-h">
+  <%= icon "alert-triangle" %>
+  <div class="min-w-0 flex-1">
+    <h2 id="<%= id %>-h" class="font-semibold">Email not delivered</h2>
+    <p class="mt-1">The email to <span class="break-all"><%= email.to %></span> on <%= local_time(email.problem_at) %> didn't arrive. <%= email.problem_reason %></p>
+    <p class="mt-1">The <%= noun %> is still <%= document.status == "partially_paid" ? "partly paid" : "sent" %> and its link still works. <%= email.our_side? ? "Resend in a while" : "Check the address and resend" %>, or send the link yourself.</p>
+    <% if (code = email.reply_code) %><p class="mt-1 text-sm2">Mail server code: <span class="font-mono"><%= code %></span></p><% end %>
+    <%# Defensive: the quote and invoice pages already need office, as does the send page. %>
+    <% if can?(:office) && document.sendable? %>
+      <%= link_to resend_path, class: "#{button_classes(:secondary, :sm)} mt-2" do %><%= icon "send" %> Resend<% end %>
+    <% end %>
+  </div>
+</section>

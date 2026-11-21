@@ -1,4 +1,4 @@
-<%# locals: (quote:) -%>
+<%# locals: (quote:, sends_by_revision:) -%>
 <%# Staff only (QTE-05): the client's answers with their evidence, and recording an approval
     the client gave another way. %>
 <% responses = quote.responses.includes(:recorded_by).to_a %>
@@ -43,6 +43,10 @@
             <% unless response.on_behalf? %>
               <%# The IP address stays in the record and the export as evidence, but isn't shown (QA #274, owner decision 2026-11-21). %>
               <p class="mt-1 text-muted">From <%= response.device || "an unknown device" %><%= ", asked for a copy at #{response.email}" if response.email %></p>
+              <% emails = sends_by_revision.fetch(response.revision, []).filter_map(&:email_message) %>
+              <% if emails.any? && emails.all?(&:problem?) %>
+                <p class="mt-1 text-muted" id="response-<%= response.uid %>-undelivered">The email for this revision wasn't delivered; <%= response.signer_name || "the client" %> reached it from the quote's link.</p>
+              <% end %>
             <% end %>
             <% if response.approved? %>
               <p class="mt-1 text-muted">Quote version <%= response.quote_version %>, reference <span class="font-mono"><%= response.reference %></span>
