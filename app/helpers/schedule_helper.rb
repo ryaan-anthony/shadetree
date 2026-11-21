@@ -40,4 +40,14 @@ module ScheduleHelper
   def schedule_column_label(column)
     [ column.date.strftime("%A, %B %-d"), (column.member == :none ? "Nobody yet" : column.member&.full_name) ].compact.join(", ")
   end
+
+  # QA #274: an empty hour on the grid, as a link to a new visit then (and with that person).
+  def schedule_slot_label(column, hour)
+    who = column.member.respond_to?(:full_name) ? ", with #{column.member.full_name}" : ""
+    "New visit, #{column.date.strftime("%A, %B %-d")}, #{format("%d:00 %s", ((hour - 1) % 12) + 1, hour < 12 ? "AM" : "PM")}#{who}"
+  end
+
+  def schedule_slot_params(column, hour, schedule)
+    { on: column.date.iso8601, at: format("%02d:00", hour), member: (column.member.id if column.member.respond_to?(:id)), view: schedule.view }.compact_blank
+  end
 end

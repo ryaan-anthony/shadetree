@@ -2,20 +2,23 @@
 <% s = @schedule %>
 <% show_locations = current_business.multiple_locations? && location_filter.nil? %><%# CAT-07: which location each visit is for, when showing them all %>
 <% content_for :title, "Schedule" %>
-<%= page_header s.title, lede: (s.view == "day" ? "Day" : "Week") do %>
+<%# QA #274: the heading says what this is and the year; the lede, which clock the times are on. %>
+<%= page_header "Schedule: #{s.title}", lede: "#{s.view == "day" ? "Day" : "Week"} view · Times in #{s.zone_name}" do %>
   <%= render "admin/shared/location_filter", path: admin_schedule_path, keep: schedule_link_params(s) %>
   <div class="flex items-center gap-1" role="group" aria-label="Period">
     <%= link_to admin_schedule_path(schedule_link_params(s, date: s.previous_date.iso8601)), class: button_classes(:secondary, :icon), "aria-label": "Previous #{s.view}" do %><%= icon "chevron-left" %><% end %>
     <%= link_to "Today", admin_schedule_path(schedule_link_params(s, date: nil)), class: button_classes(:secondary), "aria-current": ("date" if s.today?) %>
     <%= link_to admin_schedule_path(schedule_link_params(s, date: s.next_date.iso8601)), class: button_classes(:secondary, :icon), "aria-label": "Next #{s.view}" do %><%= icon "chevron-right" %><% end %>
   </div>
+  <%# QA #274: a keyboard's (and a phone's) way to book a visit without a slot on the grid. %>
+  <%= link_to admin_schedule_new_visit_path({ on: s.date.iso8601, view: s.view }.compact_blank), class: button_classes(:primary), data: { turbo_frame: "schedule_visit" } do %><%= icon "plus" %> New visit<% end %>
   <nav class="tabs hidden md:flex" aria-label="View">
     <%= link_to "Day", admin_schedule_path(schedule_link_params(s, view: "day")), class: "tab", "aria-current": ("page" if s.view == "day") %>
     <%= link_to "Week", admin_schedule_path(schedule_link_params(s, view: "week")), class: "tab", "aria-current": ("page" if s.view == "week") %>
   </nav>
 <% end %>
 
-<div class="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[16rem_minmax(0,1fr)]">
+<div class="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[16rem_minmax(0,1fr)]" data-controller="schedule-focus">
   <aside class="order-2 min-w-0 space-y-4 lg:order-none">
     <%= turbo_frame_tag "schedule_visit", data: { controller: "schedule-panel", action: "turbo:frame-load->schedule-panel#show" } %>
 
@@ -30,12 +33,21 @@
           <% end %></li>
         <% end %>
         <li class="p-0"><%= link_to admin_schedule_path(schedule_link_params(s, member: "unassigned")), class: "flex flex-1 items-center gap-2 px-4 py-2.5 #{"font-semibold" if s.member == "unassigned"}", "aria-current": ("true" if s.member == "unassigned") do %>
-          <span class="cal-dot cal-none" aria-hidden="true"></span><span class="flex-1 text-ink">Nobody yet</span><span class="tabular text-sm2 text-muted"><%= s.unassigned_count %></span>
+          <span class="cal-dot cal-none" aria-hidden="true"></span><span class="flex-1 text-ink">Nobody yet</span><span class="tabular text-sm2 text-muted"><%= pluralize(s.unassigned_count, "visit") %></span>
         <% end %></li>
       </ul>
-      <p class="border-t border-line px-4 py-2 text-sm2">
-        Color by <%= link_to_unless s.color_by == "member", "person", admin_schedule_path(schedule_link_params(s, color: nil)), class: "underline-offset-2 hover:underline" %>
-        · <%= link_to_unless s.color_by == "status", "status", admin_schedule_path(schedule_link_params(s, color: "status")), class: "underline-offset-2 hover:underline" %></p>
+      <%# QA #274: a toggle, so pressed buttons (a GET form: it works without JavaScript too). %>
+      <%= form_with url: admin_schedule_path, method: :get, id: "schedule-color", class: "flex items-center gap-2 border-t border-line px-4 py-2 text-sm2", data: { turbo_action: "advance" } do %>
+        <% schedule_link_params(s, color: nil).each do |name, value| %><%= hidden_field_tag name, value, id: nil %><% end %>
+        <%= hidden_field_tag :focus, "color", id: nil %>
+        <span id="schedule-color-label" class="text-muted">Color by</span>
+        <span class="inline-flex rounded-control border border-line p-0.5" role="group" aria-labelledby="schedule-color-label">
+          <% { "member" => "Person", "status" => "Status" }.each do |value, label| %>
+            <button type="submit" name="color" value="<%= value %>" aria-pressed="<%= s.color_by == value %>" <%= 'data-schedule-focus="color"'.html_safe if s.color_by == value %>
+                    class="min-h-6 rounded px-2.5 font-medium text-muted hover:text-ink aria-pressed:bg-ink aria-pressed:text-white"><%= label %></button>
+          <% end %>
+        </span>
+      <% end %>
       <% if s.color_by == "status" %>
         <ul class="flex flex-wrap gap-x-3 gap-y-1 px-4 pb-2.5 text-sm2 text-muted" aria-label="Status colors">
           <% { "scheduled" => "Scheduled", "in-progress" => "In progress", "completed" => "Done" }.each do |key, label| %>
@@ -78,7 +90,7 @@
           <summary class="cursor-pointer font-medium text-ink">Earlier this week (<%= pluralize(past.sum { s.visits_on(_1).size }, "visit") %>)</summary>
           <ul class="mt-2 space-y-1.5">
             <% past.each do |date| %><% s.visits_on(date).each do |visit| %>
-              <li><%= link_to "#{date.strftime("%a")} #{visit.time_label.delete_prefix("Arrive ")} · #{visit.job.client.display_name}", admin_schedule_visit_path(visit, s.member ? { member: s.member } : {}), class: "text-body hover:underline" %></li>
+              <li><%= link_to "#{date.strftime("%a")} #{visit.time_label.delete_prefix("Arrive ")} · #{visit.job.client.display_name}", admin_schedule_visit_path(visit, s.member ? { member: s.member } : {}), class: "text-body hover:underline", data: { schedule_focus: visit.uid } %></li>
             <% end %><% end %>
           </ul>
         </details>
@@ -98,7 +110,7 @@
           <% else %>
             <ul class="list">
               <% day.each do |visit| %>
-                <li class="p-0"><%= link_to admin_schedule_visit_path(visit, s.member ? { member: s.member } : {}), class: "flex min-w-0 flex-1 items-start gap-3 px-4 py-3" do %>
+                <li class="p-0"><%= link_to admin_schedule_visit_path(visit, s.member ? { member: s.member } : {}), class: "flex min-w-0 flex-1 items-start gap-3 px-4 py-3", data: { schedule_focus: visit.uid } do %>
                   <span class="w-16 shrink-0 text-sm font-semibold text-ink"><%= visit.time_label.delete_prefix("Arrive ") %></span>
                   <span class="min-w-0 flex-1"><span class="block truncate font-medium text-ink"><%= visit.job.client.display_name %></span>
                     <span class="block truncate text-sm2 text-muted"><%= visit.job.title %> · <%= crew_first_names(visit) %><%= " · #{visit.job.location.name}" if show_locations %></span></span>
@@ -112,10 +124,12 @@
     </div>
 
     <%# Desktop: the time grid, "anytime" visits in a row above it. A day for everyone has a column
-        per person. Visits can be dragged to another day, time or person (schedule_drag_controller). %>
+        per person. Visits can be dragged to another day, time or person (schedule_drag_controller);
+        on the keyboard, a visit opens with Enter or Space and has Move. Each empty hour is a link to
+        a new visit there, one tab stop moved through with the arrow keys (schedule_slots_controller). %>
     <% params_now = { view: s.view, member: s.member }.compact_blank %>
     <div class="card hidden overflow-x-auto md:block <%= inline_style("--cal-days: #{s.columns.size}") %>" id="schedule-grid"
-         data-turbo-prefetch="false" data-controller="schedule-drag" data-schedule-drag-first-hour-value="<%= s.hours.first %>" data-schedule-drag-hour-px-value="<%= ScheduleView::HOUR_PX %>"
+         data-turbo-prefetch="false" data-controller="schedule-drag schedule-slots" data-action="keydown->schedule-slots#keydown click->schedule-slots#activate" data-schedule-drag-first-hour-value="<%= s.hours.first %>" data-schedule-drag-hour-px-value="<%= ScheduleView::HOUR_PX %>"
          data-schedule-drag-url-value="<%= admin_schedule_move_path("ID") %>" data-schedule-drag-context-value="<%= params_now.merge(grid_zone: s.place.time_zone.tzinfo.identifier).to_json %>">
       <div class="cal-grid border-b border-line <%= "cal-wide" if s.columns.size > 7 %>">
         <div></div>
@@ -144,7 +158,7 @@
                data-schedule-drag-target="column" data-kind="anytime" data-date="<%= date.iso8601 %>" data-member="<%= column.member_key %>">
             <% s.anytime_in(column).each do |visit| %>
               <%= link_to admin_schedule_visit_path(visit, params_now), class: "cal-chip cal-#{s.visit_color(visit)}", id: schedule_visit_id(visit, column, s),
-                          data: { turbo_frame: "schedule_visit", **schedule_drag_data(visit, column) } do %>
+                          data: { turbo_frame: "schedule_visit", schedule_focus: visit.uid, **schedule_drag_data(visit, column) } do %>
                 <span class="block truncate font-semibold"><%= visit.job.client.display_name %> <span class="sr-only">, anytime <%= date.strftime("%A, %B %-d") %></span></span>
                 <span class="block truncate"><%= visit.job.title %><%= ", #{visit.job.property.city}" if visit.job.property&.city.present? %> · <%= crew_first_names(visit) %><%= " · #{visit.job.location.name}" if show_locations %></span>
               <% end %>
@@ -155,16 +169,24 @@
       <div class="max-h-[42rem] overflow-y-auto pt-2">
         <div class="cal-grid <%= "cal-wide" if s.columns.size > 7 %> <%= inline_style("height: #{s.grid_height}px") %>">
           <div><% s.hours.each do |hour| %><div class="cal-hour"><%= hour_label(hour) %></div><% end %></div>
-          <% s.columns.each do |column| %>
+          <% start_col = s.columns.index { _1.date == s.place.today } || s.columns.index { s.bookable?(_1.date) } %>
+          <% start_row = s.hours.to_a.index(9) || 0 %>
+          <% s.columns.each_with_index do |column, col| %>
             <% date = column.date %>
             <div class="cal-day" role="group" aria-label="<%= schedule_column_label(column) %>"
                  data-schedule-drag-target="column" data-kind="timed" data-date="<%= date.iso8601 %>" data-member="<%= column.member_key %>">
               <% s.shades_on(date).each do |shade| %><div class="cal-shade <%= inline_style("top: #{shade.top}px; height: #{shade.height}px") %>"></div><% end %>
+              <% if s.bookable?(date) %><% s.hours.each_with_index do |hour, row| %>
+                <%= link_to admin_schedule_new_visit_path(schedule_slot_params(column, hour, s)), class: "cal-slot #{inline_style("top: #{row * ScheduleView::HOUR_PX}px")}",
+                            data: { turbo_frame: "schedule_visit", schedule_slots_target: "slot", col:, row:, start: (col == start_col && row == start_row) }, "aria-describedby": "schedule-slots-help" do %>
+                  <span class="sr-only"><%= schedule_slot_label(column, hour) %></span><span class="cal-slot-hint" aria-hidden="true">+ New visit</span>
+                <% end %>
+              <% end %><% end %>
               <% s.placed_in(column).each do |placed| %>
                 <% visit = placed.visit %>
                 <% width = 100.0 / placed.columns %>
                 <%= link_to admin_schedule_visit_path(visit, params_now), class: "cal-visit cal-#{s.visit_color(visit)} #{inline_style("top: #{placed.top}px; height: #{placed.height}px; left: calc(#{(width * placed.column).round(3)}% + 2px); width: calc(#{width.round(3)}% - 4px)")}", id: schedule_visit_id(visit, column, s),
-                            data: { turbo_frame: "schedule_visit", **schedule_drag_data(visit, column) } do %>
+                            data: { turbo_frame: "schedule_visit", schedule_focus: visit.uid, **schedule_drag_data(visit, column) } do %>
                   <span class="block font-semibold"><%= schedule_time_label(visit, s) %> <%= visit.job.client.display_name %><span class="sr-only">, <%= date.strftime("%A, %B %-d") %></span></span>
                   <span class="block truncate"><%= visit.job.title %><%= ", #{visit.job.property.city}" if visit.job.property&.city.present? %></span>
                   <span class="block truncate opacity-80"><%= crew_first_names(visit) %><%= " · #{visit.job.location.name}" if show_locations %></span>
@@ -174,6 +196,7 @@
           <% end %>
         </div>
       </div>
+      <p class="sr-only" id="schedule-slots-help">Arrow keys move between hours and <%= s.by_person? ? "people" : "days" %>. Enter starts a new visit at that time.</p>
       <p class="sr-only" role="status" data-schedule-drag-target="status"></p>
       <%= inline_styles_tag %>
     </div>

@@ -52,7 +52,7 @@ class Admin::ScheduleTest < ActionDispatch::IntegrationTest
 
   test "the week shows visits by time with who, where and what; anytime ones in their own row; cancelled ones aren't shown" do
     week
-    assert_select "h1", "November 23 – 29"
+    assert_select "h1", "Schedule: November 23 – 29, 2026"
     assert_select "#schedule-grid .cal-day", 7
     assert_select "#cal-visit-#{@timed.uid}.cal-visit", text: /9 am Maria Lopez, Monday, November 23.*Spring cleanup, Asheville.*Technician/m
     assert_select "#schedule-grid [role=group][aria-label='Monday, November 23']"
@@ -64,7 +64,7 @@ class Admin::ScheduleTest < ActionDispatch::IntegrationTest
     assert_select "a[aria-label='Next week'][href=?]", admin_schedule_path(view: "week", date: (@monday + 7).iso8601)
 
     get admin_schedule_path(view: "day", date: @monday.iso8601)
-    assert_select "h1", "Monday, November 23"
+    assert_select "h1", "Schedule: Monday, November 23, 2026"
     assert_select "#schedule-grid .cal-day", 3, "a day for everyone has a column per person, and one for nobody yet"
     assert_select "#schedule-grid .cal-day[aria-label='Monday, November 23, Technician'] #cal-visit-#{@timed.uid}-#{@tech.id}"
     assert_select "#schedule-grid [id^=cal-visit-#{@anytime.uid}]", 0
@@ -77,7 +77,7 @@ class Admin::ScheduleTest < ActionDispatch::IntegrationTest
     assert_select "h1", /#{@business.today.strftime("%B")}/
 
     get admin_schedule_path(date: "2027-12-29")
-    assert_select "h1", "Dec 27, 2027 – Jan 2, 2028", "a week across the year says which"
+    assert_select "h1", "Schedule: Dec 27, 2027 – Jan 2, 2028", "a week across the year says which"
     assert_select "#schedule-agenda", text: /Nothing booked this week/
   end
 
@@ -99,8 +99,15 @@ class Admin::ScheduleTest < ActionDispatch::IntegrationTest
 
     week(color: "status")
     assert_select "#cal-visit-#{@timed.uid}.cal-status-scheduled"
-    assert_select "a", text: "status", count: 0
-    assert_select "a[href=?]", admin_schedule_path(view: "week", date: @monday.iso8601), text: "person"
+    assert_select "#schedule-color[method=get][action=?]", admin_schedule_path do # QA #274: a toggle, as pressed buttons
+      assert_select "[role=group][aria-labelledby=schedule-color-label] button[type=submit]", 2
+      assert_select "button[name=color][value=status][aria-pressed=true]", "Status"
+      assert_select "button[name=color][value=member][aria-pressed=false]", "Person"
+      assert_select "input[type=hidden][name=date][value=?]", @monday.iso8601
+    end
+    get admin_schedule_path(date: @monday.iso8601, color: "member")
+    assert_select "#cal-visit-#{@timed.uid}.cal-status-scheduled", 0
+    assert_select "button[name=color][value=member][aria-pressed=true]"
   end
 
   test "off-hours and closures are shaded" do

@@ -34,15 +34,24 @@ class ScheduleView
   def next_date = @date + (@view == "day" ? 1 : 7)
   def today? = dates.include?(place.today)
 
+  # The period, always with its year (QA #274): "November 23 – 29, 2026", "Monday, November 23, 2026".
   def title
-    year = ->(date) { date.year == business.today.year ? "" : ", #{date.year}" }
-    return "#{@date.strftime("%A, %B %-d")}#{year.(@date)}" if @view == "day"
+    return @date.strftime("%A, %B %-d, %Y") if @view == "day"
 
     first, last = dates.first, dates.last
-    return "#{first.strftime("%b %-d")}#{", #{first.year}" if first.year != last.year} – #{last.strftime("%b %-d")}#{year.(last)}" unless first.month == last.month
+    return "#{first.strftime("%b %-d")}#{", #{first.year}" if first.year != last.year} – #{last.strftime("%b %-d, %Y")}" unless first.month == last.month
 
-    "#{first.strftime("%B %-d")} – #{last.day}#{year.(last)}"
+    "#{first.strftime("%B %-d")} – #{last.day}, #{last.year}"
   end
+
+  # The grid's clock named for people: "Eastern Time (US & Canada)".
+  def zone_name
+    zone = place.time_zone
+    ActiveSupport::TimeZone::MAPPING.key(zone.tzinfo.identifier) || zone.tzinfo.identifier.split("/").last.tr("_", " ")
+  end
+
+  # The days a visit can still be booked on from the grid (today on), for its "New visit" slots.
+  def bookable?(date) = date >= place.today
 
   # Visits in the period (not cancelled), filtered, with what the grid needs loaded.
   def visits

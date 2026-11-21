@@ -1,0 +1,31 @@
+<%# locals: () -%>
+<%# QA #274 (WCAG 2.1.1): a new visit from a slot on the calendar (or "New visit"): which job it's
+    for, then that job's new-visit form, with the day, time and person filled in. %>
+<%= turbo_frame_tag "schedule_visit" do %>
+  <% at_label = @at && Time.zone.parse("2000-01-01 #{@at}").strftime("%-l:%M %p") %>
+  <%= card title: "New visit", subtitle: [ @on.strftime("%A, %B %-d, %Y"), at_label, (@member && "with #{@member.full_name}") ].compact.join(" · ") do %>
+    <% if @jobs.empty? %>
+      <p class="text-sm2 text-muted">There are no open jobs to book a visit for.</p>
+      <% if can?(:office) %><p class="mt-3"><%= link_to "New job", new_admin_job_path, class: button_classes(:secondary, :sm), data: { turbo_frame: "_top" } %></p><% end %>
+    <% else %>
+      <%= form_with url: admin_schedule_new_visit_path, method: :get, class: "space-y-4", data: { turbo_frame: "_top" } do %>
+        <%= hidden_field_tag :on, @on.iso8601, id: nil %>
+        <%= hidden_field_tag :at, @at, id: nil if @at %>
+        <%= hidden_field_tag :member, @member.id, id: nil if @member %>
+        <%= hidden_field_tag :view, params[:view], id: nil if params[:view].present? %>
+        <div class="field">
+          <label class="label" for="new-visit-job">Job</label>
+          <% waiting, booked = @jobs.partition { _1.status == "unscheduled" } %>
+          <% label = ->(job) { "#{job.number} #{job.title} · #{job.client.display_name}" } %>
+          <%= select_tag :job, grouped_options_for_select([ [ "Needs scheduling", waiting.map { [ label.(_1), _1.uid ] } ], [ "Other open jobs", booked.map { [ label.(_1), _1.uid ] } ] ].reject { _2.empty? }),
+                         include_blank: "Choose a job", required: true, id: "new-visit-job", class: "select", "aria-describedby": "new-visit-job-help" %>
+          <p class="help" id="new-visit-job-help">Next, the visit's details: the time and crew are filled in from the calendar.</p>
+        </div>
+        <div class="flex flex-wrap justify-end gap-2">
+          <button type="button" class="<%= button_classes(:ghost) %>" data-action="schedule-panel#close" data-schedule-panel-target="close" hidden>Cancel</button>
+          <%= submit_tag "Continue", class: button_classes(:primary), name: nil %>
+        </div>
+      <% end %>
+    <% end %>
+  <% end %>
+<% end %>
