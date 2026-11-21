@@ -366,10 +366,12 @@
   .logo-mark svg { width: 1.25rem; height: 1.25rem; }
   /* The wordmark (BrandHelper): "Shade" in brand green, "tree" in ink, or white on dark (owner's
      decision). #059669 is 3.77:1 on white and 4.96:1 on navy; logotypes are exempt from WCAG 1.4.3,
-     and at the nav's size (19px, 800 weight) it counts as large text (3:1) anyway. */
+     and at the nav's size (19px, 800 weight) it counts as large text (3:1) anyway. Under 14px it's
+     one colour (.wordmark-small, owner 2026-11-21). "tree" is ink (#0f172a), the design system's black. */
   .wordmark { color: var(--color-ink); font-weight: 800; letter-spacing: -0.03em; white-space: nowrap; }
   .wordmark-dark { color: #fff; }
   .wordmark-shade { color: var(--color-canopy-600); }
+  .wordmark-small { font-weight: 700; letter-spacing: -0.01em; }
   .logo-mark-dark { background: #fff; }
 
   /* ======================================================
