@@ -17,7 +17,8 @@ class BusinessDeletionTest < ActiveSupport::TestCase
     ActiveStorage::VariantRecord.create!(blob: business.logo.blob, variation_digest: "x").image.attach(variant_blob)
     # Named, not read back with where(id:): Postgres returns rows in no set order, so "the first
     # two" of a query weren't always the logo and the job's file.
-    blobs = [ business.logo.blob, job_blob, variant_blob ]
+    logo_blob = business.logo.blob
+    blobs = [ logo_blob, job_blob, variant_blob ]
     AuditEntry.record!(operator: users(:one), action: "business.viewed", business:)
     audit_before = AuditEntry.where(business_id: business.id).count # incl. the seeded support visit (OPS-03)
     FeatureFlag.create!(name: "beta", state: "businesses", business_ids: [ business.id, businesses(:two).id ])
@@ -26,8 +27,8 @@ class BusinessDeletionTest < ActiveSupport::TestCase
     assert tables.values.sum > 30, "the demo business has data in many tables"
 
     blob_ids = BusinessDeletion.run!(business)
-    assert_empty blobs.first(2).map(&:id) - blob_ids, "the logo and the job's file (the variant goes with the logo)"
-    assert ActiveStorage::Blob.exists?(blobs.first.id), "files go afterwards, in the background"
+    assert_empty [ logo_blob.id, job_blob.id ] - blob_ids, "the logo and the job's file (the variant goes with the logo)"
+    assert ActiveStorage::Blob.exists?(logo_blob.id), "files go afterwards, in the background"
     BusinessDeletion.purge_blobs(blob_ids)
 
     assert_not Business.exists?(business.id)
