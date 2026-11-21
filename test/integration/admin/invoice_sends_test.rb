@@ -176,7 +176,10 @@ class Admin::InvoiceSendsTest < ActionDispatch::IntegrationTest
       send_email
       as_business(@business) { @invoice.sends.first.email_message.mark!("bounced", error: "The mail server refused this address (550 5.1.1).") }
       get admin_invoice_path(@invoice)
-      assert_select "#invoice-delivery-problem", /wasn't delivered: The mail server refused this address/
+      assert_select "#invoice-delivery-problem h2", "Email not delivered"
+      assert_select "#invoice-delivery-problem", /The email to maria@example.com on .* didn't arrive. The receiving mail server says this address doesn't exist/
+      assert_select "#invoice-delivery-problem", /Mail server code: 550 5.1.1/
+      assert_select "#invoice-delivery-problem a[href=?]", new_admin_invoice_send_path(@invoice), text: "Resend"
     end
   end
 

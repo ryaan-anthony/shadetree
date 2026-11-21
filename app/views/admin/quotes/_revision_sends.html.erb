@@ -1,0 +1,11 @@
+<%# locals: (sends:) -%>
+<%# QA #274: how one revision of a quote went out, oldest first, and whether each email arrived. %>
+<% if sends.present? %>
+  <ul class="mt-0.5 space-y-0.5 text-muted">
+    <% sends.reverse_each do |send| %>
+      <% email = send.email_message %>
+      <li><%= send.channel == "email" ? "Emailed" : "Link copied" %> <%= local_time(send.created_at) %><% if email %> ·
+        <% if email.problem? %><span class="font-medium text-danger">Not delivered</span><% else %><%= email.status_label %><% end %><% end %></li>
+    <% end %>
+  </ul>
+<% end %>
