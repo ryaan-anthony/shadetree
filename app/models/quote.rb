@@ -13,6 +13,7 @@ class Quote < ApplicationRecord
   include BuiltDocument
   include DocumentAttachments
   include HasPdf
+  include EmailedDocument # QTE-04, PAY-02: delivery warnings
 
   # QTE-04 sends (draft → sent); QTE-05 records the client's answer. "Viewed" comes from the
   # client link and "expired" from expires_on, so neither is stored.
@@ -86,6 +87,7 @@ class Quote < ApplicationRecord
 
   def draft? = status == "draft"
   def sent? = status == "sent"
+  def awaiting_client? = sent?
   def approved? = status == "approved"
   # Only drafts change. A sent quote is revised (QTE-06); an approved one is locked for good.
   def editable? = draft?

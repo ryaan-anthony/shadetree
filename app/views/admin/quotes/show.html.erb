@@ -49,6 +49,9 @@
   </div>
 <% end %>
 
+<% if (undelivered = quote.undelivered_email) %>
+  <%= render "admin/sends/delivery_warning", email: undelivered, document: quote, resend_path: new_admin_quote_send_path(quote), id: "quote-delivery-problem" %>
+<% end %>
 <%= render "admin/quotes/from_request", quote: %>
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
   <div class="min-w-0 space-y-4">
@@ -99,17 +102,25 @@
   <aside class="space-y-4">
     <% if quote.sends.any? %><%= render "admin/quotes/sent_panel", quote: %><% end %>
     <% if quote.revisions.any? %>
+      <%# Each revision's sends, and whether each email arrived (QA #274). %>
+      <% sends_by_revision = quote.sends.includes(:email_message).group_by(&:revision) %>
       <%= card title: "Revisions" do %>
         <ul class="space-y-2.5 text-sm2" id="quote-revisions">
-          <li class="flex items-baseline justify-between gap-3">
-            <span><span class="font-semibold text-ink">Rev <%= quote.revision %></span> <span class="text-muted"><%= quote.approved? ? "Approved version" : "Current" %></span></span>
-            <span class="money text-ink"><%= money(quote.total) %></span>
+          <li id="quote-revision-<%= quote.revision %>">
+            <span class="flex items-baseline justify-between gap-3">
+              <span><span class="font-semibold text-ink">Rev <%= quote.revision %></span> <span class="text-muted"><%= quote.approved? ? "Approved version" : "Current" %></span></span>
+              <span class="money text-ink"><%= money(quote.total) %></span>
+            </span>
+            <%= render "admin/quotes/revision_sends", sends: sends_by_revision[quote.revision] %>
           </li>
           <% quote.revisions.reverse_each do |revision| %>
-            <li class="flex items-baseline justify-between gap-3">
-              <span><%= link_to "Rev #{revision.number}", revision_admin_quote_path(quote, number: revision.number), class: "font-semibold text-ink hover:underline" %>
-                <span class="text-muted">superseded <%= local_date(revision.created_at.in_time_zone(current_business.time_zone).to_date) %></span></span>
-              <span class="money text-subtle"><%= money(revision.total) %></span>
+            <li id="quote-revision-<%= revision.number %>">
+              <span class="flex items-baseline justify-between gap-3">
+                <span><%= link_to "Rev #{revision.number}", revision_admin_quote_path(quote, number: revision.number), class: "font-semibold text-ink hover:underline" %>
+                  <span class="text-muted">superseded <%= local_date(revision.created_at.in_time_zone(current_business.time_zone).to_date) %></span></span>
+                <span class="money text-subtle"><%= money(revision.total) %></span>
+              </span>
+              <%= render "admin/quotes/revision_sends", sends: sends_by_revision[revision.number] %>
             </li>
           <% end %>
         </ul>

@@ -113,7 +113,7 @@ class ClientMailerTest < ActionMailer::TestCase
     { "550 5.1.1 <dana@example.com>: Recipient address rejected" => "550 5.1.1", "501 5.1.3 Bad recipient address syntax" => "501 5.1.3" }.each do |reply, label|
       message = send_test
       deliver_over_smtp(rcpt: reply) { perform_enqueued_jobs }
-      assert_no_enqueued_jobs
+      assert_no_enqueued_jobs only: ClientMailDeliveryJob
       assert_equal [ "bounced", "The mail server refused this address (#{label})." ], outcome(message), reply
       assert suppressed?
       as_business(@business) { EmailSuppression.clear!("dana@example.com") }
@@ -124,11 +124,27 @@ class ClientMailerTest < ActionMailer::TestCase
     { { mail: "550 5.7.1 Sender address not verified" } => "550 5.7.1", { mail: "553 5.1.8 Sender domain rejected" } => "553 5.1.8",
       { rcpt: "550 Mailbox unavailable" } => "550", { message: "554 5.7.1 Message rejected as spam" } => "554 5.7.1" }.each do |replies, label|
       message = send_test
-      deliver_over_smtp(**replies) { perform_enqueued_jobs }
-      assert_no_enqueued_jobs
+      deliver_over_smtp(**replies) { perform_enqueued_jobs(only: ClientMailDeliveryJob) }
+      assert_no_enqueued_jobs only: ClientMailDeliveryJob
       assert_equal [ "failed", "The mail server refused the email (#{label})." ], outcome(message), replies.inspect
       assert_not suppressed?
     end
+  end
+
+  # QA #274: the audit's case, a recipient refused with 554 and a policy status.
+  test "an email the mail server refuses tells the team, in plain words, with the reply code kept" do
+    message = send_test
+    deliver_over_smtp(rcpt: "554 5.7.1 <dana@example.com>: Recipient address rejected: Access denied") { perform_enqueued_jobs(only: ClientMailDeliveryJob) }
+    as_business(@business) do
+      message.reload
+      assert_equal [ "failed", "554 5.7.1", "The receiving mail server rejected the email." ], [ message.status, message.reply_code, message.problem_reason ]
+      notes = Notification.where(kind: "email_not_delivered")
+      assert_equal @business.business_users.active.count { _1.can?(:office) }, notes.count
+      assert_equal [ "An email wasn't delivered" ], notes.map(&:title).uniq
+      assert_match "rejected the email", notes.first.body
+      assert_no_match "dana@example.com", notes.first.body
+    end
+    assert_enqueued_jobs 1, only: PlatformMailDeliveryJob # the team's email (NotificationMailer)
   end
 
   test "rejected credentials fail at once; a temporary AUTH reply is retried" do

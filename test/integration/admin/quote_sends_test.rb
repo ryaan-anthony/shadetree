@@ -163,9 +163,13 @@ class Admin::QuoteSendsTest < ActionDispatch::IntegrationTest
       send_email
       as_business(@business) { @quote.sends.first.email_message.mark!("bounced", error: "The mail server refused this address (550 5.1.1).") }
       get admin_quote_path(@quote)
-      assert_select "#quote-delivery-problem", /wasn't delivered: The mail server refused this address/
+      assert_select "#quote-delivery-problem h2", "Email not delivered"
+      assert_select "#quote-delivery-problem", /The email to maria@example.com on .* didn't arrive. The receiving mail server says this address doesn't exist/
+      assert_select "#quote-delivery-problem", /Mail server code: 550 5.1.1/
+      assert_select "#quote-delivery-problem a[href=?]", new_admin_quote_send_path(@quote), text: "Resend"
       get admin_quotes_path
-      assert_select "#quote-#{@quote.uid}", /Not delivered/
+      assert_select "#quote-#{@quote.uid}", /Email not delivered/
+      assert_equal "sent", fresh.status # the client's link still works (owner decision)
     end
   end
 
@@ -247,7 +251,7 @@ class Admin::QuoteSendsTest < ActionDispatch::IntegrationTest
       get admin_quote_path(@quote)
       assert_select "#quote-delivery-problem", 0
       get admin_quotes_path
-      assert_no_match "Not delivered", response.body
+      assert_no_match "Email not delivered", response.body
     end
   end
 
