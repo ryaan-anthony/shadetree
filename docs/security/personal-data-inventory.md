@@ -2,7 +2,7 @@
 
 > PLT-10 (R22). Where personal data lives in Shadetree, how long it stays, and what keeps it out
 > of logs, monitoring and analytics. Update it in the same PR as any feature that stores,
-> sends or logs personal data. Last reviewed: 2026-11-20.
+> sends or logs personal data. Last reviewed: 2026-11-21.
 
 **Clients** are a business's customers (no accounts). **Users** are business staff and
 operators. **Visitors** use the public site and forms. A client's data belongs to the business;
@@ -19,7 +19,7 @@ erasing a client (INS-02, `ClientErasure`) removes or scrubs everything listed u
 | Client | `service_requests`: contact_name, contact_email, contact_phone, address, description, timing; `service_request_notes.body` | Same |
 | Client | `quotes` / `invoices`: title, message, terms, internal_notes; `jobs`: title, instructions, internal_notes; `visits`: instructions, client_note; line items; `*_revisions.snapshot` | Same (financial records keep their numbers and totals after erasure) |
 | Client | `visit_notes.body` (technicians' notes, can describe the client or property) | Same |
-| Client | `quote_responses`: signer_name, email, message, ip_address, user_agent, signature, snapshot | Same |
+| Client | `quote_responses`: signer_name, email, message, ip_address, user_agent, signature, snapshot (the IP is evidence: in the "Quote responses" export, shown on no page) | Same |
 | Client | `quote_sends` / `invoice_sends`: recipient, cc; `email_messages`: to, subject, error; `payments`: reference, note, method_detail (PAY-04: card brand and last four digits, never the card number) | Same |
 | Client | `email_suppressions.email` | Kept after erasure, so a bounced or complaining address isn't mailed again (privacy notice) |
 | Client | `client_imports`: headers, examples, preview_rows, problems | Rows cleared after the 7-day undo window; abandoned uploads deleted after 2 days |

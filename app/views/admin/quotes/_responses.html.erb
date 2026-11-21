@@ -41,7 +41,8 @@
             </p>
             <% if response.message %><p class="mt-1 whitespace-pre-line text-subtle"><%= response.message %></p><% end %>
             <% unless response.on_behalf? %>
-              <p class="mt-1 text-muted">From <%= [ response.device, response.ip_address ].compact.join(", ").presence || "an unknown device" %><%= ", asked for a copy at #{response.email}" if response.email %></p>
+              <%# The IP address stays in the record and the export as evidence, but isn't shown (QA #274, owner decision 2026-11-21). %>
+              <p class="mt-1 text-muted">From <%= response.device || "an unknown device" %><%= ", asked for a copy at #{response.email}" if response.email %></p>
             <% end %>
             <% if response.approved? %>
               <p class="mt-1 text-muted">Quote version <%= response.quote_version %>, reference <span class="font-mono"><%= response.reference %></span>
