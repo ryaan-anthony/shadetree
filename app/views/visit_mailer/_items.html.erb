@@ -9,7 +9,7 @@
       <% if item.before %><p style="margin:2px 0 0;font-size:13px;color:#64748b;">Was <%= item.before %></p><% end %>
       <p style="margin:6px 0 0;font-size:14px;color:#334155;"><%= job.title %><%= " · #{job.property.one_line}" if job.property %></p>
       <% if visit.client_note.present? && item.kind != "cancelled" %><p style="margin:8px 0 0;font-size:14px;color:#334155;white-space:pre-line;"><%= visit.client_note %></p><% end %>
-      <p style="margin:10px 0 0;"><a href="<%= client_link_url(item.link.token) %>" style="font-weight:600;font-size:14px;color:<%= @branding.color %>;">View visit</a></p>
+      <p style="margin:10px 0 0;"><a href="<%= client_link_url(item.link.token) %>" style="font-weight:600;font-size:14px;color:<%= @branding.link_color %>;">View visit</a></p>
     </td></tr>
   </table>
 <% end %>

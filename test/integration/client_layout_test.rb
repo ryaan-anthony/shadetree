@@ -16,6 +16,7 @@ class ClientLayoutTest < ActionDispatch::IntegrationTest
     assert_select "main#main h1", "Get in touch with #{@business.name}"
     assert_select "body > footer a", /Powered by\s*Shadetree/
     assert_select "nav[aria-label=Main]", false, "no Shadetree marketing navigation on client pages"
+    assert_select "head style", /--color-brand-link: #{@business.branding.link_color};/
     assert_select "header a[href='tel:+12155551212']", "(215) 555-1212"
     assert_select "main a[href='tel:+12155551212']", /Call \(215\) 555-1212/
     assert_select "main a[href='mailto:office@oakline.example.com']"

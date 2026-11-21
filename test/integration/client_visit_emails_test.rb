@@ -42,6 +42,7 @@ class ClientVisitEmailsTest < ActionDispatch::IntegrationTest
     assert_includes text, "12 Elm St"
     assert_not_includes html + text, "Bag the leaves"
     assert_not_includes html + text, "Gate code"
+    assert_includes html, %(color:#{@business.branding.link_color};">View visit), "link text in the readable brand shade (owner, 2026-11-21)"
 
     link = text[%r{http://[^ \n]+/c/\w+}]
     sign_out :user
