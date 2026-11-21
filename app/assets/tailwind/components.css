@@ -52,7 +52,7 @@
     font-weight: 600;
   }
   .btn-link:hover { text-decoration: underline; text-underline-offset: 2px; }
-  .btn-brand { background: var(--color-brand); color: var(--color-brand-ink); }
+  .btn-brand { background: var(--color-brand-button); color: var(--color-brand-ink); }
   .btn-brand:hover { filter: brightness(0.94); }
   .btn-sm { height: 1.875rem; padding: 0 0.625rem; font-size: 0.8125rem; }
   .btn-lg { height: 2.75rem; padding: 0 1.125rem; font-size: 0.9375rem; border-radius: 8px; }
@@ -491,7 +491,7 @@
     height: 2.5rem;
     overflow: hidden;
     border-radius: 10px;
-    background: var(--color-brand);
+    background: var(--color-brand-button);
     color: var(--color-brand-ink);
     font-size: 0.9375rem;
     font-weight: 800;

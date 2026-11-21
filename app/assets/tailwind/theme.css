@@ -63,7 +63,9 @@
 
   /* Per-business brand. The client layout overrides these on <body> from the business's settings. */
   --color-brand: #047857;
-  --color-brand-ink: #ffffff;
+  --color-brand-button: #047857; /* the brand, darkened only if no text color reads on it */
+  --color-brand-ink: #ffffff; /* text on --color-brand-button */
+  --color-brand-link: #047857; /* link text: the brand, darkened to 4.5:1 if needed */
   --color-brand-soft: #ecfdf5;
 
   /* Legacy palette from the original pages, kept so existing markup renders unchanged.
