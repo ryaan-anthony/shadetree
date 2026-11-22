@@ -118,10 +118,24 @@ class Admin::RequestInboxTest < ActionDispatch::IntegrationTest
     assert_equal 4, as_business(@business) { @service_request.quotes.count }, "as before, the inbox can quote an archived request"
   end
 
-  test "two Create quote clicks at once make one draft" do
+  # Run one after the other here; the request's row lock in create_quote! is what makes two at
+  # once wait and see the first's draft.
+  test "a second Create quote, checked under the lock, finds the first's draft" do
     first = as_business(@business) { @service_request.create_quote!(by: users(:one), once: true, refuse_archived: false) }
     error = assert_raises(ServiceRequest::AlreadyQuoted) { as_business(@business) { @service_request.create_quote!(by: users(:one), once: true, refuse_archived: false) } }
     assert_equal first, error.quote
+  end
+
+  test "a technician's open draft is named as theirs, and holds the request even with its client changed" do
+    tech = member_with_role(:technician)
+    draft = as_business(@business) { @service_request.create_quote!(by: tech) }
+    post quote_admin_service_request_path(@service_request)
+    assert_redirected_to edit_admin_quote_path(draft)
+    assert_match "already has a draft quote by #{tech.full_name}, #{draft.number}", flash[:notice]
+    other = as_business(@business) { Client.create!(display_name: "Ana Diaz", contact_methods_attributes: [ { kind: "phone", value: "5125550177" } ]) }
+    as_business(@business) { draft.update_columns(client_id: other.id) }
+    post quote_admin_service_request_path(@service_request)
+    assert_redirected_to edit_admin_quote_path(draft)
   end
 
   test "a sent quote's page links back to its request (QTE-06)" do

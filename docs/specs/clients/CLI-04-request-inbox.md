@@ -37,7 +37,8 @@ archive what isn't going anywhere.
       shown in the builder for staff to add; nothing is added to the client automatically.*
 - [x] While a quote from the request is still an unsent draft, "Create quote" opens that draft
       instead of making another; once it's been sent, more quotes can be made.
-      *A sent quote being revised, or an archived draft, doesn't hold it.*
+      *A sent quote being revised, or an archived draft, doesn't hold it; a draft whose client
+      was changed still does. The notice names who drafted it, if someone else.*
 - [x] Requests appear on the client's page.
 - [x] Internal notes can be added to a request.
 - [x] Technicians have no access; tenancy and role tests exist.
@@ -55,6 +56,7 @@ archive what isn't going anywhere.
 
 - The inbox refuses a second draft quote from a request while one is still open, and opens the
   existing draft; more quotes are allowed once the earlier one has been sent (owner, 2026-11-22).
+- A sent quote being revised, or an archived unsent draft, doesn't hold the request (coordinator).
 
 ## Implementation notes
 
