@@ -7,11 +7,20 @@
 # the oldest due job has waited too long, for the external uptime check to watch.
 #
 # Thresholds (config/initializers/observability.rb): JOB_BACKLOG_THRESHOLD (jobs waiting,
-# default 100) and JOB_WAIT_THRESHOLD (seconds the oldest due job has waited, default 600).
+# default 100), JOB_WAIT_THRESHOLD (seconds the oldest due job has waited, default 600),
+# JOB_FAILED_THRESHOLD (new failures that raise an alert, default 1) and JOB_ALERT_REPEAT_MINUTES
+# (how often a backlog that persists is alerted again, default 60, to stay within Sentry's quota).
+# Each check also checks in with Sentry Cron (the "job-health" monitor, ADR 0027): error while a
+# problem lasts, ok after, and Sentry flags a missed check-in when the check itself stopped.
 class JobHealth
   # The newest failure already alerted on. If the cache loses it, failures from the last hour count.
   WATERMARK_KEY = "job_health/last_failed_execution_id"
   FALLBACK_WINDOW = 1.hour
+  BACKLOG_ALERTED_KEY = "job_health/backlog_alerted_at"
+  MONITOR = "job-health"
+  EVERY_MINUTES = 10 # config/recurring.yml
+  FAILED = "Background jobs failed"
+  BACKLOG = "Job queue backlog over threshold"
 
   attr_reader :failed, :new_failures, :new_failed_classes, :backlog, :oldest_wait, :newest_failure_id
 
@@ -27,9 +36,21 @@ class JobHealth
   # Failures alert once, however late or often the check runs.
   def self.check!(now: Time.current)
     health = current(now:, since_id: Rails.cache.read(WATERMARK_KEY)) or return
-    health.alerts.each { |message, details| Observability.alert(message, **details) }
-    Rails.cache.write(WATERMARK_KEY, health.newest_failure_id) if health.newest_failure_id
+    alerts = health.alerts
+    Observability.tracker.check_in(MONITOR, alerts.any? ? :error : :ok, every_minutes: EVERY_MINUTES) if Observability.tracker.respond_to?(:check_in)
+    alerts.reject! { |message, _| message == BACKLOG && !backlog_alert_due?(now) }
+    alerts.each { |message, details| Observability.alert(message, **details) }
+    # Failures below the threshold keep counting towards it; alerted ones aren't counted again.
+    Rails.cache.write(WATERMARK_KEY, health.newest_failure_id) if health.newest_failure_id && !health.failures_pending?
+    Rails.cache.write(BACKLOG_ALERTED_KEY, now) if alerts.any? { |message, _| message == BACKLOG }
   end
+
+  def self.backlog_alert_due?(now)
+    last = Rails.cache.read(BACKLOG_ALERTED_KEY)
+    last.nil? || last <= now - Observability.config.job_alert_repeat_minutes.minutes
+  end
+
+  def self.failed_threshold = [ Observability.config.job_failed_threshold, 1 ].max
 
   def self.backlog_threshold = Observability.config.job_backlog_threshold
   def self.wait_threshold = Observability.config.job_wait_threshold
@@ -56,6 +77,8 @@ class JobHealth
   def stalled? = oldest_wait > self.class.wait_threshold
   def backlogged? = backlog > self.class.backlog_threshold || stalled?
   def healthy? = failed.zero? && !backlogged?
+  def failures_alerted? = new_failures >= self.class.failed_threshold
+  def failures_pending? = new_failures.positive? && !failures_alerted?
 
   # The most-failing job classes among every failure still waiting to be retried or discarded.
   def failed_classes
@@ -65,8 +88,8 @@ class JobHealth
   # [message, details] pairs. Messages stay the same from run to run so a tracker groups them.
   def alerts
     list = []
-    list << [ "Background jobs failed", { new_failures:, failed:, failed_classes: new_failed_classes.keys } ] if new_failures.positive?
-    list << [ "Job queue backlog over threshold", { backlog:, oldest_wait_seconds: oldest_wait } ] if backlogged?
+    list << [ FAILED, { new_failures:, failed:, failed_classes: new_failed_classes.keys } ] if failures_alerted?
+    list << [ BACKLOG, { backlog:, oldest_wait_seconds: oldest_wait } ] if backlogged?
     list
   end
 end

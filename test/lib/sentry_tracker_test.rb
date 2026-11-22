@@ -7,6 +7,7 @@ require "sentry/test_helper"
 class SentryTrackerTest < ActionDispatch::IntegrationTest
   include Sentry::TestHelper
   include ActiveJob::TestHelper
+  include SolidQueueTables
 
   PERSONAL = [ "Maria", "Lopez", "maria@example.com", "maria%40example.com", "555-010-0100", "5550100100",
                "12 Elm Street", "gate code 4471", "Zelda", "Secret Lane", "s3cr3t-cookie", "Bearer abc123" ].freeze
@@ -165,5 +166,20 @@ class SentryTrackerTest < ActionDispatch::IntegrationTest
     12.times { Observability.alert("Job queue backlog over threshold") }
 
     assert_equal [ 10, 12 ], [ sentry_events.count { _1.exception }, sentry_events.count { _1.message.present? } ]
+  end
+
+  test "the job health check checks in with Sentry Cron: error while jobs fail, ok after" do
+    cache, Rails.cache = Rails.cache, ActiveSupport::Cache::MemoryStore.new
+    with_solid_queue_tables do
+      fail_solid_queue_job("QuotePdfJob", at: 5.minutes.ago)
+      JobHealth.check!
+      JobHealth.check!
+    end
+
+    check_ins = sentry_events.grep(Sentry::CheckInEvent)
+    assert_equal [ [ "job-health", :error ], [ "job-health", :ok ] ], check_ins.map { [ _1.monitor_slug, _1.status ] }
+    assert_equal 1, sentry_events.count { _1.is_a?(Sentry::ErrorEvent) } # the alert, once
+  ensure
+    Rails.cache = cache
   end
 end

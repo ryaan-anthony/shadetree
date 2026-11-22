@@ -65,10 +65,29 @@ class JobHealthTest < ActiveSupport::TestCase
       config.job_backlog_threshold = 100
       @alerts.clear
       JobHealth.check!(now: 11.minutes.from_now)
+      assert_empty @alerts # still backlogged, but alerted on within JOB_ALERT_REPEAT_MINUTES
+
+      JobHealth.check!(now: 61.minutes.from_now)
       assert_operator @alerts.sole[:oldest_wait_seconds], :>, 600
     end
   ensure
     config.job_backlog_threshold = 100
+  end
+
+  test "failures alert once JOB_FAILED_THRESHOLD of them are new, and keep counting until then" do
+    config = Rails.configuration.x.observability
+    with_solid_queue_tables do
+      config.job_failed_threshold = 2
+      fail_solid_queue_job("QuotePdfJob", at: 20.minutes.ago)
+      JobHealth.check!
+      assert_empty @alerts
+
+      fail_solid_queue_job("VisitRemindersJob", at: 5.minutes.ago)
+      JobHealth.check!
+      assert_equal 2, @alerts.sole[:new_failures]
+    end
+  ensure
+    config.job_failed_threshold = 1
   end
 
   test "a scheduled job nobody dispatched counts as waiting" do

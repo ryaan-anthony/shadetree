@@ -214,6 +214,7 @@ Settings → Environments: **`staging`** (deployment branches: `main` only) and 
 | `STRUCTURED_LOGS` | var, optional | `true` (default) | `true` | JSON log lines (PLT-10) |
 | `SLOW_REQUEST_MS`, `SLOW_QUERY_MS` | vars, optional | `1000`, `250` | same | PLT-10 thresholds |
 | `JOB_BACKLOG_THRESHOLD`, `JOB_WAIT_THRESHOLD` | vars, optional | `100`, `600` | same | PLT-10 job alerts and `/up/jobs` |
+| `JOB_FAILED_THRESHOLD`, `JOB_ALERT_REPEAT_MINUTES` | vars, optional | `1`, `60` | same | New failed jobs that raise an alert; how often a lasting backlog is alerted again |
 | `SENTRY_DSN` | secret, optional | the Sentry project's DSN | same DSN | Error tracking (PLT-10, ADR 0027). Unset: errors and alerts reach the log only |
 | `SENTRY_ENVIRONMENT` | var, optional | (`staging`) | (`production`) | Overrides the environment name Sentry shows; default the deploy's environment |
 | `JOB_CONCURRENCY` | var, optional | `1` | `1` | Solid Queue worker processes |
@@ -432,7 +433,8 @@ cost of the host's journal settings deciding retention; switch with `--log-drive
 
 Tuning (environment variables in the GitHub environment, all optional): `SLOW_REQUEST_MS` (1000),
 `SLOW_QUERY_MS` (250), `JOB_BACKLOG_THRESHOLD` (100 jobs waiting), `JOB_WAIT_THRESHOLD` (600
-seconds the oldest has waited). Change one and re-run the last deploy.
+seconds the oldest has waited), `JOB_FAILED_THRESHOLD` (1 new failed job), `JOB_ALERT_REPEAT_MINUTES`
+(60: a backlog that lasts is alerted again at most this often). Change one and re-run the last deploy.
 
 `JOB_CONCURRENCY` is the number of Solid Queue worker processes (default 1, three threads each).
 Each extra process is another copy of the app in memory, about 150–250 MB, inside the
@@ -444,23 +446,60 @@ PDF (100–200 MB). On the 2 GB VMs keep it at 1; raise `APP_MEMORY` with it.
 | Alert | Raised by | Meaning | What to do |
 | --- | --- | --- | --- |
 | `error` (unhandled) | A request or job failed | A bug, or a dependency down | Find the request or job id in the logs; fix, or retry the job |
-| `Background jobs failed` | `JobHealthCheckJob`, every 10 minutes | Jobs failed for good since the last alert (the classes of those jobs listed) | See "Failed jobs" below |
-| `Job queue backlog over threshold` | Same | Too many jobs waiting, or the oldest due job has waited too long | Check Solid Queue's supervisor in the logs, then load: raise `JOB_CONCURRENCY` |
+| `Background jobs failed` | `JobHealthCheckJob`, every 10 minutes | At least `JOB_FAILED_THRESHOLD` jobs failed for good since the last alert (their classes listed) | See "Failed jobs" below |
+| `Job queue backlog over threshold` | Same, at most every `JOB_ALERT_REPEAT_MINUTES` | Too many jobs waiting, or the oldest due job has waited too long | Check Solid Queue's supervisor in the logs, then load: raise `JOB_CONCURRENCY` |
+| `job-health` monitor failed or missed | Sentry Cron (the check checks in every run) | Failed: one of the two above. Missed: the check didn't run, so workers or dispatcher are down | As above; for a missed one, `docker restart shadetree-production` |
 | Jobs stalled | External uptime check on `/up/jobs` (503) | The oldest due job has waited over `JOB_WAIT_THRESHOLD`: workers or dispatcher down, so the check above can't run either | `docker restart shadetree-production`; if it persists, re-run the last deploy |
 | Backups stale or untested | External uptime check on `/up/backup` (503) | No backup in `BACKUP_MAX_AGE_HOURS`, or its nightly restore drill failed | `journalctl --user -u shadetree-backup@production` on the VM ("Backups" above) |
 | Site down | External uptime check | `/up` or a client-link page isn't answering | Check the VM, the container (`docker ps`) and the tunnel; roll back the last deploy if it's the cause |
 
 **Where they go:** the log, the "Background jobs" card on the operator console's home, and,
-with `SENTRY_DSN` set, Sentry (ADR 0027): errors at `error`, handled ones and alerts at `warning`,
-tagged with `business_id` (never a name), with release (`APP_REVISION`) and environment. What
-Sentry never gets, its setup and its free-tier limits: PLT-10 part 2 adds them here.
+with `SENTRY_DSN` set, Sentry (ADR 0027). Every `error` and `alert` line becomes a Sentry event:
+unhandled errors at `error`, handled ones and alerts at `warning`, each tagged with `business_id`
+(never a name), `source`, `handled`, and `job_class` or `area`, with release (`APP_REVISION`, the
+deployed commit) and environment (`SENTRY_ENVIRONMENT`, default the deploy's `staging` or
+`production`). Sentry's email alerts go to the maintainer's Sentry account; nothing in the repo
+names an address.
 
-**Once an uptime service is chosen:** monitor `https://<APP_HOST>/up` (no redirect, no log
-noise), `/up/jobs` (200 "ok", 503 "stalled") and `/up/backup` (200 "ok", 503 "stale" or
-"untested"; nothing else is disclosed) and one client-link page, every 1–5 minutes from outside
-the homelab, alerting the maintainer by email after two failures. The client-link page needs a
-link that stays valid for a document of a Shadetree-owned demo business; how to keep one alive is
-decided when this is set up.
+**What Sentry never gets** (`lib/observability/sentry_tracker.rb`, tested with Sentry's test
+transport in `test/lib/sentry_tracker_test.rb`): no request (params, body, query string, cookies,
+headers, IP), no user beyond an id, no breadcrumbs, no SQL, no job arguments, no source lines or
+local variables. Context, tags and extra are masked by `config.filter_parameters` plus a wider
+list (name, email, phone, address, body, notes, instructions, description, message, token, …);
+exception messages lose emails, phone-like numbers, database row details and SQL literals. Free
+text an exception message is built from can't be recognised, so never interpolate a client's
+details into one. sentry-rails' own request, job and `Rails.error` capture is off: everything
+arrives through `Observability::ErrorSubscriber`. No tracing, profiling or logs are sent.
+
+**Set up Sentry** (once): create a free Developer account and one project (platform Rails; the
+organisation's data region as you prefer), and in Project settings → Security & Privacy turn on
+"Data scrubber" and "Use default scrubbers" and "Prevent storing of IP addresses" as a second layer.
+Copy the DSN (Project settings → Client keys) into the `SENTRY_DSN` secret of both GitHub
+environments, then re-run the last deploy of each. Staging and production share the project and
+are told apart by environment. Alerts: the default "new issue" email rule; add a rule for the
+`job-health` Cron monitor (created on its first check-in) to email on failure or missed check-in.
+
+**Free-tier limits** (Developer plan, checked 2026-11-22): 5,000 errors a month, one user,
+30 days of history, one Cron monitor and one uptime monitor; email alerts included. We use errors
+and the one Cron monitor (`job-health`); spans (5M), replays and logs stay unused. Past the error
+quota Sentry drops events until the month resets (spike protection is on by default), so keep
+noisy errors fixed or ignored; the log still has every one. A lasting backlog costs at most
+24 events a day (`JOB_ALERT_REPEAT_MINUTES`).
+
+**Uptime check** (not set up; vendor is the owner's call, PLT-10 open question): poll from
+outside the homelab, every 1–5 minutes, alerting the maintainer after two failures:
+
+| URL | Healthy | Unhealthy |
+| --- | --- | --- |
+| `https://<APP_HOST>/up` | 200 | anything else, or no answer |
+| `https://<APP_HOST>/up/jobs` | 200 `ok` | 503 `stalled` |
+| `https://<APP_HOST>/up/backup` | 200 `ok` | 503 `stale` or `untested` |
+| `https://<APP_HOST>/c/11111111111111111111111111111111` | **404** containing "We couldn't find that page" | anything else |
+
+The last is the client-link page with a synthetic token (32 × `1`, well-formed, never issued): it
+runs the client pages' routing, rate limit, link lookup and layout without a real link, whose view
+would be recorded and could notify a business. Health checks aren't logged; this one is (its token
+blanked), one line per poll.
 
 ### Failed jobs
 
@@ -488,5 +527,5 @@ changes.
 | Analytics: self-hosted Plausible (MKT-04) | $0 if on the homelab |
 | GitHub (public repository, Actions) | $0 |
 | Error tracking: Sentry Developer (free; 5k errors/month, 1 Cron monitor; PLT-10, ADR 0027) | $0 |
-| Uptime check (PLT-10) | *tbd* |
+| Uptime check (PLT-10, vendor not chosen; free tiers compared in the spec) | $0 expected |
 | **Total** | **target < $50** |

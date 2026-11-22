@@ -22,19 +22,22 @@ it, without leaking client personal data into third-party tools.
 
 ## Acceptance criteria
 
-- [ ] Unhandled exceptions in web requests and background jobs are reported to an error tracker
+- [x] Unhandled exceptions in web requests and background jobs are reported to an error tracker
       with release version, environment, and business identifier — but no client names, emails,
-      phone numbers, addresses or document contents.
+      phone numbers, addresses or document contents. *Sentry, live once `SENTRY_DSN` is set.*
 - [x] Logs are structured, include a request ID, and filter sensitive parameters (passwords,
       tokens, client contact details, payment data).
 - [ ] An external uptime check monitors the health endpoint and a client-link page; alerts go
-      to the maintainer.
-- [ ] Background job failures and queue backlog beyond a threshold raise an alert.
+      to the maintainer. *Targets ready and tested; vendor is the open question below.*
+- [x] Background job failures and queue backlog beyond a threshold raise an alert. *Through
+      Sentry: a message per problem and the `job-health` Cron monitor.*
 - [x] Basic performance visibility exists (slow requests, slow queries) for the staff app and
       client pages.
 - [x] A personal-data inventory lists where client PII is stored and confirms none is sent to
       logs or monitoring tools.
-- [ ] Monitoring tools fit within free or low-cost tiers at launch scale (recorded).
+- [ ] Monitoring tools fit within free or low-cost tiers at launch scale (recorded). *Sentry:
+      free Developer plan, $0 (5,000 errors/month, 1 user, 30-day history, 1 Cron monitor, 1
+      uptime monitor; checked 2026-11-22). Uptime check: $0 expected, pending the vendor.*
 
 ## Out of scope
 
@@ -42,8 +45,12 @@ it, without leaking client personal data into third-party tools.
 
 ## Decisions
 
-- **No logging or tracker gem yet.** Rails 8.1's structured events and error reporter cover
-  logs and plumbing; the tracker plugs into one hook once the open question is answered.
+- **No logging gem.** Rails 8.1's structured events and error reporter cover logs and plumbing.
+- **Error tracking is Sentry's free tier** (owner, 2026-11-22; ADR 0027).
+- **Privacy rules for the tracker** (owner, 2026-11-22): no client names, emails, phone numbers,
+  addresses or document contents; no default PII; request params, bodies, cookies, headers,
+  breadcrumbs and SQL scrubbed; the business by id only; the DSN only from the environment, and
+  the tracker off without it; tracing off to stay in the free tier.
 
 ## Implementation notes
 
@@ -68,10 +75,22 @@ it, without leaking client personal data into third-party tools.
   Console home: "Background jobs" card. `MIN(created_at)` on ready executions has no index (Solid
   Queue owns that schema; the table is small); revisit if it grows.
 - **Inventory:** [docs/security/personal-data-inventory.md](../../security/personal-data-inventory.md).
-- **Waiting on decisions:** the tracker (open question), so alerts reach the log and console
-  only; the uptime check (PLT-09 hosting and a service); the cost record. The job criterion stays
-  open until alerts reach the maintainer.
+- **Tracker:** Sentry, fed only through the hook (its own request, job and error-reporter
+  capture off), with a `before_send` scrubber as a second layer; tested through Sentry's test
+  transport. `SENTRY_DSN` (secret) and `SENTRY_ENVIRONMENT` (var) go through the deploy's env file.
+- **Job alerts:** `JOB_FAILED_THRESHOLD` (1) new failures; a lasting backlog repeats every
+  `JOB_ALERT_REPEAT_MINUTES` (60); each check is a `job-health` check-in, so a stopped check shows
+  as missed.
+- **Uptime targets:** `/up`, `/up/jobs`, `/up/backup`, and `/c/` + 32 × `1`, a well-formed token
+  never issued: a 404 through the whole client-page stack, recording no view. Runbook: Monitoring.
 
 ## Open questions
 
-- Self-hosted vs hosted error tracking — cost vs maintenance; record in an ADR.
+- ~~Self-hosted vs hosted error tracking?~~ Hosted: Sentry's free tier (owner, 2026-11-22).
+- **Uptime vendor** (free tiers, 2026-11-22): Better Stack (10 monitors, 3-minute checks, email);
+  UptimeRobot (50 monitors, 5-minute checks; commercial use on the free plan is disputed);
+  Sentry's one included uptime monitor (`/up` only); Healthchecks.io (20 checks, but heartbeats
+  only, no polling). **Recommendation: Better Stack free**, the four targets per environment (8
+  of 10), alerting the maintainer's email after two failures, configured outside the repo.
+- Sentry receives only ids and scrubbed text, but it is a new sub-processor: add it to the
+  sub-processors page (a new version) before production's `SENTRY_DSN` is set?
