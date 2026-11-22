@@ -41,6 +41,9 @@ client's side and treated signatures as a separate legal-compliance epic.
   exactly what was approved (version). The approved quote can't be edited.
 - **R13** After approval, the client sees next steps (e.g. "We'll contact you to schedule").
   Later: deposit payment and self-scheduling (backlog).
+- **R22** Once approved, the client's quote page shows each line's progress (to do, booked,
+  done, billed, not going ahead with a note) and the money: approved, billed, deposits and still
+  expected. Work that won't be done is marked "Not going ahead"; the quote then closes.
 - **R14** Expired quotes can be viewed but not approved; the client can ask for a refresh.
 
 ### Lifecycle
@@ -83,6 +86,7 @@ client's side and treated signatures as a separate legal-compliance epic.
 | [QTE-06](../specs/quotes/QTE-06-quote-lifecycle.md) | Quote list, lifecycle & revisions | M2 | QTE-04, QTE-05 |
 | [QTE-07](../specs/quotes/QTE-07-technician-quotes.md) | Quotes from assigned requests | M6 | JOB-06, QTE-01, ACC-07 |
 | [QTE-08](../specs/quotes/QTE-08-auto-approved-services.md) | Services technicians send without review | M6 | QTE-07, CAT-03, BIL-03 |
+| [QTE-09](../specs/quotes/QTE-09-quote-progress-for-clients.md) | Quote progress for clients | M6 | JOB-09, PAY-06, CLI-05 |
 
 ## Backlog (M6)
 

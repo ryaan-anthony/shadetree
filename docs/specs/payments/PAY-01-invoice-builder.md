@@ -24,7 +24,8 @@ and tax behavior, carry payment terms and a due date, and track their status thr
 
 - [x] Owners/Admins create an invoice from a job (items from the job), from an approved quote,
       or from scratch for a client/property; sources are linked both ways.
-      *A job or quote can be invoiced more than once (progress billing, no special screen).*
+      *A job or quote can be invoiced more than once (progress billing, no special screen).
+      With quotes split across jobs, PAY-06 counts what's billed per line, so nothing is billed twice.*
 - [x] Line items, discounts and taxes behave exactly as in the quote builder (shared behavior,
       not a copy). *`PricedDocument`, `BuiltDocument` and `DocumentLine` (models), `DocumentBuilder`
       (controllers), and the quote builder's partials and script with `scope: "invoice"`.*
@@ -60,9 +61,11 @@ and tax behavior, carry payment terms and a due date, and track their status thr
   "invoice due days" setting: one of the terms when it matches, else a custom date that many days
   out. Overdue isn't stored: a sent or partly paid invoice past its due date, for the business's today.
 - An invoice from a quote bills the quote's lines as agreed; one from a job bills the job's lines
-  as they are now (with changes made on site). Either way it stays with that client.
+  as they are now (with changes made on site). Either way it stays with that client. PAY-06
+  replaces the quote case: a quote's invoice bills its completed jobs (its question 1).
 - #289: once a quote or job has an invoice (not void), its page links to that invoice; a second
   invoice is still possible (progress billing) but only as "Create another invoice", with a confirm.
+  Under PAY-06 it bills only what's left unbilled.
 - #289: payment terms are in words ("Within 15 days"; a chosen date says "14 days after it's
   issued", and the builder states the usual days), for staff and, since 2026-11-22, on clients'
   invoice page and PDF. Invoices already sent show it too: their stored PDFs are made again.
@@ -81,6 +84,6 @@ and tax behavior, carry payment terms and a due date, and track their status thr
 
 ## Open questions
 
-- Should multiple invoices per job be allowed (progress billing)? Recommend yes technically,
-  without special UI at launch.
+- ~~Should multiple invoices per job be allowed (progress billing)?~~ Yes, and it stays; PAY-06
+  credits progress invoices per line and PAY-07 adds deposits (owner, 2026-11-22).
 - Credit notes vs void-and-reissue: recommend void-and-reissue only at launch.

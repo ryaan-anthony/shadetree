@@ -21,9 +21,12 @@ optimization before basic scheduling existed.
 - **R3** Job page shows client & property, line items, notes, attachments/photos, visits, and
   links to the originating quote and resulting invoice(s).
 - **R4** Completing a job prompts creating an invoice (07-payments).
-- **R17** An approved quote's lines can be shared among several jobs: each line is in at most one
-  job that isn't cancelled, a cancelled job frees its lines, and a line is completed once.
-  Invoicing the quote bills the lines whose jobs are completed.
+- **R17** An approved quote's lines, or parts of their quantities, can be shared among several
+  jobs. Across a line's jobs that aren't cancelled, the quantity never exceeds the line's;
+  completing a job is final (its quantity becomes what was done), and cancelling one frees its
+  quantities. Billing is 07-payments R17.
+- **R18** A recurring quote, approved once, produces a job per occurrence from the same lines,
+  each billed when completed.
 
 ### Visits
 - **R5** A job has one or more visits. A visit has a date, either a start time or an arrival
@@ -77,12 +80,13 @@ optimization before basic scheduling existed.
 | [JOB-06](../specs/jobs/JOB-06-requests-on-my-day.md) | Request follow-ups on My day | M6 | CLI-07, JOB-04 |
 | [JOB-07](../specs/jobs/JOB-07-requests-on-calendar.md) | Request follow-ups on the calendar | M6 | CLI-07, JOB-03 |
 | [JOB-08](../specs/jobs/JOB-08-busy-blocks.md) | Busy blocks for schedulers without requests | M6 | JOB-07, ACC-07 |
-| [JOB-09](../specs/jobs/JOB-09-multiple-jobs-per-quote.md) | Multiple jobs per quote | M6 | JOB-01, PAY-01, PLT-14 |
+| [JOB-09](../specs/jobs/JOB-09-jobs-as-parts-of-a-quote.md) | Jobs as parts of a quote | M6 | JOB-01, PLT-11, PLT-14 |
+| [JOB-10](../specs/jobs/JOB-10-recurring-jobs.md) | Recurring jobs | M6 | JOB-09, PAY-06, JOB-02 |
 
 ## Backlog (M6)
 
 - Client self-scheduling after approval (needs member availability and time off).
-- Recurring jobs (weekly mowing, monthly pest control) — high retention value; first M6 candidate.
+- Recurring jobs (weekly mowing, monthly pest control): specified as JOB-10, the first M6 item.
 - Read-only calendar feed (ICS) per member.
 - "On my way" message to client.
 - Time tracking / materials used per visit.
