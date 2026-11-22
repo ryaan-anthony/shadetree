@@ -22,8 +22,8 @@
 <% if @without_review_count.positive? || current_business.without_review_cap %><%# QTE-08: beside the services technicians send without review %>
   <%= form_with url: review_cap_admin_catalog_items_path, method: :patch, id: "review-cap", class: "card card-body mb-4 flex flex-wrap items-end gap-3" do %>
     <div class="min-w-0 flex-1 basis-60">
-      <p class="font-semibold text-ink">Sent without review</p>
-      <p class="text-sm2 text-muted" id="review-cap-help"><%= pluralize(@without_review_count, "service") %> technicians can send without review. A quote over the cap, tax included, still comes to the office; leave it blank for no cap.</p>
+      <p class="font-semibold text-ink">Quotes sent without review</p>
+      <p class="text-sm2 text-muted" id="review-cap-help">Technicians can send a quote straight away when it's only your <%= pluralize(@without_review_count, "“No review needed” service") %>, at their prices. A quote over the cap, tax included, still comes to the office; leave it blank for no cap.</p>
     </div>
     <div class="field w-40">
       <label class="label" for="without_review_cap">Up to <span class="label-optional">(optional)</span></label>
@@ -62,7 +62,7 @@
                 <p class="font-semibold text-ink">
                   <%= link_to item.name, edit_admin_catalog_item_path(item), class: "hover:underline" %>
                   <% unless item.taxable %><%= badge "Not taxed", dot: false %><% end %>
-                  <% if item.send_without_review %><%= badge "Sent without review", tone: :success, dot: false %><% end %><%# QTE-08 %>
+                  <% if item.send_without_review %><%= badge "No review needed", tone: :success, dot: false %><% end %><%# QTE-08 %>
                 </p>
                 <p class="truncate text-sm2 text-muted"><%= [ item.description.presence, item.duration_label ].compact.join(" · ") %></p>
                 <% if (overrides = @overrides[item.id]).present? %><%# CAT-08: prices at other locations, at a glance %>

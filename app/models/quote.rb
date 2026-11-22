@@ -48,6 +48,7 @@ class Quote < ApplicationRecord
   validate :property_belongs_to_client
 
   before_validation :assign_number_and_defaults, on: :create
+  before_validation :note_catalog_prices # QTE-08
 
   scope :drafts, -> { where(status: "draft") }
   scope :unarchived, -> { where(archived_at: nil) }
@@ -393,6 +394,19 @@ class Quote < ApplicationRecord
     rescue StandardError => e
       Rails.error.report(e, context: { quote_id: id })
     end
+  end
+
+  # QTE-08: the catalog price at the quote's location of each line just added (or given another
+  # service), so a later price list change is told apart from a price typed in.
+  def note_catalog_prices
+    return unless association(:line_items).loaded? # no lines were added in memory
+
+    due = line_items.select(&:catalog_price_due?)
+    return if due.empty?
+
+    items = CatalogItem.where(id: due.filter_map(&:catalog_item_id)).index_by(&:id)
+    overrides = LocationPrice.cents_at(location, items.values)
+    due.each { |line| line.catalog_price_cents = items[line.catalog_item_id]&.price_at(location, overrides:)&.cents }
   end
 
   def property_belongs_to_client

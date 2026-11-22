@@ -19,13 +19,13 @@ class Admin::SendWithoutReviewSettingsTest < ActionDispatch::IntegrationTest
 
     get admin_catalog_items_path
     assert_select "#review-cap", 0, "no cap to set until a service has the switch on"
-    assert_select "#item-#{@gutters.uid} .badge", text: "Sent without review", count: 0
+    assert_select "#item-#{@gutters.uid} .badge", text: "No review needed", count: 0
 
     patch admin_catalog_item_path(@gutters), params: { catalog_item: { send_without_review: "1" } }
     assert as_business(@business) { @gutters.reload.send_without_review }
     get admin_catalog_items_path
-    assert_select "#item-#{@gutters.uid} .badge", text: "Sent without review"
-    assert_select "#review-cap", /1 service technicians can send without review/
+    assert_select "#item-#{@gutters.uid} .badge", text: "No review needed"
+    assert_select "#review-cap", /only your 1 “No review needed” service, at their prices/
     assert_select "#review-cap input[name=without_review_cap][placeholder='No cap']"
   end
 
@@ -44,6 +44,9 @@ class Admin::SendWithoutReviewSettingsTest < ActionDispatch::IntegrationTest
     assert_match "is not a valid amount", flash[:alert]
     assert_equal 50_000, @business.reload.without_review_cap_cents
 
+    @business.update_columns(quote_expiry_days: 0) # an unrelated setting that wouldn't validate
+    patch review_cap_admin_catalog_items_path, params: { without_review_cap: "450" }
+    assert_equal 45_000, @business.reload.without_review_cap_cents, "only the cap is checked and saved"
     patch review_cap_admin_catalog_items_path, params: { without_review_cap: " " }
     assert_equal "No cap on quotes sent without review.", flash[:notice]
     assert_nil @business.reload.without_review_cap_cents

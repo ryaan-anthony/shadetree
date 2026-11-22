@@ -79,13 +79,16 @@ class Admin::CatalogItemsController < Admin::BaseController
 
   # QTE-08: the most a quote sent without review may total, tax included; blank for no cap.
   def review_cap
-    current_business.without_review_cap = params[:without_review_cap].to_s.strip
-    if current_business.save
-      cap = current_business.without_review_cap
-      redirect_to admin_catalog_items_path, notice: cap ? "Quotes sent without review can total up to #{helpers.money(cap)}, tax included." : "No cap on quotes sent without review."
-    else
-      redirect_to admin_catalog_items_path, alert: "The cap #{current_business.errors[:without_review_cap].first || "couldn't be saved"}."
+    business = current_business
+    business.without_review_cap = params[:without_review_cap].to_s.strip
+    business.valid? # only the cap's own errors count here; the rest of the settings aren't this form's
+    if (error = business.errors[:without_review_cap].first)
+      return redirect_to admin_catalog_items_path, alert: "The cap #{error}."
     end
+
+    business.update_columns(without_review_cap_cents: business.without_review_cap_cents, updated_at: Time.current)
+    cap = business.without_review_cap
+    redirect_to admin_catalog_items_path, notice: cap ? "Quotes sent without review can total up to #{helpers.money(cap)}, tax included." : "No cap on quotes sent without review."
   end
 
   # JSON for the item picker: active items matching ?q=, or the picker's recent ?uids= in
