@@ -23,13 +23,23 @@ module BillingHelper
 
     plan = entitlements.plan
     quotes = "#{limit} #{plan.free? ? "free" : plan.name} quotes"
-    period = entitlements.period.billing_cycle? ? "this billing period" : "this month"
-    trial = " (trial)" if entitlements.business.billing_status == "trialing"
+    period = allowance_period(entitlements)
+    trial = allowance_trial(entitlements)
     text = if used >= limit then count ? "You've used all #{quotes} #{period}" : "All #{quotes} used #{period}"
     else count ? "Used #{used} of your #{quotes} #{period}" : "Of your #{quotes} #{period}"
     end
     "#{text}#{trial}"
   end
+
+  # BIL-06: what the sidebar's meter counts, in #289's words: "Free quotes this month",
+  # "Starter quotes this billing period (trial)".
+  def quote_allowance_label(entitlements)
+    plan = entitlements.plan
+    "#{plan.free? ? "Free" : plan.name} quotes #{allowance_period(entitlements)}#{allowance_trial(entitlements)}"
+  end
+
+  def allowance_period(entitlements) = entitlements.period.billing_cycle? ? "this billing period" : "this month"
+  def allowance_trial(entitlements) = (" (trial)" if entitlements.business.billing_status == "trialing")
 
   # #289: the plan that brings a feature, for "View only on Starter. Automations come with Pro
   # and up." The first listed plan that includes it, or nil.

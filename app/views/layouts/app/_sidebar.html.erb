@@ -67,6 +67,7 @@
     <% end %>
   </nav>
 
+  <% if current_business && (can?(:office) || can?(:business_settings)) %><%= render "layouts/app/quota_meter" %><% end %><%# BIL-06 %>
   <footer class="side-foot">
     <div class="flex items-center gap-2.5 px-1 text-[0.8125rem] text-slate-200">
       <%= avatar current_user.full_name.presence || current_user.email %>
