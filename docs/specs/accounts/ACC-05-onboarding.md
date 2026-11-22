@@ -44,7 +44,7 @@ starter services, optional branding, and their first quote — with every step s
 
 ## Out of scope
 
-- Product tours/tooltips. Importing clients during onboarding (CLI-06 may add a link later).
+- Product tours and tips (ACC-08). Importing clients during onboarding (CLI-06 may add a link later).
 
 ## Open questions
 
