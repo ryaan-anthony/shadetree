@@ -192,6 +192,7 @@ class User < ApplicationRecord
       Invitation.where(accepted_by_id: id).update_all(email: deleted_email)
       EmailMessage.where(to: address).where(business_id: business_users.select(:business_id)).update_all(to: deleted_email)
       VisitAssignment.where(user_id: id, visit_id: Visit.open.select(:id)).delete_all
+      RequestFollowUp.where(user_id: id).delete_all # CLI-07: their follow-ups show as unassigned
     end
   end
 

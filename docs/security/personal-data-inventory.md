@@ -16,7 +16,7 @@ erasing a client (INS-02, `ClientErasure`) removes or scrubs everything listed u
 | Client | `client_contact_methods`: value, normalized (emails, phones), label | Same |
 | Client | `properties`: address lines, city, region, postal_code, access_notes | Same |
 | Client | `client_notes.body`, `client_events.data`, `client_link_events.device` (coarse, e.g. "Phone · Safari") | Same |
-| Client | `service_requests`: contact_name, contact_email, contact_phone, address, description, timing; `service_request_notes.body` | Same |
+| Client | `service_requests`: contact_name, contact_email, contact_phone, address, description, timing; `service_request_notes.body`; `request_follow_ups.instructions` (CLI-07, removed on erasure) | Same |
 | Client | `quotes` / `invoices`: title, message, terms, internal_notes; `jobs`: title, instructions, internal_notes; `visits`: instructions, client_note; line items; `*_revisions.snapshot` | Same (financial records keep their numbers and totals after erasure) |
 | Client | `visit_notes.body` (technicians' notes, can describe the client or property) | Same |
 | Client | `quote_responses`: signer_name, email, message, ip_address, user_agent, signature, snapshot (the IP is evidence: in the "Quote responses" export, shown on no page) | Same; a full-export zip holding that CSV, IPs included, is deleted 7 days after it's made |
@@ -24,7 +24,7 @@ erasing a client (INS-02, `ClientErasure`) removes or scrubs everything listed u
 | Client | `email_suppressions.email` | Kept after erasure, so a bounced or complaining address isn't mailed again (privacy notice) |
 | Client | `client_imports`: headers, examples, preview_rows, problems | Rows cleared after the 7-day undo window; abandoned uploads deleted after 2 days |
 | Client | `notifications`: title, body (can name a client) | 90 days |
-| Client | `automation_runs.log`, `quote_events` / `invoice_events` / `visit_events` `.data` | With the business |
+| Client | `automation_runs.log`, `quote_events` / `invoice_events` / `visit_events` / `service_request_events` `.data` | With the business |
 | User | `users`: email, unconfirmed_email, first_name, last_name; `invitations.email`; `business_users.notification_emails` | Until the account or business is deleted |
 | User | `user_sessions`: ip_address, user_agent; `audit_entries`: operator_email, ip_address, user_agent | Sessions until signed out or expired; the audit log is append-only |
 | User | `data_exports.requested_by_email`; `operator_notes.body`, `support_messages.body` (may quote client details a business pasted) | With the business |

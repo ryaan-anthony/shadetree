@@ -7,13 +7,11 @@
 # what (VisitEvent) and update the job's status (Job#refresh_status!).
 class Visit < ApplicationRecord
   include BusinessOwned
+  include ArrivalTiming # JOB-02's times, shared with request follow-ups (CLI-07)
 
-  TIMINGS = %w[exact window anytime].freeze
   STATUSES = %w[scheduled in_progress completed cancelled].freeze
   OPEN_STATUSES = %w[scheduled in_progress].freeze
   LABELS = { "scheduled" => "Scheduled", "in_progress" => "In progress", "completed" => "Completed", "cancelled" => "Cancelled" }.freeze
-  MAX_DURATION = 24 * 60
-  CLOCK = /\A([01]\d|2[0-3]):[0-5]\d(:00)?\z/ # "HH:MM" from a time field (browsers may add ":00")
 
   MAX_DAYS = 31 # visits booked at once
 
@@ -40,35 +38,16 @@ class Visit < ApplicationRecord
   normalizes :instructions, with: ->(value) { value.to_s.strip.presence }
   normalizes :cancel_reason, with: ->(value) { value.to_s.squish.presence }
 
-  validates :scheduled_on, presence: true
-  validates :timing, inclusion: { in: TIMINGS }
   validates :status, inclusion: { in: STATUSES }
-  validates :duration_minutes, numericality: { only_integer: true, in: 5..MAX_DURATION, message: "must be between 5 minutes and 24 hours" }
   validates :instructions, length: { maximum: 2_000 }
   validates :client_note, length: { maximum: 1_000 } # JOB-05: for the client, in their emails and on their page
   validates :cancel_reason, length: { maximum: 200 }
-  validate :times_make_sense
   validate :assignees_are_members
-
-  before_validation :place_times
 
   scope :open, -> { where(status: OPEN_STATUSES) }
   scope :scheduled, -> { where(status: "scheduled") }
   scope :in_order, -> { order(:scheduled_on, Arel.sql("starts_at NULLS LAST"), :id) }
   scope :upcoming, ->(today) { open.where(scheduled_on: today..) }
-
-  # Form fields: wall-clock times ("09:00") and the duration in hours ("1.5").
-  attr_writer :start_time, :window_end_time
-
-  def start_time = @start_time || clock(starts_at)
-  def window_end_time = @window_end_time || clock(window_ends_at)
-
-  def duration_hours = (duration_minutes.to_d / 60).round(2).to_s("F").sub(/\.0\z/, "")
-
-  def duration_hours=(value)
-    hours = BigDecimal(value.to_s.strip, exception: false)
-    self.duration_minutes = hours && (hours * 60).round
-  end
 
   # Members going, from the form's checkboxes (user ids). Checked against the business's
   # active members on validation.
@@ -78,10 +57,9 @@ class Visit < ApplicationRecord
 
   def assignee_ids = @assignee_ids || assignments.map(&:user_id)
 
-  # The form's values (times, crew) aren't columns, so a reload forgets them too; otherwise a
-  # reloaded visit would still show the times it was first given.
+  # The crew from the form isn't a column, so a reload forgets it too (ArrivalTiming forgets the times).
   def reload(...)
-    @start_time = @window_end_time = @assignee_ids = nil
+    @assignee_ids = nil
     super
   end
 
@@ -90,19 +68,7 @@ class Visit < ApplicationRecord
   # `at` a new start ("HH:MM", a window keeps its length); `from`/`to` move it from one person
   # to another (nil for nobody); `crew`, when given, is everyone going (an undo puts it back).
   def move_attributes(on:, at: nil, from: nil, to: nil, crew: nil)
-    attributes = { scheduled_on: on }
-    if at && !anytime?
-      raise ArgumentError, "Choose a time like 09:30." unless CLOCK.match?(at)
-
-      length = window? ? ((window_ends_at - starts_at) / 60).round : 0
-      start = (at[0, 2].to_i * 60) + at[3, 2].to_i
-      raise ArgumentError, "That window would run past midnight." if start + length >= 24 * 60
-
-      attributes[:start_time] = at.first(5)
-      attributes[:window_end_time] = format("%02d:%02d", *(start + length).divmod(60)) if window?
-    else
-      attributes[:start_time], attributes[:window_end_time] = start_time, window_end_time
-    end
+    attributes = { scheduled_on: on, **moved_time_attributes(at) }
     ids = assignee_ids
     ids = crew.map(&:to_i).uniq if crew
     ids = ((ids - [ from ]) | [ to ]).compact if crew.nil? && from != to
@@ -117,30 +83,6 @@ class Visit < ApplicationRecord
 
   def status_label = LABELS.fetch(status)
   def open? = OPEN_STATUSES.include?(status)
-  def anytime? = timing == "anytime"
-  def window? = timing == "window"
-
-  # When the work is expected to finish: the start (or the window's end) plus the duration.
-  def ends_at = starts_at && ((window_ends_at || starts_at) + duration_minutes.minutes)
-
-  # "9 am", "Arrive 8–10 am", "Anytime".
-  def time_label
-    case timing
-    when "exact" then clock_label(starts_at)
-    when "window"
-      same_half = starts_at.in_time_zone(place.time_zone).hour < 12 == window_ends_at.in_time_zone(place.time_zone).hour < 12
-      "Arrive #{clock_label(starts_at, ampm: !same_half)}–#{clock_label(window_ends_at)}"
-    else "Anytime"
-    end
-  end
-
-  # "Tue, Nov 17 · Arrive 8–10 am"
-  def when_label(with_year: false) = "#{scheduled_on.strftime("%a, %b %-d")}#{", #{scheduled_on.year}" if with_year || scheduled_on.year != business.today.year} · #{time_label}"
-
-  def duration_label
-    hours, minutes = duration_minutes.divmod(60)
-    [ ("#{hours} h" if hours.positive?), ("#{minutes} min" if minutes.positive?) ].compact.join(" ")
-  end
 
   # A new visit with its assignees, recorded and reflected in the job's status.
   def schedule!(by:, notify_client: true) = self.class.schedule_all!([ self ], by:, notify_client:).first
@@ -353,7 +295,6 @@ class Visit < ApplicationRecord
                              path: Rails.application.routes.url_helpers.admin_job_path(job))
   end
 
-  # When it is, as shown ("when") and as values, for the history and for later notices.
   # JOB-05: what the client would be told about this visit: booked (and when) or cancelled.
   def client_state
     { "state" => status == "cancelled" ? "cancelled" : "booked", "when" => when_label, "on" => scheduled_on.iso8601,
@@ -391,11 +332,6 @@ class Visit < ApplicationRecord
   def client_page_visible? = true
   def client_link_partial = "client/visits/visit"
 
-  def snapshot
-    { "when" => when_label(with_year: true), "on" => scheduled_on&.iso8601, "timing" => timing,
-      "starts_at" => starts_at&.utc&.iso8601, "window_ends_at" => window_ends_at&.utc&.iso8601 }
-  end
-
   def crew_names = assignees.map(&:full_name)
 
   # Called by schedule_all! for each visit it saves.
@@ -409,10 +345,6 @@ class Visit < ApplicationRecord
     assignees.reset
     @assignee_ids = nil
   end
-
-  # The visit's own time zone, and its start on another clock (the calendar's, CAT-07).
-  def time_zone = place.time_zone
-  def start_time_in(zone) = starts_at&.in_time_zone(zone)&.strftime("%H:%M")
 
   private
 
@@ -429,14 +361,6 @@ class Visit < ApplicationRecord
     self
   end
 
-  def clock(time) = time&.in_time_zone(place.time_zone)&.strftime("%H:%M")
-
-  def clock_label(time, ampm: true)
-    local = time.in_time_zone(place.time_zone)
-    label = "#{(local.hour % 12).nonzero? || 12}#{":%02d" % local.min if local.min.positive?}"
-    ampm ? "#{label} #{local.hour < 12 ? "am" : "pm"}" : label
-  end
-
   # CAT-07: visits keep the time of their job's location (its zone; the business's for the main
   # one). With one location there's nothing to look up.
   def place
@@ -444,27 +368,6 @@ class Visit < ApplicationRecord
 
     location = Tenancy.with_business(business) { job&.location }
     location.nil? || location.primary? ? business : location
-  end
-
-  # The form's wall-clock times on the visit's date, in the location's zone (so moving a visit to
-  # another day keeps its clock time). A time that can't be read leaves none, and validation says so.
-  def place_times
-    return unless scheduled_on && business
-
-    read = ->(value) { CLOCK.match?(value.to_s.strip) ? place.local_time(scheduled_on, value.to_s.strip.first(5)) : nil }
-    self.starts_at = anytime? ? nil : read.(start_time)
-    self.window_ends_at = window? ? read.(window_end_time) : nil
-  end
-
-  def times_make_sense
-    case timing
-    when "exact"
-      errors.add(:start_time, "needs a time") unless starts_at
-    when "window"
-      errors.add(:start_time, "needs a time") unless starts_at
-      errors.add(:window_end_time, "needs a time") unless window_ends_at
-      errors.add(:window_end_time, "must be after the window starts") if starts_at && window_ends_at && window_ends_at <= starts_at
-    end
   end
 
   # Active members, or someone already on this visit (kept even after they're deactivated).

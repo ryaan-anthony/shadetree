@@ -81,7 +81,7 @@ class DataExport < ApplicationRecord
       column("Time zone", &:timezone)
       column("Archived", &:archived_at)
     end,
-    Table.new("requests", "Requests", "Requests for work from your form or added by your team.", scope: -> { ServiceRequest.includes(:client, :property, :location) }) do
+    Table.new("requests", "Requests", "Requests for work from your form or added by your team.", scope: -> { ServiceRequest.includes(:client, :property, :location, follow_up: :user) }) do
       column("Request ID", &:uid)
       column("Received", &:created_at)
       column("Status", &:status)
@@ -97,6 +97,9 @@ class DataExport < ApplicationRecord
       column("Property ID") { _1.property&.uid }
       column("Address given") { |r| r.address.is_a?(Hash) ? r.address.values_at("address_line1", "address_line2", "city", "region", "postal_code").compact_blank.join(", ") : nil }
       column("Location") { _1.location.name }
+      column("Follow-up") { _1.follow_up&.kind_label } # CLI-07
+      column("Assigned to") { _1.follow_up&.user&.full_name }
+      column("Follow-up day") { _1.follow_up&.scheduled_on }
     end,
     Table.new("quotes", "Quotes", "One row per quote, with its totals and taxes.", scope: -> { Quote.includes(:client, :property, :created_by, :line_items, :location) }) do
       column("Quote number", &:number)
