@@ -1,4 +1,4 @@
-<%# locals: (dashboard:, own_day:) -%>
+<%# locals: (dashboard:, own_day:, earlier_open: 0) -%>
 <%# #289: today on Home. Someone who does the field work themselves sees their own visits, with
     "Your day" (My day, the phone-first view) one tap away; otherwise the team's day, by person. %>
 <% zone = time_zone_label(current_business.time_zone) %>
@@ -19,13 +19,17 @@
         <% end %>
       </ul>
     <% end %>
+    <% if earlier_open.positive? %>
+      <p class="border-t border-line px-5 py-3 text-sm2 text-muted" id="earlier-open"><%= link_to "#{pluralize(earlier_open, "visit")} still open from earlier", admin_my_day_path, class: "font-medium text-ink underline-offset-2 hover:underline" %></p>
+    <% end %>
     <% if others.positive? && can?(:schedule) %>
       <p class="border-t border-line px-5 py-3 text-sm2 text-muted"><%= link_to "The team has #{pluralize(others, "other visit")} today", admin_schedule_path, class: "font-medium text-ink underline-offset-2 hover:underline" %></p>
     <% end %>
   <% end %>
 <% else %>
   <%= card title: "Today's visits", subtitle: "#{pluralize(dashboard.visits_today_count, "visit")} · times in #{zone}", id: "todays-visits", flush: true,
-           actions: (link_to("Schedule", admin_schedule_path, class: button_classes(:ghost, :sm)) if can?(:schedule)) do %>
+           actions: safe_join([ (link_to("Schedule", admin_schedule_path, class: button_classes(:ghost, :sm)) if can?(:schedule)),
+                                (link_to(admin_my_day_path, class: button_classes(:ghost, :sm), id: "your-day-link") { safe_join([ "Your day", icon("arrow-right") ], " ") } if can?(:field_work)) ].compact) do %>
     <% if dashboard.todays_visits.empty? %>
       <p class="px-5 py-4 text-sm text-muted">Nothing booked today.</p>
     <% else %>

@@ -7,6 +7,13 @@
 
 <%= render "tour_offer" if Current.membership&.tour_offered? %><%# ACC-08 %>
 
+<%# #289: a new business starts with the checklist, above the month's numbers. %>
+<% if can?(:business_settings) && @checklist.visible? %>
+  <div class="mb-4"><%= render "setup_checklist", checklist: @checklist %></div>
+<% elsif can?(:business_settings) && @checklist.hidden_by_member? %>
+  <div class="mb-4"><%= button_to "Show setup checklist", admin_show_setup_path, method: :patch, class: "btn-link text-sm2" %></div>
+<% end %>
+
 <% if can?(:office) %>
   <%= render "admin/usage/limit_notice", entitlements: dashboard.entitlements %>
   <%# How the month is going. %>
@@ -21,17 +28,10 @@
   </section>
 <% end %>
 
-<%# #289: one place to start: the checklist, then today, then money owed and what needs you. %>
+<%# #289: one place to start: the checklist (above), then today, then money owed and what needs you. %>
 <div class="space-y-4">
-  <% if can?(:business_settings) && @checklist.visible? %>
-    <%= render "setup_checklist", checklist: @checklist %>
-  <% end %>
-  <% if can?(:business_settings) && @checklist.hidden_by_member? %>
-    <div><%= button_to "Show setup checklist", admin_show_setup_path, method: :patch, class: "btn-link text-sm2" %></div>
-  <% end %>
-
   <% if can?(:office) %>
-    <%= render "today", dashboard:, own_day: @own_day %>
+    <%= render "today", dashboard:, own_day: @own_day, earlier_open: @earlier_open.to_i %>
     <%= render "money_owed", dashboard: %>
   <% end %>
 
@@ -40,7 +40,7 @@
   <% elsif dashboard.groups.all?(&:empty?) && !@checklist.visible? %>
     <%= card do %>
       <%= empty_state title: "You're all caught up",
-                      text: "New requests, quotes waiting on clients, jobs to book and money owed will show up here when they need you.",
+                      text: "Nothing needs you right now. New requests, quotes waiting on clients, jobs to book and overdue invoices will show up here.",
                       icon: "check-circle" do %>
         <%= link_to new_admin_quote_path, class: button_classes do %><%= icon "plus" %> New quote<% end %>
       <% end %>

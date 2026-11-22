@@ -66,3 +66,6 @@ starter services, optional branding, and their first quote — with every step s
   business keeps it until Stripe is set up. `/admin/setup` (a guessed address) goes to it on Home.
 - It has a progress bar, "Hide" per member, and ticks from real data. ACC-08's tour relies on
   `data-tour="checklist"` on the card and `id="setup-<key>"` on each step: keep both.
+- Without the platform's Stripe key the payments step is left out (so it can still finish); its
+  action follows the account ("Finish setting up" while Stripe needs details). An `onboarded_at`
+  stamped before #289 means the old five steps were done; operators see it as Complete.

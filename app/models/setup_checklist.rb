@@ -24,9 +24,9 @@ class SetupChecklist
                action: "Add a client"),
       Step.new(key: "quote", title: "Send your first quote", text: quote_text, done: business.first_quote_sent_at.present?, optional: false,
                action: quote_action),
-      Step.new(key: "payments", title: "Get paid online", text: "Clients pay by card, Apple Pay or Google Pay from the invoice, straight to your own Stripe account.",
-               done: business.payment_account&.accepts_payments? || false, optional: false, action: "Set up payments")
-    ]
+      (Step.new(key: "payments", title: "Get paid online", text: payments_text, done: business.accepts_online_payments?, optional: false,
+                action: payments_action) if payments_available?)
+    ].compact
   end
 
   def required = steps.reject(&:optional)
@@ -84,6 +84,21 @@ class SetupChecklist
     return "Your phone, email and address go on every quote, so add them first. Then pick the client and services, and send." unless details?
 
     "Pick the client, add services, send it by email or as a link."
+  end
+
+  # Without the platform's Stripe key (development, a fresh staging) online payments can't be set
+  # up, so the step is left out rather than never finishing; a connected account still counts.
+  def payments_available? = PaymentGateway.current.configured? || business.payment_account.present?
+
+  PAYMENT_ACTIONS = { "onboarding_incomplete" => "Finish setting up", "restricted" => "Finish setting up",
+                      "pending_verification" => "See where it's at" }.freeze
+  def payments_action = PAYMENT_ACTIONS.fetch(business.payment_account&.status, "Set up payments")
+
+  def payments_text
+    return "Stripe is checking your details. Payments switch on when it's done." if business.payment_account&.status == "pending_verification"
+    return "Stripe needs a few more details to turn payments on." if business.payment_account&.status.in?(%w[onboarding_incomplete restricted])
+
+    "Clients pay by card, Apple Pay or Google Pay from the invoice, straight to your own Stripe account."
   end
 
   def services_text

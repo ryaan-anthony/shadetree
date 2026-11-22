@@ -43,8 +43,9 @@ class ActionDashboard
   def visits_today_for(user) = todays_visits.find { |person, _| person == user }&.last || []
 
   # #289: what clients owe on invoices that are out, per currency, and how much of it is late.
-  def money_owed = owed_by_currency(Invoice.where(status: Invoice::OUTSTANDING))
-  def money_overdue = owed_by_currency(Invoice.where(status: Invoice::OUTSTANDING).where(due_on: ...today))
+  # Each invoice counts from zero up (Invoice.owed), so an overpaid one doesn't hide another's balance.
+  def money_owed = owed[:outstanding].select(&:positive?)
+  def money_overdue = owed[:overdue].select(&:positive?)
   def empty? = groups.all?(&:empty?) && todays_visits.empty?
 
   # This month so far, in the business's time zone.
@@ -72,10 +73,7 @@ class ActionDashboard
 
   def quotes = Quote.unarchived.includes(:client)
 
-  def owed_by_currency(scope)
-    scope.group(:currency).order(:currency).sum(Arel.sql("total_cents - amount_paid_cents"))
-         .filter_map { |currency, cents| Money.new(cents.to_i, currency) if cents.to_i.positive? }
-  end
+  def owed = @owed ||= Invoice.owed(today:)
 
   def group(key, title, scope, path) = Group.new(key:, title:, count: scope.unscope(:order, :includes).count, items: scope.limit(TOP).to_a, path:)
 

@@ -4,6 +4,7 @@ require "test_helper"
 # #289: four steps (services, a client, the first quote, getting paid online) on Home.
 class Admin::OnboardingTest < ActionDispatch::IntegrationTest
   setup do
+    use_fake_payment_gateway # online payments can be set up, so the payments step shows
     IndustryPreset.sync!
     @business = businesses(:one)
     @business.update!(industry: "landscaping", phone: nil, onboarded_at: nil)
@@ -112,6 +113,34 @@ class Admin::OnboardingTest < ActionDispatch::IntegrationTest
     get admin_root_path
     assert_select "#setup-payments", /The owner sets this up/
     assert_select "#setup-payments a", 0
+  end
+
+  test "the payments step follows the Stripe account, and is left out when payments can't be set up" do
+    account = as_business(@business) { PaymentAccount.create!(account_id: "acct_test1", details_submitted: false) }
+    get admin_root_path
+    assert_select "#setup-payments a[href=?]", admin_payment_account_path, "Finish setting up"
+    account.update_columns(details_submitted: true, requirements_pending: [ "id" ])
+    get admin_root_path
+    assert_select "#setup-payments", /Stripe is checking your details/
+    assert_select "#setup-payments a", "See where it's at"
+    account.update_columns(charges_enabled: true, payouts_enabled: true, requirements_pending: [])
+    get admin_root_path
+    assert_select "#setup-payments .sr-only", "Done:"
+
+    as_business(@business) { PaymentAccount.delete_all }
+    use_fake_payment_gateway(configured: false)
+    get admin_root_path
+    assert_select "#setup-payments", 0, "no Stripe key: the step isn't there, so the checklist can finish"
+    assert_select ".card", /0 of 3 done/
+  end
+
+  test "support viewing as the member can't hide or show their checklist" do
+    sign_in_operator # users(:one), viewing as business two's owner
+    post ops_business_impersonation_path(businesses(:two)), params: { member: business_users(:two).uid, reason: "Ticket: checklist" }
+    patch admin_dismiss_setup_path
+    assert_nil business_users(:two).reload.setup_hidden_at, "read-only while viewing as them"
+    patch admin_show_setup_path
+    assert_nil business_users(:two).reload.setup_hidden_at
   end
 
   test "the sample quote shows the client page with branding and saves nothing" do
