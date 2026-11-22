@@ -17,8 +17,8 @@ class EmailMessage < ApplicationRecord
 
   scope :recent, -> { order(created_at: :desc, id: :desc) }
 
-  # #289: emails about one client's own records (their quotes, invoices, payments, jobs and
-  # requests), not every email to an address: two clients can share one (a couple, a test
+  # #289: emails about one client's own records (their quotes, invoices, payments, jobs, visits
+  # and requests), not every email to an address: two clients can share one (a couple, a test
   # address), and each should only see their own.
   scope :about_client, ->(client) {
     invoices = Invoice.where(client:).select(:id)
@@ -27,6 +27,7 @@ class EmailMessage < ApplicationRecord
       .or(where(related_type: "Payment", related_id: Payment.where(invoice_id: invoices).select(:id)))
       .or(where(related_type: "Job", related_id: Job.where(client:).select(:id)))
       .or(where(related_type: "ServiceRequest", related_id: ServiceRequest.where(client:).select(:id)))
+      .or(where(related_type: "Visit", related_id: Visit.where(job_id: Job.where(client:).select(:id)).select(:id))) # automations' emails
   }
 
   # Client email a business can trigger in an hour (the platform's sending domain isn't a
