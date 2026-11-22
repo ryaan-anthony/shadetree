@@ -1,0 +1,8 @@
+<%# QTE-07: for someone who drafts but doesn't send (Ready for review), when the plan's quotes
+    for this period are used up: no plan talk, just when the office can send it. %>
+<% entitlements = current_business.entitlements %>
+<% if entitlements.quote_sending == :blocked %>
+  <p class="-mt-2 mb-4 text-sm2 text-muted" id="office-sends-later">
+    <% if entitlements.limit(:quotes_sent).zero? %>The office can't send quotes on the current plan yet; mark it ready and they'll see it.<% else %>The office can send it from <%= local_date(entitlements.period.resets_on) %>; mark it ready as usual.<% end %>
+  </p>
+<% end %>

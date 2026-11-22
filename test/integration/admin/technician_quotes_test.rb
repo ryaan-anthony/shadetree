@@ -151,6 +151,20 @@ class Admin::TechnicianQuotesTest < ActionDispatch::IntegrationTest
     assert_equal tech, as_business(@business) { quote.reload.ready_for_review_by }
   end
 
+  test "at the plan's limit, someone who doesn't send sees when the office can, not the plan notice" do
+    @business.update!(plan_overrides: { "features" => { "custom_roles" => true }, "limits" => { "team_members" => nil, "quotes_sent" => 0 } })
+    quote = quote_it
+    get edit_admin_quote_path(quote)
+    assert_select "#quote-limit-notice", 0, "no plan talk for someone who never sends"
+    assert_select "#office-sends-later", /The office can't send quotes on the current plan yet/
+    assert_no_match(/bigger plan|See plans/, css_select("main").text)
+
+    as_business(@business) { @senior.update!(permissions: %w[field_work quote_requests send_own_quotes]) }
+    get edit_admin_quote_path(quote)
+    assert_select "#quote-limit-notice"
+    assert_select "#office-sends-later", 0
+  end
+
   test "a built-in Technician whose follow-up isn't done, or isn't theirs, can't quote it" do
     tech = member_with_role(:technician)
     sign_in tech

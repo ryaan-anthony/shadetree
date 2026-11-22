@@ -55,8 +55,9 @@ assigned to them, without seeing anything else in the office.
 - Dev seeds: Marcus (tech@example.com), a built-in Technician, has a draft marked ready for
   review; Riley (senior@example.com), a "Senior tech" who also sends their own quotes, has a done
   site visit to quote and send.
-- Built-in roles are defined in code, so existing businesses' Technicians have "Quote assigned
-  requests" too. A custom role that manages the team can only hand out Technician if it has it.
+- At the plan's quote limit, people who don't send see when the office can send it, not the
+  plan notice. Built-in roles are defined in code, so existing businesses' Technicians have
+  "Quote assigned requests" too. A custom role that manages the team can only hand out Technician if it has it.
 
 ## Decisions
 
