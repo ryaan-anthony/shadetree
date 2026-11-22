@@ -52,7 +52,10 @@
         <input type="text" inputmode="decimal" id="line-discount-<%= line.key %>" name="<%= base %>[discount_value]" data-field="discount_value"
                value="<%= line.discount_value %>" class="input text-right tabular" placeholder="0">
       </div>
-      <label class="mb-2 flex shrink-0 items-center gap-1.5 text-sm2 text-subtle">
+      <%# #289: with no tax rate anywhere, "Taxed" changes nothing, so it's kept but not shown (Totals says how to add a rate). %>
+      <% @no_tax_rates = !TaxRate.active.exists? if @no_tax_rates.nil? %>
+      <% document = line.try(:quote) || line.try(:invoice) %>
+      <label class="mb-2 flex shrink-0 items-center gap-1.5 text-sm2 text-subtle" <%= "hidden" if @no_tax_rates && document&.tax_rate_list.blank? %>>
         <input type="hidden" name="<%= base %>[taxable]" value="0" data-field="taxable">
         <input type="checkbox" class="checkbox" name="<%= base %>[taxable]" value="1" data-field="taxable" <%= "checked" if line.taxable %>> Taxed
       </label>

@@ -5,7 +5,9 @@
   <tr><td style="padding:14px 16px;">
     <p style="margin:0;font-size:13px;color:#64748b;">Quote <%= @quote.number %><%= " · #{@quote.title}" if @quote.title %></p>
     <p style="margin:6px 0 0;font-size:22px;font-weight:700;color:#0f172a;"><%= money(@quote.totals.total) %></p>
-    <% if @quote.expires_on %>
+    <% if @quote.approved? && (approval = @quote.approval) %><%# #289: a copy of an approved quote %>
+      <p style="margin:4px 0 0;font-size:13px;color:#64748b;">Approved <%= local_date(approval.created_at.in_time_zone(@business.time_zone).to_date) %></p>
+    <% elsif @quote.expires_on %>
       <p style="margin:4px 0 0;font-size:13px;color:#64748b;">Valid until <%= local_date(@quote.expires_on) %></p>
     <% end %>
   </td></tr>

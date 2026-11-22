@@ -6,6 +6,7 @@ class Admin::InvoiceSendsController < Admin::BaseController
   # OPS-03: what support may do while viewing as a member
   impersonation :allowed
   include ConfirmedSender
+  include ZeroTotalGuard
 
   requires_permission :office
   # Emails per business per hour (shared with quotes' limit), and per invoice per day.
@@ -16,6 +17,7 @@ class Admin::InvoiceSendsController < Admin::BaseController
   before_action :set_invoice
   before_action :require_sendable
   before_action :require_confirmed_sender, only: :create
+  zero_total_guard :@invoice, path: :new_admin_invoice_send_path
 
   def new
     subject, message = usual_wording

@@ -90,6 +90,8 @@ module AutomationActions
     email = job.client.primary_email&.value
     return [ "done", "Created #{invoice.number} as a draft: the client has no email address." ] unless email && invoice.sendable?
     return [ "done", "Created #{invoice.number} as a draft. #{SENDER_BLOCKED}" ] if sender_blocked?(run)
+    # #289: nothing to pay (or a credit) waits for someone to look, as the send page asks.
+    return [ "done", "Created #{invoice.number} as a draft: it comes to #{invoice.totals.total.format}." ] unless invoice.sendable_total?
 
     Invoice.transaction do
       invoice_send = invoice.mark_sent!(by: nil, channel: "email", recipient: email)

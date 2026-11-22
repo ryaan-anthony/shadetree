@@ -1,4 +1,9 @@
-<%= page_header "Send quote #{@quote.number}", lede: "To #{@quote.client.display_name}: #{money(@quote.totals.total)}#{", valid until #{l(@quote.expires_on)}" if @quote.expires_on}" do %>
+<% lede = if @quote.approved? # #289: a copy of what they approved
+     "To #{@quote.client.display_name}: #{money(@quote.totals.total)}. It stays approved, and a copy never counts toward your quotes."
+   else
+     "To #{@quote.client.display_name}: #{money(@quote.totals.total)}#{", valid until #{l(@quote.expires_on)}" if @quote.expires_on}"
+   end %>
+<%= page_header (@quote.approved? ? "Send a copy of quote #{@quote.number}" : "Send quote #{@quote.number}"), lede: do %>
   <%= render "admin/usage/quotes" if @quote.counts_toward_usage? %>
   <%= link_to "Back", (own_quotes_only? ? after_send_path(@quote) : staff_quote_path(@quote)), class: button_classes(:ghost) %>
 <% end %>
@@ -6,6 +11,8 @@
 <% counts = @quote.counts_toward_usage? %>
 <% blocked = counts && !current_business.entitlements.can_send_new_quote? %>
 <%= render "admin/usage/limit_notice" if counts %>
+<%= render "admin/sends/zero_total", document: @quote, noun: "quote", edit_path: edit_admin_quote_path(@quote),
+           confirm_path: new_admin_quote_send_path(@quote, zero_total: ZeroTotalGuard::CONFIRMED, from: ("setup" if from_setup?)) unless blocked %>
 <% unless current_user.can_send_to_clients? %>
   <div class="banner banner-warning mb-4" role="status"><%= icon "alert-triangle" %>
     <p class="flex-1">Confirm your email address before sending anything to clients. Check your inbox for the link.</p>
@@ -15,11 +22,14 @@
 <% if blocked %>
   <%# BIL-03: over the limit, the explanation (above) replaces the send options. %>
   <%= link_to "Back to the quote", (own_quotes_only? ? after_send_path(@quote) : staff_quote_path(@quote)), class: button_classes(:secondary) %>
+<% elsif zero_total? && !zero_total_confirmed? %>
+  <%# #289: a $0.00 quote waits for "Send it at $0.00" (above). %>
 <% else %>
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
   <%= card title: "Email it", subtitle: "Your message, a button to the quote page, and the PDF attached. Replies come to you." do %>
     <%= form_with model: @form, scope: :quote_send, url: admin_quote_send_path(@quote), method: :post do |f| %>
   <%= hidden_field_tag :from, "setup", id: nil if from_setup? %>
+      <%= hidden_field_tag :zero_total, ZeroTotalGuard::CONFIRMED, id: nil if zero_total_confirmed? %>
       <% @form.errors[:base].each do |error| %>
         <p class="mb-3 text-sm2 font-medium text-danger" role="alert"><%= error %></p>
       <% end %>
@@ -31,19 +41,19 @@
         <%= f.field :subject, required: true, data: { template_picker_target: "subject" } %>
         <%= f.field :message, as: :textarea, optional: true, rows: 8, data: { template_picker_target: "message" } %>
       </div>
-      <%= f.submit_button(@quote.draft? ? "Send quote" : "Send again", class: "mt-4 w-full sm:w-auto", disabled: !current_user.can_send_to_clients?) %>
+      <%= f.submit_button(@quote.draft? ? "Send quote" : (@quote.approved? ? "Send a copy" : "Send again"), class: "mt-4 w-full sm:w-auto", disabled: !current_user.can_send_to_clients?) %>
     <% end %>
   <% end %>
 
   <div class="space-y-4">
-    <%= card title: "Send the link yourself", subtitle: "Text or WhatsApp it from your phone. Getting the link marks the quote as sent." do %>
+    <%= card title: "Send the link yourself", subtitle: "Text or WhatsApp it from your phone.#{" Getting the link marks the quote as sent." unless @quote.approved?}" do %>
       <% if @link %>
         <div data-controller="clipboard" class="space-y-2">
           <input type="text" readonly value="<%= client_link_url(@link.token) %>" class="input text-sm2" aria-label="Link to the quote" data-clipboard-target="source">
           <button type="button" class="<%= button_classes(:secondary, extra: "w-full") %>" data-action="clipboard#copy" data-clipboard-target="button"><%= icon "link" %> Copy link</button>
         </div>
       <% else %>
-        <%= button_to admin_quote_send_path(@quote), params: { channel: "link" }, class: button_classes(:secondary, extra: "w-full"),
+        <%= button_to admin_quote_send_path(@quote), params: { channel: "link", zero_total: (ZeroTotalGuard::CONFIRMED if zero_total_confirmed?) }.compact, class: button_classes(:secondary, extra: "w-full"),
                       disabled: !current_user.can_send_to_clients? do %><%= icon "link" %> Get the link<% end %>
         <% unless @quote.draft? || current_user.can_send_to_clients? %>
           <p class="mt-2 text-sm2 text-muted">Confirm your email address to see the link.</p>

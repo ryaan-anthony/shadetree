@@ -62,3 +62,5 @@ the number they're charged on.
 - Speed: the send path doesn't change (the usage event was already one insert in `mark_sent!`,
   QTE-04); the count is read only on pages, as one index-only query (a test checks one query).
 - Operators: `bin/rails usage:history BUSINESS=<uid>` (24 periods).
+- #289: usage is worded as what it is wherever it shows: "1 of your 5 free quotes this month", or
+  "12 of your 30 Starter quotes this billing period".

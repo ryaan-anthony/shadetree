@@ -61,6 +61,8 @@ and tax behavior, carry payment terms and a due date, and track their status thr
   out. Overdue isn't stored: a sent or partly paid invoice past its due date, for the business's today.
 - An invoice from a quote bills the quote's lines as agreed; one from a job bills the job's lines
   as they are now (with changes made on site). Either way it stays with that client.
+- #289: once a quote or job has an invoice (not void), its page links to that invoice; a second
+  invoice is still possible (progress billing) but only as "Create another invoice", with a confirm.
 
 ## Out of scope
 

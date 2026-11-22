@@ -8,16 +8,20 @@
   <% elsif quote.approved? %>
     <%= button_to admin_quote_job_path(quote), class: button_classes(:primary), form: { class: "contents" } do %><%= icon "job" %> Create job<% end %>
   <% end %>
-  <% if quote.approved? %>
-    <% billed = (quote.invoices.to_a + Array(quote.job&.invoices&.to_a)).uniq.reject(&:void?) %>
-    <%= button_to admin_quote_invoices_path(quote), class: button_classes(billed.any? ? :ghost : :secondary),
-                  form: { class: "contents", data: (billed.any? ? { turbo_confirm: "#{quote.number} already has #{billed.map(&:number).to_sentence}. Create another invoice?", turbo_confirm_button: "Create invoice" } : {}) } do %><%= icon "invoice" %> Create invoice<% end %>
+  <%# #289: once it's billed, the invoice is the next step, not a second one (that's in the menu). %>
+  <% billed = quote.approved? ? (quote.invoices.to_a + Array(quote.job&.invoices&.to_a)).uniq.reject(&:void?).sort_by(&:created_at) : [] %>
+  <% if billed.size > 1 %><%# progress billing: the Invoices card lists them all %>
+    <%= link_to "#invoices", class: button_classes(:secondary), id: "quote-invoice-link" do %><%= icon "invoice" %> Invoices (<%= billed.size %>)<% end %>
+  <% elsif (latest_invoice = billed.last) %>
+    <%= link_to admin_invoice_path(latest_invoice), class: button_classes(:secondary), id: "quote-invoice-link" do %><%= icon "invoice" %> Invoice <%= latest_invoice.number %><% end %>
+  <% elsif quote.approved? %>
+    <%= button_to admin_quote_invoices_path(quote), class: button_classes(:secondary), form: { class: "contents" } do %><%= icon "invoice" %> Create invoice<% end %>
   <% end %>
   <% if quote.revisable? %>
     <%= button_to revise_admin_quote_path(quote), class: button_classes(:secondary),
                   form: { class: "contents", data: { turbo_confirm: "Until you send the new version, #{quote.client.display_name}'s link says the quote is being updated, and they can't answer it. Sending it again unchanged also restores it.", turbo_confirm_button: "Revise" } } do %><%= icon "edit-3" %> Revise<% end %>
   <% end %>
-  <% if quote.sendable? %>
+  <% if quote.sendable? || quote.copy_sendable? %>
     <%= link_to new_admin_quote_send_path(quote), class: button_classes(:secondary) do %><%= icon "send" %> Send again<% end %>
   <% end %>
   <%= link_to preview_admin_quote_path(quote), class: button_classes(:secondary), target: "_blank", rel: "noopener" do %><%= icon "eye" %> View as client<% end %>
@@ -26,6 +30,10 @@
     <button type="button" class="<%= button_classes(:ghost, :icon) %>" data-menu-target="button" data-modal-target="return" data-action="menu#toggle"
             aria-haspopup="true" aria-expanded="false" aria-label="More actions"><%= icon "more-horizontal" %></button>
     <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
+      <% if billed.any? %>
+        <%= button_to admin_quote_invoices_path(quote), class: "menu-item",
+                      form: { class: "contents", data: { turbo_confirm: "#{quote.number} already has #{billed.map(&:number).to_sentence}. Create another invoice?", turbo_confirm_button: "Create another invoice" } } do %><%= icon "plus" %> Create another invoice<% end %>
+      <% end %>
       <%= link_to pdf_admin_quote_path(quote), class: "menu-item", data: { turbo: false } do %><%= icon "download" %> Download PDF<% end %>
       <%= button_to duplicate_admin_quote_path(quote), class: "menu-item", form: { class: "contents" } do %><%= icon "copy" %> Duplicate<% end %>
       <button type="button" class="menu-item" data-action="modal#open menu#close" aria-haspopup="dialog"><%= icon "users" %> Duplicate for another client</button>
@@ -51,6 +59,11 @@
 
 <% if (undelivered = quote.undelivered_email) %>
   <%= render "admin/sends/delivery_warning", email: undelivered, document: quote, resend_path: new_admin_quote_send_path(quote), id: "quote-delivery-problem" %>
+<% end %>
+<% if quote.approved? && (copy = quote.latest_email)&.problem? && quote.approval && copy.created_at > quote.approval.created_at %>
+  <%# #289: a copy of an approved quote that didn't arrive: worth a line, not the full warning %>
+  <p class="-mt-2 mb-4 text-sm2 text-muted" id="quote-copy-undelivered"><%= icon "alert-triangle", class: "mr-1 inline size-4 align-text-bottom text-warning" %>The copy emailed to <%= copy.to %> wasn't delivered. <%= copy.problem_reason %>
+    <%= link_to "Send it again", new_admin_quote_send_path(quote), class: "font-medium text-ink underline-offset-2 hover:underline" %></p>
 <% end %>
 <%= render "admin/quotes/from_request", quote: %>
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">

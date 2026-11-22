@@ -2,7 +2,8 @@
 
 <% end %>Quote <%= @quote.number %><%= " - #{@quote.title}" if @quote.title %>
 Total: <%= money(@quote.totals.total) %>
-<% if @quote.expires_on %>Valid until <%= l(@quote.expires_on) %>
+<% if @quote.approved? && @quote.approval %>Approved <%= l(@quote.approval.created_at.in_time_zone(@business.time_zone).to_date) %>
+<% elsif @quote.expires_on %>Valid until <%= l(@quote.expires_on) %>
 <% end %>
 View the quote: <%= client_link_url(@link.token) %>
 

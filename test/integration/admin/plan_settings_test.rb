@@ -60,11 +60,12 @@ class Admin::PlanSettingsTest < ActionDispatch::IntegrationTest
       as_business(@business) { quote.mark_sent!(by: @owner, channel: "link") }
       draft = as_business(@business) { Quote.start(client: quote.client).tap { _1.sync_line_items([ { "key" => "a", "name" => "Work", "quantity" => "1", "unit_price" => "100" } ]) && _1.save! } }
       get edit_admin_quote_path(draft)
-      assert_select "#quote-usage", /1 of 5 quotes sent/
+      assert_select "#quote-usage", /Used 1 of your 5 free quotes this month/ # #289: what the 5 is
       get new_admin_quote_send_path(draft)
-      assert_select "#quote-usage", /1 of 5 quotes sent/
+      assert_select "#quote-usage", /Used 1 of your 5 free quotes this month/
       get admin_root_path
-      assert_select "#quotes-sent-usage", /1\s*of 5/
+      assert_select "#quotes-sent-usage", "1"
+      assert_select "#quotes-sent-allowance", /Of your 5 free quotes this month · resets Dec 1, 2026/
       as_business(@business) { quote.reload.revise!(by: @owner) }
       get edit_admin_quote_path(quote)
       assert_select "#quote-usage", 0, "a revision's send doesn't count"

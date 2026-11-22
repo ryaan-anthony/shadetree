@@ -258,15 +258,18 @@ class Quote < ApplicationRecord
   def mark_sent!(by:, channel:, recipient: nil, cc: nil, email_message: nil)
     transaction do
       lock!
-      raise ArgumentError, "a #{status} quote can't be sent" unless draft? || sent?
+      raise ArgumentError, "a #{status} quote can't be sent" unless draft? || sent? || copy_sendable?
       raise ArgumentError, "the client's details were erased" if client.erased? # INS-02
 
+      copy = approved? # #289: a copy of what was approved: not usage, not a first quote, no automations
       # QTE-07: sent, so no longer waiting for review (the quote's history keeps who marked it).
       update!(status: "sent", sent_at: Time.current, sent_by: by, ready_for_review_at: nil, ready_for_review_by: nil) if draft?
-      # ACC-05: when the business sent its first quote, for time-to-first-quote (no PII).
-      @first_quote_sent = Business.where(id: business_id, first_quote_sent_at: nil).update_all(first_quote_sent_at: Time.current) == 1
-      UsageEvent.record!("quote_sent", self, at: sent_at || Time.current)
-      ClientEvent.record!(client, :quote_sent, subject: self, by:, channel:, revision:) # CLI-05
+      unless copy
+        # ACC-05: when the business sent its first quote, for time-to-first-quote (no PII).
+        @first_quote_sent = Business.where(id: business_id, first_quote_sent_at: nil).update_all(first_quote_sent_at: Time.current) == 1
+        UsageEvent.record!("quote_sent", self, at: sent_at || Time.current)
+      end
+      ClientEvent.record!(client, :quote_sent, subject: self, by:, channel:, revision:, **(copy ? { copy: true } : {})) # CLI-05
       sends.create!(business:, user: by, channel:, recipient:, cc:, email_message:, revision:)
     end
   end
@@ -283,6 +286,11 @@ class Quote < ApplicationRecord
   # Whether it can go out: it needs something to quote, and a valid-until date that hasn't
   # passed (an expired quote is renewed with a revision, QTE-06).
   def sendable? = (draft? || sent?) && line_items.any? && !past_expiry? && !client.erased?
+
+  # #289: an approved quote can go out again as a copy of what was approved (a lost email, a
+  # second contact). It stays approved, its valid-until date no longer matters, and it never
+  # counts toward the plan's quotes.
+  def copy_sendable? = approved? && !archived? && line_items.any? && !client.erased?
 
   # BIL-02/03: whether sending it now counts toward the plan's quotes: its first send only
   # (resends and revisions of a quote that went out never count).
