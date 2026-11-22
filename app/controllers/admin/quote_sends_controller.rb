@@ -17,8 +17,9 @@ class Admin::QuoteSendsController < Admin::BaseController
   EMAILS_PER_QUOTE_PER_DAY = 5
 
   before_action :set_quote
+  before_action :refuse_sent_again, if: -> { without_review? && !@quote.draft? }, only: :create
   before_action :require_sendable
-  before_action :require_without_review, if: :without_review?
+  before_action :require_without_review, if: -> { without_review? && @quote.draft? }
   before_action :require_confirmed_sender, only: :create
   before_action :require_quote_allowance, only: :create
   zero_total_guard :@quote, path: :new_admin_quote_send_path
@@ -39,6 +40,9 @@ class Admin::QuoteSendsController < Admin::BaseController
     redirect_to new_admin_quote_send_path(@quote, from: ("setup" if from_setup?)), alert: quote_limit_message
   rescue NeedsReview => error
     redirect_to edit_admin_quote_path(@quote), alert: needs_review_message(error.message)
+  rescue AlreadySent # a double submit: the first one sent it
+    sent_by_them = @quote.reload.sent_by_id == current_user.id
+    redirect_to (sent_by_them ? new_admin_quote_send_path(@quote) : admin_root_path), notice: "Quote #{@quote.number} was already sent."
   end
 
   private
@@ -74,8 +78,10 @@ class Admin::QuoteSendsController < Admin::BaseController
   # services they may send without review, at their prices. Checked here, and again inside the
   # send's transaction with the quote row locked, so a late autosave can't slip a change through.
   class NeedsReview < StandardError; end
+  class AlreadySent < StandardError; end
 
-  def without_review? = !@quote.nil? && SendWithoutReview.applies_to?(@quote, Current.membership)
+  # Set by set_quote for these members, so their checks run whenever they're the one sending.
+  def without_review? = @without_review_member == true
 
   def require_without_review
     check = SendWithoutReview.new(@quote)
@@ -89,7 +95,7 @@ class Admin::QuoteSendsController < Admin::BaseController
     return unless without_review?
 
     fresh = Quote.lock.includes(:business, :client, :service_request, line_items: :catalog_item).find(@quote.id)
-    raise ActiveRecord::RecordNotFound unless SendWithoutReview.applies_to?(fresh, Current.membership) # sent meanwhile (a double submit)
+    raise AlreadySent unless fresh.draft?
 
     check = SendWithoutReview.new(fresh)
     raise NeedsReview, check.reason unless check.qualifies?
@@ -107,11 +113,23 @@ class Admin::QuoteSendsController < Admin::BaseController
     scope = if !own_quotes_only? then Quote.all
     elsif can?(:send_own_quotes) && can?(:quote_requests) # never a revision the office started, nor a copy of an approved one
       Quote.where(created_by_id: current_user.id, revision: 1, status: %w[draft sent]).where.not(service_request_id: nil)
-    elsif can?(:quote_requests) then Quote.own_drafts_for(current_user) # QTE-08: only drafts that can go without review (below)
+    elsif can?(:quote_requests) then without_review_scope # QTE-08
     else return deny!(:office, "can't send quotes")
     end
     @quote = scope.includes(:client, :line_items).find_by_param!(params[:quote_id])
   end
+
+  # QTE-08: a member who quotes their requests but doesn't send their own sends only their drafts
+  # that can go without review (checked before and inside the send). After a send by link, the
+  # send page also opens for the quote they sent, to copy the link; sending it again is refused.
+  def without_review_scope
+    @without_review_member = true
+    Quote.own_drafts_for(current_user).or(Quote.where(created_by_id: current_user.id, sent_by_id: current_user.id, revision: 1, status: "sent").where.not(service_request_id: nil))
+  end
+
+  def refuse_sent_again = redirect_to(new_admin_quote_send_path(@quote), notice: "Quote #{@quote.number} was already sent.")
+
+  helper_method def link_only? = without_review? && !@quote.draft?
 
   # Where to go after (or instead of) sending: the quote's page for office staff; for members
   # sending their own, the draft while it's one, else their start page.

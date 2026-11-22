@@ -149,6 +149,40 @@ class AccessibilityTest < ApplicationSystemTestCase
     assert_accessible new_admin_job_visit_path(job), new_admin_invoice_payment_path(invoice), new_admin_service_request_path
   end
 
+  # QTE-08: the switch, the cap and a technician's reason, on a 360 px phone, with no sideways scroll.
+  test "sending without review: the switch, the cap and the reasons pass axe at 360 px" do
+    tech = User.create!(email: "marcus@example.com", password: "password123", first_name: "Marcus", last_name: "Reyes", confirmed_at: Time.current)
+    BusinessUser.create!(user: tech, business: @business, role: "technician")
+    gutters, quote = as_business(@business) do
+      gutters = CatalogItem.create!(name: "Gutter clean", unit: "visit", unit_price: "150", send_without_review: true)
+      client = Client.create!(display_name: "Maria Lopez", contact_methods_attributes: [ { kind: "email", value: "maria@example.com" } ])
+      request = ServiceRequest.create!(client:, source: "phone", description: "Gutters")
+      quote = request.create_quote!(by: tech)
+      quote.sync_line_items([ { "key" => "a", "catalog_item" => gutters.uid, "name" => "Gutter clean", "unit" => "visit", "unit_price" => "140", "quantity" => "1" } ])
+      quote.save!
+      [ gutters, quote ]
+    end
+    @business.update!(without_review_cap: "500")
+    page.current_window.resize_to(360, 740)
+    problems = []
+    [ admin_catalog_items_path, edit_admin_catalog_item_path(gutters) ].each do |path|
+      visit path
+      problems += axe_problems(path)
+      assert_operator evaluate_script("document.documentElement.scrollWidth"), :<=, 360, path
+    end
+    assert_field "Technicians can send without review", checked: true, visible: :all
+    Capybara.reset_sessions!
+    visit new_user_session_path
+    sign_in_with_form(tech.email, "password123")
+    visit edit_admin_quote_path(quote)
+    assert_selector "#review-reason", text: "Needs the office's review: Gutter clean: price changed"
+    problems += axe_problems("the builder's reason")
+    assert_operator evaluate_script("document.documentElement.scrollWidth"), :<=, 360
+    assert_empty problems, "axe found problems:\n#{problems.join("\n")}"
+  ensure
+    page.current_window.resize_to(1400, 1400)
+  end
+
   test "the search-engine setting is off while requests are off" do
     @business.update!(request_form_enabled: true)
     visit edit_admin_business_path(tab: "request_form")

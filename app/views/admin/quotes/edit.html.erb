@@ -167,7 +167,10 @@
         failure isn't missed on a long draft. The button only shows if autosave isn't running. %>
     <%= f.submit_button "Save draft", class: "w-full", data: { quote_builder_target: "fallback" } %>
     <p class="text-center text-sm2 text-muted" id="autosave-note">Changes save as you go: <span class="save-status" data-quote-builder-target="status" aria-hidden="true">Saved</span>.
-      <%= own_quotes_only? && !can?(:send_own_quotes) ? "Mark it ready for review from the top of the page when it’s done." : "Send it from the top of the page when it’s ready." %></p><%# QTE-07 %>
+      <%= if without_review_check(@quote) then "When it’s done, send it from the top of the page if you can, or mark it ready for review." # QTE-08
+        elsif own_quotes_only? && !can?(:send_own_quotes) then "Mark it ready for review from the top of the page when it’s done."
+        else "Send it from the top of the page when it’s ready."
+        end %></p><%# QTE-07 %>
   </aside>
 <% end %>
 </div>

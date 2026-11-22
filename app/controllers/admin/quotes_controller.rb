@@ -127,6 +127,7 @@ class Admin::QuotesController < Admin::BaseController
       # A failed save keeps nothing from this request (lines, files), not just the quote row.
       @quote.save || raise(ActiveRecord::Rollback)
     end
+    @saved = saved # QTE-08: no "Send quote" on a draft that didn't save
     # QTE-07: the person who marked it ready changed it, so it's theirs again until marked again.
     @review_cleared = (@quote.clear_ready_for_review! || true) if saved && own_quotes_only? && @quote.ready_for_review_at
     response.set_header("X-Lock-Version", @quote.lock_version.to_s)

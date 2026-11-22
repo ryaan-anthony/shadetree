@@ -46,7 +46,7 @@ be sent by the technician straight away; anything else still goes to "Ready for 
 - [x] On a qualifying draft the technician sees "Send quote" (sending as QTE-07 allows: to the
       client's emails on file, or the copy link) and can still choose "Ready for review".
 - [x] On a draft that doesn't qualify, they see only "Ready for review", with a short reason
-      naming the first thing that needs the office ("Gutter clean: price changed", "Over $500",
+      naming the first thing that needs the office ("Gutter clean: price changed", "Over $500.00",
       "Tax changed"). A line whose service price changed after it was added reads "Gutter clean:
       the price list changed"; removing and adding it again picks up the new price and clears it.
 - [x] A send counts toward the plan like any send (BIL-02) and follows BIL-03, with no grace
@@ -96,5 +96,5 @@ be sent by the technician straight away; anything else still goes to "Ready for 
 - Without a confirmed email, the office's notice, with "Ready for review" still available
   (coordinator, follows existing behaviour).
 - A "price on quote" service never qualifies: "priced on each quote" (owner, 2026-11-22).
-- Other reasons: "custom line", "needs review", "service archived", "unit changed", "discount",
-  "Quote discount", "Another location" (coordinator).
+- Other reasons: "custom line", "not one you can send without review", "service archived", "unit
+  changed", "discount", "Quote discount", "Priced for another location" (coordinator).

@@ -1,16 +1,17 @@
 require "test_helper"
 
-# Simulates an autosave committing after the send's checks but before its transaction (QTE-08).
-module LateAutosave
-  mattr_accessor :hook
-  def valid?(...) = super.tap { LateAutosave.hook&.call }
-end
-QuoteSendForm.prepend(LateAutosave)
-
 # QTE-08: a built-in Technician (quotes their requests, doesn't send their own) sends a draft of
 # only services marked "Technicians can send without review", at their prices; anything else
 # goes to Ready for review with the reason.
 class Admin::SendWithoutReviewTest < ActionDispatch::IntegrationTest
+  # A change committed after the send's page checks, before its transaction: the first plan check
+  # (require_quote_allowance) runs after them. Inert unless a test sets the hook.
+  module LateChange
+    mattr_accessor :hook
+    def can_send_new_quote? = super.tap { LateChange.hook&.call.tap { LateChange.hook = nil } }
+  end
+  Entitlements.prepend(LateChange) unless Entitlements <= LateChange
+
   setup do
     travel_to Time.utc(2026, 11, 23, 15)
     @business = businesses(:one)
@@ -31,7 +32,7 @@ class Admin::SendWithoutReviewTest < ActionDispatch::IntegrationTest
     @quote = as_business(@business) { Quote.order(:id).last }
   end
 
-  teardown { LateAutosave.hook = nil }
+  teardown { LateChange.hook = nil }
 
   def sign_in_as(user, business: @business)
     sign_in user
@@ -78,10 +79,24 @@ class Admin::SendWithoutReviewTest < ActionDispatch::IntegrationTest
     assert_select "main", /Only services technicians can send without review, at their prices: Gutter clean. Total \$150.00./
   end
 
-  test "the copy link works too" do
+  test "by copy link: marked sent, and they land on the link to copy; sending it again is refused" do
     post admin_quote_send_path(@quote), params: { channel: "link" }
+    assert_redirected_to new_admin_quote_send_path(@quote)
+    follow_redirect!
+    assert_response :success
+    link = as_business(@business) { ClientLink.active.find_by!(linkable: @quote) }
+    assert_select "#sent-link input[value=?]", client_link_url(link.token)
+    assert_select "form[action=?]", admin_quote_send_path(@quote), 0, "nothing more to send from here"
     assert_equal "sent", status
     assert_equal [ "sent_without_review" ], as_business(@business) { @quote.events.map(&:kind) }
+
+    assert_no_difference -> { as_business(@business) { @quote.sends.count } } do
+      post admin_quote_send_path(@quote), params: { channel: "link" } # a double submit
+    end
+    assert_redirected_to new_admin_quote_send_path(@quote)
+    assert_equal "Quote #{@quote.number} was already sent.", flash[:notice]
+    email_it
+    assert_equal "Quote #{@quote.number} was already sent.", flash[:notice]
   end
 
   test "a draft that doesn't qualify: only Ready for review, the reason, and the send is refused" do
@@ -105,13 +120,32 @@ class Admin::SendWithoutReviewTest < ActionDispatch::IntegrationTest
     assert as_business(@business) { @quote.reload.ready_for_review? }, "they can still hand it over"
   end
 
-  test "rechecked inside the send: a change saved after the page's checks stops it" do
-    LateAutosave.hook = -> { as_business(@business) { @quote.line_items.first.update_columns(unit_price_cents: 9_900) } }
+  test "rechecked inside the send: a change saved after the page's checks stops it, by email or link" do
+    late_edit = -> { LateChange.hook = -> { as_business(@business) { @quote.line_items.first.update_columns(unit_price_cents: 9_900) } } }
+    late_edit.call
     email_it
     assert_redirected_to edit_admin_quote_path(@quote)
     assert_match "Gutter clean: price changed", flash[:alert]
+    as_business(@business) { @quote.line_items.first.update_columns(unit_price_cents: 15_000) }
+    late_edit.call
+    post admin_quote_send_path(@quote), params: { channel: "link" }
+    assert_match "Gutter clean: price changed", flash[:alert]
     assert_equal "draft", status
     assert_equal 0, as_business(@business) { UsageEvent.count }
+  end
+
+  test "marked ready for review, it's the office's: no Send; a save that fails hides Send until one succeeds" do
+    post ready_admin_quote_path(@quote), params: { lock_version: as_business(@business) { @quote.reload.lock_version } }
+    get edit_admin_quote_path(@quote)
+    assert_select "#send-without-review", 0
+    assert_select "#ready-for-review", /the office sends it/
+    autosave # changing it takes it back
+    assert_select "turbo-stream[target=review-state] template", html: /send-without-review/
+
+    patch admin_quote_path(@quote), params: { quote: { lock_version: as_business(@business) { @quote.reload.lock_version }, title: "x" * 200 } }, as: :turbo_stream
+    assert_response :unprocessable_content
+    assert_no_match(/send-without-review/, response.body)
+    assert_select "turbo-stream[target=without-review] template", html: /once your changes save/
   end
 
   test "the cap, tax included, and a $0.00 quote after the usual confirmation" do
@@ -181,6 +215,17 @@ class Admin::SendWithoutReviewTest < ActionDispatch::IntegrationTest
     autosave(catalog_item: theirs.uid)
     assert_select "turbo-stream[target=without-review] template", html: /Gutter clean: custom line/
     post admin_quote_send_path(@quote), params: { channel: "link" }
+    assert_equal "draft", status
+  end
+
+  test "another technician's draft in the same business is not found" do
+    other = User.create!(email: "ann@example.com", password: "password123", first_name: "Ann", confirmed_at: Time.current)
+    BusinessUser.create!(user: other, business: @business, role: "technician")
+    sign_in_as other
+    get new_admin_quote_send_path(@quote)
+    assert_response :not_found
+    post admin_quote_send_path(@quote), params: { channel: "link" }
+    assert_response :not_found
     assert_equal "draft", status
   end
 

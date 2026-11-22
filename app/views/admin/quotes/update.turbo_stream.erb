@@ -13,8 +13,8 @@
   <%= turbo_stream.update "quote_property" do %><%= render "property_select", client: @quote.client, selected: @quote.property&.uid %><% end %>
 <% end %>
 <% if @review_cleared || without_review_check(@quote) %><%# QTE-07: back to "Ready for review"; QTE-08: whether it can go without review now %>
-  <%= turbo_stream.replace "review-state" do %><%= render "review_state", quote: @quote %><% end %>
+  <%= turbo_stream.replace "review-state" do %><%= render "review_state", quote: @quote, saved: @saved %><% end %>
 <% end %>
 <% if without_review_check(@quote) %>
-  <%= turbo_stream.replace "without-review" do %><%= render "without_review", quote: @quote %><% end %>
+  <%= turbo_stream.replace "without-review" do %><%= render "without_review", quote: @quote, saved: @saved %><% end %>
 <% end %>

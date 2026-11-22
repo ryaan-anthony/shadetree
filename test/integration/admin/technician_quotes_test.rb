@@ -137,8 +137,9 @@ class Admin::TechnicianQuotesTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", new_admin_quote_send_path(quote), 0
     get new_admin_quote_send_path(quote) # QTE-08: only a draft of services sent without review goes out
     assert_redirected_to edit_admin_quote_path(quote)
-    assert_match "Weekly mowing: needs review", flash[:alert]
+    assert_match "Weekly mowing: not one you can send without review", flash[:alert]
     post admin_quote_send_path(quote), params: { channel: "link" }
+    assert_redirected_to edit_admin_quote_path(quote)
     assert_equal "draft", as_business(@business) { quote.reload.status }
     get search_admin_catalog_items_path(format: :json, q: "mow")
     assert_response :success
@@ -222,7 +223,7 @@ class Admin::TechnicianQuotesTest < ActionDispatch::IntegrationTest
     quote = quote_it
     get edit_admin_quote_path(quote)
     assert_select "button[form=ready-for-review-form]", /Ready for review/
-    assert_select "p", /Mark it ready for review from the top of the page/
+    assert_select "p", /or mark it ready for review/
     get new_admin_quote_send_path(quote)
     assert_redirected_to edit_admin_quote_path(quote), "QTE-08: it isn't one that goes without review"
 

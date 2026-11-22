@@ -8,6 +8,18 @@
   <%= link_to "Back", (own_quotes_only? ? after_send_path(@quote) : staff_quote_path(@quote)), class: button_classes(:ghost) %>
 <% end %>
 
+<% if link_only? %><%# QTE-08: a technician who just sent it by link copies the link; nothing more to send from here %>
+  <%= card title: "Send the link yourself", subtitle: "Text or WhatsApp it from your phone. The quote is marked as sent.", id: "sent-link" do %>
+    <% if @link %>
+      <div data-controller="clipboard" class="space-y-2">
+        <input type="text" readonly value="<%= client_link_url(@link.token) %>" class="input text-sm2" aria-label="Link to the quote" data-clipboard-target="source">
+        <button type="button" class="<%= button_classes(:secondary, extra: "w-full sm:w-auto") %>" data-action="clipboard#copy" data-clipboard-target="button"><%= icon "link" %> Copy link</button>
+      </div>
+    <% else %>
+      <p class="text-sm2 text-muted">Confirm your email address to see the link.</p>
+    <% end %>
+  <% end %>
+<% else %>
 <% counts = @quote.counts_toward_usage? %>
 <% blocked = counts && !current_business.entitlements.can_send_new_quote? %>
 <%= render "admin/usage/limit_notice" if counts %>
@@ -68,4 +80,5 @@
     <% end %>
   </div>
 </div>
+<% end %>
 <% end %>
