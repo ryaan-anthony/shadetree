@@ -51,6 +51,7 @@ Owner, Admin, Technician (see vision glossary). Operators are covered in `10-ope
 | Schedule and assign visits | `schedule` | ✔ | ✔ | |
 | See own assigned visits, their client contact & property, add notes/photos, mark complete | `field_work` | ✔ | ✔ | ✔ |
 | Quote requests assigned to them: create and edit their own drafts (QTE-07) | `quote_requests` | ✔ | ✔ | |
+| Send the quotes they drafted (QTE-07) | `send_own_quotes` | ✔ | ✔ | |
 | Data export | `export_data` | ✔ | ✔ | |
 
 The **Permission** column names the code permissions in `app/models/permissions.rb`. This

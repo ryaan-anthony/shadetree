@@ -1,6 +1,6 @@
 <%= page_header "Send quote #{@quote.number}", lede: "To #{@quote.client.display_name}: #{money(@quote.totals.total)}#{", valid until #{l(@quote.expires_on)}" if @quote.expires_on}" do %>
   <%= render "admin/usage/quotes" if @quote.counts_toward_usage? %>
-  <%= link_to "Back", staff_quote_path(@quote), class: button_classes(:ghost) %>
+  <%= link_to "Back", (own_quotes_only? ? after_send_path(@quote) : staff_quote_path(@quote)), class: button_classes(:ghost) %>
 <% end %>
 
 <% counts = @quote.counts_toward_usage? %>
@@ -14,7 +14,7 @@
 
 <% if blocked %>
   <%# BIL-03: over the limit, the explanation (above) replaces the send options. %>
-  <%= link_to "Back to the quote", staff_quote_path(@quote), class: button_classes(:secondary) %>
+  <%= link_to "Back to the quote", (own_quotes_only? ? after_send_path(@quote) : staff_quote_path(@quote)), class: button_classes(:secondary) %>
 <% else %>
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
   <%= card title: "Email it", subtitle: "Your message, a button to the quote page, and the PDF attached. Replies come to you." do %>

@@ -159,4 +159,159 @@ class Admin::TechnicianQuotesTest < ActionDispatch::IntegrationTest
     as_business(@business) { @request_record.update!(status: "archived") }
     assert_raises(ArgumentError) { as_business(@business) { @request_record.create_quote!(by: @tech, once: true) } }
   end
+
+  test "without Send their own quotes, they mark the draft ready for review; the office hears, sees who drafted it, and sends it" do
+    quote = quote_it
+    get edit_admin_quote_path(quote)
+    assert_select "button[form=ready-for-review-form]", /Ready for review/
+    assert_select "p", /Mark it ready for review from the top of the page/
+    get new_admin_quote_send_path(quote)
+    assert_response :forbidden
+
+    ready(lines_on(quote))
+    assert_redirected_to edit_admin_quote_path(quote)
+    follow_redirect!
+    assert_select "#ready-for-review", /the office sends it/
+    as_business(@business) do
+      assert_equal [ @tech, "ready_for_review" ], [ quote.reload.ready_for_review_by, quote.events.last.kind ]
+      notice = Notification.find_by!(user: @owner, kind: "quote_ready_for_review")
+      assert_equal "Marcus Reyes's quote #{quote.number} for Maria Lopez is ready to check", notice.title
+      assert_empty Notification.where(user: @tech, kind: "quote_ready_for_review"), "not the one who marked it"
+    end
+
+    sign_in @owner
+    post switch_admin_business_path, params: { business: @business.uid }
+    get edit_admin_quote_path(quote)
+    assert_select "#review-banner", /Marcus Reyes marked this ready for review/
+    as_business(@business) { quote.update_columns(ready_for_review_at: nil) }
+    get edit_admin_quote_path(quote)
+    assert_select "#drafted-by", "Drafted by Marcus Reyes."
+    as_business(@business) { quote.update_columns(ready_for_review_at: Time.current, ready_for_review_by_id: @tech.id) }
+    post admin_quote_send_path(quote), params: { channel: "link" }
+    get admin_quote_path(quote)
+    assert_select "body", /Created by Marcus Reyes/
+    assert_select "body", /Marked ready for review by Marcus Reyes/
+    assert_select "body", /Link copied by John Doe/
+  end
+
+  test "with Send their own quotes, they send their own draft, which counts toward the plan, and not anyone else's" do
+    as_business(@business) { @senior.update!(permissions: %w[field_work quote_requests send_own_quotes]) }
+    quote = quote_it
+    assert_match "Nothing is sent until you send it", flash[:notice]
+    patch admin_quote_path(quote), params: builder_params(quote, lines: [ { key: "k1", name: "Weekly mowing", quantity: "1", unit_price: "45", taxable: "0" } ]), as: :turbo_stream
+    get edit_admin_quote_path(quote)
+    assert_select "a[href=?]", new_admin_quote_send_path(quote), /Send/
+    assert_select "button[form=ready-for-review-form]", 0
+    get new_admin_quote_send_path(quote)
+    assert_response :success
+    used = as_business(@business) { @business.reload.entitlements.used(:quotes_sent) }
+    post admin_quote_send_path(quote), params: { channel: "link" }
+    assert_redirected_to new_admin_quote_send_path(quote)
+    follow_redirect!
+    assert_response :success, "the link to copy, after sending their own"
+    as_business(@business) do
+      assert_equal "sent", quote.reload.status
+      assert_equal @tech, quote.sends.sole.user
+      assert_equal used + 1, Business.find(@business.id).entitlements.used(:quotes_sent)
+    end
+    get edit_admin_quote_path(quote)
+    assert_response :not_found, "sent: no more editing"
+
+    get new_admin_quote_send_path(@office_quote)
+    assert_response :not_found
+
+    as_business(@business) { quote.reload.revise!(by: @owner) }
+    get new_admin_quote_send_path(quote)
+    assert_response :not_found, "a revision the office started is the office's to send"
+  end
+
+  def lines_on(quote)
+    patch admin_quote_path(quote), params: builder_params(quote, lines: [ { key: "k1", name: "Weekly mowing", quantity: "1", unit_price: "45", taxable: "0" } ]), as: :turbo_stream
+    as_business(@business) { quote.reload }
+  end
+
+  def ready(quote) = post(ready_admin_quote_path(quote), params: { lock_version: as_business(@business) { quote.reload.lock_version } })
+
+  test "ready for review: once (no second notice), with a line, from a current page; editing takes it back; sending, and revising, leave no stale banner" do
+    quote = quote_it
+    as_business(@business) { quote.line_items.delete_all }
+    ready(quote)
+    assert_equal "Add at least one line before marking it ready.", flash[:alert]
+    lines_on(quote)
+    post ready_admin_quote_path(quote), params: { lock_version: 0 }
+    assert_match "changed since you last saw it", flash[:alert]
+    ready(quote)
+    ready(quote)
+    assert_equal 1, as_business(@business) { Notification.where(kind: "quote_ready_for_review", user: @owner).count }
+    assert_equal 1, as_business(@business) { quote.events.where(kind: "ready_for_review").count }
+
+    patch admin_quote_path(quote), params: builder_params(quote, title: "Changed my mind",
+                                                                 lines: [ { key: "k1", name: "Weekly mowing", quantity: "2", unit_price: "45", taxable: "0" } ]), as: :turbo_stream
+    assert_select "turbo-stream[target=review-state] template button", /Ready for review/
+    assert_not as_business(@business) { quote.reload.ready_for_review? }
+    ready(quote)
+    assert_equal 2, as_business(@business) { Notification.where(kind: "quote_ready_for_review", user: @owner).count }, "marked again after a change"
+
+    as_business(@business) do
+      quote.reload.mark_sent!(by: @owner, channel: "link")
+      assert_nil quote.reload.ready_for_review_at
+      quote.revise!(by: @owner)
+      quote.update_columns(ready_for_review_at: Time.current) # as if left over
+      assert_not quote.reload.ready_for_review?, "the office's revision isn't waiting for review"
+    end
+  end
+
+  test "ready is only for those who don't send themselves, and only on their own draft" do
+    quote = lines_on(quote_it)
+    other = User.create!(email: "tia@example.com", password: "password123", first_name: "Tia", confirmed_at: Time.current)
+    BusinessUser.create!(user: other, business: @business, role: "custom", role_id: @senior.id)
+    sign_in other
+    post switch_admin_business_path, params: { business: @business.uid }
+    ready(quote)
+    assert_response :not_found
+
+    sign_in @owner
+    post switch_admin_business_path, params: { business: @business.uid }
+    ready(quote)
+    assert_equal "You send this quote yourself.", flash[:alert]
+
+    as_business(@business) { @senior.update!(permissions: %w[field_work quote_requests send_own_quotes]) }
+    sign_in @tech
+    post switch_admin_business_path, params: { business: @business.uid }
+    ready(quote)
+    assert_equal "You send this quote yourself.", flash[:alert]
+    assert_nil as_business(@business) { quote.reload.ready_for_review_at }
+  end
+
+  test "sending their own: by email to the client's address on file only, within the plan, never without quoting too, nor across businesses" do
+    as_business(@business) do
+      @maria.contact_methods.create!(kind: "email", value: "maria@example.com")
+      @senior.update!(permissions: %w[field_work quote_requests send_own_quotes])
+    end
+    quote = lines_on(quote_it)
+    send_email = ->(to:, cc: "") { post admin_quote_send_path(quote), params: { quote_send: { to:, cc:, subject: "Your quote", message: "Hi" } } }
+    send_email.(to: "someone@elsewhere.example")
+    assert_response :unprocessable_content
+    assert_select "body", /client's email on file/
+    send_email.(to: "maria@example.com", cc: "boss@elsewhere.example")
+    assert_response :unprocessable_content
+
+    @business.update!(plan_overrides: { "features" => { "custom_roles" => true }, "limits" => { "team_members" => nil, "quotes_sent" => 0 } })
+    send_email.(to: "maria@example.com")
+    assert_equal "draft", as_business(@business) { quote.reload.status }, "the plan's limit holds for them too"
+
+    @business.update!(plan_overrides: { "features" => { "custom_roles" => true }, "limits" => { "team_members" => nil } })
+    send_email.(to: "Maria@Example.com")
+    assert_redirected_to admin_root_path
+    assert_equal [ "sent", "maria@example.com" ], as_business(@business) { [ quote.reload.status, quote.sends.sole.recipient.downcase ] }
+
+    as_business(@business) { @senior.update!(permissions: %w[field_work send_own_quotes]) }
+    get new_admin_quote_send_path(quote)
+    assert_response :forbidden, "sending their own needs quoting their own too"
+
+    sign_in users(:two)
+    post switch_admin_business_path, params: { business: businesses(:two).uid }
+    assert_not_found_across_businesses { get new_admin_quote_send_path(quote) }
+    assert_not_found_across_businesses { post admin_quote_send_path(quote), params: { channel: "link" } }
+  end
 end

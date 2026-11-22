@@ -22,6 +22,7 @@ class Quote < ApplicationRecord
   belongs_to_business_record :client
   belongs_to_business_record :property, optional: true
   belongs_to :created_by, class_name: "User", optional: true
+  belongs_to :ready_for_review_by, class_name: "User", optional: true # QTE-07
   belongs_to_business_record :service_request, optional: true # CLI-04: the request it came from
   after_destroy { service_request&.quote_removed! }
   belongs_to :sent_by, class_name: "User", optional: true
@@ -227,13 +228,41 @@ class Quote < ApplicationRecord
   # MKT-04: whether the last mark_sent! was the business's first quote ever sent.
   def first_quote_sent? = @first_quote_sent == true
 
+  # QTE-07: someone who drafts quotes for their assigned requests but doesn't send them hands
+  # the draft to the office: it's recorded, and the people who manage quotes hear (NTF-02).
+  # Marking it again changes nothing (no second notice); it needs a line to be worth checking.
+  def mark_ready_for_review!(by:)
+    marked = transaction do
+      lock!
+      raise ArgumentError, "Only a draft can be marked ready for review." unless draft?
+      raise ArgumentError, "Add at least one line before marking it ready." if line_items.none?
+      next false if ready_for_review_at
+
+      update!(ready_for_review_at: Time.current, ready_for_review_by: by)
+      QuoteEvent.record!(self, :ready_for_review, by:)
+      true
+    end
+    return unless marked
+
+    NotificationType.deliver("quote_ready_for_review", business:, subject: self, actor: by,
+                             title: "#{by&.full_name || "A teammate"}'s quote #{number} for #{client.display_name} is ready to check",
+                             body: "Check it, then send it.", path: Rails.application.routes.url_helpers.admin_quote_path(self))
+  end
+
+  # Waiting for the office: only the first revision (the office's own revisions aren't handed over).
+  def ready_for_review? = draft? && revision == 1 && ready_for_review_at.present?
+
+  # The person who marked it changed it again: it's theirs until they mark it ready again.
+  def clear_ready_for_review! = update_columns(ready_for_review_at: nil, ready_for_review_by_id: nil)
+
   def mark_sent!(by:, channel:, recipient: nil, cc: nil, email_message: nil)
     transaction do
       lock!
       raise ArgumentError, "a #{status} quote can't be sent" unless draft? || sent?
       raise ArgumentError, "the client's details were erased" if client.erased? # INS-02
 
-      update!(status: "sent", sent_at: Time.current, sent_by: by) if draft?
+      # QTE-07: sent, so no longer waiting for review (the quote's history keeps who marked it).
+      update!(status: "sent", sent_at: Time.current, sent_by: by, ready_for_review_at: nil, ready_for_review_by: nil) if draft?
       # ACC-05: when the business sent its first quote, for time-to-first-quote (no PII).
       @first_quote_sent = Business.where(id: business_id, first_quote_sent_at: nil).update_all(first_quote_sent_at: Time.current) == 1
       UsageEvent.record!("quote_sent", self, at: sent_at || Time.current)
