@@ -109,15 +109,16 @@ class Admin::FirstTimeTipsTest < ActionDispatch::IntegrationTest
     assert_select ".tip", 0
   end
 
-  # The tips' permissions match what each page needs, so nobody gets a tip for a page they can't open.
-  test "each tip's permission is the one its pages require" do
+  # Everyone a tip is for can open its pages. (QTE-07 opened the quote builder and send page to
+  # members drafting their own quotes; their tips stay with the office, as the spec has them.)
+  test "each tip's permission opens its pages" do
     FirstTimeTips::PAGES.each do |key, (pages, permission)|
       pages.each do |page|
         path, action = page.split("#")
         controller = "#{path.camelize}Controller".constantize
         rules = controller.authorization_rules.select { _1.applies?(action) }
         rules = rules.select(&:only).presence || rules
-        assert_equal [ permission ], rules.map(&:permission), "#{key}: #{page}"
+        assert rules.any? { _1.kind == :member } || rules.map(&:permission) == [ permission ], "#{key}: #{page}"
       end
     end
   end
