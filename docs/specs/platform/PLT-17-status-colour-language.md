@@ -82,5 +82,5 @@ existing tones. Triage: [#314 triage](../../audits/314-triage.md).
 - The Owner's role pill is plain like other roles (owner, 2026-11-22).
 - Visits, automation runs, support tickets and the meter go into the map with their current
   tones, so nothing changes (review of #332).
-- The calendar's In progress follows the map and turns from amber to info (review of #332
-  asked for one choice; coordinator to confirm).
+- The calendar's In progress follows the map and turns from amber to info. Scheduled keeps its
+  lighter sky tint (owner, 2026-11-22).
