@@ -70,10 +70,11 @@ class RequestFollowUp < ApplicationRecord
   end
 
   # Why a follow-up ended, for the assignee's notice ("left_team" needs none: they've gone).
-  ENDINGS = { "quoted" => "A quote was made from the request.", "archived" => "The request was archived." }.freeze
+  ENDINGS = { "quoted" => "A quote was made from the request.", "archived" => "The request was archived.",
+              "role_changed" => "Your role changed, so it's back with the office." }.freeze
 
   # Taken off the assignee: unassigned by staff, or (`reason`, ENDINGS) the request was quoted
-  # or archived, or the assignee left the team. Callers hold the request's lock.
+  # or archived, the assignee left the team, or their role changed. Callers hold the request's lock.
   def end!(by:, reason: nil)
     before = state
     destroy!
@@ -81,14 +82,19 @@ class RequestFollowUp < ApplicationRecord
     notify("request_changed", user, "No longer yours: #{summary}, #{when_label}", by:, body: ENDINGS[reason])
   end
 
-  # Someone deactivated, removed from the business or deleting their account: their follow-ups
-  # end (in each request's history), and the requests go back to New for someone to pick up.
-  def self.release!(user, business, by: Current.user)
+  # Who can follow requests up: members who can see requests (office), until JOB-06 shows
+  # follow-ups on My day.
+  def self.assignable?(membership) = membership.active? && membership.can?(:office)
+
+  # Someone deactivated, removed from the business, deleting their account or given a role that
+  # can't follow requests up: their follow-ups end (in each request's history), and the requests
+  # go back to New for someone to pick up.
+  def self.release!(user, business, by: Current.user, reason: "left_team")
     Tenancy.with_business(business) do
       RequestFollowUp.where(user_id: user.id).includes(:service_request).find_each do |follow_up|
         request = follow_up.service_request
         request.with_lock do
-          request.follow_up&.end!(by:, reason: "left_team")
+          request.follow_up&.end!(by:, reason:)
           request.update!(status: "new") if request.status == "in_progress"
         end
       end
@@ -173,6 +179,6 @@ class RequestFollowUp < ApplicationRecord
     return errors.add(:user_id, "Choose who follows it up.") if user.nil?
 
     member = business.business_users.active.find_by(user_id:)
-    errors.add(:user_id, "Only people on your team who can see requests can be assigned.") unless member&.can?(:office)
+    errors.add(:user_id, "Only people on your team who can see requests can be assigned.") unless member && self.class.assignable?(member)
   end
 end

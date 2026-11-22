@@ -136,6 +136,13 @@ class RequestFollowUpTest < ActiveSupport::TestCase
     assert_equal [ "new", [ "ended", "left_team" ] ], [ as_business(@business) { @request.reload.status }, history.last ]
     assert_equal @owner, as_business(@business) { @request.events.last.user }
 
+    third = as_business(@business) { ServiceRequest.create!(client: @maria, source: "phone", description: "Deck") }
+    tia = member("Tia", :admin)
+    assign(third, user: tia)
+    as_business(@business) { BusinessUser.find_by(user: tia).update!(role: "technician") }
+    assert_equal [ "new", nil, "role_changed" ], as_business(@business) { [ third.reload.status, third.follow_up, third.events.last.data["reason"] ] },
+                 "a role that can't see requests ends it too"
+
     @business.remove_user(@sam)
     assert_equal [ "new", nil ], as_business(@business) { [ other.reload.status, other.follow_up ] }
     assert_equal "left_team", as_business(@business) { other.events.last.data["reason"] }
