@@ -109,6 +109,31 @@ class Admin::MyDayFollowUpsTest < ActionDispatch::IntegrationTest
     assert_equal before, my_day_queries
   end
 
+  test "a new assignee can't remove the site photos an earlier one took, only their own" do
+    post admin_my_request_photos_path(@two_pm), params: { photos: [ photo ] }, xhr: true
+    marcus_photo = as_business(@business) { @two_pm.site_photos.sole }
+    priya = User.create!(email: "priya@example.com", password: "password123", first_name: "Priya", confirmed_at: Time.current)
+    BusinessUser.create!(user: priya, business: @business, role: "technician")
+    as_business(@business) { RequestFollowUp.assign!(@two_pm, { user: priya }, by: @owner) }
+    sign_in priya
+    post switch_admin_business_path, params: { business: @business.uid }
+
+    get admin_my_request_path(@two_pm)
+    assert_select "#request-site-photos li", 1
+    assert_select "button[aria-label='Remove site photo 1']", 0
+    delete admin_my_request_photo_path(@two_pm, marcus_photo)
+    assert_response :not_found
+    assert as_business(@business) { @two_pm.site_photos.exists?(marcus_photo.id) }
+
+    post admin_my_request_photos_path(@two_pm), params: { photos: [ photo ] }, xhr: true
+    priya_photo = as_business(@business) { @two_pm.site_photos.where.not(id: marcus_photo.id).sole }
+    get admin_my_request_path(@two_pm)
+    assert_select "button[aria-label='Remove site photo 1']", 0
+    assert_select "button[aria-label='Remove site photo 2']", 1
+    delete admin_my_request_photo_path(@two_pm, priya_photo)
+    assert_redirected_to admin_my_request_path(@two_pm, anchor: "photos")
+  end
+
   test "a done one from an earlier day waits under Still open from earlier until it's passed back" do
     patch done_admin_my_request_path(@two_pm)
     travel 1.day

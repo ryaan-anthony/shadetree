@@ -20,9 +20,13 @@ class Admin::MyRequestPhotosController < Admin::BaseController
     end
   end
 
-  # The person following it up can take a photo back off (a wrong one, a duplicate).
+  # The person following it up can take a photo they took back off (a wrong one, a duplicate);
+  # one an earlier assignee took is the record of their visit, so it's "not found".
   def destroy
-    @request.site_photos.find(params[:id]).purge_later
+    photo = @request.site_photos.find(params[:id])
+    raise ActiveRecord::RecordNotFound unless photo.metadata["uploaded_by"] == current_user.id
+
+    photo.purge_later
     redirect_to admin_my_request_path(@request, anchor: "photos"), notice: "Photo removed."
   end
 
