@@ -92,7 +92,7 @@
           <button class="<%= button_classes(:secondary) %>" disabled>Secondary</button>
           <button class="<%= button_classes(:tertiary, :icon) %>" disabled aria-label="Move up"><%= icon "arrow-up" %></button>
           <button class="<%= button_classes(:destructive) %>" disabled>Destructive</button>
-          <span class="<%= button_classes(:secondary, :sm) %>" aria-disabled="true"><%= icon "chevron-left" %> Previous</span>
+          <span class="<%= button_classes(:secondary, :sm) %>" role="link" aria-disabled="true"><%= icon "chevron-left" %> Previous</span>
         </div>
       <% end %>
     </section>

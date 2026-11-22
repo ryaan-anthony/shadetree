@@ -44,14 +44,14 @@
   .btn-destructive-solid:hover { background: var(--color-danger-ink); }
   .btn-brand { background: var(--color-brand-button); color: var(--color-brand-ink); }
   .btn-brand:hover { background: var(--color-brand-hover); } /* Branding#button_hover_color: keeps 4.5:1 */
-  /* PLT-14: disabled looks disabled in every rank: a flat grey fill and grey text, with no hover
-     (pointer events stay off, so no hover and no not-allowed cursor). <button disabled> and
-     aria-disabled="true" tell assistive technology. */
+  /* PLT-14: disabled looks disabled in every rank: a flat grey fill, muted text and no shadow,
+     with no hover (pointer events stay off, so no hover and no not-allowed cursor).
+     <button disabled> and aria-disabled="true" tell assistive technology. */
   .btn:disabled,
   .btn[aria-disabled="true"] {
     background: var(--color-sunken);
     border-color: var(--color-line);
-    color: var(--color-faint);
+    color: var(--color-muted);
     box-shadow: none;
     pointer-events: none;
   }
