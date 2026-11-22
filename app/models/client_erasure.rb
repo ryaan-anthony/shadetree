@@ -175,6 +175,8 @@ class ClientErasure
     @client.service_requests.find_each do |request|
       drop_files(request.photos_attachments)
       request.notes.delete_all
+      RequestFollowUp.where(service_request_id: request.id).delete_all # CLI-07: off the assignee's day, nobody told
+      scrub_events(request.events)
       changes = { contact_name: nil, contact_email: nil, contact_phone: nil, description: nil, address: {} }
       changes[:status] = "archived" unless request.status == "quoted"
       ServiceRequest.where(id: request.id).update_all(changes)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_20_100300) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_22_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -1154,6 +1154,32 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_100300) do
     t.check_constraint "discount_percent IS NULL OR discount_percent >= 0::numeric AND discount_percent <= 100::numeric", name: "quotes_discount_percent_range"
   end
 
+  create_table "request_follow_ups", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.string "uid", null: false
+    t.bigint "service_request_id", null: false
+    t.bigint "user_id", null: false
+    t.bigint "assigned_by_id"
+    t.string "kind", default: "visit", null: false
+    t.date "scheduled_on", null: false
+    t.string "timing", default: "anytime", null: false
+    t.datetime "starts_at"
+    t.datetime "window_ends_at"
+    t.integer "duration_minutes", default: 60, null: false
+    t.text "instructions"
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id", "user_id", "scheduled_on"], name: "idx_on_business_id_user_id_scheduled_on_2376eebb24"
+    t.index ["service_request_id"], name: "index_request_follow_ups_on_service_request_id", unique: true
+    t.index ["uid"], name: "index_request_follow_ups_on_uid", unique: true
+    t.index ["user_id"], name: "index_request_follow_ups_on_user_id"
+    t.check_constraint "(timing::text = 'anytime'::text) = (starts_at IS NULL) AND (timing::text = 'window'::text) = (window_ends_at IS NOT NULL)", name: "request_follow_ups_times"
+    t.check_constraint "duration_minutes >= 5 AND duration_minutes <= 1440", name: "request_follow_ups_duration"
+    t.check_constraint "kind::text = ANY (ARRAY['visit'::character varying, 'call'::character varying]::text[])", name: "request_follow_ups_kind"
+    t.check_constraint "timing::text = ANY (ARRAY['exact'::character varying, 'window'::character varying, 'anytime'::character varying]::text[])", name: "request_follow_ups_timing"
+  end
+
   create_table "role_events", force: :cascade do |t|
     t.bigint "business_id", null: false
     t.bigint "role_id"
@@ -1176,6 +1202,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_100300) do
     t.index "business_id, lower((name)::text)", name: "index_roles_on_business_and_name", unique: true
     t.index ["business_id"], name: "index_roles_on_business_id"
     t.index ["uid"], name: "index_roles_on_uid", unique: true
+  end
+
+  create_table "service_request_events", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "service_request_id", null: false
+    t.bigint "user_id"
+    t.string "kind", null: false
+    t.jsonb "data", default: {}, null: false
+    t.datetime "occurred_at", null: false
+    t.index ["business_id"], name: "index_service_request_events_on_business_id"
+    t.index ["service_request_id"], name: "index_service_request_events_on_service_request_id"
+    t.index ["user_id"], name: "index_service_request_events_on_user_id"
+    t.check_constraint "kind::text = ANY (ARRAY['assigned'::character varying, 'reassigned'::character varying, 'rescheduled'::character varying, 'updated'::character varying, 'unassigned'::character varying, 'ended'::character varying]::text[])", name: "service_request_events_kind"
   end
 
   create_table "service_request_notes", force: :cascade do |t|
@@ -1576,10 +1615,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_100300) do
   add_foreign_key "quotes", "service_requests", on_delete: :nullify
   add_foreign_key "quotes", "users", column: "created_by_id", on_delete: :nullify
   add_foreign_key "quotes", "users", column: "sent_by_id", on_delete: :nullify
+  add_foreign_key "request_follow_ups", "businesses", on_delete: :cascade
+  add_foreign_key "request_follow_ups", "service_requests", on_delete: :cascade
+  add_foreign_key "request_follow_ups", "users", column: "assigned_by_id", on_delete: :nullify
+  add_foreign_key "request_follow_ups", "users", on_delete: :cascade
   add_foreign_key "role_events", "businesses", on_delete: :cascade
   add_foreign_key "role_events", "roles", on_delete: :nullify
   add_foreign_key "role_events", "users", on_delete: :nullify
   add_foreign_key "roles", "businesses", on_delete: :cascade
+  add_foreign_key "service_request_events", "businesses", on_delete: :cascade
+  add_foreign_key "service_request_events", "service_requests", on_delete: :cascade
+  add_foreign_key "service_request_events", "users", on_delete: :nullify
   add_foreign_key "service_request_notes", "businesses"
   add_foreign_key "service_request_notes", "service_requests", on_delete: :cascade
   add_foreign_key "service_request_notes", "users", on_delete: :nullify

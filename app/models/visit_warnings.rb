@@ -6,6 +6,9 @@
 #
 # A visit's time for these checks runs from its start to its end (a window's latest arrival plus
 # the duration). "Anytime" visits are checked against the day only, and don't overlap anything.
+#
+# CLI-07: request follow-ups (RequestFollowUp) are checked the same way, against their request's
+# location, and visits and follow-ups warn about each other.
 class VisitWarnings
   def self.for(visits, hours: nil) = new(visits, hours:).messages
 
@@ -27,27 +30,37 @@ class VisitWarnings
 
   private
 
-  # CAT-07: each visit is checked against its job's location's hours, closures and zone.
-  def hours_for(visit)
-    @hours || ((@by_location ||= {})[visit.job.location_id] ||= OpeningHours.new(visit.job.location.primary? ? visit.business : visit.job.location))
+  # CAT-07: each visit is checked against its job's location's hours, closures and zone (a
+  # follow-up against its request's).
+  def hours_for(item)
+    return @hours if @hours
+
+    owner = item.is_a?(Visit) ? item.job : item.service_request
+    (@by_location ||= {})[owner.location_id] ||= owner.location.then { OpeningHours.new(_1.nil? || _1.primary? ? item.business : _1) }
   end
 
   # Visits on the same date only: a visit running past midnight from the day before isn't seen.
   def overlaps(visit)
     return [] if visit.anytime? || visit.assignee_ids.empty?
 
-    others.select { |other| other.scheduled_on == visit.scheduled_on && other.id != visit.id && !other.anytime? &&
+    others.select { |other| other.scheduled_on == visit.scheduled_on && !(other.class == visit.class && other.id == visit.id) && !other.anytime? &&
                             other.starts_at < visit.ends_at && visit.starts_at < other.ends_at }
-          .flat_map { |other| (other.assignees.map(&:id) & visit.assignee_ids).map { [ other, _1 ] } }
-          .map { |other, user_id| "#{people[user_id]} is on #{other.job.number} #{other.job.title} then (#{other.time_label.delete_prefix("Arrive ")})." }
+          .flat_map { |other| (other.assignee_ids & visit.assignee_ids).map { [ other, _1 ] } }
+          .map { |other, user_id| "#{people[user_id]} #{busy_with(other)} then (#{other.time_label.delete_prefix("Arrive ")})." }
   end
 
-  # Open visits on the same days for anyone going, in one query.
+  def busy_with(other) = other.is_a?(Visit) ? "is on #{other.job.number} #{other.job.title}" : "has a #{other.summary}"
+
+  # Open visits and request follow-ups on the same days for anyone going, in one query each.
   def others
     @others ||= begin
       ids = @visits.flat_map(&:assignee_ids).uniq
-      ids.empty? ? [] : Visit.open.where(scheduled_on: @visits.map(&:scheduled_on).uniq).joins(:assignments)
-                             .where(visit_assignments: { user_id: ids }).distinct.includes(:job, :assignees).to_a
+      days = @visits.map(&:scheduled_on).uniq
+      return @others = [] if ids.empty?
+
+      found = Visit.open.where(scheduled_on: days).joins(:assignments).where(visit_assignments: { user_id: ids }).distinct.includes(job: :location, assignments: []).to_a +
+              RequestFollowUp.where(scheduled_on: days, user_id: ids).includes(service_request: %i[client location]).to_a
+      found.each { _1.association(:business).target = @business } # one business (and its location count) for all of them, not one each
     end
   end
 

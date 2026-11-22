@@ -17,6 +17,8 @@ module ClientEventsHelper
     when "quote_approved", "quote_declined", "quote_changes_requested"
       [ RESPONSE_ICONS.fetch(event.kind), quote_response_text(event, subject), subject && staff_quote_path(subject) ]
     when "visit_scheduled" then [ "calendar", "Visit booked for #{data["when"]}#{visit_note(subject, data)}", subject && admin_job_path(subject.job) ]
+    when "follow_up_booked" # CLI-07: a site visit for a request (calls aren't on the timeline)
+      [ "map-pin", "Site visit booked for #{data["when"]}#{" (#{subject.title.downcase_first})" if subject}", subject && admin_service_request_path(subject) ]
     when "visit_completed" then [ "check-square", "Visit done#{" for #{subject.job.number}" if subject}", subject && admin_job_path(subject.job) ]
     when "visit_reopened" then [ "rotate-ccw", "Visit reopened#{" for #{subject.job.number}" if subject}", subject && admin_job_path(subject.job) ]
     when "visit_cancelled" then [ "x-circle", "Visit on #{data["when"]} cancelled#{" (#{subject.job.number})" if subject}", subject && admin_job_path(subject.job) ]

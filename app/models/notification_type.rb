@@ -56,6 +56,11 @@ class NotificationType
                    permission: :field_work, email_by_default: true, icon: "calendar", audience: :named),
     Definition.new(kind: "visit_changed", label: "A visit you're on changes", hint: "It moves, its instructions change, or you're taken off it.",
                    permission: :field_work, email_by_default: true, icon: "clock", audience: :named),
+    # CLI-07: to the person a request is assigned to follow up (any role).
+    Definition.new(kind: "request_assigned", label: "A request is given to you", hint: "A request is assigned to you to follow up, with its day.",
+                   permission: Permissions::CATALOG.keys, email_by_default: true, icon: "inbox", audience: :named),
+    Definition.new(kind: "request_changed", label: "A request you have changes", hint: "Its follow-up moves or changes, or it's taken off you.",
+                   permission: Permissions::CATALOG.keys, email_by_default: true, icon: "clock", audience: :named),
     Definition.new(kind: "job_ready_to_invoice", label: "A job is ready to invoice", hint: "The last visit on a job is completed.",
                    permission: :office, email_by_default: true, icon: "check-circle"),
     Definition.new(kind: "visit_cancelled", label: "A visit you're on is cancelled", hint: "With the reason, if one was given.",

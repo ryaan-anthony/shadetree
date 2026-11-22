@@ -7,6 +7,7 @@ class ServiceRequest < ApplicationRecord
   include AtLocation # CAT-07
 
   STATUSES = %w[new in_progress quoted archived].freeze
+  OPEN_STATUSES = %w[new in_progress].freeze # CLI-07: can be assigned and followed up
   SOURCES = %w[form phone email walk_in other].freeze
   MAX_PHOTOS = 5 # until plans set their own (BIL-01)
   PHOTO_MAX_BYTES = 10.megabytes
@@ -19,6 +20,9 @@ class ServiceRequest < ApplicationRecord
   has_many :views, class_name: "ServiceRequestView", dependent: :delete_all
   has_many :notes, -> { order(:created_at, :id) }, class_name: "ServiceRequestNote", dependent: :delete_all
   has_many :quotes, -> { order(:created_at) }, dependent: :nullify
+  # CLI-07: who's following it up, and the history of that.
+  has_one :follow_up, class_name: "RequestFollowUp", inverse_of: :service_request, dependent: :delete
+  has_many :events, -> { order(:occurred_at, :id) }, class_name: "ServiceRequestEvent", inverse_of: :service_request, dependent: :delete_all
   has_many_attached :photos do |attachable|
     attachable.variant :web, resize_to_limit: [ 640, 640 ], preprocessed: true
   end
@@ -44,10 +48,18 @@ class ServiceRequest < ApplicationRecord
   SOURCE_LABELS = { "form" => "Request form", "phone" => "Phone", "email" => "Email", "walk_in" => "In person", "other" => "Other" }.freeze
   def status_label = LABELS.fetch(status)
   def source_label = SOURCE_LABELS.fetch(source)
+  def open? = OPEN_STATUSES.include?(status)
 
   # A short reference for lists and quotes: R-<id> would leak volume, so the uid's start (case
   # kept: uids are case-sensitive).
   def reference = "R-#{uid.first(8)}"
+
+  # #289: how staff name it in lists (the reference is for support, shown on the request page).
+  def title
+    return "Request" if service_names.empty?
+
+    "Request for #{service_names.first}#{" and #{service_names.size - 1} more" if service_names.size > 1}"
+  end
 
   # CLI-04: opening a request records that this member has seen it.
   def viewed_by!(user)
@@ -57,10 +69,16 @@ class ServiceRequest < ApplicationRecord
 
   # Staff change the status by hand, except to Quoted: that happens when a quote is made.
   MANUAL_STATUSES = %w[new in_progress archived].freeze
-  def move_to!(status)
+  # CLI-07: archiving ends its follow-up, and so does setting it back to New (back in the pile
+  # for anyone; assigning moves it on again). Under the request's lock, as assigning takes it.
+  # `by` is who did it, for the history and notices.
+  def move_to!(status, by: nil)
     raise ArgumentError, "Can't set status #{status.inspect} by hand" unless MANUAL_STATUSES.include?(status.to_s)
 
-    update!(status:)
+    with_lock do
+      update!(status:)
+      follow_up&.end!(by:, reason: ("archived" if status.to_s == "archived")) if %w[new archived].include?(status.to_s)
+    end
   end
 
   # CLI-04: a draft quote from this request: its client and property (a property for the
@@ -83,6 +101,7 @@ class ServiceRequest < ApplicationRecord
       quote.service_request = self
       quote.save!
       update!(status: "quoted", property: property || self.property)
+      follow_up&.end!(by:, reason: "quoted") # CLI-07
       quote
     end
   end

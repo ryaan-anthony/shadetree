@@ -49,7 +49,7 @@ class Admin::ServiceRequestsController < Admin::BaseController
   end
 
   def status
-    @request.move_to!(params[:status])
+    @request.move_to!(params[:status], by: current_user)
     redirect_to admin_service_request_path(@request), notice: "Marked #{@request.status_label.downcase}."
   rescue ArgumentError
     head :unprocessable_content

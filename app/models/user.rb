@@ -192,6 +192,7 @@ class User < ApplicationRecord
       Invitation.where(accepted_by_id: id).update_all(email: deleted_email)
       EmailMessage.where(to: address).where(business_id: business_users.select(:business_id)).update_all(to: deleted_email)
       VisitAssignment.where(user_id: id, visit_id: Visit.open.select(:id)).delete_all
+      business_users.active.includes(:business).each { RequestFollowUp.release!(self, _1.business, by: nil) } # CLI-07: back to New, in each history
     end
   end
 
