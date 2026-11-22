@@ -5,3 +5,11 @@ en:
         issued_on: "Issue date"
         due_on: "Due date"
         payment_terms: "Payment terms"
+      payment:
+        payment_method: "Method"
+    errors:
+      models:
+        payment:
+          attributes:
+            # PAY-05 (owner, 2026-11-22): no default method, so staff choose one.
+            payment_method: { format: "%{message}", blank: "Choose how it was paid." }

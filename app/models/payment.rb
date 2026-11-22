@@ -24,8 +24,9 @@ class Payment < ApplicationRecord
   normalizes :note, with: ->(value) { value.to_s.strip.presence }
 
   validates :source, inclusion: { in: SOURCES }
-  validates :payment_method, inclusion: { in: METHODS.keys }
-  validates :payment_method, inclusion: { in: RECORDED_METHODS, message: "isn't one staff can record" }, if: :recorded?
+  validates :payment_method, presence: true
+  validates :payment_method, inclusion: { in: METHODS.keys, message: "Choose a method from the list." }, allow_blank: true
+  validates :payment_method, inclusion: { in: RECORDED_METHODS, message: "That method isn't one staff can record." }, if: -> { recorded? && payment_method.present? }
   validates :amount, presence: true
   validate { errors.add(:amount, "must be more than zero") if amount_cents && amount_cents <= 0 }
   validates :received_on, presence: true

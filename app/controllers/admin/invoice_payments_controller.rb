@@ -14,7 +14,8 @@ class Admin::InvoicePaymentsController < Admin::BaseController
   def new
     return redirect_to(helpers.staff_invoice_path(@invoice), alert: cannot_pay_message) unless @invoice.payable?
 
-    @payment = @invoice.payments.new(currency: @invoice.currency, received_on: current_business.today, payment_method: "check")
+    # PAY-05 (owner, 2026-11-22): no default method; they choose one.
+    @payment = @invoice.payments.new(currency: @invoice.currency, received_on: current_business.today)
     @payment.amount = @invoice.balance
   end
 

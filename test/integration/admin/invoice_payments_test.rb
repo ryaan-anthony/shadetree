@@ -52,6 +52,23 @@ class Admin::InvoicePaymentsTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", new_admin_invoice_payment_path(@invoice), 0, "nothing left to pay"
   end
 
+  test "no method is chosen for them: leaving it out says so and records nothing (owner, 2026-11-22)" do
+    get new_admin_invoice_payment_path(@invoice)
+    assert_select "select[name='payment[payment_method]'] option[selected]", 0
+    assert_select "select[name='payment[payment_method]'] option[value='']", "Choose one"
+    record("50", payment_method: "")
+    assert_response :unprocessable_content
+    assert_select ".field", /Method.*Choose how it was paid\./m
+    assert_select "select[name='payment[payment_method]'][aria-invalid=true]"
+    assert_equal [ "sent", 0 ], [ fresh.status, fresh.amount_paid_cents ]
+    record("50", payment_method: "card")
+    assert_select ".field", /That method isn't one staff can record\./
+
+    payment = as_business(@business) { fresh.record_payment!(by: @owner, amount: "50", received_on: @today, payment_method: "cash") }
+    get edit_admin_invoice_payment_path(@invoice, payment)
+    assert_select "select[name='payment[payment_method]'] option[selected][value=cash]", 1, "a recorded payment keeps its method"
+  end
+
   test "overpayment, a bad amount or date, and paid or void invoices are refused" do
     record("200.01")
     assert_response :unprocessable_content

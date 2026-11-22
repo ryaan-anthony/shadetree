@@ -38,9 +38,20 @@ class Admin::PaymentReceiptsTest < ActionDispatch::IntegrationTest
     assert_includes mail.text_part.body.to_s, "North yard"
   end
 
+  test "the box is ticked to start with; after a mistake it stays as they left it (owner, 2026-11-22)" do
+    get new_admin_invoice_payment_path(@invoice)
+    assert_select "input[type=checkbox][name=send_receipt][checked]"
+
+    post admin_invoice_payments_path(@invoice), params: { payment: { amount: "50", received_on: @business.today.iso8601, payment_method: "" } }
+    assert_response :unprocessable_content
+    assert_select "input[type=checkbox][name=send_receipt]:not([checked])", 1, "unticked, it stays unticked"
+    post admin_invoice_payments_path(@invoice), params: { send_receipt: "1", payment: { amount: "50", received_on: @business.today.iso8601, payment_method: "" } }
+    assert_select "input[type=checkbox][name=send_receipt][checked]"
+    assert_no_enqueued_emails
+  end
+
   test "ticking the box emails the client a receipt with what's left; it shows on the payment" do
     get new_admin_invoice_payment_path(@invoice)
-    assert_select "input[type=checkbox][name=send_receipt]:not([checked])"
     assert_select "label", /Email a receipt to maria@example.com/
 
     record("50")
