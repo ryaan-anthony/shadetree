@@ -36,9 +36,11 @@ be sent by the technician straight away; anything else still goes to "Ready for 
 - [ ] A draft qualifies only when all of these hold:
       - every line is a service with the switch on, keeping that service's unit, current price
         and taxable setting, with no line discount; quantity, name and description may change;
-      - no quote discount, and the total is within the cap if there is one;
+      - no quote discount, and the total, tax included, is within the cap if there is one;
       - the quote is at its request's location, so its prices are that location's (CAT-08);
       - its tax rates and "prices include tax" are the defaults for that location or business.
+      Only these are locked: terms, valid-until, attachments and the email's subject and message
+      may be edited. A $0.00 total qualifies like any other, after the usual $0 confirmation.
 - [ ] It's checked when the button shows, and again inside the send's transaction (as the plan
       allowance is claimed, BIL-03), so a late autosave can't slip a change through.
 - [ ] On a qualifying draft the technician sees "Send quote" (sending as QTE-07 allows: to the
@@ -47,8 +49,10 @@ be sent by the technician straight away; anything else still goes to "Ready for 
       naming the first thing that needs the office ("Gutter clean: price changed", "Over $500",
       "Tax changed"). A line whose service price changed after it was added reads "Gutter clean:
       the price list changed"; removing and adding it again picks up the new price and clears it.
-- [ ] A send counts toward the plan like any send (BIL-02) and follows BIL-03; when sending is
-      blocked, the technician is told to ask the owner and can still mark it ready for review.
+- [ ] A send counts toward the plan like any send (BIL-02) and follows BIL-03, with no grace
+      send: once the period's quotes are used, it's blocked, the technician is told to ask the
+      owner, and can still mark it ready for review. Without a confirmed email they see the
+      office's notice (ACC-01) and can still mark it ready for review.
 - [ ] The quote's history records that it was sent without review, by whom, and why it qualified;
       the office sees "Sent by" on the quote as for any send.
 - [ ] Turning a service's switch off, archiving it, or changing its price stops new sends of
@@ -56,7 +60,8 @@ be sent by the technician straight away; anything else still goes to "Ready for 
 - [ ] The switch, the cap and the reasons work at 360 px.
 - [ ] Tests cover qualifying and non-qualifying drafts (custom line, price edit, changed price
       list, discount, mixed services, archived service, taxable change, changed unit, changed tax
-      rates or "prices include tax", another location, the cap, a revision), the recheck inside
+      rates or "prices include tax", another location, the cap with tax, $0.00, edited terms and
+      email, a revision), no grace send, an unconfirmed email, the recheck inside
       the send, roles, the plan limit, and tenancy.
 
 ## Out of scope
@@ -78,16 +83,11 @@ be sent by the technician straight away; anything else still goes to "Ready for 
   list (owner, 2026-11-22).
 - Every plan, not a plan feature (owner, 2026-11-22).
 - Changing a line's taxable setting counts as a price edit (owner, 2026-11-22).
-
-## Open questions
-
-- At the plan limit, can a technician's send use BIL-03's one extra (with its warning), like
-  anyone else's? *Recommend: yes; only "blocked" refuses.*
-- Does a $0.00 total ever qualify? *Recommend: never; the reason reads "Total is $0.00" and it
-  goes to review.*
-- Terms, valid-until, attachments and the email's subject and message: may technicians edit
-  them? *Recommend: yes, they may, with the email starting from the business's own template.*
-  The alternative: any change from the defaults sends it to review.
-- Is the cap before or after tax? *Recommend: after; it's what the client pays.*
-- What does a technician with an unconfirmed email see? *Recommend: the same notice the office
-  sees (ACC-01), with "Ready for review" still available.*
+- No grace send, for anyone: once used reaches the limit, sends are blocked (owner,
+  2026-11-22; changes BIL-03, code in a separate PR).
+- A $0.00 total qualifies like any other; the usual $0 confirmation applies (owner, 2026-11-22).
+- Terms, valid-until, attachments and the email's subject and message may be edited; only
+  lines, prices, units, tax and location are locked (owner, 2026-11-22).
+- The cap is measured after tax (owner, 2026-11-22).
+- Without a confirmed email, the office's notice, with "Ready for review" still available
+  (coordinator, follows existing behaviour).

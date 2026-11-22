@@ -31,10 +31,10 @@ of the limit and the reset date. The existing notices stay.
       (the reset date in the business's time zone, BIL-02). Others don't see it.
 - [ ] The label says what it counts, as #289's wording does: "Free quotes this month", or
       "Starter quotes this billing period".
-- [ ] The bar's state follows BIL-03: normal; approaching (from the warning threshold); at the
-      limit, with "1 extra left"; then "Limit reached". Each state is said in words as well as
-      colour, using the theme's tones. Over the limit it reads "6 of 5 · Limit reached" with the
-      bar full.
+- [ ] The bar's state follows BIL-03: normal; approaching (from the warning threshold); then
+      "Limit reached" once used reaches the limit (no grace send). Each state is said in words as
+      well as colour, using the theme's tones. Over the limit, which only happens after a
+      downgrade mid-period, it reads "6 of 5 · Limit reached" with the bar full.
 - [ ] Unlimited plans show the count without a bar ("42 quotes sent this billing period · no
       limit"). A plan that doesn't include sending says so (linked as below).
 - [ ] During a trial it shows the trial plan's limit, marked "(trial)", and "Trial ends Dec 3"
@@ -52,7 +52,8 @@ of the limit and the reset date. The existing notices stay.
 - [ ] The count is the same number Settings → Plan and Home show, is current on each page load,
       and adds at most one fast query per page.
 - [ ] BIL-03's notices (builder, send page, Home) and Home's allowance line are unchanged.
-- [ ] Tests cover each state (over the limit too), unlimited and not-included plans, a trial, a
+- [ ] Operators viewing as a member (OPS-03) see it read-only, by that member's rules.
+- [ ] Tests cover each state (over the limit after a downgrade too), unlimited and not-included plans, a trial, a
       mid-period plan change, who sees it, the link rule, and that another business's usage is
       never shown.
 
@@ -70,8 +71,7 @@ of the limit and the reset date. The existing notices stay.
 - The reset date ("Resets Dec 1"), not a countdown (owner, 2026-11-22).
 - Always shown, not only near the limit (owner, 2026-11-22).
 - Unlimited plans show the count with no bar (owner, 2026-11-22).
-
-## Open questions
-
-- Do operators viewing as a member (OPS-03) see the meter? *Recommend: yes, read-only, with the
-  Plan link only if that member could open it.*
+- No grace send: "Limit reached" from used = limit; BIL-03's "1 extra left" is gone (owner
+  decision 2026-11-22: no grace send; a separate PR makes the code change).
+- Operators viewing as a member see it read-only, with the Plan link only if that member could
+  open the Plan page (coordinator, follows existing behaviour).
