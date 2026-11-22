@@ -254,10 +254,57 @@ class Admin::ScheduleFollowUpsTest < ActionDispatch::IntegrationTest
   end
 
   test "an empty week points to the next follow-up booked after it" do
-    get admin_schedule_path(date: (@monday - 7).iso8601) # nothing booked the week before
     view = ScheduleView.new(@business, date: @monday - 7, follow_ups: true)
     assert_equal @site.id, as_business(@business) { view.next_follow_up_after&.service_request_id }
     assert_nil as_business(@business) { ScheduleView.new(@business, date: @monday - 7, follow_ups: false).next_follow_up_after }, "not for people who can't see requests"
     assert_nil as_business(@business) { ScheduleView.new(@business, date: @monday, follow_ups: true).next_follow_up_after }, "not when something's booked"
+  end
+
+  test "the next follow-up after an empty week keeps to the person, the location, and open ones" do
+    @business.update!(plan_overrides: { "features" => { "locations" => true } })
+    north = as_business(@business) { Location.create!(name: "North yard") }
+    week_before = @monday - 7
+    view = ->(**options) { as_business(@business) { ScheduleView.new(@business, date: week_before, follow_ups: true, **options).next_follow_up_after&.service_request_id } }
+    assert_equal @site.id, view.()
+    assert_equal @call.id, view.(member: @owner.id)
+    as_business(@business) { @site.follow_up.done!(by: @tech) }
+    assert_equal @call.id, view.(), "a done one isn't coming up"
+    assert_nil view.(location: north)
+    as_business(@business) { @call.update!(location: north) }
+    assert_equal @call.id, view.(location: north)
+  end
+
+  test "saving from a slot returns to the slot's day, keeping the person filter only when it's theirs; the form says what a moved one was" do
+    get edit_admin_service_request_follow_up_path(@site, from: "schedule", on: "2026-11-26", at: "11:00", grid_zone: "America/New_York", member: "unassigned")
+    assert_select "#follow-up-was", /Now: Marcus Reyes, Mon, Nov 23 · 2 pm/
+    patch admin_service_request_follow_up_path(@site), params: { from: "schedule", member: "unassigned", slot: "slot-2026-11-26-11-none",
+                                                                 request_follow_up: { user_id: @tech.id, scheduled_on: "2026-11-26", timing: "exact", start_time: "11:00",
+                                                                                      lock_version: follow_up.lock_version } }
+    assert_redirected_to admin_schedule_path(date: "2026-11-26", focus: @site.uid), "no Not assigned filter: it wouldn't show there"
+
+    patch admin_service_request_follow_up_path(@site), params: { from: "schedule", member: @tech.id, request_follow_up: { user_id: @tech.id, lock_version: 0 } }
+    assert_redirected_to edit_admin_service_request_follow_up_path(@site, member: @tech.id, from: "schedule"), "a stale form keeps the way back"
+  end
+
+  test "the slot panel leaves out done follow-ups, lists the calendar's location's requests, and labels them apart" do
+    as_business(@business) { @call.follow_up.done!(by: @owner) }
+    get admin_schedule_new_visit_path(on: "2026-11-25")
+    assert_select "#new-follow-up option", { text: /Ana Diaz/, count: 0 }, "done: waiting for the quote or a pass back"
+    assert_select "#new-follow-up input[type=submit][value='Continue with request']"
+    assert_select "#new-follow-up-request-help", /Choosing an assigned one moves it here/
+
+    @business.update!(plan_overrides: { "features" => { "locations" => true } })
+    north = as_business(@business) { Location.create!(name: "North yard") }
+    get admin_schedule_new_visit_path(on: "2026-11-25", location: north.uid)
+    assert_select "#new-follow-up", /No open requests to follow up/
+  end
+
+  test "a slot on the New York calendar books a Los Angeles request at the same moment on its clock" do
+    @business.update!(plan_overrides: { "features" => { "locations" => true } })
+    la = as_business(@business) { Location.create!(name: "LA yard", timezone: "America/Los_Angeles") }
+    other = as_business(@business) { ServiceRequest.create!(client: @site.client, source: "phone", description: "Patio", location: la) }
+    get admin_schedule_new_follow_up_path(request: other.uid, on: "2026-11-25", at: "13:00", grid_zone: "America/New_York")
+    follow_redirect!
+    assert_select "input[name='request_follow_up[start_time]'][value='10:00']", 1, "1 pm in New York is 10 am in Los Angeles"
   end
 end

@@ -9,6 +9,7 @@
   <% if from_schedule? %><%# JOB-07: booked from a slot on the calendar, so back there afterwards %>
     <%= hidden_field_tag :from, "schedule", id: nil %><% calendar_params.each do |name, value| %><%= hidden_field_tag name, value, id: nil %><% end %>
   <% end %>
+  <% if @was %><div class="banner banner-info" id="follow-up-was"><%= icon "info" %><p>Now: <%= @was %>. Saving moves it to the time below.</p></div><% end %>
   <%= render "admin/request_follow_ups/warnings", action: new_follow_up ? "assign" : "save" %>
   <%= card do %>
     <%= render "admin/request_follow_ups/fields", f:, follow_up: @follow_up %>

@@ -82,14 +82,16 @@ class ScheduleView
   end
 
   # JOB-07, for #289's "Next visit" hint on an empty period: the next follow-up booked after it,
-  # for the same person (none for "Nobody yet"), when follow-ups are shown. The hint takes the
+  # for the same person (none for "Not assigned") at the filtered location, when follow-ups are shown. The hint takes the
   # earlier of this and the next visit.
   def next_follow_up_after
     return if !@show_follow_ups || @member == "unassigned" || items.any?
+    return @next_follow_up_after if defined?(@next_follow_up_after)
 
     scope = RequestFollowUp.where(scheduled_on: [ dates.last + 1, place.today ].max.., done_at: nil)
     scope = scope.where(user_id: @member) if @member
-    scope.order(:scheduled_on, Arel.sql("starts_at NULLS LAST"), :id).first
+    scope = scope.where(service_request_id: ServiceRequest.where(location_id: @location.id).select(:id)) if @location
+    @next_follow_up_after = scope.order(:scheduled_on, Arel.sql("starts_at NULLS LAST"), :id).first
   end
 
   # Visits and follow-ups together, in time order.

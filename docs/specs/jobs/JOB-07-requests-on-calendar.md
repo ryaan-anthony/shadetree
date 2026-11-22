@@ -40,7 +40,7 @@ calendar, look different from job visits, and can be moved and reassigned the sa
       time and person, and back to the calendar.*
 - [x] The person filter, the colour by person or status, and the phone agenda include
       follow-ups.
-      *Booked hours count them; "Nobody yet" never has one (a follow-up always has someone).*
+      *Booked hours count them; "Not assigned" never has one (a follow-up always has someone).*
 - [x] Moves and reassignments notify as in CLI-07, and are refused for people who can't manage
       requests, with tests for roles and tenancy.
 
@@ -56,10 +56,13 @@ calendar, look different from job visits, and can be moved and reassigned the sa
 - Visits and follow-ups share the grid (ScheduleView "items"), warnings, the Undo toast, the
   panel and the drag controller; moves go through CLI-07's assign. For #289's "Next visit" hint
   on an empty week, ScheduleView#next_follow_up_after gives the next follow-up (to wire in once
-  #289's hint lands). Dev seeds already put follow-ups on this week.
+  #289's hint lands). Dev seeds put follow-ups on the demo week (Marcus's Monday site visit,
+  Priya's Thursday one, the owner's call) and leave one open request unassigned.
 
 ## Decisions
 
 - Calls appear too, styled lighter than site visits (owner, 2026-11-21).
 - Follow-ups are shown to, and moved by, people who can see requests; a schedule-only role
   sees the visits.
+- Booking an already-assigned request from a slot moves its follow-up there (the form says
+  what it is now); done ones aren't offered, as they wait for the quote or a pass back.
