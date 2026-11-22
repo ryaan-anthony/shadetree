@@ -173,6 +173,18 @@ class BusinessUser < ApplicationRecord
 
   def tour_offered? = tour_status == "offered"
 
+  # ACC-08 (owner, 2026-11-22): the Owner of a business that existed before the tour, or that
+  # someone else created, is offered it once on Home while its setup checklist isn't finished,
+  # as its creator is: it's recorded as offered, and the first run counts as for a creator. Not
+  # once they've had the tour (offered, taken or skipped) in any business: one offer per person.
+  # The caller also checks the checklist isn't complete (hidden and then finished, it's never
+  # stamped onboarded).
+  def tour_offer_due?
+    active? && owner? && tour_status.nil? && business.onboarded_at.nil? && !user.business_users.where.not(tour_status: nil).exists?
+  end
+
+  def offer_tour! = update!(tour_status: "offered", tour_offered_at: Time.current)
+
   # ACC-08: a first-time tip was shown ("seen") or hidden ("dismissed"); the first time is kept.
   def record_tip!(key, event)
     raise ArgumentError, "Unknown tip #{key.inspect}" unless FirstTimeTips::KEYS.include?(key)

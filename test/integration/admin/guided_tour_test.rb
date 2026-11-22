@@ -12,8 +12,9 @@ class Admin::GuidedTourTest < ActionDispatch::IntegrationTest
   def record(event, stop, format: :json) = patch(admin_tour_path(format:), params: { event:, stop: })
 
   test "a new business's Owner is offered the tour on Home until they take it or skip it" do
+    @business.update!(onboarded_at: Time.current)
     get admin_root_path
-    assert_select "#tour-offer", 0, "existing businesses aren't offered it"
+    assert_select "#tour-offer", 0, "an existing business with its checklist finished isn't offered it"
     assert_select "#tour[role=dialog][aria-modal=false][aria-labelledby=tour-title]"
     assert_select "#help-menu ~ .menu a[href=?]", admin_root_path(tour: "start"), text: /Take the tour again/
 
@@ -33,6 +34,106 @@ class Admin::GuidedTourTest < ActionDispatch::IntegrationTest
     assert_equal %w[skipped offer], [ membership.reload.tour_status, membership.tour_stop ]
     follow_redirect!
     assert_select "#tour-offer", 0
+  end
+
+  # Owner decision of 2026-11-22.
+  test "an existing business's Owner, its checklist unfinished, is offered it once on Home, recorded as a creator's" do
+    @business.update!(onboarded_at: nil)
+    assert_nil @membership.tour_status
+    get admin_root_path
+    assert_select "#tour-offer button[data-tour-start]", "Take a 2-minute tour"
+    assert_select "#tour-offer form[action=?]", admin_tour_path
+    assert_equal "offered", @membership.reload.tour_status
+    offered_at = @membership.tour_offered_at
+    assert offered_at
+    get admin_root_path
+    assert_equal offered_at, @membership.reload.tour_offered_at, "offered once"
+
+    record "start", "home"
+    record "step", "quotes"
+    record "finish", "settings"
+    assert_equal %w[finished settings], [ @membership.reload.tour_status, @membership.tour_stop ]
+    assert @membership.tour_ended_at
+    get admin_root_path
+    assert_select "#tour-offer", 0, "not again after it's finished"
+    assert_equal "finished", @membership.reload.tour_status
+  end
+
+  test "skipped, it isn't offered again; nor to someone who's had it in another business" do
+    @business.update!(onboarded_at: nil)
+    get admin_root_path
+    patch admin_tour_path, params: { event: "end", stop: "offer" }
+    assert_equal %w[skipped offer], [ @membership.reload.tour_status, @membership.tour_stop ]
+    get admin_root_path
+    assert_select "#tour-offer", 0
+
+    other = Business.create!(name: "Second Yard", owner: users(:one))
+    other.business_users.find_by!(user: users(:one)).update_columns(tour_status: nil, tour_offered_at: nil) # as if it predated the tour
+    post switch_admin_business_path, params: { business: other.uid }
+    get admin_root_path
+    assert_select "#tour-offer", 0, "one offer per person"
+    assert_nil other.business_users.find_by!(user: users(:one)).tour_status
+  end
+
+  # Every step of the checklist done. Payments aren't set up here, so the "Get paid online" step
+  # must be absent: a gateway that isn't configured, whatever an earlier test left behind.
+  def complete_setup!
+    use_fake_payment_gateway(configured: false)
+    as_business(@business) do
+      CatalogItem.create!(name: "Weekly mowing", unit: "visit", unit_price: "45")
+      Client.create!(display_name: "Maria Lopez", contact_methods_attributes: [ { kind: "phone", value: "5125550100" } ])
+    end
+    @business.update_columns(first_quote_sent_at: 1.day.ago, onboarded_at: nil)
+    assert as_business(@business) { SetupChecklist.new(@business.reload, membership: @membership).complete? }, "the precondition: setup is complete"
+  end
+
+  test "an Owner whose setup is complete but not yet stamped isn't offered it" do
+    complete_setup!
+    get admin_root_path
+    assert_select "#tour-offer", 0
+    assert_nil @membership.reload.tour_status
+  end
+
+  test "hidden and then completed (never stamped onboarded), no offer" do
+    complete_setup!
+    @membership.update!(setup_hidden_at: 1.day.ago)
+    get admin_root_path
+    assert_nil @business.reload.onboarded_at, "a hidden checklist isn't stamped"
+    assert_select "#tour-offer", 0
+    assert_nil @membership.reload.tour_status
+  end
+
+  test "Turbo's hover prefetch shows the offer but doesn't record it; the real visit does" do
+    @business.update!(onboarded_at: nil)
+    get admin_root_path, headers: { "X-Sec-Purpose" => "prefetch" }
+    assert_select "#tour-offer"
+    assert_nil @membership.reload.tour_status
+    get admin_root_path
+    assert_equal "offered", @membership.reload.tour_status
+  end
+
+  test "only Owners are offered it, not Admins or Technicians (they have Help and My day)" do
+    @business.update!(onboarded_at: nil)
+    [ member_with_role(:admin), member_with_role(:technician) ].each do |user|
+      sign_in user
+      post switch_admin_business_path, params: { business: @business.uid }
+      get admin_root_path
+      follow_redirect! if response.redirect?
+      assert_select "#tour-offer", 0
+      assert_nil @business.business_users.find_by!(user:).tour_status
+    end
+  end
+
+  test "support viewing as an existing business's Owner never gets the offer, and doesn't use it up" do
+    business = businesses(:two)
+    owner = business_users(:two)
+    business.update!(onboarded_at: nil)
+    sign_in_operator
+    post ops_business_impersonation_path(business), params: { member: owner.uid, reason: "Ticket: walking through setup" }
+    get admin_root_path
+    assert_response :success
+    assert_select "#tour-offer", 0
+    assert_nil owner.reload.tour_status, "still to be offered to the Owner"
   end
 
   test "each move is recorded: started, the stop reached, then finished or ended where they stopped" do
