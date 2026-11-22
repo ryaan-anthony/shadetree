@@ -6,7 +6,7 @@ module Observability
 
     def report(error, handled:, severity:, context:, source:)
       payload = {
-        error_class: error.class.name, message: Observability.scrub(error.message),
+        error_class: error.class.name, message: Observability.error_message(error),
         location: backtrace(error).first, backtrace: backtrace(error).first(10), handled:, severity:, source:, **context
       }
       Observability.log(LEVELS.fetch(severity, :warn), error.is_a?(Alert) ? "alert" : "error", **payload)

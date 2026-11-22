@@ -31,17 +31,22 @@ Option 3. `sentry-ruby` and `sentry-rails`, initialised only when `SENTRY_DSN` i
 (`config/initializers/observability.rb`). `Observability::SentryTracker` is the tracker:
 exceptions become Sentry exceptions, `Observability.alert` becomes a warning message grouped by
 its text. sentry-rails' request middleware is removed from the stack, its job extension skips
-every adapter, and its `Rails.error` subscriber stays off, so each error is sent once, from
-`Observability::ErrorSubscriber`. `before_send` drops the request, user details (but the id),
+every adapter, its `Rails.error` subscriber stays off and the SDK's patches are disabled, and
+`before_send` drops any error event our tracker didn't mark, so each error is sent once, from
+`Observability::ErrorSubscriber`, and nothing else can send one. Each error class and place is
+capped at 10 events an hour per process. No trace headers go out on outbound requests. `before_send` drops the request, user details (but the id),
 breadcrumbs, frame variables and source lines; masks context, tags and extra by
 `config.filter_parameters` plus a wider key list; and scrubs exception messages (emails,
-phone-like numbers, database row details, SQL literals). Tags carry the business id, never its
+phone-like numbers, link tokens and file addresses, file names, database row details, SQL
+literals; for Mail, SMTP and Stripe errors also the values they quote). Tags carry the business id, never its
 name. Release is `APP_REVISION` (the deployed commit), environment `SENTRY_ENVIRONMENT` or the
 deploy's environment. Tracing, profiling, logs and sessions are off.
 
 Job health uses the one Cron monitor: `JobHealthCheckJob` checks in as `job-health` every run,
 `error` while jobs fail or the queue is backlogged, so Sentry also notices when the check stops
-(workers down). Backlog messages repeat at most hourly to protect the quota.
+(workers down). Backlog messages repeat at most hourly to protect the quota. Backups too (owner,
+2026-11-22): stale or untested ones (`/up/backup`'s rule) raise a message with the same throttle
+and fail the check-in.
 
 ## Consequences
 
@@ -50,9 +55,9 @@ Job health uses the one Cron monitor: `JobHealthCheckJob` checks in as `job-heal
   from client details. `test/lib/sentry_tracker_test.rb` sends real request, job, database and
   alert events through Sentry's test transport and fails on any personal detail.
 - Past 5,000 errors a month events are dropped until the reset; the log keeps everything.
-- Sentry is a new sub-processor (ids and scrubbed messages only); the sub-processors page needs
-  a new version before production sends to it (owner's call).
-- The uptime check is separate (PLT-10 open question); Sentry's one free uptime monitor is one of
-  the options.
+- Sentry is a new sub-processor (ids and scrubbed messages only). Owner, 2026-11-22: connect
+  now; add Sentry to the sub-processors page when the legal drafts are finalised (#274).
+- Uptime (owner, 2026-11-22): Sentry's one included uptime monitor, on production `/up`. The
+  other targets (`/up/jobs`, `/up/backup`, a client-link page, staging) wait for more monitors.
 - **Cost:** $0 on the Developer plan at launch scale; the Team plan ($26/month) if the quota or a
   second user is needed.

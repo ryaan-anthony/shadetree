@@ -22,8 +22,9 @@ class SentryTrackerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # Sentry is started for each test and closed after it, so no other test runs with it on.
   setup do
-    Sentry.init { |config| Observability::SentryTracker.configure(config, dsn: nil) } unless Sentry.initialized?
+    Sentry.init { |config| Observability::SentryTracker.configure(config, dsn: nil) }
     setup_sentry_test { |config| config.release = "0123abc"; config.environment = "staging"; config.enabled_environments = %w[staging] }
     Observability.tracker = Observability::SentryTracker.new
     @business = businesses(:one)
@@ -32,6 +33,7 @@ class SentryTrackerTest < ActionDispatch::IntegrationTest
   teardown do
     Observability.tracker = nil
     teardown_sentry_test
+    Sentry.close
   end
 
   def assert_private(event)
@@ -53,6 +55,7 @@ class SentryTrackerTest < ActionDispatch::IntegrationTest
     assert_equal [ false, 0.0, [], false ], [ config.send_default_pii, config.traces_sample_rate, config.breadcrumbs_logger, config.data_collection.database_query_data ]
     assert_not config.data_collection.user_info
     assert_includes config.rails.skippable_job_adapters, "ActiveJob::QueueAdapters::SolidQueueAdapter"
+    assert_equal [ [], false ], [ config.enabled_patches, config.propagate_traces ]
     assert_not Rails.application.middleware.include?(Sentry::Rails::CaptureExceptions)
   end
 
@@ -105,7 +108,7 @@ class SentryTrackerTest < ActionDispatch::IntegrationTest
     Sentry.with_scope do |scope|
       scope.set_extras(email: "maria@example.com", body: "gate code 4471", count: 2)
       scope.set_user(id: 7, email: "maria@example.com", ip_address: "203.0.113.9")
-      Sentry.capture_message("boom")
+      Rails.error.report(RuntimeError.new("boom"), handled: true)
     end
 
     event = sentry_events.sole
@@ -120,5 +123,47 @@ class SentryTrackerTest < ActionDispatch::IntegrationTest
     event = sentry_events.sole
     assert_equal [ "Background jobs failed", "warning", [ "alert", "Background jobs failed" ] ], [ event.message, event.level.to_s, event.fingerprint ]
     assert_equal 2, event.contexts[:shadetree][:new_failures]
+  end
+
+  test "only the app's own reports are sent: the SDK capturing on its own is dropped" do
+    Sentry.capture_exception(RuntimeError.new("from Action Cable or rails runner"))
+    assert_empty sentry_events
+  end
+
+  test "messages lose link tokens, labelled numbers, bare addresses and file names" do
+    token = "4kGx9QmZr2TbW7nYp3HcV8sJd6LfA1eE"
+    [ "Not a valid URL: https://getshadetree.com/c/#{token}/invoice/paid",
+      "call 555-010-0100.", "phone=5550100100 missing", "tel:+15550100100",
+      "Invalid email: maria@examplecom", "Upload maria-lopez-kitchen.jpg failed" ]
+      .each { Rails.error.report(RuntimeError.new(_1), handled: true) }
+
+    values = sentry_events.map { _1.exception.values.sole.value }
+    assert_equal [ "Not a valid URL: https://getshadetree.com/c/[FILTERED]/invoice/paid", "call [NUMBER].", "phone=[NUMBER] missing",
+                   "tel:[NUMBER]", "Invalid email: [EMAIL]", "Upload [FILE] failed" ], values
+    assert_no_match token, values.join
+  end
+
+  test "mail, SMTP and Stripe errors lose the values they quote" do
+    error = Class.new(StandardError) { def self.name = "Mail::Field::ParseError" }
+    Rails.error.report(error.new("Mail::AddressList can not parse |Maria Lopez <maria@example.com>|: bad"), handled: true)
+
+    assert_equal "Mail::AddressList can not parse […]: bad", sentry_events.sole.exception.values.sole.value
+  end
+
+  test "validation errors name the model and attributes, never the messages" do
+    as_business(@business) do
+      client = Client.new
+      client.errors.add(:display_name, "Maria Lopez is taken")
+      Rails.error.report(ActiveRecord::RecordInvalid.new(client), handled: true)
+    end
+
+    assert_equal "Validation failed: Client display_name", sentry_events.sole.exception.values.sole.value
+  end
+
+  test "each error class and place is sent at most 10 times an hour; alerts aren't capped" do
+    12.times { Rails.error.report(RuntimeError.new("again"), handled: true) }
+    12.times { Observability.alert("Job queue backlog over threshold") }
+
+    assert_equal [ 10, 12 ], [ sentry_events.count { _1.exception }, sentry_events.count { _1.message.present? } ]
   end
 end

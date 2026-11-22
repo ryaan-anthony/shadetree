@@ -9,7 +9,7 @@ module Observability
       controller = context.delete(:controller)
       job = context.delete(:job)
 
-      fields = { release: Observability.release, environment: ENV["APP_ENVIRONMENT"].presence || Rails.env } # staging or production: the deploy sets it (PLT-09)
+      fields = { release: Observability.release, environment: Observability.environment }
       fields.merge!(Observability.request_fields(controller)) if controller
       fields.merge!(job_fields(job)) if job.is_a?(ActiveJob::Base)
       fields.merge!(Observability.current_fields) { |_key, from_job, _current| from_job }

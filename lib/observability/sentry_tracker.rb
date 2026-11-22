@@ -4,8 +4,10 @@
 # One road in: Observability::ErrorSubscriber hands every Rails.error report (unhandled request and
 # job exceptions, the handled ones the app reports, Observability.alert) to #call, with the payload
 # ErrorContext already sanitized. sentry-rails' own captures (its Rack middleware, its Active Job
-# extension, its Rails.error subscriber) are switched off, so no event is built from a request's
-# params, headers or cookies or from a job's arguments.
+# extension, its Rails.error subscriber) and the SDK's patches (Puma, Net::HTTP, …) are switched
+# off, and before_send drops any error event #call didn't mark, so nothing else (Action Cable's
+# handler, `rails runner`'s exit hook) can send one. #call also caps each error class and place at
+# HOURLY_CAP events an hour, so an outage can't spend the month's quota.
 #
 # Then .scrub, as before_send, on everything that leaves anyway: no request, user details,
 # breadcrumbs or frame variables; context, tags and extra masked by config.filter_parameters plus
@@ -21,6 +23,8 @@ module Observability
     ].freeze
     # Who an event is about, in tags: ids and labels only, never anything a client typed.
     TAG_KEYS = %i[source handled area job_class queue business_id].freeze
+    HINT = :shadetree
+    HOURLY_CAP = 10
     # Sentry's own description of the machine and Ruby, left as they are.
     SDK_CONTEXTS = %i[os runtime trace].freeze
     SQL = /\b(?:SELECT|INSERT|UPDATE|DELETE|WITH)\b/i
@@ -31,7 +35,7 @@ module Observability
       def dsn = ENV["SENTRY_DSN"].presence
 
       # staging or production; SENTRY_ENVIRONMENT overrides the deploy's APP_ENVIRONMENT.
-      def environment = ENV["SENTRY_ENVIRONMENT"].presence || ENV["APP_ENVIRONMENT"].presence || Rails.env
+      def environment = Observability.environment
 
       # Every Sentry setting in one place, for the initializer and the tests.
       def configure(config, dsn: self.dsn)
@@ -53,10 +57,12 @@ module Observability
         config.enable_logs = false if config.respond_to?(:enable_logs=)
         config.auto_session_tracking = false
         config.send_modules = false
+        config.enabled_patches = []
+        config.propagate_traces = false # no sentry-trace or baggage headers on Stripe's or anyone's requests
         config.rails.register_error_subscriber = false
         config.rails.report_rescued_exceptions = false
         config.rails.skippable_job_adapters = job_adapters
-        config.before_send = ->(event, hint) { scrub(event, hint) }
+        config.before_send = ->(event, hint) { hint.to_h[HINT] ? scrub(event, hint) : nil }
       end
 
       # Every Active Job adapter, so sentry-rails' job extension never captures or tags a job itself.
@@ -82,8 +88,10 @@ module Observability
       def scrub_text(text)
         text = text.to_s
         text = text.gsub(SQL_STRING, "'?'") if text.match?(SQL)
-        Observability.scrub(text, limit: 1000)
+        Observability.scrub(text, limit: 1000).gsub(/\S+@\S+/, "[EMAIL]") # also "maria@examplecom"
       end
+
+      def scrub_message(error) = scrub_text(Observability.error_message(error, limit: 1000))
 
       private
 
@@ -92,7 +100,7 @@ module Observability
       def scrub_exceptions(event, error)
         chain = error ? Sentry::Utils::ExceptionCauseChain.exception_to_array(error).reverse : []
         event.exception.values.each_with_index do |exception, index|
-          exception.value = scrub_text(chain[index]&.message || exception.value)
+          exception.value = chain[index] ? scrub_message(chain[index]) : scrub_text(exception.value)
           exception.stacktrace&.frames&.each do |frame|
             frame.vars = frame.pre_context = frame.context_line = frame.post_context = nil
           end
@@ -121,17 +129,25 @@ module Observability
 
     # Observability.tracker: payload is ErrorSubscriber's (scrubbed message, location, release,
     # environment, request or job fields, business and user ids, the caller's sanitized context).
+    def initialize
+      @counts = {}
+      @lock = Mutex.new
+    end
+
     def call(error, payload)
       return unless Sentry.initialized?
+      return if !error.is_a?(Alert) && over_cap?(error, payload)
 
+      hint = { HINT => true }
       level = LEVELS.fetch(payload[:severity], :error)
       tags = payload.slice(*TAG_KEYS).compact.transform_values(&:to_s)
       context = payload.except(:message, :backtrace, :location, :severity, *TAG_KEYS)
       if error.is_a?(Alert)
         # Same message, same issue: alerts are grouped by what went wrong, not by their counts.
-        Sentry.capture_message(error.message, level:, tags:, contexts: { shadetree: context }, fingerprint: [ "alert", error.message ])
+        message = self.class.scrub_text(error.message)
+        Sentry.capture_message(message, level:, tags:, contexts: { shadetree: context }, fingerprint: [ "alert", message ], hint:)
       else
-        Sentry.capture_exception(error, level:, tags:, contexts: { shadetree: context })
+        Sentry.capture_exception(error, level:, tags:, contexts: { shadetree: context }, hint:)
       end
     end
 
@@ -140,8 +156,21 @@ module Observability
     def check_in(slug, status, every_minutes:)
       return unless Sentry.initialized?
 
-      config = Sentry::Cron::MonitorConfig.from_interval(every_minutes, :minute, checkin_margin: every_minutes, max_runtime: 5)
+      config = Sentry::Cron::MonitorConfig.from_interval(every_minutes, :minute, checkin_margin: every_minutes)
       Sentry.capture_check_in(slug, status, monitor_config: config)
+    end
+
+    private
+
+    # Per error class and place, per process: the first HOURLY_CAP in each hour go; the log keeps all.
+    def over_cap?(error, payload, now: Process.clock_gettime(Process::CLOCK_MONOTONIC))
+      key = [ error.class.name, payload[:location] ]
+      @lock.synchronize do
+        @counts.delete_if { |_, (started, _)| now - started >= 3600 }
+        started, count = @counts[key] || [ now, 0 ]
+        @counts[key] = [ started, count + 1 ]
+        count >= HOURLY_CAP
+      end
     end
   end
 end
