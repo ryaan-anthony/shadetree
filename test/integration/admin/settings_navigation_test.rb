@@ -85,5 +85,6 @@ class Admin::SettingsNavigationTest < ActionDispatch::IntegrationTest
     get "/admin/settings"
     assert_response :forbidden
     assert_select "h1", /isn't available with your role/
+    assert_select "[data-controller~=tip]", 0 # no first-time tip on it (ACC-08)
   end
 end
