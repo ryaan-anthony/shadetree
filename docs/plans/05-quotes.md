@@ -52,10 +52,10 @@ client's side and treated signatures as a separate legal-compliance epic.
   change request.
 - **R20** Members whose role allows it can draft, and optionally send, quotes for requests
   assigned to them, without wider office access (04-clients R20).
-- **R21** A business can mark services that technicians may send quotes for without office
-  review; a draft made only of those services, at their prices, can be sent by its technician.
 - **R18** Quote list with status filters, search by client/number, and totals; staff can
   duplicate, archive, mark approved on the client's behalf (records who and why) and resend.
+- **R21** A business can mark services that technicians may send quotes for without office
+  review; a draft made only of those services, at their prices, can be sent by its technician.
 
 ### PDF
 - **R19** Every quote renders as a branded PDF that matches the web view and is suitable for

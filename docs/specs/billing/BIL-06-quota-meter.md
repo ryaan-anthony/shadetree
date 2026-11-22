@@ -33,21 +33,28 @@ of the limit and the reset date. The existing notices stay.
       "Starter quotes this billing period".
 - [ ] The bar's state follows BIL-03: normal; approaching (from the warning threshold); at the
       limit, with "1 extra left"; then "Limit reached". Each state is said in words as well as
-      colour, using the theme's tones.
+      colour, using the theme's tones. Over the limit it reads "6 of 5 · Limit reached" with the
+      bar full.
 - [ ] Unlimited plans show the count without a bar ("42 quotes sent this billing period · no
-      limit"). A plan that doesn't include sending says so, linking to the plans.
+      limit"). A plan that doesn't include sending says so (linked as below).
 - [ ] During a trial it shows the trial plan's limit, marked "(trial)", and "Trial ends Dec 3"
       when the trial ends before the reset (BIL-05). A lapsed or past-due business shows the plan
       it's on now.
-- [ ] The meter links to Settings → Plan for people who can open it; for others it's plain text.
+- [ ] After a plan change mid-period, the next page shows the new plan's label and limit, with
+      the count and reset date of the usage period then in force (BIL-02), matching Settings →
+      Plan.
+- [ ] The meter links to Settings → Plan only for people with business settings (which that page
+      needs); for everyone else it's plain text.
 - [ ] It's readable by assistive technology as one meter with its value and limit ("3 of 5 free
-      quotes used, resets December 1"), meets contrast on the sidebar, has no
-      animation, and fits at 360 px.
+      quotes used, resets December 1"); over the limit the value is held at the limit and the
+      text gives the real number ("6 of 5"). It meets contrast on the sidebar, has no animation,
+      and fits at 360 px.
 - [ ] The count is the same number Settings → Plan and Home show, is current on each page load,
       and adds at most one fast query per page.
 - [ ] BIL-03's notices (builder, send page, Home) and Home's allowance line are unchanged.
-- [ ] Tests cover each state, unlimited and not-included plans, a trial, who sees it, the link
-      rule, and that another business's usage is never shown.
+- [ ] Tests cover each state (over the limit too), unlimited and not-included plans, a trial, a
+      mid-period plan change, who sees it, the link rule, and that another business's usage is
+      never shown.
 
 ## Out of scope
 
@@ -63,3 +70,8 @@ of the limit and the reset date. The existing notices stay.
 - The reset date ("Resets Dec 1"), not a countdown (owner, 2026-11-22).
 - Always shown, not only near the limit (owner, 2026-11-22).
 - Unlimited plans show the count with no bar (owner, 2026-11-22).
+
+## Open questions
+
+- Do operators viewing as a member (OPS-03) see the meter? *Recommend: yes, read-only, with the
+  Plan link only if that member could open it.*

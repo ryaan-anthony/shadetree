@@ -7,7 +7,7 @@ depends_on: [QTE-07, CAT-03, BIL-03]
 ---
 # QTE-08 · Services technicians send without review
 
-> Requirements: [05-quotes](../../plans/05-quotes.md) R21; [03-catalog](../../plans/03-catalog.md)
+> Requirements: [05-quotes](../../plans/05-quotes.md) R21; [03-catalog](../../plans/03-catalog.md) R7, R9, R10, R18
 
 ## Summary
 
@@ -29,27 +29,35 @@ be sent by the technician straight away; anything else still goes to "Ready for 
       default, set by people who manage services; the list marks the services that have it on.
       Beside them, an optional "up to" amount for the business caps such quotes' total (blank:
       no cap). Every plan has this.
-- [ ] It applies to members who quote their assigned requests but can't send their own quotes
-      (QTE-07): the built-in Technician and custom roles like it. Members who can send their own
-      quotes, and the office, are unaffected.
-- [ ] A draft qualifies when every line is a service with the switch on, at that service's
-      current price (for the quote's location, CAT-08) and taxable setting, with no line or quote
-      discount, and the total within the business's cap if it has one. Quantity, name and
-      description can be edited. It's checked again on send, not only when the button shows.
+- [ ] It applies to members with "Quote assigned requests" and without "Send their own quotes"
+      (QTE-07), and only to a draft's first version (revision 1), as QTE-07's own sends. This
+      reaches the built-in Technician once it has "Quote assigned requests" by default (owner,
+      2026-11-22; a separate change). The office and members who send their own are unaffected.
+- [ ] A draft qualifies only when all of these hold:
+      - every line is a service with the switch on, keeping that service's unit, current price
+        and taxable setting, with no line discount; quantity, name and description may change;
+      - no quote discount, and the total is within the cap if there is one;
+      - the quote is at its request's location, so its prices are that location's (CAT-08);
+      - its tax rates and "prices include tax" are the defaults for that location or business.
+- [ ] It's checked when the button shows, and again inside the send's transaction (as the plan
+      allowance is claimed, BIL-03), so a late autosave can't slip a change through.
 - [ ] On a qualifying draft the technician sees "Send quote" (sending as QTE-07 allows: to the
       client's emails on file, or the copy link) and can still choose "Ready for review".
 - [ ] On a draft that doesn't qualify, they see only "Ready for review", with a short reason
-      naming the first line that needs the office (for example, "Gutter clean: price changed",
-      or "Over $500").
-- [ ] A send counts toward the plan like any send (BIL-02) and follows BIL-03: at the limit the
-      technician is told to ask the owner, and can still mark it ready for review.
+      naming the first thing that needs the office ("Gutter clean: price changed", "Over $500",
+      "Tax changed"). A line whose service price changed after it was added reads "Gutter clean:
+      the price list changed"; removing and adding it again picks up the new price and clears it.
+- [ ] A send counts toward the plan like any send (BIL-02) and follows BIL-03; when sending is
+      blocked, the technician is told to ask the owner and can still mark it ready for review.
 - [ ] The quote's history records that it was sent without review, by whom, and why it qualified;
       the office sees "Sent by" on the quote as for any send.
 - [ ] Turning a service's switch off, archiving it, or changing its price stops new sends of
       drafts using it; quotes already sent are unaffected.
-- [ ] Tests cover qualifying and non-qualifying drafts (custom line, price edit, discount, mixed
-      services, archived service, taxable change, the cap), the send-time recheck, roles, the
-      plan limit, and tenancy.
+- [ ] The switch, the cap and the reasons work at 360 px.
+- [ ] Tests cover qualifying and non-qualifying drafts (custom line, price edit, changed price
+      list, discount, mixed services, archived service, taxable change, changed unit, changed tax
+      rates or "prices include tax", another location, the cap, a revision), the recheck inside
+      the send, roles, the plan limit, and tenancy.
 
 ## Out of scope
 
@@ -70,3 +78,16 @@ be sent by the technician straight away; anything else still goes to "Ready for 
   list (owner, 2026-11-22).
 - Every plan, not a plan feature (owner, 2026-11-22).
 - Changing a line's taxable setting counts as a price edit (owner, 2026-11-22).
+
+## Open questions
+
+- At the plan limit, can a technician's send use BIL-03's one extra (with its warning), like
+  anyone else's? *Recommend: yes; only "blocked" refuses.*
+- Does a $0.00 total ever qualify? *Recommend: never; the reason reads "Total is $0.00" and it
+  goes to review.*
+- Terms, valid-until, attachments and the email's subject and message: may technicians edit
+  them? *Recommend: yes, they may, with the email starting from the business's own template.*
+  The alternative: any change from the defaults sends it to review.
+- Is the cap before or after tax? *Recommend: after; it's what the client pays.*
+- What does a technician with an unconfirmed email see? *Recommend: the same notice the office
+  sees (ACC-01), with "Ready for review" still available.*
