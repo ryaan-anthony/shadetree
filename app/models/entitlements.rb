@@ -56,19 +56,20 @@ class Entitlements
 
   def remove_powered_by? = feature?(:remove_powered_by)
 
-  # BIL-03: sending quotes. A notice from WARN_AT percent of the limit; once the limit is
-  # reached, new quotes can't be sent until the period resets or the plan changes (no grace
+  # BIL-03: sending quotes. A notice from WARN_AT percent of the limit, and always when one is
+  # left (so small limits still get a heads-up before the block); once the limit is reached, new quotes can't be sent until the period resets or the plan changes (no grace
   # send: owner, 2026-11-22). Resending or revising a quote that already went out never counts.
   WARN_AT = Integer(ENV.fetch("USAGE_WARNING_PERCENT", 80)).clamp(1, 99)
 
-  # :ok, :approaching or :blocked (at or over the limit, including a limit of 0).
+  # :ok, :approaching (from WARN_AT, or one left) or :blocked (at or over the limit, including a
+  # limit of 0).
   def quote_sending
     return :ok if unlimited?(:quotes_sent)
 
     used = used(:quotes_sent)
     limit = limit(:quotes_sent)
     if used >= limit then :blocked
-    elsif used * 100 >= limit * WARN_AT then :approaching
+    elsif used * 100 >= limit * WARN_AT || used == limit - 1 then :approaching
     else :ok
     end
   end

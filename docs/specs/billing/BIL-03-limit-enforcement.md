@@ -51,14 +51,18 @@ limits are part of the brand.
 ## Implementation notes
 
 - `Entitlements#quote_sending` answers `:ok`, `:approaching` (from `USAGE_WARNING_PERCENT`,
-  default 80) or `:blocked` (at or over the limit; with no grace there's no separate
-  "at the limit" state). Only a quote's first send counts
+  default 80, and always when one is left, so limits of 1–4 still warn before the block) or
+  `:blocked` (at or over the limit; with no grace there's no separate "at the limit" state). Only a quote's first send counts
   and is checked (`Admin::QuoteSendsController#require_quote_allowance`, both email and link);
   resends and revisions of quotes already sent never count, and drafts always save.
 - One notice (`admin/usage/_limit_notice`) on the quote builder, the send page (where the send
   options give way to the notice and a "Back to the quote" button when blocked) and the dashboard: usage, the reset date, and
   "See plans" for anyone who can manage billing (Settings → Plan, which BIL-04 turns into checkout) or "Ask <owner>"
-  for others.
+  for others. Approaching, it says how many are left ("You can send 1 more"); blocked, it gives
+  the real count when a downgrade left the business over the limit.
+- The notice's plan link deliberately follows the billing permission (who can change the plan),
+  not business settings as BIL-06's meter does: the notice is an upgrade prompt, the meter a
+  view of usage.
 - Team size: at the limit the team page shows the same kind of prompt instead of the invite
   form (BIL-01 enforces it); members are never removed.
 - Nothing client-facing checks entitlements: sent quotes and invoices stay viewable, approvable

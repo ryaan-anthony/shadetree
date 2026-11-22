@@ -28,7 +28,7 @@ class Admin::QuoteLimitsTest < ActionDispatch::IntegrationTest
     sent(4) # 80% of Free's 5
     quote = draft
     get edit_admin_quote_path(quote)
-    assert_select "#quote-limit-notice.banner-info", /sent 4 of the 5 quotes your Free plan includes this period. It resets/
+    assert_select "#quote-limit-notice.banner-info", /sent 4 of the 5 quotes your Free plan includes this period. You can send 1 more before your count resets on/
     assert_select "#quote-limit-notice a[href=?]", admin_plan_path
     get admin_root_path
     assert_select "#quote-limit-notice"
@@ -50,7 +50,7 @@ class Admin::QuoteLimitsTest < ActionDispatch::IntegrationTest
 
     blocked = draft
     get new_admin_quote_send_path(blocked)
-    assert_select "#quote-limit-notice.banner-warning", /You've sent all 5 quotes your Free plan includes this period. New quotes can be sent again on/
+    assert_select "#quote-limit-notice.banner-warning", /You've used the 5 quotes your Free plan includes this period. New quotes can be sent again on/
     assert_select "#quote-limit-notice", text: /one more|extra/, count: 0
     assert_select "form[action=?]", admin_quote_send_path(blocked), 0, "the send options give way to the explanation"
     post admin_quote_send_path(blocked), params: { channel: "link" }
@@ -112,7 +112,7 @@ class Admin::QuoteLimitsTest < ActionDispatch::IntegrationTest
     sign_in admin
     post switch_admin_business_path, params: { business: @business.uid }
     get edit_admin_quote_path(draft)
-    assert_select "#quote-limit-notice", /sent all 5 quotes.*Ask John about a bigger plan/m
+    assert_select "#quote-limit-notice", /sent 6 quotes this period; your Free plan includes 5\..*Ask John about a bigger plan/m
     sign_out :user
     tech = member_with_role("technician", business: @business)
     sign_in tech
@@ -134,12 +134,12 @@ class Admin::QuoteLimitsTest < ActionDispatch::IntegrationTest
     first, second = draft, draft
     # Both pass the page's check; the second is refused inside its send.
     post admin_quote_send_path(first), params: { channel: "link" }
-    controller_class = Admin::QuoteSendsController
-    controller_class.skip_before_action :require_quote_allowance, raise: false
+    # Only the page's check is skipped, for this one request; the callback chain is untouched.
+    Admin::QuoteSendsController.class_eval { alias_method :original_require_quote_allowance, :require_quote_allowance; define_method(:require_quote_allowance) { nil } }
     begin
       post admin_quote_send_path(second), params: { channel: "link" }
     ensure
-      controller_class.before_action :require_quote_allowance, only: :create
+      Admin::QuoteSendsController.class_eval { alias_method :require_quote_allowance, :original_require_quote_allowance; remove_method :original_require_quote_allowance }
     end
     assert_match "used this period's quotes", flash[:alert]
     assert_equal [ "sent", "draft" ], as_business(@business) { [ first.reload.status, second.reload.status ] }
@@ -152,6 +152,22 @@ class Admin::QuoteLimitsTest < ActionDispatch::IntegrationTest
     sent(1)
     get admin_root_path
     assert_select "#quote-limit-notice.banner-info", /sent 4 of the 5 quotes/
+
+    @business.update!(plan_overrides: { "limits" => { "quotes_sent" => 10 } })
+    sent(4)
+    get admin_root_path
+    assert_select "#quote-limit-notice.banner-info", /sent 8 of the 10 quotes.*You can send 2 more before/m, "from 80%, how many are left"
+    @business.update!(plan_overrides: { "limits" => { "quotes_sent" => 2 } })
+    as_business(@business) { UsageEvent.delete_all }
+    get admin_root_path
+    assert_select "#quote-limit-notice", 0, "nothing sent of 2"
+    sent(1)
+    get admin_root_path
+    assert_select "#quote-limit-notice.banner-info", /You can send 1 more before your count resets/, "a small limit still warns with one left"
+    @business.update!(plan_overrides: { "limits" => { "quotes_sent" => 1 } })
+    as_business(@business) { UsageEvent.delete_all }
+    get admin_root_path
+    assert_select "#quote-limit-notice.banner-info", /Your Free plan includes 1 quote this period. You can send 1 before your count resets/
 
     @business.update!(plan_overrides: { "limits" => { "quotes_sent" => nil } })
     sent(6)
