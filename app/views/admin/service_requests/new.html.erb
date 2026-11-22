@@ -57,7 +57,7 @@
     <% end %>
   <% end %>
   <div class="flex justify-end gap-2">
-    <%= link_to "Cancel", admin_service_requests_path, class: button_classes(:ghost) %>
+    <%= link_to "Cancel", admin_service_requests_path, class: button_classes(:tertiary) %>
     <%= f.submit_button "Log request#{" anyway" if @warnings.present?}" %>
   </div>
 <% end %>

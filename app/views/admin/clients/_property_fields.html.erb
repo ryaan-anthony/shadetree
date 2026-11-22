@@ -8,7 +8,7 @@
   <% unless inline %>
     <div class="flex items-end gap-2">
       <div class="min-w-0 flex-1"><%= f.field :label, optional: true, placeholder: "Rental #2", maxlength: 60 %></div>
-      <button type="button" class="<%= button_classes(:ghost, :sm) %> mb-0.5" data-action="nested-fields#remove"><%= icon "trash" %> Remove</button>
+      <button type="button" class="<%= button_classes(:tertiary, :sm) %> mb-0.5" data-action="nested-fields#remove"><%= icon "trash" %> Remove</button>
     </div>
   <% end %>
   <%= f.field :address_line1, required: false, autocomplete: "off", placeholder: "123 Main St" %>

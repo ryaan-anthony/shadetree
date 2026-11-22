@@ -173,7 +173,7 @@ export default class extends Controller {
     const button = dialog.querySelector("[data-confirm-button]")
     const style = button.className
     button.textContent = "Move anyway"
-    button.className = style.replace("btn-danger-solid", "btn-primary") // a warning, not something destructive
+    button.className = button.dataset.warningClass // a warning, not something destructive
     dialog.showModal()
     return new Promise((resolve) => {
       dialog.addEventListener("close", () => {

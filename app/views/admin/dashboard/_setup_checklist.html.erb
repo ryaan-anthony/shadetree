@@ -6,7 +6,7 @@
 <% latest_draft = checklist.latest_draft %>
 <% done, total = checklist.done_count, checklist.required.size %>
 <%= card title: "Get set up", subtitle: tag.span("#{done} of #{total} done", id: "setup-progress-text"),
-         actions: button_to("Hide", admin_dismiss_setup_path, method: :patch, class: button_classes(:ghost, :sm),
+         actions: button_to("Hide", admin_dismiss_setup_path, method: :patch, class: button_classes(:tertiary, :sm),
                             form: { class: "contents" }, "aria-label": "Hide the setup checklist", data: { tour_skip: true }),
          flush: true, id: "setup-checklist", tabindex: "-1", data: { tour: "checklist" } do %>
   <div class="px-5 pb-1 pt-3">

@@ -28,6 +28,6 @@
       <% end %>
     </fieldset>
     <div class="field mt-4"><label class="label" for="reason">Reason</label><%= text_field_tag :reason, nil, class: "input", id: "reason", required: true, maxlength: 500, placeholder: "e.g. Beta customer: automations until launch" %></div>
-    <div class="mt-4 flex gap-2"><%= submit_tag "Save overrides", class: button_classes, name: nil %><%= link_to "Cancel", ops_business_path(@business, anchor: "plan"), class: button_classes(:ghost) %></div>
+    <div class="mt-4 flex gap-2"><%= submit_tag "Save overrides", class: button_classes, name: nil %><%= link_to "Cancel", ops_business_path(@business, anchor: "plan"), class: button_classes(:tertiary) %></div>
   <% end %>
 <% end %>

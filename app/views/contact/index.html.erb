@@ -18,7 +18,7 @@
                 choices: Industry.options %><%# its last option, "Something else", is the "other" key %>
     <%= f.field :body, as: :textarea, label: "Message", rows: 6, maxlength: 5_000, required: true,
                 placeholder: "What would you like to know?" %>
-    <%= f.submit_button "Send message", class: "w-full btn-lg" %>
+    <%= f.submit_button "Send message", size: :lg, class: "w-full" %>
     <p class="text-center text-sm2 text-muted">We only use your details to reply. See our <%= link_to "privacy policy", privacy_path, class: "underline" %>.</p>
   <% end %>
 <% end %>

@@ -52,11 +52,12 @@ class ShadetreeFormBuilderTest < ActionView::TestCase
 
   test "check and submit_button" do
     render inline: <<~ERB, locals: { record: Record.new(reminders: true) }
-      <%= form_with model: record, url: "/x" do |f| %><%= f.check :reminders, label: "Remind", hint: "Day before" %><%= f.submit_button "Save" %><% end %>
+      <%= form_with model: record, url: "/x" do |f| %><%= f.check :reminders, label: "Remind", hint: "Day before" %><%= f.submit_button "Save" %><%= f.submit_button "Go", variant: :secondary, size: :lg, class: "w-full" %><% end %>
     ERB
     assert_select "label.check input[type='checkbox'][checked]"
     assert_select "label.check .check-hint", "Day before"
     assert_select "input[type='submit'].btn.btn-primary[value='Save']"
+    assert_select "input[type='submit'][class='btn btn-secondary btn-lg w-full'][value='Go']"
   end
 
   test "unknown field types raise" do

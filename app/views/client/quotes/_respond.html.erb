@@ -54,7 +54,7 @@
               <%= f.field :message, as: :textarea, label: "Reason", optional: true, rows: 3, maxlength: QuoteResponse::MESSAGE_MAX %>
               <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <button type="button" class="<%= button_classes(:secondary) %>" data-action="modal#close">Keep quote</button>
-                <%= f.submit_button "Decline", variant: :danger, data: { turbo_submits_with: "Declining…" } %>
+                <%= f.submit_button "Decline", variant: :destructive, data: { turbo_submits_with: "Declining…" } %>
               </div>
             <% end %>
           <% end %>

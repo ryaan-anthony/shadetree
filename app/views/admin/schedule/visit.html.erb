@@ -1,4 +1,4 @@
 <% content_for :title, "Visit" %>
 <h1 class="sr-only">Visit</h1><%# the panel's card has the visit's own heading %>
-<div class="max-w-xl"><%= link_to admin_schedule_path({ date: @visit.scheduled_on.iso8601, view: params[:view], member: params[:member] }.compact_blank), class: "#{button_classes(:ghost)} mb-3" do %><%= icon "arrow-left" %> Schedule<% end %>
+<div class="max-w-xl"><%= link_to admin_schedule_path({ date: @visit.scheduled_on.iso8601, view: params[:view], member: params[:member] }.compact_blank), class: "#{button_classes(:tertiary)} mb-3" do %><%= icon "arrow-left" %> Schedule<% end %>
 <%= render "admin/schedule/visit", visit: @visit %></div>

@@ -5,7 +5,7 @@
 <% property = job.property %>
 <% content_for :title, client.display_name %>
 <%= page_header client.display_name, lede: "#{visit.when_label} · about #{visit.duration_label}" do %>
-  <%= link_to admin_my_day_path, class: button_classes(:ghost) do %><%= icon "arrow-left" %> My day<% end %>
+  <%= link_to admin_my_day_path, class: button_classes(:tertiary) do %><%= icon "arrow-left" %> My day<% end %>
 <% end %>
 
 <div class="max-w-2xl space-y-4">
@@ -79,6 +79,7 @@
   <% photos = visit.photos.includes(:blob).order(:id).to_a %>
   <%= card title: "Photos", id: "photos", subtitle: "Before and after, damage, anything the office should see." do %>
     <div data-controller="photo-upload" data-photo-upload-url-value="<%= admin_my_visit_photos_path(visit) %>" data-photo-upload-count-value="<%= photos.size %>"
+         data-photo-upload-retry-class="<%= button_classes(:secondary, :sm, extra: "h-auto min-h-11 shrink-0") %>"
          data-action="online@window->photo-upload#reconnected beforeunload@window->photo-upload#guard turbo:before-visit@document->photo-upload#confirmLeave submit@document->photo-upload#confirmLeave">
       <ul class="grid grid-cols-3 gap-2" data-photo-upload-target="list" id="visit-photos">
         <% photos.each.with_index(1) do |photo, number| %>

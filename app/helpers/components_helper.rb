@@ -1,13 +1,20 @@
 # Helpers for the UI kit (ADR 0005). Each one renders a partial in app/views/components or
 # returns kit classes; the style guide (/styleguide in development) shows them all.
 module ComponentsHelper
-  BUTTON_VARIANTS = %i[primary secondary danger danger_solid ghost link brand].freeze
+  # PLT-14: four ranks, plus a destructive dialog's solid red confirm and the client pages'
+  # brand button (their Primary). The style guide shows each with its rule:
+  #   primary      green, the next step in the workflow; at most one in a page's header
+  #   secondary    white with a border, supporting actions
+  #   tertiary     borderless grey, for navigation, low-risk actions and Cancel
+  #   destructive  red text and border: Cancel job, Disconnect, Deactivate, Archive, every delete
+  # The green inline text link (.text-action) isn't a button: only for actions inside a sentence.
+  BUTTON_VARIANTS = %i[primary secondary tertiary destructive destructive_solid brand].freeze
   BUTTON_SIZES = %i[sm lg icon].freeze
   BADGE_TONES = %i[neutral success info warning danger violet dark].freeze
 
   # Classes for a button-styled link or button:
   #   link_to "New quote", new_quote_path, class: button_classes
-  #   button_to "Delete", quote_path(q), method: :delete, class: button_classes(:danger, :sm)
+  #   button_to "Delete", quote_path(q), method: :delete, class: button_classes(:destructive, :sm)
   def button_classes(variant = :primary, *sizes, extra: nil)
     raise ArgumentError, "Unknown button variant #{variant.inspect}" unless BUTTON_VARIANTS.include?(variant)
     unknown = sizes - BUTTON_SIZES

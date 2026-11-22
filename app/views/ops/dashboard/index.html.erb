@@ -5,7 +5,7 @@
   <div class="banner banner-warning mt-4" role="alert" id="audit-unprotected"><p>The audit log isn't protected in this database: the append-only triggers are missing. Run <code>bin/rails runner "AuditEntry.install_append_only_trigger!"</code>.</p></div>
 <% end %>
 <div class="mt-6 grid gap-4 md:grid-cols-2">
-  <%= card title: "Recent activity", flush: true, actions: link_to("Audit log", ops_audit_entries_path, class: button_classes(:ghost, :sm)) do %>
+  <%= card title: "Recent activity", flush: true, actions: link_to("Audit log", ops_audit_entries_path, class: button_classes(:tertiary, :sm)) do %>
     <% if @recent.any? %>
       <ul class="list"><%= render partial: "ops/audit_entries/entry", collection: @recent, as: :entry %></ul>
     <% else %>

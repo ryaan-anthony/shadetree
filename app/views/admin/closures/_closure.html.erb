@@ -6,7 +6,7 @@
     <p class="text-sm2 text-muted"><%= closure.dates_label %><%= " · all day" if closure.all_day? %></p>
   </div>
   <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
-    <button type="button" class="<%= button_classes(:ghost, :sm, :icon) %>" data-menu-target="button" data-action="menu#toggle"
+    <button type="button" class="<%= button_classes(:tertiary, :sm, :icon) %>" data-menu-target="button" data-action="menu#toggle"
             aria-haspopup="true" aria-expanded="false" aria-label="More actions for <%= closure.reason %>"><%= icon "more-horizontal" %></button>
     <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
       <%= link_to edit_admin_closure_path(closure), class: "menu-item" do %><%= icon "edit-2" %> Edit<% end %>

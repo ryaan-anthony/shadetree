@@ -49,7 +49,7 @@
     <% elsif @business.active? %>
       <%= form_with url: ops_business_suspension_path(@business), class: "space-y-2", data: { turbo_confirm: "Suspend #{@business.name}? Its members lose access at once and client links show as unavailable. Billing isn't changed.", turbo_confirm_button: "Suspend" } do %>
         <div class="field"><label class="label" for="suspend_reason">Reason for suspending</label><%= text_field_tag :reason, nil, class: "input", id: "suspend_reason", required: true, maxlength: 500, placeholder: "e.g. Sending spam through client emails" %></div>
-        <%= submit_tag "Suspend business", class: button_classes(:danger), name: nil %>
+        <%= submit_tag "Suspend business", class: button_classes(:destructive), name: nil %>
         <p class="text-sm2 text-muted">Billing isn't paused; change it in the billing provider if needed.</p>
       <% end %>
     <% else %>
@@ -66,13 +66,13 @@
       <%= form_with url: ops_business_deletion_path(@business), method: :patch, class: "mt-4 space-y-2 border-t border-line pt-4", data: { turbo_confirm: "Delete #{@business.name} and everything in it now? This can't be undone.", turbo_confirm_button: "Delete now" } do %>
         <div class="field"><label class="label" for="expedite_reason">Reason for deleting now</label><%= text_field_tag :reason, nil, class: "input", id: "expedite_reason", required: true, maxlength: 500, placeholder: "e.g. Privacy request from the owner" %></div>
         <div class="field"><label class="label" for="expedite_name">Type “<%= @business.name %>” to confirm</label><%= text_field_tag :confirm_name, nil, class: "input", id: "expedite_name", required: true, autocomplete: "off" %></div>
-        <%= submit_tag "Delete now", class: button_classes(:danger_solid), name: nil %>
+        <%= submit_tag "Delete now", class: button_classes(:destructive_solid), name: nil %>
       <% end %>
     <% else %>
       <%= form_with url: ops_business_deletion_path(@business), class: "space-y-2", data: { turbo_confirm: "Schedule #{@business.name} for deletion?" } do %>
         <div class="field"><label class="label" for="delete_reason">Reason</label><%= text_field_tag :reason, nil, class: "input", id: "delete_reason", required: true, maxlength: 500, placeholder: "e.g. Owner asked by email on Nov 3" %></div>
         <div class="field"><label class="label" for="delete_name">Type “<%= @business.name %>” to confirm</label><%= text_field_tag :confirm_name, nil, class: "input", id: "delete_name", required: true, autocomplete: "off" %></div>
-        <%= submit_tag "Schedule deletion", class: button_classes(:danger), name: nil %>
+        <%= submit_tag "Schedule deletion", class: button_classes(:destructive), name: nil %>
       <% end %>
     <% end %>
   <% end %>

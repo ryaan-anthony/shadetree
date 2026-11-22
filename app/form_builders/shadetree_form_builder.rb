@@ -57,8 +57,9 @@ class ShadetreeFormBuilder < ActionView::Helpers::FormBuilder
     end
   end
 
-  def submit_button(text = nil, variant: :primary, **options)
-    options[:class] = @template.button_classes(variant, extra: options[:class])
+  # variant and size: as button_classes (PLT-14), e.g. f.submit_button "Sign in", size: :lg
+  def submit_button(text = nil, variant: :primary, size: nil, **options)
+    options[:class] = @template.button_classes(variant, *size, extra: options[:class])
     submit(text, options)
   end
 

@@ -4,7 +4,7 @@
 <% client = request_record.client %>
 <% content_for :title, client.display_name %>
 <%= page_header client.display_name, lede: "#{follow_up.kind_label} for a request · #{follow_up.when_label} · about #{follow_up.duration_label}" do %>
-  <%= link_to admin_my_day_path, class: button_classes(:ghost) do %><%= icon "arrow-left" %> My day<% end %>
+  <%= link_to admin_my_day_path, class: button_classes(:tertiary) do %><%= icon "arrow-left" %> My day<% end %>
 <% end %>
 
 <div class="max-w-2xl space-y-4">
@@ -91,6 +91,7 @@
   <% photos = request_record.site_photos.includes(:blob).order(:id).to_a %>
   <%= card title: "Site photos", id: "photos", subtitle: "What you saw, for whoever quotes it." do %>
     <div data-controller="photo-upload" data-photo-upload-url-value="<%= admin_my_request_photos_path(request_record) %>" data-photo-upload-count-value="<%= photos.size %>" data-photo-upload-noun-value="request"
+         data-photo-upload-retry-class="<%= button_classes(:secondary, :sm, extra: "h-auto min-h-11 shrink-0") %>"
          data-action="online@window->photo-upload#reconnected beforeunload@window->photo-upload#guard turbo:before-visit@document->photo-upload#confirmLeave submit@document->photo-upload#confirmLeave">
       <ul class="grid grid-cols-3 gap-2" data-photo-upload-target="list" id="request-site-photos">
         <% photos.each.with_index(1) do |photo, number| %>

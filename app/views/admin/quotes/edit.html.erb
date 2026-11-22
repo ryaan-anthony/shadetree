@@ -20,7 +20,7 @@
     <%= render "review_state", quote: @quote %>
   <% end %>
   <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
-    <button type="button" class="<%= button_classes(:ghost, :icon) %>" data-menu-target="button" data-action="menu#toggle"
+    <button type="button" class="<%= button_classes(:tertiary, :icon) %>" data-menu-target="button" data-action="menu#toggle"
             aria-haspopup="true" aria-expanded="false" aria-label="More actions"><%= icon "more-horizontal" %></button>
     <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
       <%= link_to pdf_admin_quote_path(@quote), class: "menu-item", data: { turbo: false, action: "quote-builder#download" } do %><%= icon "download" %> Download PDF<% end %>
@@ -133,7 +133,7 @@
               <%= icon(file.image? ? "image" : "file-text", class: "size-4 text-faint") %>
               <%= attachment_link file, class: "min-w-0 flex-1 truncate hover:underline" %>
               <span class="text-sm2 text-muted"><%= number_to_human_size(file.byte_size) %></span>
-              <button type="submit" form="remove-attachment-<%= file.id %>" class="<%= button_classes(:ghost, :sm) %>" aria-label="Remove <%= file.filename %>"><%= icon "x" %></button>
+              <button type="submit" form="remove-attachment-<%= file.id %>" class="<%= button_classes(:tertiary, :sm) %>" aria-label="Remove <%= file.filename %>"><%= icon "x" %></button>
             </li>
           <% end %>
         </ul>

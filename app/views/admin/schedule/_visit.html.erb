@@ -15,10 +15,10 @@
       <% if can?(:office) %><%= link_to "Open job", admin_job_path(job, anchor: "visit-#{visit.uid}"), class: button_classes(:secondary, :sm), data: { turbo_frame: "_top" } %><% end %>
       <% if visit.open? %>
         <%= render "admin/schedule/move", visit:, warnings: (@warnings if visit == @visit), proposed: (@proposed if visit == @visit) %>
-        <%= link_to "Edit visit", edit_admin_job_visit_path(job, visit), class: button_classes(:ghost, :sm), data: { turbo_frame: "_top" } %>
+        <%= link_to "Edit visit", edit_admin_job_visit_path(job, visit), class: button_classes(:tertiary, :sm), data: { turbo_frame: "_top" } %>
       <% end %>
       <%# Beside the calendar only: closes the panel and goes back to the visit (schedule_panel_controller). %>
-      <button type="button" class="<%= button_classes(:ghost, :sm) %>" data-action="schedule-panel#close" data-schedule-panel-target="close" hidden>Close</button>
+      <button type="button" class="<%= button_classes(:tertiary, :sm) %>" data-action="schedule-panel#close" data-schedule-panel-target="close" hidden>Close</button>
     </div>
   <% end %>
 <% end %>

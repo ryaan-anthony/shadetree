@@ -1,14 +1,14 @@
 <% entry = EmailCatalog.find(@template.kind) %>
 <% content_for :title, entry.name %>
 <%= page_header entry.name, lede: @template.definition.hint do %>
-  <%= link_to admin_message_templates_path, class: button_classes(:ghost) do %><%= icon "arrow-left" %> Messages<% end %>
+  <%= link_to admin_message_templates_path, class: button_classes(:tertiary) do %><%= icon "arrow-left" %> Messages<% end %>
 <% end %>
 
 <%= render "form", template: @template, url: admin_message_template_path(@template.kind), method: :patch,
            preview_url: preview_admin_message_template_path(@template.kind), editable: @editable, preview_records: @preview_records %>
 
 <% if @template.persisted? && @editable %>
-  <%= button_to admin_message_template_path(@template.kind), method: :delete, class: "#{button_classes(:ghost, :sm)} mt-4",
+  <%= button_to admin_message_template_path(@template.kind), method: :delete, class: "#{button_classes(:tertiary, :sm)} mt-4",
                 form: { data: { turbo_confirm: "Go back to the default wording for #{entry.name}?", turbo_confirm_button: "Use the default" } } do %>
     <%= icon "rotate-ccw" %> Go back to the default wording
   <% end %>

@@ -1,4 +1,4 @@
 <%# QA #274: a new visit's job choice on its own page (without JavaScript, or opened in a new tab). %>
-<%= link_to admin_schedule_path({ date: @on.iso8601, view: calendar_params[:view], member: calendar_params[:member], focus: calendar_params[:slot] }.compact_blank), class: "#{button_classes(:ghost)} mb-3" do %><%= icon "arrow-left" %> Schedule<% end %>
+<%= link_to admin_schedule_path({ date: @on.iso8601, view: calendar_params[:view], member: calendar_params[:member], focus: calendar_params[:slot] }.compact_blank), class: "#{button_classes(:tertiary)} mb-3" do %><%= icon "arrow-left" %> Schedule<% end %>
 <%= page_header "New visit", lede: @when_label %>
 <div class="max-w-xl"><%= render "admin/schedule/new_visit", titled: false %></div>

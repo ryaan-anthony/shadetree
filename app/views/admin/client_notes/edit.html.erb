@@ -1,7 +1,7 @@
 <%# CLI-05: edit a note you wrote on a client's timeline. %>
 <% content_for :title, "Edit note" %>
 <%= page_header "Edit note", lede: "On #{@client.display_name}'s timeline. Only your team sees it." do %>
-  <%= link_to "Cancel", admin_client_path(@client), class: button_classes(:ghost) %>
+  <%= link_to "Cancel", admin_client_path(@client), class: button_classes(:tertiary) %>
 <% end %>
 <%= form_with model: @note, scope: :client_note, url: admin_client_note_path(@client, @note), method: :patch, class: "max-w-2xl" do |f| %>
   <%= card do %>

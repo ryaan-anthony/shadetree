@@ -85,7 +85,7 @@
   <% end %>
   <%= render "admin/visits/notify_client", job: @job, kind: visit.new_record? ? "scheduled" : "changed", id: "notify-client" %>
   <div class="flex items-center justify-end gap-2">
-    <%= link_to "Cancel", (from_schedule? ? back_to_schedule(date: visit.scheduled_on) : admin_job_path(@job)), class: button_classes(:ghost) %>
+    <%= link_to "Cancel", (from_schedule? ? back_to_schedule(date: visit.scheduled_on) : admin_job_path(@job)), class: button_classes(:tertiary) %>
     <%= f.submit_button "#{visit.new_record? ? "Schedule" : "Save"} #{@warnings.present? ? "anyway" : "visit"}" %>
   </div>
 <% end %>

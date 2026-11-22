@@ -31,7 +31,7 @@
           <p class="error-text"><%= icon "alert-circle" %><%= @user.errors.full_messages_for(:terms_of_service).to_sentence %></p>
         <% end %>
       </div>
-      <%= f.submit_button "Create account and join", class: "mt-5 w-full btn-lg" %>
+      <%= f.submit_button "Create account and join", size: :lg, class: "mt-5 w-full" %>
     <% end %>
   <% end %>
 <% end %>

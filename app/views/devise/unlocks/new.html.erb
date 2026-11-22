@@ -5,6 +5,6 @@
   <%= form_for(resource, as: resource_name, url: unlock_path(resource_name), html: { method: :post }) do |f| %>
     <%= render "devise/shared/token_error", resource: resource, field: :unlock_token, what: "unlock" %>
     <%= f.field :email, as: :email, autofocus: true, autocomplete: "email", required: true %>
-    <%= f.submit_button "Send unlock link", class: "mt-5 w-full btn-lg" %>
+    <%= f.submit_button "Send unlock link", size: :lg, class: "mt-5 w-full" %>
   <% end %>
 <% end %>

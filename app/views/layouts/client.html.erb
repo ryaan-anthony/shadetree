@@ -11,7 +11,7 @@
     <%= inline_style_rule("body.client", branding.css_variables) %>
   </head>
   <body class="client">
-    <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[200] btn btn-secondary">Skip to content</a><%# first, above the banner %>
+    <a href="#main" class="<%= button_classes(:secondary, extra: "sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[200]") %>">Skip to content</a><%# first, above the banner %>
     <%= render "layouts/impersonation_banner" %>
     <header class="client-head">
       <div class="client-wrap flex h-[4.25rem] items-center gap-3">

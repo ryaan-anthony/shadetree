@@ -4,6 +4,6 @@
       footer: render("devise/shared/links") } do %>
   <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :post }) do |f| %>
     <%= f.field :email, as: :email, autofocus: true, autocomplete: "email", required: true %>
-    <%= f.submit_button "Send reset link", class: "mt-5 w-full btn-lg" %>
+    <%= f.submit_button "Send reset link", size: :lg, class: "mt-5 w-full" %>
   <% end %>
 <% end %>

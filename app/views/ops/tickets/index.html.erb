@@ -7,7 +7,7 @@
   <div class="field"><label class="label" for="category">Category</label><%= select_tag :category, options_for_select(SupportTicket::CATEGORIES.invert, @filters[:category]), include_blank: "Any", class: "select", id: "category" %></div>
   <div class="field"><label class="label" for="plan">Plan</label><%= select_tag :plan, options_from_collection_for_select(@plans, :id, :name, @filters[:plan].to_i), include_blank: "Any", class: "select", id: "plan" %></div>
   <div class="field"><label class="label" for="assignee">Assignee</label><%= select_tag :assignee, options_for_select([ [ "Me", "me" ], [ "Nobody", "none" ], *@operators.map { [ _1.email, _1.id.to_s ] } ], @filters[:assignee]), include_blank: "Anyone", class: "select", id: "assignee" %></div>
-  <div class="flex gap-2"><%= submit_tag "Filter", class: button_classes(:secondary), name: nil %><%= link_to "Clear", ops_tickets_path, class: button_classes(:ghost) %></div>
+  <div class="flex gap-2"><%= submit_tag "Filter", class: button_classes(:secondary), name: nil %><%= link_to "Clear", ops_tickets_path, class: button_classes(:tertiary) %></div>
 <% end %>
 <%= card flush: true, class: "mt-4" do %>
   <% if @tickets.any? %>

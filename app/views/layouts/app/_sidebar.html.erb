@@ -75,7 +75,7 @@
         <p class="truncate font-medium"><%= current_user.full_name.presence || current_user.email %></p>
         <p class="truncate text-xs text-side-text"><%= current_user.email %></p>
       <% end %>
-      <%= button_to destroy_user_session_path, method: :delete, class: "btn btn-ghost btn-sm btn-icon text-side-text hover:bg-side-2 hover:text-white", form: { class: "contents", data: { turbo: false, controller: "forget-tour", action: "submit->forget-tour#clear" } }, "aria-label": "Sign out", title: "Sign out" do %>
+      <%= button_to destroy_user_session_path, method: :delete, class: button_classes(:tertiary, :sm, :icon, extra: "text-side-text hover:bg-side-2 hover:text-white"), form: { class: "contents", data: { turbo: false, controller: "forget-tour", action: "submit->forget-tour#clear" } }, "aria-label": "Sign out", title: "Sign out" do %>
         <%= icon "log-out" %>
       <% end %>
     </div>

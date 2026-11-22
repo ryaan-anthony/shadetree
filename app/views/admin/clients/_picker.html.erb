@@ -11,7 +11,7 @@
      data-action="quick-create:picked@window->client-picker#created keydown->client-picker#keydown focusout->client-picker#blur">
   <div class="flex items-end justify-between gap-2">
     <label class="label" for="<%= picker_id %>"><%= label %></label>
-    <button type="button" class="<%= button_classes(:ghost, :sm) %>" data-action="client-picker#requestNew"><%= icon "plus" %> New client</button>
+    <button type="button" class="<%= button_classes(:tertiary, :sm) %>" data-action="client-picker#requestNew"><%= icon "plus" %> New client</button>
   </div>
   <%= hidden_field_tag name, selected&.uid, data: { client_picker_target: "value" }, id: nil %>
 
@@ -20,7 +20,7 @@
       <p class="truncate font-semibold text-ink" data-client-picker-target="chosenName"><%= selected&.display_name %></p>
       <p class="truncate text-sm2 text-muted" data-client-picker-target="chosenDetail"><%= [ selected&.primary_contact&.value, selected&.primary_property&.one_line ].compact.join(" · ") %></p>
     </div>
-    <button type="button" class="<%= button_classes(:ghost, :sm) %>" data-action="client-picker#change">Change</button>
+    <button type="button" class="<%= button_classes(:tertiary, :sm) %>" data-action="client-picker#change">Change</button>
   </div>
 
   <div class="relative" data-client-picker-target="searchBox" <%= "hidden" if selected %>>

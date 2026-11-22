@@ -9,7 +9,7 @@
   </head>
   <body class="bg-canvas text-sm text-body">
     <%# The skip link is the first tab stop, before the support banner; z-[200] keeps it above that sticky banner. %>
-    <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[200] btn btn-secondary">Skip to content</a>
+    <a href="#main" class="<%= button_classes(:secondary, extra: "sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[200]") %>">Skip to content</a>
     <%= render "layouts/impersonation_banner" %>
     <div class="shell" data-controller="drawer" data-action="keydown->drawer#closeOnEscape">
       <div class="side-scrim" data-drawer-target="scrim" data-action="click->drawer#close" hidden></div>
@@ -17,7 +17,7 @@
 
       <div class="flex min-w-0 flex-col">
         <header class="topbar">
-          <button type="button" class="<%= button_classes(:ghost, :icon) %> min-[960px]:hidden"
+          <button type="button" class="<%= button_classes(:tertiary, :icon) %> min-[960px]:hidden"
                   data-drawer-target="toggle" data-action="drawer#open" aria-controls="app-sidebar" aria-expanded="false" aria-label="Open navigation">
             <%= icon "menu", class: "size-5" %>
           </button>
@@ -26,7 +26,7 @@
             <% if current_business && current_user %>
               <%# OPS-05: the Help menu: ask Shadetree, from whatever page this is. %>
               <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
-                <button type="button" class="<%= button_classes(:ghost, :icon) %>" data-menu-target="button" data-action="menu#toggle" aria-haspopup="true" aria-expanded="false" aria-label="Help" id="help-menu" data-tour="help">
+                <button type="button" class="<%= button_classes(:tertiary, :icon) %>" data-menu-target="button" data-action="menu#toggle" aria-haspopup="true" aria-expanded="false" aria-label="Help" id="help-menu" data-tour="help">
                   <%= icon "help-circle", class: "size-5" %>
                 </button>
                 <div class="menu right-0 top-full mt-1 w-56" data-menu-target="menu" hidden>
@@ -42,7 +42,7 @@
               </div>
               <%# NTF-02: the notification center, with this member's unread count in this business. %>
               <% unread = Notification.for_user(current_user).unread.count %>
-              <%= link_to admin_notifications_path, class: "#{button_classes(:ghost, :icon)} relative", "aria-label": (unread.positive? ? "Notifications, #{unread} unread" : "Notifications"),
+              <%= link_to admin_notifications_path, class: "#{button_classes(:tertiary, :icon)} relative", "aria-label": (unread.positive? ? "Notifications, #{unread} unread" : "Notifications"),
                           "aria-current": ("page" if controller_name == "notifications" && action_name == "index") do %>
                 <%= icon "bell", class: "size-5" %>
                 <% if unread.positive? %><span class="notify-count" aria-hidden="true"><%= unread > 99 ? "99+" : unread %></span><% end %>

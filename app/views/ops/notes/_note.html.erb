@@ -6,8 +6,8 @@
   </div>
   <% if note.written_by?(current_user) %>
     <div class="flex shrink-0 gap-1">
-      <%= link_to "Edit", edit_ops_business_note_path(note.business, note), class: button_classes(:ghost, :sm) %>
-      <%= button_to "Delete", ops_business_note_path(note.business, note), method: :delete, class: button_classes(:ghost, :sm),
+      <%= link_to "Edit", edit_ops_business_note_path(note.business, note), class: button_classes(:tertiary, :sm) %>
+      <%= button_to "Delete", ops_business_note_path(note.business, note), method: :delete, class: button_classes(:tertiary, :sm),
                     form: { data: { turbo_confirm: "Delete this note?", turbo_confirm_button: "Delete" } } %>
     </div>
   <% end %>

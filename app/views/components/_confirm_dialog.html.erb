@@ -6,8 +6,9 @@
     </div>
     <div class="modal-body text-subtle" data-confirm-message></div>
     <div class="modal-foot">
-      <button value="cancel" class="<%= button_classes(:secondary) %>" autofocus>Cancel</button>
-      <button value="confirm" class="<%= button_classes(:danger_solid) %>" data-confirm-button>Confirm</button>
+      <button value="cancel" class="<%= button_classes(:tertiary) %>" autofocus>Cancel</button>
+      <%# data-warning-class: the look for a warning that isn't destructive (schedule_drag_controller) %>
+      <button value="confirm" class="<%= button_classes(:destructive_solid) %>" data-confirm-button data-warning-class="<%= button_classes(:primary) %>">Confirm</button>
     </div>
   </form>
 </dialog>

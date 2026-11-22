@@ -6,7 +6,7 @@
     <% @invoice.errors[:client].each do |message| %><p class="error-text mt-1.5"><%= icon "alert-circle" %><%= message %></p><% end %>
   <% end %>
   <div class="flex items-center justify-end gap-2">
-    <%= link_to "Cancel", :back, class: button_classes(:ghost) %>
+    <%= link_to "Cancel", :back, class: button_classes(:tertiary) %>
     <%= submit_tag "Start invoice", class: button_classes, name: nil %>
   </div>
 <% end %>

@@ -1,6 +1,6 @@
 <% content_for :title, @role.name %>
 <%= page_header @role.name, lede: "Changes apply to everyone with this role on their next click." do %>
-  <%= link_to admin_roles_path, class: button_classes(:ghost) do %><%= icon "arrow-left" %> Roles<% end %>
+  <%= link_to admin_roles_path, class: button_classes(:tertiary) do %><%= icon "arrow-left" %> Roles<% end %>
 <% end %>
 <%= render "form", role: @role, editable: @editable %>
 <% if @events.any? %>

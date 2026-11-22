@@ -53,7 +53,7 @@
     <% end %>
   <% end %>
   <div class="flex items-center justify-end gap-2">
-    <%= link_to "Cancel", admin_catalog_items_path, class: button_classes(:ghost) %>
+    <%= link_to "Cancel", admin_catalog_items_path, class: button_classes(:tertiary) %>
     <%= f.submit_button @item.persisted? ? "Save service" : "Add service" %>
   </div>
 <% end %>

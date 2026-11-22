@@ -1,7 +1,7 @@
 <%= page_header @client.display_name, lede: @client.company_name do %>
   <% unless @client.erased? %><%= link_to edit_admin_client_path(@client), class: button_classes(:secondary) do %><%= icon "edit-2" %> Edit<% end %><% end %>
   <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
-    <button type="button" class="<%= button_classes(:ghost, :icon) %>" data-menu-target="button" data-action="menu#toggle"
+    <button type="button" class="<%= button_classes(:tertiary, :icon) %>" data-menu-target="button" data-action="menu#toggle"
             aria-haspopup="true" aria-expanded="false" aria-label="More actions"><%= icon "more-horizontal" %></button>
     <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
       <% if @client.erased? %>
@@ -68,8 +68,8 @@
     <% next_visits = Visit.open.in_order.where(job_id: jobs.map(&:id)).includes(:business).group_by(&:job_id).transform_values(&:first) %>
     <%= card title: "Work", flush: true,
              actions: (unless @client.archived?
-                         safe_join([ link_to(new_admin_invoice_path(client: @client.uid), class: button_classes(:ghost, :sm)) { icon("plus") + " New invoice" },
-                                     link_to(new_admin_job_path(client: @client.uid), class: button_classes(:ghost, :sm)) { icon("plus") + " New job" },
+                         safe_join([ link_to(new_admin_invoice_path(client: @client.uid), class: button_classes(:tertiary, :sm)) { icon("plus") + " New invoice" },
+                                     link_to(new_admin_job_path(client: @client.uid), class: button_classes(:tertiary, :sm)) { icon("plus") + " New job" },
                                      button_to(admin_quotes_path, params: { "quote[client]" => @client.uid }, class: button_classes(:secondary, :sm), form: { class: "contents" }) { icon("plus") + " New quote" } ], " ")
                        end) do %>
       <ul class="list">

@@ -12,6 +12,7 @@ const PAUSED = "paused" // signed out: nothing more is sent until someone taps R
 
 export default class extends Controller {
   static targets = ["queue", "list", "announce"]
+  static classes = ["retry"] // the kit's classes for the Retry button (button_classes, PLT-14)
   static values = { url: String, count: Number, noun: { type: String, default: "visit" } }
 
   connect() {
@@ -157,9 +158,10 @@ export default class extends Controller {
     row.className = "rounded-control border border-line p-2 text-sm2"
     row.innerHTML = `<div class="flex items-center gap-2"><div class="min-w-0 flex-1"><span class="block truncate font-medium text-ink"></span>
       <span class="status block text-muted"></span></div>
-      <button type="button" class="btn btn-secondary btn-sm h-auto min-h-11 shrink-0" data-action="photo-upload#retry" hidden>Retry</button></div>
+      <button type="button" data-action="photo-upload#retry" hidden>Retry</button></div>
       <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-sunken" aria-hidden="true"><div class="bar h-full w-0 bg-brand"></div></div>`
     row.querySelector("span").textContent = file.name
+    row.querySelector("button").classList.add(...this.retryClasses)
     this.show(row, "waiting", "Waiting…", 0)
     return row
   }
