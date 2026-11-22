@@ -213,4 +213,31 @@ class GuidedTourBrowserTest < ApplicationSystemTestCase
     assert_no_selector "#tour", visible: true
     wait_for_status "finished"
   end
+
+  test "a first-time tip shows once, stays away while the tour runs, and comes back from Help" do
+    sign_in_as users(:one)
+    visit admin_service_requests_path
+    assert_selector "#tip-requests[role=note]", text: "Requests from your online form", visible: true
+    Timeout.timeout(5) { sleep 0.05 until @membership.reload.tips.dig("requests", "seen_at") }
+    within("#tip-requests") { click_on "Got it" }
+    assert_no_selector "#tip-requests"
+    visit admin_service_requests_path
+    assert_no_selector ".tip", visible: :all
+
+    visit admin_root_path(tour: "start")
+    assert_stop "Stop 1 of 6", "Start here"
+    visit admin_invoices_path # mid-tour: the tip waits
+    assert_selector "#tip-invoices", visible: :hidden
+    visit admin_root_path
+    assert_stop "Stop 1 of 6", "Start here"
+    click_on "End tour"
+    visit admin_invoices_path
+    assert_selector "#tip-invoices", visible: true
+
+    click_on "Help"
+    click_on "Show tips again"
+    assert_text "Tips will show again"
+    visit admin_service_requests_path
+    assert_selector "#tip-requests", visible: true
+  end
 end

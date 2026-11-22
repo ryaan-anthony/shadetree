@@ -666,4 +666,7 @@
     .tour-open .side { overflow-y: auto; padding-bottom: var(--tour-sheet-height, 0px); }
     .tour-open .side-nav { flex: none; overflow: visible; }
   }
+  .tip { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0.75rem 0.625rem 1rem; border: 1px solid var(--color-canopy-100);
+         border-radius: var(--radius-card); background: var(--color-canopy-50); font-size: 0.875rem; color: var(--color-ink); }
+  .tip[hidden] { display: none; }
 }

@@ -10,6 +10,9 @@ module GuidanceHelper
     tour if tour&.page == page
   end
 
+  # The first-time tip for this page, if there is one for this person (FirstTimeTips).
+  def first_time_tip_here = FirstTimeTips.for(Current.membership, controller_path, action_name)
+
   # Support viewing as a member sees the tour but never marks it as seen.
   def record_guidance? = impersonation.nil?
 end

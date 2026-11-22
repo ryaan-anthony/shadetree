@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_22_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_22_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -161,6 +161,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_130000) do
     t.datetime "tour_offered_at"
     t.datetime "tour_ended_at"
     t.datetime "tour_replayed_at"
+    t.jsonb "tips", default: {}, null: false
     t.index ["business_id", "active"], name: "index_business_users_on_business_id_and_active"
     t.index ["business_id"], name: "index_business_users_on_business_id"
     t.index ["default_location_id"], name: "index_business_users_on_default_location_id"
@@ -1417,6 +1418,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_130000) do
     t.datetime "deleted_at"
     t.string "terms_version"
     t.string "privacy_version"
+    t.boolean "tips_off", default: false, null: false
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["last_business_id"], name: "index_users_on_last_business_id"

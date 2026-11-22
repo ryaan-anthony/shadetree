@@ -1,0 +1,10 @@
+<%# locals: (tip:) -%>
+<%# ACC-08: a first-time tip. Hidden until tip_controller.js shows it (not while the tour runs),
+    which marks it seen; "Got it" hides it. %>
+<div class="tip mb-4" role="note" aria-label="<%= t("guidance.tips.label") %>" id="tip-<%= tip %>" hidden
+     data-controller="tip" data-tip-url-value="<%= admin_tip_path(tip) %>" data-tip-record-value="<%= record_guidance? %>"
+     data-tip-scope-value="<%= current_business.uid %>">
+  <%= icon "zap", class: "size-4 shrink-0 text-canopy" %>
+  <p class="min-w-0 flex-1"><%= FirstTimeTips.text(tip) %></p>
+  <button type="button" class="<%= button_classes(:ghost, :sm) %>" data-action="tip#dismiss"><%= t("guidance.tips.dismiss") %></button>
+</div>
