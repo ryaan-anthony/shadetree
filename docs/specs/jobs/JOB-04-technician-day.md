@@ -54,3 +54,9 @@ I mark it done. Build a fast, phone-first "My day" that works with gloves on and
 
 - Photo storage/retention per plan (BIL-01) and storage ADR (PLT-01).
 - ~~Should a technician be able to un-complete a visit?~~ *Decided: yes, the same day (business time).*
+
+## Decisions
+
+- #289, 2026-11-22: Home is the one place to start. Office members reach My day from Home ("Your
+  day", on today's card) and don't see it in the menu; people who only do field work land on it
+  and keep it in the menu, as before. My day itself is unchanged: the phone-first day view.

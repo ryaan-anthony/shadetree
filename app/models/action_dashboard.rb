@@ -38,6 +38,14 @@ class ActionDashboard
   end
 
   def visits_today_count = todays_visits.flat_map(&:last).uniq.size
+
+  # #289: one person's visits today, for someone who does the field work themselves.
+  def visits_today_for(user) = todays_visits.find { |person, _| person == user }&.last || []
+
+  # #289: what clients owe on invoices that are out, per currency, and how much of it is late.
+  # Each invoice counts from zero up (Invoice.owed), so an overpaid one doesn't hide another's balance.
+  def money_owed = owed[:outstanding].select(&:positive?)
+  def money_overdue = owed[:overdue].select(&:positive?)
   def empty? = groups.all?(&:empty?) && todays_visits.empty?
 
   # This month so far, in the business's time zone.
@@ -64,6 +72,8 @@ class ActionDashboard
   private
 
   def quotes = Quote.unarchived.includes(:client)
+
+  def owed = @owed ||= Invoice.owed(today:)
 
   def group(key, title, scope, path) = Group.new(key:, title:, count: scope.unscope(:order, :includes).count, items: scope.limit(TOP).to_a, path:)
 

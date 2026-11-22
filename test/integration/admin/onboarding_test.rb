@@ -1,8 +1,10 @@
 require "test_helper"
 
 # ACC-05: the setup checklist, returning to it, the sample quote, the metric and the welcome.
+# #289: four steps (services, a client, the first quote, getting paid online) on Home.
 class Admin::OnboardingTest < ActionDispatch::IntegrationTest
   setup do
+    use_fake_payment_gateway # online payments can be set up, so the payments step shows
     IndustryPreset.sync!
     @business = businesses(:one)
     @business.update!(industry: "landscaping", phone: nil, onboarded_at: nil)
@@ -15,16 +17,18 @@ class Admin::OnboardingTest < ActionDispatch::IntegrationTest
   test "a new business sees the checklist, ticking from real data" do
     post admin_business_path, params: { business: { name: "Fresh Start Lawns", industry: "landscaping" } }
     follow_redirect!
-    assert_select "h2", /Get to your first quote/
+    assert_select "h2", /Get set up/
     assert_select ".card", /0 of 4 done/
-    %w[details services branding client quote].each { assert step(_1), _1 }
-    assert_select "#setup-branding", /optional/
+    assert_select "#setup-checklist[data-tour=checklist] progress[max='4'][value='0']" # ACC-08's tour points here
+    assert_equal %w[setup-services setup-client setup-quote setup-payments], css_select("#setup-checklist li[id^=setup-]").map { _1["id"] }
     assert_select "#setup-services form[action=?] button", admin_catalog_presets_path, /Add \d+ starter services/
+    assert_select "#setup-payments a[href=?]", admin_payment_account_path, "Set up payments"
   end
 
   test "each step opens the real feature and comes back" do
     get admin_root_path
-    assert_select "#setup-details a[href=?]", edit_admin_business_path(from: "setup")
+    # The details a quote needs come first, inside the quote step.
+    assert_select "#setup-quote a[href=?]", edit_admin_business_path(from: "setup"), "Add your details first"
     get edit_admin_business_path(from: "setup")
     assert_select "input[name=from][value=setup]"
     patch admin_business_path, params: { from: "setup", business: { phone: "555-0100", email: "a@example.com", address_line1: "1 Main St" } }
@@ -43,7 +47,7 @@ class Admin::OnboardingTest < ActionDispatch::IntegrationTest
     assert_select "#setup-quote a[href=?]", new_admin_quote_path(from: "setup")
   end
 
-  test "sending the first quote completes it, records the time, and hides the checklist" do
+  test "the first quote and online payments complete it; the time to first quote is recorded" do
     travel_to(@business.created_at + 2.hours) do
       as_business(@business) do
         @business.update!(phone: "555-0100", address_line1: "1 Main St")
@@ -57,12 +61,16 @@ class Admin::OnboardingTest < ActionDispatch::IntegrationTest
     end
     assert_in_delta 2.hours.to_i, @business.reload.seconds_to_first_quote, 1
     get admin_root_path
-    assert_select "h2", { text: /Get to your first quote/, count: 0 }
+    assert_select "#setup-quote .sr-only", "Done:"
+    assert_select "#setup-payments .sr-only", 0, "still to do: getting paid online"
+    as_business(@business) { PaymentAccount.create!(account_id: "acct_test1", details_submitted: true, charges_enabled: true, payouts_enabled: true) }
+    get admin_root_path
+    assert_select "h2", { text: /Get set up/, count: 0 }
     # Finished is remembered: clearing a detail later doesn't bring it back.
     assert @business.reload.onboarded_at
     @business.update!(address_line1: nil)
     get admin_root_path
-    assert_select "h2", { text: /Get to your first quote/, count: 0 }
+    assert_select "h2", { text: /Get set up/, count: 0 }
   end
 
   test "starter services come without prices, so the step asks for them next" do
@@ -78,20 +86,61 @@ class Admin::OnboardingTest < ActionDispatch::IntegrationTest
     patch admin_dismiss_setup_path
     assert_redirected_to admin_root_path
     follow_redirect!
-    assert_select "h2", { text: /Get to your first quote/, count: 0 }
+    assert_select "h2", { text: /Get set up/, count: 0 }
     assert_nil @business.reload.onboarded_at
 
     admin = member_with_role(:admin)
     sign_in admin
     post switch_admin_business_path, params: { business: @business.uid }
     get admin_root_path
-    assert_select "h2", /Get to your first quote/
+    assert_select "h2", /Get set up/
 
     sign_in users(:one)
     post switch_admin_business_path, params: { business: @business.uid }
     patch admin_show_setup_path
     follow_redirect!
-    assert_select "h2", /Get to your first quote/
+    assert_select "h2", /Get set up/
+  end
+
+  test "/admin/setup, an address people guess, opens the checklist on Home" do
+    get "/admin/setup"
+    assert_redirected_to "/admin#setup-checklist"
+  end
+
+  test "an Admin sees the payments step but the owner sets it up" do
+    sign_in member_with_role(:admin)
+    post switch_admin_business_path, params: { business: @business.uid }
+    get admin_root_path
+    assert_select "#setup-payments", /The owner sets this up/
+    assert_select "#setup-payments a", 0
+  end
+
+  test "the payments step follows the Stripe account, and is left out when payments can't be set up" do
+    account = as_business(@business) { PaymentAccount.create!(account_id: "acct_test1", details_submitted: false) }
+    get admin_root_path
+    assert_select "#setup-payments a[href=?]", admin_payment_account_path, "Finish setting up"
+    account.update_columns(details_submitted: true, requirements_pending: [ "id" ])
+    get admin_root_path
+    assert_select "#setup-payments", /Stripe is checking your details/
+    assert_select "#setup-payments a", "See where it's at"
+    account.update_columns(charges_enabled: true, payouts_enabled: true, requirements_pending: [])
+    get admin_root_path
+    assert_select "#setup-payments .sr-only", "Done:"
+
+    as_business(@business) { PaymentAccount.delete_all }
+    use_fake_payment_gateway(configured: false)
+    get admin_root_path
+    assert_select "#setup-payments", 0, "no Stripe key: the step isn't there, so the checklist can finish"
+    assert_select ".card", /0 of 3 done/
+  end
+
+  test "support viewing as the member can't hide or show their checklist" do
+    sign_in_operator # users(:one), viewing as business two's owner
+    post ops_business_impersonation_path(businesses(:two)), params: { member: business_users(:two).uid, reason: "Ticket: checklist" }
+    patch admin_dismiss_setup_path
+    assert_nil business_users(:two).reload.setup_hidden_at, "read-only while viewing as them"
+    patch admin_show_setup_path
+    assert_nil business_users(:two).reload.setup_hidden_at
   end
 
   test "the sample quote shows the client page with branding and saves nothing" do
@@ -118,7 +167,7 @@ class Admin::OnboardingTest < ActionDispatch::IntegrationTest
     get admin_root_path
     assert_redirected_to admin_my_day_path
     follow_redirect!
-    assert_select "h2", { text: /Get to your first quote/, count: 0 }
+    assert_select "h2", { text: /Get set up/, count: 0 }
     assert_select "h2", /Welcome to #{@business.name}/
     patch admin_dismiss_welcome_path
     get admin_my_day_path

@@ -115,7 +115,7 @@
   <%= card title: "Setup and payments", id: "setup" do %>
     <% done, required = @summary.setup_progress %>
     <dl class="space-y-2 text-sm">
-      <div class="flex justify-between gap-3"><dt class="text-subtle">Setup checklist</dt><dd class="text-ink" id="setup-progress"><%= done == required ? "Complete" : "#{done} of #{required} steps" %><% if @business.onboarded_at %>, finished <%= local_date(@business.onboarded_at) %><% end %></dd></div>
+      <div class="flex justify-between gap-3"><dt class="text-subtle">Setup checklist</dt><dd class="text-ink" id="setup-progress"><%= done == required || @business.onboarded_at ? "Complete" : "#{done} of #{required} steps" %><% if @business.onboarded_at %>, finished <%= local_date(@business.onboarded_at) %><% end %></dd></div>
       <div class="flex justify-between gap-3"><dt class="text-subtle">First quote sent</dt><dd class="text-ink"><%= @business.first_quote_sent_at ? local_date(@business.first_quote_sent_at) : "Not yet" %></dd></div>
       <% account = @summary.payment_account %><%# PAY-03 %>
       <div class="flex justify-between gap-3"><dt class="text-subtle">Online payments account</dt><dd class="text-right text-ink" id="payments-account">

@@ -166,6 +166,7 @@ Rails.application.routes.draw do
     end
 
     # Guided onboarding (ACC-05)
+    get "setup", to: redirect("/admin#setup-checklist", status: 302) # #289: an address people guess; the checklist is on Home
     get "setup/sample-quote", to: "onboarding#sample_quote", as: :sample_quote
     patch "setup/dismiss", to: "onboarding#dismiss", as: :dismiss_setup
     patch "setup/show", to: "onboarding#show", as: :show_setup

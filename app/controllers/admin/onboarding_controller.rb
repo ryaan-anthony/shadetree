@@ -3,6 +3,7 @@
 class Admin::OnboardingController < Admin::BaseController
   # OPS-03: what support may do while viewing as a member
   impersonation :allowed
+  impersonation :read_only, only: %i[dismiss show] # #289: a member's own view; support doesn't change it for them
   requires_permission :business_settings, only: %i[sample_quote dismiss show]
   allow_any_member only: :dismiss_welcome
 
@@ -18,7 +19,7 @@ class Admin::OnboardingController < Admin::BaseController
   # Hides the checklist for this member only; "Show setup checklist" on the dashboard undoes it.
   def dismiss
     Current.membership.update!(setup_hidden_at: Time.current)
-    redirect_to admin_root_path, notice: "Setup checklist hidden. You can show it again from the bottom of this page."
+    redirect_to admin_root_path, notice: "Setup checklist hidden. You can show it again from the top of this page."
   end
 
   def show

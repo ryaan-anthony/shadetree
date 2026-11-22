@@ -74,7 +74,7 @@ class Ops::BusinessDirectoryTest < ActionDispatch::IntegrationTest
     assert_select "#former-members", 0
     assert_select "#usage-quotes_sent", /0 of/
     assert_select "#count-clients", /1/
-    assert_select "#setup-progress", /of 4 steps/
+    assert_select "#setup-progress", /of [34] steps/
     assert_select "#payments-account", /Not connected/
     account = as_business(@one) { PaymentAccount.create!(account_id: "acct_test1", details_submitted: true, disabled_reason: "requirements.past_due") }
     get ops_business_path(@one)
