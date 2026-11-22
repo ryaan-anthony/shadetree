@@ -69,7 +69,9 @@ class RequestFollowUp < ApplicationRecord
       before, before_user = (follow_up.state if follow_up.persisted?), (follow_up.user if follow_up.persisted?)
       follow_up.assign_attributes(attributes)
       follow_up.assigned_by = by if follow_up.new_record? || follow_up.user_id_changed?
-      follow_up.done_at = follow_up.done_by = nil # JOB-06: assigned again, so to do again
+      follow_up.validate # works out the times, so a change of who, day or time can be seen
+      # JOB-06: given to someone else, or moved, it's to do again; other details leave it done.
+      follow_up.done_at = follow_up.done_by = nil if (follow_up.changes.keys & %w[user_id scheduled_on timing starts_at window_ends_at]).any?
       follow_up.save!
       request.update!(status: "in_progress") if request.status == "new"
       follow_up.record_change(before, before_user, by:)
@@ -122,9 +124,9 @@ class RequestFollowUp < ApplicationRecord
 
       update!(done_at: Time.current, done_by: by)
       ServiceRequestEvent.record!(service_request, :done, by:, from: state)
-      if assigned_by && assigned_by.id != by&.id
-        NotificationType.deliver("request_follow_up_done", business:, subject: service_request, actor: by, to: [ assigned_by ],
-                                 title: "Done: #{by&.full_name || "The"} #{summary}", body: "Ready for a quote, or for what comes next.",
+      if (to = told_when_done(by))
+        NotificationType.deliver("request_follow_up_done", business:, subject: service_request, actor: by, to: [ to ],
+                                 title: "#{by&.full_name || "Someone"} did the #{summary}", body: "Ready for a quote, or for what comes next.",
                                  path: Rails.application.routes.url_helpers.admin_service_request_path(service_request))
       end
     end
@@ -133,19 +135,39 @@ class RequestFollowUp < ApplicationRecord
 
   # JOB-06: hands the request back to whoever assigned it, for today, anytime, with what the
   # assignee found as an internal note. Raises NotOpen when there's nobody to pass it back to.
+  # Only the assignee, once it's done, and only while it's still theirs (checked under the
+  # request's lock, so the office moving it meanwhile wins). Their instructions go with it.
   def pass_back!(by:, note: nil)
-    to = assigned_by
-    eligible = to && to.id != user_id && business.business_users.active.find_by(user_id: to.id)&.then { self.class.assignable?(_1) }
-    raise NotOpen, "There's nobody to pass this back to. Ask the office to reassign it." unless eligible
-
     request = service_request
-    ServiceRequest.transaction do
+    request.with_lock do
+      reload
+      raise NotOpen, "This isn't yours to pass back any more." unless user_id == by&.id
+      raise NotOpen, "Mark it done first." unless done?
+      raise NotOpen, "There's nobody to pass this back to. Ask the office to reassign it." unless (to = pass_back_to)
+
       request.notes.create!(business:, user: by, body: note) if note.present?
       request.passing_back = note.to_s # record_change tells it apart from a reassignment
-      self.class.assign!(request, { user: to, scheduled_on: request.location&.today || business.today, timing: "anytime" }, by:)
+      self.class.assign!(request, { user: to, scheduled_on: request.location&.today || business.today, timing: "anytime", instructions: nil }, by:)
     ensure
       request.passing_back = nil
     end
+  end
+
+  # Who it'd go back to: whoever assigned it, if they're still on the team in a role that can
+  # take it, and isn't the assignee. Nil means the office has to reassign it.
+  def pass_back_to
+    return if assigned_by.nil? || assigned_by_id == user_id
+
+    member = business.business_users.active.find_by(user_id: assigned_by_id)
+    assigned_by if member && self.class.assignable?(member)
+  end
+
+  # Who hears that it's done (NTF-02's "A follow-up you gave is done" needs request access):
+  # whoever assigned it, unless that's who did it or they've left.
+  def told_when_done(by)
+    return if assigned_by.nil? || assigned_by_id == by&.id
+
+    assigned_by if business.business_users.active.find_by(user_id: assigned_by_id)&.can?(:office)
   end
 
   # The history lines and notices for what assign! just changed from `before` (nil when new).
@@ -182,7 +204,8 @@ class RequestFollowUp < ApplicationRecord
     paths = Rails.application.routes.url_helpers
     member = business.business_users.active.find_by(user: person)
     theirs = person.id == user_id && !destroyed?
-    path = if member&.can?(:field_work) then theirs ? paths.admin_my_request_path(service_request) : paths.admin_my_day_path
+    path = if theirs then paths.admin_my_request_path(service_request)
+    elsif member&.can?(:field_work) then paths.admin_my_day_path
     else paths.admin_service_request_path(service_request)
     end
     NotificationType.deliver(kind, business:, subject: service_request, actor: by, to: [ person ], title:, body:, path:)
@@ -230,6 +253,6 @@ class RequestFollowUp < ApplicationRecord
     return errors.add(:user_id, "Choose who follows it up.") if user.nil?
 
     member = business.business_users.active.find_by(user_id:)
-    errors.add(:user_id, "Only people on your team can be assigned.") unless member && self.class.assignable?(member)
+    errors.add(:user_id, "Only people on your team whose role has My day or requests can be assigned.") unless member && self.class.assignable?(member)
   end
 end

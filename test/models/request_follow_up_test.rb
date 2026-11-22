@@ -51,7 +51,7 @@ class RequestFollowUpTest < ActiveSupport::TestCase
     assert_equal "/admin/my-day/requests/#{@request.uid}", as_business(@business) { Notification.find_by(user: @pat).path }, "JOB-06: on their day"
     office_only = custom_member("Olive", %w[office])
     assign(as_business(@business) { ServiceRequest.create!(client: @maria, source: "phone", description: "Desk") }, user: office_only)
-    assert_match %r{\A/admin/requests/}, as_business(@business) { Notification.find_by(user: office_only).path }, "no My day, so the request page"
+    assert_match %r{\A/admin/my-day/requests/}, as_business(@business) { Notification.find_by(user: office_only).path }, "their page for it, even without My day"
 
     call = assign(as_business(@business) { ServiceRequest.create!(client: @maria, source: "phone", description: "Quote by phone") },
                   kind: "call", timing: "exact", start_time: "14:00", duration_minutes: nil)
@@ -127,7 +127,7 @@ class RequestFollowUpTest < ActiveSupport::TestCase
 
   test "any role that works from My day or the request page can be assigned; nobody else, on every change" do
     error = assert_raises(ActiveRecord::RecordInvalid) { assign(user: users(:two)) }
-    assert_match "Only people on your team can be assigned", error.message
+    assert_match "Only people on your team whose role has My day or requests can be assigned", error.message
     tech = member("Tia", :technician)
     other = as_business(@business) { ServiceRequest.create!(client: @maria, source: "phone", description: "Shed") }
     assert_equal tech, assign(other, user: tech).user, "JOB-06: technicians too"
@@ -264,6 +264,20 @@ class RequestFollowUpTest < ActiveSupport::TestCase
       assert_equal [ 1, @pat.id ], [ @request.site_photos.count, @request.site_photos.first.blob.metadata["uploaded_by"] ]
       assert_match "isn't a photo", @request.add_site_photo_from(Rack::Test::UploadedFile.new(file_fixture("logo.png"), "text/plain", original_filename: "notes.txt").tap { _1.tempfile.write("x") && _1.tempfile.rewind }, by: @pat).to_s
     end
+  end
+
+  test "JOB-06: the site photo cap holds, erasure drops them, and the export says when it was done" do
+    as_business(@business) do
+      Visit::MAX_PHOTOS.times { |n| @request.site_photos.attach(io: StringIO.new("x"), filename: "p#{n}.png", content_type: "image/png") }
+      assert_match "most site photos it can (#{Visit::MAX_PHOTOS})", @request.add_site_photo_from(Rack::Test::UploadedFile.new(file_fixture("logo.png"), "image/png"), by: @pat)
+      assert_equal Visit::MAX_PHOTOS, @request.site_photos.count
+    end
+    follow_up = assign
+    as_business(@business) { follow_up.done!(by: @pat) }
+    csv, = as_business(@business) { DataExport.table("requests").generate }
+    assert CSV.parse(csv, headers: true).first["Follow-up done"].present?
+    as_business(@business) { ClientErasure.new(@maria, by: @owner).erase! }
+    assert_equal 0, as_business(@business) { @request.reload.site_photos.count }
   end
 
   private

@@ -11,12 +11,16 @@
   <%# The one thing to do next, big enough to hit with a gloved thumb. %>
   <div id="follow-up-action">
     <% if follow_up.done? %>
-      <div class="banner banner-success"><%= icon "check-circle" %><p>Done <%= local_time(follow_up.done_at) %>. Create the quote, or pass it back with what you found.</p></div>
+      <% to = follow_up.pass_back_to %>
+      <% next_step = if can?(:office) then to ? "Create the quote, or pass it back with what you found." : "Create the quote, or reassign it."
+                     else to ? "Pass it back with what you found." : "Ask the office to reassign it."
+                     end %>
+      <div class="banner banner-success"><%= icon "check-circle" %><p>Done <%= local_time(follow_up.done_at) %>. <%= next_step %></p></div>
       <div class="mt-3 grid gap-2 sm:grid-cols-2">
         <% if can?(:office) %>
           <%= button_to quote_admin_service_request_path(request_record), class: "#{button_classes(:primary)} h-auto min-h-12 w-full justify-center", form: { class: "contents" } do %><%= icon "file-plus" %> Create quote<% end %>
         <% end %>
-        <% if (to = follow_up.assigned_by) && to != current_user %>
+        <% if to %>
           <div class="contents" data-controller="modal">
             <button type="button" class="<%= button_classes(:secondary) %> h-auto min-h-12 w-full justify-center" data-action="modal#open" aria-haspopup="dialog"><%= icon "corner-up-left" %> Pass back to <%= to.full_name %></button>
             <%= modal id: "pass-back", title: "Pass this back to #{to.full_name}?", description: "It goes on their day for today. Say what you found, so they can quote it." do %>
@@ -56,12 +60,13 @@
     <% end %>
     <% phone = request_record.contact_phone || client.primary_phone&.value %>
     <% if phone %>
-      <% digits = phone.gsub(/[^\d+]/, "") %>
-      <p class="mt-4 text-sm2 text-muted"><%= phone_number(phone) %></p>
-      <div class="mt-1 grid grid-cols-2 gap-2">
-        <%= link_to "tel:#{digits}", class: "#{button_classes(:secondary)} h-auto min-h-11 justify-center" do %><%= icon "phone" %> Call<% end %>
-        <%= link_to "sms:#{digits}", class: "#{button_classes(:secondary)} h-auto min-h-11 justify-center" do %><%= icon "message-square" %> Text<% end %>
-      </div>
+      <p class="mt-4 text-sm2 text-muted"><%= [ request_record.contact_name, phone_number(phone) ].compact.join(" · ") %></p>
+      <% if (tel = phone_href(phone)) %><%# nothing to dial in "555-0100 or 555-0199": shown, not linked %>
+        <div class="mt-1 grid grid-cols-2 gap-2">
+          <%= link_to tel, class: "#{button_classes(:secondary)} h-auto min-h-11 justify-center" do %><%= icon "phone" %> Call<% end %>
+          <%= link_to tel.sub("tel:", "sms:"), class: "#{button_classes(:secondary)} h-auto min-h-11 justify-center" do %><%= icon "message-square" %> Text<% end %>
+        </div>
+      <% end %>
     <% end %>
   <% end %>
 

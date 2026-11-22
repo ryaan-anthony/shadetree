@@ -12,15 +12,16 @@ class Admin::MyRequestsController < Admin::BaseController
 
   def done
     @follow_up.done!(by: current_user)
-    redirect_to admin_my_request_path(@request), notice: "Done. #{@follow_up.assigned_by && @follow_up.assigned_by != current_user ? "#{@follow_up.assigned_by.first_name.presence || @follow_up.assigned_by.full_name} knows." : "Create the quote, or pass it back."}"
+    told = @follow_up.told_when_done(current_user)
+    redirect_to admin_my_request_path(@request), notice: "Done.#{" #{told.full_name} knows." if told}"
   rescue RequestFollowUp::NotOpen => error
     redirect_to admin_my_request_path(@request), alert: error.message
   end
 
   def pass_back
-    to = @follow_up.assigned_by
+    to = @follow_up.pass_back_to
     @follow_up.pass_back!(by: current_user, note: params[:note].to_s.strip.first(5_000))
-    redirect_to admin_my_day_path, notice: "Passed back to #{to.full_name}."
+    redirect_to (can?(:field_work) ? admin_my_day_path : admin_service_requests_path), notice: "Passed back to #{to&.full_name}."
   rescue RequestFollowUp::NotOpen, ActiveRecord::RecordInvalid => error
     redirect_to admin_my_request_path(@request), alert: error.message.delete_prefix("Validation failed: ")
   end

@@ -54,6 +54,8 @@ creates the quote or hands it back or on.
 
 - Showing follow-ups on the staff calendar (JOB-07).
 - Route ordering and travel times (backlog).
+- Photo links through an authorised controller, as support ticket files have (backlog): request
+  and visit photos use lasting signed links, so someone moved off a request keeps working links.
 
 ## Decisions
 
