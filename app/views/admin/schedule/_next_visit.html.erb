@@ -1,5 +1,5 @@
 <%# locals: (s:) -%>
-<%# #289: an empty week isn't an empty diary: the next visit booked after it, for the same people. %>
-<% if (upcoming = s.next_visit_after) %>
-  <%= link_to admin_schedule_path(schedule_link_params(s, date: upcoming.scheduled_on.iso8601)), class: "font-medium text-ink underline-offset-2 hover:underline" do %>Next visit: <%= friendly_date(upcoming.scheduled_on, format: :weekday) %><% end %>
+<%# #289: an empty week isn't an empty diary: the next visit or follow-up booked after it, for the same people. %>
+<% if (upcoming = s.next_item_after) %>
+  <%= link_to admin_schedule_path(schedule_link_params(s, date: upcoming.scheduled_on.iso8601)), class: "font-medium text-ink underline-offset-2 hover:underline" do %><%= upcoming.is_a?(Visit) ? "Next visit" : "Next follow-up" %>: <%= friendly_date(upcoming.scheduled_on, format: :weekday) %><% end %>
 <% end %>

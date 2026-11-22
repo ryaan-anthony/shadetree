@@ -17,7 +17,7 @@
     <%= link_to "Week", admin_schedule_path(schedule_link_params(s, view: "week")), class: "tab", "aria-current": ("page" if s.view == "week") %>
   </nav>
 <% end %>
-<% if s.visits.empty? && s.next_visit_after %>
+<% if s.items.empty? && s.next_item_after %>
   <p class="-mt-2 mb-4 text-sm2 text-muted" id="next-visit"><span class="hidden md:inline">Nothing booked <%= s.view == "day" ? "this day" : "this week" %>. </span><%= render "next_visit", s: %></p>
 <% end %>
 

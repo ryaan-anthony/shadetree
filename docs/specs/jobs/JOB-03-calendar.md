@@ -75,9 +75,9 @@ or one person — spot gaps, and move work around quickly, on a desktop or a pho
 - On phones the agenda comes first and this week's past days are folded into "Earlier this week".
 - Measured: a week of 200 visits for 10 people renders in well under a second with 25 queries,
   cached ones included (test).
-- #289: "Needs scheduling" says "No jobs are waiting for a visit". A week (or day) with no
-  visits links to the next open one from today on, for the same people filter ("Next visit: Mon,
-  Nov 23"). Once JOB-06 adds request follow-ups, this empty-week check must count them too.
+- #289: "Needs scheduling" says "No jobs are waiting for a visit". A week (or day) with nothing
+  booked (no visits, no request follow-ups) links to the next thing booked after it, from today on,
+  for the same people filter: "Next visit: Mon, Nov 23" or "Next follow-up: Wed, Nov 25" (JOB-07).
 ## Out of scope
 
 - Month view, map view, route optimization, calendar feed export (backlog).

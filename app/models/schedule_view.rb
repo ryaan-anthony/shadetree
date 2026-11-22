@@ -238,6 +238,14 @@ class ScheduleView
     @next_visit_after = for_member(Visit.open.where(scheduled_on: [ dates.last + 1, place.today ].max..)).in_order.first
   end
 
+  # #289: for an empty period (no visits, no follow-ups), the first thing booked after it: the
+  # next visit or the next follow-up (JOB-07), whichever comes first.
+  def next_item_after
+    return if items.any?
+
+    [ next_visit_after, next_follow_up_after ].compact.min_by { [ _1.scheduled_on, _1.starts_at ? 0 : 1, _1.starts_at || Time.at(0), _1.is_a?(Visit) ? 0 : 1 ] }
+  end
+
   # The grid's clock: the filtered location's time zone (CAT-07), else the business's.
   def place = @location || business
 

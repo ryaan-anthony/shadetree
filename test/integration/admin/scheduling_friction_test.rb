@@ -59,6 +59,18 @@ class Admin::SchedulingFrictionTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "an empty week whose next booking is a request follow-up points to it (JOB-07)" do
+    travel_to Time.utc(2026, 11, 18, 15) do
+      request = as_business(@business) { ServiceRequest.create!(client: @maria, source: "phone", description: "Ants") }
+      as_business(@business) { RequestFollowUp.assign!(request, { user: @owner, kind: "call", scheduled_on: Date.new(2026, 11, 25) }, by: @owner) }
+      book(Date.new(2026, 12, 2))
+      get admin_schedule_path(date: "2026-11-16")
+      assert_select "#next-visit a[href*='date=2026-11-25']", "Next follow-up: Wed, Nov 25"
+      get admin_schedule_path(date: "2026-11-23")
+      assert_select "#next-visit", 0, "the week with the follow-up isn't empty"
+    end
+  end
+
   test "when nothing is left to do, the jobs list offers the completed ones" do
     as_business(@business) { @job.update_columns(status: "completed", completed_at: Time.current) }
     get admin_jobs_path
