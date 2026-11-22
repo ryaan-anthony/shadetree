@@ -41,7 +41,7 @@ archive what isn't going anywhere.
 
 ## Out of scope
 
-- Assignment of requests to members, lead sources reporting, SLAs (backlog).
+- Assignment of requests to members (CLI-07); lead sources reporting, SLAs (backlog).
 
 ## Open questions
 

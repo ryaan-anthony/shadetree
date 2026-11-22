@@ -41,6 +41,8 @@ optimization before basic scheduling existed.
 - **R11** From a visit, a technician can mark start and complete, add notes, and attach photos
   (count/size limited). Completion time is recorded.
 - **R12** Technicians cannot see prices or invoices unless the business allows it (setting).
+- **R15** Request follow-ups (site visits and calls, 04-clients R18) sit on My day and the staff
+  calendar next to job visits, and are moved and reassigned the same ways.
 
 ### Client communication
 - **R13** The client receives a confirmation when a visit is scheduled or changed or cancelled,
@@ -67,6 +69,8 @@ optimization before basic scheduling existed.
 | [JOB-03](../specs/jobs/JOB-03-calendar.md) | Staff calendar | M3 | JOB-02 |
 | [JOB-04](../specs/jobs/JOB-04-technician-day.md) | Technician day view | M3 | JOB-02 |
 | [JOB-05](../specs/jobs/JOB-05-visit-notifications.md) | Visit confirmations & reminders | M3 | JOB-02, NTF-01, PLT-12 |
+| [JOB-06](../specs/jobs/JOB-06-requests-on-my-day.md) | Request follow-ups on My day | M6 | CLI-07, JOB-04 |
+| [JOB-07](../specs/jobs/JOB-07-requests-on-calendar.md) | Request follow-ups on the calendar | M6 | CLI-07, JOB-03 |
 
 ## Backlog (M6)
 
