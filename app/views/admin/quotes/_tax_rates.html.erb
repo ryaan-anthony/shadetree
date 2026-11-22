@@ -15,13 +15,17 @@
         </label>
       <% end %>
     </fieldset>
+    <% if quote.tax_rate_list.empty? && quote.current_line_items.any?(&:taxable) %>
+      <%# #289: taxed lines, but no rate ticked: say why the tax is $0 %>
+      <p class="mt-1 text-sm2 text-muted" id="no-tax-ticked">Some lines are marked Taxed, but no rate is ticked, so no tax is added.</p>
+    <% end %>
   <% else %>
     <%# #289: no rate at all, so the total has no tax; say so instead of a silent $0. %>
     <p class="text-sm2 text-muted" id="no-tax-rates">No sales tax on this <%= scope %>.
       <% if Current.membership&.can?(:business_settings) %>
         If you charge it, <%= link_to "add your tax rate", admin_tax_rates_path, class: "font-semibold text-ink underline-offset-2 hover:underline" %> in Settings.
       <% else %>
-        If you charge it, ask an owner to add your tax rate in Settings.
+        If you charge it, ask whoever manages your settings to add your tax rate.
       <% end %></p>
   <% end %>
 </div>

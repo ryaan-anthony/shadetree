@@ -10,7 +10,9 @@
   <% end %>
   <%# #289: once it's billed, the invoice is the next step, not a second one (that's in the menu). %>
   <% billed = quote.approved? ? (quote.invoices.to_a + Array(quote.job&.invoices&.to_a)).uniq.reject(&:void?).sort_by(&:created_at) : [] %>
-  <% if (latest_invoice = billed.last) %>
+  <% if billed.size > 1 %><%# progress billing: the Invoices card lists them all %>
+    <%= link_to "#invoices", class: button_classes(:secondary), id: "quote-invoice-link" do %><%= icon "invoice" %> Invoices (<%= billed.size %>)<% end %>
+  <% elsif (latest_invoice = billed.last) %>
     <%= link_to admin_invoice_path(latest_invoice), class: button_classes(:secondary), id: "quote-invoice-link" do %><%= icon "invoice" %> Invoice <%= latest_invoice.number %><% end %>
   <% elsif quote.approved? %>
     <%= button_to admin_quote_invoices_path(quote), class: button_classes(:secondary), form: { class: "contents" } do %><%= icon "invoice" %> Create invoice<% end %>
@@ -57,6 +59,11 @@
 
 <% if (undelivered = quote.undelivered_email) %>
   <%= render "admin/sends/delivery_warning", email: undelivered, document: quote, resend_path: new_admin_quote_send_path(quote), id: "quote-delivery-problem" %>
+<% end %>
+<% if quote.approved? && (copy = quote.latest_email)&.problem? && quote.approval && copy.created_at > quote.approval.created_at %>
+  <%# #289: a copy of an approved quote that didn't arrive: worth a line, not the full warning %>
+  <p class="-mt-2 mb-4 text-sm2 text-muted" id="quote-copy-undelivered"><%= icon "alert-triangle", class: "mr-1 inline size-4 align-text-bottom text-warning" %>The copy emailed to <%= copy.to %> wasn't delivered. <%= copy.problem_reason %>
+    <%= link_to "Send it again", new_admin_quote_send_path(quote), class: "font-medium text-ink underline-offset-2 hover:underline" %></p>
 <% end %>
 <%= render "admin/quotes/from_request", quote: %>
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">

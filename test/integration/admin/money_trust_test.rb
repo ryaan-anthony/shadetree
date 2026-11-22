@@ -42,6 +42,10 @@ class Admin::MoneyTrustTest < ActionDispatch::IntegrationTest
     assert_select "a#quote-invoice-link[href=?]", admin_invoice_path(invoice), text: /Invoice #{invoice.number}/
     assert_select "form[action=?]", admin_quote_invoices_path(quote), 1, "only the menu's"
     assert_select ".menu form[action=?][data-turbo-confirm*=?] button", admin_quote_invoices_path(quote), invoice.number, text: /Create another invoice/
+
+    as_business(@business) { Invoice.from_quote!(quote, by: @owner) } # progress billing
+    get admin_quote_path(quote)
+    assert_select "a#quote-invoice-link[href='#invoices']", text: /Invoices \(2\)/
   end
 
   test "a job with an invoice offers only 'Create another invoice', with a confirm" do
@@ -112,6 +116,9 @@ class Admin::MoneyTrustTest < ActionDispatch::IntegrationTest
     get edit_admin_quote_path(quote)
     assert_select "label:not([hidden]) input[type=checkbox][data-field=taxable]"
     assert_select "#no-tax-rates", 0
+    as_business(@business) { quote.reload.update!(tax_rates: []) }
+    get edit_admin_quote_path(quote)
+    assert_select "#no-tax-ticked", /marked Taxed, but no rate is ticked/
   end
 
   test "an approved quote can be sent again as a copy: it stays approved and isn't counted" do
@@ -148,6 +155,17 @@ class Admin::MoneyTrustTest < ActionDispatch::IntegrationTest
     assert_select "#client-timeline", /Copy of approved quote #{quote.number} sent by email/
   end
 
+  test "a copy that bounces gets a quiet line on the approved quote, not the full warning" do
+    quote = approve(quote_for("Grace", email: "grace@example.com"))
+    with_fake_pdf_renderer do
+      post admin_quote_send_path(quote), params: { quote_send: { to: "grace@example.com", subject: "Copy", message: "Hi" } }
+    end
+    as_business(@business) { quote.reload.latest_email.mark!("bounced", error: "550 5.1.1 no such user") }
+    get admin_quote_path(quote)
+    assert_select "#quote-copy-undelivered", /The copy emailed to grace@example\.com wasn't delivered/
+    assert_select "#quote-delivery-problem", 0
+  end
+
   test "an archived approved quote isn't sent again" do
     quote = approve(quote_for("Grace"))
     as_business(@business) { quote.update!(archived_at: Time.current) }
@@ -155,12 +173,18 @@ class Admin::MoneyTrustTest < ActionDispatch::IntegrationTest
     assert_redirected_to admin_quote_path(quote)
   end
 
-  test "quota wording names the plan and the period" do
+  test "quota wording names the plan and the period, says when it's all used, and marks a trial" do
     helper = ApplicationController.new.view_context
     as_business(@business) do
-      assert_equal "0 of your 5 free quotes this month", helper.quote_allowance(@business.entitlements)
-      @business.update!(plan: plans(:starter))
-      assert_match(/\A0 of your 30 Starter quotes this (month|billing period)\z/, helper.quote_allowance(Entitlements.for(@business)))
+      entitlements = @business.entitlements
+      assert_equal "Used 0 of your 5 free quotes this month", helper.quote_allowance(entitlements)
+      assert_equal "Of your 5 free quotes this month", helper.quote_allowance(entitlements, count: false)
+      assert_equal "You've used all 5 free quotes this month", helper.quote_allowance(entitlements, used: 6)
+      assert_equal "All 5 free quotes used this month", helper.quote_allowance(entitlements, used: 5, count: false)
+      @business.update!(plan: plans(:starter), billing_status: "trialing")
+      assert_match(/\AUsed 0 of your 30 Starter quotes this (month|billing period) \(trial\)\z/, helper.quote_allowance(Entitlements.for(@business)))
+      @business.update!(plan: plans(:business))
+      assert_nil helper.quote_allowance(Entitlements.for(@business)), "no limit, nothing to say"
     end
   end
 end
