@@ -62,7 +62,7 @@ creates the quote or hands it back or on.
 
 - Showing follow-ups on the staff calendar (JOB-07).
 - Route ordering and travel times (backlog).
-- The office removing site photos (only the person following it up can, while it's theirs);
+- The office removing site photos (only the person who took one can, while it's theirs);
   a quote made from the request attaches the client's photos, not site photos (backlog).
 - Photo links through an authorised controller, as support ticket files have (backlog): request
   and visit photos use lasting signed links, so someone moved off a request keeps working links.
@@ -79,7 +79,9 @@ creates the quote or hands it back or on.
 
 - The assignee sees all internal notes on that request (owner, 2026-11-21).
 - Any role with My day or the request page can be assigned; one with neither can't, as there'd
-  be nowhere to see it.
+  be nowhere to see it (review, 2026-11-22).
+- An assignee can remove only the site photos they took; an earlier assignee's stay as the
+  record of their visit (review, 2026-11-22).
 
 ## Open questions
 
