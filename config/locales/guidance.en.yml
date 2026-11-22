@@ -47,10 +47,10 @@ en:
       field:
         my_day:
           title: "My day"
-          text: "Your visits for today, in order. Tap one for the address, how to get in and what to do."
+          text: "Your visits and requests to follow up today, in order. Tap one for the address, how to get in and what to do."
         coming_up:
           title: "Coming up"
-          text: "Visits booked for you over the next two weeks. When the office changes one, it changes here too."
+          text: "What's booked for you over the next two weeks. When the office changes something, it changes here too."
         help:
           title: "Help"
           text: "Stuck? Ask Shadetree from here, on any page. You can take this tour again from here too."
