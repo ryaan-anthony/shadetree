@@ -25,6 +25,20 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   # Icon-only buttons are named with aria-label; let click_on and assert_button find them.
   Capybara.enable_aria_label = true
 
+  # Start every test with no cookies. Capybara's reset clears the cookies first and only then
+  # moves the browser to about:blank, so a response the previous test's page was still waiting
+  # for (a fetch, a prefetch, an image) can land in between and store that test's session
+  # cookie again. The next test then arrives signed in as a session its rolled-back transaction
+  # removed, and Devise sends it to sign in: a client link opened the sign-in page instead of
+  # the quote. Clearing again here works because it runs later: after the browser is on
+  # about:blank and Capybara has waited for pending requests, so nothing is left to set one.
+  def before_setup
+    if Capybara::Session.instance_created? && page.driver.browser.respond_to?(:execute_cdp)
+      page.driver.browser.execute_cdp("Network.clearBrowserCookies")
+    end
+    super
+  end
+
   # When a test fails, show what the server did meanwhile (requests, status, timing) and the
   # browser's console, so a CI-only failure can be diagnosed from the log. This runs in
   # before_teardown: Rails resets the browser to a blank page before teardown blocks run, so
