@@ -226,6 +226,19 @@ Tenancy.with_business(business) do
                                     description: "Called about monthly grounds maintenance next season. Wants a quote by Dec 15.")
     logged.notes.create!(business:, user: owner, body: "Site visit booked for Thursday.")
   end
+  # CLI-07: follow-ups. The phoned-in request is a site visit for Priya on Thursday afternoon;
+  # the form's request is a call for the owner that was due yesterday (overdue in the inbox).
+  unless RequestFollowUp.exists?
+    priya = User.find_by(email: "admin@example.com")
+    thursday = business.today + ((4 - business.today.wday) % 7)
+    phoned = ServiceRequest.find_by(source: "phone")
+    if phoned && priya
+      RequestFollowUp.assign!(phoned, { user: priya, scheduled_on: thursday, timing: "window", start_time: "13:00", window_end_time: "15:00",
+                                        instructions: "Walk the grounds with the facilities manager. Note the beds and the slope." }, by: owner)
+    end
+    online = ServiceRequest.find_by(source: "form")
+    RequestFollowUp.assign!(online, { user: owner, kind: "call", scheduled_on: business.today - 1, instructions: "Ask how big the back yard is." }, by: owner) if online&.open?
+  end
   # NTF-03: one customized client email (Settings → Messages; editing needs a plan with templates).
   MessageTemplate.create_with(subject: "See you tomorrow, {{client_first_name}}",
                               body: "Hi {{client_first_name}},\n\nJust a reminder that we'll be there tomorrow, {{visit_window}}. " \

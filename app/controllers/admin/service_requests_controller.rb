@@ -14,12 +14,14 @@ class Admin::ServiceRequestsController < Admin::BaseController
 
   def index
     @status = params[:status].presence_in(ServiceRequest::STATUSES) || "new"
-    @counts = ServiceRequest.group(:status).count
-    scope = ServiceRequest.where(status: @status)
+    @assignee = params[:assignee].to_s[/\A(mine|unassigned|\d+)\z/] # CLI-07
+    filtered = by_assignee(ServiceRequest.all)
+    @counts = filtered.group(:status).count
+    scope = filtered.where(status: @status)
     @total_count = scope.count
     @total_pages = [ (@total_count.to_f / PER_PAGE).ceil, 1 ].max
     @page = params[:page].to_i.clamp(1, @total_pages)
-    @requests = scope.recent.includes(:client, :property, :created_by, :location).with_attached_photos.offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
+    @requests = scope.recent.includes(:client, :property, :created_by, :location, follow_up: :user).with_attached_photos.offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
     @seen_by_me = ServiceRequestView.where(user: current_user, service_request_id: @requests.map(&:id)).pluck(:service_request_id).to_set
   end
 
@@ -82,6 +84,15 @@ class Admin::ServiceRequestsController < Admin::BaseController
   end
 
   private
+
+  # CLI-07: the inbox's "Assigned to" filter: mine, nobody's, or one member's (by user id).
+  def by_assignee(scope)
+    case @assignee
+    when nil then scope
+    when "unassigned" then scope.where.not(id: RequestFollowUp.select(:service_request_id))
+    else scope.where(id: RequestFollowUp.where(user_id: @assignee == "mine" ? current_user.id : @assignee.to_i).select(:service_request_id))
+    end
+  end
 
   def set_request = @request = ServiceRequest.includes(:client, :property, notes: :user, follow_up: %i[user assigned_by]).find_by_param!(params[:id])
 end
