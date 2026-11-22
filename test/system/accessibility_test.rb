@@ -36,13 +36,30 @@ class AccessibilityTest < ApplicationSystemTestCase
     JS
   end
 
-  # Each page loads in full (visit), so axe is injected afresh.
-  test "key app pages pass axe" do
+  # PLT-14: the shared page list (test/support/staff_pages.rb), in three tests so they run in
+  # parallel: the lists while empty, the detail pages in their main states, and everything else.
+  # The operator console isn't swept here.
+  test "the staff pages pass axe: empty lists" do
+    assert_axe_clean StaffPages.empty # before any records exist
+  end
+
+  test "the staff pages pass axe: detail pages" do
+    assert_axe_clean staff_pages.select(&:detail?)
+  end
+
+  test "the staff pages pass axe: lists, forms and settings" do
     @business.update!(weekly_hours: WeeklyHours::WEEKDAYS_8_TO_5) # so Hours has its time inputs
-    assert_accessible admin_root_path, admin_roles_path, admin_service_requests_path, admin_my_day_path, admin_hours_path,
-                      edit_admin_business_path(tab: "documents"), edit_admin_business_path(tab: "request_form"),
-                      edit_admin_business_path(tab: "branding"), admin_plan_path,
-                      admin_notifications_path, admin_data_exports_path, admin_message_templates_path
+    assert_axe_clean staff_pages.reject { _1.detail? || _1.ops? }
+  end
+
+  def staff_pages = StaffPages.build(@business, users(:one))
+
+  def assert_axe_clean(pages)
+    problems = pages.flat_map do |page|
+      visit page.path
+      axe_problems(page.to_s)
+    end
+    assert_empty problems, "axe found problems:\n#{problems.join("\n")}"
   end
 
   # CLI-07: logging a request (with its follow-up fields), a request with a follow-up, and the assign form.
