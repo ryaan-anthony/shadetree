@@ -1,0 +1,14 @@
+<%# locals: (item:) -%>
+<%# Home's own day (#289, JOB-06): a visit or a request follow-up, labelled as on My day, with
+    its zone when it's at a location in another one (CAT-07). %>
+<li class="text-sm">
+  <% if item.is_a?(Visit) %>
+    <%= link_to item.job.client.display_name, admin_my_visit_path(item), class: "min-w-0 flex-1 truncate font-medium text-ink hover:underline" %>
+  <% else %>
+    <span class="flex min-w-0 flex-1 flex-col">
+      <span class="flex items-center gap-1.5 text-sm2 font-medium text-canopy"><%= icon(item.visit? ? "map-pin" : "phone", class: "size-3.5 shrink-0") %><%= item.kind_label %> for a request</span>
+      <%= link_to item.client.display_name, admin_my_request_path(item.service_request), class: "truncate font-medium text-ink hover:underline" %>
+    </span>
+  <% end %>
+  <span class="shrink-0 text-sm2 <%= item.status == "completed" ? "text-success" : "text-muted" %>"><%= { "completed" => "Done", "in_progress" => "In progress" }.fetch(item.status) { item.time_label } %><%= other_zone_label(item) unless item.status.in?(%w[completed in_progress]) %></span>
+</li>

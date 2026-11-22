@@ -2,7 +2,8 @@ class Admin::DashboardController < Admin::BaseController
   # OPS-03: what support may do while viewing as a member
   impersonation :allowed
   allow_any_member
-  filters_by_location ServiceRequest, Quote, Job, Invoice, Visit, Payment, QuoteResponse, only: :index # CAT-07
+  # CAT-07; JOB-06: your follow-ups on Home follow the filter too (owner, 2026-11-22)
+  filters_by_location ServiceRequest, Quote, Job, Invoice, Visit, RequestFollowUp, Payment, QuoteResponse, only: :index
 
   # Members who don't work in the office land on the first page they can use: their day view
   # (technicians, JOB-04), else the schedule or the team (custom roles, ACC-07).
@@ -17,12 +18,10 @@ class Admin::DashboardController < Admin::BaseController
     @business = current_business
     @checklist = SetupChecklist.new(@business, membership: Current.membership) # ACC-05
     @dashboard = ActionDashboard.new(@business) # INS-01
-    # #289: someone with visits of their own today, or still open from earlier, sees their own day
-    # on Home (and reaches My day from it); otherwise the team's day, by person.
-    if can?(:field_work)
-      mine = Visit.open.joins(:assignments).where(visit_assignments: { user_id: current_user.id })
-      @earlier_open = mine.where(scheduled_on: ...@business.today).count
-      @own_day = @earlier_open.positive? || @dashboard.visits_today_for(current_user).any?
-    end
+    # #289: someone with visits or request follow-ups of their own today, or still open from
+    # earlier, sees their own day on Home (and reaches My day from it); otherwise the team's day,
+    # by person. JOB-06 (owner, 2026-11-22): follow-ups count, listed and placed as My day does.
+    # Anyone who can be given follow-ups (an office-only role too, without My day).
+    @my_day = MyDay.new(@business, current_user, upcoming_days: 0) if can?(:field_work) || RequestFollowUp.assignable?(Current.membership)
   end
 end

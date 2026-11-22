@@ -1,26 +1,28 @@
-<%# locals: (dashboard:, own_day:, earlier_open: 0) -%>
-<%# #289: today on Home. Someone who does the field work themselves sees their own visits, with
-    "Your day" (My day, the phone-first view) one tap away; otherwise the team's day, by person. %>
+<%# locals: (dashboard:, my_day: nil) -%>
+<%# #289: today on Home. Someone who does the field work themselves sees their own visits and
+    request follow-ups (JOB-06), with "Your day" (My day, the phone-first view) one tap away;
+    otherwise the team's day, by person. %>
 <% zone = time_zone_label(current_business.time_zone) %>
-<% if own_day %>
-  <% mine = dashboard.visits_today_for(current_user) %>
-  <% others = dashboard.visits_today_count - mine.size %>
-  <%= card title: "Your visits today", subtitle: "#{pluralize(mine.size, "visit")} · times in #{zone}", id: "todays-visits", flush: true,
-           actions: link_to(admin_my_day_path, class: button_classes(:ghost, :sm), id: "your-day-link") { safe_join([ "Your day", icon("arrow-right") ], " ") } do %>
+<% if my_day && (my_day.today.any? || my_day.earlier.any?) %>
+  <% mine = my_day.today %>
+  <%# Other people's visits today, on the business's day as the team's card counts them. %>
+  <% others = dashboard.visits_today_count - dashboard.visits_today_for(current_user).size %>
+  <%# My day for people who have it; an office-only role (follow-ups, no My day) opens each one. %>
+  <% field = can?(:field_work) %>
+  <%= card title: "Your visits today", subtitle: "#{day_items_count(mine)} · times in #{zone}", id: "todays-visits", flush: true,
+           actions: (link_to(admin_my_day_path, class: button_classes(:ghost, :sm), id: "your-day-link") { safe_join([ "Your day", icon("arrow-right") ], " ") } if field) do %>
     <% if mine.empty? %>
       <p class="px-5 py-4 text-sm text-muted">Nothing booked for you today.</p>
     <% else %>
-      <ul class="list">
-        <% mine.each do |visit| %>
-          <li class="text-sm">
-            <%= link_to visit.job.client.display_name, admin_my_visit_path(visit), class: "min-w-0 flex-1 truncate font-medium text-ink hover:underline" %>
-            <span class="shrink-0 text-sm2 <%= visit.status == "completed" ? "text-success" : "text-muted" %>"><%= { "completed" => "Done", "in_progress" => "In progress" }.fetch(visit.status) { visit.time_label } %></span>
-          </li>
-        <% end %>
-      </ul>
+      <ul class="list"><%= render partial: "admin/dashboard/own_item", collection: mine, as: :item %></ul>
     <% end %>
-    <% if earlier_open.positive? %>
-      <p class="border-t border-line px-5 py-3 text-sm2 text-muted" id="earlier-open"><%= link_to "#{pluralize(earlier_open, "visit")} still open from earlier", admin_my_day_path, class: "font-medium text-ink underline-offset-2 hover:underline" %></p>
+    <% if my_day.earlier.any? %>
+      <% if field %>
+        <p class="border-t border-line px-5 py-3 text-sm2 text-muted" id="earlier-open"><%= link_to "#{day_items_count(my_day.earlier)} still open from earlier", admin_my_day_path, class: "font-medium text-ink underline-offset-2 hover:underline" %></p>
+      <% else %>
+        <p class="border-t border-line px-5 pt-3 text-sm2 font-medium text-ink" id="earlier-open"><%= day_items_count(my_day.earlier) %> still open from earlier</p>
+        <ul class="list"><%= render partial: "admin/dashboard/own_item", collection: my_day.earlier, as: :item %></ul>
+      <% end %>
     <% end %>
     <% if others.positive? && can?(:schedule) %>
       <p class="border-t border-line px-5 py-3 text-sm2 text-muted"><%= link_to "The team has #{pluralize(others, "other visit")} today", admin_schedule_path, class: "font-medium text-ink underline-offset-2 hover:underline" %></p>
