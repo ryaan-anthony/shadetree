@@ -50,6 +50,30 @@ class Client::InvoicePageTest < ActionDispatch::IntegrationTest
     assert_nil @link.expires_at, "an unpaid invoice's link doesn't run out"
   end
 
+  test "terms in the staff's words on the page and the PDF, for invoices already sent too (owner, 2026-11-22)" do
+    set_invoice(payment_terms: "net_15", issued_on: @business.today, due_on: @business.today + 15)
+    with_fake_pdf_renderer do |calls|
+      get client_invoice_pdf_path(@link.token)
+      # As if stored before the change (PDF version 1, "Net 15"): it isn't reused.
+      as_business(@business) do
+        old = @invoice.reload.pdf_fingerprint.sub(/\A#{Invoice::PDF_VERSION}:/, "1:")
+        @invoice.update_columns(pdf_digest: Digest::SHA256.hexdigest(old))
+      end
+      get client_link_path(@link.token)
+      assert_select ".quote-doc-meta", /Due.*Within 15 days/m
+      assert_no_match "Net 15", response.body
+
+      get client_invoice_pdf_path(@link.token)
+      assert_equal 2, calls.size, "a file stored with the old wording is made again"
+      assert_match "Within 15 days", calls.last[:html]
+      assert_no_match "Net 15", calls.last[:html]
+
+      set_invoice(payment_terms: "custom", due_on: @business.today + 14)
+      get client_link_path(@link.token)
+      assert_select ".quote-doc-meta", /Due.*14 days after it's issued/m
+    end
+  end
+
   test "overdue, partly paid, paid and void each say so" do
     set_invoice(due_on: @business.today - 2, issued_on: @business.today - 30)
     get client_link_path(@link.token)

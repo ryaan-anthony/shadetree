@@ -63,9 +63,16 @@ and tax behavior, carry payment terms and a due date, and track their status thr
   as they are now (with changes made on site). Either way it stays with that client.
 - #289: once a quote or job has an invoice (not void), its page links to that invoice; a second
   invoice is still possible (progress billing) but only as "Create another invoice", with a confirm.
-- #289: staff see payment terms in words ("Within 15 days"; a chosen date says "14 days after
-  it's issued", and the builder states the usual days). Clients' invoice page and PDF keep "Net 15"
-  until the owner decides.
+- #289: payment terms are in words ("Within 15 days"; a chosen date says "14 days after it's
+  issued", and the builder states the usual days), for staff and, since 2026-11-22, on clients'
+  invoice page and PDF. Invoices already sent show it too: their stored PDFs are made again.
+
+## Decisions
+
+- Clients see the staff wording of the terms on their invoice page and PDF ("Within 15 days",
+  "14 days after it's issued") instead of "Net 15", invoices already sent included (owner, 2026-11-22).
+- #289 A: a $0.00 invoice can be sent by hand after the confirm step; automations leave it as a
+  draft (PAY-02, NTF-04). Built as is (owner, 2026-11-22).
 
 ## Out of scope
 

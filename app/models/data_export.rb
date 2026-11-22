@@ -202,7 +202,7 @@ class DataExport < ApplicationRecord
       column("Property ID") { _1.property&.uid }
       column("Taxes") { taxes_of.(_1) }
       column("Prices include tax", &:prices_include_tax)
-      column("Payment terms", &:payment_terms)
+      column("Payment terms", &:terms_label) # in words, as clients see them (owner, 2026-11-22)
       column("Void reason", &:void_reason)
       column("Internal notes", &:internal_notes)
       column("Location") { _1.location.name }

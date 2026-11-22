@@ -12,7 +12,7 @@
     <div><dt>Billed to</dt><dd><%= invoice.client.display_name %><% if invoice.client.company_name %><br><%= invoice.client.company_name %><% end %></dd></div>
     <% if invoice.property %><div><dt>Property</dt><dd><%= safe_join(invoice.property.address_lines, tag.br) %></dd></div><% end %>
     <div><dt>Issued</dt><dd><%= local_date(invoice.issued_on) %></dd></div>
-    <div><dt>Due</dt><dd><%= local_date(invoice.due_on) %><% unless invoice.payment_terms == "custom" %><br><span class="quote-doc-unit"><%= invoice.terms_label %></span><% end %></dd></div>
+    <div><dt>Due</dt><dd><%= local_date(invoice.due_on) %><br><span class="quote-doc-unit"><%= invoice.terms_label %></span></dd></div>
     <div><dt>Status</dt><dd><%= invoice.client_state_label %></dd></div>
   </dl>
 </header>

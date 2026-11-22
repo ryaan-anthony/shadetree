@@ -88,5 +88,5 @@ connected — lets the client pay.
   by default, like quotes).
 - The payment area arrives with PAY-03/PAY-04.
 - #289: a first send of an invoice that comes to $0.00 (or less) asks first, as quotes do
-  (QTE-04); the "invoice a completed job" automation leaves one as a draft. Whether a $0.00
-  invoice should be sendable at all is an open owner question; until then it is, once confirmed.
+  (QTE-04); the "invoice a completed job" automation leaves one as a draft. A $0.00 invoice can
+  be sent by hand once confirmed (owner, 2026-11-22).
