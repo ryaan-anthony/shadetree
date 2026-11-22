@@ -48,3 +48,4 @@ approach, a hosting change. Small, local choices belong in the PR description.
 | [0023](0023-homelab-vms-and-cloudflare-tunnel.md) | Staging and production on the owner's homelab VMs, deployed by GitHub Actions, behind a Cloudflare tunnel | Accepted |
 | [0024](0024-stripe-connect-standard-direct-charges.md) | Client payments through Stripe Connect Standard, with direct charges on Checkout | Accepted |
 | [0025](0025-staging-sends-real-email.md) | Staging sends real email; the mail sandbox is optional | Accepted |
+| [0026](0026-cloud-config-in-this-repository.md) | Shadetree's own cloud config (SES, Email Routing, the support Worker) lives in `infra/`, run by hand | Accepted |

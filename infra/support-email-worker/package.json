@@ -1,0 +1,9 @@
+{
+  "name": "shadetree-support-email-worker",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Email Worker: forwards support email to the human inbox and posts it, signed, to the Shadetree app.",
+  "scripts": {
+    "test": "node --test"
+  }
+}

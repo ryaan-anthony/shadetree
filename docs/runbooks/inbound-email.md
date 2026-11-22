@@ -12,8 +12,8 @@
    DKIM and DMARC and adds its own `Authentication-Results: mx.cloudflare.net; …` header at the
    top. Since July 2025 it only passes on mail that passes SPF or DKIM.
 2. The routing rule for the environment's support address runs that environment's
-   **shadetree-support-email Worker** (op-works: `cloudflare-workers/shadetree-support-email`,
-   deployed once per environment with the routing rules by Terraform `tf-config/shadetree_email.tf`).
+   **shadetree-support-email Worker** (`infra/support-email-worker`, deployed once per
+   environment with the routing rules by Terraform `infra/email.tf`, [ADR 0026](../adr/0026-cloud-config-in-this-repository.md)).
    Production is `support@getshadetree.com`; staging is `support-staging@getshadetree.com` (the
    apex, since `staging.getshadetree.com` is the tunnel's CNAME). Each Worker posts to its own
    environment with its own secret. It:
@@ -78,10 +78,10 @@ The app answers:
 ## Turning it on
 
 1. Generate the secret; set it as the app's `INBOUND_EMAIL_SECRET` and deploy.
-2. In op-works (README, "Shadetree support email"): enable Email Routing, keep **one** merged
+2. In `infra/` ([README](../../infra/README.md), "Support email"): enable Email Routing, keep **one** merged
    SPF record (the outgoing provider's plus `include:_spf.mx.cloudflare.net`), turn on
    subaddressing (a manual step; without it every emailed reply bounces once step 4 is done),
-   apply `tf-config` with the same secret, and verify the human inbox.
+   apply `infra/` with the same secret, and verify the human inbox.
 3. Send a test email to `support@` from a member's address: the human inbox gets a copy, and a
    ticket opens in the app. Check the Worker's logs and the app's `inbound_email.*` lines.
 4. Set `INBOUND_EMAIL_ENABLED=true` and deploy; reply to a ticket and answer the email.
