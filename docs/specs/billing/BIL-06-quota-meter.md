@@ -60,9 +60,8 @@ of the limit and the reset date. The existing notices stay.
 ## Implementation notes
 
 - A sidebar partial (also the phone drawer) using the business's entitlements, so the count is
-  the one query Home, the notices and Settings → Plan already make. "Nearly used" names the
-  approaching state. The meter's name repeats its text, as Chrome doesn't always pass on value
-  text. Dev seeds: the demo business on Starter with sent quotes; no new data needed.
+  the one query Home, the notices and Settings → Plan already make. The meter's name repeats its
+  text, as Chrome doesn't always pass on value text. Dev seeds: the demo business on Starter.
 
 ## Out of scope
 
@@ -82,3 +81,4 @@ of the limit and the reset date. The existing notices stay.
   decision 2026-11-22: no grace send; built in #328).
 - Operators viewing as a member see it read-only, with the Plan link only if that member could
   open the Plan page (coordinator, follows existing behaviour).
+- The approaching state reads "Nearly used" (coordinator).
