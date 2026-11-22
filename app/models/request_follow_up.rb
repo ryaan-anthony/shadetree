@@ -26,6 +26,8 @@ class RequestFollowUp < ApplicationRecord
   validate :assignee_is_member
 
   before_validation :default_duration
+  # The form's field is the duration in hours, so its error goes there (with the field's own wiring).
+  after_validation { errors.add(:duration_hours, "Give a duration between 5 minutes and 24 hours.") if errors.delete(:duration_minutes).present? }
 
   delegate :client, :location, to: :service_request
 

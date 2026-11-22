@@ -27,8 +27,13 @@ module FollowUpForm
 
   # The form's fields, with the person picked from this business's active members (nil, which
   # validation refuses, for anyone else). A blank duration means the kind's usual one.
+  FIELDS = %i[user_id kind scheduled_on timing start_time window_end_time duration_hours instructions lock_version].freeze
+
+  # The submitted follow-up fields (empty when there are none, or they aren't a set of fields).
+  def follow_up_fields = params.permit(request_follow_up: FIELDS).fetch(:request_follow_up, ActionController::Parameters.new.permit!)
+
   def follow_up_attributes(fields)
-    attributes = fields.permit(:kind, :scheduled_on, :timing, :start_time, :window_end_time, :duration_hours, :instructions, :lock_version).to_h.symbolize_keys
+    attributes = fields.slice(*(FIELDS - [ :user_id ])).to_h.symbolize_keys
     if attributes.key?(:duration_hours) && attributes[:duration_hours].blank?
       attributes.delete(:duration_hours)
       attributes[:duration_minutes] = nil

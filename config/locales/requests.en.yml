@@ -25,3 +25,9 @@ en:
         service_request:
           attributes:
             description: { format: "%{message}" } # CLI-04: "Say what they need."
+        # CLI-07: the follow-up form's messages, as written, under their fields.
+        request_follow_up:
+          attributes:
+            user_id: { format: "%{message}" }
+            scheduled_on: { format: "%{message}", blank: "Choose a day." }
+            duration_hours: { format: "%{message}" }

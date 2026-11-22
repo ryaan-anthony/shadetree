@@ -41,7 +41,7 @@ class Admin::RequestFollowUpsTest < ActionDispatch::IntegrationTest
     post switch_admin_business_path, params: { business: @business.uid }
     assign(user_id: users(:two).id)
     assert_response :unprocessable_content, "someone in another business can't be given it"
-    assert_select ".error-text", /Choose who follows it up/
+    assert_select ".error-text", "Choose who follows it up."
     assert_nil follow_up
 
     @business.update_columns(suspended_at: Time.current)
@@ -150,5 +150,65 @@ class Admin::RequestFollowUpsTest < ActionDispatch::IntegrationTest
 
     log.(user_id: "")
     assert_equal [ "new", nil ], as_business(@business) { ServiceRequest.order(:id).last.then { [ _1.status, _1.follow_up ] } }, "nobody picked, nobody assigned"
+  end
+
+  test "a custom role with office access can be assigned; once it can't see requests, the form won't keep them by accident" do
+    @business.update!(plan_overrides: { "features" => { "custom_roles" => true }, "limits" => { "team_members" => nil } })
+    role = as_business(@business) { Role.create!(name: "Coordinator", permissions: %w[office]) }
+    cora = User.create!(email: "cora@example.com", password: "password123", first_name: "Cora", last_name: "Park", confirmed_at: Time.current)
+    BusinessUser.create!(user: cora, business: @business, role: "custom", role_id: role.id)
+    assign(user_id: cora.id)
+    assert_equal cora, follow_up.user
+
+    as_business(@business) { role.update!(permissions: %w[schedule]) } # the role itself changes: nobody is told
+    get edit_admin_service_request_follow_up_path(@request_record)
+    assert_select "select[name='request_follow_up[user_id]'] option[disabled][value=?]", cora.id.to_s, /Cora Park \(can't keep it/
+    assert_select "select[name='request_follow_up[user_id]'] option[selected][value='']", "Choose someone"
+    assign(user_id: "", lock_version: follow_up.lock_version)
+    assert_response :unprocessable_content
+    assert_equal cora, follow_up.user, "not handed to anyone silently"
+  end
+
+  test "a blank duration stays blank after a warning, a bad field set is refused, and the Overdue badge shows" do
+    assign(start_time: "18:00", duration_hours: "")
+    assert_select "input[name='request_follow_up[duration_hours]'][value='']"
+    assign(start_time: "18:00", duration_hours: "0")
+    assert_select "#request_follow_up_duration_hours[aria-invalid=true]"
+    assert_select ".error-text", "Give a duration between 5 minutes and 24 hours."
+
+    patch admin_service_request_follow_up_path(@request_record), params: { request_follow_up: "nonsense" }
+    assert_response :bad_request
+
+    patch admin_service_request_follow_up_path(@request_record), params: { request_follow_up: { user_id: @marcus.id, scheduled_on: "" } }
+    assert_select ".error-text", "Choose a day."
+
+    assign(scheduled_on: "2026-11-20")
+    get admin_service_request_path(@request_record)
+    assert_select "#follow-up .badge", "Overdue"
+  end
+
+  test "unassigning from a stale page is refused; with nobody on it, it says so" do
+    assign
+    stale = follow_up.lock_version
+    assign(start_time: "15:00", lock_version: stale)
+    delete admin_service_request_follow_up_path(@request_record), params: { lock_version: stale }
+    assert_equal "Someone else changed this follow-up meanwhile. Here's the latest.", flash[:alert]
+    assert follow_up
+    delete admin_service_request_follow_up_path(@request_record), params: { lock_version: follow_up.lock_version }
+    assert_nil follow_up
+    delete admin_service_request_follow_up_path(@request_record)
+    assert_equal "Nobody had it.", flash[:notice]
+  end
+
+  test "logging a request with a follow-up that doesn't add up shows the form again, with nothing saved" do
+    get new_admin_service_request_path
+    assert_select "div.group\\/assignee"
+    assert_select "input[name='request_follow_up[scheduled_on]'][required]", 0, "a hidden day can't block logging with nobody picked"
+    post admin_service_requests_path, params: { service_request: { client: @maria.uid, source: "phone", description: "Gutters" },
+                                                request_follow_up: { user_id: @marcus.id, kind: "visit", scheduled_on: "2026-11-24", timing: "exact", start_time: "" } }
+    assert_response :unprocessable_content
+    assert_select "textarea[name='service_request[description]']", "Gutters"
+    assert_select ".error-text", /needs a time/
+    assert_equal 1, as_business(@business) { ServiceRequest.count }
   end
 end

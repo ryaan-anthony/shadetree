@@ -32,9 +32,22 @@ class Admin::RequestFollowUpsController < Admin::BaseController
     redirect_to admin_service_request_path(@request), alert: error.message
   end
 
+  # The page sends the follow-up's lock_version, so a stale page can't take off someone it
+  # didn't show (or a follow-up changed since).
   def destroy
-    @request.with_lock { @request.follow_up&.end!(by: current_user) }
-    redirect_to admin_service_request_path(@request), notice: "Unassigned. Nobody's following this request up."
+    outcome = @request.with_lock do
+      follow_up = @request.reload.follow_up
+      next :none unless follow_up
+      next :stale if params[:lock_version].present? && params[:lock_version].to_i != follow_up.lock_version
+
+      follow_up.end!(by: current_user)
+      :done
+    end
+    case outcome
+    when :none then redirect_to admin_service_request_path(@request), notice: "Nobody had it."
+    when :stale then redirect_to admin_service_request_path(@request), alert: "Someone else changed this follow-up meanwhile. Here's the latest."
+    else redirect_to admin_service_request_path(@request), notice: "Unassigned. Nobody's following this request up."
+    end
   end
 
   private
@@ -42,7 +55,7 @@ class Admin::RequestFollowUpsController < Admin::BaseController
   # The form showed no follow-up, so one assigned since then isn't overwritten.
   def fresh? = params[:fresh] == "1"
 
-  def follow_up_params = @follow_up_params ||= follow_up_attributes(params.require(:request_follow_up))
+  def follow_up_params = @follow_up_params ||= follow_up_attributes(params.expect(request_follow_up: FollowUpForm::FIELDS))
 
   def set_request = @request = ServiceRequest.includes(:client, :location).find_by_param!(params[:service_request_id])
 

@@ -10,7 +10,7 @@
     <% if follow_up.instructions %><p class="mt-2 whitespace-pre-line text-sm2 text-subtle"><%= follow_up.instructions %></p><% end %>
     <div class="mt-3 flex flex-wrap gap-2">
       <%= link_to edit_admin_service_request_follow_up_path(request_record), class: button_classes(:secondary, :sm) do %><%= icon "calendar" %> Move or reassign<% end %>
-      <%= button_to admin_service_request_follow_up_path(request_record), method: :delete, class: button_classes(:ghost, :sm),
+      <%= button_to admin_service_request_follow_up_path(request_record), method: :delete, params: { lock_version: follow_up.lock_version }, class: button_classes(:ghost, :sm),
                     form: { class: "contents", data: { turbo_confirm: "Take this off #{follow_up.user.full_name}? Nobody will be following it up.", turbo_confirm_button: "Unassign" } } do %>Unassign<% end %>
     </div>
   <% elsif request_record.open? %>

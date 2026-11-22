@@ -1,7 +1,7 @@
 <% new_follow_up = @follow_up.new_record? %>
 <% content_for :title, new_follow_up ? "Assign request" : "Change follow-up" %>
 <%= page_header (new_follow_up ? "Assign this request" : "Change the follow-up"),
-                lede: "#{@request.client.display_name} · #{@request.service_names.join(", ").presence || truncate(@request.description.to_s, length: 80)}" %>
+                lede: "#{@request.client.display_name} · #{@request.service_names.any? ? @request.title : truncate(@request.description.to_s, length: 80)}" %>
 
 <%= form_with model: @follow_up, scope: :request_follow_up, url: admin_service_request_follow_up_path(@request), method: :patch, class: "max-w-2xl space-y-4" do |f| %>
   <%# A stale form: lock_version for a follow-up shown, "fresh" for none (someone may assign it meanwhile). %>
