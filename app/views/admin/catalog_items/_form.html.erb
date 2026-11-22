@@ -33,6 +33,8 @@
     <div class="mt-4 space-y-3">
       <%= f.check :taxable, label: "Taxable", hint: "Your default tax rates apply when it's on a quote or invoice." %>
       <%= f.check :show_on_request_form, label: "Show on your request form", hint: "Clients can pick it when asking for work." %>
+      <%= f.check :send_without_review, label: "Technicians can send without review",
+                  hint: "A technician's quote made only of services like this, at their prices, can go to the client straight away. Anything else still comes to the office." %><%# QTE-08 %>
     </div>
   <% end %>
   <% branches = current_business.multiple_locations? ? current_business.active_locations.reject(&:primary?) : [] %>

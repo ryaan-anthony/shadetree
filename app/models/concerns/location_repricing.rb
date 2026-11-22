@@ -47,6 +47,7 @@ module LocationRepricing
 
     prices, taxes = location_price_changes, location_tax_change
     prices.each { |line, price| line.unit_price_cents = price.cents }
+    prices.each { |line, price| line.catalog_price_cents = price.cents if line.has_attribute?(:catalog_price_cents) } # QTE-08
     self.tax_rate_list = taxes.last if taxes
     self.priced_for_location = location
     save!
