@@ -75,6 +75,8 @@ or one person — spot gaps, and move work around quickly, on a desktop or a pho
 - On phones the agenda comes first and this week's past days are folded into "Earlier this week".
 - Measured: a week of 200 visits for 10 people renders in well under a second with 25 queries,
   cached ones included (test).
+- #289: "Needs scheduling" says "No jobs are waiting for a visit", and when the week shows no
+  visits it links to the next one booked ("Next visit: Mon, Nov 23").
 
 ## Out of scope
 

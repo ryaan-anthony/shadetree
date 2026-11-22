@@ -69,7 +69,7 @@ class ClientVisitEmailsTest < ActionDispatch::IntegrationTest
     visit = as_business(@business) { @job.visits.first }
     patch cancel_admin_job_visit_path(@job, visit), params: { reason: "Rain" }
     get admin_job_path(@job)
-    assert_select "#client-emails", text: /Your latest changes go out at.*Pending/m
+    assert_select "#client-emails", text: /We'll email .* at .*several changes arrive as one email.*Waiting/m
 
     patch restore_admin_job_visit_path(@job, visit)
     settle

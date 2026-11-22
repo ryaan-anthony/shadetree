@@ -5,7 +5,9 @@
   <%= card title: "Emails to the client", id: "client-emails", flush: true do %>
     <ul class="list">
       <% if job.client_notice_due_at %>
-        <li class="text-sm2"><span class="flex-1 text-ink">Your latest changes go out at <%= local_time(job.client_notice_due_at, format: :time) %></span><%= badge "Pending", tone: :info %></li>
+        <%# #289: why it waits, in plain words %>
+        <li class="items-start text-sm2" id="client-notice-pending"><div class="min-w-0 flex-1"><p class="text-ink">We'll email <%= job.client.display_name %> at <%= local_time(job.client_notice_due_at, format: :time) %></p>
+          <p class="text-muted">We wait a few minutes after your last change, so several changes arrive as one email.</p></div><%= badge "Waiting", tone: :info %></li>
       <% end %>
       <% messages.each do |message| %>
         <li class="items-start text-sm2">

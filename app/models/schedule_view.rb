@@ -231,6 +231,14 @@ class ScheduleView
   def unscheduled_jobs = Job.where(status: "unscheduled").includes(:client, :property).order(:created_at, :id).limit(UNSCHEDULED_SHOWN)
   def unscheduled_count = @unscheduled_count ||= Job.where(status: "unscheduled").count
 
+  # #289: when this period shows no visits, the next one booked after it (so "nothing here" isn't
+  # read as "nothing booked").
+  def next_visit_after
+    return if visits.any?
+
+    Visit.where(scheduled_on: (dates.last + 1)..).where.not(status: "cancelled").in_order.first
+  end
+
   # The grid's clock: the filtered location's time zone (CAT-07), else the business's.
   def place = @location || business
 

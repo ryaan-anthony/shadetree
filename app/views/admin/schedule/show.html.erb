@@ -60,7 +60,10 @@
     <% jobs = s.unscheduled_jobs.to_a %>
     <%= card title: "Needs scheduling", flush: true, id: "needs-scheduling" do %>
       <% if jobs.empty? %>
-        <p class="px-4 py-3 text-sm2 text-muted">No jobs are waiting for a visit.</p>
+        <p class="px-4 py-3 text-sm2 text-muted" id="nothing-to-book">No jobs are waiting for a visit.
+          <% if (upcoming = s.next_visit_after) %><%# #289: an empty week isn't an empty diary %>
+            Next visit: <%= link_to friendly_date(upcoming.scheduled_on, format: :weekday), admin_schedule_path(schedule_link_params(s, date: upcoming.scheduled_on.iso8601)), class: "font-medium text-ink underline-offset-2 hover:underline" %>.
+          <% end %></p>
       <% else %>
         <ul class="list">
           <% jobs.each do |job| %>

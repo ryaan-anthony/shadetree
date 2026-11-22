@@ -8,6 +8,6 @@
   <label class="flex items-start gap-2 text-sm text-ink" for="<%= id %>">
     <%= hidden_field_tag :notify_client, "0", id: nil %>
     <%= check_box_tag :notify_client, "1", params[:notify_client] != "0", id:, class: "checkbox mt-0.5" %>
-    <span>Email <%= job.client.display_name %> about this <span class="block text-sm2 text-muted">To <%= email.value %>, a few minutes after your last change.</span></span>
+    <span>Email <%= job.client.display_name %> about this <span class="block text-sm2 text-muted">To <%= email.value %>, a few minutes after your last change, so several changes arrive as one email.</span></span>
   </label>
 <% end %>

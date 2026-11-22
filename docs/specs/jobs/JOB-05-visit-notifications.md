@@ -71,6 +71,8 @@ when, where and how to reach the business.
 - The emails are recorded per NTF-01 against the job (`related: job`, kinds `visit_scheduled`,
   `visit_changed`, `visit_cancelled`, `visit_reminder`) and listed on the job page, with one
   about to go shown as pending.
+- #289: the job page explains the wait: "We'll email Maria Lopez at 9:38 PM. We wait a few
+  minutes after your last change, so several changes arrive as one email." No "send now".
 
 ## Out of scope
 

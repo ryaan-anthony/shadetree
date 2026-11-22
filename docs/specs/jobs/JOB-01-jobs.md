@@ -59,3 +59,5 @@ invoice. Jobs can also be created directly for work agreed by phone.
 ## Implementation notes
 
 - #289: the job filters read "Not finished" and "Ready to invoice".
+- #289: when no job is left to do, the list says "Nothing to do" and offers "Show 1 completed
+  job"; "Open" stays the default filter.
