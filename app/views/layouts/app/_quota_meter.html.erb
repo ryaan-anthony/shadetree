@@ -9,7 +9,7 @@
 <% limit, used = entitlements.limit(:quotes_sent), entitlements.used(:quotes_sent) %>
 <% trial_ends = current_business.trial_ends_at&.in_time_zone(current_business.time_zone)&.to_date if current_business.billing_status == "trialing" %>
 <% trial_ends = nil unless trial_ends && trial_ends < period.resets_on %>
-<div class="quota" id="quota-meter">
+<section class="quota" id="quota-meter" aria-label="Quote usage"><%# a region, so screen reader users can jump to it %>
   <div class="flex items-start justify-between gap-2">
     <% if limit.nil? %>
       <p class="quota-text" id="quota-unlimited"><%= pluralize(used, "quote") %> sent <%= allowance_period(entitlements) %> · no limit</p>
@@ -36,5 +36,5 @@
     </p>
     <p class="quota-text" aria-hidden="true" id="quota-resets">Resets <%= l(period.resets_on, format: "%b %-d") %><% if trial_ends %> · Trial ends <%= l(trial_ends, format: "%b %-d") %><% end %></p>
   <% end %>
-</div>
+</section>
 <%= inline_styles_tag %>
