@@ -46,6 +46,13 @@ class Business < ApplicationRecord
 
   def reload_entitlements = @entitlements = nil
   # PAY-03: the connected Stripe account, if any (one per business, for all its locations).
+  # #289: the only active member with this permission, or nil when there are none or several
+  # (a one-person crew is pre-ticked on a new visit; JOB-06's follow-ups can use it too).
+  def sole_member_who_can(permission)
+    members = business_users.active.includes(:user).select { _1.can?(permission) }
+    members.first if members.one?
+  end
+
   def payment_account
     return @payment_account if defined?(@payment_account)
 

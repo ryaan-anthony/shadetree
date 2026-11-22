@@ -62,9 +62,7 @@ class ScheduleView
     @visits ||= begin
       scope = Visit.where(scheduled_on: dates.first..dates.last).where.not(status: "cancelled")
                    .includes(:assignees, job: %i[client property location]).in_order
-      scope = scope.where.missing(:assignments) if @member == "unassigned"
-      scope = scope.where(id: VisitAssignment.where(user_id: @member).select(:visit_id)) if @member && @member != "unassigned"
-      scope.to_a.each { _1.association(:business).target = business } # labels need its time zone; not one query per visit
+      for_member(scope).to_a.each { _1.association(:business).target = business } # labels need its time zone; not one query per visit
     end
   end
 
@@ -231,12 +229,37 @@ class ScheduleView
   def unscheduled_jobs = Job.where(status: "unscheduled").includes(:client, :property).order(:created_at, :id).limit(UNSCHEDULED_SHOWN)
   def unscheduled_count = @unscheduled_count ||= Job.where(status: "unscheduled").count
 
+  # #289: when this period shows no visits, the next one booked after it (so "nothing here" isn't
+  # read as "nothing booked").
+  def next_visit_after
+    return if visits.any?
+    return @next_visit_after if defined?(@next_visit_after)
+
+    @next_visit_after = for_member(Visit.open.where(scheduled_on: [ dates.last + 1, place.today ].max..)).in_order.first
+  end
+
+  # #289: for an empty period (no visits, no follow-ups), the first thing booked after it: the
+  # next visit or the next follow-up (JOB-07), whichever comes first.
+  def next_item_after
+    return if items.any?
+
+    [ next_visit_after, next_follow_up_after ].compact.min_by { [ _1.scheduled_on, _1.starts_at ? 0 : 1, _1.starts_at || Time.at(0), _1.is_a?(Visit) ? 0 : 1 ] }
+  end
+
   # The grid's clock: the filtered location's time zone (CAT-07), else the business's.
   def place = @location || business
 
   private
 
   def by_date = @by_date ||= items.group_by(&:scheduled_on)
+
+  # The people filter: one member's visits, or the unassigned ones.
+  def for_member(scope)
+    return scope.where.missing(:assignments) if @member == "unassigned"
+    return scope.where(id: VisitAssignment.where(user_id: @member).select(:visit_id)) if @member
+
+    scope
+  end
 
   # Every visit in the period, unfiltered, for the member list's counts (ids and minutes only).
   def all_visits_in_period

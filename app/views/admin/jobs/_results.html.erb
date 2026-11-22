@@ -11,7 +11,14 @@
           <%= link_to "Clear search", admin_jobs_path(filter: @filter), class: button_classes(:secondary), data: { turbo_frame: "_top" } %>
         <% end %>
       <% else %>
-        <%= empty_state title: "Nothing here", text: { "unscheduled" => "No jobs are waiting for a visit.", "open" => "Every job is finished." }.fetch(@filter) { "No jobs are #{Job::FILTERS.fetch(@filter).downcase} right now." }, icon: "job" %>
+        <% done = @filter == "open" ? (@counts&.dig("completed") || Job.filtered("completed").count) : 0 %>
+        <%= empty_state title: (@filter == "open" ? "Nothing to do" : "Nothing here"),
+                        text: { "unscheduled" => "No jobs are waiting for a visit.", "open" => "Every job is finished." }.fetch(@filter) { "No jobs are #{Job::FILTERS.fetch(@filter).downcase} right now." },
+                        icon: "job" do %>
+          <% if done.positive? %><%# #289: finished work is one tap away, not hidden %>
+            <%= link_to "Show #{pluralize(done, "completed job")}", admin_jobs_path(filter: "completed"), class: button_classes(:secondary), id: "show-completed", data: { turbo_frame: "_top" } %>
+          <% end %>
+        <% end %>
       <% end %>
     </div>
   <% else %>

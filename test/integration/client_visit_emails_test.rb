@@ -69,7 +69,7 @@ class ClientVisitEmailsTest < ActionDispatch::IntegrationTest
     visit = as_business(@business) { @job.visits.first }
     patch cancel_admin_job_visit_path(@job, visit), params: { reason: "Rain" }
     get admin_job_path(@job)
-    assert_select "#client-emails", text: /Your latest changes go out at.*Pending/m
+    assert_select "#client-emails", text: /We'll email .* at .*several changes arrive as one email.*Waiting/m
 
     patch restore_admin_job_visit_path(@job, visit)
     settle
@@ -112,5 +112,39 @@ class ClientVisitEmailsTest < ActionDispatch::IntegrationTest
     post switch_admin_business_path, params: { business: @business.uid }
     patch admin_business_path(tab: "documents"), params: { business: { client_visit_emails: { scheduled: "1" } } }
     assert_response :forbidden
+  end
+
+  def visit_line = css_select("#client-notice-pending").first&.text.to_s.squish
+
+  test "the job promises an email only when one will go (#289)" do
+    schedule(notify_client: "1")
+    get admin_job_path(@job)
+    assert_match(/We'll email Maria Lopez at .+\. We wait a few minutes/, visit_line)
+    travel(Job::CLIENT_NOTICE_DELAY + 1.minute) do
+      get admin_job_path(@job)
+      assert_match(/We'll email Maria Lopez shortly\./, visit_line, "late: no time in the past")
+    end
+
+    # Undone before the wait ends: booked, then cancelled; the client never heard, so nothing goes.
+    visit = as_business(@business) { @job.visits.sole }
+    patch cancel_admin_job_visit_path(@job, visit), params: { notify_client: "1" }
+    get admin_job_path(@job)
+    assert_empty visit_line
+  end
+
+  test "with 'Visit booked' emails off, nothing is queued or promised (#289)" do
+    @business.update!(client_visit_emails: { "scheduled" => "0" })
+    schedule(notify_client: "1")
+    assert_nil as_business(@business) { @job.reload.client_notice_due_at }
+    get admin_job_path(@job)
+    assert_empty visit_line
+  end
+
+  test "a client without an email isn't promised one (#289)" do
+    as_business(@business) { @client.contact_methods.destroy_all && @client.contact_methods.create!(kind: "phone", value: "2155551212") }
+    schedule(notify_client: "1")
+    assert_nil as_business(@business) { @job.reload.client_notice_due_at }
+    get admin_job_path(@job)
+    assert_empty visit_line
   end
 end

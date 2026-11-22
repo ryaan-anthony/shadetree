@@ -85,6 +85,9 @@ class Admin::VisitsController < Admin::BaseController
     end
     crew = current_business.business_users.active.find_by(user_id: params[:crew].to_i) if params[:crew].to_s.match?(/\A\d+\z/)
     @visit.assignee_ids = [ crew.user_id ] if crew&.can?(:field_work)
+    # #289: a one-person crew is going; nobody has to remember to tick themselves.
+    @sole_crew = current_business.sole_member_who_can(:field_work)
+    @visit.assignee_ids = [ @sole_crew.user_id ] if @visit.assignee_ids.empty? && @sole_crew
   end
 
   helper_method def from_schedule? = params[:from] == "schedule"

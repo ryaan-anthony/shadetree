@@ -17,6 +17,9 @@
     <%= link_to "Week", admin_schedule_path(schedule_link_params(s, view: "week")), class: "tab", "aria-current": ("page" if s.view == "week") %>
   </nav>
 <% end %>
+<% if s.items.empty? && s.next_item_after %>
+  <p class="-mt-2 mb-4 text-sm2 text-muted" id="next-visit"><span class="hidden md:inline">Nothing booked <%= s.view == "day" ? "this day" : "this week" %>. </span><%= render "next_visit", s: %></p>
+<% end %>
 
 <div class="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[16rem_minmax(0,1fr)]" data-controller="schedule-focus">
   <aside class="order-2 min-w-0 space-y-4 lg:order-none">
@@ -60,7 +63,7 @@
     <% jobs = s.unscheduled_jobs.to_a %>
     <%= card title: "Needs scheduling", flush: true, id: "needs-scheduling" do %>
       <% if jobs.empty? %>
-        <p class="px-4 py-3 text-sm2 text-muted">No jobs are waiting for a visit.</p>
+        <p class="px-4 py-3 text-sm2 text-muted" id="nothing-to-book">No jobs are waiting for a visit.</p>
       <% else %>
         <ul class="list">
           <% jobs.each do |job| %>

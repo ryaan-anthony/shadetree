@@ -291,6 +291,16 @@ class Visit < ApplicationRecord
   # Whether the client has been told about the visit as it is now ("when" is only the label).
   def client_up_to_date? = client_told&.except("when", "emailed_at") == client_state.except("when")
 
+  # What the client would be told about it now: "scheduled", "changed", "cancelled", or nil when
+  # they already know (a change undone, or a cancelled visit they never heard of).
+  def client_change_kind
+    told = client_told
+    if status == "cancelled" then "cancelled" if told&.dig("state") == "booked"
+    elsif told.nil? || told["state"] == "cancelled" then "scheduled"
+    elsif !client_up_to_date? then "changed"
+    end
+  end
+
   # After a change the client should hear about: their email goes out shortly, with the job's
   # other changes. When staff chose not to tell them (or can't email clients yet, ACC-01, or the
   # client has no email), this is what the client knows, unless an email about an earlier change
@@ -298,7 +308,9 @@ class Visit < ApplicationRecord
   # earlier change being lost.
   def tell_client(notify_client, visits = [ self ], by: nil)
     sender_ok = by.nil? || by.can_send_to_clients?
-    if notify_client && sender_ok && job.client.primary_email
+    # #289: only queue an email the business sends (its visit emails can be off, kind by kind).
+    wanted = visits.any? { (kind = _1.client_change_kind) && business.client_visit_email?(kind) }
+    if notify_client && sender_ok && job.client.primary_email && wanted
       job.queue_client_notice!
     elsif job.client_notice_due_at.nil?
       visits.each { _1.update_columns(client_told: _1.client_state) }

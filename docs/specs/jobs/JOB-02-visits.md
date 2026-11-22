@@ -54,3 +54,11 @@ work (windows, "anytime"), and helpful about conflicts without being bossy.
 - ~~Multi-day visits (a 3-day painting job): one visit spanning days or one visit per day?~~
   *Decided: staff pick a date range (Wed–Fri) or separate dates (Thu, Fri, Mon) when scheduling,
   and each date becomes its own visit.*
+
+## Implementation notes
+
+- #289: when exactly one active member works visits (`Business#sole_member_who_can`), "Who's
+  going" starts with them ticked and says why. An owner plus an office admin who both can work
+  visits pre-ticks nobody, until default assignees arrive (#284). The date stays the browser's own
+  field: typed dates work and its picker is reachable (a system test checks both, in the
+  browser's locale), so no custom date control was added.
