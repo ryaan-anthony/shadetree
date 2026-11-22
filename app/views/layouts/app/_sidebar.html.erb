@@ -35,9 +35,10 @@
   <nav class="side-nav" aria-label="Primary">
     <% if current_business %>
       <% if can?(:office) || can?(:business_settings) %>
-        <%= side_link "Home", admin_root_path, icon: "home", active: controller_name == "dashboard", tour: "home" %>
+        <%= side_link "Home", admin_root_path, icon: "home", active: controller_name.in?(%w[dashboard my_day my_visits my_requests]), tour: "home" %>
       <% end %>
-      <% if can?(:field_work) %>
+      <%# #289: one place to start: office members reach My day from Home ("Your day"); people who only do field work land on it. %>
+      <% if can?(:field_work) && !can?(:office) %>
         <%= side_link "My day", admin_my_day_path, icon: "sun", active: controller_name.in?(%w[my_day my_visits my_requests]), tour: "my_day" %>
       <% end %>
       <% if can?(:office) %>

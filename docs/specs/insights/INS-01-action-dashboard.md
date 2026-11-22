@@ -63,3 +63,6 @@ money overdue — plus a tiny summary of how the month is going.
 - Speed: a fixed number of queries however busy the business is (a test checks that adding
   thirty records adds no queries beyond a small margin). On phones the groups stack, with
   today's visits last.
+- #289: Home reads top to bottom: the setup checklist (ACC-05), then today (your own visits when
+  you go on visits, with "Your day"; otherwise the team's, by person), then what clients owe (and
+  how much is overdue), then the groups that need you, two across on wide screens.

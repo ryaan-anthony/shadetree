@@ -1,28 +1,31 @@
 <%# locals: (checklist:) -%>
-<%# ACC-05: the setup checklist. Steps tick from real data; each opens the real feature with
-    from=setup, which comes back here. %>
-<%# ACC-08: the guided tour points at this card (data-tour) and never moves focus to Hide (data-tour-skip). %>
-<% business = current_business %>
+<%# ACC-05 / #289: the first-run checklist, Home's first card. Steps tick from real data; each
+    opens the real feature with from=setup, which comes back here. ACC-08's tour points at it:
+    keep data-tour="checklist" on the card and id="setup-<key>" on each step; it never moves
+    focus to Hide (data-tour-skip). %>
 <% latest_draft = checklist.latest_draft %>
-<%= card title: "Get to your first quote", subtitle: "#{checklist.done_count} of #{checklist.required.size} done",
+<% done, total = checklist.done_count, checklist.required.size %>
+<%= card title: "Get set up", subtitle: "#{done} of #{total} done",
          actions: button_to("Hide", admin_dismiss_setup_path, method: :patch, class: button_classes(:ghost, :sm),
-                            form: { class: "contents" }, data: { tour_skip: true }),
-         flush: true, data: { tour: "checklist" } do %>
-  <ul class="list">
+                            form: { class: "contents" }, "aria-label": "Hide the setup checklist", data: { tour_skip: true }),
+         flush: true, id: "setup-checklist", data: { tour: "checklist" } do %>
+  <div class="px-5 pb-1 pt-3">
+    <progress class="meter" max="<%= total %>" value="<%= done %>" aria-label="Setup progress: <%= done %> of <%= total %> steps done"></progress>
+  </div>
+  <ol class="list">
     <% checklist.steps.each do |step| %>
-      <li id="setup-<%= step.key %>" class="flex-wrap sm:flex-nowrap">
+      <li id="setup-<%= step.key %>" class="flex-wrap sm:flex-nowrap" tabindex="-1">
         <span class="flex size-6 shrink-0 items-center justify-center rounded-full <%= step.done ? "bg-canopy text-white" : "border-2 border-slate-300" %>">
           <% if step.done %><%= icon "check", class: "size-3.5" %><span class="sr-only">Done:</span><% end %>
         </span>
         <div class="min-w-0 flex-1">
-          <p class="font-semibold text-ink <%= "text-muted line-through decoration-slate-300" if step.done %>"><%= step.title %><% if step.optional %> <span class="font-normal text-muted">(optional)</span><% end %></p>
+          <p class="font-semibold text-ink <%= "text-muted line-through decoration-slate-300" if step.done %>"><%= step.title %></p>
           <p class="text-sm2 text-muted"><%= step.text %></p>
         </div>
         <% unless step.done %>
           <div class="w-full pl-9 sm:w-auto sm:pl-0">
-          <% if step.key == "details" %>
-            <%= link_to step.action, edit_admin_business_path(from: "setup"), class: button_classes(:secondary, :sm) %>
-          <% elsif step.key == "services" %>
+          <% case step.key %>
+          <% when "services" %>
             <% if checklist.unpriced_services? %>
               <%= link_to step.action, admin_catalog_items_path, class: button_classes(:secondary, :sm) %>
             <% elsif (preset = checklist.preset) %>
@@ -31,18 +34,25 @@
             <% else %>
               <%= link_to step.action, admin_catalog_presets_path(from: "setup"), class: button_classes(:secondary, :sm) %>
             <% end %>
-          <% elsif step.key == "branding" %>
-            <%= link_to step.action, edit_admin_business_path(tab: "branding", from: "setup"), class: button_classes(:secondary, :sm) %>
-          <% elsif step.key == "client" %>
+          <% when "client" %>
             <%= link_to step.action, new_admin_client_path(from: "setup"), class: button_classes(:secondary, :sm) %>
-          <% elsif step.key == "quote" %>
-            <%= link_to step.action, latest_draft ? edit_admin_quote_path(latest_draft, from: "setup") : new_admin_quote_path(from: "setup"), class: button_classes(:secondary, :sm) %>
+          <% when "quote" %>
+            <% path = if !checklist.details? then edit_admin_business_path(from: "setup")
+                      elsif latest_draft then edit_admin_quote_path(latest_draft, from: "setup")
+                      else new_admin_quote_path(from: "setup") end %>
+            <%= link_to step.action, path, class: button_classes(:secondary, :sm) %>
+          <% when "payments" %>
+            <% if can?(:billing) %>
+              <%= link_to step.action, admin_payment_account_path, class: button_classes(:secondary, :sm) %>
+            <% else %>
+              <span class="text-sm2 text-muted">The owner sets this up.</span>
+            <% end %>
           <% end %>
           </div>
         <% end %>
       </li>
     <% end %>
-  </ul>
+  </ol>
   <div class="card-foot flex flex-wrap items-center justify-between gap-2 text-sm2">
     <span class="text-muted">Want to see what clients get first?</span>
     <%= link_to admin_sample_quote_path, class: "font-semibold text-ink underline-offset-2 hover:underline" do %><%= icon "eye", class: "mr-1 inline size-4" %>Preview a sample quote<% end %>

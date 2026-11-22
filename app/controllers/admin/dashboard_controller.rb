@@ -17,5 +17,7 @@ class Admin::DashboardController < Admin::BaseController
     @business = current_business
     @checklist = SetupChecklist.new(@business, membership: Current.membership) # ACC-05
     @dashboard = ActionDashboard.new(@business) # INS-01
+    # #289: someone who goes on visits sees their own day on Home (and reaches My day from it).
+    @own_day = can?(:field_work) && VisitAssignment.where(user_id: current_user.id).exists?
   end
 end

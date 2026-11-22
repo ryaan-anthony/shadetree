@@ -70,13 +70,11 @@ class Admin::BrandingTest < ActionDispatch::IntegrationTest
     assert_select "[data-brand-preview-target=warnings] li", /light against a white page/
   end
 
-  test "the dashboard checklist counts an uploaded logo" do
-    @business.update!(brand_color: Branding::DEFAULT_COLOR) # a custom colour also counts
+  test "branding is in Settings, not a setup step (#289)" do
+    @business.update!(onboarded_at: nil)
     get admin_root_path
-    assert_select "a[href=?]", edit_admin_business_path(tab: "branding", from: "setup"), "Add branding"
-    @business.update!(logo: { io: file_fixture("logo.png").open, filename: "logo.png" })
-    get admin_root_path
-    assert_select "a[href=?]", edit_admin_business_path(tab: "branding", from: "setup"), false
+    assert_select "#setup-checklist"
+    assert_select "#setup-branding", 0
   end
 
   test "client pages use the logo, or the name wordmark, and show Powered by Shadetree" do
