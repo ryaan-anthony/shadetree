@@ -190,14 +190,20 @@ class GuidedTourBrowserTest < ApplicationSystemTestCase
     @membership = BusinessUser.create!(business: @business, user: tech, role: "technician")
     sign_in_as tech
     visit admin_my_day_path
-    click_on "Show me around"
+    # By keyboard: on CI, clicks on this page were sometimes lost entirely (no request reached
+    # the server, focus stayed on <body>), the Chrome input problem the input check works around.
+    tab_to "Show me around"
+    page.send_keys(:enter)
     assert_stop "Stop 1 of 3", "My day"
     assert_selector "[data-tour=today].tour-target"
-    click_on "Next"
+    tab_to "Next"
+    page.send_keys(:enter)
     assert_stop "Stop 2 of 3", "Coming up"
-    click_on "Next"
+    tab_to "Next"
+    page.send_keys(:enter)
     assert_stop "Stop 3 of 3", "Help"
-    click_on "Done"
+    tab_to "Done"
+    page.send_keys(:enter)
     assert_no_selector "#tour", visible: true
     wait_for_status "finished"
   end
