@@ -43,7 +43,6 @@ calendar, look different from job visits, and can be moved and reassigned the sa
 - Client self-booking of site visits (backlog, decision D1).
 - Calendar feeds (backlog).
 
-## Open questions
+## Decisions
 
-- Should calls appear on the calendar at all, or only site visits? Proposed: both, with calls
-  styled lighter, since they still take time.
+- Calls appear too, styled lighter than site visits (owner, 2026-11-21).

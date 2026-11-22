@@ -51,8 +51,6 @@ creates the quote or hands it back or on.
 - Showing follow-ups on the staff calendar (JOB-07).
 - Route ordering and travel times (backlog).
 
-## Open questions
+## Decisions
 
-- Can a technician see a request's other notes (internal notes from the office), or only its
-  client details and their own notes? Proposed: all internal notes on that request, since
-  they're there to help whoever follows up.
+- The assignee sees all internal notes on that request (owner, 2026-11-21).
