@@ -44,4 +44,16 @@ class RequestFollowUpsTest < ApplicationSystemTestCase
     assert_selector "#request-site-photos img[alt='Site photo 1']"
     assert_equal 1, Tenancy.with_business(@business) { @request_record.site_photos.count }
   end
+
+  # JOB-06: from My day to the follow-up and Done, without a mouse.
+  test "open a follow-up from My day and mark it done, with the keyboard only" do
+    Tenancy.with_business(@business) { RequestFollowUp.assign!(@request_record, { user: @owner, scheduled_on: @business.today, timing: "exact", start_time: "14:00" }, by: @owner) }
+    visit admin_my_day_path
+    find("#my-request-#{@request_record.uid} a").send_keys(:enter)
+    assert_selector "h1", text: "Maria Lopez"
+    find("#follow-up-action button", text: "Mark site visit done").send_keys(:enter)
+    within("dialog[open]") { find("button", text: "Mark done").send_keys(:enter) }
+    assert_text "Done."
+    assert Tenancy.with_business(@business) { @request_record.reload.follow_up.done? }
+  end
 end

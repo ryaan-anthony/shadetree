@@ -242,6 +242,17 @@ Tenancy.with_business(business) do
       request.update!(status: "in_progress")
     end
   end
+  # JOB-06: Marcus (tech@example.com) has a site visit for a request at 2 pm today, between his
+  # visits on My day, with a photo from the client.
+  tech = User.find_by(email: "tech@example.com")
+  if tech && !ServiceRequest.exists?(description: "Gutters overflow at the back corner. Wants guards fitted.")
+    client = Client.order(:id).offset(2).first || Client.order(:id).first
+    gutters = ServiceRequest.create!(client:, property: client.properties.first, source: "phone", created_by: owner, status: "in_progress",
+                                     description: "Gutters overflow at the back corner. Wants guards fitted.")
+    follow_up = gutters.create_follow_up!(business:, user: tech, assigned_by: owner, kind: "visit", scheduled_on: business.today, timing: "exact",
+                                          start_time: "14:00", instructions: "Measure the run and check the fascia boards.")
+    ServiceRequestEvent.record!(gutters, :assigned, by: owner, to: follow_up.state)
+  end
   # NTF-03: one customized client email (Settings → Messages; editing needs a plan with templates).
   MessageTemplate.create_with(subject: "See you tomorrow, {{client_first_name}}",
                               body: "Hi {{client_first_name}},\n\nJust a reminder that we'll be there tomorrow, {{visit_window}}. " \
