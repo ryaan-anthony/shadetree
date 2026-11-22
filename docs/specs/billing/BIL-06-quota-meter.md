@@ -26,8 +26,9 @@ of the limit and the reset date. The existing notices stay.
 ## Acceptance criteria
 
 - [ ] Every staff page (desktop sidebar and the phone drawer) shows the meter for the current
-      business to the people who see usage (see open questions): a label, a bar, "3 of 5" and
-      "Resets Dec 1" (the reset date in the business's time zone, BIL-02).
+      business to people with office access or business settings (Owners, Admins, custom roles
+      with either), always, however little is used: a label, a bar, "3 of 5" and "Resets Dec 1"
+      (the reset date in the business's time zone, BIL-02). Others don't see it.
 - [ ] The label says what it counts, as #289's wording does: "Free quotes this month", or
       "Starter quotes this billing period".
 - [ ] The bar's state follows BIL-03: normal; approaching (from the warning threshold); at the
@@ -54,13 +55,11 @@ of the limit and the reset date. The existing notices stay.
 - Usage history charts (operators have history, BIL-02).
 - Live updates without a page load.
 
-## Open questions
+## Decisions
 
-- **(blocking)** Who sees the meter? *Recommend: people who can send any quote (office access)
-  or see the plan (business settings): Owners, Admins and custom roles with either. Not
-  technicians or quote-only members; they see usage beside Send (BIL-02).*
-- Numbers or a percentage? *Recommend: numbers ("3 of 5"); limits are small and counted.*
-- A date or "in 9 days"? *Recommend: the date ("Resets Dec 1"), as every other usage line.*
-- Hide it while well under the limit? *Recommend: always show it; transparency is the point,
-  and a meter that appears only when it's late reads as a warning.*
-- On unlimited plans, show it at all? *Recommend: yes, the count only, as above.*
+- Shown to people with office access or business settings; technicians and quote-only members
+  see usage beside Send (BIL-02) instead (owner, 2026-11-22).
+- Numbers ("3 of 5"), not a percentage (owner, 2026-11-22).
+- The reset date ("Resets Dec 1"), not a countdown (owner, 2026-11-22).
+- Always shown, not only near the limit (owner, 2026-11-22).
+- Unlimited plans show the count with no bar (owner, 2026-11-22).

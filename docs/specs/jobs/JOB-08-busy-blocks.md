@@ -26,8 +26,9 @@ client, request and kind aren't, and they can't open or move it.
 ## Acceptance criteria
 
 - [ ] People who can see the schedule but not requests (a custom role with scheduling and without
-      office access, ACC-07) see every follow-up in view as "Busy" at its time and length on that
-      person's column, or in the anytime row, with the person's name.
+      office access, ACC-07) see everyone else's follow-ups in view as "Busy" at their time and
+      length on that person's column, or in the anytime row, with the person's name. Done ones
+      show as Busy too.
 - [ ] A Busy block shows no client, request, kind (site visit or call), address, instructions or
       done state, and none of these are in the page, its frames or its data. Tested on the page
       source, not just what's visible.
@@ -40,6 +41,8 @@ client, request and kind aren't, and they can't open or move it.
 - [ ] Opening, moving, reassigning or unassigning a follow-up stays refused for these people (as
       in JOB-07), and booking from an empty slot still offers only "Visit".
 - [ ] Placing a visit over Busy time warns as today ("Marcus has a request follow-up then").
+- [ ] Their own follow-ups show the kind and client, as on My day (JOB-06), and open there.
+- [ ] On an empty period, the "Next visit" hint counts Busy blocks, shown as "Busy" with no detail.
 - [ ] Office staff see follow-ups as JOB-07 describes; nothing changes for them.
 - [ ] Tests cover what each role sees, that no request detail leaks, booked hours, refusals,
       and tenancy.
@@ -49,12 +52,10 @@ client, request and kind aren't, and they can't open or move it.
 - Other kinds of busy time (time off, personal appointments; backlog with member availability).
 - Giving schedule-only roles any access to requests.
 
-## Open questions
+## Decisions
 
-- **(blocking)** The person's own follow-ups: if a schedule-only member is also given follow-ups
-  (they do field work), are their own shown as Busy too? *Recommend: their own show the kind and
-  client, as on My day (JOB-06), and open it there; everyone else's are Busy.*
-- Does a Busy block count for the "Next visit" hint on an empty week? *Recommend: yes, so an
-  empty-looking week isn't read as "nothing booked"; the hint says "Busy" with no detail.*
-- Should a done follow-up still show as Busy? *Recommend: yes; the time was taken, and showing
-  "done" would say more than "Busy".*
+- A member's own follow-ups show with their details, as on My day, and open there; everyone
+  else's are Busy (owner, 2026-11-22).
+- Busy blocks count for the "Next visit" hint on an empty period, with no detail (owner,
+  2026-11-22).
+- Done follow-ups still show as Busy, with no "done" (owner, 2026-11-22).
