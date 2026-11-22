@@ -18,14 +18,22 @@ class AccessibilityTest < ApplicationSystemTestCase
   def assert_accessible(*paths)
     problems = paths.flat_map do |path|
       visit path
-      execute_script(AXE.read) unless evaluate_script("typeof window.axe === 'object'")
-      evaluate_async_script(<<~JS).map { "#{path}: #{_1}" }
-        const done = arguments[0]
-        axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"] } })
-          .then((r) => done(r.violations.map((v) => `${v.id} (${v.help}): ${v.nodes.slice(0, 3).map((n) => n.target.join(" ")).join(" | ")}`)))
-      JS
+      axe_problems(path)
     end
     assert_empty problems, "axe found problems:\n#{problems.join("\n")}"
+  end
+
+  # Axe on the page as it is now. An open dialog's fade-in is let finish first: mid-fade, its
+  # text is partly transparent and the contrast check fails falsely.
+  def axe_problems(label)
+    execute_script(AXE.read) unless evaluate_script("typeof window.axe === 'object'")
+    evaluate_async_script(<<~JS).map { "#{label}: #{_1}" }
+      const done = arguments[0]
+      const fading = [...document.querySelectorAll("dialog[open]")].flatMap((d) => d.getAnimations({ subtree: true }))
+      Promise.all(fading.map((a) => a.finished))
+        .then(() => axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"] } }))
+        .then((r) => done(r.violations.map((v) => `${v.id} (${v.help}): ${v.nodes.slice(0, 3).map((n) => n.target.join(" ")).join(" | ")}`)))
+    JS
   end
 
   # Each page loads in full (visit), so axe is injected afresh.
@@ -48,6 +56,29 @@ class AccessibilityTest < ApplicationSystemTestCase
     assert_accessible new_admin_service_request_path, admin_service_request_path(request), edit_admin_service_request_follow_up_path(request),
                       admin_service_requests_path(status: "in_progress"),
                       admin_my_day_path, admin_my_request_path(request) # JOB-06: on their day, and the page for it
+  end
+
+  # JOB-06: a done follow-up, with a site photo they can remove, on My day and its own page, and
+  # its Pass back dialog open.
+  test "a done follow-up, its site photo and the Pass back dialog pass axe" do
+    tech = User.create!(email: "marcus@example.com", password: "password123", first_name: "Marcus", last_name: "Reyes", confirmed_at: Time.current)
+    BusinessUser.create!(user: tech, business: @business, role: "technician")
+    request = Tenancy.with_business(@business) do
+      client = Client.create!(display_name: "Maria Lopez", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ])
+      ServiceRequest.create!(client:, source: "phone", description: "Fence repair").tap do
+        RequestFollowUp.assign!(_1, { user: users(:one), scheduled_on: @business.today }, by: tech) # so it can go back to Marcus
+        assert_nil _1.add_site_photo_from(Rack::Test::UploadedFile.new(file_fixture("logo.png"), "image/png"), by: users(:one))
+        _1.reload.follow_up.done!(by: users(:one))
+      end
+    end
+    assert_accessible admin_my_day_path
+    assert_selector "#my-request-#{request.uid} .badge", text: "Done"
+    assert_accessible admin_my_request_path(request)
+    assert_button "Remove site photo 1"
+    click_on "Pass back to Marcus Reyes"
+    assert_selector "dialog[open]", text: "Pass this back to Marcus Reyes?"
+    problems = axe_problems("Pass back dialog")
+    assert_empty problems, "axe found problems:\n#{problems.join("\n")}"
   end
 
   test "the search-engine setting is off while requests are off" do
