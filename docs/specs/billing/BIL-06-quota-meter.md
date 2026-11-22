@@ -60,8 +60,10 @@ of the limit and the reset date. The existing notices stay.
 ## Implementation notes
 
 - A sidebar partial (also the phone drawer) using the business's entitlements, so the count is
-  the one query Home, the notices and Settings → Plan already make. The meter's name repeats its
-  text, as Chrome doesn't always pass on value text. Dev seeds: the demo business on Starter.
+  the one query Home, the notices and Settings → Plan already make. Not on a suspended business.
+- Read as text in a "Quote usage" region ("6 of 5 used · Limit reached, Resets Dec 1"), with the
+  bar hidden: Chrome doesn't pass on a meter's value text, which would leave a bare, clamped
+  number (review of #341). Approaching adds how many are left ("Nearly used, 1 left").
 
 ## Out of scope
 

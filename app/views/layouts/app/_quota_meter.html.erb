@@ -1,9 +1,10 @@
 <%# BIL-06: quotes sent this usage period, at the foot of the sidebar (and the phone drawer), for
-    people with office access or business settings. One meter for assistive technology: its value
-    is held at the limit, and its text gives the real count ("6 of 5"), in its name as well as its
-    value text (Chrome doesn't pass a meter's value text on to every screen reader). The Plan link is only for
-    people who can open Settings → Plan. Counted once per page with the business's entitlements
-    (the number Home and Settings → Plan show). %>
+    people with office access or business settings. Assistive technology reads its text, in a
+    "Quote usage" region: the label, "6 of 5 used · Limit reached" (the real count) and the reset
+    date. The bar is decoration and hidden from it: a role=meter's value text (needed for "6 of 5"
+    and the date) isn't passed on by Chrome, which would leave a bare number. The Plan link is only
+    for people who can open Settings → Plan. Counted once per page with the business's
+    entitlements (the number Home and Settings → Plan show). %>
 <% entitlements = current_business.entitlements %>
 <% plan, period = entitlements.plan, entitlements.period %>
 <% limit, used = entitlements.limit(:quotes_sent), entitlements.used(:quotes_sent) %>
@@ -12,11 +13,11 @@
 <section class="quota" id="quota-meter" aria-label="Quote usage"><%# a region, so screen reader users can jump to it %>
   <div class="flex items-start justify-between gap-2">
     <% if limit.nil? %>
-      <p class="quota-text" id="quota-unlimited"><%= pluralize(used, "quote") %> sent <%= allowance_period(entitlements) %> · no limit</p>
+      <p class="quota-text" id="quota-unlimited"><%= pluralize(used, "quote") %> sent <%= quote_allowance_period(entitlements) %><%= quote_allowance_trial(entitlements) %> · no limit</p>
     <% elsif limit.zero? %>
       <p class="quota-text" id="quota-not-included">Sending quotes isn't included on <%= plan.name %>.</p>
     <% else %>
-      <p class="quota-label" aria-hidden="true"><%= quote_allowance_label(entitlements) %></p>
+      <p class="quota-label"><%= quote_allowance_label(entitlements) %></p>
     <% end %>
     <% if can?(:business_settings) %>
       <%= link_to "Plan", admin_plan_path, class: "quota-link", id: "quota-plan-link", "aria-label": "Plan: see your plan and usage" %>
@@ -24,17 +25,14 @@
   </div>
   <% if limit&.positive? %>
     <% state = entitlements.quote_sending %>
-    <% word = { approaching: "Nearly used", blocked: "Limit reached" }[state] %>
-    <% spoken = [ "#{used} of #{limit} #{plan.free? ? "free" : plan.name} quotes used", word&.downcase, "resets #{l(period.resets_on, format: "%B %-d")}",
-                  ("trial ends #{l(trial_ends, format: "%B %-d")}" if trial_ends) ].compact.join(", ") %>
-    <div class="quota-bar quota-<%= state %>" role="meter" aria-label="<%= quote_allowance_label(entitlements) %>: <%= spoken %>" aria-valuemin="0"
-         aria-valuemax="<%= limit %>" aria-valuenow="<%= [ used, limit ].min %>" aria-valuetext="<%= spoken %>">
+    <% word = { approaching: "Nearly used, #{limit - used} left", blocked: "Limit reached" }[state] %>
+    <div class="quota-bar quota-<%= state %>" aria-hidden="true">
       <span class="<%= inline_style("width: #{[ used * 100 / limit, 100 ].min}%") %>"></span>
     </div>
-    <p class="quota-text" aria-hidden="true">
-      <span class="quota-count" id="quota-count"><%= used %> of <%= limit %></span><% if word %> · <span class="quota-state"><%= word %></span><% end %>
+    <p class="quota-text">
+      <span class="quota-count" id="quota-count"><%= used %> of <%= limit %></span><span class="sr-only"> used</span><% if word %> · <span class="quota-state"><%= word %></span><% end %>
     </p>
-    <p class="quota-text" aria-hidden="true" id="quota-resets">Resets <%= l(period.resets_on, format: "%b %-d") %><% if trial_ends %> · Trial ends <%= l(trial_ends, format: "%b %-d") %><% end %></p>
+    <p class="quota-text" id="quota-resets">Resets <%= l(period.resets_on, format: "%b %-d") %><% if trial_ends %> · Trial ends <%= l(trial_ends, format: "%b %-d") %><% end %></p>
   <% end %>
 </section>
 <%= inline_styles_tag %>
