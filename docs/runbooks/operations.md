@@ -304,7 +304,8 @@ runs `docker.sh <env> nightly`:
    users, businesses, clients and uploads, and the newest 200 files with their sizes). Nothing
    live is touched; the scratch copies are dropped.
 3. `/up/backup` answers `ok`, `stale` (no backup in 26 hours) or `untested` (no passing drill
-   since). Point the uptime check at it.
+   since). No external check polls it yet (PLT-10: the free uptime monitor is on `/up`); look at
+   it after a backup change, or watch it once a second uptime monitor exists.
 
 Retention: sets older than `BACKUP_RETENTION_DAYS` (production 30, staging 7) are pruned, except,
 with `BACKUP_KEEP_MONTHLY` (production's default), the oldest set of each month, kept for a year;
@@ -449,9 +450,9 @@ PDF (100–200 MB). On the 2 GB VMs keep it at 1; raise `APP_MEMORY` with it.
 | `Background jobs failed` | `JobHealthCheckJob`, every 10 minutes | At least `JOB_FAILED_THRESHOLD` jobs failed for good since the last alert (their classes listed) | See "Failed jobs" below |
 | `Job queue backlog over threshold` | Same, at most every `JOB_ALERT_REPEAT_MINUTES` | Too many jobs waiting, or the oldest due job has waited too long | Check Solid Queue's supervisor in the logs, then load: raise `JOB_CONCURRENCY` |
 | `job-health` monitor failed or missed | Sentry Cron (the check checks in every run) | Failed: one of the two above. Missed: the check didn't run, so workers or dispatcher are down | As above; for a missed one, `docker restart shadetree-production` |
-| Jobs stalled | External uptime check on `/up/jobs` (503) | The oldest due job has waited over `JOB_WAIT_THRESHOLD`: workers or dispatcher down, so the check above can't run either | `docker restart shadetree-production`; if it persists, re-run the last deploy |
-| Backups stale or untested | External uptime check on `/up/backup` (503) | No backup in `BACKUP_MAX_AGE_HOURS`, or its nightly restore drill failed | `journalctl --user -u shadetree-backup@production` on the VM ("Backups" above) |
-| Site down | External uptime check | `/up` or a client-link page isn't answering | Check the VM, the container (`docker ps`) and the tunnel; roll back the last deploy if it's the cause |
+| Jobs stalled | The missed `job-health` check-in above (`/up/jobs` answers 503 too; not polled yet) | The oldest due job has waited over `JOB_WAIT_THRESHOLD`: workers or dispatcher down | `docker restart shadetree-production`; if it persists, re-run the last deploy |
+| Backups stale or untested | `/up/backup` (503), **not polled yet** | No backup in `BACKUP_MAX_AGE_HOURS`, or its nightly restore drill failed | `journalctl --user -u shadetree-backup@production` on the VM ("Backups" above) |
+| Site down | Sentry uptime monitor on production `/up` | Three checks in a row failed (no answer, or not 2xx) | Check the VM, the container (`docker ps`) and the tunnel; roll back the last deploy if it's the cause |
 
 **Where they go:** the log, the "Background jobs" card on the operator console's home, and,
 with `SENTRY_DSN` set, Sentry (ADR 0027). Every `error` and `alert` line becomes a Sentry event:
@@ -480,26 +481,40 @@ are told apart by environment. Alerts: the default "new issue" email rule; add a
 `job-health` Cron monitor (created on its first check-in) to email on failure or missed check-in.
 
 **Free-tier limits** (Developer plan, checked 2026-11-22): 5,000 errors a month, one user,
-30 days of history, one Cron monitor and one uptime monitor; email alerts included. We use errors
-and the one Cron monitor (`job-health`); spans (5M), replays and logs stay unused. Past the error
+30 days of history, one Cron monitor and one uptime monitor; email alerts included. We use errors,
+the Cron monitor (`job-health`) and the uptime monitor (production `/up`); spans (5M), replays and
+logs stay unused. Past the error
 quota Sentry drops events until the month resets (spike protection is on by default), so keep
 noisy errors fixed or ignored; the log still has every one. A lasting backlog costs at most
 24 events a day (`JOB_ALERT_REPEAT_MINUTES`).
 
-**Uptime check** (not set up; vendor is the owner's call, PLT-10 open question): poll from
-outside the homelab, every 1–5 minutes, alerting the maintainer after two failures:
+**Uptime check** (owner, 2026-11-22): Sentry's one included uptime monitor, on production `/up`.
+Set it up once production answers:
+
+1. Sentry → Monitors → Create monitor → Uptime: URL `https://getshadetree.com/up`, method `GET`,
+   interval 5 minutes, the production environment. `/up` answers 200 and isn't logged, so the
+   checks cost nothing and add no noise.
+2. Sentry treats anything but a 2xx (after redirects) or no answer within the timeout as a
+   failure, and opens an issue after 3 failures in a row (15 minutes at 5-minute checks); one
+   success resolves it. Checks come from several regions in turn.
+3. A monitor alone notifies nobody: add an alert (Alerts → Create alert → Uptime) for this
+   monitor's downtime issues, emailing the maintainer.
+4. If Cloudflare challenges the checks (Bot Fight Mode, a WAF rule), add a skip rule for path
+   `/up` only.
+
+Later, with more monitors (Better Stack free: 10 at 3 minutes; UptimeRobot free: 50 at 5
+minutes), these are ready and tested (`test/integration/uptime_check_targets_test.rb`):
 
 | URL | Healthy | Unhealthy |
 | --- | --- | --- |
-| `https://<APP_HOST>/up` | 200 | anything else, or no answer |
 | `https://<APP_HOST>/up/jobs` | 200 `ok` | 503 `stalled` |
 | `https://<APP_HOST>/up/backup` | 200 `ok` | 503 `stale` or `untested` |
 | `https://<APP_HOST>/c/11111111111111111111111111111111` | **404** containing "We couldn't find that page" | anything else |
+| staging's `/up` | 200 | anything else |
 
-The last is the client-link page with a synthetic token (32 × `1`, well-formed, never issued): it
-runs the client pages' routing, rate limit, link lookup and layout without a real link, whose view
-would be recorded and could notify a business. Health checks aren't logged; this one is (its token
-blanked), one line per poll.
+The client-link target uses a synthetic token (32 × `1`, well-formed, never issued): it runs the
+client pages' routing, rate limit, link lookup and layout without a real link, whose view would
+be recorded and could notify a business. Unlike the health checks, it's logged (token blanked).
 
 ### Failed jobs
 
@@ -527,5 +542,5 @@ changes.
 | Analytics: self-hosted Plausible (MKT-04) | $0 if on the homelab |
 | GitHub (public repository, Actions) | $0 |
 | Error tracking: Sentry Developer (free; 5k errors/month, 1 Cron monitor; PLT-10, ADR 0027) | $0 |
-| Uptime check (PLT-10, vendor not chosen; free tiers compared in the spec) | $0 expected |
+| Uptime check: Sentry's included uptime monitor, production `/up` (PLT-10) | $0 |
 | **Total** | **target < $50** |
