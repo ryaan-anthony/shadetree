@@ -25,7 +25,7 @@ class Admin::GuidedTourTest < ActionDispatch::IntegrationTest
     assert_select "#tour-offer button[data-tour-start]", "Take a 2-minute tour"
     tour = JSON.parse(css_select("[data-controller=tour]").first["data-tour-tour-value"])
     assert_equal %w[home requests quotes schedule invoices settings], tour["stops"].map { _1["key"] }
-    assert_equal "setup-details", tour.dig("next_step", "id")
+    assert_equal "setup-services", tour.dig("next_step", "id") # #289: the four-step checklist
 
     patch admin_tour_path, params: { event: "end", stop: "offer" }
     assert_redirected_to admin_root_path
@@ -57,12 +57,16 @@ class Admin::GuidedTourTest < ActionDispatch::IntegrationTest
 
   # The tour points at these; a rebuilt Home or menu (#289) must keep them, or the tour loses its way.
   test "every element the tour points at is on its page" do
+    use_fake_payment_gateway # so the payments step is there too
     @business.update!(onboarded_at: nil, phone: nil)
     get admin_root_path
     %w[checklist home requests quotes schedule invoices settings].each { assert_select "[data-tour~=#{_1}]", 1, _1 }
-    %w[details services branding client quote].each { assert_select "#setup-#{_1}", 1, _1 } # the last stop leads to a step by id
-    assert_select "#setup-details a", "Add details" # and focuses its button
+    %w[services client quote payments].each { assert_select "#setup-#{_1}", 1, _1 } # the last stop leads to a step by id (#289)
+    assert_select "#setup-services a, #setup-services button" # and focuses its link or button
     assert_select "[data-tour~=checklist] button[data-tour-skip]", "Hide" # never Hide
+    # My day's stops, for someone who lands there: office members reach it from Home, not the menu (#289).
+    sign_in member_with_role(:technician)
+    post switch_admin_business_path, params: { business: @business.uid }
     get admin_my_day_path
     %w[today coming_up my_day help].each { assert_select "[data-tour~=#{_1}]", 1, _1 }
   end

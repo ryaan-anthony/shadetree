@@ -21,7 +21,7 @@ class GuidedTourTest < ActiveSupport::TestCase
     assert_equal %w[checklist home], owner_tour.stops.first.targets
     assert_match "checklist", owner_tour.stops.first.text
     assert_match "your plan", owner_tour.stops.last.text
-    assert_equal [ "Next: Add your business details", "setup-details" ], owner_tour.next_step
+    assert_equal [ "Next: Add your services and prices", "setup-services" ], owner_tour.next_step # #289: the four-step checklist
     assert_equal admin_sample_quote_path, owner_tour.stops.find { _1.key == "quotes" }.link.last
   end
 

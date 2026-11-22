@@ -67,9 +67,9 @@ class GuidedTourBrowserTest < ApplicationSystemTestCase
     assert_no_selector "#tour-offer", visible: true
     wait_for_status "started"
 
-    assert_selector "#tour-pointing", text: "Pointing at: Get to your first quote", visible: :all
+    assert_selector "#tour-pointing", text: "Pointing at: Get set up", visible: :all
     page.send_keys(:f6) # into the checklist: its first link, never Hide
-    assert_equal "Add details", evaluate_script("document.activeElement.textContent.trim()")
+    assert evaluate_script("document.activeElement.closest('#setup-services') !== null"), "the first step's link or button (#289: services first)"
     page.send_keys(:f6)
     assert_equal "tour", focused_id
 
@@ -92,10 +92,10 @@ class GuidedTourBrowserTest < ApplicationSystemTestCase
     tab_to "Next"
     page.send_keys(:enter)
 
-    tab_to "Next: Add your business details"
+    tab_to "Next: Add your services and prices"
     page.send_keys(:enter)
     assert_no_selector "#tour", visible: true
-    assert_equal "Add details", evaluate_script("document.activeElement.textContent.trim()"), "focus lands on the step"
+    assert evaluate_script("document.activeElement.closest('#setup-services') !== null"), "focus lands on the step (#289: services first)"
     wait_for_status "finished"
     assert_equal "settings", @membership.tour_stop
   end
