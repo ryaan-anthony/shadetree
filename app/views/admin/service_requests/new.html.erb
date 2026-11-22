@@ -1,6 +1,7 @@
 <%= page_header "Log a request", lede: "For work that came in by phone, email or in person." %>
 
-<%= form_with model: @request, scope: :service_request, url: admin_service_requests_path, class: "max-w-2xl space-y-4",
+<div class="form-split">
+<%= form_with model: @request, scope: :service_request, url: admin_service_requests_path, class: "min-w-0 space-y-4",
               data: { controller: "property-loader", property_loader_url_value: property_options_admin_quotes_path,
                       property_loader_name_value: "service_request[property]", action: "client-picker:change->property-loader#load" } do |f| %>
   <%= card do %>
@@ -60,4 +61,13 @@
     <%= f.submit_button "Log request#{" anyway" if @warnings.present?}" %>
   </div>
 <% end %>
+<%# #289: what happens next, beside the form on wide screens %>
+<%= card title: "What happens next", id: "request-next-steps" do %>
+  <ol class="list-decimal space-y-2 pl-5 text-sm2 text-subtle">
+    <li>It goes to Requests as New, so nobody forgets to call back.</li>
+    <li>When you're ready, Create quote fills in the client, the address and the services.</li>
+    <li>Nothing is sent to the client until you send the quote.</li>
+  </ol>
+<% end %>
+</div>
 <%= render "admin/clients/quick_create", button: false %>

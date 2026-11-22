@@ -1,0 +1,21 @@
+<%# locals: (job:) -%>
+<%# #289: the job being booked, beside the visit form on wide screens. %>
+<%= card title: "The job", subtitle: "#{job.number} · #{job.title}", id: "visit-job-summary" do %>
+  <div class="space-y-3 text-sm">
+    <p class="text-ink"><span class="font-medium"><%= job.client.display_name %></span>
+      <% if job.property %><br><span class="text-subtle"><%= job.property.one_line %></span><% end %></p>
+    <% if (phone = job.client.primary_phone) %><p><%= phone_link(phone.value, class: "text-ink hover:underline") %></p><% end %>
+    <% if job.line_items.any? %>
+      <ul class="space-y-1 border-t border-line pt-3">
+        <% job.line_items.first(6).each do |line| %>
+          <li class="flex justify-between gap-2"><span class="min-w-0 truncate text-ink"><%= line.name %></span><span class="shrink-0 text-subtle tabular">× <%= line.quantity.to_d.to_s("F").sub(/\.0\z/, "") %></span></li>
+        <% end %>
+      </ul>
+    <% end %>
+    <% if job.instructions.present? %>
+      <div class="border-t border-line pt-3"><p class="text-sm2 font-semibold text-ink">Instructions</p><p class="mt-1 whitespace-pre-line text-subtle"><%= job.instructions %></p></div>
+    <% end %>
+    <% booked = job.visits.where.not(status: "cancelled").count %>
+    <p class="border-t border-line pt-3 text-sm2 text-muted"><%= booked.zero? ? "No visits booked yet." : "#{pluralize(booked, "visit")} already booked." %></p>
+  </div>
+<% end %>

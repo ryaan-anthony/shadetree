@@ -12,7 +12,7 @@
   <%= link_to preview_admin_invoice_path(@invoice), class: button_classes(:secondary), target: "_blank", rel: "noopener",
               data: { action: "quote-builder#preview" } do %><%= icon "eye" %> Preview as client<% end %>
   <%= link_to new_admin_invoice_send_path(@invoice), class: button_classes(:primary),
-              data: { action: "quote-builder#saveAndGo" } do %><%= icon "send" %> <%= @invoice.revising? ? "Send revision" : "Send" %><% end %>
+              data: { action: "quote-builder#saveAndGo" } do %><%= icon "send" %> <%= @invoice.revising? ? "Send revision" : "Send invoice" %><% end %>
   <span class="save-status" id="save_status" role="status" data-quote-builder-target="status">Saved</span>
   <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
     <button type="button" class="<%= button_classes(:ghost, :icon) %>" data-menu-target="button" data-action="menu#toggle"
@@ -124,10 +124,9 @@
         <div class="border-t border-line pt-3"><%= render "admin/quotes/totals", quote: @invoice, totals: %></div>
       </div>
     <% end %>
-    <div class="flex flex-col gap-2">
-      <%= f.submit_button "Save draft" %>
-      <p class="text-center text-sm2 text-muted">This draft is saved as you go and can be finished later.</p>
-    </div>
+    <%# #289: one way to save: as you go (the status at the top says when). Without JavaScript, a button. %>
+    <noscript><%= f.submit_button "Save draft", class: "w-full" %></noscript>
+    <p class="text-center text-sm2 text-muted" id="autosave-note">Changes save as you go. Send it from the top of the page when it’s ready.</p>
   </aside>
 <% end %>
 </div>
