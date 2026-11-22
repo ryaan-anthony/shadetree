@@ -38,8 +38,8 @@ class Admin::QuoteSendsController < Admin::BaseController
 
   private
 
-  # BIL-03: a quote's first send counts toward the plan's quotes; over the limit (and its one
-  # extra), new quotes wait. Resends of quotes already sent never count.
+  # BIL-03: a quote's first send counts toward the plan's quotes; at the limit, new quotes wait.
+  # Resends and revisions of quotes already sent never count.
   def require_quote_allowance
     return if !@quote.counts_toward_usage? || current_business.entitlements.can_send_new_quote?
 

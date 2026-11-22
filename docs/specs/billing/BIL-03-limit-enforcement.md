@@ -43,15 +43,16 @@ limits are part of the brand.
 
 ## Decisions
 
-- A grace of one: at the limit, one more new quote can go out (with a warning) so nobody is
-  blocked mid-conversation; then new quotes wait for the reset or a bigger plan.
-  *Superseded:* owner decision 2026-11-22: no grace send. Once used reaches the limit, new
-  quotes are blocked for everyone; a separate PR makes the code change (QTE-08, BIL-06).
+- No grace send at the limit (owner, 2026-11-22): once the plan's quotes are used, new quotes
+  wait for the reset or a bigger plan. This replaces the earlier grace of one extra send.
+- Resends and revisions of quotes already sent still go out at or over the limit and never
+  count; the owner declined a guard on revisions (2026-11-22).
 
 ## Implementation notes
 
 - `Entitlements#quote_sending` answers `:ok`, `:approaching` (from `USAGE_WARNING_PERCENT`,
-  default 80), `:at_limit` (the one extra left) or `:blocked`. Only a quote's first send counts
+  default 80) or `:blocked` (at or over the limit; with no grace there's no separate
+  "at the limit" state). Only a quote's first send counts
   and is checked (`Admin::QuoteSendsController#require_quote_allowance`, both email and link);
   resends and revisions of quotes already sent never count, and drafts always save.
 - One notice (`admin/usage/_limit_notice`) on the quote builder, the send page (where the send
@@ -63,7 +64,7 @@ limits are part of the brand.
 - Nothing client-facing checks entitlements: sent quotes and invoices stay viewable, approvable
   and payable, and the request form keeps working (tested over the limit).
 - The count is claimed inside the send transaction under a row lock on the business, so two
-  first sends at the boundary can't both take the one extra.
+  first sends at the boundary can't both take the last one.
 - A downgrade turns features off ("Powered by" returns) and deletes nothing. No content is
   over-limit today; later gated features (templates, automations, roles, locations) keep their
   data read-only.
