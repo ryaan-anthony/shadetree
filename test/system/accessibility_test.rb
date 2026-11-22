@@ -130,15 +130,15 @@ class AccessibilityTest < ApplicationSystemTestCase
     visit edit_admin_business_path(tab: "documents")
     click_on "Save changes"
     assert_selector "#announcer", text: "Settings saved.", visible: :all
-    click_on "Hours" # a Turbo visit; the page with the toast is cached
-    assert_selector "h2", text: "Weekly hours"
+    click_on "Taxes" # a Turbo visit; the page with the toast is cached
+    assert_selector "h2", text: "Tax rates"
     execute_script(<<~JS)
       window.__announced = []
       new MutationObserver(() => { const t = document.getElementById("announcer").textContent; if (t) window.__announced.push(t) })
         .observe(document.getElementById("announcer"), { childList: true, characterData: true, subtree: true })
     JS
     page.go_back
-    assert_selector "nav[aria-label=Settings] a[aria-current=page]", text: "Documents"
+    assert_selector "nav[aria-label=Settings] a[aria-current=page]", text: "Quotes, jobs & invoices"
     assert_no_selector "#flash .toast"
     sleep 0.5 # longer than an announcement takes to land
     assert_empty evaluate_script("window.__announced"), "nothing is read out again"
@@ -149,6 +149,6 @@ class AccessibilityTest < ApplicationSystemTestCase
     click_on "Save changes"
     assert_selector "#flash .toast:not([role])", text: "Settings saved." # read through #announcer, not twice
     assert_selector "#announcer[role=status]", text: "Settings saved.", visible: :all
-    assert_selector "nav[aria-label=Settings] a[aria-current=page]", text: "Documents"
+    assert_selector "nav[aria-label=Settings] a[aria-current=page]", text: "Quotes, jobs & invoices"
   end
 end

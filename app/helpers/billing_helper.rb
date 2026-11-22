@@ -30,4 +30,13 @@ module BillingHelper
     end
     "#{text}#{trial}"
   end
+
+  # #289: the plan that brings a feature, for "View only on Starter. Automations come with Pro
+  # and up." The first listed plan that includes it, or nil.
+  def plan_with(feature) = Plan.listed.find { _1.features[feature.to_s] == true }
+
+  def comes_with(feature)
+    plan = plan_with(feature)
+    plan ? "#{plan.name} and up" : "a bigger plan"
+  end
 end

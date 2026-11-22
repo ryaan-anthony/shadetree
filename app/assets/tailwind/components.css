@@ -359,6 +359,7 @@
   }
   .tab:hover { color: var(--color-ink); }
   .tab[aria-current="page"],
+  .tab[aria-current="true"],
   .tab-radio:has(:checked),
   .tab[aria-selected="true"],
   .tab[aria-pressed="true"] { border-bottom-color: var(--color-canopy); color: var(--color-ink); }

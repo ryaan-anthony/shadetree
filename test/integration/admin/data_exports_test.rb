@@ -29,7 +29,7 @@ class Admin::DataExportsTest < ActionDispatch::IntegrationTest
   test "every table downloads with its documented columns, and each download is logged" do
     get admin_data_exports_path
     assert_select "#export-tables li", DataExport::TABLES.size
-    assert_select "a.tab[aria-current=page]", "Your data"
+    assert_select "nav[aria-label=Settings] a[aria-current=page]", "Your data"
     DataExport::TABLES.each_value do |table|
       rows = download(table.key)
       assert_equal table.columns.map(&:header), rows.headers, table.key

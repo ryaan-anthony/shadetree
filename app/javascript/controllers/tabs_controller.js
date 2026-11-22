@@ -19,7 +19,7 @@ export default class extends Controller {
     }
     document.addEventListener("turbo:frame-render", this.refocus)
     const row = this.hasRowTarget ? this.rowTarget : this.element
-    const current = row.querySelector("[aria-current=page], [aria-pressed=true]")
+    const current = row.querySelector("[aria-current=page], [aria-current=true], [aria-pressed=true]")
     if (current && current.offsetLeft + current.offsetWidth > row.clientWidth) row.scrollLeft = current.offsetLeft - 16
   }
 

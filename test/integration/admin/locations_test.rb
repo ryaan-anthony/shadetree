@@ -42,7 +42,7 @@ class Admin::LocationsTest < ActionDispatch::IntegrationTest
     assert_equal "America/Chicago", location.timezone
     assert_equal [ tech ], as_business(@business) { location.members.to_a }
     follow_redirect!
-    assert_select "nav.tabs a[aria-current=page]", "Locations"
+    assert_select "nav[aria-label=Settings] a[aria-current=page]", "Locations"
     assert_select "#location-#{location.uid}", /North yard.*555-0111.*#{tech.full_name}/m
 
     patch admin_location_path(location), params: { location: { name: "North", member_ids: [ "" ] } }

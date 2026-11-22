@@ -118,6 +118,8 @@ Rails.application.routes.draw do
       resource :erasure, only: %i[new create], controller: "client_erasures" # INS-02
     end
 
+    # #289: one entry point for Settings; each page keeps its own URL (grouped in SettingsHelper).
+    get "settings", to: "settings#show", as: :settings
     # Business settings (tabs for profile, documents, branding, request form; hours and taxes have their own)
     resource :business, only: [ :new, :create, :edit, :update ] do
       post :switch, on: :collection

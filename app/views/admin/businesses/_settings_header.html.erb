@@ -1,19 +1,24 @@
 <%# locals: (current:) -%>
-<%# The settings page header and tabs, shared by the business settings tabs and tax rates. %>
+<%# The settings page header and navigation, shared by every settings page. #289: four groups
+    (SettingsHelper#settings_groups), then the pages in the current one; every page keeps its URL. %>
 <% business = current_business %>
 <%= page_header "Settings", lede: "How #{business.name_was.presence || business.name} appears to clients, and the defaults new quotes and invoices start from." %>
 
-<nav class="tabs mb-5" aria-label="Settings" data-controller="tabs">
-  <%= link_to "Business", edit_admin_business_path, class: "tab", "aria-current": ("page" if current == "business") %>
-  <%= link_to "Hours", admin_hours_path, class: "tab", "aria-current": ("page" if current == "hours") %>
-  <% if business.multiple_locations? %><%= link_to "Locations", admin_locations_path, class: "tab", "aria-current": ("page" if current == "locations") %><% end %><%# CAT-07 %>
-  <%= link_to "Documents", edit_admin_business_path(tab: "documents"), class: "tab", "aria-current": ("page" if current == "documents") %>
-  <%= link_to "Taxes", admin_tax_rates_path, class: "tab", "aria-current": ("page" if current == "taxes") %>
-  <%= link_to "Branding", edit_admin_business_path(tab: "branding"), class: "tab", "aria-current": ("page" if current == "branding") %>
-  <%= link_to "Request form", edit_admin_business_path(tab: "request_form"), class: "tab", "aria-current": ("page" if current == "request_form") %>
-  <%= link_to "Messages", admin_message_templates_path, class: "tab", "aria-current": ("page" if current == "messages") %>
-  <%= link_to "Automations", admin_automations_path, class: "tab", "aria-current": ("page" if current == "automations") %>
-  <%= link_to "Payments", admin_payment_account_path, class: "tab", "aria-current": ("page" if current == "payments") %><%# PAY-03 %>
-  <%= link_to "Plan", admin_plan_path, class: "tab", "aria-current": ("page" if current == "plan") %>
-  <% if current_membership&.can?(:export_data) %><%= link_to "Your data", admin_data_exports_path, class: "tab", "aria-current": ("page" if current == "data") %><% end %>
+<% groups = settings_groups(current) %>
+<% group, pages = groups.find { |_, list| list.any? { _1.key == current } } || groups.first %>
+<nav class="mb-5" aria-label="Settings" id="settings-nav">
+  <div class="tabs" data-controller="tabs">
+    <% groups.each do |name, list| %>
+      <%# The group is the page when it has just one (no pills below to say so). %>
+      <%= link_to name, list.first.path, class: "tab", "aria-current": (name == group ? (list.size == 1 ? "page" : "true") : nil) %>
+    <% end %>
+  </div>
+  <% if pages.size > 1 %>
+    <ul class="mt-3 flex flex-wrap gap-2" aria-label="<%= group %>">
+      <% pages.each do |page| %>
+        <li><%= link_to page.label, page.path, class: "inline-flex items-center rounded-full border px-3 py-1 text-sm2 #{page.key == current ? "border-canopy bg-canopy/10 font-semibold text-ink" : "border-line text-subtle hover:text-ink"}",
+                        "aria-current": ("page" if page.key == current) %></li>
+      <% end %>
+    </ul>
+  <% end %>
 </nav>
