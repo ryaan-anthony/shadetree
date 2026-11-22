@@ -17,10 +17,22 @@ class UiKitTest < ApplicationSystemTestCase
     click_link "Delete client"
     within "dialog#confirm-dialog[open]" do
       assert_text "Delete Maria Lopez?"
-      assert_button "Delete client"
+      assert_selector "button.btn-destructive-solid", text: "Delete client" # data-turbo-confirm-variant="destructive" (PLT-14)
+      assert_selector "button.btn-tertiary", text: "Cancel"
       click_on "Cancel"
     end
     assert_no_selector "dialog#confirm-dialog[open]"
+    assert_equal "confirm-dialog-message", find("dialog#confirm-dialog", visible: :all)["aria-describedby"] # the message is read out
+  end
+
+  # PLT-14 (owner, 2026-11-22): a safe action confirms with the Primary.
+  test "a confirm that isn't destructive uses the Primary" do
+    visit styleguide_path
+    click_link "Complete job"
+    within "dialog#confirm-dialog[open]" do
+      assert_selector "button.btn-primary", text: "Complete job"
+      click_on "Cancel"
+    end
   end
 
   test "menu opens with the keyboard and closes on Escape" do

@@ -57,7 +57,7 @@
       <div class="flex flex-wrap items-center justify-between gap-3">
         <p class="text-sm text-subtle">Removes the clients it added, unless they already have quotes, requests, jobs or invoices. Clients edited since are removed too, with their notes. Available until <%= local_date(@import.undo_until) %>.</p>
         <%= button_to "Undo import", undo_admin_client_import_path(@import), class: button_classes(:destructive),
-                      form: { data: { turbo_confirm: "Remove the clients this import added (#{@import.clients.count}), including any notes added since?", turbo_confirm_button: "Undo import" } } %>
+                      form: { data: { turbo_confirm: "Remove the clients this import added (#{@import.clients.count}), including any notes added since?", turbo_confirm_button: "Undo import", turbo_confirm_variant: "destructive" } } %>
       </div>
     <% end %>
   <% end %>

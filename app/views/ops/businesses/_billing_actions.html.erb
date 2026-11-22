@@ -18,7 +18,7 @@
     <% end %>
   <% end %>
   <% if business.comp_plan %>
-    <%= form_with url: ops_business_billing_comp_path(business), class: "mt-3 flex flex-wrap items-end gap-2", data: { turbo_confirm: "Remove #{business.name}'s comp?" } do %>
+    <%= form_with url: ops_business_billing_comp_path(business), class: "mt-3 flex flex-wrap items-end gap-2", data: { turbo_confirm: "Remove #{business.name}'s comp?", turbo_confirm_variant: "destructive" } do %>
       <%= hidden_field_tag :remove_comp, "1", id: nil %>
       <div class="field min-w-0 flex-1"><label class="label" for="uncomp_reason">Reason for removing the comp</label><%= text_field_tag :reason, nil, class: "input", id: "uncomp_reason", required: true, maxlength: 500 %></div>
       <%= submit_tag "Remove comp", class: button_classes(:secondary, :sm), name: nil %>

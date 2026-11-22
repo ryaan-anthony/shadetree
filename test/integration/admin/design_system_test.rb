@@ -59,6 +59,19 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
                      .map { "#{label(_1).inspect} is #{_1["class"]}" }
   end
 
+  # Owner, 2026-11-22: confirm dialogs use the Primary for safe actions and solid red only for these.
+  DESTRUCTIVE_CONFIRM = /\A(Delete|Remove|Revoke|Disconnect|Deactivate|Suspend|Discard|Undo import|Cancel job|Cancel visit|Void)\b/
+
+  check :confirm_variant_matches_the_action do |_page, html|
+    html.css("[data-turbo-confirm-button]").filter_map do |node|
+      destructive = node["data-turbo-confirm-variant"] == "destructive"
+      wanted = node["data-turbo-confirm-button"].match?(DESTRUCTIVE_CONFIRM)
+      next if destructive == wanted
+
+      "confirming #{node["data-turbo-confirm-button"].inspect} is #{destructive ? "red" : "the Primary"}"
+    end
+  end
+
   check :empty_state_matches_the_page_action do |_page, html|
     header = kit_buttons(html.css(".page-head")).index_by { _1["href"] }
     kit_buttons(html.css(".empty")).filter_map do |cta|

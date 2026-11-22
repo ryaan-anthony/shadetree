@@ -10,7 +10,7 @@
             aria-haspopup="true" aria-expanded="false" aria-label="More actions for <%= closure.reason %>"><%= icon "more-horizontal" %></button>
     <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
       <%= link_to edit_admin_closure_path(closure), class: "menu-item" do %><%= icon "edit-2" %> Edit<% end %>
-      <%= button_to admin_closure_path(closure), method: :delete, class: "menu-item text-danger", form: { class: "contents", data: { turbo_confirm: "Remove #{closure.reason}?", turbo_confirm_button: "Remove" } } do %><%= icon "trash-2" %> Remove<% end %>
+      <%= button_to admin_closure_path(closure), method: :delete, class: "menu-item text-danger", form: { class: "contents", data: { turbo_confirm: "Remove #{closure.reason}?", turbo_confirm_button: "Remove", turbo_confirm_variant: "destructive" } } do %><%= icon "trash-2" %> Remove<% end %>
     </div>
   </div>
 </li>

@@ -92,7 +92,7 @@
         <li>This can't be undone. We'll email <%= current_user.email %> to confirm.</li>
       </ul>
       <%= form_with url: user_registration_path, method: :delete, class: "mt-4 flex flex-wrap items-end gap-3",
-                    data: { turbo_confirm: "Delete your Shadetree account? This can't be undone.", turbo_confirm_button: "Delete account" } do %>
+                    data: { turbo_confirm: "Delete your Shadetree account? This can't be undone.", turbo_confirm_button: "Delete account", turbo_confirm_variant: "destructive" } do %>
         <div class="field min-w-56 flex-1">
           <label class="label" for="delete_current_password">Your password</label>
           <%= password_field_tag :current_password, nil, id: "delete_current_password", class: "input", autocomplete: "current-password", required: true %>

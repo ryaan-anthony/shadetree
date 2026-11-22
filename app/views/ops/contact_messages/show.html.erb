@@ -32,14 +32,14 @@
         <%= button_to @message.handled_at ? "Mark open again" : "Mark handled", ops_contact_message_path(@message), method: :patch,
                       params: { handled: @message.handled_at ? "0" : "1" }, class: "#{button_classes(:secondary)} w-full" %>
         <%= button_to "Delete message", ops_contact_message_path(@message), method: :delete, class: "#{button_classes(:destructive)} w-full",
-                      form: { data: { turbo_confirm: "Delete this message? This can't be undone.", turbo_confirm_button: "Delete" } } %>
+                      form: { data: { turbo_confirm: "Delete this message? This can't be undone.", turbo_confirm_button: "Delete", turbo_confirm_variant: "destructive" } } %>
       </div>
     <% end %>
     <%= card title: "Asked to be forgotten?" do %>
       <p class="text-sm text-subtle">Delete every message from <span class="break-words"><%= @message.email %></span> (<%= pluralize(@from_sender, "message") %>). The audit log records how many, not who.</p>
       <p class="mt-2 text-sm text-subtle">Each message (apart from spam) was also emailed to <%= ContactMailer.support_address %>: delete those emails there too.</p>
       <%= button_to "Delete everything from this address", erase_ops_contact_message_path(@message), method: :delete, class: "#{button_classes(:destructive)} mt-3 w-full", id: "erase-sender",
-                    form: { data: { turbo_confirm: "Delete #{@from_sender == 1 ? "the only message" : "all #{@from_sender} messages"} from #{@message.email}? This can't be undone. Remember to delete their emails in the support inbox too.", turbo_confirm_button: "Delete all" } } %>
+                    form: { data: { turbo_confirm: "Delete #{@from_sender == 1 ? "the only message" : "all #{@from_sender} messages"} from #{@message.email}? This can't be undone. Remember to delete their emails in the support inbox too.", turbo_confirm_button: "Delete all", turbo_confirm_variant: "destructive" } } %>
     <% end %>
   </div>
 </div>
