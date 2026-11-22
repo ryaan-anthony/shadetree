@@ -6,9 +6,9 @@ class Admin::ToursController < Admin::BaseController
   allow_any_member
 
   def update
-    tour = GuidedTour.for(Current.membership, checklist: SetupChecklist.new(current_business, membership: Current.membership))
+    tour = GuidedTour.for(Current.membership) # the stops' keys don't depend on the checklist
     stop = params[:stop].to_s
-    return head(:unprocessable_content) unless tour && (tour.keys.include?(stop) || stop == GuidedTour::OFFER)
+    return head(:unprocessable_content) unless tour && params[:event].in?(GuidedTour::EVENTS) && (tour.keys.include?(stop) || stop == GuidedTour::OFFER)
 
     Current.membership.record_tour!(params[:event], stop)
     respond_to do |format|

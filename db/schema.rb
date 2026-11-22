@@ -160,6 +160,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_130000) do
     t.string "tour_stop"
     t.datetime "tour_offered_at"
     t.datetime "tour_ended_at"
+    t.datetime "tour_replayed_at"
     t.index ["business_id", "active"], name: "index_business_users_on_business_id_and_active"
     t.index ["business_id"], name: "index_business_users_on_business_id"
     t.index ["default_location_id"], name: "index_business_users_on_default_location_id"

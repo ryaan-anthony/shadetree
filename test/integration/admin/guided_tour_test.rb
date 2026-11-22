@@ -44,13 +44,42 @@ class Admin::GuidedTourTest < ActionDispatch::IntegrationTest
     record "end", "quotes"
     assert_equal %w[skipped quotes], [ @membership.reload.tour_status, @membership.tour_stop ]
 
-    record "start", "home" # again, from Help
+    record "start", "home" # again, from Help: stamped, the first run's outcome kept
     record "finish", "settings"
-    assert_equal "finished", @membership.reload.tour_status
-    assert_not_nil @membership.tour_ended_at
+    assert_equal %w[skipped quotes], [ @membership.reload.tour_status, @membership.tour_stop ]
+    assert_not_nil @membership.tour_replayed_at
 
     record "step", "billing"
     assert_response :unprocessable_content, "only this person's stops"
+    record "restart", "home"
+    assert_response :unprocessable_content, "only the tour's events"
+  end
+
+  # The tour points at these; a rebuilt Home or menu (#289) must keep them, or the tour loses its way.
+  test "every element the tour points at is on its page" do
+    @business.update!(onboarded_at: nil, phone: nil)
+    get admin_root_path
+    %w[checklist home requests quotes schedule invoices settings].each { assert_select "[data-tour~=#{_1}]", 1, _1 }
+    %w[details services branding client quote].each { assert_select "#setup-#{_1}", 1, _1 } # the last stop leads to a step by id
+    assert_select "#setup-details a", "Add details" # and focuses its button
+    get admin_my_day_path
+    %w[today coming_up my_day help].each { assert_select "[data-tour~=#{_1}]", 1, _1 }
+  end
+
+  test "the browser's JSON update passes forgery protection with the page's token, and not without" do
+    ActionController::Base.allow_forgery_protection = true
+    @membership.update!(tour_status: "offered")
+    get admin_root_path
+    token = css_select("meta[name=csrf-token]").first["content"]
+    patch admin_tour_path, params: { event: "start", stop: "home" }.to_json,
+                           headers: { "Content-Type" => "application/json", "Accept" => "application/json", "X-CSRF-Token" => token }
+    assert_response :no_content
+    assert_equal "started", @membership.reload.tour_status
+    patch admin_tour_path, params: { event: "step", stop: "quotes" }.to_json, headers: { "Content-Type" => "application/json", "Accept" => "application/json" }
+    assert_response :unprocessable_content
+    assert_equal "home", @membership.reload.tour_stop
+  ensure
+    ActionController::Base.allow_forgery_protection = false
   end
 
   test "technicians take the short tour on My day, from the welcome or Help" do
@@ -81,6 +110,8 @@ class Admin::GuidedTourTest < ActionDispatch::IntegrationTest
     post ops_business_impersonation_path(business), params: { member: owner.uid, reason: "Ticket: walking through setup" }
     get admin_root_path
     assert_select "[data-controller=tour][data-tour-record-value=false]"
+    assert_select "#tour-offer button[data-tour-start]"
+    assert_select "#tour-offer form", 0, "no Skip for support"
 
     record "start", "home"
     assert_response :forbidden

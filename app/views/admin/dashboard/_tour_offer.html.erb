@@ -7,7 +7,9 @@
   </div>
   <div class="flex shrink-0 gap-2">
     <button type="button" class="<%= button_classes %>" data-tour-start><%= t("guidance.tour.offer.start") %></button>
-    <%= button_to t("guidance.tour.offer.skip"), admin_tour_path, method: :patch, params: { event: "end", stop: GuidedTour::OFFER },
-                  class: button_classes(:secondary), form: { class: "contents" } %>
+    <% unless impersonation %><%# support can't answer the offer for them %>
+      <%= button_to t("guidance.tour.offer.skip"), admin_tour_path, method: :patch, params: { event: "end", stop: GuidedTour::OFFER },
+                    class: button_classes(:secondary), form: { class: "contents" } %>
+    <% end %>
   </div>
 </section>

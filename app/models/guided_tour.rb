@@ -11,6 +11,7 @@
 class GuidedTour
   Stop = Data.define(:key, :targets, :title, :text, :link)
   STATUSES = %w[offered started finished skipped].freeze
+  EVENTS = %w[start step finish end].freeze
   OFFER = "offer" # the stop recorded when someone skips from the offer
 
   def self.for(membership, checklist: nil)
@@ -36,7 +37,7 @@ class GuidedTour
 
   # The last stop leads to the first unfinished checklist step: [label, the step's element id].
   def next_step
-    step = checklist&.visible? && checklist.required.find { !_1.done }
+    step = checklist? && checklist.required.find { !_1.done }
     [ I18n.t("guidance.tour.finish_to_step", step: step.title), "setup-#{step.key}" ] if step
   end
 
@@ -50,9 +51,12 @@ class GuidedTour
 
   def can?(permission) = membership.can?(permission)
 
+  # Home shows the setup checklist only to people who can change the business's settings.
+  def checklist? = can?(:business_settings) && checklist&.visible?
+
   def office_stops
     [
-      (checklist&.visible? ? stop(:home, %w[checklist home], copy: :home_checklist) : stop(:home, %w[home])),
+      (checklist? ? stop(:home, %w[checklist home], copy: :home_checklist) : stop(:home, %w[home])),
       (stop(:requests) if can?(:office)),
       (stop(:quotes, link: (sample_quote_link if can?(:business_settings))) if can?(:office)),
       (stop(:schedule) if can?(:schedule)),

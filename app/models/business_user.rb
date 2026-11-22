@@ -146,12 +146,15 @@ class BusinessUser < ApplicationRecord
   def custom_roles_allowed? = business.entitlements.feature?(:custom_roles)
 
   # ACC-08: where this member is with the guided tour (product measurement, no personal data).
-  # start begins a run (again, from Help); step moves it on; finish and end close it. Moves
-  # outside a run, and stops the tour doesn't have, change nothing.
+  # start begins the first run; step moves it on; finish and end close it. Once the first run
+  # has ended its outcome stays: taking the tour again from Help only stamps tour_replayed_at,
+  # so the measurement is of the first run. Moves outside a run change nothing.
   def record_tour!(event, stop)
     now = Time.current
+    return (update!(tour_replayed_at: now) if event.to_s == "start") if tour_ended_at
+
     case event.to_s
-    when "start" then update!(tour_status: "started", tour_stop: stop, tour_ended_at: nil)
+    when "start" then update!(tour_status: "started", tour_stop: stop)
     when "step" then update!(tour_stop: stop) if tour_status == "started"
     when "finish" then update!(tour_status: "finished", tour_stop: stop, tour_ended_at: now) if tour_status == "started"
     when "end" then update!(tour_status: "skipped", tour_stop: stop, tour_ended_at: now) if tour_status.in?(%w[offered started])

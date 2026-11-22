@@ -46,6 +46,9 @@ class GuidedTourTest < ActiveSupport::TestCase
     office_only = as_business(@business) { Role.create!(name: "Office help", permissions: %w[office]) }
     office_tour = tour(member(:custom, role_id: office_only.id))
     assert_equal %w[home requests quotes invoices], office_tour.keys
+    assert_equal %w[home], office_tour.stops.first.targets, "Home shows them no checklist"
+    assert_no_match(/checklist/, office_tour.stops.first.text)
+    assert_nil office_tour.next_step
     assert_nil office_tour.stops.find { _1.key == "quotes" }.link, "the sample quote needs settings access"
 
     scheduler = as_business(@business) { Role.create!(name: "Scheduler", permissions: %w[schedule]) }
@@ -53,7 +56,7 @@ class GuidedTourTest < ActiveSupport::TestCase
     assert_nil tour(member(:admin, active: false))
   end
 
-  test "recording a run: start, step, finish or end; moves outside a run change nothing" do
+  test "recording the first run: start, step, finish or end; moves outside a run change nothing" do
     membership = member(:admin)
     membership.record_tour!("step", "quotes")
     membership.record_tour!("finish", "settings")
@@ -66,9 +69,19 @@ class GuidedTourTest < ActiveSupport::TestCase
     assert_equal %w[skipped quotes], [ membership.tour_status, membership.tour_stop ]
     assert membership.tour_ended_at
 
-    membership.record_tour!("start", "home") # again, from Help
+    ended_at = membership.tour_ended_at
+    membership.record_tour!("start", "home") # again, from Help: the first run's outcome stays
+    membership.record_tour!("step", "schedule")
     membership.record_tour!("finish", "settings")
-    assert_equal %w[finished settings], [ membership.reload.tour_status, membership.tour_stop ]
+    assert_equal [ "skipped", "quotes", ended_at ], [ membership.reload.tour_status, membership.tour_stop, membership.tour_ended_at ]
+    assert membership.tour_replayed_at
+
+    finished = member(:admin)
+    finished.record_tour!("start", "home")
+    finished.record_tour!("finish", "settings")
+    finished.record_tour!("start", "home") # a half-finished replay doesn't turn it back to started
+    finished.record_tour!("step", "quotes")
+    assert_equal %w[finished settings], [ finished.reload.tour_status, finished.tour_stop ]
   end
 
   private

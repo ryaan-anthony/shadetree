@@ -72,9 +72,12 @@ from Help.
 - Only the person who creates a business is offered it (businesses that existed before aren't);
   technicians start theirs from their My day welcome ("Show me around"), everyone from Help.
 - Per membership: `tour_status` (offered, started, finished, skipped), `tour_stop` (reached, or
-  where it ended; "offer" when skipped there), offered and ended times. A replay from Help
-  overwrites the last outcome. `bin/rails onboarding:tour` reports outcomes, where people
-  stopped and the median time to first quote for each; counts only.
+  where it ended; "offer" when skipped there), offered and ended times. `bin/rails
+  onboarding:tour` reports outcomes, where people stopped and the median time to first quote
+  for each; counts only.
+- Proposed, pending the owner: the first run's outcome is kept once it ends, and taking the
+  tour again from Help only stamps `tour_replayed_at`. This keeps the measurement honest: a
+  replay can't overwrite a skip, or turn a finished tour back into started.
 - Support viewing as a member sees the tour but never records it (the endpoint is read-only
   under impersonation, and the page doesn't report moves).
 - Dev seeds: `new@example.com` owns a brand-new business with the offer and checklist showing.

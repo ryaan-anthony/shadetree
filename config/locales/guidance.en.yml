@@ -11,7 +11,6 @@ en:
         skip: "Skip"
         start_field: "Show me around"
         skipped: "No problem. The tour is in the Help menu whenever you want it."
-      label: "Tour"
       count: "Stop %{at} of %{of}"
       back: "Back"
       next: "Next"
