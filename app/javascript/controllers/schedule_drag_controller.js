@@ -138,7 +138,8 @@ export default class extends Controller {
 
     let response
     try {
-      response = await fetch(this.urlValue.replace("ID", element.dataset.visit), {
+      // JOB-07: a request follow-up carries its own address.
+      response = await fetch(element.dataset.moveUrl || this.urlValue.replace("ID", element.dataset.visit), {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Accept: "application/json", "X-CSRF-Token": document.querySelector("meta[name=csrf-token]")?.content },
         body: JSON.stringify(body)

@@ -611,6 +611,9 @@
   .cal-status-scheduled { background: #e0f2fe; border-color: #0284c7; color: #0c4a6e; }
   .cal-status-in-progress { background: #fef3c7; border-color: #d97706; color: #78350f; }
   .cal-status-completed { background: #dcfce7; border-color: #16a34a; color: #14532d; }
+  /* JOB-07: a request follow-up: a dashed edge, so it isn't taken for a job visit; a call, lighter still. */
+  .cal-request { border-style: dashed; border-width: 1px 1px 1px 3px; }
+  .cal-request.cal-call { background-color: #fff; }
   .cal-dot { display: inline-block; width: 0.625rem; height: 0.625rem; border-radius: 999px; border: 2px solid; }
 }
 

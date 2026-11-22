@@ -23,7 +23,7 @@ class Admin::ScheduleController < Admin::BaseController
     member = params[:member].presence
     member = nil unless member == "unassigned" || current_business.business_users.active.exists?(user_id: member.to_i)
     @schedule = ScheduleView.new(current_business, view: params[:view], date:, member: member && (member == "unassigned" ? member : member.to_i),
-                                                   color_by: params[:color], location: location_filter)
+                                                   color_by: params[:color], location: location_filter, follow_ups: can?(:office)) # JOB-07: requests are office work
   end
 
   # A visit dragged to another day, time or person (JOB-03), or changed in the quick-edit sheet.

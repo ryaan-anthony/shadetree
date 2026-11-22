@@ -43,10 +43,11 @@ class Admin::RequestFollowUpsController < Admin::BaseController
       follow_up.end!(by: current_user)
       :done
     end
+    back = params[:from] == "schedule" ? admin_schedule_path : admin_service_request_path(@request) # JOB-07: unassigned from the calendar
     case outcome
-    when :none then redirect_to admin_service_request_path(@request), notice: "Nobody had it."
-    when :stale then redirect_to admin_service_request_path(@request), alert: "Someone else changed this follow-up meanwhile. Here's the latest."
-    else redirect_to admin_service_request_path(@request), notice: "Unassigned. Nobody's following this request up."
+    when :none then redirect_to back, notice: "Nobody had it."
+    when :stale then redirect_to back, alert: "Someone else changed this follow-up meanwhile. Here's the latest."
+    else redirect_to back, notice: "Unassigned. Nobody's following this request up."
     end
   end
 

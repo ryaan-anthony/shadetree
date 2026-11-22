@@ -27,6 +27,15 @@ module ScheduleHelper
       timing: visit.timing, member: column.member_key, label: "#{visit.job.client.display_name}, #{visit.time_label}" }
   end
 
+  # JOB-07: the same for a request follow-up (open ones), moved through its own address.
+  def schedule_follow_up_drag_data(follow_up, column)
+    return {} unless follow_up.open?
+
+    start = @schedule ? follow_up.start_time_in(@schedule.place.time_zone).to_s : follow_up.start_time.to_s
+    { schedule_drag_target: "visit", visit: follow_up.service_request.uid, lock: follow_up.lock_version, start:, timing: follow_up.timing, member: column.member_key,
+      move_url: admin_schedule_follow_up_move_path(follow_up.service_request), label: "#{follow_up.service_request.client.display_name}, #{follow_up.time_label}" }
+  end
+
   # CAT-07: a visit's time, with its zone named when it isn't the calendar's ("9 am CST").
   def schedule_time_label(visit, schedule)
     label = visit.time_label.delete_prefix("Arrive ")

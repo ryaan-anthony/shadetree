@@ -1,0 +1,31 @@
+<%# locals: (follow_up:, column:, schedule:, as:, style: nil) -%>
+<%# JOB-07: a request follow-up on the calendar, beside the visits: dashed (a call lighter
+    still) and labelled, so it isn't taken for a job visit. `as`: :block on the time grid, :chip
+    in the anytime row, :row in the phone agenda. %>
+<% request_record = follow_up.service_request %>
+<% client = request_record.client.display_name %>
+<% kind = follow_up.visit? ? "Site visit" : "Call" %>
+<% what = request_record.service_names.join(", ").presence || "Request" %>
+<% path = admin_schedule_follow_up_path(request_record, { view: schedule.view, member: schedule.member }.compact_blank) %>
+<% id = schedule.by_person? ? "cal-request-#{request_record.uid}-#{column.member_key}" : "cal-request-#{request_record.uid}" %>
+<% classes = "cal-request #{"cal-call" unless follow_up.visit?} cal-#{schedule.visit_color(follow_up)}" %>
+<% case as %>
+<% when :block %>
+  <%= link_to path, class: "cal-visit #{classes} #{style}", id:, data: { turbo_frame: "schedule_visit", schedule_focus: request_record.uid, **schedule_follow_up_drag_data(follow_up, column) } do %>
+    <span class="block font-semibold"><%= schedule_time_label(follow_up, schedule) %> <%= client %><span class="sr-only">, <%= column.date.strftime("%A, %B %-d") %></span></span>
+    <span class="flex items-center gap-1 truncate"><%= icon(follow_up.visit? ? "map-pin" : "phone", class: "size-3 shrink-0") %><%= kind %> for a request<%= " · done" if follow_up.done? %></span>
+    <span class="block truncate opacity-80"><%= crew_first_names(follow_up) %> · <%= what %></span>
+  <% end %>
+<% when :chip %>
+  <%= link_to path, class: "cal-chip #{classes}", id:, data: { turbo_frame: "schedule_visit", schedule_focus: request_record.uid, **schedule_follow_up_drag_data(follow_up, column) } do %>
+    <span class="block truncate font-semibold"><%= client %> <span class="sr-only">, anytime <%= column.date.strftime("%A, %B %-d") %></span></span>
+    <span class="block truncate"><%= kind %> for a request · <%= crew_first_names(follow_up) %><%= " · done" if follow_up.done? %></span>
+  <% end %>
+<% else %>
+  <li class="p-0"><%= link_to path, class: "flex min-w-0 flex-1 items-start gap-3 px-4 py-3", data: { schedule_focus: request_record.uid } do %>
+    <span class="w-16 shrink-0 text-sm font-semibold text-ink"><%= follow_up.time_label.delete_prefix("Arrive ") %></span>
+    <span class="min-w-0 flex-1"><span class="block truncate font-medium text-ink"><%= client %></span>
+      <span class="flex items-center gap-1 truncate text-sm2 text-muted"><%= icon(follow_up.visit? ? "map-pin" : "phone", class: "size-3 shrink-0") %><%= kind %> for a request · <%= crew_first_names(follow_up) %><%= " · done" if follow_up.done? %></span></span>
+    <span class="cal-dot cal-<%= schedule.visit_color(follow_up) %> mt-1.5" aria-hidden="true"></span>
+  <% end %></li>
+<% end %>

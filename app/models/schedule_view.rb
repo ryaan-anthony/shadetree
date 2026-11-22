@@ -2,6 +2,9 @@
 # the ones nobody's on yet), where each sits on the time grid, the time the business is closed,
 # a color per member, and the jobs still needing a visit. One query for the visits however
 # many there are; a calendar week of 200 visits renders without any per-visit queries.
+#
+# JOB-07: request follow-ups (RequestFollowUp) sit on the grid with the visits, for people who
+# can see requests (follow_ups: true): "items" are both, placed and colored the same way.
 class ScheduleView
   HOUR_PX = 56
   MIN_PX = 22 # the shortest a visit is drawn, so its first line can be read
@@ -18,8 +21,9 @@ class ScheduleView
 
   attr_reader :business, :view, :date, :member, :color_by
 
-  def initialize(business, view: "week", date: nil, member: nil, color_by: "member", location: nil)
+  def initialize(business, view: "week", date: nil, member: nil, color_by: "member", location: nil, follow_ups: false)
     @location = location # CAT-07: shades that location's hours (else the main location's)
+    @show_follow_ups = follow_ups
     @business = business
     @view = view == "day" ? "day" : "week"
     @date = date || place.today # the filtered location's today (CAT-07)
@@ -64,6 +68,23 @@ class ScheduleView
     end
   end
 
+  # JOB-07: the follow-ups in the period (one person's, or none for "Nobody yet": a follow-up
+  # always has someone), at the filtered location when there is one.
+  def follow_ups
+    @follow_ups ||= if @show_follow_ups && @member != "unassigned"
+      scope = RequestFollowUp.where(scheduled_on: dates.first..dates.last).includes(:user, service_request: %i[client property location])
+      scope = scope.where(user_id: @member) if @member
+      scope = scope.where(service_request_id: ServiceRequest.where(location_id: @location.id).select(:id)) if @location
+      scope.to_a.each { _1.association(:business).target = business }
+    else
+      []
+    end
+  end
+
+  # Visits and follow-ups together, in time order.
+  def items = @items ||= (visits + follow_ups).sort_by { [ _1.scheduled_on, _1.starts_at ? 0 : 1, _1.starts_at || Time.at(0), _1.is_a?(Visit) ? 0 : 1, _1.id ] }
+
+  # What's on a day: visits and follow-ups.
   def visits_on(date) = by_date.fetch(date, [])
 
   # The grid's columns. A day for everyone is split by person, so a visit can be dragged from
@@ -123,7 +144,7 @@ class ScheduleView
       weekly = dates.filter_map { opening.day(_1).hours }
       opens = weekly.map { clock_hour(_1[0]) }
       closes = weekly.map { |(open, close)| WeeklyHours.end_of_day?(close) || close <= open ? 24 : clock_hour(close, round_up: true) }
-      timed = visits.reject(&:anytime?)
+      timed = items.reject(&:anytime?)
       from = [ *(opens.any? ? opens : [ DEFAULT_HOURS.first ]), *timed.map { hour_on(_1.scheduled_on, _1.starts_at) } ].min
       to = [ *(closes.any? ? closes : [ DEFAULT_HOURS.last ]), *timed.map { hour_on(_1.scheduled_on, _1.ends_at, round_up: true) } ].max
       from = from.clamp(0, 23)
@@ -169,6 +190,7 @@ class ScheduleView
     index ? COLORS[index % COLORS.size] : "none" # someone no longer on the team
   end
 
+  # JOB-07: a follow-up is colored like a visit (its person's, or scheduled / done by status).
   def visit_color(visit)
     return "status-#{visit.status.dasherize}" if @color_by == "status"
 
@@ -176,9 +198,14 @@ class ScheduleView
     first ? color_for(first) : "none"
   end
 
+  # Hours booked per person this period: visits, and follow-ups when they're shown (JOB-07).
   def booked_hours
     @booked_hours ||= all_visits_in_period.each_with_object(Hash.new(0)) do |visit, hours|
       visit.assignments.each { hours[_1.user_id] += visit.duration_minutes / 60.0 }
+    end.tap do |hours|
+      next unless @show_follow_ups
+
+      RequestFollowUp.where(scheduled_on: dates.first..dates.last).pluck(:user_id, :duration_minutes).each { |user_id, minutes| hours[user_id] += minutes / 60.0 }
     end
   end
 
@@ -194,7 +221,7 @@ class ScheduleView
 
   private
 
-  def by_date = @by_date ||= visits.group_by(&:scheduled_on)
+  def by_date = @by_date ||= items.group_by(&:scheduled_on)
 
   # Every visit in the period, unfiltered, for the member list's counts (ids and minutes only).
   def all_visits_in_period

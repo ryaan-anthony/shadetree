@@ -44,8 +44,12 @@ class RequestFollowUp < ApplicationRecord
   # "site visit for Maria Lopez", "call with Maria Lopez"
   def summary = visit? ? "site visit for #{client.display_name}" : "call with #{client.display_name}"
 
-  # JOB-02's warnings ask everything booked who's on it.
+  # JOB-02's warnings ask everything booked who's on it; the calendar (JOB-07) places and colors
+  # it as it does a visit: by its person, and scheduled or done.
   def assignee_ids = [ user_id ].compact
+  def assignees = [ user ].compact
+  def status = done? ? "completed" : "scheduled"
+  def open? = !done?
 
   # The day it's on has passed and it's still to do.
   def overdue? = !done? && scheduled_on < place.today
