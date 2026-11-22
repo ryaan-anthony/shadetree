@@ -197,6 +197,25 @@ class Admin::HomeTest < ActionDispatch::IntegrationTest
     assert_select "#earlier-open", 0
   end
 
+  test "JOB-06: follow-ups on Home follow its location filter, as visits do (owner, 2026-11-22)" do
+    @business.update!(plan_overrides: { "features" => { "locations" => true } })
+    north = as_business(@business) { Location.create!(name: "North yard") }
+    main = @business.primary_location
+    follow_up("Sam Ortiz", location: north)
+    follow_up("Ana Diaz", location: main, kind: "call")
+    as_business(@business) { @job.update!(location: north) }
+    book(@owner)
+    get admin_root_path(location: "all")
+    assert_select "#todays-visits", /1 visit and 2 request follow-ups/
+    get admin_root_path(location: main.uid)
+    assert_select "#todays-visits", /1 request follow-up · times in/
+    assert_select "#todays-visits li", /Ana Diaz/
+    assert_select "#todays-visits li", { text: /Sam Ortiz/, count: 0 }
+    get admin_root_path(location: north.uid)
+    assert_select "#todays-visits", /1 visit and 1 request follow-up/
+    assert_select "#todays-visits li", { text: /Ana Diaz/, count: 0 }
+  end
+
   test "your own day on Home doesn't query per visit or follow-up" do
     count = lambda do
       queries = 0

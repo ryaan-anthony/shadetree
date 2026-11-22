@@ -92,6 +92,7 @@ creates the quote or hands it back or on.
 - Home's "Your visits today" (and "N still open from earlier") counts request follow-ups as well
   as visits, listed as My day lists them, so an office manager whose only work today is
   follow-ups doesn't see "Nothing booked" (owner, 2026-11-22).
+- Follow-ups on Home follow Home's location filter, as visits do (owner, 2026-11-22).
 
 ## Open questions
 

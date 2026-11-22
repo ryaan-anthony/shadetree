@@ -17,6 +17,7 @@ module LocationFilter
     "Job" => ->(location) { Job.where(location_id: location.id) },
     "Invoice" => ->(location) { Invoice.where(location_id: location.id) },
     "Visit" => ->(location) { Visit.where(job_id: Job.where(location_id: location.id).select(:id)) },
+    "RequestFollowUp" => ->(location) { RequestFollowUp.where(service_request_id: ServiceRequest.where(location_id: location.id).select(:id)) }, # JOB-06
     "Payment" => ->(location) { Payment.where(invoice_id: Invoice.where(location_id: location.id).select(:id)) },
     "QuoteResponse" => ->(location) { QuoteResponse.where(quote_id: Quote.where(location_id: location.id).select(:id)) }
   }.freeze
