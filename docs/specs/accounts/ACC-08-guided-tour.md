@@ -28,6 +28,7 @@ from Help.
 ## Acceptance criteria
 
 - [x] After creating a business, the owner is offered the tour ("Take a 2-minute tour" or "Skip").
+      *So is an existing business's Owner, once, on Home, while its checklist is unfinished.*
       It has about six stops, each pointing at the real thing on screen: Home and its setup
       checklist, Requests, Quotes, Schedule, Invoices and Settings. Each stop says in a sentence
       or two what it's for and what to do first.
@@ -63,21 +64,26 @@ from Help.
   skips it (owner, 2026-11-21).
 - Invited Admins get the tips; the tour is available to them from Help (owner, 2026-11-21).
 - The Quotes stop uses the sample quote (Q-SAMPLE) to show what clients see (owner, 2026-11-21).
+- Owners of existing businesses whose setup checklist isn't finished are offered it once on Home
+  too, recorded as for the first run; not again once skipped or finished (owner, 2026-11-22).
+- Built as is (owner, 2026-11-22): a replay keeps the first run's result and is recorded
+  separately; technicians start it from "Show me around"; leaving the page ends it, except
+  through the sample-quote link; "Tips off" applies across every business the person belongs to.
 
 ## Implementation notes
 
 - Built in-house (Stimulus, no tour library). Stops point at `data-tour="…"` attributes, never
   at position or copy; Home's checklist and the menu links carry them. Wording:
   `config/locales/guidance.en.yml`; which stops a role gets: `GuidedTour`.
-- Only the person who creates a business is offered it (businesses that existed before aren't);
-  technicians start theirs from their My day welcome ("Show me around"), everyone from Help.
+- Offered to whoever creates a business, and to an existing one's Owner on Home while it isn't
+  onboarded, unless they've had the tour in any business (one offer per person; never on
+  support's visit). Technicians start from their My day welcome, everyone from Help.
 - Per membership: `tour_status` (offered, started, finished, skipped), `tour_stop` (reached, or
   where it ended; "offer" when skipped there), offered and ended times. `bin/rails
   onboarding:tour` reports outcomes, where people stopped and the median time to first quote
   for each; counts only.
-- Proposed, pending the owner: the first run's outcome is kept once it ends, and taking the
-  tour again from Help only stamps `tour_replayed_at`. This keeps the measurement honest: a
-  replay can't overwrite a skip, or turn a finished tour back into started.
+- The first run's outcome is kept once it ends; taking the tour again from Help only stamps
+  `tour_replayed_at`, so a replay can't overwrite a skip or reopen a finished tour.
 - Support viewing as a member sees the tour but never records it (the endpoint is read-only
   under impersonation, and the page doesn't report moves).
 - One non-modal dialog (`role=dialog`, `aria-modal=false`) moves between stops, saying what it

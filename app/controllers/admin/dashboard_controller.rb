@@ -16,6 +16,7 @@ class Admin::DashboardController < Admin::BaseController
 
     @business = current_business
     @checklist = SetupChecklist.new(@business, membership: Current.membership) # ACC-05
+    Current.membership.offer_tour_if_due! unless impersonation # ACC-08: never on support's visit
     @dashboard = ActionDashboard.new(@business) # INS-01
     # #289: someone with visits of their own today, or still open from earlier, sees their own day
     # on Home (and reaches My day from it); otherwise the team's day, by person.

@@ -123,6 +123,23 @@ class GuidedTourBrowserTest < ApplicationSystemTestCase
     assert_current_path new_admin_client_path(from: "setup")
   end
 
+  # Owner decision of 2026-11-22: an existing business's Owner, its checklist unfinished.
+  test "an existing business's Owner is offered it on their next visit to Home, and the run counts as a creator's" do
+    @membership.update!(tour_status: nil, tour_offered_at: nil)
+    sign_in_as users(:one)
+    visit admin_root_path
+    assert_selector "#tour-offer", text: "Take a 2-minute tour"
+    assert_equal "offered", @membership.reload.tour_status
+    click_on "Take a 2-minute tour"
+    assert_stop "Stop 1 of 6", "Start here"
+    wait_for_status "started", stop: "home"
+    click_on "End tour"
+    wait_for_status "skipped", stop: "home"
+    visit admin_root_path
+    assert_selector "#main h1"
+    assert_no_selector "#tour-offer"
+  end
+
   test "it resumes after a look at the sample quote; following another link ends it there" do
     sign_in_as users(:one)
     visit admin_root_path

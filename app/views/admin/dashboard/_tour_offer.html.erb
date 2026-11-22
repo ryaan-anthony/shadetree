@@ -1,7 +1,8 @@
-<%# ACC-08: offered once, after the business is created: one click starts the tour, one skips it. %>
+<%# ACC-08: offered once on Home, after the business is created or (an existing business's Owner,
+    its checklist unfinished) on their first visit: one click starts the tour, one skips it. %>
 <section class="card card-body mb-4 flex flex-wrap items-center gap-x-4 gap-y-3" aria-labelledby="tour-offer-h" id="tour-offer" data-tour-offer>
   <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-canopy-50 text-canopy"><%= icon "map", class: "size-5" %></span>
-  <div class="min-w-0 flex-1">
+  <div class="min-w-48 flex-1">
     <h2 id="tour-offer-h" class="font-semibold text-ink"><%= t("guidance.tour.offer.title") %></h2>
     <p class="text-sm2 text-muted"><%= t("guidance.tour.offer.text") %></p>
   </div>
