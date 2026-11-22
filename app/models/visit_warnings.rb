@@ -59,7 +59,7 @@ class VisitWarnings
       return @others = [] if ids.empty?
 
       found = Visit.open.where(scheduled_on: days).joins(:assignments).where(visit_assignments: { user_id: ids }).distinct.includes(job: :location, assignments: []).to_a +
-              RequestFollowUp.where(scheduled_on: days, user_id: ids).includes(service_request: %i[client location]).to_a
+              RequestFollowUp.where(scheduled_on: days, user_id: ids, done_at: nil).includes(service_request: %i[client location]).to_a
       found.each { _1.association(:business).target = @business } # one business (and its location count) for all of them, not one each
     end
   end

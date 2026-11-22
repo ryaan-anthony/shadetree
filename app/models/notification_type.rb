@@ -61,6 +61,9 @@ class NotificationType
                    permission: Permissions::CATALOG.keys, email_by_default: true, icon: "inbox", audience: :named),
     Definition.new(kind: "request_changed", label: "A request you have changes", hint: "Its follow-up moves or changes, or it's taken off you.",
                    permission: Permissions::CATALOG.keys, email_by_default: true, icon: "clock", audience: :named),
+    # JOB-06: to whoever assigned a request, when the assignee marks the follow-up done.
+    Definition.new(kind: "request_follow_up_done", label: "A follow-up you gave is done", hint: "Someone you gave a request to did the site visit or call.",
+                   permission: :office, email_by_default: true, icon: "check-circle", audience: :named),
     Definition.new(kind: "job_ready_to_invoice", label: "A job is ready to invoice", hint: "The last visit on a job is completed.",
                    permission: :office, email_by_default: true, icon: "check-circle"),
     Definition.new(kind: "visit_cancelled", label: "A visit you're on is cancelled", hint: "With the reason, if one was given.",

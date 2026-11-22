@@ -13,9 +13,12 @@ module ServiceRequestsHelper
       changed = data["changed"].map { { "kind" => "made it a #{RequestFollowUp::KIND_LABELS.fetch(data.dig("to", "kind"), "follow-up").downcase}", "duration_minutes" => "changed the duration",
                                         "instructions" => "changed the instructions" }.fetch(_1, _1) }
       changed.to_sentence.upcase_first
+    when "done" then "#{RequestFollowUp::KIND_LABELS.fetch(data.dig("from", "kind"), "Follow-up")} done"
+    when "passed_back" then "Passed back from #{name.(data["from_user_id"])} to #{name.(data["to_user_id"])}"
     when "unassigned" then "Taken off #{name.(data.dig("from", "user_id"))}"
     when "ended"
-      why = { "quoted" => "the request was quoted", "archived" => "the request was archived", "left_team" => "they left the team" }.fetch(data["reason"], data["reason"])
+      why = { "quoted" => "the request was quoted", "archived" => "the request was archived", "left_team" => "they left the team",
+              "role_changed" => "their role changed" }.fetch(data["reason"], data["reason"])
       "Taken off #{name.(data.dig("from", "user_id"))}: #{why}"
     else event.kind.humanize
     end

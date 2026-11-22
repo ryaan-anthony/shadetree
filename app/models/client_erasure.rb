@@ -174,6 +174,7 @@ class ClientErasure
   def erase_requests
     @client.service_requests.find_each do |request|
       drop_files(request.photos_attachments)
+      drop_files(request.site_photos_attachments) # JOB-06
       request.notes.delete_all
       RequestFollowUp.where(service_request_id: request.id).delete_all # CLI-07: off the assignee's day, nobody told
       scrub_events(request.events)

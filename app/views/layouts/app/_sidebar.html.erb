@@ -38,7 +38,7 @@
         <%= side_link "Home", admin_root_path, icon: "home", active: controller_name == "dashboard" %>
       <% end %>
       <% if can?(:field_work) %>
-        <%= side_link "My day", admin_my_day_path, icon: "sun", active: controller_name.in?(%w[my_day my_visits]) %>
+        <%= side_link "My day", admin_my_day_path, icon: "sun", active: controller_name.in?(%w[my_day my_visits my_requests]) %>
       <% end %>
       <% if can?(:office) %>
         <%= side_link "Requests", admin_service_requests_path, icon: "inbox", active: controller_name.in?(%w[service_requests service_request_notes]),

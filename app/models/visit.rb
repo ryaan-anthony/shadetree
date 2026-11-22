@@ -8,6 +8,7 @@
 class Visit < ApplicationRecord
   include BusinessOwned
   include ArrivalTiming # JOB-02's times, shared with request follow-ups (CLI-07)
+  include SitePhotos # JOB-04's photos, shared with request follow-ups (JOB-06)
 
   STATUSES = %w[scheduled in_progress completed cancelled].freeze
   OPEN_STATUSES = %w[scheduled in_progress].freeze
@@ -200,23 +201,9 @@ class Visit < ApplicationRecord
     end
   end
 
-  # Adds one photo from site, cleaned like quote photos. Returns an error sentence, or nil.
-  # The count is checked again under the visit's lock, so two phones uploading at once can't
-  # go past the limit; the slow part (re-encoding) happens before taking it.
-  def add_photo(file, by:)
-    full = "This visit already has the most photos it can (#{MAX_PHOTOS})."
-    return full if photos.count >= MAX_PHOTOS
-
-    result = LogoUpload.clean_photo(file, max_bytes: PHOTO_MAX_BYTES)
-    return "#{file.respond_to?(:original_filename) ? file.original_filename : "That file"} #{result.error.sub("must be a PNG, JPEG or WebP image", "isn't a photo we can use (PNG, JPEG or WebP)")}." if result.error
-
-    with_lock do
-      next full if photos.count >= MAX_PHOTOS
-
-      photos.attach(result.attachable.merge(metadata: { "uploaded_by" => by&.id }))
-      nil
-    end
-  end
+  # Adds one photo from site (SitePhotos). Returns an error sentence, or nil.
+  def add_photo(file, by:) = add_site_photo(photos, file, by:, max: MAX_PHOTOS, max_bytes: PHOTO_MAX_BYTES,
+                                                              full: "This visit already has the most photos it can (#{MAX_PHOTOS}).")
 
   # On site (JOB-04): the person going starts the visit.
   def start!(by:)

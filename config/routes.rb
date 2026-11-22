@@ -236,6 +236,13 @@ Rails.application.routes.draw do
       resources :notes, only: :create, controller: "my_visit_notes"
       resources :photos, only: %i[create destroy], controller: "my_visit_photos"
     end
+    # JOB-06: requests the signed-in member is following up, while they're theirs.
+    resources :my_requests, only: :show, path: "my-day/requests", controller: "my_requests" do
+      member do
+        patch :done
+        patch :pass_back, path: "pass-back"
+      end
+    end
 
     # Jobs (JOB-01)
     resources :jobs, only: %i[index show new create edit update] do

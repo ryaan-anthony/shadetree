@@ -100,6 +100,7 @@ class DataExport < ApplicationRecord
       column("Follow-up") { _1.follow_up&.kind_label } # CLI-07
       column("Assigned to") { _1.follow_up&.user&.full_name }
       column("Follow-up day") { _1.follow_up&.scheduled_on }
+      column("Follow-up done") { _1.follow_up&.done_at } # JOB-06
     end,
     Table.new("quotes", "Quotes", "One row per quote, with its totals and taxes.", scope: -> { Quote.includes(:client, :property, :created_by, :line_items, :location) }) do
       column("Quote number", &:number)

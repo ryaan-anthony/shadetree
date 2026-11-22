@@ -26,12 +26,12 @@ that person's schedule, until a quote is created or the request is archived.
 
 ## Acceptance criteria
 
-- [ ] Anyone who can manage requests can assign one to a team member (any role, active, in this
+- [x] Anyone who can manage requests can assign one to a team member (any role, active, in this
       business) with a day and, optionally, a start time or arrival window and a duration. The
       day defaults to today, and no time means "anytime that day". Assigning is offered when a
       request is created by staff and from the request page.
-      *Done except "any role": members who can see requests, for now (see Decisions); JOB-06
-      opens it to every role. A blank duration is an hour for a site visit, 15 min for a call.*
+      *Any role that works from My day or the request page (JOB-06 lifted the interim limit).
+      A blank duration is an hour for a site visit, 15 minutes for a call.*
 - [x] Each follow-up is a visit or a call, chosen when assigning (visit by default), with
       optional instructions for the assignee.
 - [x] A request can be reassigned and rescheduled any number of times, or unassigned. Each
@@ -75,7 +75,7 @@ that person's schedule, until a quote is created or the request is archived.
 
 ## Decisions
 
-- Until JOB-06, only members who can see requests can be assigned: My day doesn't show
-  follow-ups yet, so a technician's notice would lead nowhere. JOB-06 lifts this (review, 2026-11-22).
+- Until JOB-06, only members who can see requests could be assigned: My day didn't show
+  follow-ups yet, so a technician's notice would lead nowhere. JOB-06 lifted it (review, 2026-11-22).
 - Two kinds, site visit and call, so calls don't take travel time on the calendar (owner, 2026-11-21).
 - No client confirmation for a booked site visit yet; backlog (owner, 2026-11-21).

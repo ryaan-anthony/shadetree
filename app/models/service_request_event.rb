@@ -3,11 +3,12 @@
 # ({ "changed", "from", "to" }: kind, duration, instructions), unassigned ({ "from" }) and ended
 # ({ "from", "reason" }: quoted or archived). "from" and "to" are RequestFollowUp#state: the
 # person by id (names are looked up when shown, so a deleted account shows as a former member).
+# JOB-06: done ({ "from" }) and passed_back ({ "from_user_id", "to_user_id" }).
 class ServiceRequestEvent < ApplicationRecord
   include BusinessOwned
   include SupportAttribution # OPS-03
 
-  KINDS = %w[assigned reassigned rescheduled updated unassigned ended].freeze
+  KINDS = %w[assigned reassigned rescheduled updated unassigned ended done passed_back].freeze # done, passed_back: JOB-06
 
   belongs_to_business_record :service_request
   belongs_to :user, optional: true
