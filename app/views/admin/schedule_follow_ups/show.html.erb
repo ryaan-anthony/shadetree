@@ -1,4 +1,5 @@
 <%# JOB-07: a follow-up opened from the calendar on its own page (phones, or without scripts). %>
 <% content_for :title, "Follow-up" %>
+<h1 class="sr-only">Request follow-up</h1>
 <div class="max-w-xl"><%= link_to admin_schedule_path({ date: @follow_up.scheduled_on.iso8601, view: params[:view], member: params[:member] }.compact_blank), class: "#{button_classes(:ghost)} mb-3" do %><%= icon "arrow-left" %> Schedule<% end %>
 <%= render "admin/schedule/follow_up_panel", follow_up: @follow_up %></div>

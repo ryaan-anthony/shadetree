@@ -10,9 +10,12 @@
 # CLI-07: request follow-ups (RequestFollowUp) are checked the same way, against their request's
 # location, and visits and follow-ups warn about each other.
 class VisitWarnings
-  def self.for(visits, hours: nil) = new(visits, hours:).messages
+  # `name_requests: false` (JOB-07: someone who can't see requests) says a person "has a request
+  # follow-up" rather than naming the client.
+  def self.for(visits, hours: nil, name_requests: true) = new(visits, hours:, name_requests:).messages
 
-  def initialize(visits, hours: nil)
+  def initialize(visits, hours: nil, name_requests: true)
+    @name_requests = name_requests
     @visits = Array(visits)
     @business = @visits.first&.business
     @hours = hours
@@ -49,7 +52,11 @@ class VisitWarnings
           .map { |other, user_id| "#{people[user_id]} #{busy_with(other)} then (#{other.time_label.delete_prefix("Arrive ")})." }
   end
 
-  def busy_with(other) = other.is_a?(Visit) ? "is on #{other.job.number} #{other.job.title}" : "has a #{other.summary}"
+  def busy_with(other)
+    return "is on #{other.job.number} #{other.job.title}" if other.is_a?(Visit)
+
+    @name_requests ? "has a #{other.summary}" : "has a request follow-up"
+  end
 
   # Open visits and request follow-ups on the same days for anyone going, in one query each.
   def others

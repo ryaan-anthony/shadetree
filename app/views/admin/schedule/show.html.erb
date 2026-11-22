@@ -87,7 +87,8 @@
       <% past = [] if coming.empty? %>
       <% if past.any? { s.visits_on(_1).any? } %>
         <details class="card px-4 py-2.5 text-sm2" id="schedule-earlier">
-          <summary class="cursor-pointer font-medium text-ink">Earlier this week (<%= pluralize(past.sum { s.visits_on(_1).size }, "visit") %>)</summary>
+          <% earlier = past.flat_map { s.visits_on(_1) }.partition { _1.is_a?(Visit) } %><%# JOB-07: visits, and follow-ups apart %>
+          <summary class="cursor-pointer font-medium text-ink">Earlier this week (<%= [ pluralize(earlier[0].size, "visit"), (pluralize(earlier[1].size, "follow-up") if earlier[1].any?) ].compact.join(", ") %>)</summary>
           <ul class="mt-2 space-y-1.5">
             <% past.each do |date| %><% s.visits_on(date).each do |visit| %>
               <% if visit.is_a?(RequestFollowUp) %><%# JOB-07 %>

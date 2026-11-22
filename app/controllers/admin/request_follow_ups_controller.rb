@@ -43,7 +43,8 @@ class Admin::RequestFollowUpsController < Admin::BaseController
       follow_up.end!(by: current_user)
       :done
     end
-    back = params[:from] == "schedule" ? admin_schedule_path : admin_service_request_path(@request) # JOB-07: unassigned from the calendar
+    # JOB-07: unassigned from the calendar, back to it as it was
+    back = params[:from] == "schedule" ? admin_schedule_path(params.permit(:date, :view, :member).to_h.compact_blank) : admin_service_request_path(@request)
     case outcome
     when :none then redirect_to back, notice: "Nobody had it."
     when :stale then redirect_to back, alert: "Someone else changed this follow-up meanwhile. Here's the latest."

@@ -68,7 +68,7 @@ class ScheduleView
     end
   end
 
-  # JOB-07: the follow-ups in the period (one person's, or none for "Nobody yet": a follow-up
+  # JOB-07: the follow-ups in the period (one person's, or none for "Not assigned": a follow-up
   # always has someone), at the filtered location when there is one.
   def follow_ups
     @follow_ups ||= if @show_follow_ups && @member != "unassigned"
@@ -205,7 +205,9 @@ class ScheduleView
     end.tap do |hours|
       next unless @show_follow_ups
 
-      RequestFollowUp.where(scheduled_on: dates.first..dates.last).pluck(:user_id, :duration_minutes).each { |user_id, minutes| hours[user_id] += minutes / 60.0 }
+      scope = RequestFollowUp.where(scheduled_on: dates.first..dates.last)
+      scope = scope.where(service_request_id: ServiceRequest.where(location_id: @location.id).select(:id)) if @location # as follow_ups is
+      scope.pluck(:user_id, :duration_minutes).each { |user_id, minutes| hours[user_id] += minutes / 60.0 }
     end
   end
 

@@ -4,6 +4,7 @@
 class Admin::ScheduleController < Admin::BaseController
   # OPS-03: what support may do while viewing as a member
   impersonation :allowed
+  include GridClock # CAT-07
   requires_permission :schedule
   filters_by_location Visit, Job, only: %i[show new_visit] # CAT-07
   # The visit panel (and a new visit's job choice) loads into its frame in the background; a load
@@ -38,14 +39,14 @@ class Admin::ScheduleController < Admin::BaseController
     on = Date.iso8601(params[:on].to_s) rescue nil
     return refuse("Choose a day.") unless on
 
-    on, at = from_grid_clock(on, params[:at].presence)
+    on, at = from_grid_clock(on, params[:at].presence, to: @visit.time_zone)
     changes = @visit.move_attributes(on:, at:, from: member_param(:from), to: member_param(:to),
                                      crew: (Array(params[:crew]).select { _1.is_a?(String) || _1.is_a?(Integer) }.map(&:to_s).compact_blank if params.key?(:crew)))
     @visit.assign_attributes(changes)
     return refuse(@visit.errors.full_messages.to_sentence) unless @visit.valid?
     return render_move(:ok, "Nothing changed.") unless @visit.when_or_crew_changed?
 
-    @warnings = VisitWarnings.for([ @visit ])
+    @warnings = VisitWarnings.for([ @visit ], name_requests: can?(:office)) # JOB-07
     # An undo puts back what was there, so it doesn't warn again. (Warnings are advice, not rules:
     # anyone who can move a visit can also choose "Move anyway".)
     if @warnings.any? && params[:undo].blank? && params[:confirm] != Admin::VisitsController.digest(@warnings)
@@ -108,22 +109,6 @@ class Admin::ScheduleController < Admin::BaseController
   helper_method def calendar_params = self.class.calendar_params(params)
 
   def grid_place = location_filter || current_business
-
-  # CAT-07: a drag's day and time are on the calendar's clock (?grid_zone=); a visit keeps its
-  # location's, so a visit in another zone gets the same moment on its own clock.
-  def from_grid_clock(on, at)
-    zone = ActiveSupport::TimeZone[params[:grid_zone].to_s] if params[:grid_zone].present?
-    zone ? shift_clock(on, at, from: zone, to: @visit.time_zone) : [ on, at ]
-  end
-
-  # A day and "HH:MM" on one clock, as the same moment on another.
-  def shift_clock(on, at, from:, to:)
-    return [ on, at ] unless at.to_s.match?(/\A\d\d:\d\d/) && from.tzinfo.identifier != to.tzinfo.identifier
-
-    hour, minute = at.to_s.split(":").map { Integer(_1, 10) }
-    local = from.local(on.year, on.month, on.day, hour, minute).in_time_zone(to)
-    [ local.to_date, local.strftime("%H:%M") ]
-  end
 
   # A member id from the drag ("none" for the "Nobody yet" column), only if they're in this business.
   def member_param(key)

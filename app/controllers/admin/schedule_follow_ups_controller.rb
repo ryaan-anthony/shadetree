@@ -5,6 +5,7 @@
 class Admin::ScheduleFollowUpsController < Admin::BaseController
   # OPS-03: what support may do while viewing as a member
   impersonation :allowed
+  include GridClock # CAT-07
   requires_permission :office
   # The panel loads into its frame in the background; it mustn't take an Undo's flash (as visits').
   leaves_session_alone only: :show, if: -> { turbo_frame_request? }
@@ -21,7 +22,9 @@ class Admin::ScheduleFollowUpsController < Admin::BaseController
     on = Date.iso8601(params[:on].to_s) rescue nil
     return refuse("Choose a day.") unless on
 
-    on, at = from_grid_clock(on, params[:at].presence)
+    return refuse("This follow-up is done. Move it from the request if it needs doing again.") if @follow_up.done?
+
+    on, at = from_grid_clock(on, params[:at].presence, to: @follow_up.time_zone)
     changes = { scheduled_on: on, **@follow_up.moved_time_attributes(at) }
     if (to = person_param)
       changes[:user] = to
@@ -61,7 +64,7 @@ class Admin::ScheduleFollowUpsController < Admin::BaseController
   private
 
   def set_follow_up
-    @request = ServiceRequest.includes(:client, :property, :location, follow_up: %i[user assigned_by]).find_by_param!(params[:id])
+    @request = ServiceRequest.includes(:client, :property, :location, follow_up: :user).find_by_param!(params[:id])
     @follow_up = @request.follow_up or raise ActiveRecord::RecordNotFound
   end
 
@@ -70,19 +73,9 @@ class Admin::ScheduleFollowUpsController < Admin::BaseController
   def person_param
     value = params[:to].to_s
     return if value.blank? || value == params[:from].to_s
-    raise ArgumentError, "A follow-up needs someone. Unassign it from the request instead." if value == "none"
+    raise ArgumentError, "A follow-up needs someone. Use Unassign instead." if value == "none"
 
     current_business.business_users.active.find_by(user_id: value.to_i)&.user || raise(ArgumentError, "That person isn't on your team.")
-  end
-
-  # CAT-07: a drag's day and time are on the calendar's clock; a follow-up keeps its location's.
-  def from_grid_clock(on, at)
-    zone = ActiveSupport::TimeZone[params[:grid_zone].to_s] if params[:grid_zone].present?
-    return [ on, at ] unless zone && at.to_s.match?(/\A\d\d:\d\d/) && zone.tzinfo.identifier != @follow_up.time_zone.tzinfo.identifier
-
-    hour, minute = at.to_s.split(":").map { Integer(_1, 10) }
-    local = zone.local(on.year, on.month, on.day, hour, minute).in_time_zone(@follow_up.time_zone)
-    [ local.to_date, local.strftime("%H:%M") ]
   end
 
   # Focus goes back to the follow-up that was moved (schedule_focus_controller).

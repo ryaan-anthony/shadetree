@@ -152,7 +152,7 @@ class Admin::ScheduleFollowUpsTest < ActionDispatch::IntegrationTest
     patch admin_schedule_follow_up_move_path(@site), params: { lock_version: 0, on: "2026-11-25" }, as: :json
     assert_response :conflict
     move(on: "2026-11-25", to: "none", from: @tech.id)
-    assert_match "needs someone", response.parsed_body["error"]
+    assert_match "Use Unassign instead", response.parsed_body["error"]
     move(on: "2026-11-25", to: users(:two).id, from: @tech.id)
     assert_match "isn't on your team", response.parsed_body["error"]
     assert_equal @monday, follow_up.scheduled_on
@@ -170,10 +170,63 @@ class Admin::ScheduleFollowUpsTest < ActionDispatch::IntegrationTest
 
   test "unassigning from the calendar goes back to it; a done follow-up can't be dragged" do
     delete admin_service_request_follow_up_path(@site), params: { lock_version: follow_up.lock_version, from: "schedule" }
-    assert_redirected_to admin_schedule_path
+    assert_redirected_to admin_schedule_path, "with nothing more to keep"
     assert_nil follow_up
     as_business(@business) { @call.follow_up.done!(by: @owner) }
     week
     assert_select "#cal-request-#{@call.uid}[data-move-url]", 0
+  end
+
+  test "booked hours follow the location filter, and leave follow-ups out for someone who can't see requests" do
+    @business.update!(plan_overrides: { "features" => { "custom_roles" => true, "locations" => true }, "limits" => { "team_members" => nil } })
+    north = as_business(@business) { Location.create!(name: "North yard") }
+    week(location: north.uid)
+    assert_select "#schedule-members li", /Marcus Reyes\s*0 h/, "nothing of his at North yard yet"
+    as_business(@business) { @site.update!(location: north) }
+    week(location: north.uid)
+    assert_select "#schedule-members li", /Marcus Reyes\s*1 h/, "the follow-up, now at North yard"
+    week(location: "all")
+    assert_select "#schedule-members li", /Marcus Reyes\s*2 h/
+
+    dispatcher = as_business(@business) { Role.create!(name: "Dispatcher", permissions: %w[schedule]) }
+    dee = User.create!(email: "dee@example.com", password: "password123", first_name: "Dee", confirmed_at: Time.current)
+    BusinessUser.create!(user: dee, business: @business, role: "custom", role_id: dispatcher.id)
+    sign_in dee
+    post switch_admin_business_path, params: { business: @business.uid }
+    week(location: "all")
+    assert_select "#schedule-members li", /Marcus Reyes\s*1 h/
+  end
+
+  test "someone who can't see requests is told a person has a request follow-up, not whose" do
+    @business.update!(plan_overrides: { "features" => { "custom_roles" => true }, "limits" => { "team_members" => nil } })
+    dispatcher = as_business(@business) { Role.create!(name: "Dispatcher", permissions: %w[schedule]) }
+    dee = User.create!(email: "dee@example.com", password: "password123", first_name: "Dee", confirmed_at: Time.current)
+    BusinessUser.create!(user: dee, business: @business, role: "custom", role_id: dispatcher.id)
+    sign_in dee
+    post switch_admin_business_path, params: { business: @business.uid }
+    patch admin_schedule_move_path(@one_pm), params: { lock_version: @one_pm.lock_version, on: "2026-11-23", at: "14:00" }, as: :json
+    assert_equal [ "Marcus Reyes has a request follow-up then (2 pm)." ], response.parsed_body["warnings"]
+  end
+
+  test "a done follow-up has no Move, and can't be moved" do
+    as_business(@business) { @site.follow_up.done!(by: @tech) }
+    get admin_schedule_follow_up_path(@site)
+    assert_select "button", { text: "Move", count: 0 }
+    move(on: "2026-11-25", at: "10:00")
+    assert_match "is done", response.parsed_body["error"]
+    assert follow_up.done?
+  end
+
+  test "a window keeps its length when moved; a drag on another zone's grid lands at the same moment on the request's clock" do
+    as_business(@business) { RequestFollowUp.assign!(@site, { timing: "window", start_time: "14:00", window_end_time: "16:00" }, by: @owner) }
+    move(on: "2026-11-24", at: "09:00")
+    assert_equal "Arrive 9–11 am", follow_up.time_label
+    move(on: "2026-11-24", at: "09:00", grid_zone: "America/Chicago")
+    assert_equal "Arrive 10 am–12 pm", follow_up.time_label, "9 am in Chicago is 10 am in New York"
+  end
+
+  test "unassigning from the calendar comes back to the same day, view and person" do
+    delete admin_service_request_follow_up_path(@site), params: { lock_version: follow_up.lock_version, from: "schedule", date: "2026-11-23", view: "day", member: @tech.id }
+    assert_redirected_to admin_schedule_path(date: "2026-11-23", view: "day", member: @tech.id)
   end
 end
