@@ -17,6 +17,18 @@ class EmailMessage < ApplicationRecord
 
   scope :recent, -> { order(created_at: :desc, id: :desc) }
 
+  # #289: emails about one client's own records (their quotes, invoices, payments, jobs and
+  # requests), not every email to an address: two clients can share one (a couple, a test
+  # address), and each should only see their own.
+  scope :about_client, ->(client) {
+    invoices = Invoice.where(client:).select(:id)
+    where(related_type: "Quote", related_id: Quote.where(client:).select(:id))
+      .or(where(related_type: "Invoice", related_id: invoices))
+      .or(where(related_type: "Payment", related_id: Payment.where(invoice_id: invoices).select(:id)))
+      .or(where(related_type: "Job", related_id: Job.where(client:).select(:id)))
+      .or(where(related_type: "ServiceRequest", related_id: ServiceRequest.where(client:).select(:id)))
+  }
+
   # Client email a business can trigger in an hour (the platform's sending domain isn't a
   # relay). Staff sends are rate limited at the controller; email a client's action triggers
   # (an approval confirmation to an address they typed) checks this before queueing.

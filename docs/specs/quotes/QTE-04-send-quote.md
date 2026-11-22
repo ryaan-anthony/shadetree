@@ -68,6 +68,9 @@ their own phone. This is the moment that counts toward plan usage.
 - Owner, 2026-11-21: an undelivered email doesn't change the status. The quote stays Sent (its
   link still works), with the warning, the reason and Resend. An approval of a later revision
   still counts; where that revision's own email didn't arrive, the response says so quietly.
+- #289, 2026-11-21: a first send of a quote or invoice whose total is $0.00 asks first ("Send it at
+  $0.00"); lines without a price are named on the send page either way. An approved quote can be
+  sent again as a copy: it stays approved, never counts toward usage, and has its own wording.
 
 ## Open questions
 

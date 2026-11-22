@@ -46,3 +46,8 @@ rates and a default, so taxable line items are taxed correctly and documents sho
 
 - ~~Is tax-inclusive pricing needed at launch (common outside the US)?~~ Resolved: the math
   supports it (PLT-08, `prices_include_tax:`); the business setting is exposed later.
+
+## Implementation notes
+
+- #289: with no tax rate, the builders hide the line's "Taxed" box (its value is kept) and Totals
+  says there's no sales tax, linking to the rates for those who manage settings.

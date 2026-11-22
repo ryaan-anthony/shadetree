@@ -64,6 +64,8 @@ Conventions from the QA/accessibility audit (#274), for every staff page:
 - **Contrast:** `muted` is #5e6d82 (was #64748b, 4.44:1 on the page background): 5.27:1 on
   white, 4.92 on canvas, 4.77 on sunken. `faint` is never text.
 - **Checks:** `test/system/accessibility_test.rb` runs axe-core (WCAG 2.1 A/AA) on key pages.
+- #289: every Turbo form's submit button says what it's doing while it runs ("Creating…",
+  "Sending…"), from one hook (`submitting.js`); `data-turbo-submits-with` overrides it.
 
 ## Out of scope
 

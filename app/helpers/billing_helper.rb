@@ -10,4 +10,14 @@ module BillingHelper
     else "#{used} of #{limit}"
     end
   end
+
+  # #289: what "1 of 5" means, where it's shown: whose quotes, which period.
+  #   "1 of your 5 free quotes this month"
+  #   "12 of your 30 Starter quotes this billing period"
+  def quote_allowance(entitlements, used: entitlements.used(:quotes_sent))
+    limit = entitlements.limit(:quotes_sent) or return
+    period = entitlements.period.billing_cycle? ? "this billing period" : "this month"
+    plan = entitlements.plan
+    "#{used} of your #{limit} #{plan.free? ? "free" : plan.name} quotes #{period}"
+  end
 end

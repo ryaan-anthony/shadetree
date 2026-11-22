@@ -78,7 +78,10 @@ class Admin::ClientEmailTest < ActionDispatch::IntegrationTest
   end
 
   test "recent emails show on the client with their outcome" do
-    as_business(@business) { EmailMessage.create!(kind: "test_message", to: "maria@example.com", subject: "Your quote", status: "bounced") }
+    as_business(@business) do
+      quote = Quote.start(client: @maria).tap(&:save!) # #289: emails about this client's records
+      EmailMessage.create!(kind: "quote_sent", to: "maria@example.com", subject: "Your quote", status: "bounced", related: quote)
+    end
     get admin_client_path(@maria)
     assert_select "[id^=email-]", /Your quote.*Address refused/m
   end

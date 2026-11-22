@@ -57,9 +57,10 @@
 
     <%# PAY-01: a job can be billed more than once (progress billing). %>
     <% invoices = job.invoices.order(:created_at, :id).to_a %>
+    <% billed = invoices.reject(&:void?) %><%# #289: a second invoice is possible (progress billing), but never the obvious button %>
     <%= card title: "Invoices", id: "invoices", flush: true,
-             actions: button_to(admin_job_invoices_path(job), class: button_classes(invoices.any? ? :ghost : :secondary, :sm),
-                                form: { class: "contents", data: (invoices.reject(&:void?).any? ? { turbo_confirm: "#{job.number} already has #{invoices.reject(&:void?).map(&:number).to_sentence}. Create another invoice?", turbo_confirm_button: "Create invoice" } : {}) }) { icon("plus") + " Create invoice" } do %>
+             actions: button_to(admin_job_invoices_path(job), class: button_classes(billed.any? ? :ghost : :secondary, :sm),
+                                form: { class: "contents", data: (billed.any? ? { turbo_confirm: "#{job.number} already has #{billed.map(&:number).to_sentence}. Create another invoice?", turbo_confirm_button: "Create another invoice" } : {}) }) { icon("plus") + (billed.any? ? " Create another invoice" : " Create invoice") } do %>
       <%= render "admin/invoices/list", invoices:, empty: "Not invoiced yet. Create invoice copies this job's items, discount and taxes." %>
       <% job_payments = Payment.where(invoice_id: invoices.map(&:id)).includes(:invoice).chronological.to_a %>
       <% if job_payments.any? %><%# PAY-04/PAY-05: what's been paid on them, online ones with Stripe's reference %>

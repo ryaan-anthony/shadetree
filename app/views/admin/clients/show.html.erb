@@ -145,7 +145,7 @@
     <% end %>
     <% end %>
 
-    <% emails = EmailMessage.where(to: @client.emails.map(&:normalized)).recent.limit(5) %>
+    <% emails = EmailMessage.about_client(@client).recent.limit(5) %><%# #289: theirs, not everyone's at the same address %>
     <% if emails.any? %>
       <%= card title: "Recent emails", flush: true do %>
         <ul class="list">

@@ -61,3 +61,5 @@ related documents, balance and a chronological timeline.
   their author and marked "edited"); each job in the Work list shows its next visit; the
   Balance card adds what the client has paid in all, recorded or online. (The record lists
   show the five most recent of each kind, as CLI-01 built them.)
+- #289: the client page's "Recent emails" lists emails about this client's own quotes, invoices,
+  payments, jobs and requests, not every email to their address (two clients can share one).

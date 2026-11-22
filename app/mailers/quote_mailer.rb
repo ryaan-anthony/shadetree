@@ -30,5 +30,7 @@ class QuoteMailer < ClientMailer
     client_mail subject: custom_subject("quote_approved", values) || "You approved quote #{@quote.number} from #{@business.name}"
   end
 
-  def self.default_subject(quote) = "Quote #{quote.number} from #{quote.business.name}#{": #{quote.title}" if quote.title}"
+  def self.default_subject(quote)
+    "#{quote.approved? ? "Your approved quote" : "Quote"} #{quote.number} from #{quote.business.name}#{": #{quote.title}" if quote.title}"
+  end
 end

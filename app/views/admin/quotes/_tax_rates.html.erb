@@ -15,5 +15,13 @@
         </label>
       <% end %>
     </fieldset>
+  <% else %>
+    <%# #289: no rate at all, so the total has no tax; say so instead of a silent $0. %>
+    <p class="text-sm2 text-muted" id="no-tax-rates">No sales tax on this <%= scope %>.
+      <% if Current.membership&.can?(:business_settings) %>
+        If you charge it, <%= link_to "add your tax rate", admin_tax_rates_path, class: "font-semibold text-ink underline-offset-2 hover:underline" %> in Settings.
+      <% else %>
+        If you charge it, ask an owner to add your tax rate in Settings.
+      <% end %></p>
   <% end %>
 </div>

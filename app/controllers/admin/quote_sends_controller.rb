@@ -5,6 +5,7 @@ class Admin::QuoteSendsController < Admin::BaseController
   # OPS-03: what support may do while viewing as a member
   impersonation :allowed
   include ConfirmedSender
+  include ZeroTotalGuard
 
   requires_permission :office
   include OwnQuoteAccess
@@ -19,6 +20,7 @@ class Admin::QuoteSendsController < Admin::BaseController
   before_action :require_sendable
   before_action :require_confirmed_sender, only: :create
   before_action :require_quote_allowance, only: :create
+  zero_total_guard :@quote, path: :new_admin_quote_send_path
 
   def new
     subject, message = usual_wording
@@ -73,7 +75,7 @@ class Admin::QuoteSendsController < Admin::BaseController
   helper_method def after_send_path(quote) = own_quotes_only? ? (quote.editable? ? edit_admin_quote_path(quote) : admin_root_path) : admin_quote_path(quote)
 
   def require_sendable
-    return if @quote.sendable?
+    return if @quote.sendable? || @quote.copy_sendable? # #289: a copy of an approved quote
 
     message = if @quote.client.erased? then "This client's details were erased, so nothing more can be sent to them."
     elsif @quote.line_items.empty? then "Add at least one line before sending."
@@ -141,7 +143,7 @@ class Admin::QuoteSendsController < Admin::BaseController
 
   # NTF-03: the business's own wording for this email if it has some, else the standard.
   def usual_wording
-    subject, message = templated_wording
+    subject, message = templated_wording unless @quote.approved? # a copy isn't asking for an answer (#289)
     [ subject || QuoteMailer.default_subject(@quote), message || default_message ]
   end
 
@@ -153,6 +155,10 @@ class Admin::QuoteSendsController < Admin::BaseController
 
   def default_message
     name = @quote.client.display_name.split.first
+    if @quote.approved? # #289: a copy of what they approved
+      return "Hi #{name},\n\nHere's a copy of the quote you approved, for your records. You can see it any time with the button below, " \
+             "and the PDF is attached.\n\nAny questions, just reply to this email.\n\n#{current_user.first_name.presence || current_business.name}"
+    end
     "Hi #{name},\n\nThanks for the chance to quote this work. You can see all the details with the button below. " \
       "The PDF is attached too.\n\nAny questions, just reply to this email.\n\n#{current_user.first_name.presence || current_business.name}"
   end

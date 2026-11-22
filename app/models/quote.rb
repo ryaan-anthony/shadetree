@@ -258,7 +258,7 @@ class Quote < ApplicationRecord
   def mark_sent!(by:, channel:, recipient: nil, cc: nil, email_message: nil)
     transaction do
       lock!
-      raise ArgumentError, "a #{status} quote can't be sent" unless draft? || sent?
+      raise ArgumentError, "a #{status} quote can't be sent" unless draft? || sent? || copy_sendable?
       raise ArgumentError, "the client's details were erased" if client.erased? # INS-02
 
       # QTE-07: sent, so no longer waiting for review (the quote's history keeps who marked it).
@@ -283,6 +283,11 @@ class Quote < ApplicationRecord
   # Whether it can go out: it needs something to quote, and a valid-until date that hasn't
   # passed (an expired quote is renewed with a revision, QTE-06).
   def sendable? = (draft? || sent?) && line_items.any? && !past_expiry? && !client.erased?
+
+  # #289: an approved quote can go out again as a copy of what was approved (a lost email, a
+  # second contact). It stays approved, its valid-until date no longer matters, and it never
+  # counts toward the plan's quotes.
+  def copy_sendable? = approved? && !archived? && line_items.any? && !client.erased?
 
   # BIL-02/03: whether sending it now counts toward the plan's quotes: its first send only
   # (resends and revisions of a quote that went out never count).

@@ -22,10 +22,13 @@ class QuoteSendTest < ActiveSupport::TestCase
     end
   end
 
-  test "an answered quote can't be sent again" do
+  test "a declined quote can't be sent again; an approved one goes out as a copy and stays approved" do
     as_business(@business) do
-      @quote.update_column(:status, "approved")
+      @quote.update_column(:status, "declined")
       assert_raises(ArgumentError) { @quote.mark_sent!(by: users(:one), channel: "link") }
+      @quote.update_column(:status, "approved")
+      @quote.mark_sent!(by: users(:one), channel: "link") # #289
+      assert_equal "approved", @quote.reload.status
     end
   end
 
