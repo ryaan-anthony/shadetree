@@ -5,7 +5,7 @@
   <% if @quotes.empty? %>
     <div class="card">
       <% if !@any_quotes %>
-        <%= empty_state title: "No quotes yet", text: "Pick a client, add items from your catalog and send a professional quote in a couple of minutes.", icon: "quote" do %>
+        <%= empty_state title: "No quotes yet", text: "Pick a client, add your services and send a professional quote in a couple of minutes.", icon: "quote" do %>
           <%= link_to new_admin_quote_path, class: button_classes, data: { turbo_frame: "_top" } do %><%= icon "plus" %> New quote<% end %>
         <% end %>
       <% elsif @query.present? %>

@@ -37,6 +37,6 @@
   </div>
   <div class="mt-4"><%= f.field :handle, label: "Link name", maxlength: 40, autocapitalize: "none", spellcheck: false,
               help: "Your link is #{public_request_url("name").delete_suffix("name")}<name>. Changing it stops the old link working." %></div>
-  <p class="mt-3 text-sm2 text-muted">Services on the form are the catalog items marked "Show on your request form".
+  <p class="mt-3 text-sm2 text-muted">Services on the form are the ones marked "Show on your request form".
     <%= link_to "Edit services", admin_catalog_items_path, class: "font-medium text-ink underline-offset-2 hover:underline" %></p>
 <% end %>

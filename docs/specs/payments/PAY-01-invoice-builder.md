@@ -63,6 +63,8 @@ and tax behavior, carry payment terms and a due date, and track their status thr
   as they are now (with changes made on site). Either way it stays with that client.
 - #289: once a quote or job has an invoice (not void), its page links to that invoice; a second
   invoice is still possible (progress billing) but only as "Create another invoice", with a confirm.
+- #289: payment terms read "Within 15 days", and a chosen date says how long it gives ("14 days
+  after it's issued") instead of "Custom date".
 
 ## Out of scope
 

@@ -50,7 +50,7 @@ class Admin::ClientsTest < ActionDispatch::IntegrationTest
     client = as_business(@business) { Client.find_by!(display_name: "Maria Lopez") }
     assert_redirected_to admin_client_path(client)
     follow_redirect!
-    assert_select "a[href='tel:5550100100']", "(555) 010-0100"
+    assert_select "a[href='tel:+15550100100']", "(555) 010-0100"
     assert_select "a[href='mailto:maria@example.com']"
     assert_select "address", /Austin, TX 78701/
     assert_select "#property-#{as_business(@business) { client.properties.first.uid }}", /Billing.*Gate code 1234/m

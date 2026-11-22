@@ -49,8 +49,10 @@
               <% end %>
             <% end %>
             <% if response.approved? %>
-              <p class="mt-1 text-muted">Quote version <%= response.quote_version %>, reference <span class="font-mono"><%= response.reference %></span>
-                <% unless response.signature_valid? && response.snapshot_intact? %><span class="font-medium text-danger">: this record doesn't verify</span><% end %></p>
+              <%# #289: the evidence stays (support and disputes need it), behind one word; a record that doesn't verify still says so up front. %>
+              <% unless response.signature_valid? && response.snapshot_intact? %><p class="mt-1 font-medium text-danger">This approval record doesn't verify.</p><% end %>
+              <details class="mt-1 text-muted"><summary class="cursor-pointer text-sm2">Reference</summary>
+                <p class="mt-1 text-sm2">Approval <span class="font-mono"><%= response.reference %></span>. Quote this if you contact support.</p></details>
             <% end %>
           </li>
         <% end %>

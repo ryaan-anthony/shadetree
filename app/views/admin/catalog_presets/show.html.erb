@@ -30,7 +30,7 @@
     <%= form_with url: admin_catalog_presets_path, method: :post, data: { controller: "check-all" } do %>
   <%= hidden_field_tag :from, "setup", id: nil if from_setup? %>
       <%= hidden_field_tag :industry, @preset.industry %>
-      <%= card title: @preset.name, subtitle: "#{rows.count { _2.nil? }} of #{rows.size} not in your catalog yet", flush: true do %>
+      <%= card title: @preset.name, subtitle: "#{rows.count { _2.nil? }} of #{rows.size} not in your services yet", flush: true do %>
         <ul class="list">
           <% rows.each_with_index do |(item, existing), index| %>
             <li>
@@ -45,7 +45,7 @@
               </label>
               <span class="text-sm2 text-muted">
                 <% unit = item.unit == "custom" ? item.custom_unit : CatalogItem::UNITS.fetch(item.unit.presence || "each", "each") %>
-                <%= existing == :archived ? "Archived in your catalog" : existing ? "In your catalog" : (unit == "each" ? "each" : "per #{unit}") %>
+                <%= existing == :archived ? "Archived in your services" : existing ? "In your services" : (unit == "each" ? "each" : "per #{unit}") %>
               </span>
             </li>
           <% end %>

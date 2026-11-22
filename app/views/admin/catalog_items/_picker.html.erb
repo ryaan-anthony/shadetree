@@ -10,7 +10,7 @@
   <label class="label" for="<%= picker_id = "catalog-picker-#{SecureRandom.hex(3)}" %>"><%= label %></label>
   <div class="relative">
     <%= icon "search", class: "pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-faint" %>
-    <input id="<%= picker_id %>" type="search" class="input pl-9" autocomplete="off" placeholder="Search your catalog"
+    <input id="<%= picker_id %>" type="search" class="input pl-9" autocomplete="off" placeholder="Search your services"
            role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="<%= picker_id %>-list"
            data-catalog-picker-target="input" data-action="input->catalog-picker#search focus->catalog-picker#open">
   </div>

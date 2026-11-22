@@ -40,7 +40,7 @@ class Admin::RequestInboxTest < ActionDispatch::IntegrationTest
   test "opening a request shows everything and records who saw it" do
     get admin_service_request_path(@service_request)
     assert_response :success
-    assert_select "dd", "5550100100"
+    assert_select "dd", "(555) 010-0100" # #289: one phone format
     assert_select "dd", "9 Oak Ave, Austin"
     assert_select "dd", "Weekly mowing"
     assert_select "img[alt=?]", "Photo 1 from Maria Lopez"
@@ -75,7 +75,8 @@ class Admin::RequestInboxTest < ActionDispatch::IntegrationTest
       assert_equal 1, quote.attachments.count
     end
     follow_redirect!
-    assert_select "a[href=?]", admin_service_request_path(@service_request), /request R-/
+    assert_select "a[href=?]", admin_service_request_path(@service_request), /'s request of / # #289: no R- code for owners
+    assert_no_match(/R-\w{8}/, response.body)
     assert_select "p", /They asked about.*9 Oak Ave, Austin.*isn't one of/m
     get admin_service_request_path(@service_request)
     assert_select "a", /#{quote.number}/
@@ -93,7 +94,7 @@ class Admin::RequestInboxTest < ActionDispatch::IntegrationTest
     quote = as_business(@business) { Quote.order(:id).last.tap { _1.update_columns(status: "sent", sent_at: Time.current) } }
     get admin_quote_path(quote)
     assert_response :success
-    assert_select "a[href=?]", admin_service_request_path(@service_request), /request #{@service_request.reference}/
+    assert_select "a[href=?]", admin_service_request_path(@service_request), /'s request of /
     assert_select "p", { text: /They asked about/, count: 0 }, "the address note is for drafts, where the property can still change"
   end
 
@@ -153,6 +154,8 @@ class Admin::RequestInboxTest < ActionDispatch::IntegrationTest
 
   test "requests appear on the client's page" do
     get admin_client_path(@maria)
-    assert_select "a[href=?]", admin_service_request_path(@service_request), /Request R-.*Weekly mowing/
+    assert_select "a[href=?]", admin_service_request_path(@service_request), "Request for Weekly mowing"
+    get admin_service_request_path(@service_request)
+    assert_select "dd", @service_request.reference # kept for support, on the request itself
   end
 end

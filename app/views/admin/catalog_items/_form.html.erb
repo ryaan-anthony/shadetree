@@ -5,7 +5,7 @@
     </div>
   <% end %>
   <%= card do %>
-    <%= f.field :name, autofocus: @item.new_record?, placeholder: "Weekly lawn mowing" %>
+    <%= f.field :name, autofocus: @item.new_record?, placeholder: example_title %>
     <%= f.field :description, as: :textarea, optional: true, rows: 3, label: "Description for clients",
                 help: "Appears on quotes and invoices under the item name." %>
     <div class="grid gap-4 sm:grid-cols-2" data-controller="custom-unit">

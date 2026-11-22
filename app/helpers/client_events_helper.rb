@@ -8,7 +8,7 @@ module ClientEventsHelper
     data = event.data
     case event.kind
     when "request_received"
-      [ "inbox", "Request #{subject&.reference} received#{" (entered by staff)" if subject&.created_by_id}", subject && admin_service_request_path(subject) ]
+      [ "inbox", "#{subject&.title || "Request"} received#{" (entered by staff)" if subject&.created_by_id}", subject && admin_service_request_path(subject) ]
     when "quote_sent"
       what = data["copy"] ? "Copy of approved quote" : "Quote" # #289
       [ "send", "#{what} #{subject&.number} sent #{CHANNELS[data["channel"]]} #{revision_note(data) unless data["copy"]}".squish, subject && staff_quote_path(subject) ]

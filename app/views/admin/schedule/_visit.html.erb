@@ -7,7 +7,7 @@
       <div><dt class="text-sm2 text-muted">Job</dt><dd class="text-ink"><%= job.number %> <%= job.title %></dd></div>
       <% if current_business.multiple_locations? %><div><dt class="text-sm2 text-muted">Location</dt><dd class="text-ink"><%= job.location.name %></dd></div><% end %>
       <% if job.property %><div><dt class="text-sm2 text-muted">Where</dt><dd class="text-ink"><%= job.property.one_line %></dd></div><% end %>
-      <div><dt class="text-sm2 text-muted">Who's going</dt><dd class="text-ink"><%= visit.assignees.any? ? visit.assignees.map(&:full_name).to_sentence : "Nobody yet" %></dd></div>
+      <div><dt class="text-sm2 text-muted">Who's going</dt><dd class="text-ink"><%= visit.assignees.any? ? visit.assignees.map(&:full_name).to_sentence : "Not assigned" %></dd></div>
       <div><dt class="text-sm2 text-muted">How long</dt><dd class="text-ink">About <%= visit.duration_label %> · <%= visit.status_label %></dd></div>
       <% if visit.instructions %><div><dt class="text-sm2 text-muted">Instructions</dt><dd class="whitespace-pre-line text-ink"><%= visit.instructions %></dd></div><% end %>
     </dl>

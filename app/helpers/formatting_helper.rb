@@ -103,6 +103,24 @@ module FormattingHelper
     ActiveSupport::TimeZone::MAPPING.key(zone.tzinfo.identifier) || zone.name.split("/").last.tr("_", " ")
   end
 
+  # #289: a file's name as staff read it in a list: long names (a stock photo's
+  # "close-up-upside-down-dead-cricket-…-284754777.webp") are shortened in the middle, keeping
+  # the start and the extension. The file itself keeps its name; title= shows it in full.
+  #   attachment_name(file)  # => "close-up-upside-down-dea…284754777.webp"
+  def attachment_name(file, max: 36)
+    name = file.filename.to_s
+    return name if name.length <= max
+
+    ext = File.extname(name)
+    tail = name.delete_suffix(ext).last(9) + ext
+    "#{name.first(max - tail.length - 1)}…#{tail}"
+  end
+
+  # A link to a staff-side file, its long name shortened (#289).
+  def attachment_link(file, **options)
+    link_to attachment_name(file), rails_blob_path(file, disposition: "inline"), title: file.filename.to_s, target: "_blank", rel: "noopener", **options
+  end
+
   private
 
   # The part of a phone number that's dialled: everything before an extension marker.

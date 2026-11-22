@@ -137,7 +137,7 @@ class Admin::InvoicesTest < ActionDispatch::IntegrationTest
     assert_redirected_to admin_invoice_path(sent)
     get admin_invoice_path(sent)
     assert_select "h1", "Invoice #{sent.number}"
-    assert_select "dl", /Sent.*Due.*Net 30.*\$90\.00/m
+    assert_select "dl", /Sent.*Due.*Within 30 days.*\$90\.00/m
     assert_select "li", /Created from job #{@job.number} by/
     delete admin_invoice_path(sent)
     assert_match "never sent", flash[:alert]

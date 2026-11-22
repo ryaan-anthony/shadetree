@@ -69,7 +69,7 @@
         <% end %>
       </div>
       <div class="mt-4 grid gap-4 sm:grid-cols-[minmax(0,1fr)_11rem] [&>*]:min-w-0">
-        <%= f.field :title, optional: true, placeholder: "Spring cleanup", maxlength: 120, help: "Shown at the top of the invoice." %>
+        <%= f.field :title, optional: true, placeholder: example_title, maxlength: 120, help: "Shown at the top of the invoice." %>
         <%= f.field :issued_on, as: :date, label: "Issue date" %>
       </div>
       <div class="mt-4 empty:hidden"><%= render "admin/locations/field", f:, document: @invoice, help: "The client sees this location's contact details." %></div>
@@ -84,10 +84,10 @@
         <% end %>
       </div>
       <p class="px-5 py-6 text-center text-sm text-muted" data-quote-builder-target="empty" <%= "hidden" if lines.any? %>>
-        No items yet. Add one from your catalog or type a custom line.
+        No items yet. Add one of your services or type a custom line.
       </p>
       <div class="flex flex-wrap items-end gap-2 border-t border-line px-5 py-4">
-        <div class="min-w-0 flex-1 basis-64"><%= render "admin/catalog_items/picker", label: "Add from catalog", location: @invoice.location %></div>
+        <div class="min-w-0 flex-1 basis-64"><%= render "admin/catalog_items/picker", label: "Add a service", location: @invoice.location %></div>
         <button type="button" class="<%= button_classes(:secondary) %>" data-action="quote-builder#addCustom"><%= icon "plus" %> Custom line</button>
       </div>
       <template data-quote-builder-target="template">

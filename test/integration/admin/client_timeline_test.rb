@@ -42,7 +42,7 @@ class Admin::ClientTimelineTest < ActionDispatch::IntegrationTest
 
     get admin_client_path(@maria)
     assert_select "#client-timeline li", 11
-    assert_select "#client-timeline", /Email not delivered\s*Invoice INV-\d+ to maria@example.com: The receiving mail server says this address doesn't exist.*Invoice INV-\d+ paid in full.*Payment: \$50\.00, check \(1042\), received .* on INV-\d+.*Invoice INV-\d+ sent as a link.*Visit done for J-\d+.*Visit booked for .*Approval of quote Q-\d+ recorded.*Maria Lopez opened quote Q-\d+.*Quote Q-\d+ sent by email.*Request R-\w+ received/m
+    assert_select "#client-timeline", /Email not delivered\s*Invoice INV-\d+ to maria@example.com: The receiving mail server says this address doesn't exist.*Invoice INV-\d+ paid in full.*Payment: \$50\.00, check \(1042\), received .* on INV-\d+.*Invoice INV-\d+ sent as a link.*Visit done for J-\d+.*Visit booked for .*Approval of quote Q-\d+ recorded.*Maria Lopez opened quote Q-\d+.*Quote Q-\d+ sent by email.*Request( for [^.]*)? received/m
     assert_no_match "maria@example.com refused", response.body
     assert_select "#client-timeline li", /Approval of quote Q-\d+ recorded.*#{@owner.full_name}/m
     assert_select "#client-timeline-more a", 0

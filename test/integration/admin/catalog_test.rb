@@ -142,6 +142,6 @@ class Admin::CatalogTest < ActionDispatch::IntegrationTest
   test "the sidebar links to the catalog for settings roles only" do
     as_member(@owner)
     get admin_root_path
-    assert_select "nav a[href='#{admin_catalog_items_path}']", "Catalog"
+    assert_select "nav a[href='#{admin_catalog_items_path}']", "Services & prices"
   end
 end

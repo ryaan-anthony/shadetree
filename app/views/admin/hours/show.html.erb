@@ -20,7 +20,7 @@
   <% end %>
 
   <%= card title: "Weekly hours", subtitle: "Times are in #{time_zone_label(zone)}. One opening and one closing time per day; close at 12:00 AM to stay open until midnight.",
-           actions: button_to("Use weekdays 8–5", hours_path, method: :patch, params: { preset: "weekdays" }, class: button_classes(:secondary, :sm),
+           actions: button_to("Set Mon–Fri, 8 am–5 pm", hours_path, method: :patch, params: { preset: "weekdays" }, class: button_classes(:secondary, :sm),
                               form: { data: ({ turbo_confirm: "Replace your hours with Monday to Friday, 8 am to 5 pm?", turbo_confirm_button: "Replace" } if @place.weekly_hours_was) }) do %>
     <%= form_with url: hours_path, method: :patch, id: "weekly-hours" do %>
       <% if problems.any? %>

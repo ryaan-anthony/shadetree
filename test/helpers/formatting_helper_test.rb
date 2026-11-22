@@ -67,4 +67,12 @@ class FormattingHelperTest < ActionView::TestCase
     assert_equal "Eastern Time (US & Canada)", time_zone_label("America/New_York")
     assert_equal "Pacific Time (US & Canada)", time_zone_label(ActiveSupport::TimeZone["America/Los_Angeles"])
   end
+
+  test "long file names are shortened in the middle, keeping the end and extension (#289)" do
+    long = Data.define(:filename).new(ActiveStorage::Filename.new("close-up-upside-down-dead-cricket-brown-wood-plank-shot-degree-angle-284754777.webp"))
+    assert_equal "close-up-upside-down-…284754777.webp", attachment_name(long)
+    assert_equal 36, attachment_name(long).length
+    short = Data.define(:filename).new(ActiveStorage::Filename.new("yard.png"))
+    assert_equal "yard.png", attachment_name(short)
+  end
 end

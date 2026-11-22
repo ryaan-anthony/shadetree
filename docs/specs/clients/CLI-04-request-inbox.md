@@ -47,3 +47,8 @@ archive what isn't going anywhere.
 
 - ~~Should "In progress" exist, or is New/Quoted/Archived enough?~~ Keep it, for requests
   needing a site visit before quoting.
+
+## Implementation notes
+
+- #289: owners see a request as "Request for Lawn mowing" (or "<client>'s request of <date>" on
+  its quote); the R- reference is kept for support, as "Reference" on the request page.

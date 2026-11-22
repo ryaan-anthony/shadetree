@@ -40,10 +40,10 @@
       <div class="field">
         <label class="label" for="service_request_description">What they need</label>
         <%= f.text_area :description, rows: 4, maxlength: 5_000, class: "textarea", "aria-invalid": ("true" if description_error),
-                        placeholder: "e.g. Called about weekly mowing from May. Corner lot, side gate." %>
+                        placeholder: example_request_note %>
         <% if description_error %><p class="error-text"><%= icon "alert-circle" %><%= description_error %></p><% end %>
       </div>
-      <%= f.field :timing, label: "When", optional: true, maxlength: 120, placeholder: "e.g. Before Memorial Day" %>
+      <%= f.field :timing, label: "When", optional: true, maxlength: 120, placeholder: "e.g. Next week, mornings" %>
       <%= render "admin/locations/field", f:, document: @request %>
 
     </div>

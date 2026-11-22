@@ -13,7 +13,7 @@
     <%= card do %>
       <% @business.errors[:base].each do |message| %><p class="mb-4 text-sm2 font-medium text-danger" role="alert"><%= message %></p><% end %>
       <%= f.field :name, label: "Business name", autofocus: true, required: true,
-                  placeholder: "Oakline Lawn & Landscape", help: "Clients see this on quotes and invoices." %>
+                  placeholder: "e.g. Rivera Home Services", help: "Clients see this on quotes and invoices." %>
       <%= f.field :industry, as: :select, label: "What kind of work do you do?", required: true,
                   include_blank: "Choose one", choices: Industry.options,
                   help: "Used to suggest services and wording. You can change it later." %>

@@ -23,8 +23,9 @@ class Invoice < ApplicationRecord
 
   # Payment terms and the days they give; "custom" is a due date chosen on the invoice.
   TERMS = { "due_on_receipt" => 0, "net_7" => 7, "net_15" => 15, "net_30" => 30, "custom" => nil }.freeze
-  TERM_LABELS = { "due_on_receipt" => "Due on receipt", "net_7" => "Net 7", "net_15" => "Net 15", "net_30" => "Net 30",
-                  "custom" => "Custom date" }.freeze
+  # #289: in words, not "Net 15"; a chosen date says how long that gives (terms_label).
+  TERM_LABELS = { "due_on_receipt" => "Due on receipt", "net_7" => "Within 7 days", "net_15" => "Within 15 days", "net_30" => "Within 30 days",
+                  "custom" => "A date you choose" }.freeze
 
   belongs_to_business_record :client
   belongs_to_business_record :property, optional: true
@@ -104,7 +105,12 @@ class Invoice < ApplicationRecord
   def awaiting_client? = status.in?(%w[sent partially_paid])
   def paid? = status == "paid"
   def status_label = revising? ? "Revising" : STATUS_LABELS.fetch(status)
-  def terms_label = TERM_LABELS.fetch(payment_terms)
+  def terms_label
+    return TERM_LABELS.fetch(payment_terms) unless payment_terms == "custom" && issued_on && due_on
+
+    days = (due_on - issued_on).to_i
+    days.zero? ? "Due on receipt" : "#{days} #{"day".pluralize(days)} after it's issued"
+  end
 
   # Drafts are edited freely, including a sent invoice reopened as its next revision. Once
   # anything is paid, an invoice can't be revised or voided (its items can't change).

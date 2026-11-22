@@ -3,7 +3,7 @@ require "test_helper"
 # QA #274 (WCAG 2.1.1): every pointer action on the calendar has a keyboard way. Each empty hour
 # is a named link to a new visit there; it asks which job, then opens the job's visit form with
 # the day, time and person filled in, and comes back to the calendar with focus on the visit.
-# Also the heading's year and time zone, and the "Nobody yet" count's unit.
+# Also the heading's year and time zone, and the "Not assigned" count's unit.
 class Admin::ScheduleNewVisitTest < ActionDispatch::IntegrationTest
   setup do
     @business = businesses(:one)
@@ -40,7 +40,7 @@ class Admin::ScheduleNewVisitTest < ActionDispatch::IntegrationTest
       assert_equal admin_schedule_new_visit_path(on: "2026-11-24", at: "09:00", view: "week", slot: "slot-2026-11-24-09-all"), slot["href"]
       assert_select "#schedule-grid a.cal-slot[data-start=true]", 1
       assert_select "#schedule-grid a.cal-slot[data-start=true] .sr-only", "New visit, Monday, November 23, 9:00 AM"
-      assert_select "#schedule-members li", text: /Nobody yet\s*1 visit/
+      assert_select "#schedule-members li", text: /Not assigned\s*1 visit/
       assert_select "a[href=?]", admin_schedule_new_visit_path(on: @monday.iso8601, view: "week"), text: /New visit/
       assert_select ".cal-grid div", text: "Anytime", count: 1 do |label|
         assert_includes label.first["class"], "text-muted", "4.58:1 on the anytime row (QA #274)"
