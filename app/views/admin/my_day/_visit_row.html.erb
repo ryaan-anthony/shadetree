@@ -2,7 +2,7 @@
 <% job = visit.job %>
 <li id="my-visit-<%= visit.uid %>" class="p-0">
   <%= link_to admin_my_visit_path(visit), class: "flex min-w-0 flex-1 items-start gap-3 px-4 py-3.5" do %>
-    <span class="w-20 shrink-0 pt-0.5 text-sm font-semibold text-ink"><%= visit.time_label.delete_prefix("Arrive ") %></span>
+    <span class="w-20 shrink-0 pt-0.5 text-sm font-semibold text-ink"><%= visit.time_label.delete_prefix("Arrive ") %><%= other_zone_label(visit) %></span>
     <span class="min-w-0 flex-1">
       <span class="block truncate font-semibold text-ink"><%= job.client.display_name %></span>
       <span class="block truncate text-sm2 text-muted"><%= job.property&.one_line || "No address on file" %></span>

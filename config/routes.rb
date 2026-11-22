@@ -242,6 +242,8 @@ Rails.application.routes.draw do
         patch :done
         patch :pass_back, path: "pass-back"
       end
+      resources :notes, only: :create, controller: "my_request_notes"
+      resources :photos, only: %i[create destroy], controller: "my_request_photos"
     end
 
     # Jobs (JOB-01)

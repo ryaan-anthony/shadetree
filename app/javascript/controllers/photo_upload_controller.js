@@ -12,7 +12,7 @@ const PAUSED = "paused" // signed out: nothing more is sent until someone taps R
 
 export default class extends Controller {
   static targets = ["queue", "list", "announce"]
-  static values = { url: String, count: Number }
+  static values = { url: String, count: Number, noun: { type: String, default: "visit" } }
 
   connect() {
     this.element.querySelector("[data-photo-upload-fallback]")?.setAttribute("hidden", "")
@@ -86,7 +86,7 @@ export default class extends Controller {
     } else if (status === 401) {
       this.signedOut()
     } else if (status === 403 || status === 404) {
-      this.failed(row, "You can't add photos to this visit any more.", false)
+      this.failed(row, `You can't add photos to this ${this.nounValue} any more.`, false)
     } else if (status === 422) {
       this.failed(row, "This page is out of date. Reload it, then add the photo again.", false)
     } else {

@@ -16,16 +16,14 @@
     <% if @today.empty? %>
       <p class="px-5 py-4 text-sm2 text-muted">Nothing booked for you today.</p>
     <% else %>
-      <ul class="list"><%= render partial: "admin/my_day/visit_row", collection: @today, as: :visit %></ul>
+      <ul class="list"><%= render partial: "admin/my_day/item", collection: @today, as: :item %></ul>
     <% end %>
   <% end %>
 
   <% if @earlier.any? %>
-    <%= card title: "Still open from earlier", subtitle: "Complete these, or tell the office.", flush: true do %>
+    <%= card title: "Still open from earlier", subtitle: "Finish these, or tell the office. Done requests stay until they're quoted or passed back.", flush: true do %>
       <ul class="list">
-        <% @earlier.each do |visit| %>
-          <%= render "admin/my_day/visit_row", visit: %>
-        <% end %>
+        <%= render partial: "admin/my_day/item", collection: @earlier, as: :item %>
       </ul>
     <% end %>
   <% end %>
@@ -36,7 +34,7 @@
     <% else %>
       <% @upcoming.each do |date, visits| %>
         <h3 class="border-t border-line bg-sunken/60 px-4 py-1.5 text-sm2 font-semibold text-muted first:border-t-0"><%= friendly_date(date) %></h3>
-        <ul class="list"><%= render partial: "admin/my_day/visit_row", collection: visits, as: :visit %></ul>
+        <ul class="list"><%= render partial: "admin/my_day/item", collection: visits, as: :item %></ul>
       <% end %>
     <% end %>
   <% end %>

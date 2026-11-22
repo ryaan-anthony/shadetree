@@ -5,7 +5,9 @@
   <% if follow_up %>
     <p class="font-medium text-ink"><%= follow_up.user.full_name %></p>
     <p class="text-sm2 text-ink"><%= follow_up.kind_label %>, <%= follow_up.when_label %>
-      <% if follow_up.overdue? %><%= badge "Overdue", tone: :danger %><% end %></p>
+      <% if follow_up.overdue? %><%= badge "Overdue", tone: :danger %><% end %>
+      <% if follow_up.done? %><%= badge "Done", tone: :success %><% end %></p>
+    <% if follow_up.done? %><p class="text-sm2 text-muted">Done <%= local_time(follow_up.done_at) %>. Create the quote, or move it on.</p><% end %>
     <p class="text-sm2 text-muted">About <%= follow_up.duration_label %><%= " · assigned by #{follow_up.assigned_by.full_name}" if follow_up.assigned_by && follow_up.assigned_by != follow_up.user %></p>
     <% if follow_up.instructions %><p class="mt-2 whitespace-pre-line text-sm2 text-subtle"><%= follow_up.instructions %></p><% end %>
     <% if follow_up.user_id == current_user.id %><%# JOB-06: theirs to work on, Done and all %>

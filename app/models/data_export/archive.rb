@@ -1,6 +1,6 @@
 # INS-02: everything a business has, in zips: every CSV, each quote's and invoice's PDF (drafts
 # in their own folder), and every uploaded file (document attachments, job files, visit photos,
-# request photos, the logo), with a README explaining the layout. A new part starts when one
+# request photos and site photos from following requests up, the logo), with a README explaining the layout. A new part starts when one
 # reaches PART_BYTES, so a business with years of photos still gets all of it. Built inside the
 # business.
 class DataExport::Archive
@@ -40,6 +40,7 @@ class DataExport::Archive
     attachments("files/jobs", Job, :attachments, &:number)
     attachments("files/visits", Visit.includes(:job), :photos) { "#{_1.job.number} #{_1.scheduled_on.iso8601}" }
     attachments("files/requests", ServiceRequest, :photos) { "#{_1.created_at.to_date.iso8601} #{_1.uid}" }
+    attachments("files/requests", ServiceRequest, :site_photos) { "#{_1.created_at.to_date.iso8601} #{_1.uid} site" } # JOB-06
     add_blob("branding", @business.logo.blob) if @business.logo.attached?
     finish_part(readme: true)
     @written
@@ -131,7 +132,8 @@ class DataExport::Archive
       csv/         Your records as spreadsheets. Money is a plain number in the document's currency;
                    dates are YYYY-MM-DD; times are in #{@business.time_zone.name}.
       documents/   Each quote's and invoice's PDF, as clients see it. Drafts (never sent) are in drafts/.
-      files/       Files attached to quotes, invoices and jobs; visit photos; request photos.
+      files/       Files attached to quotes, invoices and jobs; visit photos; request photos (and
+                   site photos from following them up, in each request's "site" folder).
       #{"branding/    Your logo.\n" if @business.logo.attached?}
       Not in this export:
       #{NOT_INCLUDED.map { "  - #{_1}" }.join("\n")}

@@ -1,0 +1,3 @@
+<%# locals: (item:) -%>
+<%# JOB-06: a visit (JOB-04) or a request follow-up on My day. %>
+<%= item.is_a?(Visit) ? render("admin/my_day/visit_row", visit: item) : render("admin/my_day/follow_up_row", follow_up: item) %>

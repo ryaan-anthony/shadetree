@@ -49,6 +49,8 @@ class Admin::FullExportsTest < ActionDispatch::IntegrationTest
       job = Job.create!(client:, title: "Mowing")
       visit = job.visits.new(scheduled_on: Date.new(2026, 11, 20), timing: "anytime", duration_minutes: 60).tap { _1.schedule!(by: @owner) }
       visit.photos.attach(io: StringIO.new("jpegdata"), filename: "yard.jpg", content_type: "image/jpeg")
+      request = ServiceRequest.create!(client:, source: "phone", description: "Fence") # JOB-06: photos from following it up
+      request.site_photos.attach(io: StringIO.new("jpegdata"), filename: "fence.jpg", content_type: "image/jpeg")
     end
     as_business(businesses(:two)) { Client.create!(display_name: "Their client", contact_methods_attributes: [ { kind: "phone", value: "5550100199" } ]) }
 
@@ -74,6 +76,7 @@ class Admin::FullExportsTest < ActionDispatch::IntegrationTest
     assert(files.keys.any? { _1.start_with?("documents/quotes/") && _1.end_with?(".pdf") })
     assert_includes files.keys, "files/quotes/#{as_business(@business) { Quote.last.number }}/plan.pdf"
     assert(files.keys.any? { _1.start_with?("files/visits/") && _1.end_with?("yard.jpg") })
+    assert(files.keys.any? { _1.start_with?("files/requests/") && _1.end_with?(" site/fence.jpg") }, "site photos, in the request's site folder")
     assert_equal "jpegdata", files.find { _1.first.end_with?("yard.jpg") }.last
     assert_match "Maria Lopez", files["csv/clients.csv"]
     assert_no_match(/Their client/, files.values.join)

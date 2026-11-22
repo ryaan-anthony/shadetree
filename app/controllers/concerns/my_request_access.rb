@@ -15,7 +15,7 @@ module MyRequestAccess
   def set_my_request
     id = params[:my_request_id] || params[:id]
     @request = ServiceRequest.where(status: ServiceRequest::OPEN_STATUSES).joins(:follow_up).where(request_follow_ups: { user_id: current_user.id })
-                             .includes(:client, :property, :location, follow_up: %i[assigned_by], notes: :user).find_by_param!(id)
+                             .includes(:client, :property, :location, follow_up: %i[assigned_by], notes: :user, photos_attachments: :blob).find_by_param!(id)
     @follow_up = @request.follow_up
   end
 end

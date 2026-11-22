@@ -41,6 +41,15 @@
           <% end %>
         </ul>
       <% end %>
+      <% if (site_photos = request_record.site_photos.includes(:blob).order(:id).to_a).any? %><%# JOB-06: from whoever followed it up %>
+        <h2 class="mt-5 text-sm font-semibold text-ink">Site photos</h2>
+        <ul class="mt-2 flex flex-wrap gap-1.5" id="site-photos">
+          <% site_photos.each.with_index(1) do |photo, number| %>
+            <li><%= link_to rails_representation_path(photo.variant(:web)), target: "_blank", rel: "noopener" do %>
+              <%= image_tag rails_representation_path(photo.variant(:thumb)), alt: "Site photo #{number} of #{site_photos.size}", loading: "lazy", class: "size-20 rounded-control bg-sunken object-cover" %><% end %></li>
+          <% end %>
+        </ul>
+      <% end %>
       <p class="mt-5 text-sm2 text-muted">Creating a quote fills in the client, the address and these services<%= " and attaches the photos" if request_record.photos.attached? %>. Nothing is sent until you send it.</p>
     <% end %>
 
