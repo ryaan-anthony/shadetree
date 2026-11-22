@@ -34,10 +34,21 @@ class GuidedTourBrowserTest < ApplicationSystemTestCase
     assert_equal "tour", focused_id, "focus moves into each stop"
   end
 
-  def wait_for_status(status)
-    Timeout.timeout(5) { sleep 0.05 until @membership.reload.tour_status == status }
-  rescue Timeout::Error
-    flunk "tour status stayed #{@membership.tour_status.inspect}, expected #{status.inspect}"
+  # Like input_reaches_page?: a deadline, not Timeout around database calls.
+  def wait_for_status(status, stop: nil)
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 5
+    until @membership.reload.tour_status == status && (stop.nil? || @membership.tour_stop == stop)
+      flunk "tour stayed #{[ @membership.tour_status, @membership.tour_stop ].inspect}, expected #{[ status, stop ].inspect}" if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+      sleep 0.05
+    end
+  end
+
+  # Starts it the way a person does, from Help. (Visiting ?tour=start directly can be undone by
+  # the input check's reload, which loads the URL after the tour has tidied the parameter away.)
+  def start_from_help
+    click_on "Help"
+    click_on "Take the tour again"
+    assert_selector "#tour[role=dialog]", visible: true
   end
 
   test "keyboard only: take the tour from the offer, through every stop, to the first checklist step" do
@@ -50,12 +61,21 @@ class GuidedTourBrowserTest < ApplicationSystemTestCase
     assert_no_selector "#tour-offer", visible: true
     wait_for_status "started"
 
+    assert_selector "#tour-pointing", text: "Pointing at: Get to your first quote", visible: :all
+
     [ [ "Stop 2 of 6", "Requests" ], [ "Stop 3 of 6", "Quotes" ], [ "Stop 4 of 6", "Schedule" ], [ "Stop 5 of 6", "Invoices" ], [ "Stop 6 of 6", "Settings" ] ].each do |count, title|
       tab_to "Next"
       page.send_keys(:enter)
       assert_stop count, title
       assert_selector "[data-tour=#{title.downcase}].tour-target"
+      assert_selector "#tour-pointing", text: "Pointing at: #{title}, in the menu", visible: :all
     end
+    wait_for_status "started", stop: "settings" # recorded in order
+
+    page.send_keys(:f6) # to what it points at, and back
+    assert_equal "Settings", evaluate_script("document.activeElement.textContent.trim()")
+    page.send_keys(:f6)
+    assert_equal "tour", focused_id
     tab_to "Back"
     page.send_keys(:enter)
     assert_stop "Stop 5 of 6", "Invoices"
@@ -72,24 +92,28 @@ class GuidedTourBrowserTest < ApplicationSystemTestCase
 
   test "Escape ends it where you are, focus comes back, and the page stays usable while it's open" do
     sign_in_as users(:one)
-    visit admin_root_path(tour: "start")
+    visit admin_root_path
+    start_from_help
     assert_stop "Stop 1 of 6", "Start here"
     assert_no_current_path(/tour=/) # a reload doesn't start it again
     click_on "Next"
     assert_stop "Stop 2 of 6", "Requests"
+    page.send_keys(:f6) # Escape works from what it points at, too
     page.send_keys(:escape)
     assert_no_selector "#tour", visible: true
-    assert_equal "H1", evaluate_script("document.activeElement.tagName")
-    wait_for_status "skipped"
-    assert_equal "requests", @membership.tour_stop
+    wait_for_status "skipped", stop: "requests"
 
-    visit admin_root_path(tour: "start")
-    assert_stop "Stop 1 of 6", "Start here"
+    start_from_help
+    page.send_keys(:escape)
+    assert_no_selector "#tour", visible: true
+    assert_equal "H1", evaluate_script("document.activeElement.tagName"), "started with the page, so focus goes to its heading"
+
+    start_from_help
     within("#setup-client") { click_on "Add a client" } # nothing covers or blocks the page
     assert_current_path new_admin_client_path(from: "setup")
   end
 
-  test "it resumes after a look at the sample quote" do
+  test "it resumes after a look at the sample quote; following another link ends it there" do
     sign_in_as users(:one)
     visit admin_root_path
     click_on "Take a 2-minute tour"
@@ -100,16 +124,46 @@ class GuidedTourBrowserTest < ApplicationSystemTestCase
     assert_text "Jordan Rivera"
     visit admin_root_path
     assert_stop "Stop 3 of 6", "Quotes"
-    click_on "End tour"
+    wait_for_status "started", stop: "quotes"
+
+    click_on "Back"
+    assert_stop "Stop 2 of 6", "Requests"
+    find("[data-tour=requests]").click # the highlighted link: leaving ends the tour where it was
+    assert_selector "h1", text: "Requests"
+    wait_for_status "skipped", stop: "requests"
     visit admin_root_path
     assert_no_selector "#tour", visible: true
+  end
+
+  test "at 400% zoom the sheet never covers what it points at" do
+    sign_in_as users(:one)
+    page.driver.browser.execute_cdp("Emulation.setDeviceMetricsOverride", width: 320, height: 213, deviceScaleFactor: 1, mobile: false)
+    visit admin_root_path
+    execute_script("document.querySelector('#help-menu ~ .menu a[href$=\"tour=start\"]').click()") # the menu runs off a screen this short
+    assert_selector "#tour[role=dialog]", visible: true
+    covered = <<~JS
+      (() => { const sheet = document.getElementById("tour").getBoundingClientRect().top
+               const target = document.querySelector(".tour-target").getBoundingClientRect()
+               return target.top >= sheet || target.bottom <= 0 })()
+    JS
+    assert_selector "#tour.tour-sheet"
+    sleep 0.3 # scrolling settles
+    assert_not evaluate_script(covered), "the checklist is visible above the sheet"
+    click_on "Next"
+    assert_stop "Stop 2 of 6", "Requests"
+    sleep 0.3
+    assert_operator evaluate_script("document.querySelector('.tour-target').getBoundingClientRect().bottom"), :<=,
+                    evaluate_script("document.getElementById('tour').getBoundingClientRect().top") + 1
+  ensure
+    page.driver.browser.execute_cdp("Emulation.clearDeviceMetricsOverride")
   end
 
   test "on a phone it's a bottom sheet that steps through the menu, without motion when that's asked" do
     page.driver.browser.manage.window.resize_to(390, 844)
     page.driver.browser.execute_cdp("Emulation.setEmulatedMedia", features: [ { name: "prefers-reduced-motion", value: "reduce" } ])
     sign_in_as users(:one)
-    visit admin_root_path(tour: "start")
+    visit admin_root_path
+    start_from_help
     assert_stop "Stop 1 of 6", "Start here"
     assert_selector "#tour.tour-sheet"
     assert_operator evaluate_script("parseFloat(getComputedStyle(document.getElementById('tour')).animationDuration)"), :<, 0.01

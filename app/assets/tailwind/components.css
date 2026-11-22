@@ -655,6 +655,15 @@
   .tour-text { margin-top: 0.375rem; font-size: 0.875rem; color: var(--color-body); }
   .tour-link { display: inline-block; margin-top: 0.5rem; font-size: 0.8125rem; font-weight: 600; color: var(--color-canopy); text-decoration: underline; text-underline-offset: 2px; }
   .tour-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 0.875rem; }
-  .tour-target { outline: 3px solid var(--color-leaf); outline-offset: 3px; border-radius: 8px; }
-  .tour-open .side-nav { padding-bottom: var(--tour-sheet-height, 0); }
+  .tour-target { outline: 3px solid var(--color-canopy); outline-offset: 3px; border-radius: 8px; } /* 3:1 on light pages */
+  #app-sidebar .tour-target { outline-color: var(--color-leaf); } /* and on the dark menu */
+  /* While the phone's sheet is open, the page and the target scroll clear of it (WCAG 2.4.11). */
+  html.tour-open { scroll-padding-bottom: var(--tour-sheet-height, 0px); }
+  .tour-open .tour-target { scroll-margin-bottom: var(--tour-sheet-height, 0px); }
+  @media (max-width: 959.98px) { .tour-open .content { padding-bottom: max(5.5rem, calc(var(--tour-sheet-height, 0px) + 1rem)); } }
+  /* the whole menu scrolls, so even on a very short screen a link can sit above the sheet */
+  @media (max-width: 959.98px) {
+    .tour-open .side { overflow-y: auto; padding-bottom: var(--tour-sheet-height, 0px); }
+    .tour-open .side-nav { flex: none; overflow: visible; }
+  }
 }

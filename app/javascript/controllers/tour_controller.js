@@ -1,67 +1,95 @@
 import { Controller } from "@hotwired/stimulus"
 
 // ACC-08: the guided tour. One non-modal dialog steps through the stops, pointing at the element
-// with data-tour="<target>" (the first of a stop's targets on the page). It takes focus at each
-// stop and gives it back at the end, Escape ends it, and the page stays usable underneath: there
-// is no backdrop and no focus trap. Below the desktop breakpoint it is a bottom sheet, and stops
-// in the menu open the menu drawer.
+// with data-tour="<target>" (the first of a stop's targets on the page) and saying what it points
+// at for screen readers. It takes focus at each stop and gives it back at the end; F6 moves focus
+// between it and what it points at; Escape ends it (unless a menu or modal is open). There is no
+// backdrop and no focus trap. Below the desktop breakpoint it is a bottom sheet that the page and
+// the target scroll clear of, and stops in the menu open the menu drawer.
 //
-// Anything with data-tour-start starts it. Where it is is kept for this tab (sessionStorage), so
-// it resumes after a look at another page; first-time tips stay away while it runs. Each move is
-// reported to the server for measurement, unless support is viewing as the member.
+// Anything with data-tour-start starts it. Leaving the page ends it where it was, except through
+// the tour's own sample-quote link: then its place is kept for this tab (sessionStorage, keyed by
+// business and member, for 30 minutes) and it resumes on return. Moves are reported to the server
+// in order, for measurement, unless support is viewing as the member.
 const NARROW = "(max-width: 959.98px)"
 const GAP = 12
+const KEEP_FOR = 30 * 60 * 1000
 
 export default class extends Controller {
-  static targets = ["dialog", "count", "title", "text", "link", "back", "next"]
-  static values = { tour: Object, url: String, record: Boolean, scope: String, autostart: Boolean, count: String, next: String, done: String }
+  static targets = ["dialog", "count", "title", "text", "link", "back", "next", "pointing"]
+  static values = {
+    tour: Object, url: String, record: Boolean, scope: String, autostart: Boolean,
+    count: String, next: String, done: String, pointing: String, inMenu: String, missing: String
+  }
 
   connect() {
+    this.queue = Promise.resolve()
     this.startClick = (event) => {
       const button = event.target.closest("[data-tour-start]")
       if (!button) return
       event.preventDefault()
       this.start(button)
     }
-    this.reposition = () => { if (this.current) this.place() }
+    this.keys = (event) => this.keydown(event)
+    this.reposition = () => { if (this.running) this.place() }
     this.beforeCache = () => this.hide()
+    this.pagehide = () => this.leave()
     document.addEventListener("click", this.startClick)
+    document.addEventListener("keydown", this.keys, { capture: true })
     window.addEventListener("resize", this.reposition)
     document.addEventListener("scroll", this.reposition, { passive: true, capture: true })
     document.addEventListener("turbo:before-cache", this.beforeCache)
+    window.addEventListener("pagehide", this.pagehide)
 
+    // After a Turbo visit finishes rendering (it scrolls to the top, which would undo ours).
+    const kept = this.takeKept()
+    const later = (fn) => requestAnimationFrame(() => requestAnimationFrame(() => { if (this.element.isConnected) fn() }))
     if (this.autostartValue) {
       const url = new URL(window.location.href)
       url.searchParams.delete("tour")
       history.replaceState(history.state, "", url)
-      this.start()
-    } else if (this.saved !== null && this.stops[this.saved]) {
-      this.show(this.saved, { quietly: true })
+      later(() => this.start())
+    } else if (kept !== null && this.stops[kept]) {
+      later(() => this.show(kept, { quietly: true }))
     }
   }
 
   disconnect() {
+    this.leave()
     document.removeEventListener("click", this.startClick)
+    document.removeEventListener("keydown", this.keys, { capture: true })
     window.removeEventListener("resize", this.reposition)
     document.removeEventListener("scroll", this.reposition, { capture: true })
     document.removeEventListener("turbo:before-cache", this.beforeCache)
+    window.removeEventListener("pagehide", this.pagehide)
     this.hide()
   }
 
   get stops() { return this.tourValue.stops || [] }
+  get running() { return this.index !== undefined && this.index !== null }
   get storageKey() { return `shadetree:tour:${this.scopeValue}` }
 
-  get saved() {
+  // The place kept by the sample-quote link, if it's recent; read once.
+  takeKept() {
     try {
-      const value = sessionStorage.getItem(this.storageKey)
-      return value === null ? null : Number(value)
+      const kept = JSON.parse(sessionStorage.getItem(this.storageKey) || "null")
+      sessionStorage.removeItem(this.storageKey)
+      return kept && Date.now() - kept.at < KEEP_FOR ? kept.index : null
     } catch { return null }
   }
 
-  set saved(index) {
-    try {
-      index === null ? sessionStorage.removeItem(this.storageKey) : sessionStorage.setItem(this.storageKey, String(index))
-    } catch { /* private mode: the tour just won't resume */ }
+  // The tour's own link: keep its place so it resumes on return.
+  keep() {
+    this.keeping = true
+    try { sessionStorage.setItem(this.storageKey, JSON.stringify({ index: this.index, at: Date.now() })) } catch { /* it just won't resume */ }
+  }
+
+  // Leaving the page any other way (a highlighted menu link, the back button) ends the tour
+  // where it was: recorded as ended at that stop.
+  leave() {
+    if (!this.running || this.keeping) return
+    this.record("end", this.stops[this.index].key)
+    this.index = null
   }
 
   start(opener = document.activeElement) {
@@ -92,17 +120,32 @@ export default class extends Controller {
   }
 
   keydown(event) {
-    if (event.key !== "Escape") return
-    event.preventDefault()
-    event.stopPropagation()
-    this.end()
+    if (!this.running || event.defaultPrevented) return
+    if (event.key === "F6") {
+      event.preventDefault()
+      this.toggleFocus()
+    } else if (event.key === "Escape" && !document.querySelector(".menu:not([hidden]), dialog[open]")) {
+      event.preventDefault()
+      event.stopPropagation()
+      this.end()
+    }
+  }
+
+  // F6: from the tour to what it points at, and back.
+  toggleFocus() {
+    if (!this.dialogTarget.contains(document.activeElement)) return this.dialogTarget.focus({ preventScroll: true })
+    const target = this.current
+    if (!target) return
+    const focusable = target.matches("a[href], button, input, select, textarea, [tabindex]") ? target : target.querySelector("a[href], button, input, select, textarea")
+    if (focusable) return focusable.focus()
+    target.setAttribute("tabindex", "-1")
+    target.focus()
   }
 
   show(index, { quietly = false } = {}) {
     const stop = this.stops[index]
     const last = index === this.stops.length - 1
     this.index = index
-    this.saved = index
     if (!quietly) this.record("step", stop.key)
 
     this.countTarget.textContent = this.countValue.replace("%{at}", index + 1).replace("%{of}", this.stops.length)
@@ -119,7 +162,9 @@ export default class extends Controller {
     this.unmark()
     this.current = this.findTarget(stop)
     this.current?.classList.add("tour-target")
+    this.pointingTarget.textContent = this.describe(this.current)
     this.dialogTarget.hidden = false
+    this.dialogTarget.scrollTop = 0 // a short screen's sheet scrolls: each stop starts at its title
     document.documentElement.classList.add("tour-open")
     this.useDrawer(this.current?.closest("#app-sidebar"))
     this.place()
@@ -136,14 +181,22 @@ export default class extends Controller {
     return null
   }
 
+  // "Pointing at: Requests, in the menu", from the target's label, heading or text.
+  describe(element) {
+    if (!element) return this.missingValue
+    const name = (element.getAttribute("aria-label") || element.querySelector("h2, h3")?.textContent ||
+                  element.querySelector("span")?.textContent || element.textContent).trim()
+    return this.pointingValue.replace("%{name}", name) + (element.closest("#app-sidebar") ? this.inMenuValue : "")
+  }
+
   place() {
     const dialog = this.dialogTarget
     const narrow = window.matchMedia(NARROW).matches
     dialog.classList.toggle("tour-sheet", narrow)
+    // The page, and the target, scroll clear of the sheet (WCAG 2.4.11).
+    document.documentElement.style.setProperty("--tour-sheet-height", narrow ? `${dialog.offsetHeight}px` : "0px")
     if (narrow) {
       dialog.style.left = dialog.style.top = ""
-      // Room under the menu, so a link near its foot isn't hidden by the sheet.
-      document.documentElement.style.setProperty("--tour-sheet-height", `${dialog.offsetHeight}px`)
       return
     }
 
@@ -155,13 +208,13 @@ export default class extends Controller {
     let top = vh - box.height - 24 // no target on the page: the corner
     if (this.current) {
       const rect = this.current.getBoundingClientRect()
-      const fits = { right: rect.right + GAP + box.width <= vw - GAP, below: rect.bottom + GAP + box.height <= vh - GAP, above: rect.top - GAP - box.height >= GAP }
-      if (fits.right && (this.current.closest("#app-sidebar") || !(fits.below || fits.above))) {
+      // To the right where it fits (clear of the page's heading), else below or above.
+      if (rect.right + GAP + box.width <= vw - GAP) {
         left = rect.right + GAP
         top = rect.top
-      } else if (fits.below || fits.above) {
+      } else if (rect.bottom + GAP + box.height <= vh - GAP || rect.top - GAP - box.height >= GAP) {
         left = rect.left
-        top = fits.below ? rect.bottom + GAP : rect.top - GAP - box.height
+        top = rect.bottom + GAP + box.height <= vh - GAP ? rect.bottom + GAP : rect.top - GAP - box.height
       }
     }
     dialog.style.left = `${clamp(left, vw - box.width)}px`
@@ -179,7 +232,7 @@ export default class extends Controller {
 
   // Closes the tour; focus goes to the checklist step it leads to, else back where it started.
   close(nextStep = null) {
-    this.saved = null
+    this.index = null
     this.hide()
     this.useDrawer(false)
     const step = nextStep && document.getElementById(nextStep.id)?.querySelector("a, button")
@@ -195,6 +248,7 @@ export default class extends Controller {
     if (!this.hasDialogTarget) return
     this.dialogTarget.hidden = true
     document.documentElement.classList.remove("tour-open")
+    document.documentElement.style.removeProperty("--tour-sheet-height")
     this.unmark()
   }
 
@@ -205,14 +259,16 @@ export default class extends Controller {
 
   get motion() { return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }
 
+  // One at a time, in order: a quick click after the start mustn't land before it.
   record(event, stop) {
     if (!this.recordValue) return
-    fetch(this.urlValue, {
+    const body = JSON.stringify({ event, stop })
+    this.queue = this.queue.then(() => fetch(this.urlValue, {
       method: "PATCH",
       headers: { Accept: "application/json", "Content-Type": "application/json", "X-CSRF-Token": document.querySelector("meta[name=csrf-token]")?.content },
-      body: JSON.stringify({ event, stop }),
+      body,
       credentials: "same-origin",
       keepalive: true
-    }).catch(() => {})
+    })).catch(() => {})
   }
 }

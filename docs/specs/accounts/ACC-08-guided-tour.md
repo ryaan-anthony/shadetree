@@ -80,8 +80,10 @@ from Help.
   replay can't overwrite a skip, or turn a finished tour back into started.
 - Support viewing as a member sees the tour but never records it (the endpoint is read-only
   under impersonation, and the page doesn't report moves).
-- One non-modal dialog (`role=dialog`, `aria-modal=false`) moves between stops: it takes focus
-  at each, Escape or End tour closes it and focus goes back (or to the checklist step it leads
-  to). No backdrop or focus trap. Below 960px it's a bottom sheet, opening the menu drawer for
-  menu stops. Where it is lives in the tab (sessionStorage), so it resumes after a look elsewhere.
+- One non-modal dialog (`role=dialog`, `aria-modal=false`) moves between stops, saying what it
+  points at; it takes focus at each, F6 moves between it and the target, Escape ends it, and
+  focus goes back (or to the checklist step it leads to). No backdrop or focus trap. Below
+  960px it's a bottom sheet the page and target scroll clear of, opening the menu for menu stops.
+- Leaving the page ends the tour at that stop (recorded as ended there), except through its own
+  sample-quote link: it resumes on return (this tab, 30 minutes; forgotten on sign-out).
 - Dev seeds: `new@example.com` owns a brand-new business with the offer and checklist showing.

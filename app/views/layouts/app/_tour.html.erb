@@ -5,22 +5,27 @@
      data-tour-tour-value="<%= tour.as_json.to_json %>"
      data-tour-url-value="<%= admin_tour_path %>"
      data-tour-record-value="<%= record_guidance? %>"
-     data-tour-scope-value="<%= current_business.uid %>"
+     data-tour-scope-value="<%= "#{current_business.uid}:#{Current.membership.uid}" %>"
      data-tour-autostart-value="<%= params[:tour] == "start" %>"
      data-tour-count-value="<%= t("guidance.tour.count", at: "%{at}", of: "%{of}") %>"
      data-tour-next-value="<%= t("guidance.tour.next") %>"
-     data-tour-done-value="<%= t("guidance.tour.done") %>">
-  <div class="tour" role="dialog" aria-modal="false" aria-labelledby="tour-title" aria-describedby="tour-count tour-text"
-       tabindex="-1" hidden data-tour-target="dialog" data-action="keydown->tour#keydown" id="tour">
+     data-tour-done-value="<%= t("guidance.tour.done") %>"
+     data-tour-pointing-value="<%= t("guidance.tour.pointing", name: "%{name}") %>"
+     data-tour-in-menu-value="<%= t("guidance.tour.in_menu") %>"
+     data-tour-missing-value="<%= t("guidance.tour.missing") %>">
+  <div class="tour" role="dialog" aria-modal="false" aria-labelledby="tour-title" aria-describedby="tour-count tour-text tour-pointing tour-keys"
+       tabindex="-1" hidden data-tour-target="dialog" id="tour">
     <p class="tour-count" id="tour-count" data-tour-target="count"></p>
     <h2 class="tour-title" id="tour-title" data-tour-target="title"></h2>
     <p class="tour-text" id="tour-text" data-tour-target="text"></p>
-    <a class="tour-link" data-tour-target="link" hidden></a>
+    <p class="sr-only" id="tour-pointing" data-tour-target="pointing"></p>
+    <p class="sr-only" id="tour-keys"><%= t("guidance.tour.keys") %></p>
+    <a class="tour-link" data-tour-target="link" data-action="tour#keep" hidden></a>
     <div class="tour-actions">
-      <button type="button" class="<%= button_classes(:ghost, :sm) %>" data-action="tour#end"><%= t("guidance.tour.end") %></button>
-      <span class="flex-1"></span>
       <button type="button" class="<%= button_classes(:secondary, :sm) %>" data-tour-target="back" data-action="tour#back"><%= t("guidance.tour.back") %></button>
       <button type="button" class="<%= button_classes(:primary, :sm) %>" data-tour-target="next" data-action="tour#next"></button>
+      <span class="flex-1"></span>
+      <button type="button" class="<%= button_classes(:ghost, :sm) %>" data-action="tour#end"><%= t("guidance.tour.end") %></button>
     </div>
   </div>
 </div>
