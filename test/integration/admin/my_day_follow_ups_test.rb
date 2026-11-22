@@ -17,8 +17,9 @@ class Admin::MyDayFollowUpsTest < ActionDispatch::IntegrationTest
       job = Job.create!(client: maria, property: maria.properties.first, title: "Spring cleanup")
       book = ->(at) { job.visits.new(scheduled_on: today, timing: "exact", start_time: at, duration_minutes: 60, assignee_ids: [ @tech.id ]).tap { _1.schedule!(by: @owner) } }
       @one_pm, @three_pm = book.("13:00"), book.("15:00")
+      phones = (1..).each
       request = ->(name, **when_) do
-        client = Client.create!(display_name: name, contact_methods_attributes: [ { kind: "phone", value: "555010#{rand(1000..9999)}" } ])
+        client = Client.create!(display_name: name, contact_methods_attributes: [ { kind: "phone", value: format("51255501%02d", phones.next) } ])
         ServiceRequest.create!(client:, source: "phone", description: "Fence for #{name}").tap { RequestFollowUp.assign!(_1, { user: @tech, **when_ }, by: @owner) }
       end
       @two_pm = request.("Sam Ortiz", scheduled_on: today, timing: "exact", start_time: "14:00")
@@ -82,11 +83,56 @@ class Admin::MyDayFollowUpsTest < ActionDispatch::IntegrationTest
     assert_redirected_to admin_my_request_path(@two_pm, anchor: "photos")
   end
 
-  test "My day stays quick with follow-ups on it" do
+  # My day's statements on a fresh sign-in, so each count is taken the same way.
+  def my_day_queries
+    sign_out @tech
+    sign_in @tech
+    post switch_admin_business_path, params: { business: @business.uid }
     queries = 0
     callback = ->(*, payload) { queries += 1 unless payload[:name] == "SCHEMA" || payload[:cached] }
     ActiveSupport::Notifications.subscribed(callback, "sql.active_record") { get admin_my_day_path }
     assert_response :success
-    assert_operator queries, :<, 30
+    queries
+  end
+
+  test "My day's queries don't grow with what's on it" do
+    before = my_day_queries
+    as_business(@business) do
+      client = Client.create!(display_name: "Busy", contact_methods_attributes: [ { kind: "phone", value: "5125550199" } ])
+      job = Job.create!(client:, title: "Busy week")
+      20.times do |n|
+        on = Date.new(2026, 11, 23) + (n % 5)
+        job.visits.new(scheduled_on: on, timing: "exact", start_time: "08:00", duration_minutes: 30, assignee_ids: [ @tech.id ]).schedule!(by: @owner)
+        RequestFollowUp.assign!(ServiceRequest.create!(client:, source: "phone", description: "More #{n}"), { user: @tech, scheduled_on: on }, by: @owner)
+      end
+    end
+    assert_equal before, my_day_queries
+  end
+
+  test "a done one from an earlier day waits under Still open from earlier until it's passed back" do
+    patch done_admin_my_request_path(@two_pm)
+    travel 1.day
+    get admin_my_day_path
+    assert_select ".card", /Still open from earlier.*Sam Ortiz/m
+    patch pass_back_admin_my_request_path(@two_pm)
+    get admin_my_day_path
+    assert_select "#my-request-#{@two_pm.uid}", 0
+  end
+
+  test "work at a location in another zone is placed on that location's day and labelled with its zone" do
+    travel_to Time.utc(2026, 11, 23, 5, 30) # 00:30 Monday in New York; 7:30 pm Sunday in Honolulu
+    @business.update!(plan_overrides: { "features" => { "locations" => true } })
+    island = as_business(@business) do
+      honolulu = Location.create!(name: "Island yard", timezone: "Pacific/Honolulu")
+      client = Client.create!(display_name: "Kai Akana", contact_methods_attributes: [ { kind: "phone", value: "8085550123" } ])
+      ServiceRequest.create!(client:, source: "phone", description: "Lanai", location: honolulu)
+                    .tap { RequestFollowUp.assign!(_1, { user: @tech, scheduled_on: Date.new(2026, 11, 22), timing: "exact", start_time: "20:00" }, by: @owner) }
+    end
+    get admin_my_day_path
+    today = css_select("li[id^=my-]").map { _1["id"] }
+    assert_equal "my-request-#{island.uid}", today.first, "still Sunday there, so today, not overdue"
+    assert_select "#my-request-#{island.uid}", /8 pm HST/
+    assert_select "#my-visit-#{@one_pm.uid}", /1 pm/
+    assert_select "#my-visit-#{@one_pm.uid}", { text: /EST/, count: 0 }, "the business's own zone isn't repeated"
   end
 end

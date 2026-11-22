@@ -2,6 +2,9 @@
 # then anything still open from earlier, then the next two weeks. Technicians land here.
 # JOB-06: requests they're following up sit among them, at their time (or with the anytime
 # ones); a done one stays until they create the quote or pass it back.
+#
+# Each visit or follow-up is placed by the day on its own clock (CAT-07: a location may be in
+# another zone), so "today" is today where the work is.
 class Admin::MyDayController < Admin::BaseController
   # OPS-03: what support may do while viewing as a member
   impersonation :allowed
@@ -10,18 +13,23 @@ class Admin::MyDayController < Admin::BaseController
   UPCOMING_DAYS = 14
 
   def show
-    today = current_business.today
-    mine = Visit.joins(:assignments).where(visit_assignments: { user_id: current_user.id }).includes(:business, job: %i[client property]).in_order
-    follow_ups = RequestFollowUp.where(user_id: current_user.id, scheduled_on: ..(today + UPCOMING_DAYS))
-                                .includes(service_request: %i[client property location]).to_a
-    follow_ups.each { _1.association(:business).target = current_business }
-    @today = in_time_order(mine.where(scheduled_on: today).where.not(status: "cancelled").to_a + follow_ups.select { _1.scheduled_on == today })
-    @earlier = in_time_order(mine.open.where(scheduled_on: ...today).to_a + follow_ups.select { _1.scheduled_on < today })
-    @upcoming = in_time_order(mine.open.where(scheduled_on: (today + 1)..(today + UPCOMING_DAYS)).to_a + follow_ups.select { _1.scheduled_on > today }).group_by(&:scheduled_on)
+    # A day either side of the business's, for locations whose today differs.
+    last = current_business.today + UPCOMING_DAYS + 1
+    recent = (current_business.today - 1)..last
+    mine = Visit.joins(:assignments).where(visit_assignments: { user_id: current_user.id }).includes(:business, job: %i[client property location])
+    visits = mine.open.where(scheduled_on: ..last).or(mine.where(scheduled_on: recent).where.not(status: "cancelled")).to_a
+    follow_ups = RequestFollowUp.where(user_id: current_user.id, scheduled_on: ..last).includes(service_request: %i[client property location]).to_a
+    (visits + follow_ups).each { _1.association(:business).target = current_business }
+    items = (visits + follow_ups).map { [ _1, _1.time_zone.today ] }
+    current = ->(item) { !item.is_a?(Visit) || item.open? }
+    @today = in_time_order(items.select { |item, today| item.scheduled_on == today }.map(&:first))
+    @earlier = in_time_order(items.select { |item, today| item.scheduled_on < today && current.(item) }.map(&:first))
+    @upcoming = in_time_order(items.select { |item, today| item.scheduled_on > today && item.scheduled_on <= today + UPCOMING_DAYS && current.(item) }.map(&:first))
+                .group_by(&:scheduled_on)
   end
 
   private
 
-  # Visits and follow-ups by day, timed ones by their start, then the anytime ones.
+  # Visits and follow-ups by day, timed ones by when they start, then the anytime ones.
   def in_time_order(items) = items.sort_by { [ _1.scheduled_on, _1.starts_at ? 0 : 1, _1.starts_at || Time.at(0), _1.is_a?(Visit) ? 0 : 1, _1.id ] }
 end

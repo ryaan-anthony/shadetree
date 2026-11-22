@@ -9,7 +9,7 @@ class Admin::MyRequestNotesController < Admin::BaseController
     if note.save
       redirect_to admin_my_request_path(@request, anchor: "notes"), notice: "Note added."
     else
-      redirect_to admin_my_request_path(@request, anchor: "notes"), alert: "Write something before adding the note."
+      redirect_to admin_my_request_path(@request, anchor: "notes"), alert: note.errors.full_messages.to_sentence
     end
   end
 end

@@ -34,4 +34,14 @@ class RequestFollowUpsTest < ApplicationSystemTestCase
     assert_selector "#follow-up", text: /Call, .* · 9 am/
     assert_equal "Ask about the side gate", Tenancy.with_business(@business) { @request_record.reload.follow_up.instructions }
   end
+
+  # JOB-06: a site photo goes up from the follow-up's page as on a visit, one at a time.
+  test "add a site photo from the follow-up's page" do
+    Tenancy.with_business(@business) { RequestFollowUp.assign!(@request_record, { user: @owner, scheduled_on: @business.today }, by: @owner) }
+    visit admin_my_request_path(@request_record)
+    attach_file "choose-photos", file_fixture("logo.png").to_s, make_visible: true
+    assert_selector "[role=status]", text: "Photo 1 added.", visible: :all
+    assert_selector "#request-site-photos img[alt='Site photo 1']"
+    assert_equal 1, Tenancy.with_business(@business) { @request_record.site_photos.count }
+  end
 end

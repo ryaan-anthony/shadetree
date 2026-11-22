@@ -76,7 +76,7 @@
   <% end %>
 
   <%# Photos: take one with the camera, or choose several already taken. %>
-  <% photos = visit.photos.includes(:blob).to_a %>
+  <% photos = visit.photos.includes(:blob).order(:id).to_a %>
   <%= card title: "Photos", id: "photos", subtitle: "Before and after, damage, anything the office should see." do %>
     <div data-controller="photo-upload" data-photo-upload-url-value="<%= admin_my_visit_photos_path(visit) %>" data-photo-upload-count-value="<%= photos.size %>"
          data-action="online@window->photo-upload#reconnected beforeunload@window->photo-upload#guard turbo:before-visit@document->photo-upload#confirmLeave submit@document->photo-upload#confirmLeave">

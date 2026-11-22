@@ -21,7 +21,7 @@
   <% end %>
 
   <% if @earlier.any? %>
-    <%= card title: "Still open from earlier", subtitle: "Complete these, or tell the office.", flush: true do %>
+    <%= card title: "Still open from earlier", subtitle: "Finish these, or tell the office. Done requests stay until they're quoted or passed back.", flush: true do %>
       <ul class="list">
         <%= render partial: "admin/my_day/item", collection: @earlier, as: :item %>
       </ul>

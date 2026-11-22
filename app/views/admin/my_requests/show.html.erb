@@ -27,7 +27,7 @@
               <%= form_with url: pass_back_admin_my_request_path(request_record), method: :patch, class: "space-y-4" do %>
                 <div class="field">
                   <label class="label" for="pass-back-note">What you found <span class="label-optional">(optional)</span></label>
-                  <%= text_area_tag :note, nil, id: "pass-back-note", rows: 4, maxlength: 5_000, class: "textarea", placeholder: "About 40 m of fence; two posts rotten. Gate is fine." %>
+                  <%= text_area_tag :note, nil, id: "pass-back-note", rows: 4, maxlength: 5_000, class: "textarea" %>
                 </div>
                 <div class="flex justify-end gap-2">
                   <button type="button" class="<%= button_classes(:secondary) %>" data-action="modal#close">Not yet</button>
@@ -56,7 +56,7 @@
         <div class="mt-4 rounded-control bg-warning-50 p-3 text-sm"><p class="font-semibold text-ink">Getting in</p><p class="mt-1 whitespace-pre-line text-body"><%= request_record.property.access_notes %></p></div>
       <% end %>
     <% else %>
-      <p class="text-sm2 text-muted">No address on this request. Call to ask where to go.</p>
+      <p class="text-sm2 text-muted">No address on file. Call to ask where to go.</p>
     <% end %>
     <% phone = request_record.contact_phone || client.primary_phone&.value %>
     <% if phone %>
@@ -88,9 +88,9 @@
   <% end %>
 
   <%# Photos from site: take one with the camera, or choose several already taken (as on a visit). %>
-  <% photos = request_record.site_photos.includes(:blob).to_a %>
+  <% photos = request_record.site_photos.includes(:blob).order(:id).to_a %>
   <%= card title: "Site photos", id: "photos", subtitle: "What you saw, for whoever quotes it." do %>
-    <div data-controller="photo-upload" data-photo-upload-url-value="<%= admin_my_request_photos_path(request_record) %>" data-photo-upload-count-value="<%= photos.size %>"
+    <div data-controller="photo-upload" data-photo-upload-url-value="<%= admin_my_request_photos_path(request_record) %>" data-photo-upload-count-value="<%= photos.size %>" data-photo-upload-noun-value="request"
          data-action="online@window->photo-upload#reconnected beforeunload@window->photo-upload#guard turbo:before-visit@document->photo-upload#confirmLeave submit@document->photo-upload#confirmLeave">
       <ul class="grid grid-cols-3 gap-2" data-photo-upload-target="list" id="request-site-photos">
         <% photos.each.with_index(1) do |photo, number| %>
@@ -130,7 +130,7 @@
       </ul>
     <% end %>
     <%= form_with model: @note, scope: :service_request_note, url: admin_my_request_notes_path(request_record), class: "border-t border-line p-4 first:border-t-0" do |f| %>
-      <%= f.field :body, as: :textarea, label: "Add a note", rows: 2, maxlength: 5_000, placeholder: "About 40 m of fence; two posts rotten." %>
+      <%= f.field :body, as: :textarea, label: "Add a note", rows: 2, maxlength: 5_000 %>
       <div class="mt-2 flex justify-end"><%= f.submit_button "Add note", variant: :secondary, class: "h-auto min-h-11" %></div>
     <% end %>
   <% end %>

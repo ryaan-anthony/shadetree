@@ -4,6 +4,14 @@ module JobsHelper
 
   def job_status_badge(job) = badge(job.status_label, tone: JOB_STATUS_TONES.fetch(job.status))
 
+  # CAT-07: " MST" after a time on My day when the work is in another zone than the business's
+  # (My day names the business's zone once at the top).
+  def other_zone_label(item)
+    return if item.starts_at.nil? || item.time_zone.tzinfo == current_business.time_zone.tzinfo
+
+    tag.span(" #{item.starts_at.in_time_zone(item.time_zone).strftime("%Z")}", class: "font-normal text-muted")
+  end
+
   # JOB-02: one line of a visit's history.
   def visit_event_text(event)
     data = event.data

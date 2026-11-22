@@ -41,7 +41,7 @@
           <% end %>
         </ul>
       <% end %>
-      <% if (site_photos = request_record.site_photos.includes(:blob).to_a).any? %><%# JOB-06: from whoever followed it up %>
+      <% if (site_photos = request_record.site_photos.includes(:blob).order(:id).to_a).any? %><%# JOB-06: from whoever followed it up %>
         <h2 class="mt-5 text-sm font-semibold text-ink">Site photos</h2>
         <ul class="mt-2 flex flex-wrap gap-1.5" id="site-photos">
           <% site_photos.each.with_index(1) do |photo, number| %>

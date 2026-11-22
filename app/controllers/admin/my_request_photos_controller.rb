@@ -16,7 +16,7 @@ class Admin::MyRequestPhotosController < Admin::BaseController
     elsif errors.any?
       respond_with_error(errors.first)
     else
-      render partial: "admin/my_requests/photo", locals: { photo: @request.site_photos.reload.last, request_record: @request, number: @request.site_photos.size }, status: :created
+      render partial: "admin/my_requests/photo", locals: { photo: @request.site_photos.reload.order(:id).last, request_record: @request, number: @request.site_photos.size }, status: :created
     end
   end
 
