@@ -28,10 +28,12 @@ class SubmitFeedbackTest < ApplicationSystemTestCase
       new MutationObserver(() => document.querySelectorAll("form button, form input[type=submit]").forEach((b) => window.seenLabels.push((b.value || b.textContent).trim())))
         .observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true })
     JS
-    click_on "Add item"
+    # The button's label may be "Add item" or "Add service" (#298 renames it); either says "Adding…".
+    submit = "form[action='#{admin_catalog_items_path}'] [type=submit]"
+    find(submit).click
     assert_selector ".banner-danger", text: /to fix/
     assert_includes evaluate_script("window.seenLabels"), "Adding…"
-    assert_button "Add item"
+    assert_match(/\AAdd (item|service)\z/, find(submit).value)
     assert_no_selector "form[aria-busy]"
   end
 
