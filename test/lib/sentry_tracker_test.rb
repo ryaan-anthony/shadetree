@@ -168,19 +168,39 @@ class SentryTrackerTest < ActionDispatch::IntegrationTest
     assert_equal [ 10, 12 ], [ sentry_events.count { _1.exception }, sentry_events.count { _1.message.present? } ]
   end
 
-  test "the job health check checks in with Sentry Cron: error while jobs fail, ok after" do
+  def in_environment(name)
+    previous, ENV["SENTRY_ENVIRONMENT"] = ENV["SENTRY_ENVIRONMENT"], name
+    yield
+  ensure
+    ENV["SENTRY_ENVIRONMENT"] = previous
+  end
+
+  test "production's job health check checks in with Sentry Cron: error while backlogged, ok after; failed jobs don't fail it" do
+    config = Rails.configuration.x.observability
     cache, Rails.cache = Rails.cache, ActiveSupport::Cache::MemoryStore.new
-    with_solid_queue_tables do
-      fail_solid_queue_job("QuotePdfJob", at: 5.minutes.ago)
-      JobHealth.check!
-      JobHealth.check!
+    in_environment("production") do
+      with_solid_queue_tables do
+        fail_solid_queue_job("QuotePdfJob", at: 5.minutes.ago)
+        JobHealth.check!
+        config.job_backlog_threshold = 0
+        enqueue_solid_queue_job
+        JobHealth.check!
+        config.job_backlog_threshold = 100
+        JobHealth.check!
+      end
     end
 
     check_ins = sentry_events.grep(Sentry::CheckInEvent)
-    assert_equal [ [ "job-health", :error ], [ "job-health", :ok ] ], check_ins.map { [ _1.monitor_slug, _1.status ] }
-    assert_equal 1, sentry_events.count { _1.is_a?(Sentry::ErrorEvent) } # the alert, once
+    assert_equal [ [ "job-health", :ok ], [ "job-health", :error ], [ "job-health", :ok ] ], check_ins.map { [ _1.monitor_slug, _1.status ] }
+    assert_equal [ "Background jobs failed", "Job queue backlog over threshold" ], sentry_events.grep(Sentry::ErrorEvent).map(&:message)
   ensure
+    config.job_backlog_threshold = 100
     Rails.cache = cache
+  end
+
+  test "staging doesn't check in: the free plan's one monitor is production's" do
+    in_environment("staging") { with_solid_queue_tables { JobHealth.check! } }
+    assert_empty sentry_events.grep(Sentry::CheckInEvent)
   end
 
   test "stale backups fail the job-health check-in and arrive as one warning message" do
@@ -189,7 +209,7 @@ class SentryTrackerTest < ActionDispatch::IntegrationTest
     dir, previous = Dir.mktmpdir, ENV["BACKUP_STATUS_DIR"]
     ENV["BACKUP_STATUS_DIR"] = dir # no backup taken yet
     config.backup_alerts = true
-    with_solid_queue_tables { JobHealth.check! }
+    in_environment("production") { with_solid_queue_tables { JobHealth.check! } }
 
     assert_equal [ :error ], sentry_events.grep(Sentry::CheckInEvent).map(&:status)
     message = sentry_events.grep(Sentry::ErrorEvent).sole

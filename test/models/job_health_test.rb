@@ -49,8 +49,12 @@ class JobHealthTest < ActiveSupport::TestCase
       assert_empty @alerts # already alerted on
 
       fail_solid_queue_job("DataExportJob", at: 3.hours.ago) # a check that ran late still sees it
+      fail_solid_queue_job("QuotePdfJob", at: 1.minute.ago)
       JobHealth.check!
-      assert_equal [ 1, %w[DataExportJob] ], @alerts.sole.values_at(:new_failures, :failed_classes)
+      assert_empty @alerts # within JOB_ALERT_REPEAT_MINUTES of the last failure alert: still counting
+
+      JobHealth.check!(now: 61.minutes.from_now)
+      assert_equal [ 2, %w[DataExportJob QuotePdfJob] ], @alerts.sole.values_at(:new_failures, :failed_classes).then { [ _1, _2.sort ] }
     end
   end
 

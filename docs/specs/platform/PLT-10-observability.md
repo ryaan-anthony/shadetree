@@ -31,7 +31,8 @@ it, without leaking client personal data into third-party tools.
       to the maintainer. *Scoped (owner, 2026-11-22): Sentry's uptime monitor on production
       `/up`; the client-link page and staging are later (Out of scope).*
 - [x] Background job failures and queue backlog beyond a threshold raise an alert. *Through
-      Sentry: a message per problem and the `job-health` Cron monitor.*
+      Sentry, once `SENTRY_DSN` and the Cron alert rule exist: a message per problem and the
+      production `job-health` Cron monitor.*
 - [x] Basic performance visibility exists (slow requests, slow queries) for the staff app and
       client pages.
 - [x] A personal-data inventory lists where client PII is stored and confirms none is sent to
@@ -87,9 +88,10 @@ it, without leaking client personal data into third-party tools.
 - **Tracker:** Sentry, fed only through the hook (its own request, job and error-reporter
   capture off), with a `before_send` scrubber as a second layer; tested through Sentry's test
   transport. `SENTRY_DSN` (secret) and `SENTRY_ENVIRONMENT` (var) go through the deploy's env file.
-- **Job alerts:** `JOB_FAILED_THRESHOLD` (1) new failures; a lasting backlog repeats every
-  `JOB_ALERT_REPEAT_MINUTES` (60), as does a backup problem (`BACKUP_ALERTS`, on in production
-  mode); each check is a `job-health` check-in, so a stopped check shows as missed.
+- **Job alerts:** `JOB_FAILED_THRESHOLD` (1) new failures; each kind of alert (failures, backlog,
+  backups via `BACKUP_ALERTS`) repeats at most every `JOB_ALERT_REPEAT_MINUTES` (60), failures
+  counted since the last one. Production checks in as `job-health` (error on backlog or backups;
+  a stopped check shows as missed). Errors are capped at 10 an hour per class and place.
 - **Uptime targets:** `/up` now; `/up/jobs`, `/up/backup` and `/c/` + 32 × `1` (never issued:
   a 404 through the client-page stack, recording no view) are tested for later. Runbook: Monitoring.
 

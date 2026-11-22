@@ -1,7 +1,8 @@
 require "test_helper"
 
-# PLT-10: what the external uptime check polls (docs/runbooks/operations.md, Monitoring). Each
-# answers without side effects. The client-link check uses a well-formed token that is never
+# PLT-10: uptime targets (docs/runbooks/operations.md, Monitoring). Sentry's uptime monitor polls
+# production /up today; the client-link target is ready for a later monitor. Each answers without
+# side effects. The client-link check uses a well-formed token that is never
 # issued, so it runs the client page's whole stack (routing, rate limit, link lookup, the client
 # layout) without a real link, whose view would be recorded and could notify a business.
 class UptimeCheckTargetsTest < ActionDispatch::IntegrationTest

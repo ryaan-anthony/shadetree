@@ -3,21 +3,23 @@
 # the operator console's home. Only where Solid Queue runs (staging and production); elsewhere
 # jobs run in-process and there is no queue to look at.
 #
-# The check can't run when the workers are down, so /up/jobs (HealthController) answers 503 when
-# the oldest due job has waited too long, for the external uptime check to watch.
+# The check can't run when the workers are down: in production it checks in with Sentry Cron
+# (the "job-health" monitor, ADR 0027) every run, so Sentry flags the missed check-in; /up/jobs
+# (HealthController) answers 503 too, for a later uptime check. The check-in is error while the
+# queue is backlogged or backups are stale (failed jobs already arrive as their own errors).
 #
 # Thresholds (config/initializers/observability.rb): JOB_BACKLOG_THRESHOLD (jobs waiting,
 # default 100), JOB_WAIT_THRESHOLD (seconds the oldest due job has waited, default 600),
 # JOB_FAILED_THRESHOLD (new failures that raise an alert, default 1) and JOB_ALERT_REPEAT_MINUTES
-# (how often a backlog that persists is alerted again, default 60, to stay within Sentry's quota).
-# Each check also checks in with Sentry Cron (the "job-health" monitor, ADR 0027): error while a
-# problem lasts, ok after, and Sentry flags a missed check-in when the check itself stopped.
+# (default 60): each kind of alert is sent at most that often while it lasts, to stay within
+# Sentry's quota; a failure alert then counts every failure since the last one.
 #
 # Backups too (owner, 2026-11-22): where they're expected (BACKUP_ALERTS, on in staging and
 # production), BackupStatus's rule for /up/backup (no backup within BACKUP_MAX_AGE_HOURS, or no
 # passing restore drill since) raises an alert, repeated like the backlog, and fails the check-in.
 class JobHealth
-  # The newest failure already alerted on. If the cache loses it, failures from the last hour count.
+  # The newest failure already alerted on. If the cache loses it, failures from the last hour count
+  # (so, with JOB_FAILED_THRESHOLD above 1, older ones below the threshold are never alerted on).
   WATERMARK_KEY = "job_health/last_failed_execution_id"
   FALLBACK_WINDOW = 1.hour
   MONITOR = "job-health"
@@ -25,7 +27,7 @@ class JobHealth
   FAILED = "Background jobs failed"
   BACKLOG = "Job queue backlog over threshold"
   BACKUPS = "Backups stale or untested"
-  REPEATED = [ BACKLOG, BACKUPS ].freeze # alerted again at most every JOB_ALERT_REPEAT_MINUTES while they last
+  CHECK_IN_ERRORS = [ BACKLOG, BACKUPS ].freeze
 
   attr_reader :failed, :new_failures, :new_failed_classes, :backlog, :oldest_wait, :newest_failure_id
 
@@ -42,12 +44,22 @@ class JobHealth
   def self.check!(now: Time.current)
     health = current(now:, since_id: Rails.cache.read(WATERMARK_KEY)) or return
     alerts = health.alerts + backup_alerts(now)
-    Observability.tracker.check_in(MONITOR, alerts.any? ? :error : :ok, every_minutes: EVERY_MINUTES) if Observability.tracker.respond_to?(:check_in)
-    alerts.reject! { |message, _| REPEATED.include?(message) && !repeat_due?(message, now) }
+    check_in(alerts.any? { |message, _| CHECK_IN_ERRORS.include?(message) } ? :error : :ok)
+    alerts.select! { |message, _| repeat_due?(message, now) }
     alerts.each { |message, details| Observability.alert(message, **details) }
-    # Failures below the threshold keep counting towards it; alerted ones aren't counted again.
-    Rails.cache.write(WATERMARK_KEY, health.newest_failure_id) if health.newest_failure_id && !health.failures_pending?
-    alerts.each { |message, _| Rails.cache.write(alerted_key(message), now) if REPEATED.include?(message) }
+    alerts.each { |message, _| Rails.cache.write(alerted_key(message), now) }
+    # Failures not alerted on yet (below the threshold, or held back by the repeat interval) keep
+    # counting; alerted ones aren't counted again.
+    sent_failures = alerts.any? { |message, _| message == FAILED }
+    Rails.cache.write(WATERMARK_KEY, health.newest_failure_id) if health.newest_failure_id && (sent_failures || health.new_failures.zero?)
+  end
+
+  # Production only: the free plan has one Cron monitor, and an idle staging would miss check-ins.
+  def self.check_in(status)
+    tracker = Observability.tracker
+    return unless tracker.respond_to?(:check_in) && Observability.environment == "production"
+
+    tracker.check_in(MONITOR, status, every_minutes: EVERY_MINUTES)
   end
 
   # The same rule as /up/backup, where nightly backups run.
@@ -93,7 +105,6 @@ class JobHealth
   def backlogged? = backlog > self.class.backlog_threshold || stalled?
   def healthy? = failed.zero? && !backlogged?
   def failures_alerted? = new_failures >= self.class.failed_threshold
-  def failures_pending? = new_failures.positive? && !failures_alerted?
 
   # The most-failing job classes among every failure still waiting to be retried or discarded.
   def failed_classes

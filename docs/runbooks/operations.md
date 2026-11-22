@@ -214,7 +214,7 @@ Settings → Environments: **`staging`** (deployment branches: `main` only) and 
 | `STRUCTURED_LOGS` | var, optional | `true` (default) | `true` | JSON log lines (PLT-10) |
 | `SLOW_REQUEST_MS`, `SLOW_QUERY_MS` | vars, optional | `1000`, `250` | same | PLT-10 thresholds |
 | `JOB_BACKLOG_THRESHOLD`, `JOB_WAIT_THRESHOLD` | vars, optional | `100`, `600` | same | PLT-10 job alerts and `/up/jobs` |
-| `JOB_FAILED_THRESHOLD`, `JOB_ALERT_REPEAT_MINUTES` | vars, optional | `1`, `60` | same | New failed jobs that raise an alert; how often a lasting backlog is alerted again |
+| `JOB_FAILED_THRESHOLD`, `JOB_ALERT_REPEAT_MINUTES` | vars, optional | `1`, `60` | same | New failed jobs that raise an alert; how often each kind of job or backup alert may repeat |
 | `SENTRY_DSN` | secret, optional | the Sentry project's DSN | same DSN | Error tracking (PLT-10, ADR 0027). Unset: errors and alerts reach the log only |
 | `SENTRY_ENVIRONMENT` | var, optional | (`staging`) | (`production`) | Overrides the environment name Sentry shows; default the deploy's environment |
 | `JOB_CONCURRENCY` | var, optional | `1` | `1` | Solid Queue worker processes |
@@ -448,9 +448,9 @@ PDF (100–200 MB). On the 2 GB VMs keep it at 1; raise `APP_MEMORY` with it.
 | Alert | Raised by | Meaning | What to do |
 | --- | --- | --- | --- |
 | `error` (unhandled) | A request or job failed | A bug, or a dependency down | Find the request or job id in the logs; fix, or retry the job |
-| `Background jobs failed` | `JobHealthCheckJob`, every 10 minutes | At least `JOB_FAILED_THRESHOLD` jobs failed for good since the last alert (their classes listed) | See "Failed jobs" below |
+| `Background jobs failed` | `JobHealthCheckJob`, every 10 minutes, at most every `JOB_ALERT_REPEAT_MINUTES` | At least `JOB_FAILED_THRESHOLD` jobs failed for good since the last alert (counted and their classes listed; each failure also arrived as its own `error`) | See "Failed jobs" below |
 | `Job queue backlog over threshold` | Same, at most every `JOB_ALERT_REPEAT_MINUTES` | Too many jobs waiting, or the oldest due job has waited too long | Check Solid Queue's supervisor in the logs, then load: raise `JOB_CONCURRENCY` |
-| `job-health` monitor failed or missed | Sentry Cron (the check checks in every run) | Failed: one of the alerts above or below. Missed: the check didn't run, so workers or dispatcher are down | As above; for a missed one, `docker restart shadetree-production` |
+| `job-health` monitor failed or missed | Sentry Cron (production's check checks in every run; staging doesn't) | Failed: a backlog or a backup problem (failed jobs don't fail it). Missed: the check didn't run, so workers or dispatcher are down | As above; for a missed one, `docker restart shadetree-production` |
 | Jobs stalled | The missed `job-health` check-in above (`/up/jobs` answers 503 too; not polled yet) | The oldest due job has waited over `JOB_WAIT_THRESHOLD`: workers or dispatcher down | `docker restart shadetree-production`; if it persists, re-run the last deploy |
 | `Backups stale or untested` | `JobHealthCheckJob`, at most every `JOB_ALERT_REPEAT_MINUTES`; fails the `job-health` check-in (owner, 2026-11-22) | `/up/backup`'s rule: no backup in `BACKUP_MAX_AGE_HOURS`, or its nightly restore drill failed (`state` says which) | `journalctl --user -u shadetree-backup@production` on the VM ("Backups" above) |
 | Site down | Sentry uptime monitor on production `/up` | Three checks in a row failed (no answer, or not 2xx) | Check the VM, the container (`docker ps`) and the tunnel; roll back the last deploy if it's the cause |
@@ -484,10 +484,12 @@ are told apart by environment. Alerts: the default "new issue" email rule; add a
 **Free-tier limits** (Developer plan, checked 2026-11-22): 5,000 errors a month, one user,
 30 days of history, one Cron monitor and one uptime monitor; email alerts included. We use errors,
 the Cron monitor (`job-health`) and the uptime monitor (production `/up`); spans (5M), replays and
-logs stay unused. Past the error
-quota Sentry drops events until the month resets (spike protection is on by default), so keep
-noisy errors fixed or ignored; the log still has every one. A lasting backlog or backup problem
-costs at most 24 events a day each (`JOB_ALERT_REPEAT_MINUTES`).
+logs stay unused. Past the error quota Sentry drops events until the month resets (spike
+protection is on by default), so keep noisy errors fixed or ignored; the log still has every
+one. The app caps each error class and place at 10 events an hour per process, and each job or
+backup alert at one per `JOB_ALERT_REPEAT_MINUTES`: at most 24 a day per kind of alert, 72 for
+all three. If the plan allows it, also set a project rate limit (Project settings → Client keys
+→ the key → Rate limiting), for example 500 an hour.
 
 **Uptime check** (owner, 2026-11-22): Sentry's one included uptime monitor, on production `/up`.
 Set it up once production answers:
