@@ -4,24 +4,22 @@
   <% unless @client.archived? || @client.erased? %>
     <%= button_to admin_quotes_path, params: { "quote[client]" => @client.uid }, class: button_classes(:primary), form: { class: "contents" } do %><%= icon "plus" %> New quote<% end %>
   <% end %>
-  <%# PLT-14: archiving a client is Destructive, so it's a button, not a menu item. %>
-  <% if @client.erased? %>
-  <% elsif @client.archived? %>
-    <%= button_to restore_admin_client_path(@client), method: :patch, class: button_classes(:secondary), form: { class: "contents" } do %><%= icon "archive" %> Restore<% end %>
-  <% else %>
-    <%= button_to archive_admin_client_path(@client), method: :patch, class: button_classes(:destructive), form: { class: "contents" } do %><%= icon "archive" %> Archive<% end %>
-  <% end %>
-  <% erasable = can?(:export_data) && !@client.erased? %>
-  <% if erasable || @client.deletable? %>
   <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
     <button type="button" class="<%= button_classes(:tertiary, :icon) %>" data-menu-target="button" data-action="menu#toggle"
             aria-haspopup="true" aria-expanded="false" aria-label="More actions"><%= icon "more-horizontal" %></button>
     <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
-      <% if erasable %>
+      <% if @client.erased? %>
+      <% elsif @client.archived? %>
+        <%= button_to restore_admin_client_path(@client), method: :patch, class: "menu-item", form: { class: "contents" } do %><%= icon "archive" %> Restore<% end %>
+      <% else %>
+        <%= button_to archive_admin_client_path(@client), method: :patch, class: "menu-item", form: { class: "contents" } do %><%= icon "archive" %> Archive<% end %>
+      <% end %>
+      <% if can?(:export_data) && !@client.erased? %>
+        <div class="menu-sep"></div>
         <%= link_to new_admin_client_erasure_path(@client), class: "menu-item text-danger" do %><%= icon "user-x" %> Erase their details…<% end %>
       <% end %>
       <% if @client.deletable? %>
-        <% if erasable %><div class="menu-sep"></div><% end %>
+        <div class="menu-sep"></div>
         <%= button_to admin_client_path(@client), method: :delete, class: "menu-item text-danger",
                       form: { class: "contents", data: { turbo_confirm: "Delete #{@client.display_name} and their properties? This can't be undone.", turbo_confirm_button: "Delete client" } } do %>
           <%= icon "trash" %> Delete
@@ -29,7 +27,6 @@
       <% end %>
     </div>
   </div>
-  <% end %>
 <% end %>
 
 <% if @client.erased? %>

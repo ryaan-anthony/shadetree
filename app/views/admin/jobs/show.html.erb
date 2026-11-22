@@ -6,7 +6,12 @@
                                               (safe_join([ " · from ", link_to("quote #{job.quote.number}", admin_quote_path(job.quote), class: "font-medium text-ink hover:underline") ]) if job.quote), location_badge(job) ].compact) do %>
   <% if job.open? %>
     <%= link_to edit_admin_job_path(job), class: button_classes(:secondary) do %><%= icon "edit-2" %> Edit<% end %>
-    <%= button_to complete_admin_job_path(job), method: :patch, class: button_classes(:primary),
+    <%# PLT-14 (owner, 2026-11-22): with nothing booked, the next step is a visit; then Complete. %>
+    <% unbooked = can?(:schedule) && job.visits.where.not(status: "cancelled").none? %>
+    <% if unbooked %>
+      <%= link_to new_admin_job_visit_path(job), class: button_classes(:primary) do %><%= icon "calendar" %> Schedule visit<% end %>
+    <% end %>
+    <%= button_to complete_admin_job_path(job), method: :patch, class: button_classes(unbooked ? :secondary : :primary),
                   form: { class: "contents", data: { turbo_confirm: ["Mark #{job.number} completed?", (" Visits not started yet are cancelled." if job.visits.scheduled.exists?)].join, turbo_confirm_button: "Complete job" } } do %><%= icon "check" %> Complete<% end %>
     <div class="contents" data-controller="modal">
       <button type="button" class="<%= button_classes(:destructive) %>" data-action="modal#open" data-modal-target="return" aria-haspopup="dialog">Cancel job</button>

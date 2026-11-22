@@ -6,7 +6,15 @@
       <%= { "new" => "Mark new", "in_progress" => "Mark in progress", "archived" => "Archive" }.fetch(status) %>
     <% end %>
   <% end %>
-  <%= button_to quote_admin_service_request_path(request_record), class: button_classes, form: { class: "contents" } do %><%= icon "file-plus" %> Create quote<% end %>
+  <% if client.archived? %><%# PLT-14: the server refuses it, so it looks it (the line below says why) %>
+    <span class="<%= button_classes %>" role="button" aria-disabled="true" aria-describedby="request-client-archived"><%= icon "file-plus" %> Create quote</span>
+  <% else %>
+    <%= button_to quote_admin_service_request_path(request_record), class: button_classes, form: { class: "contents" } do %><%= icon "file-plus" %> Create quote<% end %>
+  <% end %>
+<% end %>
+<% if client.archived? %>
+  <p class="-mt-2 mb-4 text-sm2 text-muted" id="request-client-archived"><%= client.display_name %> is archived.
+    <%= link_to "Restore them", admin_client_path(client), class: "font-medium text-ink underline-offset-2 hover:underline" %> to quote this request.</p>
 <% end %>
 
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
