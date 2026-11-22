@@ -35,6 +35,9 @@ archive what isn't going anywhere.
       services as line items, and request photos available as attachments; the request links to
       every quote created from it. *A typed address that isn't one of the client's properties is
       shown in the builder for staff to add; nothing is added to the client automatically.*
+- [x] While a quote from the request is still an unsent draft, "Create quote" opens that draft
+      instead of making another; once it's been sent, more quotes can be made.
+      *A sent quote being revised, or an archived draft, doesn't hold it.*
 - [x] Requests appear on the client's page.
 - [x] Internal notes can be added to a request.
 - [x] Technicians have no access; tenancy and role tests exist.
@@ -48,7 +51,15 @@ archive what isn't going anywhere.
 - ~~Should "In progress" exist, or is New/Quoted/Archived enough?~~ Keep it, for requests
   needing a site visit before quoting.
 
+## Decisions
+
+- The inbox refuses a second draft quote from a request while one is still open, and opens the
+  existing draft; more quotes are allowed once the earlier one has been sent (owner, 2026-11-22).
+
 ## Implementation notes
 
 - #289: owners see a request as "Request for Lawn mowing" (or "<client>'s request of <date>" on
   its quote); the R- reference is kept for support, as "Reference" on the request page.
+- One open draft per request: `ServiceRequest#create_quote!(once: true)` checks under the lock,
+  as QTE-07's follow-up path does, and `AlreadyQuoted` redirects to the draft. The inbox can
+  still quote an archived request, as before.
