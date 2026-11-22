@@ -42,12 +42,12 @@ class SendWithoutReviewTest < ActiveSupport::TestCase
     with_tenant { @quote.update!(terms: "Pay on the day", expires_on: Date.current + 3, title: "Spring work", message: "Hi Maria") }
     assert_equal [], reasons
     grounds = with_tenant { SendWithoutReview.new(@quote).grounds }
-    assert_equal({ "services" => [ "Gutter clean", "Mulch" ], "total" => "$636.00", "cap" => nil }, grounds)
+    assert_equal({ "services" => [ "Gutter clean, front and back (Gutter clean)", "Mulch" ], "total" => "$636.00", "cap" => nil }, grounds)
   end
 
   test "each thing the office needs to see is a reason, the first named first" do
     lines(row(@gutters, unit_price: "140"), { "key" => "c", "name" => "Haul away", "unit_price" => "20", "quantity" => "1" }, row(@design))
-    assert_equal [ "Gutter clean: price changed", "Haul away: custom line", "Garden design: needs review" ], reasons
+    assert_equal [ "Gutter clean: price changed", "Haul away: custom line", "Garden design: not one you can send without review" ], reasons
 
     lines(row(@gutters, unit: "hour"))
     assert_equal [ "Gutter clean: unit changed" ], reasons
@@ -74,10 +74,22 @@ class SendWithoutReviewTest < ActiveSupport::TestCase
   test "a service switched off, archived or without a price stops it" do
     lines(row(@gutters))
     with_tenant { @gutters.update!(send_without_review: false) }
-    assert_equal [ "Gutter clean: needs review" ], reasons
+    assert_equal [ "Gutter clean: not one you can send without review" ], reasons
     with_tenant { @gutters.update!(send_without_review: true) && @gutters.archive! }
     assert_equal [ "Gutter clean: service archived" ], reasons
     with_tenant { @gutters.update!(archived_at: nil, unit_price: nil) }
+    assert_equal [ "Gutter clean: priced on each quote" ], reasons
+  end
+
+  test "a \"Price on quote\" service never qualifies, even at a location with its own price for it (owner, 2026-11-22)" do
+    branch = with_tenant { Location.create!(name: "North", address_line1: "1 North Rd") }
+    with_tenant do
+      @gutters.update!(unit_price: nil)
+      LocationPrice.create!(location: branch, catalog_item: @gutters, unit_price_cents: 500)
+      @request_record.update!(location: branch)
+      @quote.update!(location: branch, priced_for_location: branch)
+    end
+    lines(row(@gutters, unit_price: "5"))
     assert_equal [ "Gutter clean: priced on each quote" ], reasons
   end
 
@@ -93,13 +105,12 @@ class SendWithoutReviewTest < ActiveSupport::TestCase
     branch = with_tenant { Location.create!(name: "North", address_line1: "1 North Rd") }
     lines(row(@gutters))
     with_tenant { @quote.update!(location: branch) }
-    assert_equal [ "Another location" ], reasons
+    assert_equal [ "Priced for another location" ], reasons
     with_tenant { @request_record.update!(location: branch) }
-    assert_equal [ "Another location" ], reasons, "moved, but still priced for the main location"
-    with_tenant do
-      LocationPrice.create!(location: branch, catalog_item: @gutters, unit_price_cents: 16_500)
-      @quote.reprice_for_location!
-    end
+    assert_equal [ "Priced for another location" ], reasons, "moved, but still priced for the main location"
+    with_tenant { LocationPrice.create!(location: branch, catalog_item: @gutters, unit_price_cents: 16_500) }
+    assert_equal "Priced for another location", reasons.first, "named before the lines checked against the branch's prices"
+    with_tenant { @quote.reprice_for_location! }
     @quote = with_tenant { Quote.includes(line_items: :catalog_item).find(@quote.id) }
     assert_equal [], reasons, "at the branch's price, for the branch"
   end

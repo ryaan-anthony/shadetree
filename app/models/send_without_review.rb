@@ -32,18 +32,24 @@ class SendWithoutReview
   def reasons
     @reasons ||= begin
       lines = quote.current_line_items
-      list = lines.empty? ? [ "Add a service first" ] : lines.filter_map { line_reason(_1) }
+      # The location first: prices are checked against it, so a moved quote isn't misread as a price list change.
+      list = at_request_location? ? [] : [ "Priced for another location" ]
+      list += lines.empty? ? [ "Add a service first" ] : lines.filter_map { line_reason(_1) }
       list << "Quote discount" if quote.discounted?
-      list << "Another location" unless at_request_location?
       list << "Tax changed" unless default_taxes?
       list << "Over #{cap.format}" if cap && quote.totals.total > cap
       list
     end
   end
 
-  # For the quote's history: the services, the total and the cap it was within.
+  # For the quote's history: the services (as named on the quote, with the catalog's name when it
+  # was renamed: "Full roof replacement (Gutter clean)"), the total and the cap it was within.
   def grounds
-    { "services" => quote.current_line_items.map { _1.catalog_item.name }.uniq, "total" => quote.totals.total.format, "cap" => cap&.format }
+    services = quote.current_line_items.map do |line|
+      service = line.catalog_item.name
+      line.name.present? && line.name != service ? "#{line.name} (#{service})" : service
+    end
+    { "services" => services.uniq, "total" => quote.totals.total.format, "cap" => cap&.format }
   end
 
   private
@@ -55,12 +61,13 @@ class SendWithoutReview
     name = line.name.presence || item&.name || "A line"
     return "#{name}: custom line" unless item
     return "#{name}: service archived" if item.archived?
-    return "#{name}: needs review" unless item.send_without_review
+    return "#{name}: not one you can send without review" unless item.send_without_review
     return "#{name}: unit changed" if line.unit.to_s != item.unit_label
     return "#{name}: discount" if line.discounted?
+    # No list price to keep ("Price on quote"), even where a location has its own (owner, 2026-11-22).
+    return "#{name}: priced on each quote" if item.unit_price_cents.nil?
 
     price = item.price_at(quote.location, overrides: location_prices)
-    return "#{name}: priced on each quote" if price.nil?
     return "#{name}: price changed" if line.taxable != item.taxable # a taxable change counts as a price edit (owner, 2026-11-22)
     return if line.unit_price_cents == price.cents
 
