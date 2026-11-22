@@ -11,9 +11,14 @@ class GuidedTourBrowserTest < ApplicationSystemTestCase
     @membership.update!(tour_status: "offered", tour_offered_at: Time.current)
   end
 
+  # Waits for signing in to land (a technician goes /admin, then My day) before the test visits
+  # anything: on CI a visit to the same URL while that redirect was still loading merged with it,
+  # and the page lost its input.
   def sign_in_as(user)
     visit new_user_session_path
     sign_in_with_form(user.email, "password123")
+    assert_selector "#main h1"
+    wait_for_controllers
   end
 
   # Presses Tab until the focused element's text is `text` (keyboard only, no clicks).
