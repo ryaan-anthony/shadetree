@@ -17,11 +17,16 @@ class Admin::MyVisitPhotosTest < ActionDispatch::IntegrationTest
     post switch_admin_business_path, params: { business: @business.uid }
   end
 
+  # Written to a directory of its own: tests run in parallel processes, and a shared path (it was
+  # tmp/yard.png) let one test copy the file while another was rewriting it, so the upload was
+  # refused as "isn't a photo we can use". UploadedFile copies the file, so the directory can go.
   def photo(name = "yard.png")
     tagged = Vips::Image.new_from_file(file_fixture("logo.png").to_s).mutate { _1.set_type!(GObject::GSTR_TYPE, "png-comment-0-gps", "40.7,-74.0") }
-    path = Rails.root.join("tmp", name).to_s
-    tagged.write_to_file(path)
-    Rack::Test::UploadedFile.new(path, "image/png", original_filename: name)
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, name)
+      tagged.write_to_file(path)
+      Rack::Test::UploadedFile.new(path, "image/png", original_filename: name)
+    end
   end
 
   def photos = as_business(@business) { @visit.reload.photos.to_a }
