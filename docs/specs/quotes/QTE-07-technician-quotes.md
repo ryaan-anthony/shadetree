@@ -42,10 +42,7 @@ assigned to them, without seeing anything else in the office.
 - Technicians editing quotes after they're sent, or revising approved quotes.
 - Technicians creating invoices (backlog).
 
-## Open questions
+## Decisions
 
-- **(blocking)** Should field techs build quotes at all, or always hand back to the office?
-  The flow described has the office manager quote or pass to a tech for the visit; who prices
-  it after the tech's visit decides whether this spec is needed now.
-- If yes: is one permission (draft and send) enough for 1–10 person teams? Proposed: two, so an
-  owner can require review.
+- Field techs can build quotes for requests assigned to them, behind two permissions (draft;
+  send), so an owner can require review (owner approved the feature set, 2026-11-21).

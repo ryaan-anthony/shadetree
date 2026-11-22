@@ -54,9 +54,7 @@ that person's schedule, until a quote is created or the request is archived.
 - Telling the client about a booked site visit (backlog).
 - Automatic assignment or round-robin (decision D3 stands).
 
-## Open questions
+## Decisions
 
-- Should a follow-up be a visit or a call, or is that one kind with an optional note? Proposed:
-  two kinds, so calls don't take up travel time on the calendar.
-- Should a site visit booked for a client send them a confirmation, like job visits (JOB-05)?
-  Proposed: backlog, as the request form already confirms receipt.
+- Two kinds, site visit and call, so calls don't take travel time on the calendar (owner, 2026-11-21).
+- No client confirmation for a booked site visit yet; backlog (owner, 2026-11-21).
