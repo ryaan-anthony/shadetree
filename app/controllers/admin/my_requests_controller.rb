@@ -24,10 +24,17 @@ class Admin::MyRequestsController < Admin::BaseController
   def quote
     return deny!(:quote_requests, "can't quote requests") unless can?(:office) || can?(:quote_requests)
     return redirect_to(admin_my_request_path(@request), alert: "Mark it done first.") unless @follow_up.done?
-    return redirect_to(admin_my_request_path(@request), alert: "#{@request.client.display_name} is archived. Ask the office to restore them.") if @request.client.archived?
+    if @request.client.archived?
+      return redirect_to(admin_my_request_path(@request), alert: "#{@request.client.display_name} is archived. #{can?(:office) ? "Restore them" : "Ask the office to restore them"} to quote this.")
+    end
 
-    quote = @request.create_quote!(by: current_user)
-    redirect_to edit_admin_quote_path(quote), notice: "Draft #{quote.number} from the request. Nothing is sent until #{can?(:send_own_quotes) ? "you send it" : "the office sends it"}."
+    quote = @request.create_quote!(by: current_user, once: true)
+    redirect_to edit_admin_quote_path(quote), notice: "Draft #{quote.number} from the request. Nothing is sent until #{can?(:office) ? "you send it" : "the office sends it"}."
+  rescue ServiceRequest::AlreadyQuoted => error
+    mine = can?(:office) || Quote.own_drafts_for(current_user).exists?(error.quote.id)
+    redirect_to (mine ? edit_admin_quote_path(error.quote) : admin_my_day_path), notice: error.message # a second click: the draft the first made
+  rescue ArgumentError => error
+    redirect_to admin_my_day_path, alert: error.message
   end
 
   def pass_back

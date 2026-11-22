@@ -18,6 +18,6 @@ module OwnQuoteAccess
     return Quote.all unless own_quotes_only?
     return deny!(:office, "no quote access") && nil unless can?(:quote_requests)
 
-    Quote.where(created_by_id: current_user.id, status: "draft").where.not(service_request_id: nil)
+    Quote.own_drafts_for(current_user)
   end
 end

@@ -41,7 +41,7 @@
   <div class="banner banner-info mb-4"><%= icon "edit-3" %>
     <div class="min-w-0 flex-1">
       <p><% if answer %><span class="font-semibold"><%= answer.label %></span> on revision <%= previous.number %><%= answer.message ? ":" : "." %><% else %>Revising revision <%= previous.number %>.<% end %>
-        <%= link_to "See what was sent", revision_admin_quote_path(@quote, number: previous.number), class: "font-semibold underline-offset-2 hover:underline" %></p>
+        <%= link_to_unless own_quotes_only?, "See what was sent", revision_admin_quote_path(@quote, number: previous.number), class: "font-semibold underline-offset-2 hover:underline" %></p>
       <% if answer&.message %><p class="mt-1 whitespace-pre-line">“<%= answer.message %>”</p><% end %>
     </div>
   </div>
@@ -149,7 +149,7 @@
     <% end %>
     <div class="flex flex-col gap-2">
       <%= f.submit_button "Save draft" %>
-      <p class="text-center text-sm2 text-muted">Your draft is kept. Send it from the top of the page when it’s ready.</p>
+      <p class="text-center text-sm2 text-muted">Your draft is kept. <%= own_quotes_only? ? "The office sends it when it’s ready." : "Send it from the top of the page when it’s ready." %></p><%# QTE-07 %>
     </div>
   </aside>
 <% end %>
@@ -160,4 +160,4 @@
 <% end %>
 <%# CAT-08: the re-price offer's form, outside the builder (its buttons use form=). %>
 <%= form_with url: reprice_admin_quote_path(@quote), method: :patch, id: "location-reprice-form", class: "hidden", data: { turbo: false } do %><%= hidden_field_tag :lock_version, @quote.lock_version, id: nil %><% end %>
-<%= render "admin/clients/quick_create", button: false %>
+<%= render "admin/clients/quick_create", button: false unless own_quotes_only? %><%# QTE-07: no other clients %>

@@ -25,7 +25,7 @@ class Admin::MyDayController < Admin::BaseController
     @today = in_time_order(items.select { |item, today| item.scheduled_on == today }.map(&:first))
     @earlier = in_time_order(items.select { |item, today| item.scheduled_on < today && current.(item) }.map(&:first))
     # QTE-07: drafts they made from requests given to them, until they're sent.
-    @quote_drafts = (Quote.where(created_by_id: current_user.id, status: "draft").where.not(service_request_id: nil).includes(:client).order(:created_at).to_a if can?(:quote_requests) && !can?(:office))
+    @quote_drafts = (Quote.own_drafts_for(current_user).includes(:client).order(:created_at, :id).to_a if can?(:quote_requests) && !can?(:office))
     @upcoming = in_time_order(items.select { |item, today| item.scheduled_on > today && item.scheduled_on <= today + UPCOMING_DAYS && current.(item) }.map(&:first))
                 .group_by(&:scheduled_on)
   end

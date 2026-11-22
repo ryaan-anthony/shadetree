@@ -113,10 +113,50 @@ class Admin::TechnicianQuotesTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
-  test "Owners and Admins have both new permissions; a custom role can be given them" do
+  test "Owners and Admins can quote assigned requests; a custom role can be given it, Technicians can't by default" do
     assert Permissions.granted?("admin", :quote_requests)
-    assert Permissions.granted?("admin", :send_own_quotes)
     assert_not Permissions.granted?("technician", :quote_requests)
-    assert_includes Permissions::GRANTABLE, :send_own_quotes
+    assert_includes Permissions::GRANTABLE, :quote_requests
+  end
+
+  test "once the office has sent it, it's not theirs again, even when revised back to a draft" do
+    quote = quote_it
+    patch admin_quote_path(quote), params: builder_params(quote, lines: [ { key: "k1", name: "Weekly mowing", quantity: "1", unit_price: "45", taxable: "0" } ]), as: :turbo_stream
+    as_business(@business) do
+      quote.reload.mark_sent!(by: @owner, channel: "link")
+      quote.reload.revise!(by: @owner)
+      assert_equal [ "draft", 2 ], [ quote.reload.status, quote.revision ]
+    end
+    get edit_admin_quote_path(quote)
+    assert_response :not_found
+    patch admin_quote_path(quote), params: builder_params(quote, title: "Sneaky"), as: :turbo_stream
+    assert_response :not_found
+    get admin_my_day_path
+    assert_select "#my-quote-drafts", 0
+  end
+
+  test "another member's draft, and its files and prices, are out of reach" do
+    other = User.create!(email: "tia@example.com", password: "password123", first_name: "Tia", confirmed_at: Time.current)
+    BusinessUser.create!(user: other, business: @business, role: "custom", role_id: @senior.id)
+    theirs = as_business(@business) do
+      request = ServiceRequest.create!(client: @maria, source: "phone", description: "Hedges")
+      RequestFollowUp.assign!(request, { user: other, scheduled_on: Date.new(2026, 11, 23) }, by: @owner).done!(by: other)
+      request.create_quote!(by: other).tap { _1.attachments.attach(io: file_fixture("logo.png").open, filename: "plan.png", content_type: "image/png") }
+    end
+    get edit_admin_quote_path(theirs)
+    assert_response :not_found
+    delete admin_quote_attachment_path(theirs, as_business(@business) { theirs.attachments.first.id })
+    assert_response :not_found
+    patch reprice_admin_quote_path(theirs)
+    assert_response :not_found
+  end
+
+  test "from a follow-up, a second click (checked under the lock) doesn't make a second draft; the inbox still may" do
+    quote = as_business(@business) { @request_record.create_quote!(by: @tech, once: true) }
+    error = assert_raises(ServiceRequest::AlreadyQuoted) { as_business(@business) { @request_record.reload.create_quote!(by: @tech, once: true) } }
+    assert_equal quote, error.quote
+    assert_equal 2, as_business(@business) { @request_record.create_quote!(by: @owner) && Quote.where(service_request: @request_record).count }, "CLI-04: several quotes from the inbox"
+    as_business(@business) { @request_record.update!(status: "archived") }
+    assert_raises(ArgumentError) { as_business(@business) { @request_record.create_quote!(by: @tech, once: true) } }
   end
 end
