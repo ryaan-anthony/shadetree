@@ -64,6 +64,8 @@ assigned to them, without seeing anything else in the office.
   send), so an owner can require review (owner approved the feature set, 2026-11-21).
 - The built-in Technician role gets "Quote assigned requests" by default, existing businesses'
   too; review stays required, as "Send their own quotes" stays off for it (owner, 2026-11-22).
+- Technicians drafting a quote see catalog prices even with "Technicians see prices" off; that
+  setting covers visits only, and says so (owner, 2026-11-22).
 - Deleting a draft stays with the office.
 - Changing a draft after marking it ready takes it back from the office until it's marked again:
   kept as built; owner to confirm (owner, 2026-11-22).

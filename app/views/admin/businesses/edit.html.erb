@@ -37,7 +37,7 @@
         <%= f.check :auto_create_jobs, label: "Make a job when a quote is approved",
                     hint: "The job copies the quote's client, property, items, notes and files. When this is off, make the job from the quote's page." %>
         <div class="mt-4"><%= f.check :technicians_see_prices, label: "Technicians see prices",
-                    hint: "On the visits they're sent to. Otherwise they see what to do and how much, without prices." %></div>
+                    hint: "On the visits they're sent to. Otherwise they see what to do and how much, without prices. This covers visits only: a technician drafting a quote sees your prices." %></div>
       <% end %>
 
       <%= card title: "Visit emails to clients", subtitle: "Sent to the client's email address, from your business, with a link to their visit." do %>

@@ -53,6 +53,9 @@ Let Owners create custom roles from a fixed catalog of permissions, alongside th
   (so nobody promotes themselves). (Admins hold every grantable permission, so for them
   nothing changes; a custom "team lead" can hand out Technician but not Admin. Since Technicians
   quote assigned requests (QTE-07, 2026-11-22), that lead needs "Quote assigned requests" too.)
+- A team-manager role without "Quote assigned requests" can't invite or manage Technicians
+  (who have it since QTE-07): the rule stays, and a business adds the permission to the role
+  (owner, 2026-11-22).
 - **Owner-only, never in a custom role:** `billing` (plan, deleting the business, the payment
   account) and `manage_owners`.
 
