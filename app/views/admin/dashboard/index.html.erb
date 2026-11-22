@@ -5,7 +5,7 @@
   <%= render "admin/shared/location_filter", path: admin_root_path if can?(:office) %>
 <% end %>
 
-<%= render "tour_offer" if Current.membership&.tour_offered? %><%# ACC-08 %>
+<%= render "tour_offer" if @tour_offer %><%# ACC-08 %>
 
 <%# #289: a new business starts with the checklist, above the month's numbers. %>
 <% if can?(:business_settings) && @checklist.visible? %>

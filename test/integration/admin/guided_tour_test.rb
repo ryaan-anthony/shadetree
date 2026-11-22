@@ -75,6 +75,39 @@ class Admin::GuidedTourTest < ActionDispatch::IntegrationTest
     assert_nil other.business_users.find_by!(user: users(:one)).tour_status
   end
 
+  def complete_setup!
+    as_business(@business) do
+      CatalogItem.create!(name: "Weekly mowing", unit: "visit", unit_price: "45")
+      Client.create!(display_name: "Maria Lopez", contact_methods_attributes: [ { kind: "phone", value: "5125550100" } ])
+    end
+    @business.update_columns(first_quote_sent_at: 1.day.ago, onboarded_at: nil)
+  end
+
+  test "an Owner whose setup is complete but not yet stamped isn't offered it" do
+    complete_setup!
+    get admin_root_path
+    assert_select "#tour-offer", 0
+    assert_nil @membership.reload.tour_status
+  end
+
+  test "hidden and then completed (never stamped onboarded), no offer" do
+    complete_setup!
+    @membership.update!(setup_hidden_at: 1.day.ago)
+    get admin_root_path
+    assert_nil @business.reload.onboarded_at, "a hidden checklist isn't stamped"
+    assert_select "#tour-offer", 0
+    assert_nil @membership.reload.tour_status
+  end
+
+  test "Turbo's hover prefetch shows the offer but doesn't record it; the real visit does" do
+    @business.update!(onboarded_at: nil)
+    get admin_root_path, headers: { "X-Sec-Purpose" => "prefetch" }
+    assert_select "#tour-offer"
+    assert_nil @membership.reload.tour_status
+    get admin_root_path
+    assert_equal "offered", @membership.reload.tour_status
+  end
+
   test "only Owners are offered it, not Admins or Technicians (they have Help and My day)" do
     @business.update!(onboarded_at: nil)
     [ member_with_role(:admin), member_with_role(:technician) ].each do |user|

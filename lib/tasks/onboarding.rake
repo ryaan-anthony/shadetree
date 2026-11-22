@@ -12,19 +12,32 @@ namespace :onboarding do
   end
 
   # ACC-08: how the guided tour's first run went for the Owners it was offered to, beside their
-  # time to a first quote. Counts and minutes only; nothing about who.
-  desc "How the guided tour went for new Owners: finished, skipped (and where), with time to first quote"
+  # time to a first quote. Counts and minutes only; nothing about who. Owners offered it when
+  # they created the business are measured from its creation (ACC-05); Owners of businesses
+  # that existed before it (offered later, 2026-11-22) are reported apart, from the offer, so
+  # they don't skew the new businesses' medians.
+  desc "How the guided tour went: finished, skipped (and where), with time to first quote; new and existing businesses apart"
   task tour: :environment do
     owners = BusinessUser.owners.where.not(tour_offered_at: nil).includes(:business)
     if owners.none?
       puts "The tour hasn't been offered yet."
       next
     end
-    owners.group_by { _1.tour_status }.sort_by { _1.to_s }.each do |status, group|
-      minutes = group.filter_map { _1.business.seconds_to_first_quote }.sort
-      median = minutes.any? ? "#{(minutes[(minutes.size - 1) / 2] / 60.0).round(1)} min to first quote (median of #{minutes.size})" : "no quotes sent yet"
-      puts "#{status}: #{group.size}. #{median}."
+    # An offer within the hour of the business's creation is its creator's.
+    fresh, existing = owners.partition { _1.tour_offered_at < _1.business.created_at + 1.hour }
+    report = lambda do |heading, group, seconds|
+      next if group.empty?
+
+      puts heading
+      group.group_by(&:tour_status).sort_by { _1.to_s }.each do |status, members|
+        times = members.filter_map(&seconds).sort
+        median = times.any? ? "#{(times[(times.size - 1) / 2] / 60.0).round(1)} min to first quote (median of #{times.size})" : "no quotes sent yet"
+        puts "  #{status}: #{members.size}. #{median}."
+      end
     end
+    report.("New businesses (offered when created; minutes from creation):", fresh, ->(m) { m.business.seconds_to_first_quote })
+    report.("Existing businesses (offered later; minutes from the offer, first quotes after it only):", existing,
+            ->(m) { (sent = m.business.first_quote_sent_at) && sent > m.tour_offered_at ? (sent - m.tour_offered_at).round : nil })
     replayed = owners.count { _1.tour_replayed_at }
     puts "Taken again from Help after the first run: #{replayed}." if replayed.positive?
     stops = owners.select { _1.tour_status.in?(%w[skipped started]) }.map(&:tour_stop).tally.sort_by { -_2 }
