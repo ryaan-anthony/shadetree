@@ -26,13 +26,12 @@ that person's schedule, until a quote is created or the request is archived.
 
 ## Acceptance criteria
 
-- [x] Anyone who can manage requests can assign one to a team member (any role, active, in this
+- [ ] Anyone who can manage requests can assign one to a team member (any role, active, in this
       business) with a day and, optionally, a start time or arrival window and a duration. The
       day defaults to today, and no time means "anytime that day". Assigning is offered when a
       request is created by staff and from the request page.
-      *Until JOB-06 shows follow-ups on My day, only members who can see requests can be
-      assigned, so a notice never leads somewhere the follow-up isn't; JOB-06 opens it to every
-      role. A blank duration means an hour for a site visit and 15 minutes for a call.*
+      *Done except "any role": members who can see requests, for now (see Decisions); JOB-06
+      opens it to every role. A blank duration is an hour for a site visit, 15 min for a call.*
 - [x] Each follow-up is a visit or a call, chosen when assigning (visit by default), with
       optional instructions for the assignee.
 - [x] A request can be reassigned and rescheduled any number of times, or unassigned. Each
@@ -49,7 +48,10 @@ that person's schedule, until a quote is created or the request is archived.
       closure, or overlapping the assignee's visits or other follow-ups.
       *On the request location's hours and clock (CAT-07); visits warn about follow-ups too.*
 - [x] The inbox shows each request's assignee and day, can filter by assignee (including
-      "Mine" and "Unassigned"), and marks requests whose follow-up day has passed as overdue.
+      "Assigned to me" and "Not assigned"), and marks requests whose follow-up day has passed as
+      overdue.
+      *The filter is in the URL only (?assignee=), like the quotes list's ?filter=. Overdue goes
+      by each request's location's clock.*
 - [x] The client timeline records when a follow-up visit is booked. Calls aren't shown there.
       *One line per follow-up, updated when it moves.*
 - [x] Only people who can manage requests can assign. Assignees, members of other businesses
@@ -73,5 +75,7 @@ that person's schedule, until a quote is created or the request is archived.
 
 ## Decisions
 
+- Until JOB-06, only members who can see requests can be assigned: My day doesn't show
+  follow-ups yet, so a technician's notice would lead nowhere. JOB-06 lifts this (review, 2026-11-22).
 - Two kinds, site visit and call, so calls don't take travel time on the calendar (owner, 2026-11-21).
 - No client confirmation for a booked site visit yet; backlog (owner, 2026-11-21).

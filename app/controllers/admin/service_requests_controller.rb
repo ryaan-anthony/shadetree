@@ -14,7 +14,8 @@ class Admin::ServiceRequestsController < Admin::BaseController
 
   def index
     @status = params[:status].presence_in(ServiceRequest::STATUSES) || "new"
-    @assignee = params[:assignee].to_s[/\A(mine|unassigned|\d+)\z/] # CLI-07
+    @assignee_choices = assignee_choices # CLI-07
+    @assignee = assignee_filter
     filtered = by_assignee(ServiceRequest.all)
     @counts = filtered.group(:status).count
     scope = filtered.where(status: @status)
@@ -22,6 +23,7 @@ class Admin::ServiceRequestsController < Admin::BaseController
     @total_pages = [ (@total_count.to_f / PER_PAGE).ceil, 1 ].max
     @page = params[:page].to_i.clamp(1, @total_pages)
     @requests = scope.recent.includes(:client, :property, :created_by, :location, follow_up: :user).with_attached_photos.offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
+    @requests.each { _1.follow_up&.association(:business)&.target = current_business } # one business (and location count) for every row
     @seen_by_me = ServiceRequestView.where(user: current_user, service_request_id: @requests.map(&:id)).pluck(:service_request_id).to_set
   end
 
@@ -89,9 +91,27 @@ class Admin::ServiceRequestsController < Admin::BaseController
   def by_assignee(scope)
     case @assignee
     when nil then scope
-    when "unassigned" then scope.where.not(id: RequestFollowUp.select(:service_request_id))
+    when "unassigned" then scope.where(status: ServiceRequest::OPEN_STATUSES).where.not(id: RequestFollowUp.select(:service_request_id))
     else scope.where(id: RequestFollowUp.where(user_id: @assignee == "mine" ? current_user.id : @assignee.to_i).select(:service_request_id))
     end
+  end
+
+  # The members the filter offers: whoever can be assigned (RequestFollowUp.assignable?), and
+  # anyone who has a follow-up now; not the signed-in member (that's "Assigned to me").
+  def assignee_choices
+    holding = RequestFollowUp.distinct.pluck(:user_id)
+    current_business.business_users.active.includes(:user).select { RequestFollowUp.assignable?(_1) || holding.include?(_1.user_id) }
+                    .reject { _1.user_id == current_user.id }.map(&:user).sort_by { _1.full_name.downcase }
+  end
+
+  # ?assignee=: mine, unassigned, or one of those members (your own id is "mine"); anything
+  # else shows everyone's.
+  def assignee_filter
+    value = params[:assignee].to_s
+    return value if %w[mine unassigned].include?(value)
+    return "mine" if value == current_user.id.to_s
+
+    value if @assignee_choices.any? { _1.id.to_s == value }
   end
 
   def set_request = @request = ServiceRequest.includes(:client, :property, notes: :user, follow_up: %i[user assigned_by]).find_by_param!(params[:id])

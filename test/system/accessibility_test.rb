@@ -45,7 +45,8 @@ class AccessibilityTest < ApplicationSystemTestCase
         RequestFollowUp.assign!(_1, { user: users(:one), scheduled_on: @business.today }, by: users(:one))
       end
     end
-    assert_accessible new_admin_service_request_path, admin_service_request_path(request), edit_admin_service_request_follow_up_path(request)
+    assert_accessible new_admin_service_request_path, admin_service_request_path(request), edit_admin_service_request_follow_up_path(request),
+                      admin_service_requests_path(status: "in_progress")
   end
 
   test "the search-engine setting is off while requests are off" do

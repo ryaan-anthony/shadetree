@@ -1,6 +1,6 @@
 require "application_system_test_case"
 
-# CLI-07: assigning a request with the keyboard alone, and the follow-up pages pass axe.
+# CLI-07: assigning a request with the keyboard alone (axe: test/system/accessibility_test.rb).
 class RequestFollowUpsTest < ApplicationSystemTestCase
   setup do
     @business = businesses(:one)
@@ -33,29 +33,5 @@ class RequestFollowUpsTest < ApplicationSystemTestCase
     assert_text "John Doe has it: call"
     assert_selector "#follow-up", text: /Call, .* · 9 am/
     assert_equal "Ask about the side gate", Tenancy.with_business(@business) { @request_record.reload.follow_up.instructions }
-  end
-
-  test "the follow-up pages pass axe" do
-    Tenancy.with_business(@business) { RequestFollowUp.assign!(@request_record, { user: @owner, scheduled_on: @business.today }, by: @owner) }
-    assert_accessible admin_service_request_path(@request_record), edit_admin_service_request_follow_up_path(@request_record),
-                      new_admin_service_request_path, admin_service_requests_path(status: "in_progress")
-  end
-
-  private
-
-  AXE = Pathname(Gem.loaded_specs.fetch("axe-core-api").full_gem_path).join("node_modules/axe-core/axe.min.js")
-
-  # As AccessibilityTest does: axe's WCAG 2.1 A/AA and best-practice rules on each page.
-  def assert_accessible(*paths)
-    problems = paths.flat_map do |path|
-      visit path
-      execute_script(AXE.read) unless evaluate_script("typeof window.axe === 'object'")
-      evaluate_async_script(<<~JS).map { "#{path}: #{_1}" }
-        const done = arguments[0]
-        axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"] } })
-          .then((r) => done(r.violations.map((v) => `${v.id} (${v.help}): ${v.nodes.slice(0, 3).map((n) => n.target.join(" ")).join(" | ")}`)))
-      JS
-    end
-    assert_empty problems, "axe found problems:\n#{problems.join("\n")}"
   end
 end
