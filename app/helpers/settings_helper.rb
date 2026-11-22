@@ -22,34 +22,43 @@ module SettingsHelper
   def currency_options = Money::CURRENCIES.values.map { [ "#{_1.name} (#{_1.code})", _1.code ] }
 
   # #289: Settings in four groups, each page where an owner would look for it. Every page keeps
-  # its own URL; /admin/settings opens the first. A group shows when any of its pages does.
-  #   settings_groups  # => [["Business", [[key, label, path], ...]], ...] for the current member
+  # its own URL; /admin/settings opens the first one the member can use. A group shows when any
+  # of its pages does; each page needs the permission its controller asks for.
+  #   settings_groups  # => [["Business", [SettingsPage, ...]], ...] for the current member
   SettingsPage = Data.define(:key, :label, :path)
 
-  def settings_groups
-    business = current_business
-    can = ->(permission) { current_membership&.can?(permission) }
+  # The controllers behind those pages (and their forms), for the sidebar's Settings highlight.
+  SETTINGS_CONTROLLERS = %w[businesses hours locations closures tax_rates message_templates custom_message_templates
+                            automations payment_accounts plans data_exports].freeze
+  def settings_page? = controller_name.in?(SETTINGS_CONTROLLERS) && !(controller_name == "businesses" && action_name.in?(%w[new create]))
+
+  def settings_groups(current = nil) = SettingsHelper.groups_for(current_business, current_membership, self, current:)
+
+  # current: the page being shown, so Locations is listed while adding the first extra one.
+  def self.groups_for(business, membership, routes, current: nil)
+    can = ->(permission) { membership&.can?(permission) }
+    settings = can.(:business_settings)
     [
-      [ "Business", [
-        SettingsPage.new("business", "Details", edit_admin_business_path),
-        SettingsPage.new("hours", "Hours", admin_hours_path),
-        (SettingsPage.new("locations", "Locations", admin_locations_path) if business.multiple_locations?), # CAT-07
-        SettingsPage.new("branding", "Branding", edit_admin_business_path(tab: "branding")),
-        SettingsPage.new("request_form", "Request form", edit_admin_business_path(tab: "request_form"))
-      ] ],
-      [ "Money", [
-        SettingsPage.new("documents", "Quotes, jobs & invoices", edit_admin_business_path(tab: "documents")),
-        SettingsPage.new("taxes", "Taxes", admin_tax_rates_path),
-        SettingsPage.new("payments", "Online payments", admin_payment_account_path) # PAY-03
-      ] ],
-      [ "Messages", [
-        SettingsPage.new("messages", "Emails to clients", admin_message_templates_path),
-        SettingsPage.new("automations", "Automations", admin_automations_path)
-      ] ],
+      [ "Business", ([
+        SettingsPage.new("business", "Details", routes.edit_admin_business_path),
+        SettingsPage.new("hours", "Hours", routes.admin_hours_path),
+        (SettingsPage.new("locations", "Locations", routes.admin_locations_path) if business.multiple_locations? || current == "locations"), # CAT-07
+        SettingsPage.new("branding", "Branding", routes.edit_admin_business_path(tab: "branding")),
+        SettingsPage.new("request_form", "Request form", routes.edit_admin_business_path(tab: "request_form"))
+      ] if settings) ],
+      [ "Money", ([
+        SettingsPage.new("documents", "Quotes, jobs & invoices", routes.edit_admin_business_path(tab: "documents")),
+        SettingsPage.new("taxes", "Taxes", routes.admin_tax_rates_path),
+        SettingsPage.new("payments", "Card payments", routes.admin_payment_account_path) # PAY-03
+      ] if settings) ],
+      [ "Messages", ([
+        SettingsPage.new("messages", "Emails to clients", routes.admin_message_templates_path),
+        SettingsPage.new("automations", "Automations", routes.admin_automations_path)
+      ] if settings) ],
       [ "Plan and data", [
-        SettingsPage.new("plan", "Plan", admin_plan_path),
-        (SettingsPage.new("data", "Your data", admin_data_exports_path) if can.(:export_data))
+        (SettingsPage.new("plan", "Plan", routes.admin_plan_path) if settings),
+        (SettingsPage.new("data", "Your data", routes.admin_data_exports_path) if can.(:export_data))
       ] ]
-    ].map { |name, pages| [ name, pages.compact ] }.reject { _2.empty? }
+    ].map { |name, pages| [ name, Array(pages).compact ] }.reject { _2.empty? }
   end
 end

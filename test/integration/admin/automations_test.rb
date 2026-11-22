@@ -122,11 +122,18 @@ class Admin::AutomationsTest < ActionDispatch::IntegrationTest
     assert_select "#automation-runs", /Tell the office.*Notified 1 person/m
   end
 
+  test "on a paid plan without automations, the banner names the plan that has them (#289)" do
+    Plan.create!(key: "pro", name: "Pro", public: true, position: 5, monthly_price_cents: 4900, annual_price_cents: 49_000, limits: {}, features: { "automations" => true })
+    @business.update!(plan: plans(:starter), plan_overrides: {})
+    get admin_automations_path
+    assert_select ".banner", /View only on Starter\. Automations come with Pro and up\./
+  end
+
   test "without the plan feature the page explains, history stays, and nothing can be changed" do
     rule = as_business(@business) { AutomationRule.create!(name: "Kept", trigger: "quote_sent", actions: [ { "type" => "notify_team", "team" => "office" } ]) }
     @business.update!(plan_overrides: {})
     get admin_automations_path
-    assert_select ".banner", /View only on Free\..*paid plan.*paused/m
+    assert_select ".banner", /View only on Free\. Automations come with a bigger plan.*paused/m
     assert_select "#automation-#{rule.uid}", /Kept/
     assert_select "#recipe-quote_follow_up", count: 0
     get new_admin_automation_path

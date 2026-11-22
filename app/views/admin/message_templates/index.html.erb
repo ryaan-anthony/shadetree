@@ -3,7 +3,7 @@
 <div class="max-w-3xl space-y-4">
   <% unless @editable %>
     <div class="banner banner-info" role="status"><%= icon "info" %>
-      <p><span class="font-semibold">View only on <%= current_business.plan.name %>.</span> You can read every email below; changing them is part of a paid plan. <%= link_to "See plans", admin_plan_path, class: "font-semibold underline" %><%= ". Messages you've already customized keep sending as they are." if @templates.any? %></p>
+      <p><span class="font-semibold">View only on <%= current_business.plan.name %>.</span> You can read every email below; changing them comes with <%= comes_with(:message_templates) %>. <%= link_to "See plans", admin_plan_path, class: "font-semibold underline" %><%= ". Messages you've already customized keep sending as they are." if @templates.any? %></p>
     </div>
   <% end %>
   <%= card title: "Emails to clients", subtitle: "Change the subject and opening words so they sound like you. Your logo, the summary, the button to their page and your contact details are always included.", flush: true do %>

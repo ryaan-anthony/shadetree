@@ -51,7 +51,7 @@ current multi-tab setup screen with one clear settings area.
 
 ## Decisions
 
-- #289, 2026-11-22: Settings has one entry point (/admin/settings) and four groups: Business
-  (details, hours, locations, branding, request form), Money (quotes, jobs & invoices, taxes, online
-  payments), Messages (emails to clients, automations) and Plan and data. Pages keep their URLs
-  (no renames; old links keep working); the groups live in one place, SettingsHelper.
+- #289, 2026-11-22: Settings has one entry point (/admin/settings, the first page the member can
+  open) and four groups: Business (details, hours, locations, branding, request form), Money
+  (quotes, jobs & invoices; taxes; card payments), Messages (emails to clients, automations) and
+  Plan and data. Each page keeps its URL and its permission; the groups live in SettingsHelper.

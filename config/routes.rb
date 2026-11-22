@@ -119,7 +119,7 @@ Rails.application.routes.draw do
     end
 
     # #289: one entry point for Settings; each page keeps its own URL (grouped in SettingsHelper).
-    get "settings", to: redirect("/admin/business/edit", status: 302)
+    get "settings", to: "settings#show", as: :settings
     # Business settings (tabs for profile, documents, branding, request form; hours and taxes have their own)
     resource :business, only: [ :new, :create, :edit, :update ] do
       post :switch, on: :collection

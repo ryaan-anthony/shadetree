@@ -174,11 +174,18 @@ class Admin::MessageTemplatesTest < ActionDispatch::IntegrationTest
     assert_includes mail.text_part.body.to_s, "Your visits are booked."
   end
 
+  test "on Starter without editing, the banner names the plan that has it (#289)" do
+    Plan.create!(key: "pro", name: "Pro", public: true, position: 5, monthly_price_cents: 4900, annual_price_cents: 49_000, limits: {}, features: { "message_templates" => true })
+    @business.update!(plan: plans(:starter), plan_overrides: {})
+    get admin_message_templates_path
+    assert_select ".banner", /View only on Starter\. You can read every email below; changing them comes with Pro and up\./
+  end
+
   test "on a plan without the feature, messages are read-only and customized ones keep sending" do
     save("request_received", subject: "Got it, {{client_first_name}}!", body: "Thanks!")
     @business.update!(plan_overrides: {})
     get admin_message_templates_path
-    assert_select ".banner", /View only on Free\..*part of a paid plan/m
+    assert_select ".banner", /View only on Free\. You can read every email below; changing them comes with a bigger plan/
     get edit_admin_message_template_path("request_received")
     assert_select "fieldset[disabled]"
     assert_select "input[type=submit][value=Save]", false
