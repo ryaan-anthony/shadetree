@@ -62,13 +62,15 @@ class ServiceRequest < ApplicationRecord
 
   # Staff change the status by hand, except to Quoted: that happens when a quote is made.
   MANUAL_STATUSES = %w[new in_progress archived].freeze
-  # Archiving ends its follow-up (CLI-07); `by` is who did it, for the history and notices.
+  # CLI-07: archiving ends its follow-up, and so does setting it back to New (back in the pile
+  # for anyone; assigning moves it on again). Under the request's lock, as assigning takes it.
+  # `by` is who did it, for the history and notices.
   def move_to!(status, by: nil)
     raise ArgumentError, "Can't set status #{status.inspect} by hand" unless MANUAL_STATUSES.include?(status.to_s)
 
-    transaction do
+    with_lock do
       update!(status:)
-      follow_up&.end!(by:, reason: "archived") if status.to_s == "archived"
+      follow_up&.end!(by:, reason: ("archived" if status.to_s == "archived")) if %w[new archived].include?(status.to_s)
     end
   end
 

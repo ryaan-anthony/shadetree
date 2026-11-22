@@ -9,7 +9,7 @@ class CreateRequestFollowUps < ActiveRecord::Migration[8.1]
       t.references :business, null: false, foreign_key: { on_delete: :cascade }, index: false
       t.string :uid, null: false
       t.references :service_request, null: false, foreign_key: { on_delete: :cascade }, index: { unique: true }
-      t.references :user, null: false, foreign_key: { on_delete: :cascade }, index: false
+      t.references :user, null: false, foreign_key: { on_delete: :cascade }
       t.references :assigned_by, foreign_key: { to_table: :users, on_delete: :nullify }, index: false
       t.string :kind, null: false, default: "visit"
       t.date :scheduled_on, null: false
@@ -29,9 +29,9 @@ class CreateRequestFollowUps < ActiveRecord::Migration[8.1]
     add_index :request_follow_ups, %i[business_id user_id scheduled_on]
 
     create_table :service_request_events do |t|
-      t.references :business, null: false, foreign_key: { on_delete: :cascade }, index: false
+      t.references :business, null: false, foreign_key: { on_delete: :cascade }
       t.references :service_request, null: false, foreign_key: { on_delete: :cascade }
-      t.references :user, foreign_key: { on_delete: :nullify }, index: false
+      t.references :user, foreign_key: { on_delete: :nullify }
       t.string :kind, null: false
       t.jsonb :data, null: false, default: {}
       t.datetime :occurred_at, null: false

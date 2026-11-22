@@ -32,6 +32,9 @@ class BusinessUser < ApplicationRecord
   # under a lock on the business row, so concurrent demotions can't both pass.
   before_update :keeps_an_active_owner
   before_destroy :ensure_not_last_owner
+  # CLI-07: someone who leaves the team stops following up requests (recorded in each one's history).
+  after_update(if: -> { saved_change_to_active?(from: true, to: false) }) { RequestFollowUp.release!(user, business) }
+  before_destroy(prepend: false) { RequestFollowUp.release!(user, business) unless destroyed_by_association&.active_record == Business }
   # BIL-04: an Owner who leaves may be the billing contact, so Stripe gets a remaining Owner's email.
   after_update_commit(if: -> { saved_change_to_role?(from: "owner") || (owner? && saved_change_to_active?(from: true)) }) do
     UpdateBillingEmailJob.perform_later(business_id) if business.stripe_customer_id

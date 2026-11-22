@@ -33,8 +33,10 @@ class VisitWarnings
   # CAT-07: each visit is checked against its job's location's hours, closures and zone (a
   # follow-up against its request's).
   def hours_for(item)
-    location = item.is_a?(Visit) ? item.job.location : item.location
-    @hours || ((@by_location ||= {})[location&.id] ||= OpeningHours.new(location.nil? || location.primary? ? item.business : location))
+    return @hours if @hours
+
+    owner = item.is_a?(Visit) ? item.job : item.service_request
+    (@by_location ||= {})[owner.location_id] ||= owner.location.then { OpeningHours.new(_1.nil? || _1.primary? ? item.business : _1) }
   end
 
   # Visits on the same date only: a visit running past midnight from the day before isn't seen.
@@ -54,8 +56,11 @@ class VisitWarnings
     @others ||= begin
       ids = @visits.flat_map(&:assignee_ids).uniq
       days = @visits.map(&:scheduled_on).uniq
-      ids.empty? ? [] : Visit.open.where(scheduled_on: days).joins(:assignments).where(visit_assignments: { user_id: ids }).distinct.includes(:job, :assignments).to_a +
-                        RequestFollowUp.where(scheduled_on: days, user_id: ids).includes(service_request: :client).to_a
+      return @others = [] if ids.empty?
+
+      found = Visit.open.where(scheduled_on: days).joins(:assignments).where(visit_assignments: { user_id: ids }).distinct.includes(job: :location, assignments: []).to_a +
+              RequestFollowUp.where(scheduled_on: days, user_id: ids).includes(service_request: %i[client location]).to_a
+      found.each { _1.association(:business).target = @business } # one business (and its location count) for all of them, not one each
     end
   end
 

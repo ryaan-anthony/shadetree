@@ -1173,6 +1173,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_100000) do
     t.index ["business_id", "user_id", "scheduled_on"], name: "idx_on_business_id_user_id_scheduled_on_2376eebb24"
     t.index ["service_request_id"], name: "index_request_follow_ups_on_service_request_id", unique: true
     t.index ["uid"], name: "index_request_follow_ups_on_uid", unique: true
+    t.index ["user_id"], name: "index_request_follow_ups_on_user_id"
     t.check_constraint "(timing::text = 'anytime'::text) = (starts_at IS NULL) AND (timing::text = 'window'::text) = (window_ends_at IS NOT NULL)", name: "request_follow_ups_times"
     t.check_constraint "duration_minutes >= 5 AND duration_minutes <= 1440", name: "request_follow_ups_duration"
     t.check_constraint "kind::text = ANY (ARRAY['visit'::character varying, 'call'::character varying]::text[])", name: "request_follow_ups_kind"
@@ -1210,7 +1211,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_100000) do
     t.string "kind", null: false
     t.jsonb "data", default: {}, null: false
     t.datetime "occurred_at", null: false
+    t.index ["business_id"], name: "index_service_request_events_on_business_id"
     t.index ["service_request_id"], name: "index_service_request_events_on_service_request_id"
+    t.index ["user_id"], name: "index_service_request_events_on_user_id"
     t.check_constraint "kind::text = ANY (ARRAY['assigned'::character varying, 'reassigned'::character varying, 'rescheduled'::character varying, 'updated'::character varying, 'unassigned'::character varying, 'ended'::character varying]::text[])", name: "service_request_events_kind"
   end
 

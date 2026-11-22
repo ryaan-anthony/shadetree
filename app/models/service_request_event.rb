@@ -14,6 +14,9 @@ class ServiceRequestEvent < ApplicationRecord
 
   validates :kind, inclusion: { in: KINDS }
 
+  # History isn't edited (erasure scrubs it with update_all).
+  def readonly? = persisted?
+
   def self.record!(request, kind, by:, **data)
     create!(business: request.business, service_request: request, kind: kind.to_s, user: by, data: data.compact, occurred_at: Time.current)
   end
