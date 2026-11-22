@@ -23,7 +23,7 @@
   <%= form_with url: review_cap_admin_catalog_items_path, method: :patch, id: "review-cap", class: "card card-body mb-4 flex flex-wrap items-end gap-3" do %>
     <div class="min-w-0 flex-1 basis-60">
       <p class="font-semibold text-ink">Sent without review</p>
-      <p class="text-sm2 text-muted"><%= pluralize(@without_review_count, "service") %> technicians can send without review. A quote over the cap, tax included, still comes to the office.</p>
+      <p class="text-sm2 text-muted" id="review-cap-help"><%= pluralize(@without_review_count, "service") %> technicians can send without review. A quote over the cap, tax included, still comes to the office; leave it blank for no cap.</p>
     </div>
     <div class="field w-40">
       <label class="label" for="without_review_cap">Up to <span class="label-optional">(optional)</span></label>
@@ -32,7 +32,6 @@
                            placeholder: "No cap", "aria-describedby": "review-cap-help" %></div>
     </div>
     <button type="submit" class="<%= button_classes(:secondary) %>">Save cap</button>
-    <p class="help w-full" id="review-cap-help">Leave it blank for no cap.</p>
   <% end %>
 <% end %>
 
