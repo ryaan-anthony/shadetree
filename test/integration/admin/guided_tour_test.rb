@@ -62,6 +62,7 @@ class Admin::GuidedTourTest < ActionDispatch::IntegrationTest
     %w[checklist home requests quotes schedule invoices settings].each { assert_select "[data-tour~=#{_1}]", 1, _1 }
     %w[details services branding client quote].each { assert_select "#setup-#{_1}", 1, _1 } # the last stop leads to a step by id
     assert_select "#setup-details a", "Add details" # and focuses its button
+    assert_select "[data-tour~=checklist] button[data-tour-skip]", "Hide" # never Hide
     get admin_my_day_path
     %w[today coming_up my_day help].each { assert_select "[data-tour~=#{_1}]", 1, _1 }
   end

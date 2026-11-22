@@ -23,13 +23,13 @@ class AccessibilityTest < ApplicationSystemTestCase
     assert_empty problems, "axe found problems:\n#{problems.join("\n")}"
   end
 
-  # Axe on the page as it is now. An open dialog's fade-in is let finish first: mid-fade, its
-  # text is partly transparent and the contrast check fails falsely.
+  # Axe on the page as it is now. An open dialog's fade-in (a <dialog>, or the tour's, ACC-08)
+  # is let finish first: mid-fade, its text is partly transparent and the contrast check fails falsely.
   def axe_problems(label)
     execute_script(AXE.read) unless evaluate_script("typeof window.axe === 'object'")
     evaluate_async_script(<<~JS).map { "#{label}: #{_1}" }
       const done = arguments[0]
-      const fading = [...document.querySelectorAll("dialog[open]")].flatMap((d) => d.getAnimations({ subtree: true }))
+      const fading = [...document.querySelectorAll("dialog[open], [role=dialog]:not([hidden])")].flatMap((d) => d.getAnimations({ subtree: true }))
       Promise.all(fading.map((a) => a.finished))
         .then(() => axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"] } }))
         .then((r) => done(r.violations.map((v) => `${v.id} (${v.help}): ${v.nodes.slice(0, 3).map((n) => n.target.join(" ")).join(" | ")}`)))
@@ -81,6 +81,29 @@ class AccessibilityTest < ApplicationSystemTestCase
     assert_selector "dialog[open]", text: "Pass this back to Marcus Reyes?"
     problems = axe_problems("Pass back dialog")
     assert_empty problems, "axe found problems:\n#{problems.join("\n")}"
+  end
+
+  # ACC-08: the guided tour, open at the checklist and at a menu stop, wide and on a phone
+  # (where the menu drawer is open beside the sheet).
+  test "the guided tour passes axe while it's open" do
+    @business.update!(onboarded_at: nil)
+    problems = []
+    [ [ 1400, 1400, "wide" ], [ 390, 844, "phone" ] ].each do |width, height, label|
+      page.driver.browser.manage.window.resize_to(width, height)
+      visit admin_root_path
+      click_on "Help"
+      click_on "Take the tour again"
+      assert_selector "#tour[role=dialog]", text: "Start here"
+      problems += axe_problems("#{label}, checklist stop")
+      click_on "Next"
+      assert_selector "[data-tour=requests].tour-target"
+      assert_selector "#app-sidebar[data-open=true]" if label == "phone"
+      problems += axe_problems("#{label}, menu stop")
+      click_on "End tour"
+    end
+    assert_empty problems, "axe found problems:\n#{problems.join("\n")}"
+  ensure
+    page.driver.browser.manage.window.resize_to(1400, 1400)
   end
 
   test "the search-engine setting is off while requests are off" do

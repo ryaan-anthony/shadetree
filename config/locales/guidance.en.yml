@@ -17,6 +17,10 @@ en:
       done: "Done"
       end: "End tour"
       finish_to_step: "Next: %{step}"
+      pointing: "Pointing at: %{name}"
+      in_menu: ", in the menu"
+      missing: "What this stop points at isn't on this page."
+      keys: "Press F6 to move between the tour and what it points at. Escape ends the tour."
       again: "Take the tour again"
       office:
         home_checklist:
