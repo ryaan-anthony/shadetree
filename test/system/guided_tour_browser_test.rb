@@ -62,6 +62,10 @@ class GuidedTourBrowserTest < ApplicationSystemTestCase
     wait_for_status "started"
 
     assert_selector "#tour-pointing", text: "Pointing at: Get to your first quote", visible: :all
+    page.send_keys(:f6) # into the checklist: its first link, never Hide
+    assert_equal "Add details", evaluate_script("document.activeElement.textContent.trim()")
+    page.send_keys(:f6)
+    assert_equal "tour", focused_id
 
     [ [ "Stop 2 of 6", "Requests" ], [ "Stop 3 of 6", "Quotes" ], [ "Stop 4 of 6", "Schedule" ], [ "Stop 5 of 6", "Invoices" ], [ "Stop 6 of 6", "Settings" ] ].each do |count, title|
       tab_to "Next"

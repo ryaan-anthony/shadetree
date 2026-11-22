@@ -131,15 +131,21 @@ export default class extends Controller {
     }
   }
 
-  // F6: from the tour to what it points at, and back.
+  // F6: from the tour to what it points at, and back. In a container (the checklist) that's its
+  // first link, else its first button; never a control marked data-tour-skip (like Hide, which
+  // would do something mid-tour), else the container itself.
   toggleFocus() {
     if (!this.dialogTarget.contains(document.activeElement)) return this.dialogTarget.focus({ preventScroll: true })
     const target = this.current
     if (!target) return
-    const focusable = target.matches("a[href], button, input, select, textarea, [tabindex]") ? target : target.querySelector("a[href], button, input, select, textarea")
+    const focusable = target.matches("a[href], button") ? target : this.firstControl(target)
     if (focusable) return focusable.focus()
     target.setAttribute("tabindex", "-1")
     target.focus()
+  }
+
+  firstControl(container) {
+    return container.querySelector("a[href]:not([data-tour-skip])") || container.querySelector("button:not([data-tour-skip]):not([disabled])")
   }
 
   show(index, { quietly = false } = {}) {
@@ -235,7 +241,8 @@ export default class extends Controller {
     this.index = null
     this.hide()
     this.useDrawer(false)
-    const step = nextStep && document.getElementById(nextStep.id)?.querySelector("a, button")
+    const stepElement = nextStep && document.getElementById(nextStep.id)
+    const step = stepElement && this.firstControl(stepElement)
     const opener = this.opener !== document.body && this.opener?.isConnected && this.opener.getClientRects().length ? this.opener : null
     const fallback = document.querySelector("#main h1")
     if (fallback && !step && !opener) fallback.setAttribute("tabindex", "-1")
