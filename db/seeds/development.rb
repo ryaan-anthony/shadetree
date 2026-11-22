@@ -294,24 +294,37 @@ Tenancy.with_business(business) do
   AutomationRecipe.install!("quote_follow_up", by: owner) unless AutomationRule.exists?(recipe: "quote_follow_up")
   # ACC-07: a role of the business's own (Team → Roles; giving it needs a plan with custom roles).
   Role.create_with(permissions: %w[schedule field_work]).find_or_create_by!(name: "Dispatcher")
-  # QTE-07: Riley (senior@example.com) is a "Senior tech" who quotes the requests given to them
-  # but doesn't send: one draft, from a site visit they did, is marked ready for review. Made
-  # directly, so nobody is notified or emailed.
-  senior_role = Role.create_with(permissions: %w[field_work quote_requests]).find_or_create_by!(name: "Senior tech")
+  # QTE-07 (owner, 2026-11-22): built-in Technicians quote the requests given to them and the
+  # office sends what they draft: Marcus (tech@example.com) has a draft, from a site visit he did,
+  # marked ready for review. Riley (senior@example.com) is a "Senior tech", a custom role that
+  # also sends their own quotes: a done site visit is waiting for Riley to quote and send.
+  # Made directly, so nobody is notified or emailed.
+  senior_role = Role.find_or_create_by!(name: "Senior tech") { _1.permissions = %w[field_work quote_requests send_own_quotes] }
+  senior_role.update!(permissions: %w[field_work quote_requests send_own_quotes]) unless senior_role.permissions.include?("send_own_quotes")
   riley = demo_user("senior@example.com", "Riley", "Park", demo_password)
   BusinessUser.find_or_create_by!(business:, user: riley) { _1.assign_attributes(role: "custom", role_id: senior_role.id) }
-  unless Quote.exists?(created_by: riley)
+  if tech && !Quote.exists?(created_by: tech)
     client = Client.order(:id).first
     mulch = CatalogItem.active.find_by(name: "Mulch installation") || CatalogItem.active.first
     request = ServiceRequest.create!(client:, property: client.properties.first, source: "phone", created_by: owner, status: "in_progress",
                                      description: "Wants the beds edged and mulched before spring.",
                                      services: mulch ? [ { "catalog_item_id" => mulch.id, "name" => mulch.name } ] : [])
-    follow_up = request.create_follow_up!(business:, user: riley, assigned_by: owner, kind: "visit", scheduled_on: business.today - 1,
-                                          timing: "exact", start_time: "10:00", done_at: 1.day.ago, done_by: riley)
+    follow_up = request.create_follow_up!(business:, user: tech, assigned_by: owner, kind: "visit", scheduled_on: business.today - 1,
+                                          timing: "exact", start_time: "10:00", done_at: 1.day.ago, done_by: tech)
     ServiceRequestEvent.record!(request, :assigned, by: owner, to: follow_up.state)
-    quote = request.create_quote!(by: riley)
-    quote.update!(title: "Bed edging and mulch", ready_for_review_at: 2.hours.ago, ready_for_review_by: riley)
-    QuoteEvent.record!(quote, :ready_for_review, by: riley)
+    quote = request.create_quote!(by: tech)
+    quote.update!(title: "Bed edging and mulch", ready_for_review_at: 2.hours.ago, ready_for_review_by: tech)
+    QuoteEvent.record!(quote, :ready_for_review, by: tech)
+  end
+  unless ServiceRequest.exists?(description: "Wants the back lawn aerated and overseeded.")
+    client = Client.order(:id).offset(1).first || Client.order(:id).first
+    aeration = CatalogItem.active.find_by(name: "Aeration") || CatalogItem.active.first
+    lawn = ServiceRequest.create!(client:, property: client.properties.first, source: "phone", created_by: owner, status: "in_progress",
+                                  description: "Wants the back lawn aerated and overseeded.",
+                                  services: aeration ? [ { "catalog_item_id" => aeration.id, "name" => aeration.name } ] : [])
+    follow_up = lawn.create_follow_up!(business:, user: riley, assigned_by: owner, kind: "visit", scheduled_on: business.today - 1,
+                                       timing: "exact", start_time: "15:00", done_at: 1.day.ago, done_by: riley)
+    ServiceRequestEvent.record!(lawn, :assigned, by: owner, to: follow_up.state)
   end
   puts "Request form: http://localhost:3000/request/#{business.handle}"
 end

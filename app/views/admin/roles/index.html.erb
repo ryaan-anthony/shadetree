@@ -12,7 +12,7 @@
 
 <div class="grid max-w-4xl gap-4 md:grid-cols-2">
   <% { "owner" => "Runs the business. There's always at least one.", "admin" => "Runs the office: clients, quotes, the schedule, invoices and the team.",
-       "technician" => "Works their own visits from their phone." }.each do |key, lede| %>
+       "technician" => "Works their own visits from their phone, and drafts quotes for the requests given to them for the office to check and send." }.each do |key, lede| %>
     <%= card title: key.humanize, subtitle: lede, id: "role-#{key}",
              actions: (link_to("Duplicate", new_admin_role_path(from: key), class: button_classes(:ghost, :sm), "aria-label": "Duplicate: #{key.humanize}") if @editable && key != "owner") do %>
       <%= render "permissions", granted: Permissions::ROLES.fetch(key), owner: key == "owner" %>

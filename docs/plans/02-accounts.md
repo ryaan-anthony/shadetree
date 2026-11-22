@@ -50,7 +50,7 @@ Owner, Admin, Technician (see vision glossary). Operators are covered in `10-ope
 | Clients, requests, quotes, jobs, invoices, payments (all) | `office` | ✔ | ✔ | |
 | Schedule and assign visits | `schedule` | ✔ | ✔ | |
 | See own assigned visits, their client contact & property, add notes/photos, mark complete | `field_work` | ✔ | ✔ | ✔ |
-| Quote requests assigned to them: create and edit their own drafts (QTE-07) | `quote_requests` | ✔ | ✔ | |
+| Quote requests assigned to them: create and edit their own drafts (QTE-07) | `quote_requests` | ✔ | ✔ | ✔ |
 | Send the quotes they drafted (QTE-07) | `send_own_quotes` | ✔ | ✔ | |
 | Data export | `export_data` | ✔ | ✔ | |
 
@@ -107,7 +107,8 @@ table is the source of truth: change both together.
 
 1. Can an unconfirmed user sign in and start setting up (lower friction), with client-facing
    sends blocked until confirmed? Recommend **yes**.
-2. Should Technicians be able to create quotes in the field? Common in trades. Recommend a
-   per-business toggle in M6; launch with Admin+ only.
+2. ~~Should Technicians be able to create quotes in the field?~~ Resolved (QTE-07, owner,
+   2026-11-22): built-in Technicians draft quotes for requests given to them (`quote_requests`)
+   and the office checks and sends them; sending their own is a custom role's `send_own_quotes`.
 3. Is there a cap on members on the Free plan? Owned by `09-billing`.
 4. Does a deactivated member's name stay on historic records (quotes, visits)? Recommend yes.

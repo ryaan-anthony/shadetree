@@ -20,6 +20,8 @@ class PermissionsTest < ActiveSupport::TestCase
     assert_equal %w[owner admin], Permissions.roles_with(:manage_team)
     assert_equal %w[owner admin], Permissions.roles_with(:office)
     assert_equal %w[owner admin technician], Permissions.roles_with(:field_work)
+    assert_equal %w[owner admin technician], Permissions.roles_with(:quote_requests), "QTE-07 (owner, 2026-11-22)"
+    assert_equal %w[owner admin], Permissions.roles_with(:send_own_quotes), "Technicians' quotes are reviewed"
   end
 
   test "every role is a membership role and unknown permissions raise" do

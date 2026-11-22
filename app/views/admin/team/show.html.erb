@@ -93,7 +93,7 @@
       <%= form_with model: @invitation, url: admin_invitations_path do |f| %>
         <%= f.field :email, as: :email, required: true, placeholder: "name@example.com" %>
         <%= f.field :role, as: :select, choices: role_options(BusinessUser.new(business: current_business, role: "technician"), @custom_roles, built_in: BusinessUser::ROLES.reverse),
-                    help: safe_join([ "Technicians see their own visits. Admins run the office. Owners also handle billing. ",
+                    help: safe_join([ "Technicians see their own visits and draft quotes for the office to send. Admins run the office. Owners also handle billing. ",
                                       (link_to("See what each role can do", admin_roles_path, class: "underline") if can?(:manage_owners)) ].compact) %>
         <%= f.submit_button "Send invitation", class: "mt-4 w-full" %>
       <% end %>

@@ -31,7 +31,9 @@ class Admin::QuotesTest < ActionDispatch::IntegrationTest
     quote = draft
     sign_out :user
     assert_permission_matrix(owner: true, admin: true, technician: false) { get admin_quotes_path }
-    assert_permission_matrix(owner: true, admin: true, technician: false) { get edit_admin_quote_path(quote) }
+    assert_permission_matrix(owner: true, admin: true) { get edit_admin_quote_path(quote) }
+    as_technician { get edit_admin_quote_path(quote) }
+    assert_response :not_found, "QTE-07: Technicians reach only their own drafts from requests"
     assert_permission_matrix(owner: true, admin: true, technician: false) { post admin_quotes_path, params: { quote: { client: @maria.uid } } }
   end
 
