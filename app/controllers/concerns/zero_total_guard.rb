@@ -25,7 +25,7 @@ module ZeroTotalGuard
   private
 
   # A first send (draft or revision) of a document that totals nothing.
-  def zero_total? = zero_total_document.draft? && zero_total_document.totals.total.zero?
+  def zero_total? = zero_total_document.draft? && !zero_total_document.sendable_total?
   def zero_total_confirmed? = params[:zero_total] == CONFIRMED
 
   # Lines with no price, named on the send page even when the total isn't zero.

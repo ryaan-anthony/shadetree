@@ -27,6 +27,10 @@ module PricedDocument
                                 lines: current_line_items.map { _1.to_pricing(tax_rate_list) })
   end
 
+  # #289: whether the total is worth sending without asking: more than zero (a $0.00 total or
+  # a credit needs someone to confirm it; ZeroTotalGuard asks, automations leave a draft).
+  def sendable_total? = totals.total.positive?
+
   # Lines as a builder sees them: in order, without ones being removed.
   def current_line_items = line_items.reject(&:marked_for_destruction?).sort_by { [ _1.position, _1.id || 0 ] }
 

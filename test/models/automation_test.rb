@@ -125,6 +125,16 @@ class AutomationTest < ActiveSupport::TestCase
     assert_no_match "Maria", AutomationRun.pluck(:log).to_s, "logs don't keep the client's name"
   end
 
+  test "a completed job that comes to $0.00 gets a draft invoice, not an email (#289)" do
+    rule(trigger: "job_completed", delay: 0, conditions: {}, actions: [ { "type" => "invoice_job" } ], name: "Invoice it")
+    job = Job.create!(client: @maria, title: "Free inspection", line_items_attributes: [ { name: "Inspection", quantity: 1, unit_price: 0 } ])
+    now { job.complete!(by: @owner) }
+    invoice = job.invoices.sole
+    assert_equal "draft", invoice.status
+    assert_not EmailMessage.exists?(related: invoice)
+    assert_includes AutomationRun.where(subject: job).sole.log.to_s, "Created #{invoice.number} as a draft: it comes to $0.00."
+  end
+
   test "overdue invoices trigger once, from the hourly sweep" do
     reminder = MessageTemplate.create!(name: "Overdue", subject: "{{document_number}} is overdue", body: "Hi {{client_first_name}}")
     rule(trigger: "invoice_overdue", delay: 0, conditions: { "still_open" => true }, actions: [ { "type" => "send_template", "template" => reminder.uid } ], name: "Overdue")
