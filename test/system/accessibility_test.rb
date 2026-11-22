@@ -42,7 +42,7 @@ class AccessibilityTest < ApplicationSystemTestCase
     assert_accessible admin_root_path, admin_roles_path, admin_service_requests_path, admin_my_day_path, admin_hours_path,
                       edit_admin_business_path(tab: "documents"), edit_admin_business_path(tab: "request_form"),
                       edit_admin_business_path(tab: "branding"), admin_plan_path,
-                      admin_notifications_path, admin_data_exports_path
+                      admin_notifications_path, admin_data_exports_path, admin_message_templates_path
   end
 
   # CLI-07: logging a request (with its follow-up fields), a request with a follow-up, and the assign form.
