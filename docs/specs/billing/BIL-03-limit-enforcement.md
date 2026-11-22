@@ -45,6 +45,8 @@ limits are part of the brand.
 
 - A grace of one: at the limit, one more new quote can go out (with a warning) so nobody is
   blocked mid-conversation; then new quotes wait for the reset or a bigger plan.
+  *Superseded:* owner decision 2026-11-22: no grace send. Once used reaches the limit, new
+  quotes are blocked for everyone; a separate PR makes the code change (QTE-08, BIL-06).
 
 ## Implementation notes
 

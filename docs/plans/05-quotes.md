@@ -54,6 +54,8 @@ client's side and treated signatures as a separate legal-compliance epic.
   assigned to them, without wider office access (04-clients R20).
 - **R18** Quote list with status filters, search by client/number, and totals; staff can
   duplicate, archive, mark approved on the client's behalf (records who and why) and resend.
+- **R21** A business can mark services that technicians may send quotes for without office
+  review; a draft made only of those services, at their prices, can be sent by its technician.
 
 ### PDF
 - **R19** Every quote renders as a branded PDF that matches the web view and is suitable for
@@ -80,6 +82,7 @@ client's side and treated signatures as a separate legal-compliance epic.
 | [QTE-05](../specs/quotes/QTE-05-client-approval.md) | Client approve / decline / request changes | M2 | QTE-03, NTF-01 |
 | [QTE-06](../specs/quotes/QTE-06-quote-lifecycle.md) | Quote list, lifecycle & revisions | M2 | QTE-04, QTE-05 |
 | [QTE-07](../specs/quotes/QTE-07-technician-quotes.md) | Quotes from assigned requests | M6 | JOB-06, QTE-01, ACC-07 |
+| [QTE-08](../specs/quotes/QTE-08-auto-approved-services.md) | Services technicians send without review | M6 | QTE-07, CAT-03, BIL-03 |
 
 ## Backlog (M6)
 
