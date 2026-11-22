@@ -182,4 +182,22 @@ class SentryTrackerTest < ActionDispatch::IntegrationTest
   ensure
     Rails.cache = cache
   end
+
+  test "stale backups fail the job-health check-in and arrive as one warning message" do
+    config = Rails.configuration.x.observability
+    cache, Rails.cache = Rails.cache, ActiveSupport::Cache::MemoryStore.new
+    dir, previous = Dir.mktmpdir, ENV["BACKUP_STATUS_DIR"]
+    ENV["BACKUP_STATUS_DIR"] = dir # no backup taken yet
+    config.backup_alerts = true
+    with_solid_queue_tables { JobHealth.check! }
+
+    assert_equal [ :error ], sentry_events.grep(Sentry::CheckInEvent).map(&:status)
+    message = sentry_events.grep(Sentry::ErrorEvent).sole
+    assert_equal [ "Backups stale or untested", "warning" ], [ message.message, message.level.to_s ]
+  ensure
+    config.backup_alerts = false
+    ENV["BACKUP_STATUS_DIR"] = previous
+    FileUtils.rm_rf(dir)
+    Rails.cache = cache
+  end
 end

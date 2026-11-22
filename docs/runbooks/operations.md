@@ -304,8 +304,8 @@ runs `docker.sh <env> nightly`:
    users, businesses, clients and uploads, and the newest 200 files with their sizes). Nothing
    live is touched; the scratch copies are dropped.
 3. `/up/backup` answers `ok`, `stale` (no backup in 26 hours) or `untested` (no passing drill
-   since). No external check polls it yet (PLT-10: the free uptime monitor is on `/up`); look at
-   it after a backup change, or watch it once a second uptime monitor exists.
+   since). The job health check applies the same rule every 10 minutes and alerts through Sentry
+   (PLT-10, owner 2026-11-22; "Alerts" under Monitoring).
 
 Retention: sets older than `BACKUP_RETENTION_DAYS` (production 30, staging 7) are pruned, except,
 with `BACKUP_KEEP_MONTHLY` (production's default), the oldest set of each month, kept for a year;
@@ -435,7 +435,8 @@ cost of the host's journal settings deciding retention; switch with `--log-drive
 Tuning (environment variables in the GitHub environment, all optional): `SLOW_REQUEST_MS` (1000),
 `SLOW_QUERY_MS` (250), `JOB_BACKLOG_THRESHOLD` (100 jobs waiting), `JOB_WAIT_THRESHOLD` (600
 seconds the oldest has waited), `JOB_FAILED_THRESHOLD` (1 new failed job), `JOB_ALERT_REPEAT_MINUTES`
-(60: a backlog that lasts is alerted again at most this often). Change one and re-run the last deploy.
+(60: a backlog or backup problem that lasts is alerted again at most this often), `BACKUP_ALERTS`
+(on in staging and production; set it in `EXTRA_SETTINGS`). Change one and re-run the last deploy.
 
 `JOB_CONCURRENCY` is the number of Solid Queue worker processes (default 1, three threads each).
 Each extra process is another copy of the app in memory, about 150–250 MB, inside the
@@ -449,9 +450,9 @@ PDF (100–200 MB). On the 2 GB VMs keep it at 1; raise `APP_MEMORY` with it.
 | `error` (unhandled) | A request or job failed | A bug, or a dependency down | Find the request or job id in the logs; fix, or retry the job |
 | `Background jobs failed` | `JobHealthCheckJob`, every 10 minutes | At least `JOB_FAILED_THRESHOLD` jobs failed for good since the last alert (their classes listed) | See "Failed jobs" below |
 | `Job queue backlog over threshold` | Same, at most every `JOB_ALERT_REPEAT_MINUTES` | Too many jobs waiting, or the oldest due job has waited too long | Check Solid Queue's supervisor in the logs, then load: raise `JOB_CONCURRENCY` |
-| `job-health` monitor failed or missed | Sentry Cron (the check checks in every run) | Failed: one of the two above. Missed: the check didn't run, so workers or dispatcher are down | As above; for a missed one, `docker restart shadetree-production` |
+| `job-health` monitor failed or missed | Sentry Cron (the check checks in every run) | Failed: one of the alerts above or below. Missed: the check didn't run, so workers or dispatcher are down | As above; for a missed one, `docker restart shadetree-production` |
 | Jobs stalled | The missed `job-health` check-in above (`/up/jobs` answers 503 too; not polled yet) | The oldest due job has waited over `JOB_WAIT_THRESHOLD`: workers or dispatcher down | `docker restart shadetree-production`; if it persists, re-run the last deploy |
-| Backups stale or untested | `/up/backup` (503), **not polled yet** | No backup in `BACKUP_MAX_AGE_HOURS`, or its nightly restore drill failed | `journalctl --user -u shadetree-backup@production` on the VM ("Backups" above) |
+| `Backups stale or untested` | `JobHealthCheckJob`, at most every `JOB_ALERT_REPEAT_MINUTES`; fails the `job-health` check-in (owner, 2026-11-22) | `/up/backup`'s rule: no backup in `BACKUP_MAX_AGE_HOURS`, or its nightly restore drill failed (`state` says which) | `journalctl --user -u shadetree-backup@production` on the VM ("Backups" above) |
 | Site down | Sentry uptime monitor on production `/up` | Three checks in a row failed (no answer, or not 2xx) | Check the VM, the container (`docker ps`) and the tunnel; roll back the last deploy if it's the cause |
 
 **Where they go:** the log, the "Background jobs" card on the operator console's home, and,
@@ -485,8 +486,8 @@ are told apart by environment. Alerts: the default "new issue" email rule; add a
 the Cron monitor (`job-health`) and the uptime monitor (production `/up`); spans (5M), replays and
 logs stay unused. Past the error
 quota Sentry drops events until the month resets (spike protection is on by default), so keep
-noisy errors fixed or ignored; the log still has every one. A lasting backlog costs at most
-24 events a day (`JOB_ALERT_REPEAT_MINUTES`).
+noisy errors fixed or ignored; the log still has every one. A lasting backlog or backup problem
+costs at most 24 events a day each (`JOB_ALERT_REPEAT_MINUTES`).
 
 **Uptime check** (owner, 2026-11-22): Sentry's one included uptime monitor, on production `/up`.
 Set it up once production answers:

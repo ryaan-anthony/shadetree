@@ -12,6 +12,8 @@ Rails.application.configure do
 
   config.x.observability.job_failed_threshold = Observability.env_integer("JOB_FAILED_THRESHOLD", 1)
   config.x.observability.job_alert_repeat_minutes = Observability.env_integer("JOB_ALERT_REPEAT_MINUTES", 60)
+  # Where nightly backups run (staging and production): stale or untested ones raise an alert.
+  config.x.observability.backup_alerts = Observability.env_flag("BACKUP_ALERTS", Rails.env.production?)
 
   # The error tracker (ADR 0027): Sentry, only with SENTRY_DSN (staging and production). Its own
   # request capture is taken out of the stack; everything reaches it through ErrorSubscriber.

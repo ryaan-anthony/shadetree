@@ -56,6 +56,8 @@ it, without leaking client personal data into third-party tools.
   breadcrumbs and SQL scrubbed; the business by id only; the DSN only from the environment, and
   the tracker off without it; tracing off to stay in the free tier.
 - **Uptime** (owner, 2026-11-22): Sentry's one included uptime monitor, on production `/up`.
+- **Backups alert too** (owner, 2026-11-22): stale or untested backups, by `/up/backup`'s rule,
+  raise a Sentry message (same repeat throttle) and fail the `job-health` check-in.
 - **Sub-processor** (owner, 2026-11-22): connect now; add Sentry to the sub-processors page when
   the legal drafts are finalised (#274).
 
@@ -86,8 +88,8 @@ it, without leaking client personal data into third-party tools.
   capture off), with a `before_send` scrubber as a second layer; tested through Sentry's test
   transport. `SENTRY_DSN` (secret) and `SENTRY_ENVIRONMENT` (var) go through the deploy's env file.
 - **Job alerts:** `JOB_FAILED_THRESHOLD` (1) new failures; a lasting backlog repeats every
-  `JOB_ALERT_REPEAT_MINUTES` (60); each check is a `job-health` check-in, so a stopped check shows
-  as missed.
+  `JOB_ALERT_REPEAT_MINUTES` (60), as does a backup problem (`BACKUP_ALERTS`, on in production
+  mode); each check is a `job-health` check-in, so a stopped check shows as missed.
 - **Uptime targets:** `/up` now; `/up/jobs`, `/up/backup` and `/c/` + 32 × `1` (never issued:
   a 404 through the client-page stack, recording no view) are tested for later. Runbook: Monitoring.
 

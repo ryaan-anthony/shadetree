@@ -97,4 +97,36 @@ class JobHealthTest < ActiveSupport::TestCase
       assert_operator JobHealth.oldest_wait(21.minutes.from_now), :>=, 20.minutes
     end
   end
+
+  test "stale or untested backups raise a repeated alert, by /up/backup's rule (owner, 2026-11-22)" do
+    config = Rails.configuration.x.observability
+    dir = Dir.mktmpdir
+    previous = ENV["BACKUP_STATUS_DIR"]
+    ENV["BACKUP_STATUS_DIR"] = dir
+    with_solid_queue_tables do
+      JobHealth.check!
+      assert_empty @alerts # off where backups don't run (BACKUP_ALERTS)
+
+      config.backup_alerts = true
+      JobHealth.check!
+      assert_equal [ "Backups stale or untested", "stale" ], @alerts.sole.values_at(:message, :state)
+
+      @alerts.clear
+      FileUtils.touch(File.join(dir, "last_success"))
+      JobHealth.check!(now: 30.minutes.from_now)
+      assert_empty @alerts # now untested, but alerted on within JOB_ALERT_REPEAT_MINUTES
+
+      JobHealth.check!(now: 61.minutes.from_now)
+      assert_equal "untested", @alerts.sole[:state]
+
+      @alerts.clear
+      FileUtils.touch(File.join(dir, "last_drill"), mtime: 2.hours.from_now.to_time)
+      JobHealth.check!(now: 2.hours.from_now)
+      assert_empty @alerts
+    end
+  ensure
+    config.backup_alerts = false
+    ENV["BACKUP_STATUS_DIR"] = previous
+    FileUtils.rm_rf(dir)
+  end
 end
