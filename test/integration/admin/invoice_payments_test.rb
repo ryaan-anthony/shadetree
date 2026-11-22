@@ -63,6 +63,9 @@ class Admin::InvoicePaymentsTest < ActionDispatch::IntegrationTest
     assert_equal [ "sent", 0 ], [ fresh.status, fresh.amount_paid_cents ]
     record("50", payment_method: "card")
     assert_select ".field", /That method isn't one staff can record\./
+    record("50", payment_method: "barter")
+    assert_select ".field", /Choose a method from the list\./
+    assert_select ".field", { text: /isn't one staff can record/, count: 0 }, "one message for an unknown method"
 
     payment = as_business(@business) { fresh.record_payment!(by: @owner, amount: "50", received_on: @today, payment_method: "cash") }
     get edit_admin_invoice_payment_path(@invoice, payment)

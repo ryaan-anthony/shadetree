@@ -22,8 +22,8 @@
     <%= render "fields", f:, payment: @payment %>
     <% if (email = @invoice.client.primary_email&.value) && current_user.can_send_to_clients? %>
       <label class="check mt-4">
-        <%# ticked at first (owner, 2026-11-22); after a mistake, as they left it %>
-        <%= check_box_tag :send_receipt, "1", params.key?(:payment) ? params[:send_receipt] == "1" : true, id: "send_receipt" %>
+        <%# ticked at first (owner, 2026-11-22), except for support viewing as them; after a mistake, as they left it %>
+        <%= check_box_tag :send_receipt, "1", params.key?(:payment) ? params[:send_receipt] == "1" : impersonation.nil?, id: "send_receipt" %>
         <span><span class="font-medium text-ink">Email a receipt to <%= email %></span>
           <span class="check-hint">What was received and what's left to pay, with a link to the invoice.</span></span>
       </label>

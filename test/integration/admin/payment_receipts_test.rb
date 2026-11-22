@@ -50,6 +50,17 @@ class Admin::PaymentReceiptsTest < ActionDispatch::IntegrationTest
     assert_no_enqueued_emails
   end
 
+  test "support viewing as a member starts with the box unticked" do
+    admin = @business.business_users.find_by!(user: member_with_role(:admin))
+    sign_out :user
+    sign_in_operator
+    post ops_business_impersonation_path(@business), params: { member: admin.uid, reason: "Ticket: recording a check with them" }
+    patch ops_impersonation_path, params: { mode: "write", reason: "Recording the check they asked about" }
+    get new_admin_invoice_payment_path(@invoice)
+    assert_response :success
+    assert_select "input[type=checkbox][name=send_receipt]:not([checked])"
+  end
+
   test "ticking the box emails the client a receipt with what's left; it shows on the payment" do
     get new_admin_invoice_payment_path(@invoice)
     assert_select "label", /Email a receipt to maria@example.com/

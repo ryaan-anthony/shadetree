@@ -21,6 +21,7 @@ class RecordPaymentSystemTest < ApplicationSystemTestCase
     assert_select "Method", selected: "Choose one"
     assert_checked_field "Email a receipt to maria@example.com"
     click_on "Record payment"
+    assert_selector "h1", text: "Record a payment"
     assert_current_path new_admin_invoice_payment_path(@invoice)
     assert_not_empty find_field("Method").native.property("validationMessage"), "the browser asks for a method"
     assert_equal 0, Tenancy.with_business(@business) { @invoice.payments.count }
