@@ -48,3 +48,10 @@ current multi-tab setup screen with one clear settings area.
   sent document never changes (QTE-01 and INV-01 store it).
 - ~~Is "country" needed at launch?~~ Resolved: yes, with ten supported countries, each setting
   the default currency and address wording.
+
+## Decisions
+
+- #289, 2026-11-22: Settings has one entry point (/admin/settings) and four groups: Business
+  (details, hours, locations, branding, request form), Money (quotes, jobs & invoices, taxes, online
+  payments), Messages (emails to clients, automations) and Plan and data. Pages keep their URLs
+  (no renames; old links keep working); the groups live in one place, SettingsHelper.

@@ -178,7 +178,7 @@ class Admin::MessageTemplatesTest < ActionDispatch::IntegrationTest
     save("request_received", subject: "Got it, {{client_first_name}}!", body: "Thanks!")
     @business.update!(plan_overrides: {})
     get admin_message_templates_path
-    assert_select ".banner", /part of a paid plan/
+    assert_select ".banner", /View only on Free\..*part of a paid plan/m
     get edit_admin_message_template_path("request_received")
     assert_select "fieldset[disabled]"
     assert_select "input[type=submit][value=Save]", false

@@ -89,6 +89,8 @@ Part 2 (a business's own templates, real-record previews):
   document, so visit or payment automations need wording of their own there.
 - "Preview" can use one of the business's ten most recent records of the right kind (quotes,
   invoices, visits or requests) instead of the samples; anything else falls back to the samples.
+- #289: on a plan without editing, the page says so first: "View only on Free. You can read every
+  email below; changing them is part of a paid plan."
 
 ## Open questions
 

@@ -126,7 +126,7 @@ class Admin::AutomationsTest < ActionDispatch::IntegrationTest
     rule = as_business(@business) { AutomationRule.create!(name: "Kept", trigger: "quote_sent", actions: [ { "type" => "notify_team", "team" => "office" } ]) }
     @business.update!(plan_overrides: {})
     get admin_automations_path
-    assert_select ".banner", /part of a paid plan.*paused/m
+    assert_select ".banner", /View only on Free\..*paid plan.*paused/m
     assert_select "#automation-#{rule.uid}", /Kept/
     assert_select "#recipe-quote_follow_up", count: 0
     get new_admin_automation_path

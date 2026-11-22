@@ -27,7 +27,7 @@ class Admin::HoursTest < ActionDispatch::IntegrationTest
 
   test "hours start unset, then are saved per day" do
     get admin_hours_path
-    assert_select "nav.tabs a[aria-current=page]", "Hours"
+    assert_select "nav[aria-label=Settings] a[aria-current=page]", "Hours"
     assert_select ".banner", /hours aren't set yet/
     assert_select "input[name='hours[1][open]']:not([checked])"
 

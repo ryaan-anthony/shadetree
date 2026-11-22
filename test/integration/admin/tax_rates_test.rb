@@ -18,7 +18,7 @@ class Admin::TaxRatesTest < ActionDispatch::IntegrationTest
 
   test "no rates explains that documents show no tax" do
     get admin_tax_rates_path
-    assert_select "nav.tabs a[aria-current=page]", "Taxes"
+    assert_select "nav[aria-label=Settings] a[aria-current=page]", "Taxes"
     assert_select "main", /Quotes and invoices show no tax/
   end
 

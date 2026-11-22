@@ -92,6 +92,7 @@ build custom rules from a fixed list of triggers, conditions and actions.
 - Dev seeds: `AutomationRecipe.install!("quote_follow_up", by: user)` inside the business.
 - #289: a copy of an approved quote isn't a send: it starts no "quote sent" automation; and the
   "invoice a completed job" action leaves a $0.00 (or credit) invoice as a draft.
+- #289: on a plan without automations, the page starts with "View only on Free".
 
 ## Open questions
 
