@@ -29,5 +29,6 @@
         </div>
       <% end %>
     <% end %>
+    <%= render "admin/schedule/new_follow_up", titled: titled if can?(:office) %><%# JOB-07: or a request's follow-up at this slot %>
   <% end %>
 <% end %>

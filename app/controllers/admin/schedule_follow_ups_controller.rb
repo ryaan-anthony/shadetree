@@ -9,7 +9,13 @@ class Admin::ScheduleFollowUpsController < Admin::BaseController
   requires_permission :office
   # The panel loads into its frame in the background; it mustn't take an Undo's flash (as visits').
   leaves_session_alone only: :show, if: -> { turbo_frame_request? }
-  before_action :set_follow_up
+  before_action :set_follow_up, except: :new
+
+  # From a slot: the chosen request's assign form, with the slot's day, time and person.
+  def new
+    request = ServiceRequest.where(status: ServiceRequest::OPEN_STATUSES).find_by_param!(params[:request])
+    redirect_to edit_admin_service_request_follow_up_path(request, params.permit(:on, :at, :crew, :grid_zone, *Admin::ScheduleController::CALENDAR_PARAMS.keys).merge(from: "schedule"))
+  end
 
   def show
     render partial: "admin/schedule/follow_up_panel", locals: { follow_up: @follow_up }, layout: false if turbo_frame_request?

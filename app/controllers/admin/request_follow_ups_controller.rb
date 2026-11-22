@@ -6,12 +6,14 @@ class Admin::RequestFollowUpsController < Admin::BaseController
   # OPS-03: what support may do while viewing as a member
   impersonation :allowed
   include FollowUpForm
+  include GridClock # JOB-07: a slot's time is on the calendar's clock
   requires_permission :office
   before_action :set_request
   before_action :require_open_request, only: %i[edit update]
 
   def edit
     @follow_up = @request.follow_up || start_follow_up(@request)
+    prefill_from_schedule
   end
 
   def update
@@ -23,11 +25,13 @@ class Admin::RequestFollowUpsController < Admin::BaseController
     return render(:edit, status: :unprocessable_content) if follow_up_warn?(@follow_up)
 
     follow_up = RequestFollowUp.assign!(@request, follow_up_params, by: current_user, fresh: fresh?)
-    redirect_to admin_service_request_path(@request), notice: "#{follow_up.user.full_name} has it: #{follow_up.kind_label.downcase}, #{follow_up.when_label}."
+    back = from_schedule? ? back_to_schedule(date: follow_up.scheduled_on, focus: @request.uid, user_id: follow_up.user_id) : admin_service_request_path(@request)
+    redirect_to back, notice: "#{follow_up.user.full_name} has it: #{follow_up.kind_label.downcase}, #{follow_up.when_label}."
   rescue ActiveRecord::RecordInvalid
     render :edit, status: :unprocessable_content
   rescue ActiveRecord::StaleObjectError
-    redirect_to edit_admin_service_request_follow_up_path(@request), alert: "Someone else assigned or changed this follow-up meanwhile. Here's the latest."
+    redirect_to edit_admin_service_request_follow_up_path(@request, (calendar_params.merge(from: "schedule") if from_schedule?) || {}),
+                alert: "Someone else assigned or changed this follow-up meanwhile. Here's the latest."
   rescue RequestFollowUp::NotOpen => error
     redirect_to admin_service_request_path(@request), alert: error.message
   end
@@ -53,6 +57,36 @@ class Admin::RequestFollowUpsController < Admin::BaseController
   end
 
   private
+
+  # JOB-07: booked from a slot on the calendar (?from=schedule): the slot's day and start (on
+  # the calendar's clock, ?grid_zone=, as the request's location keeps its own) and its person;
+  # afterwards, back to the calendar as it was (Admin::VisitsController's calendar params).
+  def prefill_from_schedule
+    return unless from_schedule?
+
+    # Booking one that's already assigned moves it: say what it is now.
+    @was = "#{@follow_up.user.full_name}, #{@follow_up.when_label}" if @follow_up.persisted?
+
+    on = Visit.parse_date(params[:on])
+    at = params[:at].to_s[/\A(?:[01]\d|2[0-3]):[0-5]\d\z/]
+    on, at = from_grid_clock(on, at, to: @follow_up.time_zone) if on
+    @follow_up.scheduled_on = on if on
+    @follow_up.assign_attributes(timing: "exact", start_time: at) if at
+    member = current_business.business_users.active.find_by(user_id: params[:crew].to_i) if params[:crew].to_s.match?(/\A\d+\z/)
+    @follow_up.user = member.user if member && RequestFollowUp.assignable?(member)
+  end
+
+  helper_method def from_schedule? = params[:from] == "schedule"
+  helper_method def calendar_params = Admin::ScheduleController.calendar_params(params)
+
+  # The slot's own day when there is one (on the calendar's clock), and the person filter only if
+  # the follow-up is theirs (else it wouldn't show).
+  helper_method def back_to_schedule(date:, focus: nil, user_id: nil)
+    calendar = calendar_params
+    date = Date.iso8601(calendar[:slot][5, 10]) if calendar[:slot]
+    member = calendar[:member] if user_id.nil? || calendar[:member].to_s == user_id.to_s
+    admin_schedule_path({ date: date&.iso8601, view: calendar[:view], member:, focus: focus || calendar[:slot] }.compact_blank)
+  end
 
   # The form showed no follow-up, so one assigned since then isn't overwritten.
   def fresh? = params[:fresh] == "1"

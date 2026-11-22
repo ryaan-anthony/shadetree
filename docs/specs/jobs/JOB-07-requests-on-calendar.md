@@ -24,25 +24,45 @@ calendar, look different from job visits, and can be moved and reassigned the sa
 
 ## Acceptance criteria
 
-- [ ] The day and week views show assigned follow-ups for the people in view, at their time
+- [x] The day and week views show assigned follow-ups for the people in view, at their time
       (or with the anytime items), styled differently from job visits and labelled as a site
       visit or call, with the client name.
-- [ ] Opening one shows the request summary with Open request, Move, Reassign and Unassign, for
+      *A dashed edge, a call lighter still (white), "Site visit / Call for a request" with an
+      icon. Shown to people who can see requests (see Decisions).*
+- [x] Opening one shows the request summary with Open request, Move, Reassign and Unassign, for
       people who can manage requests.
-- [ ] Follow-ups can be moved to another time, day or person by drag on desktop and by the same
+      *Reassign opens the assign form; Unassign comes back to the calendar.*
+- [x] Follow-ups can be moved to another time, day or person by drag on desktop and by the same
       keyboard-operable flow as visits (JOB-03), with the same warnings and an Undo.
-- [ ] Booking from an empty slot offers "Request follow-up" alongside "Visit", listing open
+- [x] Booking from an empty slot offers "Request follow-up" alongside "Visit", listing open
       requests that need one (unassigned or unscheduled first).
-- [ ] The person filter, the colour by person or status, and the phone agenda include
+      *"Or a request follow-up" in the slot's panel, then the assign form with the slot's day,
+      time and person, and back to the calendar.*
+- [x] The person filter, the colour by person or status, and the phone agenda include
       follow-ups.
-- [ ] Moves and reassignments notify as in CLI-07, and are refused for people who can't manage
+      *Booked hours count them; "Not assigned" never has one (a follow-up always has someone).*
+- [x] Moves and reassignments notify as in CLI-07, and are refused for people who can't manage
       requests, with tests for roles and tenancy.
 
 ## Out of scope
 
 - Client self-booking of site visits (backlog, decision D1).
 - Calendar feeds (backlog).
+- A "Busy" block for roles that schedule but can't see requests, so they see a person's
+  follow-up time without its details (later, if wanted).
+
+## Implementation notes
+
+- Visits and follow-ups share the grid (ScheduleView "items"), warnings, the Undo toast, the
+  panel and the drag controller; moves go through CLI-07's assign. For #289's "Next visit" hint
+  on an empty week, ScheduleView#next_follow_up_after gives the next follow-up (to wire in once
+  #289's hint lands). Dev seeds put follow-ups on the demo week (Marcus's Monday site visit,
+  Priya's Thursday one, the owner's call) and leave one open request unassigned.
 
 ## Decisions
 
 - Calls appear too, styled lighter than site visits (owner, 2026-11-21).
+- Follow-ups are shown to, and moved by, people who can see requests; a schedule-only role
+  sees the visits.
+- Booking an already-assigned request from a slot moves its follow-up there (the form says
+  what it is now); done ones aren't offered, as they wait for the quote or a pass back.

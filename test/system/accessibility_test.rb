@@ -56,7 +56,8 @@ class AccessibilityTest < ApplicationSystemTestCase
     assert_accessible new_admin_service_request_path, admin_service_request_path(request), edit_admin_service_request_follow_up_path(request),
                       admin_service_requests_path(status: "in_progress"),
                       admin_my_day_path, admin_my_request_path(request),
-                      admin_schedule_path, admin_schedule_follow_up_path(request) # JOB-07 # JOB-06: on their day, and the page for it
+                      admin_schedule_path, admin_schedule_follow_up_path(request), admin_schedule_new_visit_path, # JOB-06, JOB-07
+                      edit_admin_service_request_follow_up_path(request, from: "schedule", on: @business.today.iso8601, at: "10:00")
   end
 
   # JOB-06: a done follow-up, with a site photo they can remove, on My day and its own page, and

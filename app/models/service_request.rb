@@ -119,6 +119,14 @@ class ServiceRequest < ApplicationRecord
   def add_site_photo_from(file, by:) = add_site_photo(site_photos, file, by:, max: Visit::MAX_PHOTOS, max_bytes: Visit::PHOTO_MAX_BYTES,
                                                                      full: "This request already has the most site photos it can (#{Visit::MAX_PHOTOS}).")
 
+  # JOB-07: open requests to book a follow-up for from the calendar, nobody's first, oldest first;
+  # not ones whose follow-up is done (they wait for the quote or a pass back).
+  def self.for_follow_up(limit:, location: nil)
+    scope = where(status: OPEN_STATUSES).left_joins(:follow_up).where(request_follow_ups: { done_at: nil })
+    scope = scope.where(location_id: location.id) if location
+    scope.includes(:client, :property, follow_up: :user).order(Arel.sql("CASE WHEN request_follow_ups.id IS NULL THEN 0 ELSE 1 END"), :created_at, :id).limit(limit)
+  end
+
   def service_names = services.map { _1["name"] }
 
   # The service address as typed, one line ("12 Maple St, Austin, 06804").

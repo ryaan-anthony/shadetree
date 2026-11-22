@@ -227,6 +227,7 @@ Rails.application.routes.draw do
     # JOB-07: a request's follow-up on the calendar (by the request's id): its panel, and moving it.
     get "schedule/requests/:id", to: "schedule_follow_ups#show", as: :schedule_follow_up
     patch "schedule/requests/:id", to: "schedule_follow_ups#move", as: :schedule_follow_up_move
+    get "schedule/new-follow-up", to: "schedule_follow_ups#new", as: :schedule_new_follow_up
 
     # The day view for the people going on visits (JOB-04): only their own visits.
     get "my-day", to: "my_day#show", as: :my_day

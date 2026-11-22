@@ -1,0 +1,37 @@
+<%# JOB-07: from a slot on the calendar (or "New visit"), a request follow-up instead of a visit:
+    which request, then the assign form with the slot's day, time and person filled in, and back
+    to the calendar afterwards. Requests nobody has yet come first. %>
+<%# locals: (titled: true) -%>
+<% shown = Admin::ScheduleController::NEW_VISIT_JOBS %>
+<% requests = ServiceRequest.for_follow_up(limit: shown + 1, location: location_filter).to_a %><%# CAT-07: the calendar's location's %>
+<% more = requests.size > shown %>
+<% requests = requests.first(shown) %>
+<div class="mt-5 border-t border-line pt-4" id="new-follow-up">
+  <%# Under the card's H2 beside the calendar; under the page's H1 on its own page. %>
+  <%= content_tag(titled ? :h3 : :h2, "Or a request follow-up", class: "text-sm font-semibold text-ink") %>
+  <% if requests.empty? %>
+    <p class="mt-1 text-sm2 text-muted">No open requests to follow up.</p>
+  <% else %>
+    <%= form_with url: admin_schedule_new_follow_up_path, method: :get, class: "mt-2 space-y-3", data: { turbo_frame: "_top" } do %>
+      <%= hidden_field_tag :on, @on.iso8601, id: nil %>
+      <%= hidden_field_tag :at, @at, id: nil if @at %>
+      <%= hidden_field_tag :crew, params[:crew], id: nil if params[:crew].to_s.match?(/\A\d+\z/) %>
+      <%= hidden_field_tag :grid_zone, (location_filter || current_business).time_zone.tzinfo.identifier, id: nil %>
+      <% calendar_params.each do |name, value| %><%= hidden_field_tag name, value, id: nil %><% end %>
+      <div class="field">
+        <label class="label" for="new-follow-up-request">Request</label>
+        <% waiting, held = requests.partition { _1.follow_up.nil? } %>
+        <% label = ->(request) do
+             where = request.property&.one_line || request.address_line
+             "#{request.client.display_name} · #{request.service_names.first || truncate(request.description.to_s, length: 40)}#{" · #{truncate(where, length: 40)}" if where}" \
+               "#{" (#{request.follow_up.user.full_name}, #{request.follow_up.scheduled_on.strftime("%b %-d")})" if request.follow_up}"
+           end %>
+        <%= select_tag :request, grouped_options_for_select([ [ "Not assigned", waiting.map { [ label.(_1), _1.uid ] } ], [ "Already assigned", held.map { [ label.(_1), _1.uid ] } ] ].reject { _2.empty? }),
+                       include_blank: "Choose a request", required: true, id: "new-follow-up-request", class: "select", "aria-describedby": "new-follow-up-request-help" %>
+        <p class="help" id="new-follow-up-request-help">Next, who and how: the day and time are filled in from the calendar. Choosing an assigned one moves it here.
+          <% if more %>Only the first <%= shown %> open requests are listed; for another, assign it from its request page.<% end %></p>
+      </div>
+      <div class="flex justify-end"><%= submit_tag "Continue with request", class: button_classes(:secondary), name: nil %></div>
+    <% end %>
+  <% end %>
+</div>

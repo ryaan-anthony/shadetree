@@ -281,6 +281,11 @@ Tenancy.with_business(business) do
     ServiceRequestEvent.record!(patio, :reassigned, by: owner, from_user_id: owner.id, to_user_id: tech.id)
     ServiceRequestEvent.record!(patio, :done, by: tech, from: follow_up.state)
   end
+  # JOB-07: one open request nobody has yet, to book from a slot on the calendar.
+  unless ServiceRequest.exists?(description: "Asked about taking down a dead maple by the drive.")
+    client = Client.order(:id).offset(3).first || Client.order(:id).first
+    ServiceRequest.create!(client:, property: client.properties.first, source: "phone", created_by: owner, description: "Asked about taking down a dead maple by the drive.")
+  end
   # NTF-03: one customized client email (Settings → Messages; editing needs a plan with templates).
   MessageTemplate.create_with(subject: "See you tomorrow, {{client_first_name}}",
                               body: "Hi {{client_first_name}},\n\nJust a reminder that we'll be there tomorrow, {{visit_window}}. " \
