@@ -101,7 +101,7 @@ class Admin::VisitsController < Admin::BaseController
   # Shows the warnings unless these exact warnings were seen and confirmed ("Schedule anyway"):
   # the form carries a digest of what it showed, so a change after that is checked again.
   def warn?(visits)
-    @warnings = VisitWarnings.for(visits, hours: @hours)
+    @warnings = VisitWarnings.for(visits, hours: @hours, name_requests: can?(:office)) # JOB-07: request follow-ups are office work
     @warnings.any? && params[:confirm] != self.class.digest(@warnings)
   end
 

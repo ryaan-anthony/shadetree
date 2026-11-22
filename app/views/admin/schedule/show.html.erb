@@ -87,9 +87,14 @@
       <% past = [] if coming.empty? %>
       <% if past.any? { s.visits_on(_1).any? } %>
         <details class="card px-4 py-2.5 text-sm2" id="schedule-earlier">
-          <summary class="cursor-pointer font-medium text-ink">Earlier this week (<%= pluralize(past.sum { s.visits_on(_1).size }, "visit") %>)</summary>
+          <% earlier = past.flat_map { s.visits_on(_1) }.partition { _1.is_a?(Visit) } %><%# JOB-07: visits, and follow-ups apart %>
+          <summary class="cursor-pointer font-medium text-ink">Earlier this week (<%= [ pluralize(earlier[0].size, "visit"), (pluralize(earlier[1].size, "follow-up") if earlier[1].any?) ].compact.join(", ") %>)</summary>
           <ul class="mt-2 space-y-1.5">
             <% past.each do |date| %><% s.visits_on(date).each do |visit| %>
+              <% if visit.is_a?(RequestFollowUp) %><%# JOB-07 %>
+                <li><%= link_to "#{date.strftime("%a")} #{visit.time_label.delete_prefix("Arrive ")} · #{visit.service_request.client.display_name} (#{visit.kind_label.downcase} for a request)", admin_schedule_follow_up_path(visit.service_request), class: "text-body hover:underline", data: { schedule_focus: visit.service_request.uid } %></li>
+                <% next %>
+              <% end %>
               <li><%= link_to "#{date.strftime("%a")} #{visit.time_label.delete_prefix("Arrive ")} · #{visit.job.client.display_name}", admin_schedule_visit_path(visit, s.member ? { member: s.member } : {}), class: "text-body hover:underline", data: { schedule_focus: visit.uid } %></li>
             <% end %><% end %>
           </ul>
@@ -110,6 +115,7 @@
           <% else %>
             <ul class="list">
               <% day.each do |visit| %>
+                <% next concat(render("admin/schedule/follow_up", follow_up: visit, column: ScheduleView::Column.new(date, nil), schedule: s, as: :row)) if visit.is_a?(RequestFollowUp) %><%# JOB-07 %>
                 <li class="p-0"><%= link_to admin_schedule_visit_path(visit, s.member ? { member: s.member } : {}), class: "flex min-w-0 flex-1 items-start gap-3 px-4 py-3", data: { schedule_focus: visit.uid } do %>
                   <span class="w-16 shrink-0 text-sm font-semibold text-ink"><%= visit.time_label.delete_prefix("Arrive ") %></span>
                   <span class="min-w-0 flex-1"><span class="block truncate font-medium text-ink"><%= visit.job.client.display_name %></span>
@@ -157,6 +163,7 @@
           <div class="min-h-9 min-w-0 space-y-1 border-l border-line-2 p-1" role="group" aria-label="Anytime, <%= schedule_column_label(column) %>"
                data-schedule-drag-target="column" data-kind="anytime" data-date="<%= date.iso8601 %>" data-member="<%= column.member_key %>">
             <% s.anytime_in(column).each do |visit| %>
+              <% next concat(render("admin/schedule/follow_up", follow_up: visit, column:, schedule: s, as: :chip)) if visit.is_a?(RequestFollowUp) %><%# JOB-07 %>
               <%= link_to admin_schedule_visit_path(visit, params_now), class: "cal-chip cal-#{s.visit_color(visit)}", id: schedule_visit_id(visit, column, s),
                           data: { turbo_frame: "schedule_visit", schedule_focus: visit.uid, **schedule_drag_data(visit, column) } do %>
                 <span class="block truncate font-semibold"><%= visit.job.client.display_name %> <span class="sr-only">, anytime <%= date.strftime("%A, %B %-d") %></span></span>
@@ -185,6 +192,8 @@
               <% s.placed_in(column).each do |placed| %>
                 <% visit = placed.visit %>
                 <% width = 100.0 / placed.columns %>
+                <% next concat(render("admin/schedule/follow_up", follow_up: visit, column:, schedule: s, as: :block,
+                                      style: inline_style("top: #{placed.top}px; height: #{placed.height}px; left: calc(#{(width * placed.column).round(3)}% + 2px); width: calc(#{width.round(3)}% - 4px)"))) if visit.is_a?(RequestFollowUp) %><%# JOB-07 %>
                 <%= link_to admin_schedule_visit_path(visit, params_now), class: "cal-visit cal-#{s.visit_color(visit)} #{inline_style("top: #{placed.top}px; height: #{placed.height}px; left: calc(#{(width * placed.column).round(3)}% + 2px); width: calc(#{width.round(3)}% - 4px)")}", id: schedule_visit_id(visit, column, s),
                             data: { turbo_frame: "schedule_visit", schedule_focus: visit.uid, **schedule_drag_data(visit, column) } do %>
                   <span class="block font-semibold"><%= schedule_time_label(visit, s) %> <%= visit.job.client.display_name %><span class="sr-only">, <%= date.strftime("%A, %B %-d") %></span></span>
