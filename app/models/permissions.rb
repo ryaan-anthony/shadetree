@@ -11,12 +11,14 @@ module Permissions
     office: "Clients, requests, quotes, jobs, invoices and payments, for the whole business",
     schedule: "Schedule visits and assign them to people",
     field_work: "Own assigned visits: client contact, property, notes, photos, complete",
+    quote_requests: "Quote requests assigned to them: create and edit their own drafts", # QTE-07
+    send_own_quotes: "Send the quotes they drafted", # QTE-07
     export_data: "Export the business's data"
   }.freeze
 
   ROLES = {
     "owner" => CATALOG.keys,
-    "admin" => %i[manage_team business_settings office schedule field_work export_data],
+    "admin" => %i[manage_team business_settings office schedule field_work quote_requests send_own_quotes export_data],
     "technician" => %i[field_work]
   }.freeze
 
@@ -28,7 +30,9 @@ module Permissions
     "Work" => {
       office: "See and manage all clients, requests, quotes, jobs, invoices and payments",
       schedule: "Schedule visits and assign them to people",
-      field_work: "Work their own assigned visits: see the client and property, add notes and photos, complete them"
+      field_work: "Work their own assigned visits: see the client and property, add notes and photos, complete them",
+      quote_requests: "Quote the requests given to them: draft the quote, with catalog prices, and edit it until it's sent",
+      send_own_quotes: "Send the quotes they drafted (without this, they mark them ready for the office to check and send)"
     },
     "Business" => {
       business_settings: "Change the business profile, branding, hours, catalog and taxes",

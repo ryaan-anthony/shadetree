@@ -12,6 +12,20 @@
     <% end %>
   <% end %>
 
+  <% if @quote_drafts.present? %><%# QTE-07 %>
+    <%= card title: "Your quotes", subtitle: "Drafts from requests you followed up, until they're sent.", flush: true, id: "my-quote-drafts" do %>
+      <ul class="list">
+        <% @quote_drafts.each do |quote| %>
+          <li class="p-0"><%= link_to edit_admin_quote_path(quote), class: "flex min-w-0 flex-1 items-center gap-3 px-4 py-3.5" do %>
+            <span class="min-w-0 flex-1"><span class="block truncate font-semibold text-ink"><%= quote.client.display_name %></span>
+              <span class="block truncate text-sm2 text-muted"><%= quote.number %><%= " · #{quote.title}" if quote.title %></span></span>
+            <%= icon "chevron-right", class: "size-4 shrink-0 text-faint" %>
+          <% end %></li>
+        <% end %>
+      </ul>
+    <% end %>
+  <% end %>
+
   <%= card title: "Today", flush: true do %>
     <% if @today.empty? %>
       <p class="px-5 py-4 text-sm2 text-muted">Nothing booked for you today.</p>

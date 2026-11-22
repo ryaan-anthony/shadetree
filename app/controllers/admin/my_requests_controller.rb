@@ -18,6 +18,18 @@ class Admin::MyRequestsController < Admin::BaseController
     redirect_to admin_my_request_path(@request), alert: error.message
   end
 
+  # QTE-07: the quote, pre-filled as from the inbox (CLI-04), by someone who can quote the
+  # requests given to them (or office staff following one up). The request becomes Quoted and
+  # the follow-up ends; the draft stays theirs to edit until it's sent.
+  def quote
+    return deny!(:quote_requests, "can't quote requests") unless can?(:office) || can?(:quote_requests)
+    return redirect_to(admin_my_request_path(@request), alert: "Mark it done first.") unless @follow_up.done?
+    return redirect_to(admin_my_request_path(@request), alert: "#{@request.client.display_name} is archived. Ask the office to restore them.") if @request.client.archived?
+
+    quote = @request.create_quote!(by: current_user)
+    redirect_to edit_admin_quote_path(quote), notice: "Draft #{quote.number} from the request. Nothing is sent until #{can?(:send_own_quotes) ? "you send it" : "the office sends it"}."
+  end
+
   def pass_back
     to = @follow_up.pass_back_to
     @follow_up.pass_back!(by: current_user, note: params[:note].to_s.strip.first(5_000))

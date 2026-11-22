@@ -13,14 +13,16 @@
   <%= link_to preview_admin_quote_path(@quote), class: button_classes(:secondary), target: "_blank", rel: "noopener",
               data: { action: "quote-builder#preview" } do %><%= icon "eye" %> Preview as client<% end %>
   <%= render "admin/usage/quotes" if @quote.counts_toward_usage? %>
+  <% unless own_quotes_only? %><%# QTE-07: their own drafts are sent in part 2's ways %>
   <%= link_to new_admin_quote_send_path(@quote, from: ("setup" if from_setup?)), class: button_classes(:primary),
               data: { action: "quote-builder#saveAndGo" } do %><%= icon "send" %> Send<% end %>
+  <% end %>
   <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
     <button type="button" class="<%= button_classes(:ghost, :icon) %>" data-menu-target="button" data-action="menu#toggle"
             aria-haspopup="true" aria-expanded="false" aria-label="More actions"><%= icon "more-horizontal" %></button>
     <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
       <%= link_to pdf_admin_quote_path(@quote), class: "menu-item", data: { turbo: false, action: "quote-builder#download" } do %><%= icon "download" %> Download PDF<% end %>
-      <% unless @quote.revising? %>
+      <% unless @quote.revising? || own_quotes_only? %>
         <%= button_to admin_quote_path(@quote), method: :delete, class: "menu-item text-danger",
                       form: { class: "contents", data: { turbo_confirm: "Delete draft #{@quote.number}? This can't be undone.", turbo_confirm_button: "Delete draft" } } do %>
           <%= icon "trash" %> Delete draft
@@ -57,7 +59,10 @@
 
     <%= card do %>
       <div class="grid gap-4 sm:grid-cols-2 [&>*]:min-w-0">
-        <% if @quote.revising? %>
+        <% if own_quotes_only? %><%# QTE-07: the request's client; they see no others %>
+          <div class="field"><p class="label">Client</p><p class="text-sm font-semibold text-ink"><%= @quote.client.display_name %></p>
+            <p class="help">From the request you followed up.</p></div>
+        <% elsif @quote.revising? %>
           <%# A revision goes to the same client, through the same link. %>
           <div class="field"><p class="label">Client</p><p class="text-sm font-semibold text-ink"><%= @quote.client.display_name %></p>
             <p class="help">A revision goes to the same client. To quote someone else, duplicate the quote.</p></div>

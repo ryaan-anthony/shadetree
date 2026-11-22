@@ -3,7 +3,10 @@ class Admin::CatalogItemsController < Admin::BaseController
   # OPS-03: what support may do while viewing as a member
   impersonation :allowed
   requires_permission :business_settings
-  requires_permission :office, only: :search # the picker on quotes, invoices and jobs
+  # The picker on quotes, invoices and jobs; QTE-07: and on the drafts of members who quote
+  # their assigned requests.
+  allow_any_member only: :search
+  before_action(only: :search) { deny!(:office, "no catalog search") unless can?(:office) || can?(:quote_requests) }
   SEARCH_LIMIT = 50
   RECENT_LIMIT = 5
 

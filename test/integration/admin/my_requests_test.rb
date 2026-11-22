@@ -58,7 +58,7 @@ class Admin::MyRequestsTest < ActionDispatch::IntegrationTest
 
     get admin_my_request_path(@request_record)
     assert_select "button", /Pass back to John Doe/
-    assert_select "form[action=?]", quote_admin_service_request_path(@request_record), 0, "a technician can't make quotes (QTE-07)"
+    assert_select "form[action=?]", quote_admin_my_request_path(@request_record), 0, "a technician without the permission can't make quotes (QTE-07)"
     patch pass_back_admin_my_request_path(@request_record), params: { note: "About 40 m; two posts rotten." }
     assert_redirected_to admin_my_day_path
     assert_equal [ @owner, false, Date.new(2026, 11, 23), "anytime" ], [ follow_up.user, follow_up.done?, follow_up.scheduled_on, follow_up.timing ]
@@ -125,7 +125,7 @@ class Admin::MyRequestsTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", edit_admin_service_request_follow_up_path(@request_record), /Move or reassign/
     patch done_admin_my_request_path(@request_record)
     follow_redirect!
-    assert_select "form[action=?] button", quote_admin_service_request_path(@request_record), /Create quote/
+    assert_select "form[action=?] button", quote_admin_my_request_path(@request_record), /Create quote/ # QTE-07: through their follow-up
     assert_select "button", { text: /Pass back/, count: 1 }, "back to Marcus, who gave it to them"
   end
 

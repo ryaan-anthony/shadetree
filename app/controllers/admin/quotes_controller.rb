@@ -1,7 +1,8 @@
 # Quotes (QTE-01): start a draft for a client, build it with autosave, preview it as the
 # client will see it, delete a draft. QTE-06: the list with filters and search, the staff
 # quote page with its activity, and archiving, duplicating and extending expiry. Sending is
-# QTE-04. Technicians can't see quotes (office permission).
+# QTE-04. Technicians can't see quotes (office permission), except that QTE-07's members who quote
+# requests assigned to them build, preview and download their own drafts (OwnQuoteAccess).
 class Admin::QuotesController < Admin::BaseController
   # OPS-03: what support may do while viewing as a member
   impersonation :allowed, reads: %i[search]
@@ -9,6 +10,10 @@ class Admin::QuotesController < Admin::BaseController
   PER_PAGE = 50
 
   requires_permission :office
+  include OwnQuoteAccess
+  # QTE-07: what a member who quotes their assigned requests can do with their own draft.
+  OWN_DRAFT_ACTIONS = %i[show edit update preview pdf reprice].freeze
+  allow_any_member only: OWN_DRAFT_ACTIONS
   include SendsPdf
   leaves_session_alone only: :search
   filters_by_location Quote, only: %i[index search] # CAT-07
@@ -180,7 +185,10 @@ class Admin::QuotesController < Admin::BaseController
     @any_quotes = @total_count.positive? || Quote.exists?
   end
 
-  def set_quote = @quote = Quote.includes(:client, :property, line_items: :catalog_item).find_by_param!(params[:id])
+  def set_quote
+    scope = reachable_quotes or return # refused
+    @quote = scope.includes(:client, :property, line_items: :catalog_item).find_by_param!(params[:id])
+  end
 
   def require_editable
     redirect_to admin_quotes_path, alert: "Quote #{@quote.number} can't be edited." unless @quote.editable?
@@ -202,8 +210,9 @@ class Admin::QuotesController < Admin::BaseController
   def apply_builder_params
     attrs = builder_params
     @quote.lock_version = attrs[:lock_version] if attrs.key?(:lock_version)
-    # A revision stays with its client: its link was sent to them (QTE-06).
-    change_client(attrs[:client]) if attrs[:client].present? && attrs[:client] != @quote.client.uid && !@quote.revising?
+    # A revision stays with its client: its link was sent to them (QTE-06); so does a quote drafted
+    # from an assigned request (QTE-07: they see that client only).
+    change_client(attrs[:client]) if attrs[:client].present? && attrs[:client] != @quote.client.uid && !@quote.revising? && !own_quotes_only?
     assign_property(attrs[:property]) if attrs.key?(:property)
     @quote.location = picked_location(attrs[:location]) || @quote.location if attrs.key?(:location)
     @location_changed = @quote.location_id_changed? # CAT-08: offer the new location's prices
