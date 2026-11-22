@@ -27,13 +27,13 @@ from Help.
 
 ## Acceptance criteria
 
-- [ ] After creating a business, the owner is offered the tour ("Take a 2-minute tour" or "Skip").
+- [x] After creating a business, the owner is offered the tour ("Take a 2-minute tour" or "Skip").
       It has about six stops, each pointing at the real thing on screen: Home and its setup
       checklist, Requests, Quotes, Schedule, Invoices and Settings. Each stop says in a sentence
       or two what it's for and what to do first.
-- [ ] Each stop has Back, Next and "End tour". The last stop leads to the first unfinished
+- [x] Each stop has Back, Next and "End tour". The last stop leads to the first unfinished
       checklist step. The tour never blocks the page underneath.
-- [ ] The tour fits the person's role. Technicians get a short version of My day and their visits
+- [x] The tour fits the person's role. Technicians get a short version of My day and their visits
       only. Admins get the office stops without billing. Stops for things a role can't use are
       left out.
 - [ ] First-time tips: the first visit to Requests, the quote builder, the send page, Schedule,
@@ -41,7 +41,7 @@ from Help.
       once per person per business, and doesn't show while the tour is running.
 - [ ] Help offers "Take the tour again" and "Show tips again". Personal settings can turn tips
       off.
-- [ ] It works on phones (the tour becomes a bottom sheet that steps through the menu) and with
+- [x] It works on phones (the tour becomes a bottom sheet that steps through the menu) and with
       the keyboard and screen readers (focus moves into each stop and back, Escape ends it). It
       respects reduced motion, and the axe check passes with it open.
 - [ ] Stops and tips are written in the product's plain voice, from the person's point of view,
@@ -80,4 +80,8 @@ from Help.
   replay can't overwrite a skip, or turn a finished tour back into started.
 - Support viewing as a member sees the tour but never records it (the endpoint is read-only
   under impersonation, and the page doesn't report moves).
+- One non-modal dialog (`role=dialog`, `aria-modal=false`) moves between stops: it takes focus
+  at each, Escape or End tour closes it and focus goes back (or to the checklist step it leads
+  to). No backdrop or focus trap. Below 960px it's a bottom sheet, opening the menu drawer for
+  menu stops. Where it is lives in the tab (sessionStorage), so it resumes after a look elsewhere.
 - Dev seeds: `new@example.com` owns a brand-new business with the offer and checklist showing.

@@ -83,6 +83,23 @@ class AccessibilityTest < ApplicationSystemTestCase
     assert_empty problems, "axe found problems:\n#{problems.join("\n")}"
   end
 
+  # ACC-08: the guided tour, open at the checklist and at a menu stop, wide and on a phone
+  # (where the menu drawer is open beside the sheet). It resumes where it was on each visit.
+  test "the guided tour passes axe while it's open" do
+    @business.update!(onboarded_at: nil)
+    assert_accessible admin_root_path(tour: "start")
+    assert_selector "#tour[role=dialog]", text: "Start here"
+    click_on "Next"
+    assert_accessible admin_root_path
+    assert_selector "[data-tour=requests].tour-target"
+    page.driver.browser.manage.window.resize_to(390, 844)
+    assert_accessible admin_root_path
+    assert_selector "#app-sidebar[data-open=true] [data-tour=requests].tour-target"
+    assert_selector "#tour.tour-sheet", text: "Requests"
+  ensure
+    page.driver.browser.manage.window.resize_to(1400, 1400)
+  end
+
   test "the search-engine setting is off while requests are off" do
     @business.update!(request_form_enabled: true)
     visit edit_admin_business_path(tab: "request_form")

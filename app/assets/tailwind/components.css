@@ -633,4 +633,28 @@
   .legal-text a { text-decoration: underline; }
   .legal-text table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
   .legal-text th, .legal-text td { border-bottom: 1px solid var(--color-line); padding: 0.5rem; text-align: left; vertical-align: top; }
+
+  /* ---------- Guided tour (ACC-08): a non-modal popover; a bottom sheet on phones ---------- */
+  .tour {
+    position: fixed;
+    z-index: 110; /* above the menu drawer (100), below toasts (120) */
+    width: min(21rem, calc(100vw - 1.5rem));
+    padding: 1rem 1.125rem 0.875rem;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-dialog);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-pop);
+    animation: modal-in 0.16s ease-out;
+  }
+  .tour:focus { outline: none; }
+  .tour:focus-visible { outline: 3px solid var(--color-canopy); outline-offset: -3px; }
+  .tour-sheet { inset: auto 0 0 0; width: 100vw; max-height: 60vh; overflow-y: auto; border-radius: var(--radius-dialog) var(--radius-dialog) 0 0;
+                padding-bottom: calc(0.875rem + env(safe-area-inset-bottom)); animation: sheet-in 0.2s ease-out; }
+  .tour-count { font-size: 0.75rem; font-weight: 600; color: var(--color-muted); }
+  .tour-title { margin-top: 0.125rem; font-size: 1rem; font-weight: 650; color: var(--color-ink); }
+  .tour-text { margin-top: 0.375rem; font-size: 0.875rem; color: var(--color-body); }
+  .tour-link { display: inline-block; margin-top: 0.5rem; font-size: 0.8125rem; font-weight: 600; color: var(--color-canopy); text-decoration: underline; text-underline-offset: 2px; }
+  .tour-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 0.875rem; }
+  .tour-target { outline: 3px solid var(--color-leaf); outline-offset: 3px; border-radius: 8px; }
+  .tour-open .side-nav { padding-bottom: var(--tour-sheet-height, 0); }
 }
