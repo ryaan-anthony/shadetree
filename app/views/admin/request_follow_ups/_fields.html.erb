@@ -1,11 +1,12 @@
 <%# locals: (f:, follow_up:, optional: false) -%>
-<%# CLI-07: who follows a request up, how and when. `optional` (logging a request) adds "Nobody yet". %>
-<% members = current_business.business_users.active.includes(:user).sort_by { _1.user.full_name.downcase } %>
+<%# CLI-07: who follows a request up, how and when. `optional` (logging a request) adds "Not assigned". %>
+<%# People who can see requests (office); JOB-06 opens it to everyone once follow-ups show on My day. %>
+<% members = current_business.business_users.active.includes(:user).select { _1.can?(:office) }.sort_by { _1.user.full_name.downcase } %>
 <% zone = (follow_up.service_request&.location || current_business).time_zone %>
 <div class="space-y-4">
   <% problems = follow_up.errors.reject { _1.attribute.in?(%i[user_id scheduled_on start_time window_end_time duration_minutes instructions]) }.map(&:full_message) %>
   <% if problems.any? %><div class="banner banner-danger" role="alert"><%= icon "alert-circle" %><p><%= problems.to_sentence %></p></div><% end %>
-  <div class="sm:w-80"><%= f.field :user_id, as: :select, label: "Who follows it up", optional:, include_blank: (optional ? "Nobody yet" : nil),
+  <div class="sm:w-80"><%= f.field :user_id, as: :select, label: "Who follows it up", optional:, include_blank: (optional ? "Not assigned" : nil),
                                    choices: members.map { [ "#{_1.user.full_name} (#{_1.role_name})", _1.user_id ] } %></div>
   <fieldset>
     <legend class="label">How</legend>

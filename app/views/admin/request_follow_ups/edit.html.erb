@@ -4,7 +4,8 @@
                 lede: "#{@request.client.display_name} · #{@request.service_names.join(", ").presence || truncate(@request.description.to_s, length: 80)}" %>
 
 <%= form_with model: @follow_up, scope: :request_follow_up, url: admin_service_request_follow_up_path(@request), method: :patch, class: "max-w-2xl space-y-4" do |f| %>
-  <%= f.hidden_field :lock_version if @follow_up.persisted? %>
+  <%# A stale form: lock_version for a follow-up shown, "fresh" for none (someone may assign it meanwhile). %>
+  <%= @follow_up.persisted? ? f.hidden_field(:lock_version) : hidden_field_tag(:fresh, "1", id: nil) %>
   <%= render "admin/request_follow_ups/warnings", action: new_follow_up ? "assign" : "save" %>
   <%= card do %>
     <%= render "admin/request_follow_ups/fields", f:, follow_up: @follow_up %>

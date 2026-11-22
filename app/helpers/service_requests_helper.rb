@@ -14,7 +14,9 @@ module ServiceRequestsHelper
                                         "instructions" => "changed the instructions" }.fetch(_1, _1) }
       changed.to_sentence.upcase_first
     when "unassigned" then "Taken off #{name.(data.dig("from", "user_id"))}"
-    when "ended" then "Taken off #{name.(data.dig("from", "user_id"))}: the request was #{data["reason"]}"
+    when "ended"
+      why = { "quoted" => "the request was quoted", "archived" => "the request was archived", "left_team" => "they left the team" }.fetch(data["reason"], data["reason"])
+      "Taken off #{name.(data.dig("from", "user_id"))}: #{why}"
     else event.kind.humanize
     end
   end

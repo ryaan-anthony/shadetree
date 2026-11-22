@@ -15,17 +15,19 @@ class Admin::RequestFollowUpsController < Admin::BaseController
   end
 
   def update
+    raise ActiveRecord::StaleObjectError.new(@request.follow_up, "assign") if fresh? && @request.follow_up
+
     @follow_up = @request.follow_up || @request.build_follow_up
     @follow_up.assign_attributes(follow_up_params)
     return render(:edit, status: :unprocessable_content) unless @follow_up.valid?
     return render(:edit, status: :unprocessable_content) if follow_up_warn?(@follow_up)
 
-    follow_up = RequestFollowUp.assign!(@request, follow_up_params, by: current_user)
+    follow_up = RequestFollowUp.assign!(@request, follow_up_params, by: current_user, fresh: fresh?)
     redirect_to admin_service_request_path(@request), notice: "#{follow_up.user.full_name} has it: #{follow_up.kind_label.downcase}, #{follow_up.when_label}."
   rescue ActiveRecord::RecordInvalid
     render :edit, status: :unprocessable_content
   rescue ActiveRecord::StaleObjectError
-    redirect_to edit_admin_service_request_follow_up_path(@request), alert: "Someone else changed this follow-up meanwhile. Here's the latest."
+    redirect_to edit_admin_service_request_follow_up_path(@request), alert: "Someone else assigned or changed this follow-up meanwhile. Here's the latest."
   rescue RequestFollowUp::NotOpen => error
     redirect_to admin_service_request_path(@request), alert: error.message
   end
@@ -36,6 +38,9 @@ class Admin::RequestFollowUpsController < Admin::BaseController
   end
 
   private
+
+  # The form showed no follow-up, so one assigned since then isn't overwritten.
+  def fresh? = params[:fresh] == "1"
 
   def follow_up_params = @follow_up_params ||= follow_up_attributes(params.require(:request_follow_up))
 

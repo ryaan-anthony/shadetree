@@ -7,7 +7,8 @@ class Admin::RequestFollowUpsTest < ActionDispatch::IntegrationTest
     travel_to Time.utc(2026, 11, 23, 15) # a Monday, 10 am in New York
     @business = businesses(:one)
     @business.update!(timezone: "America/New_York", weekly_hours: WeeklyHours::WEEKDAYS_8_TO_5)
-    @tech = member_with_role(:technician)
+    @marcus = User.create!(email: "marcus@example.com", password: "password123", first_name: "Marcus", last_name: "Reyes", confirmed_at: Time.current)
+    BusinessUser.create!(user: @marcus, business: @business, role: "admin")
     as_business(@business) do
       @maria = Client.create!(display_name: "Maria Lopez", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ])
       @request_record = ServiceRequest.create!(client: @maria, source: "phone", description: "Fence repair")
@@ -16,9 +17,9 @@ class Admin::RequestFollowUpsTest < ActionDispatch::IntegrationTest
     post switch_admin_business_path, params: { business: @business.uid }
   end
 
-  def assign(**fields)
+  def assign(fresh: nil, **fields)
     patch admin_service_request_follow_up_path(@request_record),
-          params: { request_follow_up: { user_id: @tech.id, kind: "visit", scheduled_on: "2026-11-24", timing: "exact", start_time: "14:00", window_end_time: "",
+          params: { fresh:, request_follow_up: { user_id: @marcus.id, kind: "visit", scheduled_on: "2026-11-24", timing: "exact", start_time: "14:00", window_end_time: "",
                                          duration_hours: "", instructions: "Check the back gate" }.merge(fields) }
   end
 
@@ -56,21 +57,24 @@ class Admin::RequestFollowUpsTest < ActionDispatch::IntegrationTest
     assert_select "input#follow-up-kind-visit[checked]"
     assert_select "input#timing-anytime[checked]"
     assert_select "input[name='request_follow_up[scheduled_on]'][value='2026-11-23']", 1, "today by default"
-    assert_select "select[name='request_follow_up[user_id]'] option", /Technician \(Technician\)/
+    assert_select "select[name='request_follow_up[user_id]'] option", /Marcus Reyes \(Admin\)/
+    tech = member_with_role(:technician)
+    assert_select "select[name='request_follow_up[user_id]'] option[value=?]", tech.id.to_s, false, "not until JOB-06 shows follow-ups on My day"
+    assert_select "input[name=fresh][value='1']"
 
     assign
     assert_redirected_to admin_service_request_path(@request_record)
-    assert_equal "Technician has it: site visit, Tue, Nov 24 · 2 pm.", flash[:notice]
-    assert_equal [ @tech, "2 pm", 60, "Check the back gate" ], [ follow_up.user, follow_up.time_label, follow_up.duration_minutes, follow_up.instructions ]
+    assert_equal "Marcus Reyes has it: site visit, Tue, Nov 24 · 2 pm.", flash[:notice]
+    assert_equal [ @marcus, "2 pm", 60, "Check the back gate" ], [ follow_up.user, follow_up.time_label, follow_up.duration_minutes, follow_up.instructions ]
     assert_equal "in_progress", as_business(@business) { @request_record.reload.status }
     follow_redirect!
-    assert_select "#follow-up", /Technician.*Site visit, Tue, Nov 24 · 2 pm.*About 1 h/m
-    assert_select "#history li", /Assigned to Technician: site visit, Tue, Nov 24, 2026 · 2 pm/
+    assert_select "#follow-up", /Marcus Reyes.*Site visit, Tue, Nov 24 · 2 pm.*About 1 h/m
+    assert_select "#history li", /Assigned to Marcus Reyes: site visit, Tue, Nov 24, 2026 · 2 pm/
 
     admin = member_with_role(:admin)
     assign(user_id: admin.id, kind: "call", scheduled_on: "2026-11-25", lock_version: follow_up.lock_version)
     get admin_service_request_path(@request_record)
-    assert_select "#history li", /Handed from Technician to Admin/
+    assert_select "#history li", /Handed from Marcus Reyes to Admin/
     assert_select "#history li", /Moved from Tue, Nov 24, 2026 · 2 pm to Wed, Nov 25, 2026 · 2 pm/
     assert_select "#history li", /Made it a call/
 
@@ -79,6 +83,11 @@ class Admin::RequestFollowUpsTest < ActionDispatch::IntegrationTest
     follow_redirect!
     assert_select "#history li", /Taken off Admin/
     assert_select "#follow-up a", /Assign/
+
+    assign(user_id: admin.id)
+    as_business(@business) { BusinessUser.find_by(user: admin).deactivate! }
+    get admin_service_request_path(@request_record)
+    assert_select "#history li", /Taken off Admin: they left the team/
   end
 
   test "warnings come first, and Assign anyway goes ahead" do
@@ -90,17 +99,20 @@ class Admin::RequestFollowUpsTest < ActionDispatch::IntegrationTest
 
     digest = css_select("input[name=confirm]").first["value"]
     patch admin_service_request_follow_up_path(@request_record),
-          params: { confirm: digest, request_follow_up: { user_id: @tech.id, kind: "visit", scheduled_on: "2026-11-24", timing: "exact", start_time: "18:00" } }
+          params: { confirm: digest, request_follow_up: { user_id: @marcus.id, kind: "visit", scheduled_on: "2026-11-24", timing: "exact", start_time: "18:00" } }
     assert_redirected_to admin_service_request_path(@request_record)
     assert_equal "6 pm", follow_up.time_label
 
-    patch admin_service_request_follow_up_path(@request_record), params: { request_follow_up: { user_id: @tech.id, kind: "call", instructions: "Ring first",
+    patch admin_service_request_follow_up_path(@request_record), params: { request_follow_up: { user_id: @marcus.id, instructions: "Ring first",
                                                                                                lock_version: follow_up.lock_version } }
     assert_redirected_to admin_service_request_path(@request_record), "changing only the details doesn't warn again"
   end
 
   test "a stale form, and a request that's closed, are refused with a reason" do
-    assign
+    assign(fresh: "1")
+    assign(fresh: "1", start_time: "09:00")
+    assert_redirected_to edit_admin_service_request_follow_up_path(@request_record), "a form that showed nobody doesn't overwrite someone assigned since"
+    assert_equal "2 pm", follow_up.time_label
     stale = follow_up.lock_version
     assign(start_time: "15:00", lock_version: stale)
     assign(start_time: "16:00", lock_version: stale)
@@ -117,10 +129,10 @@ class Admin::RequestFollowUpsTest < ActionDispatch::IntegrationTest
   test "logging a request can assign it, with warnings first" do
     log = ->(**fields) do
       post admin_service_requests_path, params: { service_request: { client: @maria.uid, source: "phone", description: "Gutters" },
-                                                  request_follow_up: { user_id: @tech.id, kind: "call", scheduled_on: "2026-11-23", timing: "anytime" }.merge(fields) }
+                                                  request_follow_up: { user_id: @marcus.id, kind: "call", scheduled_on: "2026-11-23", timing: "anytime" }.merge(fields) }
     end
     get new_admin_service_request_path
-    assert_select "select[name='request_follow_up[user_id]'] option[value='']", "Nobody yet"
+    assert_select "select[name='request_follow_up[user_id]'] option[value='']", "Not assigned"
 
     log.(scheduled_on: "2026-11-28")
     assert_response :unprocessable_content
@@ -131,8 +143,8 @@ class Admin::RequestFollowUpsTest < ActionDispatch::IntegrationTest
     log.()
     request = as_business(@business) { ServiceRequest.order(:id).last }
     assert_redirected_to admin_service_request_path(request)
-    assert_equal "Request from Maria Lopez logged and given to Technician.", flash[:notice]
-    assert_equal [ "in_progress", "call", @tech ], as_business(@business) { [ request.status, request.follow_up.kind, request.follow_up.user ] }
+    assert_equal "Request from Maria Lopez logged and given to Marcus Reyes.", flash[:notice]
+    assert_equal [ "in_progress", "call", @marcus ], as_business(@business) { [ request.status, request.follow_up.kind, request.follow_up.user ] }
 
     log.(user_id: "")
     assert_equal [ "new", nil ], as_business(@business) { ServiceRequest.order(:id).last.then { [ _1.status, _1.follow_up ] } }, "nobody picked, nobody assigned"
