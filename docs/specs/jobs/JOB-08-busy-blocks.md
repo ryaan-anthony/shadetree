@@ -80,5 +80,9 @@ client, request and kind aren't, and they can't open or move it.
 - Busy blocks count for the "Next visit" hint on an empty period, with no detail (owner,
   2026-11-22).
 - Done follow-ups still show as Busy, with no "done" (owner, 2026-11-22).
+- A Busy block's times are on its location's clock, with the zone named when it isn't the
+  calendar's ("Busy, arriving 1 to 3 pm CST"), as JOB-07's are (owner, 2026-11-22).
+- The phone agenda keeps its "2 pm" time style for Busy, and an empty period's hint reads
+  "Next: Busy, <day>" (coordinator).
 - Accepted: a block's length, and which location filter shows it, can hint at a follow-up's
   kind and location (review of #316).

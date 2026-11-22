@@ -63,6 +63,6 @@ calendar, look different from job visits, and can be moved and reassigned the sa
 
 - Calls appear too, styled lighter than site visits (owner, 2026-11-21).
 - Follow-ups are shown to, and moved by, people who can see requests; a schedule-only role
-  sees the visits.
+  sees the visits. Superseded by JOB-08: such a role now sees others' follow-ups as "Busy".
 - Booking an already-assigned request from a slot moves its follow-up there (the form says
   what it is now); done ones aren't offered, as they wait for the quote or a pass back.
