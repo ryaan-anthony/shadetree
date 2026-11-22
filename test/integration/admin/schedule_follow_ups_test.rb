@@ -67,6 +67,7 @@ class Admin::ScheduleFollowUpsTest < ActionDispatch::IntegrationTest
     week
     assert_response :success
     assert_select "[id^=cal-request-]", 0
+    assert_select ".cal-busy", 2, "JOB-08: as Busy"
     assert_select "#cal-visit-#{@one_pm.uid}"
 
     sign_in @owner
@@ -177,7 +178,7 @@ class Admin::ScheduleFollowUpsTest < ActionDispatch::IntegrationTest
     assert_select "#cal-request-#{@call.uid}[data-move-url]", 0
   end
 
-  test "booked hours follow the location filter, and leave follow-ups out for someone who can't see requests" do
+  test "booked hours follow the location filter, and count follow-ups for someone who can't see requests too (JOB-08)" do
     @business.update!(plan_overrides: { "features" => { "custom_roles" => true, "locations" => true }, "limits" => { "team_members" => nil } })
     north = as_business(@business) { Location.create!(name: "North yard") }
     week(location: north.uid)
@@ -194,7 +195,7 @@ class Admin::ScheduleFollowUpsTest < ActionDispatch::IntegrationTest
     sign_in dee
     post switch_admin_business_path, params: { business: @business.uid }
     week(location: "all")
-    assert_select "#schedule-members li", /Marcus Reyes\s*1 h/
+    assert_select "#schedule-members li", /Marcus Reyes\s*2 h/, "as Busy"
   end
 
   test "someone who can't see requests is told a person has a request follow-up, not whose" do
@@ -256,7 +257,7 @@ class Admin::ScheduleFollowUpsTest < ActionDispatch::IntegrationTest
   test "an empty week points to the next follow-up booked after it" do
     view = ScheduleView.new(@business, date: @monday - 7, follow_ups: true)
     assert_equal @site.id, as_business(@business) { view.next_follow_up_after&.service_request_id }
-    assert_nil as_business(@business) { ScheduleView.new(@business, date: @monday - 7, follow_ups: false).next_follow_up_after }, "not for people who can't see requests"
+    assert_nil as_business(@business) { ScheduleView.new(@business, date: @monday - 7, follow_ups: false).next_follow_up_after }, "not when follow-ups aren't shown"
     assert_nil as_business(@business) { ScheduleView.new(@business, date: @monday, follow_ups: true).next_follow_up_after }, "not when something's booked"
   end
 

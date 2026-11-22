@@ -1,0 +1,25 @@
+<%# locals: (busy:, schedule:, as:, style: nil) -%>
+<%# JOB-08: someone's request follow-up, for people who can't see requests: its time and person,
+    nothing of the request. Not a link or a control; clicks and drops go to the grid under it.
+    `as`: :block on the time grid, :chip in the anytime row, :row in the phone agenda. %>
+<% who = busy.user.first_name.presence || busy.user.full_name %>
+<% label = schedule_busy_label(busy, schedule) %>
+<% case as %>
+<% when :block %>
+  <div class="cal-busy cal-<%= schedule.visit_color(busy) %> absolute <%= style %>">
+    <span class="sr-only"><%= label %></span>
+    <span class="block truncate" aria-hidden="true"><span class="font-semibold"><%= schedule_time_label(busy, schedule) %></span> Busy</span>
+    <span class="block truncate" aria-hidden="true"><%= who %></span>
+  </div>
+<% when :chip %>
+  <div class="cal-busy cal-<%= schedule.visit_color(busy) %> block truncate whitespace-nowrap">
+    <span class="sr-only"><%= label %></span><span aria-hidden="true"><span class="font-semibold">Busy</span> · <%= who %></span>
+  </div>
+<% else %>
+  <li class="flex min-w-0 items-start gap-3 px-4 py-3">
+    <span class="sr-only"><%= label %></span>
+    <span class="w-16 shrink-0 text-sm font-semibold text-ink" aria-hidden="true"><%= busy.time_label.delete_prefix("Arrive ") %></span>
+    <span class="min-w-0 flex-1 truncate text-muted" aria-hidden="true">Busy · <%= who %></span>
+    <span class="cal-dot cal-<%= schedule.visit_color(busy) %> mt-1.5" aria-hidden="true"></span>
+  </li>
+<% end %>

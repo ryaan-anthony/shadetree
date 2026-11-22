@@ -45,6 +45,13 @@ module ScheduleHelper
     "#{label} #{visit.starts_at.in_time_zone(zone).strftime("%Z")}"
   end
 
+  # JOB-08: what screen readers hear for a Busy block: "Busy, 2 to 3 pm, Marcus", "Busy,
+  # arriving 2 to 4 pm CST, Marcus", "Busy, anytime, Marcus".
+  def schedule_busy_label(busy, schedule)
+    zone = (" #{busy.starts_at.in_time_zone(busy.time_zone).strftime("%Z")}" unless busy.anytime? || busy.time_zone.tzinfo.identifier == schedule.place.time_zone.tzinfo.identifier)
+    "Busy, #{busy.spoken_time}#{zone}, #{busy.user.first_name.presence || busy.user.full_name}"
+  end
+
   # A grid column's name for screen readers: its day, and whose it is in a day split by person.
   def schedule_column_label(column)
     [ column.date.strftime("%A, %B %-d"), (column.member == :none ? "Not assigned" : column.member&.full_name) ].compact.join(", ")
