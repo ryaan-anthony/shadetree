@@ -134,6 +134,33 @@ class Admin::MyDayFollowUpsTest < ActionDispatch::IntegrationTest
     assert_redirected_to admin_my_request_path(@two_pm, anchor: "photos")
   end
 
+  # The follow-up page's statements on a fresh sign-in, so each count is taken the same way.
+  def follow_up_page_queries
+    sign_out @tech
+    sign_in @tech
+    post switch_admin_business_path, params: { business: @business.uid }
+    queries = 0
+    callback = ->(*, payload) { queries += 1 unless payload[:name] == "SCHEMA" || payload[:cached] }
+    ActiveSupport::Notifications.subscribed(callback, "sql.active_record") { get admin_my_request_path(@two_pm) }
+    assert_response :success
+    queries
+  end
+
+  test "the follow-up page's queries don't grow with its notes and photos" do
+    add = lambda do
+      as_business(@business) do
+        @two_pm.photos.attach(io: file_fixture("logo.png").open, filename: "client.png", content_type: "image/png")
+        @two_pm.add_site_photo_from(photo, by: @tech)
+        @two_pm.notes.create!(user: @owner, body: "From the office")
+        @two_pm.notes.create!(user: @tech, body: "From site")
+      end
+    end
+    add.()
+    before = follow_up_page_queries
+    3.times { add.() }
+    assert_equal before, follow_up_page_queries
+  end
+
   test "a done one from an earlier day waits under Still open from earlier until it's passed back" do
     patch done_admin_my_request_path(@two_pm)
     travel 1.day
