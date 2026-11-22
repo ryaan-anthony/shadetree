@@ -39,13 +39,16 @@ class ScheduleBusyTest < ApplicationSystemTestCase
   test "a visit dropped on Busy time lands there, after the warning that names nobody" do
     visit admin_schedule_path(date: @monday.iso8601)
     busy = find("#schedule-grid .cal-busy", text: "Busy")
-    page.document.synchronize(20) do # as for visits: drag again while a slow Chrome dropped it
-      find("#cal-visit-#{@visit.uid}").drag_to(busy) unless page.has_text?("has a request follow-up then", wait: 0)
-      raise Capybara::ExpectationNotMet, "the drop didn't reach the hour" unless page.has_text?("has a request follow-up then", wait: 4)
+    # As for visits: drag again while a slow Chrome dropped it, but never while the warning is up.
+    page.document.synchronize(20) do
+      find("#cal-visit-#{@visit.uid}").drag_to(busy) unless page.has_css?("dialog[open]", wait: 0)
+      raise Capybara::ExpectationNotMet, "the drop didn't reach the hour" unless page.has_css?("dialog[open]", text: "has a request follow-up then", wait: 4)
     end
-    assert_text "John Doe has a request follow-up then (2 pm)."
-    click_on "Move anyway"
-    assert_text "Moved: Maria Lopez"
+    within("dialog[open]") do
+      assert_text "John Doe has a request follow-up then (2 pm)."
+      click_on "Move anyway"
+    end
+    assert_text "Moved: Maria Lopez", wait: 10
     assert_equal "2 pm", Tenancy.with_business(@business) { moved.time_label }
   end
 end
