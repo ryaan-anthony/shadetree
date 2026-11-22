@@ -6,12 +6,15 @@
 <%= form_with model: @follow_up, scope: :request_follow_up, url: admin_service_request_follow_up_path(@request), method: :patch, class: "max-w-2xl space-y-4" do |f| %>
   <%# A stale form: lock_version for a follow-up shown, "fresh" for none (someone may assign it meanwhile). %>
   <%= @follow_up.persisted? ? f.hidden_field(:lock_version) : hidden_field_tag(:fresh, "1", id: nil) %>
+  <% if from_schedule? %><%# JOB-07: booked from a slot on the calendar, so back there afterwards %>
+    <%= hidden_field_tag :from, "schedule", id: nil %><% calendar_params.each do |name, value| %><%= hidden_field_tag name, value, id: nil %><% end %>
+  <% end %>
   <%= render "admin/request_follow_ups/warnings", action: new_follow_up ? "assign" : "save" %>
   <%= card do %>
     <%= render "admin/request_follow_ups/fields", f:, follow_up: @follow_up %>
   <% end %>
   <div class="flex items-center justify-end gap-2">
-    <%= link_to "Cancel", admin_service_request_path(@request), class: button_classes(:ghost) %>
+    <%= link_to "Cancel", (from_schedule? ? back_to_schedule(date: @follow_up.scheduled_on) : admin_service_request_path(@request)), class: button_classes(:ghost) %>
     <%= f.submit_button "#{new_follow_up ? "Assign" : "Save"}#{@warnings.present? ? " anyway" : ""}" %>
   </div>
 <% end %>

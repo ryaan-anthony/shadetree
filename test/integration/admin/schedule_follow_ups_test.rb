@@ -229,4 +229,35 @@ class Admin::ScheduleFollowUpsTest < ActionDispatch::IntegrationTest
     delete admin_service_request_follow_up_path(@site), params: { lock_version: follow_up.lock_version, from: "schedule", date: "2026-11-23", view: "day", member: @tech.id }
     assert_redirected_to admin_schedule_path(date: "2026-11-23", view: "day", member: @tech.id)
   end
+
+  test "booking from an empty slot offers a request follow-up beside a visit, nobody's first, then the assign form filled in and back" do
+    other = as_business(@business) { ServiceRequest.create!(client: Client.create!(display_name: "Kim Chu", contact_methods_attributes: [ { kind: "phone", value: "5125550103" } ]), source: "phone", description: "Deck") }
+    get admin_schedule_new_visit_path(on: "2026-11-25", at: "10:00", crew: @tech.id, view: "week")
+    assert_select "#new-follow-up select#new-follow-up-request optgroup[label='Not assigned'] option", /Kim Chu/
+    assert_select "#new-follow-up optgroup[label='Already assigned'] option", "Sam Ortiz · Fence (Marcus Reyes, Nov 23)"
+
+    get admin_schedule_new_follow_up_path(request: other.uid, on: "2026-11-25", at: "10:00", crew: @tech.id, view: "week", grid_zone: "America/New_York")
+    follow_redirect!
+    assert_select "input[name='request_follow_up[scheduled_on]'][value='2026-11-25']"
+    assert_select "input#timing-exact[checked]"
+    assert_select "input[name='request_follow_up[start_time]'][value='10:00']"
+    assert_select "select[name='request_follow_up[user_id]'] option[selected][value=?]", @tech.id.to_s
+    assert_select "input[name=from][value=schedule]"
+
+    patch admin_service_request_follow_up_path(other), params: { fresh: "1", from: "schedule", view: "week",
+                                                                 request_follow_up: { user_id: @tech.id, kind: "visit", scheduled_on: "2026-11-25", timing: "exact", start_time: "10:00" } }
+    assert_redirected_to admin_schedule_path(date: "2026-11-25", view: "week", focus: other.uid)
+    assert_equal [ @tech, "10 am" ], as_business(@business) { other.reload.follow_up.then { [ _1.user, _1.time_label ] } }
+
+    sign_out :user
+    assert_permission_matrix(owner: true, admin: true, technician: false) { get admin_schedule_new_follow_up_path(request: other.uid) }
+  end
+
+  test "an empty week points to the next follow-up booked after it" do
+    get admin_schedule_path(date: (@monday - 7).iso8601) # nothing booked the week before
+    view = ScheduleView.new(@business, date: @monday - 7, follow_ups: true)
+    assert_equal @site.id, as_business(@business) { view.next_follow_up_after&.service_request_id }
+    assert_nil as_business(@business) { ScheduleView.new(@business, date: @monday - 7, follow_ups: false).next_follow_up_after }, "not for people who can't see requests"
+    assert_nil as_business(@business) { ScheduleView.new(@business, date: @monday, follow_ups: true).next_follow_up_after }, "not when something's booked"
+  end
 end
