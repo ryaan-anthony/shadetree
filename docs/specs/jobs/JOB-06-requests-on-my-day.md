@@ -57,6 +57,9 @@ creates the quote or hands it back or on.
       requires.
       *34 queries with the seeds; about 170–420 ms warm in development. Axe passes on My day and
       the follow-up's page, and a browser test opens one and marks it done by keyboard.*
+- [x] Home's "Your visits today" (#289) counts and lists the person's follow-ups too, labelled as
+      on My day, and "still open from earlier" counts overdue and done-but-not-quoted ones.
+      *Same listing and per-location day as My day (`MyDay`); Home's queries don't grow with them.*
 
 ## Out of scope
 
@@ -73,7 +76,11 @@ creates the quote or hands it back or on.
   follow-up doesn't clash). Office staff see site photos and Done on the request and the inbox.
 - Dev seeds: Marcus (tech@example.com) has a site visit for a request at 9:30 on the demo
   week's Monday, between his visits there, with a client photo; one on the Friday before is
-  done, with his site photo and note, and its history has a pass back.
+  done, with his site photo and note, and its history has a pass back. Priya (admin@example.com)
+  has only a call for a request today, at 11:00, so Home shows it rather than "Nothing booked".
+- My day's listing (visits and follow-ups, each on its own location's day; today, earlier,
+  coming up) is `MyDay`, shared by My day and Home. Home asks for today and earlier only, and
+  counts "1 visit and 2 request follow-ups".
 
 ## Decisions
 
@@ -82,9 +89,10 @@ creates the quote or hands it back or on.
   be nowhere to see it (review, 2026-11-22).
 - An assignee can remove only the site photos they took; an earlier assignee's stay as the
   record of their visit (review, 2026-11-22).
+- Home's "Your visits today" (and "N still open from earlier") counts request follow-ups as well
+  as visits, listed as My day lists them, so an office manager whose only work today is
+  follow-ups doesn't see "Nothing booked" (owner, 2026-11-22).
 
 ## Open questions
 
-- Should Home's "Your visits today" (#289) count follow-ups too? With My day off the office
-  menu there, an office manager with only follow-ups would see "Nothing booked". Asked of the
-  owner; Home is unchanged until then.
+- None.

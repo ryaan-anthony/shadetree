@@ -17,12 +17,9 @@ class Admin::DashboardController < Admin::BaseController
     @business = current_business
     @checklist = SetupChecklist.new(@business, membership: Current.membership) # ACC-05
     @dashboard = ActionDashboard.new(@business) # INS-01
-    # #289: someone with visits of their own today, or still open from earlier, sees their own day
-    # on Home (and reaches My day from it); otherwise the team's day, by person.
-    if can?(:field_work)
-      mine = Visit.open.joins(:assignments).where(visit_assignments: { user_id: current_user.id })
-      @earlier_open = mine.where(scheduled_on: ...@business.today).count
-      @own_day = @earlier_open.positive? || @dashboard.visits_today_for(current_user).any?
-    end
+    # #289: someone with visits or request follow-ups of their own today, or still open from
+    # earlier, sees their own day on Home (and reaches My day from it); otherwise the team's day,
+    # by person. JOB-06 (owner, 2026-11-22): follow-ups count, listed and placed as My day does.
+    @my_day = MyDay.new(@business, current_user, upcoming_days: 0) if can?(:field_work)
   end
 end

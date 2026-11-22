@@ -286,6 +286,16 @@ Tenancy.with_business(business) do
     client = Client.order(:id).offset(3).first || Client.order(:id).first
     ServiceRequest.create!(client:, property: client.properties.first, source: "phone", created_by: owner, description: "Asked about taking down a dead maple by the drive.")
   end
+  # JOB-06 (owner, 2026-11-22): Priya's only work today is a call for a request, so Home shows
+  # it under "Your visits today" instead of "Nothing booked". Made directly; nobody is emailed.
+  if priya && !ServiceRequest.exists?(description: "Wants the hedges along the street cut back.")
+    client = Client.order(:id).offset(1).first || Client.order(:id).first
+    hedges = ServiceRequest.create!(client:, property: client.properties.first, source: "phone", created_by: owner, status: "in_progress",
+                                    description: "Wants the hedges along the street cut back.")
+    follow_up = hedges.create_follow_up!(business:, user: priya, assigned_by: owner, kind: "call", scheduled_on: business.today, timing: "exact",
+                                         start_time: "11:00", instructions: "Ask how tall they want them left.")
+    ServiceRequestEvent.record!(hedges, :assigned, by: owner, to: follow_up.state)
+  end
   # NTF-03: one customized client email (Settings → Messages; editing needs a plan with templates).
   MessageTemplate.create_with(subject: "See you tomorrow, {{client_first_name}}",
                               body: "Hi {{client_first_name}},\n\nJust a reminder that we'll be there tomorrow, {{visit_window}}. " \

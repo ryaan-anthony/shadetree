@@ -34,7 +34,7 @@
 <%# #289: one place to start: the checklist (above), then today, then money owed and what needs you. %>
 <div class="space-y-4">
   <% if can?(:office) %>
-    <%= render "today", dashboard:, own_day: @own_day, earlier_open: @earlier_open.to_i %>
+    <%= render "today", dashboard:, my_day: @my_day %>
     <%= render "money_owed", dashboard: %>
   <% end %>
 
