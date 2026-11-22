@@ -177,7 +177,7 @@ class Admin::HomeTest < ActionDispatch::IntegrationTest
     old = follow_up("Lee Park", scheduled_on: @business.today - 3)
     get admin_root_path
     assert_select "#todays-visits h2", "Your visits today"
-    assert_select "#todays-visits", /0 visits · times in/
+    assert_select "#todays-visits", /Nothing today · times in/
     assert_select "#earlier-open a[href=?]", admin_my_day_path, text: "1 request follow-up still open from earlier"
 
     as_business(@business) { old.follow_up.update!(done_at: Time.current, done_by: @owner) }
@@ -192,7 +192,7 @@ class Admin::HomeTest < ActionDispatch::IntegrationTest
     honolulu = as_business(@business) { Location.create!(name: "Island yard", timezone: "Pacific/Honolulu") }
     follow_up("Kai Akana", location: honolulu, scheduled_on: Date.new(2026, 11, 22), timing: "exact", start_time: "20:00")
     get admin_root_path
-    assert_select "#todays-visits li", /Kai Akana.*8 pm/m
+    assert_select "#todays-visits li", /Kai Akana.*8 pm HST/m
     assert_select "#todays-visits", /1 request follow-up · times in/, "still Sunday there, so today, not from earlier"
     assert_select "#earlier-open", 0
   end
@@ -214,6 +214,25 @@ class Admin::HomeTest < ActionDispatch::IntegrationTest
     get admin_root_path(location: north.uid)
     assert_select "#todays-visits", /1 visit and 1 request follow-up/
     assert_select "#todays-visits li", { text: /Ana Diaz/, count: 0 }
+  end
+
+  test "JOB-06: an office-only role (no My day) sees its follow-ups on Home, each opening its own page" do
+    role = as_business(@business) { Role.create!(name: "Office", permissions: %w[office]) }
+    clerk = member_with_role(:admin)
+    as_business(@business) { @business.business_users.find_by!(user: clerk).update!(role: "custom", role_id: role.id) }
+    today = follow_up("Sam Ortiz", user: clerk, kind: "call")
+    old = follow_up("Lee Park", user: clerk, scheduled_on: @business.today - 2)
+    sign_in clerk
+    post switch_admin_business_path, params: { business: @business.uid }
+    get admin_root_path
+    assert_select "#todays-visits h2", "Your visits today"
+    assert_select "#todays-visits", /1 request follow-up · times in/
+    assert_select "#todays-visits a[href=?]", admin_my_request_path(today), "Sam Ortiz"
+    assert_select "#earlier-open", "1 request follow-up still open from earlier"
+    assert_select "#todays-visits a[href=?]", admin_my_request_path(old), "Lee Park"
+    assert_select "#todays-visits a[href=?]", admin_my_day_path, 0, "no My day for this role"
+    get admin_my_request_path(old)
+    assert_response :success
   end
 
   test "your own day on Home doesn't query per visit or follow-up" do

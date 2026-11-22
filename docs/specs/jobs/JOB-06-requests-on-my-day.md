@@ -78,9 +78,9 @@ creates the quote or hands it back or on.
   week's Monday, between his visits there, with a client photo; one on the Friday before is
   done, with his site photo and note, and its history has a pass back. Priya (admin@example.com)
   has only a call for a request today, at 11:00, so Home shows it rather than "Nothing booked".
-- My day's listing (visits and follow-ups, each on its own location's day; today, earlier,
-  coming up) is `MyDay`, shared by My day and Home. Home asks for today and earlier only, and
-  counts "1 visit and 2 request follow-ups".
+- `MyDay` (today, earlier, coming up; each on its location's day) serves My day and Home. Home
+  shows today and earlier, with the zone when it differs; an office-only role (no My day) opens
+  each follow-up's page from there.
 
 ## Decisions
 
