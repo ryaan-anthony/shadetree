@@ -31,7 +31,7 @@ module Permissions
       office: "See and manage all clients, requests, quotes, jobs, invoices and payments",
       schedule: "Schedule visits and assign them to people",
       field_work: "Work their own assigned visits: see the client and property, add notes and photos, complete them",
-      quote_requests: "Quote the requests given to them: draft the quote, with catalog prices, and edit it until it's sent " \
+      quote_requests: "Quote the requests given to them: draft the quote, with your services and prices, and edit it until it's sent " \
                       "(with the visits permission above, so the requests reach them)",
       send_own_quotes: "Send the quotes they drafted (without this, they mark them ready for the office to check and send)"
     },
