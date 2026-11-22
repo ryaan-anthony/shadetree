@@ -75,12 +75,16 @@ class Admin::GuidedTourTest < ActionDispatch::IntegrationTest
     assert_nil other.business_users.find_by!(user: users(:one)).tour_status
   end
 
+  # Every step of the checklist done. Payments aren't set up here, so the "Get paid online" step
+  # must be absent: a gateway that isn't configured, whatever an earlier test left behind.
   def complete_setup!
+    use_fake_payment_gateway(configured: false)
     as_business(@business) do
       CatalogItem.create!(name: "Weekly mowing", unit: "visit", unit_price: "45")
       Client.create!(display_name: "Maria Lopez", contact_methods_attributes: [ { kind: "phone", value: "5125550100" } ])
     end
     @business.update_columns(first_quote_sent_at: 1.day.ago, onboarded_at: nil)
+    assert as_business(@business) { SetupChecklist.new(@business.reload, membership: @membership).complete? }, "the precondition: setup is complete"
   end
 
   test "an Owner whose setup is complete but not yet stamped isn't offered it" do

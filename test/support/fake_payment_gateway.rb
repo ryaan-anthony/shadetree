@@ -74,11 +74,15 @@ end
 
 # Swaps the fake in for one test.
 module FakePaymentGatewayHelper
+  # Called twice in one test (setup, then again with options), the gateway from before the
+  # first call is the one put back: remembering the first fake instead leaked it into every
+  # later test (a configured gateway adds Home's "Get paid online" step, for one).
   def use_fake_payment_gateway(**options)
-    previous = PaymentGateway.instance_variable_get(:@current)
+    unless @restore_payment_gateway
+      previous = PaymentGateway.instance_variable_get(:@current)
+      @restore_payment_gateway = -> { PaymentGateway.current = previous }
+    end
     PaymentGateway.current = FakePaymentGateway.new(**options)
-    @restore_payment_gateway = -> { PaymentGateway.current = previous }
-    PaymentGateway.current
   end
 
   def after_teardown
