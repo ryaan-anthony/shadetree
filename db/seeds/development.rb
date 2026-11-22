@@ -294,6 +294,23 @@ Tenancy.with_business(business) do
   AutomationRecipe.install!("quote_follow_up", by: owner) unless AutomationRule.exists?(recipe: "quote_follow_up")
   # ACC-07: a role of the business's own (Team → Roles; giving it needs a plan with custom roles).
   Role.create_with(permissions: %w[schedule field_work]).find_or_create_by!(name: "Dispatcher")
+  # QTE-07: Riley (senior@example.com) is a "Senior tech" who quotes the requests given to them
+  # but doesn't send: one draft, from a site visit they did, is marked ready for review. Made
+  # directly, so nobody is notified or emailed.
+  senior_role = Role.create_with(permissions: %w[field_work quote_requests]).find_or_create_by!(name: "Senior tech")
+  riley = demo_user("senior@example.com", "Riley", "Park", demo_password)
+  BusinessUser.find_or_create_by!(business:, user: riley) { _1.assign_attributes(role: "custom", role_id: senior_role.id) }
+  unless Quote.exists?(created_by: riley)
+    client = Client.order(:id).first
+    request = ServiceRequest.create!(client:, property: client.properties.first, source: "phone", created_by: owner, status: "in_progress",
+                                     description: "Wants the beds edged and mulched before spring.")
+    follow_up = request.create_follow_up!(business:, user: riley, assigned_by: owner, kind: "visit", scheduled_on: business.today - 1,
+                                          timing: "exact", start_time: "10:00", done_at: 1.day.ago, done_by: riley)
+    ServiceRequestEvent.record!(request, :assigned, by: owner, to: follow_up.state)
+    quote = request.create_quote!(by: riley)
+    quote.update!(title: "Bed edging and mulch", ready_for_review_at: 2.hours.ago, ready_for_review_by: riley)
+    QuoteEvent.record!(quote, :ready_for_review, by: riley)
+  end
   puts "Request form: http://localhost:3000/request/#{business.handle}"
 end
 
@@ -309,7 +326,7 @@ unless ContactMessage.handled.exists?
                          body: "Do you support recurring weekly visits?", notified_at: 3.days.ago, created_at: 3.days.ago, handled_at: 2.days.ago)
 end
 
-puts "Demo data ready. Sign in as owner@example.com, admin@example.com or tech@example.com " \
+puts "Demo data ready. Sign in as owner@example.com, admin@example.com, tech@example.com or senior@example.com " \
      "with password #{demo_password}."
 
 # ACC-06: a second signed-in browser for the demo owner, so the account page's list has two.

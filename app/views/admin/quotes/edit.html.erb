@@ -13,9 +13,14 @@
   <%= link_to preview_admin_quote_path(@quote), class: button_classes(:secondary), target: "_blank", rel: "noopener",
               data: { action: "quote-builder#preview" } do %><%= icon "eye" %> Preview as client<% end %>
   <%= render "admin/usage/quotes" if @quote.counts_toward_usage? %>
-  <% unless own_quotes_only? %><%# QTE-07: their own drafts are sent in part 2's ways %>
+  <% if !own_quotes_only? || can?(:send_own_quotes) %><%# QTE-07: their own drafts, if their role sends them %>
   <%= link_to new_admin_quote_send_path(@quote, from: ("setup" if from_setup?)), class: button_classes(:primary),
               data: { action: "quote-builder#saveAndGo" } do %><%= icon "send" %> Send<% end %>
+  <% elsif @quote.ready_for_review? %>
+    <span class="text-sm2 text-muted" id="ready-for-review">Ready for review: the office sends it</span>
+  <% else %>
+    <%# Saves anything pending first (quote_builder#saveAndSubmit), then hands it over. %>
+    <button type="submit" form="ready-for-review-form" class="<%= button_classes(:primary) %>" data-action="quote-builder#saveAndSubmit"><%= icon "check-square" %> Ready for review</button>
   <% end %>
   <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
     <button type="button" class="<%= button_classes(:ghost, :icon) %>" data-menu-target="button" data-action="menu#toggle"
@@ -35,6 +40,12 @@
 <div id="builder_banner"></div>
 <%= render "admin/usage/limit_notice" if @quote.counts_toward_usage? %>
 <%= render "admin/quotes/from_request", quote: @quote %>
+<% if @quote.ready_for_review? && !own_quotes_only? %><%# QTE-07: handed over by whoever drafted it %>
+  <div class="banner banner-info mb-4" id="review-banner"><%= icon "check-square" %>
+    <p><%= @quote.ready_for_review_by&.full_name || "A former member" %> marked this ready for review <%= local_time_ago(@quote.ready_for_review_at) %>. Check it, then send it.</p></div>
+<% elsif @quote.created_by && @quote.created_by != current_user && @quote.service_request && !own_quotes_only? %>
+  <p class="-mt-2 mb-4 text-sm2 text-muted" id="drafted-by">Drafted by <%= @quote.created_by.full_name %>.</p>
+<% end %>
 <% if @quote.revising? && (previous = @quote.revisions.last) %>
   <%# What this revision answers: the client's last words on the previous one. %>
   <% answer = @quote.responses.reverse.find { _1.revision == previous.number } %>
@@ -149,7 +160,7 @@
     <% end %>
     <div class="flex flex-col gap-2">
       <%= f.submit_button "Save draft" %>
-      <p class="text-center text-sm2 text-muted">Your draft is kept. <%= own_quotes_only? ? "The office sends it when it’s ready." : "Send it from the top of the page when it’s ready." %></p><%# QTE-07 %>
+      <p class="text-center text-sm2 text-muted">Your draft is kept. <%= own_quotes_only? && !can?(:send_own_quotes) ? "Mark it ready for review from the top of the page when it’s done." : "Send it from the top of the page when it’s ready." %></p><%# QTE-07 %>
     </div>
   </aside>
 <% end %>
@@ -159,5 +170,6 @@
   <%= form_with url: admin_quote_attachment_path(@quote, file), method: :delete, id: "remove-attachment-#{file.id}", class: "hidden" do %><% end %>
 <% end %>
 <%# CAT-08: the re-price offer's form, outside the builder (its buttons use form=). %>
+<% if own_quotes_only? && !can?(:send_own_quotes) %><%= form_with url: ready_admin_quote_path(@quote), method: :post, id: "ready-for-review-form", class: "hidden", data: { turbo: false } do %><%= hidden_field_tag :lock_version, @quote.lock_version, id: nil %><% end %><% end %>
 <%= form_with url: reprice_admin_quote_path(@quote), method: :patch, id: "location-reprice-form", class: "hidden", data: { turbo: false } do %><%= hidden_field_tag :lock_version, @quote.lock_version, id: nil %><% end %>
 <%= render "admin/clients/quick_create", button: false unless own_quotes_only? %><%# QTE-07: no other clients %>

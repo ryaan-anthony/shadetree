@@ -12,14 +12,14 @@ class Admin::QuotesController < Admin::BaseController
   requires_permission :office
   include OwnQuoteAccess
   # QTE-07: what a member who quotes their assigned requests can do with their own draft.
-  OWN_DRAFT_ACTIONS = %i[show edit update preview pdf reprice].freeze
+  OWN_DRAFT_ACTIONS = %i[show edit update preview pdf reprice ready].freeze
   allow_any_member only: OWN_DRAFT_ACTIONS
   include SendsPdf
   leaves_session_alone only: :search
   filters_by_location Quote, only: %i[index search] # CAT-07
 
-  before_action :set_quote, only: %i[show edit update destroy preview pdf archive unarchive duplicate extend_expiry revise revision reprice]
-  before_action :require_editable, only: %i[edit update reprice]
+  before_action :set_quote, only: %i[show edit update destroy preview pdf archive unarchive duplicate extend_expiry revise revision reprice ready]
+  before_action :require_editable, only: %i[edit update reprice ready]
 
   # The list, on the "All" tab (or ?filter= from a link). Searching posts to #search, so client
   # names never appear in URLs.
@@ -99,6 +99,12 @@ class Admin::QuotesController < Admin::BaseController
   end
 
   def edit; end
+
+  # QTE-07: their draft, handed to the office to check and send.
+  def ready
+    @quote.mark_ready_for_review!(by: current_user)
+    redirect_to edit_admin_quote_path(@quote), notice: "Marked ready for review. The office will check it and send it."
+  end
 
   # The builder's autosave and its explicit Save. The form always sends the whole draft
   # (every line, in order), with the lock_version it was rendered from; a save from a stale

@@ -7,6 +7,8 @@ class Admin::QuoteSendsController < Admin::BaseController
   include ConfirmedSender
 
   requires_permission :office
+  include OwnQuoteAccess
+  allow_any_member # QTE-07: also members who send the quotes they drafted (set_quote decides)
   # Emails per business per hour (one count with invoices' sends), and per quote per day (below): the platform's sending domain
   # isn't a relay. Only a quote's first send counts toward plan usage, so usage can't be the cap.
   rate_limit to: EmailMessage::CLIENT_EMAILS_PER_HOUR, within: 1.hour, by: -> { current_business.id }, only: :create, scope: "client-emails",
@@ -55,7 +57,19 @@ class Admin::QuoteSendsController < Admin::BaseController
 
   def quote_limit_message = "You've used this period's quotes. New quotes can be sent again on #{l(current_business.entitlements.period.resets_on)}."
 
-  def set_quote = @quote = Quote.includes(:client, :line_items).find_by_param!(params[:quote_id])
+  # QTE-07: office staff send any quote; members with "Send their own quotes" only the ones they
+  # drafted from requests (resends of them too); anyone else is refused.
+  def set_quote
+    scope = if !own_quotes_only? then Quote.all
+    elsif can?(:send_own_quotes) then Quote.where(created_by_id: current_user.id, revision: 1).where.not(service_request_id: nil) # never a revision the office started
+    else return deny!(:office, "can't send quotes")
+    end
+    @quote = scope.includes(:client, :line_items).find_by_param!(params[:quote_id])
+  end
+
+  # Where to go after (or instead of) sending: the quote's page for office staff; for members
+  # sending their own, the draft while it's one, else their start page.
+  helper_method def after_send_path(quote) = own_quotes_only? ? (quote.editable? ? edit_admin_quote_path(quote) : admin_root_path) : admin_quote_path(quote)
 
   def require_sendable
     return if @quote.sendable?
@@ -65,7 +79,7 @@ class Admin::QuoteSendsController < Admin::BaseController
     elsif @quote.past_expiry? then "Quote #{@quote.number} expired on #{l(@quote.expires_on)}. Change its valid-until date before sending."
     else "Quote #{@quote.number} can't be sent now."
     end
-    redirect_to(@quote.editable? ? edit_admin_quote_path(@quote, from: ("setup" if from_setup?)) : admin_quote_path(@quote), alert: message)
+    redirect_to(@quote.editable? ? edit_admin_quote_path(@quote, from: ("setup" if from_setup?)) : after_send_path(@quote), alert: message)
   end
 
   def send_link
@@ -96,7 +110,7 @@ class Admin::QuoteSendsController < Admin::BaseController
       quote_send.update!(email_message: email)
     end
     track_first_quote
-    redirect_after_setup_step admin_quote_path(@quote), notice: "Quote #{@quote.number} is on its way to #{@form.to}."
+    redirect_after_setup_step after_send_path(@quote), notice: "Quote #{@quote.number} is on its way to #{@form.to}."
   end
 
   # MKT-04: the funnel's last step, when this send was the business's first.

@@ -35,6 +35,9 @@ class NotificationType
                    permission: :office, email_by_default: true, icon: "check-circle"),
     Definition.new(kind: "quote_declined", label: "Quote declined", hint: "With the client's reason, if they gave one.",
                    permission: :office, email_by_default: true, icon: "x-circle"),
+    # QTE-07: a teammate who drafts but doesn't send hands a quote to the office.
+    Definition.new(kind: "quote_ready_for_review", label: "A quote is ready to check", hint: "A teammate marks a quote they drafted ready for you to send.",
+                   permission: :office, email_by_default: true, icon: "check-square"),
     Definition.new(kind: "quote_changes_requested", label: "Changes requested", hint: "A client asks for changes to a quote.",
                    permission: :office, email_by_default: true, icon: "edit-3"),
     # QA #274: a client email the mail server refused or that couldn't be sent, so it's resent.

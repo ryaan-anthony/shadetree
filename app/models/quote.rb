@@ -22,6 +22,7 @@ class Quote < ApplicationRecord
   belongs_to_business_record :client
   belongs_to_business_record :property, optional: true
   belongs_to :created_by, class_name: "User", optional: true
+  belongs_to :ready_for_review_by, class_name: "User", optional: true # QTE-07
   belongs_to_business_record :service_request, optional: true # CLI-04: the request it came from
   after_destroy { service_request&.quote_removed! }
   belongs_to :sent_by, class_name: "User", optional: true
@@ -226,6 +227,23 @@ class Quote < ApplicationRecord
   # billable "quote_sent" usage event exactly once (BIL-02). Returns the QuoteSend.
   # MKT-04: whether the last mark_sent! was the business's first quote ever sent.
   def first_quote_sent? = @first_quote_sent == true
+
+  # QTE-07: someone who drafts quotes for their assigned requests but doesn't send them hands
+  # the draft to the office: it's recorded, and the people who manage quotes hear (NTF-02).
+  def mark_ready_for_review!(by:)
+    transaction do
+      lock!
+      raise ArgumentError, "Only a draft can be marked ready for review." unless draft?
+
+      update!(ready_for_review_at: Time.current, ready_for_review_by: by)
+      QuoteEvent.record!(self, :ready_for_review, by:)
+    end
+    NotificationType.deliver("quote_ready_for_review", business:, subject: self, actor: by,
+                             title: "#{by&.full_name || "A teammate"}'s quote #{number} for #{client.display_name} is ready to check",
+                             body: "Check it, then send it.", path: Rails.application.routes.url_helpers.edit_admin_quote_path(self))
+  end
+
+  def ready_for_review? = draft? && ready_for_review_at.present?
 
   def mark_sent!(by:, channel:, recipient: nil, cc: nil, email_message: nil)
     transaction do

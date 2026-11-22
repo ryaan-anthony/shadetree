@@ -183,6 +183,7 @@ Rails.application.routes.draw do
 
     # Quotes (QTE-01)
     resources :quotes do
+      post :ready, on: :member # QTE-07: ready for the office to check and send
       get :preview, on: :member
       get :pdf, on: :member
       get :property_options, on: :collection

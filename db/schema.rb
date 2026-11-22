@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_22_110000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_22_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -1010,7 +1010,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_110000) do
     t.index ["business_id", "quote_id", "occurred_at"], name: "index_quote_events_on_business_id_and_quote_id_and_occurred_at"
     t.index ["quote_id"], name: "index_quote_events_on_quote_id"
     t.index ["user_id"], name: "index_quote_events_on_user_id"
-    t.check_constraint "kind::text = ANY (ARRAY['archived'::character varying::text, 'unarchived'::character varying::text, 'expiry_extended'::character varying::text, 'duplicated'::character varying::text, 'revised'::character varying::text, 'repriced'::character varying::text])", name: "quote_events_kind"
+    t.check_constraint "kind::text = ANY (ARRAY['archived'::character varying::text, 'unarchived'::character varying::text, 'expiry_extended'::character varying::text, 'duplicated'::character varying::text, 'revised'::character varying::text, 'repriced'::character varying::text, 'ready_for_review'::character varying::text])", name: "quote_events_kind"
   end
 
   create_table "quote_line_items", force: :cascade do |t|
@@ -1138,6 +1138,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_110000) do
     t.bigint "service_request_id"
     t.bigint "location_id", null: false
     t.bigint "priced_for_location_id"
+    t.datetime "ready_for_review_at"
+    t.bigint "ready_for_review_by_id"
     t.index ["business_id", "archived_at", "created_at"], name: "index_quotes_on_business_id_and_archived_at_and_created_at"
     t.index ["business_id", "location_id"], name: "index_quotes_on_business_id_and_location_id"
     t.index ["business_id", "number"], name: "index_quotes_on_business_id_and_number", unique: true
@@ -1616,6 +1618,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_110000) do
   add_foreign_key "quotes", "properties", on_delete: :nullify
   add_foreign_key "quotes", "service_requests", on_delete: :nullify
   add_foreign_key "quotes", "users", column: "created_by_id", on_delete: :nullify
+  add_foreign_key "quotes", "users", column: "ready_for_review_by_id", on_delete: :nullify
   add_foreign_key "quotes", "users", column: "sent_by_id", on_delete: :nullify
   add_foreign_key "request_follow_ups", "businesses", on_delete: :cascade
   add_foreign_key "request_follow_ups", "service_requests", on_delete: :cascade

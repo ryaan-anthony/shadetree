@@ -29,7 +29,7 @@ class Admin::MyRequestsController < Admin::BaseController
     end
 
     quote = @request.create_quote!(by: current_user, once: true)
-    redirect_to edit_admin_quote_path(quote), notice: "Draft #{quote.number} from the request. Nothing is sent until #{can?(:office) ? "you send it" : "the office sends it"}."
+    redirect_to edit_admin_quote_path(quote), notice: "Draft #{quote.number} from the request. Nothing is sent until #{can?(:office) || can?(:send_own_quotes) ? "you send it" : "the office sends it"}."
   rescue ServiceRequest::AlreadyQuoted => error
     mine = can?(:office) || Quote.own_drafts_for(current_user).exists?(error.quote.id)
     redirect_to (mine ? edit_admin_quote_path(error.quote) : admin_my_day_path), notice: error.message # a second click: the draft the first made

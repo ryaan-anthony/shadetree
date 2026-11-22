@@ -159,4 +159,65 @@ class Admin::TechnicianQuotesTest < ActionDispatch::IntegrationTest
     as_business(@business) { @request_record.update!(status: "archived") }
     assert_raises(ArgumentError) { as_business(@business) { @request_record.create_quote!(by: @tech, once: true) } }
   end
+
+  test "without Send their own quotes, they mark the draft ready for review; the office hears, sees who drafted it, and sends it" do
+    quote = quote_it
+    get edit_admin_quote_path(quote)
+    assert_select "button[form=ready-for-review-form]", /Ready for review/
+    assert_select "p", /Mark it ready for review from the top of the page/
+    get new_admin_quote_send_path(quote)
+    assert_response :forbidden
+
+    post ready_admin_quote_path(quote)
+    assert_redirected_to edit_admin_quote_path(quote)
+    follow_redirect!
+    assert_select "#ready-for-review", /the office sends it/
+    as_business(@business) do
+      assert_equal [ @tech, "ready_for_review" ], [ quote.reload.ready_for_review_by, quote.events.last.kind ]
+      notice = Notification.find_by!(user: @owner, kind: "quote_ready_for_review")
+      assert_equal "Marcus Reyes's quote #{quote.number} for Maria Lopez is ready to check", notice.title
+      assert_empty Notification.where(user: @tech, kind: "quote_ready_for_review"), "not the one who marked it"
+    end
+
+    sign_in @owner
+    post switch_admin_business_path, params: { business: @business.uid }
+    get edit_admin_quote_path(quote)
+    assert_select "#review-banner", /Marcus Reyes marked this ready for review/
+    post admin_quote_send_path(quote), params: { channel: "link" }
+    get admin_quote_path(quote)
+    assert_select "body", /Created by Marcus Reyes/
+    assert_select "body", /Marked ready for review by Marcus Reyes/
+    assert_select "body", /Link copied by John Doe/
+  end
+
+  test "with Send their own quotes, they send their own draft, which counts toward the plan, and not anyone else's" do
+    as_business(@business) { @senior.update!(permissions: %w[field_work quote_requests send_own_quotes]) }
+    quote = quote_it
+    assert_match "Nothing is sent until you send it", flash[:notice]
+    patch admin_quote_path(quote), params: builder_params(quote, lines: [ { key: "k1", name: "Weekly mowing", quantity: "1", unit_price: "45", taxable: "0" } ]), as: :turbo_stream
+    get edit_admin_quote_path(quote)
+    assert_select "a[href=?]", new_admin_quote_send_path(quote), /Send/
+    assert_select "button[form=ready-for-review-form]", 0
+    get new_admin_quote_send_path(quote)
+    assert_response :success
+    used = as_business(@business) { @business.reload.entitlements.used(:quotes_sent) }
+    post admin_quote_send_path(quote), params: { channel: "link" }
+    assert_redirected_to new_admin_quote_send_path(quote)
+    follow_redirect!
+    assert_response :success, "the link to copy, after sending their own"
+    as_business(@business) do
+      assert_equal "sent", quote.reload.status
+      assert_equal @tech, quote.sends.last.user
+      assert_equal used + 1, Business.find(@business.id).entitlements.used(:quotes_sent)
+    end
+    get edit_admin_quote_path(quote)
+    assert_response :not_found, "sent: no more editing"
+
+    get new_admin_quote_send_path(@office_quote)
+    assert_response :not_found
+
+    as_business(@business) { quote.reload.revise!(by: @owner) }
+    get new_admin_quote_send_path(quote)
+    assert_response :not_found, "a revision the office started is the office's to send"
+  end
 end
