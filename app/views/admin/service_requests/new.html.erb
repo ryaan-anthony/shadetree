@@ -48,9 +48,16 @@
 
     </div>
   <% end %>
+  <%# CLI-07: who follows it up, if anyone yet. %>
+  <%= render "admin/request_follow_ups/warnings", action: "log" %>
+  <%= card title: "Follow-up", subtitle: "Optional. Give it to someone for a site visit or a call." do %>
+    <%= fields model: @follow_up, scope: :request_follow_up do |ff| %>
+      <%= render "admin/request_follow_ups/fields", f: ff, follow_up: @follow_up, optional: true %>
+    <% end %>
+  <% end %>
   <div class="flex justify-end gap-2">
     <%= link_to "Cancel", admin_service_requests_path, class: button_classes(:ghost) %>
-    <%= f.submit_button "Log request" %>
+    <%= f.submit_button "Log request#{" anyway" if @warnings.present?}" %>
   </div>
 <% end %>
 <%= render "admin/clients/quick_create", button: false %>

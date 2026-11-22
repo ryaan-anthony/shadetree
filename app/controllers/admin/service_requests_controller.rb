@@ -4,6 +4,7 @@
 class Admin::ServiceRequestsController < Admin::BaseController
   # OPS-03: what support may do while viewing as a member
   impersonation :allowed
+  include FollowUpForm # CLI-07
   PER_PAGE = 50
 
   requires_permission :office
@@ -31,10 +32,12 @@ class Admin::ServiceRequestsController < Admin::BaseController
 
   def new
     @request = ServiceRequest.new(source: "phone", location: current_membership.document_location)
+    @follow_up = start_follow_up(@request)
   end
 
   # Logged by staff: a client (picked, or added inline), one of their properties, the services,
-  # what they need and how they got in touch.
+  # what they need and how they got in touch; and, if someone's picked, who follows it up
+  # (CLI-07), with warnings first as on the request page.
   def create
     attrs = params.expect(service_request: [ :client, :property, :source, :description, :timing, :location, { service_ids: [] } ])
     @request = ServiceRequest.new(created_by: current_user, source: attrs[:source], description: attrs[:description], timing: attrs[:timing],
@@ -43,9 +46,23 @@ class Admin::ServiceRequestsController < Admin::BaseController
     @request.property = @request.client&.properties&.find_by(uid: attrs[:property])
     @request.services = CatalogItem.active.where(uid: Array(attrs[:service_ids])).map { { "catalog_item_id" => _1.id, "name" => _1.name } }
     @request.errors.add(:client, "Choose a client, or add a new one.") unless @request.client
-    return render(:new, status: :unprocessable_content) unless @request.client && @request.save
+    fields = follow_up_fields
+    assign = fields[:user_id].present?
+    @follow_up = start_follow_up(@request).tap { _1.assign_attributes(follow_up_attributes(fields)) if assign }
+    valid = @request.client && @request.valid?
+    return render(:new, status: :unprocessable_content) unless valid && (!assign || @follow_up.valid?)
+    return render(:new, status: :unprocessable_content) if assign && follow_up_warn?(@follow_up)
 
-    redirect_to admin_service_request_path(@request), notice: "Request from #{@request.client.display_name} logged."
+    ServiceRequest.transaction do
+      @request.save!
+      RequestFollowUp.assign!(@request, follow_up_attributes(fields), by: current_user) if assign
+    end
+    redirect_to admin_service_request_path(@request), notice: "Request from #{@request.client.display_name} logged#{" and given to #{@follow_up.user.full_name}" if assign}."
+  rescue ActiveRecord::RecordInvalid, RequestFollowUp::NotOpen => error
+    # Assigning failed after the checks above (a member removed meanwhile): the transaction
+    # rolled the request back too, so the form shows again with everything typed.
+    @follow_up.errors.add(:base, error.message.delete_prefix("Validation failed: ")) unless error.respond_to?(:record) && error.record == @follow_up
+    render :new, status: :unprocessable_content
   end
 
   def status
@@ -66,5 +83,5 @@ class Admin::ServiceRequestsController < Admin::BaseController
 
   private
 
-  def set_request = @request = ServiceRequest.includes(:client, :property, notes: :user).find_by_param!(params[:id])
+  def set_request = @request = ServiceRequest.includes(:client, :property, notes: :user, follow_up: %i[user assigned_by]).find_by_param!(params[:id])
 end

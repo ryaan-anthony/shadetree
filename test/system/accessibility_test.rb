@@ -37,6 +37,17 @@ class AccessibilityTest < ApplicationSystemTestCase
                       admin_notifications_path, admin_data_exports_path
   end
 
+  # CLI-07: logging a request (with its follow-up fields), a request with a follow-up, and the assign form.
+  test "request follow-up pages pass axe" do
+    request = Tenancy.with_business(@business) do
+      client = Client.create!(display_name: "Maria Lopez", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ])
+      ServiceRequest.create!(client:, source: "phone", description: "Fence repair").tap do
+        RequestFollowUp.assign!(_1, { user: users(:one), scheduled_on: @business.today }, by: users(:one))
+      end
+    end
+    assert_accessible new_admin_service_request_path, admin_service_request_path(request), edit_admin_service_request_follow_up_path(request)
+  end
+
   test "the search-engine setting is off while requests are off" do
     @business.update!(request_form_enabled: true)
     visit edit_admin_business_path(tab: "request_form")

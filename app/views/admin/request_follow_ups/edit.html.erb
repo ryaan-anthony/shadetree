@@ -1,0 +1,17 @@
+<% new_follow_up = @follow_up.new_record? %>
+<% content_for :title, new_follow_up ? "Assign request" : "Change follow-up" %>
+<%= page_header (new_follow_up ? "Assign this request" : "Change the follow-up"),
+                lede: "#{@request.client.display_name} · #{@request.service_names.any? ? @request.title : truncate(@request.description.to_s, length: 80)}" %>
+
+<%= form_with model: @follow_up, scope: :request_follow_up, url: admin_service_request_follow_up_path(@request), method: :patch, class: "max-w-2xl space-y-4" do |f| %>
+  <%# A stale form: lock_version for a follow-up shown, "fresh" for none (someone may assign it meanwhile). %>
+  <%= @follow_up.persisted? ? f.hidden_field(:lock_version) : hidden_field_tag(:fresh, "1", id: nil) %>
+  <%= render "admin/request_follow_ups/warnings", action: new_follow_up ? "assign" : "save" %>
+  <%= card do %>
+    <%= render "admin/request_follow_ups/fields", f:, follow_up: @follow_up %>
+  <% end %>
+  <div class="flex items-center justify-end gap-2">
+    <%= link_to "Cancel", admin_service_request_path(@request), class: button_classes(:ghost) %>
+    <%= f.submit_button "#{new_follow_up ? "Assign" : "Save"}#{@warnings.present? ? " anyway" : ""}" %>
+  </div>
+<% end %>

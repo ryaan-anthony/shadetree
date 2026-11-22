@@ -1,0 +1,41 @@
+<%# locals: (f:, follow_up:, optional: false) -%>
+<%# CLI-07: who follows a request up, how and when. `optional` (logging a request) adds "Not assigned", and shows the rest once someone's picked. %>
+<%# Who can be assigned (RequestFollowUp.assignable?: office, until JOB-06). Someone who has it but no longer could is listed, marked, and isn't kept by accident. %>
+<% members = current_business.business_users.active.includes(:user).select { RequestFollowUp.assignable?(_1) }.sort_by { _1.user.full_name.downcase } %>
+<% current = follow_up.persisted? && follow_up.user_id_was && members.none? { _1.user_id == follow_up.user_id_was } ? User.find_by(id: follow_up.user_id_was) : nil %>
+<% choices = members.map { [ "#{_1.user.full_name} (#{_1.role_name})", _1.user_id ] } %>
+<% choices.unshift([ "#{current.full_name} (can't keep it: can no longer see requests)", current.id, { disabled: true } ]) if current %>
+<% blank = optional ? "Not assigned" : ("Choose someone" if current) %>
+<% choices.unshift([ blank, "" ]) if blank %>
+<% selected = current && follow_up.user_id == current.id ? "" : follow_up.user_id %>
+<% location = follow_up.service_request&.location %>
+<% zone_name = time_zone_label((location || current_business).time_zone) %>
+<% zone_name = "#{zone_name}, at #{location.name}" if location && current_business.multiple_locations? %>
+<% submitted = params[:request_follow_up].is_a?(ActionController::Parameters) %>
+<div class="space-y-4 <%= "group/assignee" if optional %>">
+  <% problems = follow_up.errors.reject { _1.attribute.in?(%i[user_id scheduled_on start_time window_end_time duration_hours instructions]) }.map(&:full_message) %>
+  <% if problems.any? %><div class="banner banner-danger" role="alert"><%= icon "alert-circle" %><p><%= problems.to_sentence %></p></div><% end %>
+  <div class="sm:w-80"><%= f.field :user_id, as: :select, label: "Who follows it up", optional:,
+                                   choices: options_for_select(choices, selected) %></div>
+  <%# Logging a request: nothing more to fill in until someone's picked (and nothing hidden is required). %>
+  <div class="space-y-4 <%= "group-has-[option[value='']:checked]/assignee:hidden" if optional %>">
+    <fieldset>
+      <legend class="label">How</legend>
+      <div class="flex flex-wrap gap-x-5 gap-y-2">
+        <% RequestFollowUp::KIND_LABELS.each do |value, label| %>
+          <label class="check items-center"><%= f.radio_button :kind, value, id: "follow-up-kind-#{value}" %><span class="text-ink"><%= label %></span></label>
+        <% end %>
+      </div>
+    </fieldset>
+    <div class="w-48"><%= f.field :scheduled_on, as: :date, label: "Day", required: !optional %></div>
+    <%= render "admin/shared/arrival_fields", f:, zone_name:, label: "Time" %>
+    <div class="max-w-xs">
+      <%# The value as it was typed after an error or warning (a blank one stays blank, so it still follows the kind). %>
+      <%= f.field :duration_hours, as: :number, label: "Estimated hours", optional: true, class: "w-40", step: "any", min: 0.1, max: 24,
+                  value: (submitted ? params.dig(:request_follow_up, :duration_hours) : (follow_up.duration_minutes && follow_up.duration_hours)),
+                  help: "Leave empty for an hour for a site visit, 15 minutes for a call." %>
+    </div>
+    <%= f.field :instructions, as: :textarea, optional: true, rows: 3, maxlength: 2_000, label: "Instructions for them",
+                help: "What to look at or ask. Only your team sees these." %>
+  </div>
+</div>
