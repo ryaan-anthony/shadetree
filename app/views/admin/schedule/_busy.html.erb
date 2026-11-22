@@ -3,7 +3,7 @@
     nothing of the request. Not a link or a control; clicks and drops go to the grid under it.
     `as`: :block on the time grid, :chip in the anytime row, :row in the phone agenda. %>
 <% who = busy.user.first_name.presence || busy.user.full_name %>
-<% label = schedule_busy_label(busy, schedule) %>
+<% label = schedule_busy_label(busy, schedule, day: as != :row) %><%# the agenda's rows are under their day %>
 <% case as %>
 <% when :block %>
   <div class="cal-busy cal-<%= schedule.visit_color(busy) %> absolute <%= style %>">

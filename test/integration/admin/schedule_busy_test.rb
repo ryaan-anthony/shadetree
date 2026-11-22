@@ -35,7 +35,7 @@ class Admin::ScheduleBusyTest < ActionDispatch::IntegrationTest
   end
 
   def week(**params) = get(admin_schedule_path(date: @monday.iso8601, **params))
-  def follow_ups = as_business(@business) { RequestFollowUp.where(service_request: [ @site, @call ]).to_a }
+  def follow_ups = as_business(@business) { RequestFollowUp.where(service_request: [ @site, @call ]).order(:id).to_a }
 
   # Nothing of either request anywhere in the page's source: names, what was asked, instructions,
   # ids, the follow-up's styling or kind, or its done state.
@@ -52,28 +52,28 @@ class Admin::ScheduleBusyTest < ActionDispatch::IntegrationTest
   test "others' follow-ups are Busy at their time on their person's day, or in the anytime row, and say nothing more" do
     week
     assert_select "#schedule-grid .cal-busy.cal-#{as_business(@business) { ScheduleView.new(@business).color_for(@tech) }}", 1
-    assert_select "#schedule-grid .cal-busy .sr-only", "Busy, 2 to 3 pm, Marcus"
-    assert_select "#schedule-grid [data-kind=anytime] .cal-busy .sr-only", "Busy, anytime, John"
+    assert_select "#schedule-grid .cal-busy .sr-only", "Busy, 2 to 3 pm, Marcus, Monday, November 23"
+    assert_select "#schedule-grid [data-kind=anytime] .cal-busy .sr-only", "Busy, anytime, John, Tuesday, November 24"
     assert_select "#schedule-grid .cal-busy", /2 pm\s*Busy\s*Marcus/
     assert_select "#schedule-grid a.cal-busy, #schedule-grid .cal-busy a, .cal-busy[tabindex], .cal-busy[data-schedule-drag-target]", 0, "not a link, drag handle or control"
     assert_select "#cal-visit-#{@one_pm.uid}", /Maria Lopez/, "visits as before"
     assert_nothing_of_the_requests
 
     get admin_schedule_path(date: @monday.iso8601, view: "day")
-    assert_select "[data-kind=timed][data-member='#{@tech.id}'] .cal-busy .sr-only", "Busy, 2 to 3 pm, Marcus"
+    assert_select "[data-kind=timed][data-member='#{@tech.id}'] .cal-busy .sr-only", "Busy, 2 to 3 pm, Marcus, Monday, November 23"
     assert_nothing_of_the_requests
   end
 
   test "a window says when they're arriving; times are on the calendar's clock, its zone named when the request's differs" do
     as_business(@business) { RequestFollowUp.assign!(@site, { timing: "window", start_time: "14:00", window_end_time: "16:00" }, by: @owner) }
     week
-    assert_select "#schedule-grid .cal-busy .sr-only", "Busy, arriving 2 to 4 pm, Marcus"
+    assert_select "#schedule-grid .cal-busy .sr-only", "Busy, arriving 2 to 4 pm, Marcus, Monday, November 23"
     assert_select "#schedule-grid .cal-busy", /2–4 pm\s*Busy/
 
     north = as_business(@business) { Location.create!(name: "North yard", timezone: "America/Chicago") }
     as_business(@business) { @site.update!(location: north) }
     week
-    assert_select "#schedule-grid .cal-busy .sr-only", "Busy, arriving 1 to 3 pm CST, Marcus", "its own clock, zone named, as JOB-07 does"
+    assert_select "#schedule-grid .cal-busy .sr-only", "Busy, arriving 1 to 3 pm CST, Marcus, Monday, November 23", "its own clock, zone named, as JOB-07 does"
   end
 
   test "done ones are Busy too; by status they're neutral; the filters and the phone agenda include them" do
@@ -93,7 +93,7 @@ class Admin::ScheduleBusyTest < ActionDispatch::IntegrationTest
     north = as_business(@business) { Location.create!(name: "North yard") }
     as_business(@business) { @call.update!(location: north) }
     week(location: north.uid)
-    assert_select "#schedule-grid .cal-busy .sr-only", "Busy, anytime, John"
+    assert_select "#schedule-grid .cal-busy .sr-only", "Busy, anytime, John, Tuesday, November 24"
     assert_nothing_of_the_requests
   end
 
@@ -124,8 +124,21 @@ class Admin::ScheduleBusyTest < ActionDispatch::IntegrationTest
     assert_equal "2 pm", as_business(@business) { @one_pm.reload.time_label }
   end
 
+  test "a slot over Busy time says who's busy then, as the block can't be focused; the status legend has Busy" do
+    get admin_schedule_path(date: @monday.iso8601, view: "day")
+    assert_select "[data-kind=timed][data-member='#{@tech.id}'] a.cal-slot[href*='at=14%3A00'] .sr-only", "New visit, Monday, November 23, 2:00 PM, with Marcus Reyes, Marcus busy"
+    assert_select "[data-kind=timed][data-member='#{@tech.id}'] a.cal-slot[href*='at=15%3A00'] .sr-only", "New visit, Monday, November 23, 3:00 PM, with Marcus Reyes"
+    week
+    assert_select "a.cal-slot[href*='on=2026-11-23'][href*='at=14%3A00'] .sr-only", "New visit, Monday, November 23, 2:00 PM, Marcus busy"
+    week(color: "status")
+    assert_select "#schedule-color + ul li", /Busy/
+    sign_in_as @owner
+    week(color: "status")
+    assert_select "#schedule-color + ul li", { text: "Busy", count: 0 }
+  end
+
   test "opening, moving, reassigning or unassigning a follow-up stays refused; a slot offers only a visit" do
-    follow_up = follow_ups.first
+    follow_up = as_business(@business) { @site.reload.follow_up }
     get admin_schedule_follow_up_path(@site)
     assert_response :forbidden
     patch admin_schedule_follow_up_move_path(@site), params: { lock_version: follow_up.lock_version, on: "2026-11-24", at: "10:00" }, as: :json
@@ -145,7 +158,7 @@ class Admin::ScheduleBusyTest < ActionDispatch::IntegrationTest
     week
     assert_select "#schedule-grid a.cal-request.cal-call[href=?]", admin_my_request_path(@call), /Ana Diaz.*Call for a request/m
     assert_select "#schedule-grid a.cal-request[data-move-url]", 0, "moved by the office, not from here"
-    assert_select "#schedule-grid .cal-busy .sr-only", "Busy, 2 to 3 pm, Marcus"
+    assert_select "#schedule-grid .cal-busy .sr-only", "Busy, 2 to 3 pm, Marcus, Monday, November 23"
     assert_not_includes response.body, @site.uid
     assert_not_includes response.body, "Sam Ortiz"
   end

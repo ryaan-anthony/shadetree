@@ -57,6 +57,7 @@
           <% { "scheduled" => "Scheduled", "in-progress" => "In progress", "completed" => "Done" }.each do |key, label| %>
             <li class="flex items-center gap-1.5"><span class="cal-dot cal-status-<%= key %>" aria-hidden="true"></span><%= label %></li>
           <% end %>
+          <% if own %><li class="flex items-center gap-1.5"><span class="cal-dot cal-neutral" aria-hidden="true"></span>Busy</li><% end %><%# JOB-08 %>
         </ul>
       <% end %>
     <% end %>
@@ -197,7 +198,7 @@
               <% if s.bookable?(date) %><% s.hours.each_with_index do |hour, row| %>
                 <%= link_to admin_schedule_new_visit_path(schedule_slot_params(column, hour, s)), class: "cal-slot #{inline_style("top: #{row * ScheduleView::HOUR_PX}px")}",
                             data: { turbo_frame: "schedule_visit", schedule_slots_target: "slot", schedule_focus: schedule_slot_key(column, hour), col:, row:, start: (col == start_col && row == start_row) } do %>
-                  <span class="sr-only"><%= schedule_slot_label(column, hour) %></span><span class="cal-slot-hint" aria-hidden="true">+ New visit</span>
+                  <span class="sr-only"><%= schedule_slot_label(column, hour, busy: s.busy_during(column, hour)) %></span><span class="cal-slot-hint" aria-hidden="true">+ New visit</span>
                 <% end %>
               <% end %><% end %>
               <% s.placed_in(column).each do |placed| %>
