@@ -213,4 +213,66 @@ class GuidedTourBrowserTest < ApplicationSystemTestCase
     assert_no_selector "#tour", visible: true
     wait_for_status "finished"
   end
+
+  # Loads a page without the input check's recovery reload: the first load already marks its tip seen.
+  def open_page(path)
+    page.visit(path)
+    wait_for_controllers
+  end
+
+  def wait_for_tip(key, field)
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 5
+    until @membership.reload.tips.dig(key, field)
+      flunk "#{key} never #{field}" if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+      sleep 0.05
+    end
+  end
+
+  test "a first-time tip shows once, is hidden by keyboard, and isn't kept for Back" do
+    sign_in_as users(:one)
+    open_page admin_service_requests_path
+    assert_selector "#tip-requests[role=note]", text: "Requests from your online form", visible: true
+    wait_for_tip "requests", "seen_at"
+    click_on "Invoices" # a Turbo visit, then Back to the cached page
+    assert_selector "#tip-invoices", visible: true
+    page.go_back
+    assert_selector "h1", text: "Requests"
+    assert_no_selector "#tip-requests", visible: :all
+
+    open_page admin_invoices_path
+    assert_no_selector ".tip", visible: :all, wait: 0 # shown once already
+    open_page admin_schedule_path
+    tab_to "Got it"
+    page.send_keys(:enter)
+    assert_no_selector "#tip-schedule"
+    assert_equal "H1", evaluate_script("document.activeElement.tagName")
+    wait_for_tip "schedule", "dismissed_at"
+  end
+
+  test "tips wait while the tour is away at the sample quote, come back from Help, and hide on a phone" do
+    sign_in_as users(:one)
+    visit admin_root_path
+    click_on "Take a 2-minute tour"
+    click_on "Next"
+    click_on "Next"
+    click_on "See what a client sees" # the tour keeps its place
+    assert_text "Jordan Rivera"
+    open_page admin_invoices_path
+    assert_selector "#tip-invoices", visible: :hidden
+    open_page admin_root_path
+    assert_stop "Stop 3 of 6", "Quotes"
+    click_on "End tour"
+    open_page admin_invoices_path
+    assert_selector "#tip-invoices", visible: true
+
+    click_on "Help"
+    click_on "Show tips again"
+    assert_text "Tips will show again"
+    page.driver.browser.manage.window.resize_to(390, 844)
+    open_page admin_service_requests_path
+    within("#tip-requests") { click_on "Got it" }
+    assert_no_selector "#tip-requests"
+  ensure
+    page.driver.browser.manage.window.resize_to(1400, 1400)
+  end
 end

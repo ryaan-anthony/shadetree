@@ -35,6 +35,9 @@
                   <% if (help_tour = GuidedTour.for(Current.membership)) %><%# ACC-08 %>
                     <%= link_to (help_tour.page == :field ? admin_my_day_path(tour: "start") : admin_root_path(tour: "start")), class: "menu-item" do %><%= icon "map" %> <%= t("guidance.tour.again") %><% end %>
                   <% end %>
+                  <% if tips_for_me? %>
+                    <%= button_to admin_tips_path, method: :delete, class: "menu-item w-full", form: { class: "contents" } do %><%= icon "zap" %> <%= t("guidance.tips.again") %><% end %>
+                  <% end %>
                 </div>
               </div>
               <%# NTF-02: the notification center, with this member's unread count in this business. %>
@@ -51,6 +54,7 @@
         <main id="main" class="content">
           <%= render "layouts/app/confirm_email_banner" if current_user && !current_user.confirmed? %>
           <%= render "layouts/app/billing_banner" if Current.membership&.can?(:billing) && current_business %>
+          <% if (tip = first_time_tip_here) %><%= render "layouts/app/tip", tip: %><% end %><%# ACC-08 %>
           <%= yield %>
         </main>
       </div>

@@ -38,6 +38,16 @@
     <% end %>
   <% end %>
 
+  <% if tips_setting? %><%# ACC-08 %>
+    <%= card title: t("guidance.tips.setting_title"), class: "mt-4", id: "tips-setting" do %>
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <p class="text-sm text-subtle"><%= current_user.tips_off? ? t("guidance.tips.setting_off") : t("guidance.tips.setting_on") %></p>
+        <%= button_to (current_user.tips_off? ? t("guidance.tips.turn_on") : t("guidance.tips.turn_off")), admin_tips_preference_path,
+                      method: :patch, params: { off: !current_user.tips_off? }, class: button_classes(:secondary) %>
+      </div>
+    <% end %>
+  <% end %>
+
   <% unless impersonation %><%# OPS-03: support doesn't see the member's browsers and addresses %>
   <% browser_sessions = current_user.user_sessions.listed.to_a.sort_by { _1 == current_user_session ? 0 : 1 } %>
   <%= card title: "Where you're signed in", subtitle: "Lost a phone or used a shared computer? Sign it out here.", flush: true, class: "mt-4" do %>

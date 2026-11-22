@@ -36,19 +36,19 @@ from Help.
 - [x] The tour fits the person's role. Technicians get a short version of My day and their visits
       only. Admins get the office stops without billing. Stops for things a role can't use are
       left out.
-- [ ] First-time tips: the first visit to Requests, the quote builder, the send page, Schedule,
+- [x] First-time tips: the first visit to Requests, the quote builder, the send page, Schedule,
       Invoices, Services & prices and Settings shows one short, dismissible tip. A tip shows
       once per person per business, and doesn't show while the tour is running.
-- [ ] Help offers "Take the tour again" and "Show tips again". Personal settings can turn tips
+- [x] Help offers "Take the tour again" and "Show tips again". Personal settings can turn tips
       off.
 - [x] It works on phones (the tour becomes a bottom sheet that steps through the menu) and with
       the keyboard and screen readers (focus moves into each stop and back, Escape ends it). It
       respects reduced motion, and the axe check passes with it open.
-- [ ] Stops and tips are written in the product's plain voice, from the person's point of view,
+- [x] Stops and tips are written in the product's plain voice, from the person's point of view,
       with no jargon. Wording lives in one place so it's easy to edit.
 - [x] Whether the tour was finished or skipped, and at which stop, is recorded per person for
       product measurement, without personal data, alongside ACC-05's time-to-first-quote.
-- [ ] Tests cover the offer, role variants, skip and resume, the tips showing once, restarting
+- [x] Tests cover the offer, role variants, skip and resume, the tips showing once, restarting
       from Help, keyboard use and mobile.
 
 ## Out of scope
@@ -86,4 +86,7 @@ from Help.
   960px it's a bottom sheet the page and target scroll clear of, opening the menu for menu stops.
 - Leaving the page ends the tour at that stop (recorded as ended there), except through its own
   sample-quote link: it resumes on return (this tab, 30 minutes; forgotten on sign-out).
+- Tips (`FirstTimeTips`): shown once per page and member when first seen in the browser, never
+  mid-tour; `tips` keeps seen and hidden times. Help shows them again; Your account turns them
+  off everywhere. Support can't mark, reset or turn them off.
 - Dev seeds: `new@example.com` owns a brand-new business with the offer and checklist showing.

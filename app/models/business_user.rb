@@ -163,6 +163,17 @@ class BusinessUser < ApplicationRecord
 
   def tour_offered? = tour_status == "offered"
 
+  # ACC-08: a first-time tip was shown ("seen") or hidden ("dismissed"); the first time is kept.
+  def record_tip!(key, event)
+    raise ArgumentError, "Unknown tip #{key.inspect}" unless FirstTimeTips::KEYS.include?(key)
+
+    field = { "seen" => "seen_at", "dismissed" => "dismissed_at" }.fetch(event.to_s)
+    with_lock do
+      entry = tips.fetch(key, {})
+      update_columns(tips: tips.merge(key => { field => Time.current.iso8601 }.merge(entry))) unless entry.key?(field)
+    end
+  end
+
   # The permissions this membership's role grants (ignoring whether it's active).
   def permission_set = custom_role? ? Array(custom_role_record&.permissions).map(&:to_sym) : Permissions::ROLES.fetch(role, [])
 
