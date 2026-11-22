@@ -72,6 +72,6 @@ of the limit and the reset date. The existing notices stay.
 - Always shown, not only near the limit (owner, 2026-11-22).
 - Unlimited plans show the count with no bar (owner, 2026-11-22).
 - No grace send: "Limit reached" from used = limit; BIL-03's "1 extra left" is gone (owner
-  decision 2026-11-22: no grace send; a separate PR makes the code change).
+  decision 2026-11-22: no grace send; built in #328).
 - Operators viewing as a member see it read-only, with the Plan link only if that member could
   open the Plan page (coordinator, follows existing behaviour).

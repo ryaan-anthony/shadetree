@@ -84,7 +84,7 @@ be sent by the technician straight away; anything else still goes to "Ready for 
 - Every plan, not a plan feature (owner, 2026-11-22).
 - Changing a line's taxable setting counts as a price edit (owner, 2026-11-22).
 - No grace send, for anyone: once used reaches the limit, sends are blocked (owner,
-  2026-11-22; changes BIL-03, code in a separate PR).
+  2026-11-22; changes BIL-03, built in #328).
 - A $0.00 total qualifies like any other; the usual $0 confirmation applies (owner, 2026-11-22).
 - Terms, valid-until, attachments and the email's subject and message may be edited; only
   lines, prices, units, tax and location are locked (owner, 2026-11-22).

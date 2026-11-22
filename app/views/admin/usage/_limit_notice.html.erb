@@ -1,6 +1,7 @@
 <%# locals: (entitlements: current_business.entitlements) -%>
-<%# BIL-03: where the business stands on sending quotes this period: approaching the limit, at
-    it (one more allowed), or over it. Owners get an upgrade link; others are told to ask. %>
+<%# BIL-03: where the business stands on sending quotes this period: approaching the limit
+    (with how many are left), or at or over it (new quotes wait; no grace send). The plan link is
+    for people who can manage billing; others are told to ask the owner. %>
 <% state = entitlements.quote_sending %>
 <% unless state == :ok %>
   <% used, limit, resets = entitlements.used(:quotes_sent), entitlements.limit(:quotes_sent), entitlements.period.resets_on %>
@@ -10,11 +11,10 @@
     <p class="flex-1">
       <% case state %>
       <% when :approaching %>
-        You've sent <%= used %> of the <%= limit %> quotes your <%= plan %> plan includes this period. It resets <%= local_date(resets) %>.
-      <% when :at_limit %>
-        You've sent all <%= limit %> quotes your <%= plan %> plan includes this period. You can send one more; after that, new quotes wait until <%= local_date(resets) %> or a bigger plan.
+        <% left = limit - used %>
+        <% if used.zero? %>Your <%= plan %> plan includes <%= pluralize(limit, "quote") %> this period. You can send <%= left %><% else %>You've sent <%= used %> of the <%= pluralize(limit, "quote") %> your <%= plan %> plan includes this period. You can send <%= left %> more<% end %> before your count resets on <%= local_date(resets) %>.
       <% else %>
-        <% if limit.zero? %>Your <%= plan %> plan doesn't include sending quotes.<% else %>You've used this period's <%= limit %> quotes and your one extra. New quotes can be sent again on <%= local_date(resets) %>.<% end %> Drafts keep saving, and quotes already sent still work for your clients.
+        <% if limit.zero? %>Your <%= plan %> plan doesn't include sending quotes.<% else %><% if used > limit %>You've sent <%= used %> quotes this period; your <%= plan %> plan includes <%= limit %>.<% else %>You've used the <%= pluralize(limit, "quote") %> your <%= plan %> plan includes this period.<% end %> New quotes can be sent again on <%= local_date(resets) %>.<% end %> Drafts keep saving, and quotes already sent still work for your clients.
       <% end %>
       <% if Current.membership&.can?(:billing) %>
         <%= link_to "See plans", admin_plan_path, class: "font-semibold underline-offset-2 hover:underline" %>

@@ -87,8 +87,8 @@ Part 3 (Pricing):
 - Every plan's button is "Start free": accounts start on Free; choosing a paid plan comes with
   BIL-04 (until then the page says to ask us). A plan with no yearly price shows its monthly
   price either way; the switch's "N months free" appears only when every plan saves the same. "Included on every plan" lists the shared workflow.
-- FAQ: what counts as a quote, what happens at the limit (BIL-03's behavior: the one extra send,
-  then the reset at the next period, the 1st on Free or the billing date on paid), people per
+- FAQ: what counts as a quote, what happens at the limit (BIL-03's behavior: no more new quotes
+  until the reset at the next period, the 1st on Free or the billing date on paid), people per
   plan, cancelling (no contract or fee; downgrades are BIL-04's), and taking your data (INS-02). The old pricing page's
   invented tiers, toggle script and comparison table are gone, as is its test.
 

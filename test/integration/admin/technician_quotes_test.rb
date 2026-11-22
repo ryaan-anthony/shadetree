@@ -300,6 +300,21 @@ class Admin::TechnicianQuotesTest < ActionDispatch::IntegrationTest
     send_email.(to: "maria@example.com")
     assert_equal "draft", as_business(@business) { quote.reload.status }, "the plan's limit holds for them too"
 
+    # BIL-03: at the limit there's no grace send for them either.
+    as_business(@business) do
+      @office_quote.sync_line_items([ { "key" => "a", "name" => "Edging", "quantity" => "1", "unit_price" => "30" } ])
+      @office_quote.save!
+      @office_quote.mark_sent!(by: @owner, channel: "link")
+    end
+    @business.update!(plan_overrides: { "features" => { "custom_roles" => true }, "limits" => { "team_members" => nil, "quotes_sent" => 1 } })
+    get new_admin_quote_send_path(quote)
+    assert_select "#quote-limit-notice", /New quotes can be sent again/
+    assert_select "form[action=?]", admin_quote_send_path(quote), 0, "but the send options give way"
+    send_email.(to: "maria@example.com")
+    assert_redirected_to new_admin_quote_send_path(quote)
+    assert_match "used this period's quotes", flash[:alert]
+    assert_equal "draft", as_business(@business) { quote.reload.status }
+
     @business.update!(plan_overrides: { "features" => { "custom_roles" => true }, "limits" => { "team_members" => nil } })
     send_email.(to: "Maria@Example.com")
     assert_redirected_to admin_root_path

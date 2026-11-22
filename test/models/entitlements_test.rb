@@ -54,6 +54,42 @@ class EntitlementsTest < ActiveSupport::TestCase
     end
   end
 
+  test "quote sending: ok, a warning from 80%, blocked at the limit with no grace send; unlimited is always ok" do
+    states = Tenancy.with_business(@business) do
+      client = Client.create!(display_name: "Maria", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ])
+      (0..5).map do |used|
+        UsageEvent.record!("quote_sent", Quote.start(client:)) unless used.zero?
+        Entitlements.for(@business).quote_sending
+      end
+    end
+    assert_equal %i[ok ok ok ok approaching blocked], states, "Free's 5: from 4 a warning, at 5 no more"
+    assert_not Entitlements.for(@business).can_send_new_quote?
+    @business.update!(plan_overrides: { "limits" => { "quotes_sent" => 0 } })
+    assert_equal :blocked, Entitlements.for(@business).quote_sending
+    @business.update!(plan_overrides: { "limits" => { "quotes_sent" => nil } })
+    assert_equal :ok, Entitlements.for(@business).quote_sending
+    assert Entitlements.for(@business).can_send_new_quote?
+  end
+
+  test "small limits still warn before the block: always when one is left" do
+    {
+      1 => %i[approaching blocked],
+      2 => %i[ok approaching blocked],
+      3 => %i[ok ok approaching blocked]
+    }.each do |limit, expected|
+      @business.update!(plan_overrides: { "limits" => { "quotes_sent" => limit } })
+      states = Tenancy.with_business(@business) do
+        UsageEvent.delete_all
+        client = Client.create!(display_name: "Maria #{limit}", contact_methods_attributes: [ { kind: "phone", value: "555010010#{limit}" } ])
+        (0..limit).map do |used|
+          UsageEvent.record!("quote_sent", Quote.start(client:)) unless used.zero?
+          Entitlements.for(@business).quote_sending
+        end
+      end
+      assert_equal expected, states, "a limit of #{limit}"
+    end
+  end
+
   test "plans sync from the seed file without overwriting edits, and validate their keys" do
     plans(:free).update!(limits: { "quotes_sent" => 9, "team_members" => 2 })
     written = Plan.sync!

@@ -43,27 +43,32 @@ limits are part of the brand.
 
 ## Decisions
 
-- A grace of one: at the limit, one more new quote can go out (with a warning) so nobody is
-  blocked mid-conversation; then new quotes wait for the reset or a bigger plan.
-  *Superseded:* owner decision 2026-11-22: no grace send. Once used reaches the limit, new
-  quotes are blocked for everyone; a separate PR makes the code change (QTE-08, BIL-06).
+- No grace send at the limit (owner, 2026-11-22): once the plan's quotes are used, new quotes
+  wait for the reset or a bigger plan. This replaces the earlier grace of one extra send.
+- Resends and revisions of quotes already sent still go out at or over the limit and never
+  count; the owner declined a guard on revisions (2026-11-22).
 
 ## Implementation notes
 
 - `Entitlements#quote_sending` answers `:ok`, `:approaching` (from `USAGE_WARNING_PERCENT`,
-  default 80), `:at_limit` (the one extra left) or `:blocked`. Only a quote's first send counts
+  default 80, and always when one is left, so limits of 1–4 still warn before the block) or
+  `:blocked` (at or over the limit; with no grace there's no separate "at the limit" state). Only a quote's first send counts
   and is checked (`Admin::QuoteSendsController#require_quote_allowance`, both email and link);
   resends and revisions of quotes already sent never count, and drafts always save.
 - One notice (`admin/usage/_limit_notice`) on the quote builder, the send page (where the send
   options give way to the notice and a "Back to the quote" button when blocked) and the dashboard: usage, the reset date, and
   "See plans" for anyone who can manage billing (Settings → Plan, which BIL-04 turns into checkout) or "Ask <owner>"
-  for others.
+  for others. Approaching, it says how many are left ("You can send 1 more"); blocked, it gives
+  the real count when a downgrade left the business over the limit.
+- The notice's plan link deliberately follows the billing permission (who can change the plan),
+  not business settings as BIL-06's meter does: the notice is an upgrade prompt, the meter a
+  view of usage.
 - Team size: at the limit the team page shows the same kind of prompt instead of the invite
   form (BIL-01 enforces it); members are never removed.
 - Nothing client-facing checks entitlements: sent quotes and invoices stay viewable, approvable
   and payable, and the request form keeps working (tested over the limit).
 - The count is claimed inside the send transaction under a row lock on the business, so two
-  first sends at the boundary can't both take the one extra.
+  first sends at the boundary can't both take the last one.
 - A downgrade turns features off ("Powered by" returns) and deletes nothing. No content is
   over-limit today; later gated features (templates, automations, roles, locations) keep their
   data read-only.

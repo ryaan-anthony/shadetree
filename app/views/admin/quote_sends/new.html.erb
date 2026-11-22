@@ -20,7 +20,7 @@
 <% end %>
 
 <% if blocked %>
-  <%# BIL-03: over the limit, the explanation (above) replaces the send options. %>
+  <%# BIL-03: at or over the limit, the explanation (above) replaces the send options. %>
   <%= link_to "Back to the quote", (own_quotes_only? ? after_send_path(@quote) : staff_quote_path(@quote)), class: button_classes(:secondary) %>
 <% elsif zero_total? && !zero_total_confirmed? %>
   <%# #289: a $0.00 quote waits for "Send it at $0.00" (above). %>
