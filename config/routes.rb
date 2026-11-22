@@ -178,6 +178,7 @@ Rails.application.routes.draw do
         post :quote
       end
       resources :notes, only: :create, controller: "service_request_notes"
+      resource :follow_up, path: "follow-up", only: %i[edit update destroy], controller: "request_follow_ups" # CLI-07
     end
 
     # Quotes (QTE-01)

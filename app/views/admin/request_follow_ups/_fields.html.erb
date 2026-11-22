@@ -1,0 +1,26 @@
+<%# locals: (f:, follow_up:, optional: false) -%>
+<%# CLI-07: who follows a request up, how and when. `optional` (logging a request) adds "Nobody yet". %>
+<% members = current_business.business_users.active.includes(:user).sort_by { _1.user.full_name.downcase } %>
+<% zone = (follow_up.service_request&.location || current_business).time_zone %>
+<div class="space-y-4">
+  <% problems = follow_up.errors.reject { _1.attribute.in?(%i[user_id scheduled_on start_time window_end_time duration_minutes instructions]) }.map(&:full_message) %>
+  <% if problems.any? %><div class="banner banner-danger" role="alert"><%= icon "alert-circle" %><p><%= problems.to_sentence %></p></div><% end %>
+  <div class="sm:w-80"><%= f.field :user_id, as: :select, label: "Who follows it up", optional:, include_blank: (optional ? "Nobody yet" : nil),
+                                   choices: members.map { [ "#{_1.user.full_name} (#{_1.role_name})", _1.user_id ] } %></div>
+  <fieldset>
+    <legend class="label">How</legend>
+    <div class="flex flex-wrap gap-x-5 gap-y-2">
+      <% RequestFollowUp::KIND_LABELS.each do |value, label| %>
+        <label class="check items-center"><%= f.radio_button :kind, value, id: "follow-up-kind-#{value}" %><span class="text-ink"><%= label %></span></label>
+      <% end %>
+    </div>
+  </fieldset>
+  <div class="w-48"><%= f.field :scheduled_on, as: :date, label: "Day" %></div>
+  <%= render "admin/shared/arrival_fields", f:, zone_name: time_zone_label(zone), label: "Time" %>
+  <div class="max-w-xs"><%= f.field :duration_hours, as: :number, label: "Estimated hours", optional: true, class: "w-40", step: "any", min: 0.1, max: 24,
+                                value: (follow_up.duration_minutes && follow_up.duration_hours), help: "Leave empty for an hour for a site visit, 15 minutes for a call." %>
+    <% if (error = follow_up.errors.full_messages_for(:duration_minutes).first) %><p class="error-text"><%= icon "alert-circle" %><%= error.sub("Duration minutes", "Duration") %></p><% end %>
+  </div>
+  <%= f.field :instructions, as: :textarea, optional: true, rows: 3, maxlength: 2_000, label: "Instructions for them",
+              help: "What to look at or ask. Only your team sees these." %>
+</div>

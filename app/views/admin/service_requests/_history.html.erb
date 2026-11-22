@@ -1,0 +1,14 @@
+<%# locals: (request_record:) -%>
+<%# CLI-07: who assigned, moved or took the follow-up off whom, and when. %>
+<% events = request_record.events.includes(:user).to_a %>
+<% if events.any? %>
+  <% people = User.where(id: events.flat_map(&:user_ids)).index_by(&:id) %>
+  <%= card title: "History", id: "history" do %>
+    <ol class="space-y-2 text-sm2">
+      <% events.each do |event| %>
+        <li><span class="text-ink"><%= request_event_text(event, people) %></span>
+          <span class="block text-muted"><%= event.actor_label("Someone") %>, <%= local_time(event.occurred_at) %></span></li>
+      <% end %>
+    </ol>
+  <% end %>
+<% end %>

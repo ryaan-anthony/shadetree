@@ -1,0 +1,22 @@
+<%# locals: (request_record:) -%>
+<%# CLI-07: who's following the request up, and when; assign, change or unassign it. %>
+<% follow_up = request_record.follow_up %>
+<%= card title: "Follow-up", id: "follow-up" do %>
+  <% if follow_up %>
+    <p class="font-medium text-ink"><%= follow_up.user.full_name %></p>
+    <p class="text-sm2 text-ink"><%= follow_up.kind_label %>, <%= follow_up.when_label %>
+      <% if follow_up.overdue? %><%= badge "Overdue", tone: :danger %><% end %></p>
+    <p class="text-sm2 text-muted">About <%= follow_up.duration_label %><%= " · assigned by #{follow_up.assigned_by.full_name}" if follow_up.assigned_by && follow_up.assigned_by != follow_up.user %></p>
+    <% if follow_up.instructions %><p class="mt-2 whitespace-pre-line text-sm2 text-subtle"><%= follow_up.instructions %></p><% end %>
+    <div class="mt-3 flex flex-wrap gap-2">
+      <%= link_to edit_admin_service_request_follow_up_path(request_record), class: button_classes(:secondary, :sm) do %><%= icon "calendar" %> Move or reassign<% end %>
+      <%= button_to admin_service_request_follow_up_path(request_record), method: :delete, class: button_classes(:ghost, :sm),
+                    form: { class: "contents", data: { turbo_confirm: "Take this off #{follow_up.user.full_name}? Nobody will be following it up.", turbo_confirm_button: "Unassign" } } do %>Unassign<% end %>
+    </div>
+  <% elsif request_record.open? %>
+    <p class="text-sm2 text-muted">Nobody's following this up yet. Give it to someone for a site visit or a call.</p>
+    <div class="mt-3"><%= link_to edit_admin_service_request_follow_up_path(request_record), class: button_classes(:secondary, :sm) do %><%= icon "user-plus" %> Assign<% end %></div>
+  <% else %>
+    <p class="text-sm2 text-muted">Requests that are <%= request_record.status_label.downcase %> aren't followed up.</p>
+  <% end %>
+<% end %>

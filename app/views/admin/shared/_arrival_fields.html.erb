@@ -1,0 +1,17 @@
+<%# locals: (f:, zone_name:, label: "Arrival") -%>
+<%# JOB-02's arrival choices (a window, a start time or anytime), shared with request follow-ups (CLI-07). %>
+<%# The record's timing picks which time fields show; the zone is the record's location's (CAT-07). %>
+<fieldset class="group">
+  <legend class="label"><%= label %></legend>
+  <div class="flex flex-wrap gap-x-5 gap-y-2">
+    <% [ [ "window", "A window" ], [ "exact", "A start time" ], [ "anytime", "Anytime that day" ] ].each do |value, text| %>
+      <%# Hyphenated ids: Tailwind reads "_" in the classes below as a space. %>
+      <label class="check items-center"><%= f.radio_button :timing, value, id: "timing-#{value}" %><span class="text-ink"><%= text %></span></label>
+    <% end %>
+  </div>
+  <div class="mt-3 hidden flex-wrap items-end gap-2 group-has-[#timing-window:checked]:flex group-has-[#timing-exact:checked]:flex">
+    <div class="w-36"><%= f.field :start_time, as: :time, required: false, label: "Start", step: 300, "aria-describedby": "arrival-zone" %></div>
+    <div class="hidden w-36 group-has-[#timing-window:checked]:block"><%= f.field :window_end_time, as: :time, required: false, label: "Latest arrival", step: 300, "aria-describedby": "arrival-zone" %></div>
+  </div>
+  <p class="mt-2 text-sm2 text-muted" id="arrival-zone">In <%= zone_name %> time.</p>
+</fieldset>
