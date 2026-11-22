@@ -204,7 +204,7 @@ Settings → Environments: **`staging`** (deployment branches: `main` only) and 
 | `STRIPE_PUBLISHABLE_KEY` | var | `pk_test_…` (enforced) | `pk_live_…` | |
 | `STRIPE_WEBHOOK_SECRET`, `STRIPE_CONNECT_WEBHOOK_SECRET` | secrets | test-mode endpoints' | live endpoints' | Signing secrets of the two webhook endpoints |
 | `STRIPE_CONNECT_CLIENT_ID` | var | test-mode client id | live client id | Stripe Connect onboarding (PAY-03) |
-| `INBOUND_EMAIL_SECRET` | secret | its own value | its own value | Signs inbound support email; same value as that environment's entry in op-works `shadetree_inbound_email_secrets` (OPS-05, [inbound-email.md](inbound-email.md)) |
+| `INBOUND_EMAIL_SECRET` | secret | its own value | its own value | Signs inbound support email; same value as that environment's entry in `shadetree_inbound_email_secrets` in `infra/terraform.tfvars` (OPS-05, [inbound-email.md](inbound-email.md)) |
 | `INBOUND_EMAIL_ENABLED` | var, optional | | | `true` turns inbound support email on once tested (OPS-05, [inbound-email.md](inbound-email.md)) |
 | `STRIPE_AUTOMATIC_TAX` | var, optional | `true` (default) | `true` | `false` turns Stripe Tax off on subscriptions (needs Stripe Tax enabled in the account) |
 | `TRIAL_DAYS` | var, optional | `14` (default) | `14` | Length of a new business's paid-plan trial; `0` turns trials off (BIL-05) |
