@@ -86,7 +86,8 @@ connected — lets the client pay.
   history partial is now shared (`admin/sends/_history`).
 - A client's first view notifies the office in-app (NTF-02 type `invoice_viewed`, email off
   by default, like quotes).
-- The payment area arrives with PAY-03/PAY-04.
+- The payment area arrives with PAY-03/PAY-04. Recording a payment by hand has no default method and ticks "Email a
+  receipt" (PAY-05's decision, owner, 2026-11-22).
 - #289: a first send of an invoice that comes to $0.00 (or less) asks first, as quotes do
   (QTE-04); the "invoice a completed job" automation leaves one as a draft. A $0.00 invoice can
   be sent by hand once confirmed (owner, 2026-11-22).

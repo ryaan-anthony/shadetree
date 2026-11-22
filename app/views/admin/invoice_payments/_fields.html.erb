@@ -4,7 +4,8 @@
 <div class="grid gap-4 sm:grid-cols-2">
   <%= f.field :amount, as: :money, currency: Money.currency(payment.currency).symbol, value: payment.amount_before_type_cast, required: true %>
   <%= f.field :received_on, as: :date, label: "Date received", max: current_business.today.iso8601, required: true %>
-  <%= f.field :payment_method, as: :select, label: "Method", choices: Payment::RECORDED_METHODS.map { [ Payment::METHODS.fetch(_1), _1 ] }, required: true %>
+  <%= f.field :payment_method, as: :select, label: "Method", choices: Payment::RECORDED_METHODS.map { [ Payment::METHODS.fetch(_1), _1 ] },
+              include_blank: ("Choose one" if payment.new_record?), required: true %>
   <%= f.field :reference, optional: true, maxlength: 100, help: "A check number or transfer reference." %>
 </div>
 <%= f.field :note, as: :textarea, optional: true, rows: 2, maxlength: 1000, help: "Only your team sees this." %>

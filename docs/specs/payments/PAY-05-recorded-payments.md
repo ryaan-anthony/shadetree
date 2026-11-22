@@ -28,6 +28,8 @@ accurate regardless of how the money arrived.
 - [x] Recording updates balance and status (Partially paid / Paid); overpayment is prevented or
       requires explicit confirmation.
 - [x] Optionally send the client a receipt for a recorded payment.
+- [x] No method is chosen for them: the person picks one, and is told to if they don't. "Email
+      a receipt" starts ticked.
 - [x] Recorded payments can be edited or deleted by Owners/Admins with a reason; changes are
       kept in the invoice history. Online payments cannot be edited here.
 - [x] Client page shows outstanding balance; invoice list and dashboard totals include recorded
@@ -45,6 +47,8 @@ accurate regardless of how the money arrived.
 - Payments can be recorded on a draft (paid on the spot): it marks the invoice sent and paid in
   one step. Not on a revision being prepared: send or discard it first.
 - Overpayment is refused: a payment can't be more than the balance.
+- Recording a payment has no default method: the person must choose one ("Choose how it was
+  paid." if they don't), and "Email a receipt" is ticked by default (owner, 2026-11-22).
 
 ## Implementation notes
 
@@ -56,7 +60,8 @@ accurate regardless of how the money arrived.
   the invoice's history keeps the before and after. Online payments (PAY-04) are listed but
   can't be changed here.
 - Part 2: the optional receipt (`PaymentMailer#receipt`, catalog type `payment_receipt`, which
-  PAY-04 reuses for online payments): a box on the record form, off by default, shown when the
+  PAY-04 reuses for online payments): a box on the record form, ticked by default since
+  2026-11-22 (kept as they left it after a mistake), shown when the
   client has an email and the account may email clients. It goes to the client's email on file
   within the hourly cap, at most five receipts a day per client, and not to a refused address;
   its delivery shows on the payment. It states the balance as of its payment, and one queued
