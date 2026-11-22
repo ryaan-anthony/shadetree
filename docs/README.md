@@ -12,6 +12,7 @@ It replaces the original planning material in `.project/`, which is kept for ref
 | Specifications | [`specs/<domain>/<ID>-<slug>.md`](specs/) | 30–60 lines (max 100) | One incrementally deliverable feature with acceptance criteria |
 | Issues | GitHub Issues | short | One issue per spec: summary, acceptance criteria, link to spec |
 | Mockups | [`mockups/`](mockups/README.md) | HTML | Clickable screens for M1–M5 specs, plus the design system reference |
+| Audits | [`audits/`](audits/) | short | Triage of an outside audit against `main`: what's fixed, what's still true, and which spec covers it |
 
 ```
 Requirement (plans/)  ──▶  Spec (specs/)  ──▶  Issue (GitHub)  ──▶  1..n Pull requests
