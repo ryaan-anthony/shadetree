@@ -242,16 +242,44 @@ Tenancy.with_business(business) do
       request.update!(status: "in_progress")
     end
   end
-  # JOB-06: Marcus (tech@example.com) has a site visit for a request at 2 pm today, between his
-  # visits on My day, with a photo from the client.
+  # JOB-06, made directly so nobody is notified or emailed. Marcus (tech@example.com) has a
+  # site visit for a request at 9:30 on the Monday of the demo week, between his 8:00 and 10:30
+  # visits on My day, with a photo the client sent. A second, on the Friday before, is done:
+  # his site photo and note are on it, ready to quote. Priya called about it first and passed it
+  # back to Dana, so its history has a pass back.
   tech = User.find_by(email: "tech@example.com")
+  priya = User.find_by(email: "admin@example.com")
+  demo_photo = lambda do |name, rgb| # a plain gradient stands in for a photo
+    { io: StringIO.new((Vips::Image.xyz(800, 600)[1] / 6 + rgb).cast(:uchar).jpegsave_buffer), filename: "#{name}.jpg", content_type: "image/jpeg" }
+  end
+  monday = Visit.where(job: Job.where(title: "Weekly mowing")).minimum(:scheduled_on) || business.today.beginning_of_week
   if tech && !ServiceRequest.exists?(description: "Gutters overflow at the back corner. Wants guards fitted.")
     client = Client.order(:id).offset(2).first || Client.order(:id).first
     gutters = ServiceRequest.create!(client:, property: client.properties.first, source: "phone", created_by: owner, status: "in_progress",
                                      description: "Gutters overflow at the back corner. Wants guards fitted.")
-    follow_up = gutters.create_follow_up!(business:, user: tech, assigned_by: owner, kind: "visit", scheduled_on: business.today, timing: "exact",
-                                          start_time: "14:00", instructions: "Measure the run and check the fascia boards.")
+    gutters.photos.attach(demo_photo.("back-corner", [ 150, 150, 160 ]))
+    follow_up = gutters.create_follow_up!(business:, user: tech, assigned_by: owner, kind: "visit", scheduled_on: monday, timing: "exact",
+                                          start_time: "09:30", duration_minutes: 45, instructions: "Measure the run and check the fascia boards.")
     ServiceRequestEvent.record!(gutters, :assigned, by: owner, to: follow_up.state)
+  end
+  if tech && priya && !ServiceRequest.exists?(description: "Patio pavers sinking by the back steps.")
+    client = Client.order(:id).offset(3).first || Client.order(:id).first
+    patio = ServiceRequest.create!(client:, property: client.properties.first, source: "phone", created_by: owner, status: "in_progress",
+                                   description: "Patio pavers sinking by the back steps.")
+    friday = monday - 3
+    follow_up = patio.create_follow_up!(business:, user: tech, assigned_by: owner, kind: "visit", scheduled_on: friday, timing: "exact", start_time: "14:00",
+                                        instructions: "See how much of the patio needs relaying.", done_by: tech,
+                                        done_at: business.time_zone.local(friday.year, friday.month, friday.day, 14, 50))
+    passed_back = "Wants it fixed before spring. Someone should go and look at it."
+    patio.notes.create!(business:, user: priya, body: passed_back)
+    patio.notes.create!(business:, user: tech, body: "About 12 sq ft has sunk; the base washed out under the downspout. Relay it and add a drain.")
+    patio.site_photos.attach(demo_photo.("patio", [ 120, 110, 90 ]).merge(metadata: { "uploaded_by" => tech.id }))
+    call = { "user_id" => priya.id, "kind" => "call", "duration_minutes" => 15 }
+    ServiceRequestEvent.record!(patio, :assigned, by: owner, to: follow_up.snapshot.merge(call))
+    ServiceRequestEvent.record!(patio, :done, by: priya, from: follow_up.snapshot.merge(call))
+    ServiceRequestEvent.record!(patio, :passed_back, by: priya, from_user_id: priya.id, to_user_id: owner.id)
+    ServiceRequestEvent.record!(patio, :reassigned, by: owner, from_user_id: owner.id, to_user_id: tech.id)
+    ServiceRequestEvent.record!(patio, :done, by: tech, from: follow_up.state)
   end
   # NTF-03: one customized client email (Settings → Messages; editing needs a plan with templates).
   MessageTemplate.create_with(subject: "See you tomorrow, {{client_first_name}}",

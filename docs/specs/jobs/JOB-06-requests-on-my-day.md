@@ -71,7 +71,9 @@ creates the quote or hands it back or on.
 
 - Follow-ups and visits share the photo handling (SitePhotos) and the warnings (a done
   follow-up doesn't clash). Office staff see site photos and Done on the request and the inbox.
-- Dev seeds: Marcus (tech@example.com) has a site visit for a request at 2 pm today.
+- Dev seeds: Marcus (tech@example.com) has a site visit for a request at 9:30 on the demo
+  week's Monday, between his visits there, with a client photo; one on the Friday before is
+  done, with his site photo and note, and its history has a pass back.
 
 ## Decisions
 
