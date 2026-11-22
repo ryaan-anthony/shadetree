@@ -80,13 +80,62 @@ class Admin::RequestInboxTest < ActionDispatch::IntegrationTest
     assert_select "p", /They asked about.*9 Oak Ave, Austin.*isn't one of/m
     get admin_service_request_path(@service_request)
     assert_select "a", /#{quote.number}/
-    # Every quote made from it is listed.
+    # While that draft is unsent, Create quote opens it instead of making a second (owner, 2026-11-22).
     post quote_admin_service_request_path(@service_request)
+    assert_redirected_to edit_admin_quote_path(quote)
+    assert_equal "This request already has a draft quote, #{quote.number}. Here it is: send it before starting another.", flash[:notice]
+    assert_equal 1, as_business(@business) { @service_request.quotes.count }
+    # Once it's been sent, another may follow, and every quote made from it is listed.
+    as_business(@business) { quote.update_columns(status: "sent", sent_at: Time.current) }
+    post quote_admin_service_request_path(@service_request)
+    second = as_business(@business) { Quote.order(:id).last }
+    assert_not_equal quote, second
+    assert_redirected_to edit_admin_quote_path(second)
     assert_equal 2, as_business(@business) { @service_request.quotes.count }
+    get admin_service_request_path(@service_request)
+    [ quote, second ].each { assert_select "a", /#{_1.number}/ }
 
     # With every quote deleted, it's back in progress.
     as_business(@business) { @service_request.quotes.each(&:destroy!) }
     assert_equal "in_progress", as_business(@business) { @service_request.reload.status }
+  end
+
+  test "an archived or revising draft doesn't hold the request; an archived request can still be quoted from the inbox" do
+    post quote_admin_service_request_path(@service_request)
+    first = as_business(@business) { Quote.order(:id).last }
+    as_business(@business) { first.update_columns(archived_at: Time.current) }
+    post quote_admin_service_request_path(@service_request)
+    second = as_business(@business) { Quote.order(:id).last }
+    assert_redirected_to edit_admin_quote_path(second)
+    assert_not_equal first, second, "an archived draft doesn't count"
+
+    as_business(@business) { second.update_columns(status: "draft", revision: 2, sent_at: 1.day.ago) } # a sent quote being revised
+    post quote_admin_service_request_path(@service_request)
+    assert_equal 3, as_business(@business) { @service_request.quotes.count }, "it was sent: another may follow"
+
+    as_business(@business) { @service_request.quotes.update_all(status: "sent"); @service_request.update_columns(status: "archived") }
+    post quote_admin_service_request_path(@service_request)
+    assert_equal 4, as_business(@business) { @service_request.quotes.count }, "as before, the inbox can quote an archived request"
+  end
+
+  # Run one after the other here; the request's row lock in create_quote! is what makes two at
+  # once wait and see the first's draft.
+  test "a second Create quote, checked under the lock, finds the first's draft" do
+    first = as_business(@business) { @service_request.create_quote!(by: users(:one), once: true, refuse_archived: false) }
+    error = assert_raises(ServiceRequest::AlreadyQuoted) { as_business(@business) { @service_request.create_quote!(by: users(:one), once: true, refuse_archived: false) } }
+    assert_equal first, error.quote
+  end
+
+  test "a technician's open draft is named as theirs, and holds the request even with its client changed" do
+    tech = member_with_role(:technician)
+    draft = as_business(@business) { @service_request.create_quote!(by: tech) }
+    post quote_admin_service_request_path(@service_request)
+    assert_redirected_to edit_admin_quote_path(draft)
+    assert_match "already has a draft quote by #{tech.full_name}, #{draft.number}", flash[:notice]
+    other = as_business(@business) { Client.create!(display_name: "Ana Diaz", contact_methods_attributes: [ { kind: "phone", value: "5125550177" } ]) }
+    as_business(@business) { draft.update_columns(client_id: other.id) }
+    post quote_admin_service_request_path(@service_request)
+    assert_redirected_to edit_admin_quote_path(draft)
   end
 
   test "a sent quote's page links back to its request (QTE-06)" do

@@ -81,8 +81,13 @@ class Admin::ServiceRequestsController < Admin::BaseController
       return redirect_to(admin_service_request_path(@request), alert: "#{@request.client.display_name} is archived. Restore them to quote this request.")
     end
 
-    quote = @request.create_quote!(by: current_user)
+    # CLI-04 (owner, 2026-11-22): one unsent draft at a time; another once it's been sent.
+    quote = @request.create_quote!(by: current_user, once: true, refuse_archived: false)
     redirect_to edit_admin_quote_path(quote), notice: "Draft #{quote.number} from the request. Nothing is sent until you send it."
+  rescue ServiceRequest::AlreadyQuoted => error
+    drafter = error.quote.created_by
+    by = " by #{drafter.full_name}" if drafter && drafter != current_user
+    redirect_to edit_admin_quote_path(error.quote), notice: "This request already has a draft quote#{by}, #{error.quote.number}. Here it is: send it before starting another."
   end
 
   private

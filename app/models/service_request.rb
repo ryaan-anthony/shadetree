@@ -90,23 +90,29 @@ class ServiceRequest < ApplicationRecord
     end
   end
 
-  # CLI-04: a draft quote from this request: its client and property (a property for the
-  # typed address if the request has none, now that a staff member has checked it), its
-  # services as lines with today's catalog prices (the location's, CAT-08), and its photos.
-  # `once: true` (QTE-07, from a follow-up) re-checks under the lock: a request archived
-  # meanwhile is refused, and one just quoted (two clicks at once) raises AlreadyQuoted with
-  # that quote. From the inbox a request may have several quotes (CLI-04).
   class AlreadyQuoted < StandardError
     attr_reader :quote
 
     def initialize(quote) = super("This request was just quoted (#{quote.number}).").tap { @quote = quote }
   end
 
-  def create_quote!(by:, once: false)
+  # CLI-04: a quote from it that hasn't been sent yet (not a revision of a sent one), if any.
+  def open_draft_quote = quotes.unarchived.where(status: "draft", revision: 1).reorder(:id).last
+
+  # CLI-04: a draft quote from this request: its client and property (a property for the
+  # typed address if the request has none, now that a staff member has checked it), its
+  # services as lines with today's catalog prices (the location's, CAT-08), and its photos.
+  # `once: true` re-checks under the lock: while a quote from it is still an unsent draft, another
+  # is refused with AlreadyQuoted carrying that draft (CLI-04, owner 2026-11-22: once it's been
+  # sent, more quotes may follow). `refuse_archived` (QTE-07, from a follow-up, the default with
+  # once) also refuses a request archived meanwhile, and one already quoted.
+  def create_quote!(by:, once: false, refuse_archived: once)
     transaction do
       lock!
-      raise ArgumentError, "This request was archived meanwhile." if once && status == "archived"
-      raise AlreadyQuoted, quotes.reorder(:id).last if once && status == "quoted" && quotes.exists?
+      raise ArgumentError, "This request was archived meanwhile." if refuse_archived && status == "archived"
+      if once && (existing = open_draft_quote || (quotes.reorder(:id).last if refuse_archived && status == "quoted"))
+        raise AlreadyQuoted, existing
+      end
 
       property = self.property || property_matching_address
       quote = Quote.start(client:, property:, created_by: by, location:)
