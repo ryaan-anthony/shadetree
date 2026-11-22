@@ -57,7 +57,7 @@ class Admin::ScheduleTest < ActionDispatch::IntegrationTest
     assert_select "#cal-visit-#{@timed.uid}.cal-visit", text: /9 am Maria Lopez, Monday, November 23.*Spring cleanup, Asheville.*Technician/m
     assert_select "#schedule-grid [role=group][aria-label='Monday, November 23']"
     assert_select "#cal-visit-#{@anytime.uid}.cal-chip", text: /Maria Lopez.*anytime Wednesday, November 25.*Spring cleanup, Asheville · John/m
-    assert_select "#cal-visit-#{@nobody.uid}", text: /1–3 pm.*Nobody yet/m
+    assert_select "#cal-visit-#{@nobody.uid}", text: /1–3 pm.*Not assigned/m
     assert_select "#cal-visit-#{@cancelled.uid}", 0
     assert_select "#schedule-agenda", text: /Monday, Nov 23.*9 am.*Maria Lopez/m
     assert_select "a[aria-label='Previous week'][href=?]", admin_schedule_path(view: "week", date: (@monday - 7).iso8601)

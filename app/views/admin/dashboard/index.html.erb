@@ -18,7 +18,7 @@
   <%= render "admin/usage/limit_notice", entitlements: dashboard.entitlements %>
   <%# How the month is going. %>
   <section class="mb-4" aria-labelledby="month-summary-h">
-    <h2 id="month-summary-h" class="sr-only">So far this period</h2>
+    <h2 id="month-summary-h" class="sr-only">How this <%= dashboard.entitlements.period.billing_cycle? ? "billing period" : "month" %> is going</h2>
     <dl class="grid grid-cols-1 gap-3 sm:grid-cols-3" id="month-summary">
       <div class="card card-body py-3"><dt class="text-sm2 text-muted">Quotes sent<%= " this #{dashboard.entitlements.period.billing_cycle? ? "billing period" : "month"}" unless dashboard.quote_limit %></dt><dd class="mt-1 text-lg font-semibold text-ink" id="quotes-sent-usage"><%= dashboard.quotes_sent_this_period %></dd>
         <% if (allowance = quote_allowance(dashboard.entitlements, used: dashboard.quotes_sent_this_period, count: false)) %><%# #289: what the limit is, in words %>

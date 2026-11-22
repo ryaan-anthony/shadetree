@@ -33,7 +33,7 @@
           <% end %></li>
         <% end %>
         <li class="p-0"><%= link_to admin_schedule_path(schedule_link_params(s, member: "unassigned")), class: "flex flex-1 items-center gap-2 px-4 py-2.5 #{"font-semibold" if s.member == "unassigned"}", "aria-current": ("true" if s.member == "unassigned") do %>
-          <span class="cal-dot cal-none" aria-hidden="true"></span><span class="flex-1 text-ink">Nobody yet</span><span class="tabular text-sm2 text-muted"><%= pluralize(s.unassigned_count, "visit") %></span>
+          <span class="cal-dot cal-none" aria-hidden="true"></span><span class="flex-1 text-ink">Not assigned</span><span class="tabular text-sm2 text-muted"><%= pluralize(s.unassigned_count, "visit") %></span>
         <% end %></li>
       </ul>
       <%# QA #274: a toggle, so pressed buttons (a GET form: it works without JavaScript too). %>
@@ -60,7 +60,7 @@
     <% jobs = s.unscheduled_jobs.to_a %>
     <%= card title: "Needs scheduling", flush: true, id: "needs-scheduling" do %>
       <% if jobs.empty? %>
-        <p class="px-4 py-3 text-sm2 text-muted">Every open job has a visit booked.</p>
+        <p class="px-4 py-3 text-sm2 text-muted">No jobs are waiting for a visit.</p>
       <% else %>
         <ul class="list">
           <% jobs.each do |job| %>
@@ -144,7 +144,7 @@
           <% today = date == s.business.today && !s.by_person? %>
           <div class="min-w-0 border-l border-line-2 px-2 py-2 text-sm2 <%= today ? "font-semibold text-ink" : "text-muted" %>" <%= 'aria-current="date"'.html_safe if today %>>
             <% if column.member == :none %>
-              <%= link_to "Nobody yet", admin_schedule_path(schedule_link_params(s, member: "unassigned")), class: "block truncate font-medium text-ink hover:underline" %>
+              <%= link_to "Not assigned", admin_schedule_path(schedule_link_params(s, member: "unassigned")), class: "block truncate font-medium text-ink hover:underline" %>
             <% elsif column.member %>
               <%= link_to admin_schedule_path(schedule_link_params(s, member: column.member.id)), class: "flex items-center gap-1.5 font-medium text-ink hover:underline" do %>
                 <span class="cal-dot cal-<%= s.color_for(column.member) %>" aria-hidden="true"></span><span class="truncate"><%= column.member.full_name %></span>

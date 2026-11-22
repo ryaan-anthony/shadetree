@@ -31,7 +31,7 @@ class Admin::CatalogPresetsTest < ActionDispatch::IntegrationTest
     assert_select "select#industry option[selected][value=cleaning]"
     assert_select "input[type=checkbox][name='names[]'][value='Standard clean'][checked]"
     assert_select "input[type=checkbox][value='Deep clean']", false
-    assert_select "li", /Deep clean.*In your catalog/m
+    assert_select "li", /Deep clean.*In your services/m
 
     post admin_catalog_presets_path, params: { industry: "cleaning", names: [ "Standard clean", "Inside fridge" ] }
     assert_redirected_to admin_catalog_items_path

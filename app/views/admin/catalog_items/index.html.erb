@@ -1,19 +1,19 @@
-<%= page_header "Catalog", lede: "What you sell, with default prices. Pick from it when building quotes and invoices." do %>
-  <%= link_to "Starter services", admin_catalog_presets_path, class: button_classes(:secondary) %>
-  <%= link_to new_admin_catalog_item_path, class: button_classes do %><%= icon "plus" %> Add item<% end %>
+<%= page_header "Services & prices", lede: "What you sell, with default prices. Pick from these when building quotes and invoices." do %>
+  <%= link_to "Add starter services", admin_catalog_presets_path, class: button_classes(:secondary), title: "Common services for your trade, ready to price" %>
+  <%= link_to new_admin_catalog_item_path, class: button_classes do %><%= icon "plus" %> Add service<% end %>
 <% end %>
 
 <div class="mb-4 flex flex-wrap items-center gap-2">
   <%= form_with url: admin_catalog_items_path, method: :get, class: "flex min-w-0 flex-1 items-center gap-2", data: { turbo_frame: "_top" } do |f| %>
     <% if @showing_archived %><%= hidden_field_tag :archived, "1" %><% end %>
-    <label class="sr-only" for="q">Search the catalog</label>
+    <label class="sr-only" for="q">Search your services</label>
     <div class="relative min-w-0 flex-1 sm:max-w-sm">
       <%= icon "search", class: "pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-faint" %>
       <%= search_field_tag :q, @query, class: "input pl-9", placeholder: "Search by name or description" %>
     </div>
     <%= f.submit "Search", class: button_classes(:secondary), name: nil %>
   <% end %>
-  <nav class="tabs border-0" aria-label="Catalog view">
+  <nav class="tabs border-0" aria-label="Services view">
     <%= link_to "Active", admin_catalog_items_path(q: @query.presence), class: "tab", "aria-current": ("page" unless @showing_archived) %>
     <%= link_to "Archived (#{@archived_count})", admin_catalog_items_path(archived: 1, q: @query.presence), class: "tab", "aria-current": ("page" if @showing_archived) %>
   </nav>
@@ -26,11 +26,11 @@
         <%= link_to "Clear search", admin_catalog_items_path(archived: (1 if @showing_archived)), class: button_classes(:secondary) %>
       <% end %>
     <% elsif @showing_archived %>
-      <%= empty_state title: "No archived items", text: "Archived items are hidden from pickers but stay on old quotes and invoices.", icon: "archive" %>
+      <%= empty_state title: "No archived services", text: "Archived services are hidden from pickers but stay on old quotes and invoices.", icon: "archive" %>
     <% else %>
-      <%= empty_state title: "Your catalog is empty", text: "Start with common services for your kind of business and fill in your prices, or add your own one at a time.", icon: "package" do %>
+      <%= empty_state title: "No services yet", text: "Start with common services for your kind of business and fill in your prices, or add your own one at a time.", icon: "package" do %>
         <%= link_to admin_catalog_presets_path, class: button_classes do %><%= icon "zap" %> Add starter services<% end %>
-        <%= link_to new_admin_catalog_item_path, class: button_classes(:secondary) do %><%= icon "plus" %> Add an item<% end %>
+        <%= link_to new_admin_catalog_item_path, class: button_classes(:secondary) do %><%= icon "plus" %> Add a service<% end %>
       <% end %>
     <% end %>
   </div>

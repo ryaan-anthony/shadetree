@@ -61,8 +61,8 @@ class Job < ApplicationRecord
   scope :unfinished, -> { where(status: OPEN_STATUSES) }
 
   # The list's tabs. "Needs scheduling" is the approved-but-unscheduled shortcut.
-  FILTERS = { "open" => "Open", "unscheduled" => "Needs scheduling", "scheduled" => "Scheduled", "in_progress" => "In progress",
-              "completed" => "Completed", "to_invoice" => "To invoice", "cancelled" => "Cancelled", "all" => "All" }.freeze
+  FILTERS = { "open" => "Not finished", "unscheduled" => "Needs scheduling", "scheduled" => "Scheduled", "in_progress" => "In progress",
+              "completed" => "Completed", "to_invoice" => "Ready to invoice", "cancelled" => "Cancelled", "all" => "All" }.freeze
 
   # INS-01: finished, and not billed yet: no invoice that went out (a draft or a void one
   # doesn't count) for the job, or for the quote it came from (a deposit invoice).

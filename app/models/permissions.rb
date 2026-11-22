@@ -7,7 +7,7 @@ module Permissions
     billing: "Billing, plan, delete the business, transfer ownership",
     manage_owners: "Grant or remove the Owner role",
     manage_team: "Invite people, change roles (except Owner), deactivate members",
-    business_settings: "Business profile, branding, hours, catalog, taxes",
+    business_settings: "Business profile, branding, hours, services and prices, taxes",
     office: "Clients, requests, quotes, jobs, invoices and payments, for the whole business",
     schedule: "Schedule visits and assign them to people",
     field_work: "Own assigned visits: client contact, property, notes, photos, complete",
@@ -31,12 +31,12 @@ module Permissions
       office: "See and manage all clients, requests, quotes, jobs, invoices and payments",
       schedule: "Schedule visits and assign them to people",
       field_work: "Work their own assigned visits: see the client and property, add notes and photos, complete them",
-      quote_requests: "Quote the requests given to them: draft the quote, with catalog prices, and edit it until it's sent " \
+      quote_requests: "Quote the requests given to them: draft the quote, with your services and prices, and edit it until it's sent " \
                       "(with the visits permission above, so the requests reach them)",
       send_own_quotes: "Send the quotes they drafted (without this, they mark them ready for the office to check and send)"
     },
     "Business" => {
-      business_settings: "Change the business profile, branding, hours, catalog and taxes",
+      business_settings: "Change the business profile, branding, hours, services and prices, and taxes",
       manage_team: "Invite people and change their roles (never Owners)",
       export_data: "Export all the business's data, invoices and payments included"
     }

@@ -76,7 +76,7 @@
         <% if requests.any? %>
           <% requests.each do |request| %>
             <li><%= icon "inbox", class: "size-4 text-faint" %>
-              <%= link_to "Request #{request.reference}#{" · #{request.service_names.first}" if request.service_names.any?}", admin_service_request_path(request),
+              <%= link_to request.title, admin_service_request_path(request),
                           class: "min-w-0 flex-1 truncate font-medium text-ink hover:underline" %>
               <%= badge request.status_label %><span class="text-sm2 text-subtle"><%= local_time_ago(request.created_at) %></span></li>
           <% end %>
@@ -129,7 +129,11 @@
         <% @client.contact_methods.each do |method| %>
           <li class="flex items-center gap-2.5">
             <%= icon(method.email? ? "mail" : "phone", class: "size-4 shrink-0 text-faint") %>
-            <%= link_to method.value, method.href, class: "min-w-0 truncate font-medium text-ink hover:underline" %>
+            <% if method.email? %>
+              <%= link_to method.value, method.href, class: "min-w-0 truncate font-medium text-ink hover:underline" %>
+            <% else %>
+              <%= phone_link method.value, class: "min-w-0 truncate font-medium text-ink hover:underline" %>
+            <% end %>
             <% if method.label %><span class="text-sm2 text-muted"><%= method.label %></span><% end %>
           </li>
           <% if method.undeliverable? %>

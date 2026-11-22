@@ -55,3 +55,7 @@ invoice. Jobs can also be created directly for work agreed by phone.
 - ~~Should editing job line items after creation be allowed?~~ *Decided: yes. The approved quote
   stays unchanged; the invoice uses the job's items.*
 - ~~Job numbering: sequential per business like quotes?~~ *Decided: yes, J-0001, J-0002…*
+
+## Implementation notes
+
+- #289: the job filters read "Not finished" and "Ready to invoice".

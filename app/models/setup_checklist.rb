@@ -102,7 +102,7 @@ class SetupChecklist
   end
 
   def services_text
-    return "Your services are in the catalog; give at least one a price." if unpriced_services?
+    return "Your services are in Services & prices; give at least one a price." if unpriced_services?
     return "Start from the common services for your industry, then set your prices." unless preset
 
     "#{preset.item_list.first(3).map(&:name).join(", ")} and more, ready to price."

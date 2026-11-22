@@ -21,12 +21,12 @@
 
       <%= card title: "Quotes" do %>
         <div class="grid gap-4 sm:grid-cols-2">
-          <%= f.field :quote_expiry_days, as: :number, label: "Valid for (days)", min: 1, max: 365,
-                      help: "After this, the client can't approve without asking you." %>
+          <%= f.field :quote_expiry_days, as: :number, label: "Days a quote stays valid", min: 1, max: 365,
+                      help: "After that many days, the client can't approve it without asking you." %>
           <%= f.field :quote_number_prefix, label: "Quote number prefix", maxlength: 8, help: "Quotes are numbered #{@business.quote_number_prefix.presence || "Q"}-0001, -0002…" %>
         </div>
         <%= f.field :quote_terms, as: :textarea, label: "Quote terms", optional: true, rows: 5,
-                    placeholder: "e.g. Prices include materials and disposal. 50% deposit to schedule.",
+                    placeholder: "e.g. Prices include materials. 50% deposit to schedule.",
                     help: "Shown at the bottom of every new quote. You can edit it on each quote." %>
         <%= f.field :quote_approved_message, as: :textarea, label: "After a client approves", optional: true, rows: 2, maxlength: 500,
                     placeholder: @business.quote_next_steps,
@@ -59,8 +59,8 @@
 
       <%= card title: "Invoices" do %>
         <div class="grid gap-4 sm:grid-cols-2">
-          <%= f.field :invoice_due_days, as: :number, label: "Payment due (days after sending)", min: 0, max: 365,
-                      help: "0 means due on receipt." %>
+          <%= f.field :invoice_due_days, as: :number, label: "Days to pay, after it's issued", min: 0, max: 365,
+                      help: "An invoice is issued when you send it. 0 means due on receipt." %>
           <%= f.field :invoice_number_prefix, label: "Invoice number prefix", maxlength: 8, help: "Invoices are numbered #{@business.invoice_number_prefix.presence || "INV"}-0001…" %>
         </div>
         <%= f.field :invoice_terms, as: :textarea, label: "Invoice terms", optional: true, rows: 5,
@@ -70,7 +70,7 @@
       <%= render "request_form_tab", f: %>
     <% else %>
       <%= card title: "Business profile", subtitle: "Shown on quotes, invoices and emails." do %>
-        <%= f.field :name, label: "Business name", placeholder: "Oakline Lawn & Landscape" %>
+        <%= f.field :name, label: "Business name", placeholder: "e.g. Rivera Home Services" %>
         <%= f.field :industry, as: :select, optional: true, include_blank: "Choose an industry", choices: Industry.options %>
         <%= f.field :description, as: :textarea, optional: true, rows: 3,
                     help: "A sentence or two about what you do. Shown on your public pages." %>

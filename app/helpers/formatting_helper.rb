@@ -41,10 +41,11 @@ module FormattingHelper
     tag.time(l(date.to_date, format:), datetime: date.to_date.iso8601)
   end
 
-  # phone_number("2155551212")      => "(215) 555-1212"
-  # phone_number("+1 215-555-1212") => "(215) 555-1212"
-  # North American numbers (10 digits, or 11 with a leading 1) get the usual format; anything
-  # else (international numbers, extensions, vanity numbers) is shown as typed.
+  # phone_number("2155551212")      => "(215) 555-1212" (a business in the US or Canada)
+  # phone_number("+1 215-555-1212") => "(215) 555-1212" (anywhere)
+  # phone_number("0412 345 678")    => "0412 345 678"
+  # North American numbers get the usual format; anything else (international numbers,
+  # extensions, vanity numbers, fictional 555-01xx ones) is shown as typed.
   def phone_number(value)
     text = value.to_s.strip
     number = phone_number_part(text)
@@ -103,6 +104,29 @@ module FormattingHelper
     ActiveSupport::TimeZone::MAPPING.key(zone.tzinfo.identifier) || zone.name.split("/").last.tr("_", " ")
   end
 
+  # #289: a file's name as staff read it in a list: long names (a stock photo's
+  # "close-up-upside-down-dead-cricket-…-284754777.webp") are shortened in the middle, keeping
+  # the start and the end. The file itself keeps its name; title and aria-label give it in full.
+  # Counted in characters as people see them (grapheme clusters), and a long "extension" (a name
+  # with a dot in it, like "Estimate.Nov 20 final") isn't treated as one.
+  #   attachment_name(file)  # => "close-up-upside-down-…284754777.webp"
+  def attachment_name(file, max: 36)
+    chars = file.filename.to_s.grapheme_clusters
+    return chars.join if chars.length <= max
+
+    ext = File.extname(chars.join)
+    ext = "" if ext.length > 8
+    tail = chars[(chars.length - ext.grapheme_clusters.length - 9)..].join
+    head = [ max - tail.grapheme_clusters.length - 1, 1 ].max
+    "#{chars.first(head).join}…#{tail}"
+  end
+
+  # A link to a staff-side file, its long name shortened (#289).
+  def attachment_link(file, **options)
+    name = file.filename.to_s
+    link_to attachment_name(file), rails_blob_path(file, disposition: "inline"), title: name, "aria-label": name, target: "_blank", rel: "noopener", **options
+  end
+
   private
 
   # The part of a phone number that's dialled: everything before an extension marker.
@@ -110,12 +134,22 @@ module FormattingHelper
     text.split(/[#,;]|(?:\b|(?<=\d))(?:ext(?:ension)?\.?|x)\s*\d/i, 2).first.to_s.strip
   end
 
+  # The ten digits of a North American number, or nil: +1 numbers, or 10 (or 1 + 10) digits for a
+  # business in the US or Canada, whose area code and exchange start with 2-9 (#289: an
+  # Australian 0412 345 678 is left as typed).
   def north_american_digits(text)
     digits = text.gsub(/\D/, "")
-    if text.start_with?("+") then digits[1..] if digits.length == 11 && digits.start_with?("1")
+    ten = if text.start_with?("+") then (digits[1..] if digits.length == 11 && digits.start_with?("1"))
+    elsif !north_american_business? then nil
     elsif digits.length == 11 && digits.start_with?("1") then digits[1..]
     elsif digits.length == 10 then digits
     end
+    ten if ten&.match?(/\A[2-9]\d\d[2-9]/)
+  end
+
+  def north_american_business?
+    business = (current_business if respond_to?(:current_business, true)) || (@business if defined?(@business))
+    business.respond_to?(:country) && business.country.to_s.upcase.in?(%w[US CA])
   end
 
   def today_for_dates = (respond_to?(:current_business, true) && current_business&.today) || Time.zone.today

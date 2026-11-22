@@ -13,7 +13,7 @@ class ScheduleView
 
   Placed = Data.define(:visit, :top, :height, :column, :columns)
   # One column of the grid: a day (week view), or one person's day (day view for everyone).
-  # `member` is a user, :none for "Nobody yet", or nil for everyone.
+  # `member` is a user, :none for "Not assigned", or nil for everyone.
   Column = Data.define(:date, :member) do
     def member_key = member == :none ? "none" : member&.id&.to_s
   end

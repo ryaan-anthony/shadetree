@@ -48,3 +48,8 @@ empty and the first quote can be built immediately.
   washing was added as an industry) and "Something else". The first drafts are in
   `db/seeds/industry_presets.yml`; the operator owns the content from here.
 - ~~Include suggested prices?~~ Resolved: no. Owners fill in their own prices.
+
+## Implementation notes
+
+- #289: placeholders across the app use the industry's first starter service ("e.g. General pest
+  treatment"), or "Service call" without an industry, so no business sees another trade's copy.

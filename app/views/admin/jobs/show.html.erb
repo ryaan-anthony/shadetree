@@ -112,13 +112,13 @@
         <ul class="grid grid-cols-2 gap-3 sm:grid-cols-3" id="job-files">
           <% files.each do |file| %>
             <li class="min-w-0">
-              <%= link_to rails_blob_path(file, disposition: "inline"), target: "_blank", rel: "noopener", class: "block text-sm2 text-ink hover:underline" do %>
+              <%= link_to rails_blob_path(file, disposition: "inline"), target: "_blank", rel: "noopener", class: "block text-sm2 text-ink hover:underline", "aria-label": file.filename.to_s do %>
                 <% if file.image? %>
                   <%= image_tag rails_representation_path(file.variant(:web)), alt: file.filename.to_s, loading: "lazy", class: "aspect-[4/3] w-full rounded-control bg-sunken object-cover" %>
                 <% else %>
                   <span class="flex aspect-[4/3] items-center justify-center rounded-control bg-sunken"><%= icon "file-text", class: "size-6 text-faint" %></span>
                 <% end %>
-                <span class="mt-1 block truncate"><%= file.filename %></span>
+                <span class="mt-1 block truncate" title="<%= file.filename %>"><%= attachment_name(file) %></span>
               <% end %>
             </li>
           <% end %>
@@ -140,7 +140,7 @@
         <p class="mt-1 text-sm2 text-muted">No property chosen.</p>
       <% end %>
       <ul class="mt-3 space-y-1 text-sm2">
-        <% if (phone = client.primary_phone) %><li><%= link_to "tel:#{phone.value.gsub(/[^\d+]/, "")}", class: "text-ink hover:underline" do %><%= icon "phone", class: "mr-1 inline size-4 text-faint" %><%= phone.value %><% end %></li><% end %>
+        <% if (phone = client.primary_phone) %><li><%= phone_link(phone.value, class: "text-ink hover:underline") { icon("phone", class: "mr-1 inline size-4 text-faint") + phone_number(phone.value) } %></li><% end %>
         <% if (email = client.primary_email) %><li><%= mail_to email.value, class: "break-all text-ink hover:underline" do %><%= icon "mail", class: "mr-1 inline size-4 text-faint" %><%= email.value %><% end %></li><% end %>
       </ul>
     <% end %>

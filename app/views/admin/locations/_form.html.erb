@@ -8,7 +8,7 @@
     <div class="banner banner-danger" role="alert"><%= icon "alert-circle" %><p><%= @location.errors[:base].to_sentence %></p></div>
   <% end %>
   <%= card title: "Location" do %>
-    <%= f.field :name, autofocus: @location.new_record?, maxlength: 60, placeholder: "North yard", help: "Clients see it beside your business name." %>
+    <%= f.field :name, autofocus: @location.new_record?, maxlength: 60, placeholder: "e.g. North side", help: "Clients see it beside your business name." %>
     <% if @location.primary? %>
       <p class="mt-3 text-sm2 text-muted">The main location's address, contact details and time zone are your business's, on the <%= link_to "Business", edit_admin_business_path, class: "font-medium text-ink underline-offset-2 hover:underline" %> tab, and its hours are on <%= link_to "Hours", admin_hours_path, class: "font-medium text-ink underline-offset-2 hover:underline" %>.</p>
     <% end %>

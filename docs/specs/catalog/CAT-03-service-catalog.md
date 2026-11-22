@@ -47,3 +47,8 @@ per-location pricing, bundles or pricing rules.
   backlog; nothing in M1 reads it.
 - ~~Should the request form show all active services or only ones flagged "show on request form"?~~
   Resolved: a per-item `show_on_request_form` flag, on by default.
+
+## Implementation notes
+
+- #289: shown to owners as "Services & prices" (sidebar, page title, "Add a service" in the
+  builders); routes and code keep "catalog".

@@ -57,6 +57,9 @@ response is recorded with strong evidence and the business is told immediately.
   "Quote responses" CSV (INS-02), but shown on no page: staff see the device ("Phone · Safari").
   *Owner decision, 2026-11-21 (QA #274).* The operator audit log (operators' own IPs) and a
   user's own session list are unaffected.
+- #289: on the staff quote page the approval reference sits behind a "Reference" disclosure and
+  the quote version isn't shown (both stay in the record and the export); a record that doesn't
+  verify still says so up front.
 
 ## Open questions
 
