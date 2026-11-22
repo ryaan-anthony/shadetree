@@ -66,9 +66,7 @@ be sent by the technician straight away; anything else still goes to "Ready for 
 
 ## Implementation notes
 
-- SendWithoutReview lists every reason (the first is shown); the send re-checks it with the quote
-  row locked and records why it qualified. A service without a list price never qualifies. Seeds:
-  Lawn mowing, Leaf cleanup, a $500 cap; Marcus (tech@example.com) has a mowing visit to quote.
+- Seeds: Lawn mowing and Leaf cleanup, a $500 cap; Marcus (tech@example.com) has a visit to quote.
 
 ## Out of scope
 
@@ -97,3 +95,6 @@ be sent by the technician straight away; anything else still goes to "Ready for 
 - The cap is measured after tax (owner, 2026-11-22).
 - Without a confirmed email, the office's notice, with "Ready for review" still available
   (coordinator, follows existing behaviour).
+- A "price on quote" service never qualifies: "priced on each quote" (owner, 2026-11-22).
+- Other reasons: "custom line", "needs review", "service archived", "unit changed", "discount",
+  "Quote discount", "Another location" (coordinator).
