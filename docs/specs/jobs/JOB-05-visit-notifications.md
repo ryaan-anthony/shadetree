@@ -66,7 +66,7 @@ when, where and how to reach the business.
   midnight (booked or moved that morning) isn't also reminded, and one whose email about it is
   still pending is looked at again the next hour. Runs missed for the rest of that day aren't
   made up at night. Fixed lead time, as recommended.
-- **Settings:** Settings → Documents → "Visit emails to clients" turns booked, moved, cancelled
+- **Settings:** Settings → Messages → "Visit emails to clients" turns booked, moved, cancelled
   and reminder emails on or off; with a kind off, its changes still count as what the client knows.
 - The emails are recorded per NTF-01 against the job (`related: job`, kinds `visit_scheduled`,
   `visit_changed`, `visit_cancelled`, `visit_reminder`) and listed on the job page, with one
@@ -74,6 +74,14 @@ when, where and how to reach the business.
 - #289: a change is only queued for the client when it's a kind the business sends (and the
   client has an email); the job page promises the email only then ("We'll email Maria Lopez at
   9:38 PM", or "shortly" once that's passed), and explains the wait. No "send now".
+
+## Decisions
+
+- The visit-email switches (booked, moved, cancelled) live on Settings → Messages, not
+  "Quotes, jobs & invoices": same settings, new place (owner, 2026-11-22).
+- The day-before reminder's switch, in the same card, moved with them (coordinator; owner to
+  confirm).
+
 ## Out of scope
 
 - SMS confirmations/reminders, "on my way" messages, client confirmation/reschedule requests

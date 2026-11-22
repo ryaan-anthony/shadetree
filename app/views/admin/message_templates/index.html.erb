@@ -1,6 +1,27 @@
 <%= render "admin/businesses/settings_header", current: "messages" %>
 
 <div class="max-w-3xl space-y-4">
+  <%# JOB-05: which visit emails go. Moved here from "Quotes, jobs & invoices" (owner, 2026-11-22). %>
+  <%= form_with model: current_business, url: admin_business_path(tab: "messages"), method: :patch, id: "visit-emails-form" do |f| %>
+    <%= card title: "Visit emails to clients", subtitle: "Sent to the client's email address, from your business, with a link to their visit." do %>
+      <div class="space-y-3">
+        <% hints = { "scheduled" => "When you book visits. Several booked together are one email.",
+                     "changed" => "When you move a visit to another day or time.",
+                     "cancelled" => "When you cancel a visit, or its job.",
+                     "reminder" => "The day before, at #{Business::VISIT_REMINDER_HOUR} am your time, for visits still booked." } %>
+        <% Business::CLIENT_VISIT_EMAILS.each do |kind, label| %>
+          <label class="flex items-start gap-2 text-sm" for="client-visit-email-<%= kind %>">
+            <%= hidden_field_tag "business[client_visit_emails][#{kind}]", "0", id: nil %>
+            <%= check_box_tag "business[client_visit_emails][#{kind}]", "1", current_business.client_visit_email?(kind), id: "client-visit-email-#{kind}", class: "checkbox mt-0.5" %>
+            <span><span class="font-medium text-ink"><%= label %></span><span class="block text-sm2 text-muted"><%= hints.fetch(kind) %></span></span>
+          </label>
+        <% end %>
+      </div>
+      <p class="mt-3 text-sm2 text-muted">You can also skip the email for one change, from the visit form.</p>
+      <%= f.submit_button "Save visit emails", class: "mt-4" %>
+    <% end %>
+  <% end %>
+
   <% unless @editable %>
     <div class="banner banner-info" role="status"><%= icon "info" %>
       <p><span class="font-semibold">View only on <%= current_business.plan.name %>.</span> You can read every email below; changing them comes with <%= comes_with(:message_templates) %>. <%= link_to "See plans", admin_plan_path, class: "font-semibold underline" %><%= ". Messages you've already customized keep sending as they are." if @templates.any? %></p>

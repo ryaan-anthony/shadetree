@@ -71,6 +71,7 @@ Part 1 (editing the catalog's client emails):
 - Settings → Messages (`business_settings`): the list marks customized emails; the editor has
   placeholder buttons that insert at the cursor and a live preview (server-rendered as you
   type, with sample details and the business's own name), and "Go back to the default wording".
+  The visit-email switches (JOB-05) sit on the same page and aren't plan-gated.
 - Mailers ask `custom_subject(kind, values)`: request received, quote approved, visit booked /
   moved / cancelled (one visit) and reminder, payment receipt. Quote and invoice send forms start
   from the template's subject and note. Subjects are one line, and drop a separator an empty

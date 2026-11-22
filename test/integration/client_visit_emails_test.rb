@@ -91,11 +91,18 @@ class ClientVisitEmailsTest < ActionDispatch::IntegrationTest
     assert_select "#client-emails li", text: /Visit booked: .*To maria@example.com.*Sent/m
   end
 
-  test "settings turn each kind of visit email on or off" do
+  test "Settings → Messages turns each kind of visit email on or off (moved there, owner, 2026-11-22)" do
     get edit_admin_business_path(tab: "documents")
+    assert_select "input[name^='business[client_visit_emails]']", 0, "no longer under Quotes, jobs & invoices"
+    get admin_message_templates_path
+    assert_select "form#visit-emails-form[action=?]", admin_business_path(tab: "messages")
     assert_select "input[type=checkbox][name='business[client_visit_emails][reminder]'][checked]"
-    patch admin_business_path(tab: "documents"), params: { business: { client_visit_emails: { scheduled: "0", changed: "1", cancelled: "1", reminder: "0" } } }
-    assert_redirected_to edit_admin_business_path(tab: "documents")
+    assert_select "label[for=client-visit-email-scheduled]", /Visit booked/
+    patch admin_business_path(tab: "messages"), params: { business: { client_visit_emails: { scheduled: "0", changed: "1", cancelled: "1", reminder: "0" } } }
+    assert_redirected_to admin_message_templates_path
+    assert_equal "Visit emails saved.", flash[:notice]
+    follow_redirect!
+    assert_select "input[type=checkbox][name='business[client_visit_emails][scheduled]']:not([checked])"
     assert_equal({ "scheduled" => false, "changed" => true, "cancelled" => true, "reminder" => false }, @business.reload.client_visit_emails)
     @business.update!(client_visit_emails: { cancelled: "0" })
     assert_equal({ "scheduled" => false, "changed" => true, "cancelled" => false, "reminder" => false }, @business.reload.client_visit_emails, "kinds not given keep their setting")
@@ -110,8 +117,32 @@ class ClientVisitEmailsTest < ActionDispatch::IntegrationTest
     sign_out :user
     sign_in member_with_role(:technician)
     post switch_admin_business_path, params: { business: @business.uid }
-    patch admin_business_path(tab: "documents"), params: { business: { client_visit_emails: { scheduled: "1" } } }
+    patch admin_business_path(tab: "messages"), params: { business: { client_visit_emails: { scheduled: "1" } } }
     assert_response :forbidden
+  end
+
+  test "the Quotes, jobs & invoices form no longer changes visit emails" do
+    patch admin_business_path(tab: "documents"), params: { business: { quote_expiry_days: "30", client_visit_emails: { scheduled: "0", reminder: "0" } } }
+    assert_redirected_to edit_admin_business_path(tab: "documents")
+    assert @business.reload.client_visit_email?(:scheduled)
+    assert @business.client_visit_email?(:reminder)
+  end
+
+  test "on Starter (templates view only) the switches still save" do
+    @business.update!(plan: plans(:starter), plan_overrides: {})
+    get admin_message_templates_path
+    assert_select ".banner", /View only on Starter/
+    assert_select "form#visit-emails-form input[type=submit][value=?]", "Save visit emails"
+    patch admin_business_path(tab: "messages"), params: { business: { client_visit_emails: { changed: "0" } } }
+    assert_redirected_to admin_message_templates_path
+    assert_not @business.reload.client_visit_email?(:changed)
+  end
+
+  test "a business setting that needs fixing first is named, not a bare error page" do
+    @business.update_columns(quote_expiry_days: 0)
+    patch admin_business_path(tab: "messages"), params: { business: { client_visit_emails: { changed: "0" } } }
+    assert_redirected_to admin_message_templates_path
+    assert_match "Visit emails not saved:", flash[:alert]
   end
 
   def visit_line = css_select("#client-notice-pending").first&.text.to_s.squish

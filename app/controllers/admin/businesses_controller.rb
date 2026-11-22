@@ -33,6 +33,8 @@ class Admin::BusinessesController < Admin::BaseController
 
   def update
     @business = current_business
+    return update_visit_emails if params[:tab] == "messages"
+
     @tab = params[:tab].presence_in(SETTINGS_TABS) || "business"
     attributes = @tab == "branding" ? branding_params : settings_params
     # The search-engine choice only applies while requests are on; with them off it's ignored.
@@ -86,9 +88,18 @@ class Admin::BusinessesController < Admin::BaseController
       :name, :industry, :description, :email, :phone, :website,
       :address_line1, :address_line2, :city, :region, :postal_code, :country, :timezone, :currency,
       :quote_expiry_days, :auto_create_jobs, :technicians_see_prices, :quote_terms, :quote_approved_message, :invoice_due_days, :invoice_terms, :quote_number_prefix, :invoice_number_prefix,
-      :handle, :request_form_enabled, :request_form_intro, :request_form_indexable, # CLI-03, MKT-04
-      client_visit_emails: Business::CLIENT_VISIT_EMAILS.keys # JOB-05
+      :handle, :request_form_enabled, :request_form_intro, :request_form_indexable # CLI-03, MKT-04
     )
+  end
+
+  # JOB-05: the visit-email switches, on Settings → Messages (owner, 2026-11-22). Kinds not
+  # given keep their setting.
+  def update_visit_emails
+    if @business.update(params.require(:business).permit(client_visit_emails: Business::CLIENT_VISIT_EMAILS.keys))
+      redirect_to admin_message_templates_path, notice: "Visit emails saved."
+    else # another of the business's settings needs fixing first; say which
+      redirect_to admin_message_templates_path, alert: "Visit emails not saved: #{@business.errors.full_messages.to_sentence}"
+    end
   end
 
   def branding_params
