@@ -1,0 +1,62 @@
+---
+id: CLI-07
+title: Assign and schedule requests
+domain: clients
+milestone: M6
+depends_on: [CLI-04, JOB-02, NTF-02]
+---
+# CLI-07 · Assign and schedule requests
+
+> Requirements: [04-clients](../../plans/04-clients.md) R18, R19, R20
+
+## Summary
+
+A request often needs a site visit or a phone call before anyone can quote it. Whoever takes the
+request assigns it to a team member, with a day (today by default) and an optional time, so the
+follow-up lands on that person's day. They can hand it on to someone else, at a time that fits
+that person's schedule, until a quote is created or the request is archived.
+
+## User stories
+
+- As the person answering the phone, I want to log a request and assign it to the office manager
+  for today, so it's on their list straight away.
+- As an office manager, I want to reassign a request to a field tech for 2 pm tomorrow, so the
+  site visit fits around their other work.
+- As an owner, I want to see who has each request and which ones are overdue, so nothing waits.
+
+## Acceptance criteria
+
+- [ ] Anyone who can manage requests can assign one to a team member (any role, active, in this
+      business) with a day and, optionally, a start time or arrival window and a duration. The
+      day defaults to today, and no time means "anytime that day". Assigning is offered when a
+      request is created by staff and from the request page.
+- [ ] Each follow-up is a visit or a call, chosen when assigning (visit by default), with
+      optional instructions for the assignee.
+- [ ] A request can be reassigned and rescheduled any number of times, or unassigned. Each
+      change records who, when, from and to, and shows on the request's history.
+- [ ] Assigning a New request moves it to In progress. Creating a quote still moves it to
+      Quoted, and archiving it ends the follow-up (it leaves the assignee's list).
+- [ ] The assignee is notified when a request is assigned to them, moved or taken off them,
+      using the team notifications (NTF-02), with their usual email preference.
+- [ ] Scheduling shows the same non-blocking warnings as visits: outside business hours, on a
+      closure, or overlapping the assignee's visits or other follow-ups.
+- [ ] The inbox shows each request's assignee and day, can filter by assignee (including
+      "Mine" and "Unassigned"), and marks requests whose follow-up day has passed as overdue.
+- [ ] The client timeline records when a follow-up visit is booked. Calls aren't shown there.
+- [ ] Only people who can manage requests can assign. Assignees, members of other businesses
+      and suspended businesses are refused, with tenancy and role tests.
+- [ ] Works on phones; the assign form is keyboard-operable and announced correctly.
+
+## Out of scope
+
+- Showing follow-ups on the assignee's day and calendar (JOB-06, JOB-07).
+- Technicians creating quotes (QTE-07).
+- Telling the client about a booked site visit (backlog).
+- Automatic assignment or round-robin (decision D3 stands).
+
+## Open questions
+
+- Should a follow-up be a visit or a call, or is that one kind with an optional note? Proposed:
+  two kinds, so calls don't take up travel time on the calendar.
+- Should a site visit booked for a client send them a confirmation, like job visits (JOB-05)?
+  Proposed: backlog, as the request form already confirms receipt.

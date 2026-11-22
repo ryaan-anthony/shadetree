@@ -53,6 +53,15 @@ users, which conflicts with the "clients never sign in" principle.
   requested services and photos; the request links to resulting quotes.
 - **R16** New request count is visible in navigation and on the dashboard.
 
+### Request follow-up
+- **R18** A request can be assigned to a team member with a day (today by default) and an
+  optional time, as a site visit or a call, and reassigned or rescheduled until it's quoted or
+  archived. The assignee is notified.
+- **R19** Assigned follow-ups appear on the assignee's day and on the staff calendar, next to
+  their job visits.
+- **R20** The assignee records what they found and either creates the quote (if their role
+  allows) or hands the request back or on.
+
 ### Client activity
 - **R17** A per-client timeline of events (request received, quote sent/viewed/approved, visit
   completed, invoice paid, notes) gives anyone answering the phone full context.
@@ -63,8 +72,9 @@ users, which conflicts with the "clients never sign in" principle.
 | --- | --- | --- |
 | D1 | Clients are tenant-owned records, never users. | They never log in; avoids cross-tenant identity leakage. |
 | D2 | Properties are first-class. | Property managers and landlords are a key persona (one client, many addresses). |
-| D3 | No lead pipeline/stages, source tracking, or auto-assignment at launch. | A 3-status inbox covers 1–10 person businesses. |
+| D3 | No lead pipeline/stages, source tracking, or auto-assignment at launch. | A 3-status inbox covers 1–10 person businesses. Manual assignment came later (R18, owner 2026-11-21). |
 | D4 | Client portal ("see all my stuff") is backlog. | Per-document client links cover the core loop. |
+| D5 | The public request page is on every plan, Free included. | It brings in requests that turn into quotes, which is what the plans meter (owner, 2026-11-21). |
 
 ## Specifications
 
@@ -76,6 +86,7 @@ users, which conflicts with the "clients never sign in" principle.
 | [CLI-04](../specs/clients/CLI-04-request-inbox.md) | Request inbox | M2 | CLI-03, QTE-01 |
 | [CLI-05](../specs/clients/CLI-05-client-timeline.md) | Client timeline | M4 | CLI-01, QTE-06, JOB-01, PAY-01 |
 | [CLI-06](../specs/clients/CLI-06-client-import.md) | Client CSV import | M5 | CLI-01 |
+| [CLI-07](../specs/clients/CLI-07-request-assignment.md) | Assign and schedule requests | M6 | CLI-04, JOB-02, NTF-02 |
 
 ## Backlog (M6)
 
