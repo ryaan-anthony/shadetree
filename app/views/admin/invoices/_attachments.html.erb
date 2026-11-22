@@ -1,6 +1,6 @@
 <%# locals: (invoice:, f:) -%>
 <%# PAY-01: files the client sees with the invoice: completion photos from the job's visits
-    (JOB-04), ticked and added (or added by Save draft), or uploaded. Either way the page reloads with them listed. %>
+    (JOB-04), ticked and added (or added by the no-JavaScript "Save draft"), or uploaded. Either way the page reloads with them listed. %>
 <% attached = invoice.saved_attachments %>
 <% job_photos = invoice.job_photos.reject { |photo| attached.any? { _1.blob_id == photo.blob_id } } %>
 <%= card title: "Attachments", subtitle: "Photos or PDFs the client sees with the invoice. Up to #{Invoice::MAX_ATTACHMENTS}, #{Invoice::ATTACHMENT_MAX_BYTES / 1.megabyte} MB each." do %>

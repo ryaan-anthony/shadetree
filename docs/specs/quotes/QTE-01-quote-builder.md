@@ -52,3 +52,10 @@ catalog, adjusting quantities and prices, and seeing totals update live.
 - ~~Show per-line totals including or excluding tax?~~ Resolved: excluding; tax is summarized
   per rate below the lines.
 - ~~Should a quote be able to cover multiple properties?~~ Resolved: no; one property per quote.
+
+## Decisions
+
+- #289, 2026-11-22: the quote and invoice builders save one way, as you go. "Save draft" only
+  shows if autosave isn't running. Leaving within the app waits for the save, and asks first if
+  it can't be saved; failures show in red by the header and by "Changes save as you go", worded
+  by cause (errors to fix, signed out, retrying). "Send quote" / "Send invoice" match the send page.

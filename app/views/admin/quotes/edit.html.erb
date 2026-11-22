@@ -15,7 +15,7 @@
   <%= render "admin/usage/quotes" if @quote.counts_toward_usage? %>
   <% if !own_quotes_only? || can?(:send_own_quotes) %><%# QTE-07: their own drafts, if their role sends them %>
   <%= link_to new_admin_quote_send_path(@quote, from: ("setup" if from_setup?)), class: button_classes(:primary),
-              data: { action: "quote-builder#saveAndGo" } do %><%= icon "send" %> Send<% end %>
+              data: { action: "quote-builder#saveAndGo" } do %><%= icon "send" %> Send quote<% end %><%# #289: the same words as the send page's button %>
   <% else %>
     <%= render "review_state", quote: @quote %>
   <% end %>
@@ -155,10 +155,11 @@
         <div class="border-t border-line pt-3"><%= render "totals", quote: @quote, totals: %></div>
       </div>
     <% end %>
-    <div class="flex flex-col gap-2">
-      <%= f.submit_button "Save draft" %>
-      <p class="text-center text-sm2 text-muted">Your draft is kept. <%= own_quotes_only? && !can?(:send_own_quotes) ? "Mark it ready for review from the top of the page when it’s done." : "Send it from the top of the page when it’s ready." %></p><%# QTE-07 %>
-    </div>
+    <%# #289: one way to save: as you go. The status repeats here (the header's is read out), so a
+        failure isn't missed on a long draft. The button only shows if autosave isn't running. %>
+    <%= f.submit_button "Save draft", class: "w-full", data: { quote_builder_target: "fallback" } %>
+    <p class="text-center text-sm2 text-muted" id="autosave-note">Changes save as you go: <span class="save-status" data-quote-builder-target="status" aria-hidden="true">Saved</span>.
+      <%= own_quotes_only? && !can?(:send_own_quotes) ? "Mark it ready for review from the top of the page when it’s done." : "Send it from the top of the page when it’s ready." %></p><%# QTE-07 %>
   </aside>
 <% end %>
 </div>

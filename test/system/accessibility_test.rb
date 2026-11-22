@@ -106,6 +106,16 @@ class AccessibilityTest < ApplicationSystemTestCase
     page.driver.browser.manage.window.resize_to(1400, 1400)
   end
 
+  # #289: the forms with a summary beside them (Schedule a visit, Record a payment).
+  test "the split forms pass axe" do
+    job, invoice = as_business(@business) do
+      client = Client.create!(display_name: "Maria Lopez", contact_methods_attributes: [ { kind: "phone", value: "2155551212" } ])
+      job = Job.create!(client:, title: "Ants", line_items_attributes: [ { name: "Spraying", quantity: 1, unit_price: 40 } ])
+      [ job, Invoice.from_job!(job, by: users(:one)).tap { _1.mark_sent!(by: users(:one), channel: "link") } ]
+    end
+    assert_accessible new_admin_job_visit_path(job), new_admin_invoice_payment_path(invoice), new_admin_service_request_path
+  end
+
   test "the search-engine setting is off while requests are off" do
     @business.update!(request_form_enabled: true)
     visit edit_admin_business_path(tab: "request_form")

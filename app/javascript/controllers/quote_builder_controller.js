@@ -13,26 +13,37 @@ import { Turbo } from "@hotwired/turbo-rails"
 //
 // Saves are sent URL-encoded (far smaller than multipart), with keepalive whenever they fit
 // the browser's 64 KiB keepalive limit; while there are unsaved changes, leaving the page asks
-// first. "Save draft" and "Preview as client" go through the same one-at-a-time queue.
+// first, and leaving within the app waits for the save (or asks, if it can't be saved). #289:
+// saving is automatic; the "Save draft" button is only for when this controller isn't running.
+// "Preview as client" and "Send" go through the same one-at-a-time queue.
 // Uploading a file submits the whole form as a normal request and pauses autosave.
 // Browsers refuse keepalive bodies over 64 KiB; leave room for headers.
 const KEEPALIVE_LIMIT = 60 * 1024
 
 export default class extends Controller {
-  static targets = ["form", "line", "lines", "template", "empty", "status", "property"]
+  static targets = ["form", "line", "lines", "template", "empty", "status", "property", "fallback"]
   static values = { propertyUrl: String, delay: { type: Number, default: 700 }, scope: { type: String, default: "quote" } }
 
   connect() {
     this.dirty = false
     this.saving = null
+    this.failed = false
+    // #289: autosave is running, so the button for when it isn't goes away.
+    this.fallbackTargets.forEach((button) => { button.hidden = true })
     this.onHide = () => { if (document.visibilityState === "hidden") this.flush() }
     this.onPageHide = () => this.flush()
     document.addEventListener("visibilitychange", this.onHide)
     window.addEventListener("pagehide", this.onPageHide)
-    this.onBeforeVisit = (event) => { if (this.dirty) this.flush() }
+    // #289: a visit within the app waits for the save, then goes on; if the work can't be saved
+    // (refused, signed out, a conflict), it asks before leaving it behind.
+    this.onBeforeVisit = (event) => {
+      if (this.leaving || !this.unsaved()) return
+      event.preventDefault()
+      this.leaveAfterSave(event.detail.url)
+    }
     document.addEventListener("turbo:before-visit", this.onBeforeVisit)
     this.onBeforeUnload = (event) => {
-      if (this.uploading || (!this.dirty && !this.saving && !this.photosTicked())) return
+      if (this.uploading || (!this.unsaved() && !this.photosTicked())) return
       this.flush()
       event.preventDefault()
       event.returnValue = ""
@@ -59,7 +70,7 @@ export default class extends Controller {
     this.schedule()
   }
 
-  // Ticked job photos are added by the "Add ticked photos" button or by "Save draft"; until
+  // Ticked job photos are added by the "Add ticked photos" button; until
   // then the button is live, the status says so and leaving the page asks first.
   photoTicked() {
     const ticked = this.photosTicked()
@@ -80,8 +91,8 @@ export default class extends Controller {
     this.timer = setTimeout(() => this.save(), this.delayValue)
   }
 
-  // "Save draft" goes through the same queue as autosave, so it can't race one in flight. With
-  // job photos ticked it adds them too (a normal submit, as an upload is).
+  // A submit (Enter in a field) goes through the same queue as autosave, so it can't race one in
+  // flight. With job photos ticked it adds them too (a normal submit, as an upload is).
   submit(event) {
     event.preventDefault()
     this.photosTicked() ? this.upload() : this.save()
@@ -90,12 +101,15 @@ export default class extends Controller {
   // Send: save first, then go to the send page in this tab.
   async saveAndGo(event) {
     event.preventDefault()
-    const href = event.currentTarget.href // currentTarget is gone after the await
+    const link = event.currentTarget
+    const href = link.href // currentTarget is gone after the await
     if (this.dirty) this.save()
+    if (this.saving) link.setAttribute("aria-busy", "true") // #289: it's on its way
     await this.saving
+    link.removeAttribute("aria-busy")
     // Only once everything is saved: after a conflict (another tab saved newer work) the
     // page says so and the quote stays here, so an older version can't go out.
-    if (!this.dirty && !this.conflict) Turbo.visit(href)
+    if (!this.dirty && !this.conflict && !this.failed) { this.leaving = true; Turbo.visit(href) }
   }
 
   // CAT-08: a button for a form outside the builder (re-pricing): save first, then submit that
@@ -106,9 +120,10 @@ export default class extends Controller {
     const form = button.form
     if (this.dirty) this.save()
     await this.saving
-    if (this.dirty || this.conflict || !form) return
+    if (this.dirty || this.conflict || this.failed || !form) return
     const lock = this.formTarget.querySelector(`#${this.scopeValue}_lock_version`)
     if (lock && form.elements.lock_version) form.elements.lock_version.value = lock.value
+    this.leaving = true // #289: saved; the page this submit leads to isn't held by the leave guard
     form.requestSubmit(button)
   }
 
@@ -264,19 +279,34 @@ export default class extends Controller {
       const lockVersion = response.headers.get("X-Lock-Version")
       const lockField = formElement.querySelector(`#${this.scopeValue}_lock_version`)
       if (lockVersion && lockField) lockField.value = lockVersion
+      const isStream = (response.headers.get("Content-Type") || "").includes("turbo-stream")
       const stream = await response.text()
       // The builder may have been left meanwhile (another quote has the same target ids).
       if (!formElement.isConnected) return
-      if (stream) Turbo.renderStreamMessage(stream)
+      if (stream && isStream && !response.redirected) Turbo.renderStreamMessage(stream)
       this.conflict = response.status === 409
-      if (response.ok) this.setStatus(this.dirty ? "Unsaved changes" : "Saved")
-      else if (this.conflict) this.setStatus("Not saved")
-      else { this.setStatus("Not saved: fix the errors above"); this.dirty = true }
+      this.failed = !response.ok && !this.conflict
+      if (response.ok && isStream && !response.redirected) {
+        this.retryDelay = null
+        this.setStatus(this.dirty ? "Unsaved changes" : "Saved")
+      } else if (this.conflict) {
+        this.setStatus("Not saved", "error")
+      } else if (response.status === 422 && isStream) {
+        this.dirty = true
+        this.setStatus("Not saved: fix the errors above", "error")
+      } else if (response.status >= 500) {
+        this.dirty = true
+        this.retry("Couldn't save. Retrying…")
+      } else {
+        // Signed out, terms to accept, the business suspended, a stale page: a sign-in page or
+        // a redirect came back instead of the builder's answer.
+        this.failed = true
+        this.dirty = true
+        this.setStatus("Not saved: you may be signed out. Sign in in another tab, then keep editing.", "error")
+      }
     }).catch(() => {
       this.dirty = true
-      this.setStatus("Offline: will retry")
-      clearTimeout(this.timer)
-      this.timer = setTimeout(() => this.save(), 5000)
+      this.retry("Offline: will retry")
     }).finally(() => {
       this.saving = null
       if (this.again) {
@@ -288,12 +318,39 @@ export default class extends Controller {
     return this.saving
   }
 
+  // Work that isn't safely saved yet: edits waiting, a save in flight, or one that was refused.
+  unsaved() { return this.dirty || !!this.saving || this.failed || this.conflict }
+
+  async leaveAfterSave(url) {
+    if (this.dirty) this.save()
+    await this.saving
+    if (!this.unsaved() || window.confirm("Your changes aren't saved. Leave anyway?")) {
+      this.leaving = true
+      this.dirty = false
+      clearTimeout(this.timer)
+      Turbo.visit(url)
+    }
+  }
+
   // Leaving or hiding the page: save what's pending now (with keepalive, like every save).
   flush() {
     if (this.dirty) this.save()
   }
 
-  setStatus(text) {
-    if (this.hasStatusTarget) this.statusTarget.textContent = text
+  // Tries again later, waiting longer each time (up to a minute).
+  retry(text) {
+    this.setStatus(text, "error")
+    this.retryDelay = Math.min((this.retryDelay || 2500) * 2, 60000)
+    clearTimeout(this.timer)
+    this.timer = setTimeout(() => this.save(), this.retryDelay)
+  }
+
+  // Every status target shows it (the header's, and the one by "Changes save as you go");
+  // state "error" colours it (#289), so a failure doesn't look like "Saved".
+  setStatus(text, state = "ok") {
+    this.statusTargets.forEach((target) => {
+      target.textContent = text
+      target.dataset.state = state
+    })
   }
 }
