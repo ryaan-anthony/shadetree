@@ -13,62 +13,69 @@ depends_on: [PLT-05]
 
 The admin design-system audit (#314, items 1 and 10) found that the loudest button on a page is
 often not the most important one. The quote page's green button opens the job, the client page
-has no primary at all, "Cancel job" is plain grey text, and the kit has seven button styles.
-Settle on four ranks, use them on every staff page, and make disabled controls look disabled.
-The look stays as it is. This is about which existing style goes where.
-Triage and evidence: [#314 triage](../../audits/314-triage.md).
+has no primary at all, and "Cancel job" is plain grey text. Settle on four ranks, use them on
+every staff page, and make disabled controls look disabled. The look stays as it is. This is
+about which existing style goes where. This spec also creates the shared page list that the
+design-system checks run over. Triage: [#314 triage](../../audits/314-triage.md).
 
 ## User stories
 
-- As an owner, I want the one green button on a page to be the next thing I should do, so I
-  never have to work out which of four equal buttons matters.
+- As an owner, I want the one green button on a page to be the next thing I should do.
 - As an owner, I want anything that cancels or deletes to look dangerous before I click it.
 
 ## Acceptance criteria
 
-- [ ] The kit has four ranks, shown on the style guide with their rules: **Primary** (green,
-      the next step in the workflow), **Secondary** (white with a border, supporting actions),
-      **Tertiary** (text only: navigation, low-risk actions and Cancel), and **Destructive**
-      (red text or a red border. Solid red only on the confirm button of a destructive dialog).
-      The client layout's brand button is the client pages' Primary. Other variants are retired.
+- [ ] The kit has four ranks, each shown on the style guide with its rule:
+  - **Primary:** green, the next step in the workflow.
+  - **Secondary:** white with a border, supporting actions.
+  - **Tertiary:** borderless grey, for navigation, low-risk actions and Cancel.
+  - **Destructive:** red text with a red border.
+  - Beside these, a destructive dialog's confirm button is solid red, and the client pages'
+    brand button is their Primary. That makes six button variants. The green inline text link
+    isn't a button: it's only for actions inside a sentence.
 - [ ] Every staff page has at most one Primary in its header. A card or dialog may have its own
-      single Primary only when it is that region's one action (a rail card's "Export everything").
-- [ ] Moving to another record is never Primary. On detail pages the Primary is the record's
-      next step, as listed in the spec's decisions once approved. Example: an approved quote
-      with no invoice → "Create invoice". With nothing left to do there is no Primary.
-- [ ] Client page: "New quote" is the Primary. "New job" and "New invoice" are the same
-      Secondary rank as each other, not text links beside a bordered button.
-- [ ] "Cancel job", "Disconnect", "Deactivate", "Archive" (when it hides work) and every
-      delete use the Destructive rank, never plain grey text.
+      Primary only when it is that region's single action (a rail card's "Export everything").
+- [ ] Moving to another record is never Primary. The quote page's Primary follows the
+      Decisions. Approved quotes get their job and invoice links as Secondary.
+- [ ] Client page: "New quote" is the Primary, in the page header beside Edit. The Work card
+      keeps "New job" and "New invoice" as Secondary (today they're borderless buttons).
+- [ ] These actions use Destructive: "Cancel job", "Disconnect" (Stripe), "Deactivate"
+      (Team), "Archive" on a client or a request, and every delete. Archive in the quote,
+      service, location and tax-rate menus stays a menu item.
 - [ ] Cancel on forms and dialogs is Tertiary everywhere.
-- [ ] An empty state's call to action is the same button as the page's own action, not a second
-      style of it.
-- [ ] Disabled controls are visibly disabled on every page: reduced contrast, a not-allowed
-      cursor, no hover change, and the disabled state exposed to assistive technology.
-      Covers pagination's Previous/Next (including the Clients list's own pager) and the
-      services list's move arrows.
-- [ ] A test signs in as an Owner, visits every staff page in the sweep the accessibility
-      check uses, plus each detail page in its main states, and fails when a page header has
-      more than one Primary, a Cancel isn't Tertiary, or a destructive label isn't Destructive.
-- [ ] A test fails if a view asks the kit for a retired variant.
-- [ ] Desktop (1280) and phone (390) screenshots of Home, the quote, job, invoice and client
-      pages before and after, with no visual change other than the ranks.
+- [ ] An empty state's call to action uses the page action's own rank and wording.
+- [ ] Disabled controls look disabled everywhere: reduced contrast, no hover change, and the
+      state exposed to assistive technology. A not-allowed cursor needs pointer events, which
+      the kit turns off today. Keep it off and rely on contrast, or let pointer events through
+      and block the click another way. Covers the pager's Previous and Next (the kit's and
+      the Clients list's own) and the services list's move arrows.
+- [ ] **One shared page list.** The pages the accessibility check sweeps (fixtures, not seeds)
+      become one list, plus each detail page in its main states. The axe tests and every
+      design-system check (PLT-15 to PLT-22) use that list.
+- [ ] Integration tests render each page in the list as an Owner. They fail when a page
+      header has more than one Primary, when a Cancel isn't Tertiary, or when a label above
+      isn't Destructive.
+- [ ] A test fails when a view or layout writes kit button classes by hand instead of asking
+      the kit (today: the sidebar's sign-out, the skip links, and the operator console).
+      Unknown variants already raise.
+- [ ] Desktop (1280) and phone (390) screenshots of Home and the quote, job, invoice and
+      client pages, with no visual change other than the ranks.
 
 ## Out of scope
 
-- New colours or button shapes (the audit: "a new colour or font would be the wrong lever").
-- Toolbars inside the quote and invoice builders (their Send button is already the Primary).
-- Client-facing pages beyond renaming their brand button as Primary.
+- New colours or button shapes ("a new colour or font would be the wrong lever", #314).
+- The quote and invoice builders' toolbars (Send is already their Primary).
+- Client-facing pages beyond naming their brand button as Primary.
 
-## Open questions
+## Decisions
 
-- Home's Primary? **Recommendation:** none. Home is an overview and each card has its own next
-  step. The rule is "at most one", so zero is allowed.
-- The quote page once a job exists: is the job link Secondary, and what's Primary?
-  **Recommendation:** the job and invoice links become Secondary. Primary follows the record's
-  state: Draft → Send; Changes requested → Revise; Approved without invoice → Create invoice;
-  otherwise none. This keeps #292's rule that an invoiced quote shows "Invoice INV-0001", not
-  "Create invoice".
-- Which style is Tertiary? **Recommendation:** today's borderless grey button. Today's green
-  text link stays only for actions inside a sentence ("None yet. Add instructions") and isn't
-  a rank.
+- Home has no page-level Primary. It's an overview, and the rule is "at most one" (owner,
+  2026-11-22).
+- Tertiary is today's borderless grey button. The green text link stays only for actions
+  inside a sentence ("None yet. Add instructions") and isn't a rank (owner, 2026-11-22).
+- The quote page's job and invoice links become Secondary. Its Primary (owner, 2026-11-22):
+  - an approved quote with no job → **Create job** (today's button);
+  - a job but no invoice → **Create invoice**;
+  - otherwise no Primary. "Revise" on a quote with changes requested stays Secondary.
+  - The earlier Draft case is dropped, because drafts open in the builder. #292's "Invoice
+    INV-0001" link stays, as Secondary.

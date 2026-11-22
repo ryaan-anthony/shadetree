@@ -125,11 +125,14 @@ other.
 | [PLT-12](../specs/platform/PLT-12-client-links.md) | Client links | M1 | PLT-06, PLT-08 |
 | [PLT-13](../specs/platform/PLT-13-security-baseline.md) | Security baseline | M5 | PLT-05, PLT-10 |
 | [PLT-14](../specs/platform/PLT-14-button-ranks.md) | Design system: button ranks and page actions | M6 | PLT-05 |
-| [PLT-15](../specs/platform/PLT-15-page-header-type-scale.md) | Design system: one page header and a locked type scale | M6 | PLT-05 |
-| [PLT-16](../specs/platform/PLT-16-containers-detail-pages.md) | Design system: two layout containers, and each fact once on detail pages | M6 | PLT-05, PLT-15 |
-| [PLT-17](../specs/platform/PLT-17-status-colour-language.md) | Design system: one status colour language and one severity per event | M6 | PLT-05 |
-| [PLT-18](../specs/platform/PLT-18-formatting-copy.md) | Design system: one format per data type, and the remaining copy fixes | M6 | PLT-08 |
-| [PLT-19](../specs/platform/PLT-19-shared-controls-feedback.md) | Design system: tabs, toggles, search, empty states, feedback and logo upload | M6 | PLT-05, PLT-14 |
+| [PLT-15](../specs/platform/PLT-15-page-header-type-scale.md) | Design system: one page header and a locked type scale | M6 | PLT-05, PLT-14 |
+| [PLT-16](../specs/platform/PLT-16-layout-containers.md) | Design system: two layout containers | M6 | PLT-05, PLT-14, PLT-15 |
+| [PLT-17](../specs/platform/PLT-17-status-colour-language.md) | Design system: one status colour language and one severity per event | M6 | PLT-05, PLT-14 |
+| [PLT-18](../specs/platform/PLT-18-formatting-copy.md) | Design system: one format per data type, and the remaining copy fixes | M6 | PLT-08, PLT-14 |
+| [PLT-19](../specs/platform/PLT-19-tabs-toggles-search-menus.md) | Design system: tabs, segmented controls, search and menus | M6 | PLT-05, PLT-14 |
+| [PLT-20](../specs/platform/PLT-20-each-fact-once.md) | Design system: each fact once on detail pages | M6 | PLT-14, PLT-15 |
+| [PLT-21](../specs/platform/PLT-21-empty-states-feedback.md) | Design system: empty states, notifications, toasts and banners | M6 | PLT-14, PLT-17 |
+| [PLT-22](../specs/platform/PLT-22-logo-upload-brand-note.md) | Design system: logo upload and where the brand colour applies | M6 | PLT-05 |
 
 ## Backlog (M6, not yet specified)
 
