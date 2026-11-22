@@ -16,6 +16,8 @@ module ExamplesHelper
 
   # The note on a request logged from a call.
   def example_request_note(business = current_business)
-    "e.g. Called about #{example_service(business).downcase}. Prefers mornings; use the side gate."
+    service = example_service(business)
+    service = service[0].downcase + service[1..] if service.match?(/\A.[a-z]/) # "HVAC tune-up" keeps its capitals
+    "e.g. Called about #{service}. Prefers mornings; use the side gate."
   end
 end

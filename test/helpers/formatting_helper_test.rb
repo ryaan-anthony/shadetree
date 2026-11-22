@@ -1,6 +1,9 @@
 require "test_helper"
 
 class FormattingHelperTest < ActionView::TestCase
+  # Phone formats follow the business's country (#289); the fixture business is in the US.
+  def current_business = @current_business ||= businesses(:one)
+
   test "money formats or stays blank" do
     assert_equal "$12.50", money(Money.new(1250, "USD"))
     assert_equal "No charge", money(Money.zero("USD"), zero: "No charge")
@@ -38,7 +41,7 @@ class FormattingHelperTest < ActionView::TestCase
       "215-555-1212 ext. 12" => "tel:+12155551212", "215 555 1212 extension 7" => "tel:+12155551212",
       "1-800-GOT-JUNK" => "tel:+18004685865", "1-800-GOT-JUNK x5" => "tel:+18004685865", "1-800-FIX-XBOX" => "tel:+18003499269",
       "+44 20 7946 0958" => "tel:+442079460958", "020 7946 0958" => "tel:02079460958",
-      "Office: 555 123 4567" => "tel:+15551234567" }.each do |typed, href|
+      "Office: 215 555 1212" => "tel:+12155551212" }.each do |typed, href|
       assert_equal href, phone_href(typed), typed
     end
     assert_equal "1-800-GOT-JUNK", phone_number("1-800-GOT-JUNK"), "vanity numbers are shown as typed"
@@ -74,5 +77,30 @@ class FormattingHelperTest < ActionView::TestCase
     assert_equal 36, attachment_name(long).length
     short = Data.define(:filename).new(ActiveStorage::Filename.new("yard.png"))
     assert_equal "yard.png", attachment_name(short)
+  end
+
+  test "phone numbers outside North America are shown and dialled as typed (#289)" do
+    { "0412 345 678" => "tel:0412345678", "06 12 34 56 78" => "tel:0612345678", "020 123 4567" => "tel:0201234567" }.each do |typed, href|
+      assert_equal typed, phone_number(typed), "a US business, but not a North American number"
+      assert_equal href, phone_href(typed)
+    end
+    assert_equal "555-010-0100", phone_number("555-010-0100"), "a 555-01xx exchange isn't a real one"
+    @current_business = businesses(:one).tap { _1.country = "AU" }
+    assert_equal "2155551212", phone_number("2155551212"), "an Australian business's ten digits aren't North American"
+    assert_equal "tel:2155551212", phone_href("2155551212")
+    assert_equal "(215) 555-1212", phone_number("+1 215 555 1212"), "+1 is North American anywhere"
+    assert_equal "215-555-1212 x12", phone_number("215-555-1212 x12")
+    assert_nil phone_number("  ")
+  end
+
+  test "very long file names, and names with a dot in them, are shortened without failing (#289)" do
+    file = ->(name) { Data.define(:filename).new(ActiveStorage::Filename.new(name)) }
+    name = attachment_name(file.("Estimate.Nov 20 2026 final copy for the Smith family"))
+    assert_equal 36, name.grapheme_clusters.length
+    assert name.start_with?("Estimate.Nov"), name
+    assert name.end_with?("th family"), name
+    emoji = attachment_name(file.(("👍🏽" * 40) + ".jpg"))
+    assert_equal 36, emoji.grapheme_clusters.length
+    assert emoji.end_with?(".jpg")
   end
 end

@@ -44,7 +44,7 @@ class Admin::JobsTest < ActionDispatch::IntegrationTest
     get admin_job_path(@job)
     assert_response :success
     assert_select "h1", "Gutter clean"
-    assert_select "aside", /Maria Lopez.*12 Elm St.*Gate code 4417.*\(555\) 010-0100/m
+    assert_select "aside", /Maria Lopez.*12 Elm St.*Gate code 4417.*5550100100/m
     assert_select "#job-instructions", "Ladder on the left side"
     assert_select "main", /No items/
   end

@@ -60,7 +60,7 @@
     <% jobs = s.unscheduled_jobs.to_a %>
     <%= card title: "Needs scheduling", flush: true, id: "needs-scheduling" do %>
       <% if jobs.empty? %>
-        <p class="px-4 py-3 text-sm2 text-muted">Every open job has a visit booked.</p>
+        <p class="px-4 py-3 text-sm2 text-muted">No jobs are waiting for a visit.</p>
       <% else %>
         <ul class="list">
           <% jobs.each do |job| %>

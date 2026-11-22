@@ -42,7 +42,7 @@ or one person — spot gaps, and move work around quickly, on a desktop or a pho
 
 - Part 1 (the views, filters, shading, "Needs scheduling", the visit panel) is one PR; dragging,
   undo and the phone quick-edit sheet are part 2.
-- A day for everyone is split into a column per person (and "Nobody yet"), so a visit can be
+- A day for everyone is split into a column per person (and "Not assigned"), so a visit can be
   dragged from one person to another; a visit with two people shows in both columns, and moving
   it from one column changes only that person.
 - Dragging is for a mouse. Phones, and keyboards anywhere, use **Move** in the visit's details:
@@ -62,7 +62,7 @@ or one person — spot gaps, and move work around quickly, on a desktop or a pho
   so the scrolling grid can't clip them. Hour and "Anytime" labels are muted (4.5:1 or more).
 - The heading names the page and the year ("Schedule: November 23 – 29, 2026"); the lede names
   the clock ("Times in Eastern Time (US & Canada)"). "Color by" is two pressed buttons in a GET
-  form, so it works without JavaScript; "Nobody yet" counts visits ("1 visit").
+  form, so it works without JavaScript; "Not assigned" counts visits ("1 visit").
 - Times snap to 15 minutes; a window keeps its length; an anytime visit moves between anytime
   rows only, and a timed one keeps a time.
 - A window visit fills the grid from the window's start to its latest finish (window end plus

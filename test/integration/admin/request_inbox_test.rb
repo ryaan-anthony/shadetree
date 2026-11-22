@@ -40,7 +40,7 @@ class Admin::RequestInboxTest < ActionDispatch::IntegrationTest
   test "opening a request shows everything and records who saw it" do
     get admin_service_request_path(@service_request)
     assert_response :success
-    assert_select "dd", "(555) 010-0100" # #289: one phone format
+    assert_select "dd", "5550100100" # a fictional 555-01xx number is shown as typed (#289)
     assert_select "dd", "9 Oak Ave, Austin"
     assert_select "dd", "Weekly mowing"
     assert_select "img[alt=?]", "Photo 1 from Maria Lopez"

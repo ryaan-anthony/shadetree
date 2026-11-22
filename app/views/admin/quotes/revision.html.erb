@@ -41,7 +41,7 @@
         <% if @revision.pdf_blob %><li><%= link_to rails_blob_path(@revision.pdf_blob, disposition: "attachment"), class: "font-medium text-ink hover:underline", data: { turbo: false } do %><%= icon "download", class: "mr-1 inline size-4" %>The PDF as stored<% end %></li><% end %>
         <% blobs = ActiveStorage::Blob.where(id: files.map { _1["blob_id"] }).index_by(&:id) %>
         <% files.each do |file| %>
-          <% if (blob = blobs[file["blob_id"]]) %><li><%= link_to rails_blob_path(blob, disposition: "inline"), class: "text-ink hover:underline", target: "_blank", rel: "noopener" do %><%= icon "paperclip", class: "mr-1 inline size-4" %><%= file["filename"] %><% end %></li><% end %>
+          <% if (blob = blobs[file["blob_id"]]) %><li><%= link_to rails_blob_path(blob, disposition: "inline"), class: "text-ink hover:underline", target: "_blank", rel: "noopener", title: file["filename"], "aria-label": file["filename"] do %><%= icon "paperclip", class: "mr-1 inline size-4" %><%= attachment_name(blob) %><% end %></li><% end %>
         <% end %>
       </ul>
     <% end %>

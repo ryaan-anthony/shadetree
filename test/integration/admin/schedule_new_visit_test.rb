@@ -73,7 +73,7 @@ class Admin::ScheduleNewVisitTest < ActionDispatch::IntegrationTest
       assert_select "label[for=new-visit-job]", "Job"
       assert_select "select#new-visit-job[required]" do
         assert_select "optgroup[label='Needs scheduling'] option[value=?]", @waiting.uid
-        assert_select "optgroup[label='Other open jobs'] option[value=?]", @booked.uid
+        assert_select "optgroup[label='Other unfinished jobs'] option[value=?]", @booked.uid
         assert_select "option", text: /Old fence/, count: 0
       end
       assert_select "a[href=?]", admin_clients_path, 0, "no layout inside the frame"
@@ -137,7 +137,7 @@ class Admin::ScheduleNewVisitTest < ActionDispatch::IntegrationTest
     end
     get admin_schedule_new_visit_path
     assert_select "#new-visit-job option[value]:not([value=''])", Admin::ScheduleController::NEW_VISIT_JOBS
-    assert_select "#new-visit-job-help", text: /Only the first 200 open jobs are listed.*find it in Jobs and choose Schedule visit/m
+    assert_select "#new-visit-job-help", text: /Only the first 200 unfinished jobs are listed.*find it in Jobs and choose Schedule visit/m
     assert_select "#new-visit-job-help a[href=?]", admin_jobs_path(filter: "open")
   end
 

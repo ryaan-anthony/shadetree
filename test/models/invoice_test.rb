@@ -38,8 +38,9 @@ class InvoiceTest < ActiveSupport::TestCase
     @business.update!(invoice_due_days: 14)
     odd = Invoice.start(client: @maria)
     assert_equal [ "custom", @business.today + 14 ], [ odd.payment_terms, odd.due_on ], "14 days isn't one of the terms: a custom date"
-    assert_equal "14 days after it's issued", odd.terms_label, "#289: says how long, not 'Custom date'"
-    assert_equal "Within 15 days", Invoice.new(payment_terms: "net_15").terms_label
+    assert_equal "14 days after it's issued", odd.staff_terms_label, "#289: says how long, not 'Custom date'"
+    assert_equal "Within 15 days", Invoice.new(payment_terms: "net_15").staff_terms_label
+    assert_equal "Net 15", Invoice.new(payment_terms: "net_15").terms_label, "clients' wording is unchanged until the owner decides"
   end
 
   test "terms set the due date from the issue date; a custom date keeps its distance from it, but not before it" do

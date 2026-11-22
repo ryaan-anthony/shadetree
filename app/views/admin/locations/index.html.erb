@@ -17,7 +17,7 @@
             <p class="font-semibold text-ink"><%= link_to location.name, edit_admin_location_path(location), class: "hover:underline" %>
               <% if location.primary? %><%= badge "Main", tone: :info, dot: false %><% end %></p>
             <p class="text-sm2 text-muted"><%= [ location.address_lines.first, phone_number(location.contact_phone) ].compact_blank.join(" · ").presence || "No address yet" %></p>
-            <p class="text-sm2 text-muted"><%= location.members.select { @working.include?(_1.id) }.map(&:full_name).sort.to_sentence.presence || "Nobody assigned" %></p>
+            <p class="text-sm2 text-muted"><%= location.members.select { @working.include?(_1.id) }.map(&:full_name).sort.to_sentence.presence || "Not assigned" %></p>
           </div>
           <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
             <button type="button" class="<%= button_classes(:ghost, :sm, :icon) %>" data-menu-target="button" data-action="menu#toggle"

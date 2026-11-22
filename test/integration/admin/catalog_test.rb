@@ -32,7 +32,7 @@ class Admin::CatalogTest < ActionDispatch::IntegrationTest
   test "an empty catalog invites the first item" do
     as_member(@owner)
     get admin_catalog_items_path
-    assert_select "main", /Your catalog is empty/
+    assert_select "main", /No services yet/
   end
 
   test "adding an item with a new category" do

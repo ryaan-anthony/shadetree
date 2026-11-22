@@ -43,7 +43,7 @@ class Admin::CatalogItemsController < Admin::BaseController
     @item = CatalogItem.new(item_params)
     assign_new_category
     if @item.save
-      redirect_to admin_catalog_items_path(anchor: "item-#{@item.uid}"), notice: "#{@item.name} added to your catalog."
+      redirect_to admin_catalog_items_path(anchor: "item-#{@item.uid}"), notice: "#{@item.name} added to your services."
     else
       render :new, status: :unprocessable_content
     end

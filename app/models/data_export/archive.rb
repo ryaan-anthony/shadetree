@@ -11,7 +11,7 @@ class DataExport::Archive
   class TooLarge < StandardError; end
 
   NOT_INCLUDED = [
-    "Your catalog, tax rates, team and settings (see them in the app)",
+    "Your services and prices, tax rates, team and settings (see them in the app)",
     "Plan and billing history (from your billing emails and the billing page)",
     "Activity timelines and email logs",
     "Your questions to Shadetree support (see them under Help)" # OPS-05

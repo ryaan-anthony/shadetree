@@ -129,7 +129,11 @@
         <% @client.contact_methods.each do |method| %>
           <li class="flex items-center gap-2.5">
             <%= icon(method.email? ? "mail" : "phone", class: "size-4 shrink-0 text-faint") %>
-            <%= link_to (method.email? ? method.value : phone_number(method.value)), (method.email? ? method.href : phone_href(method.value) || method.href), class: "min-w-0 truncate font-medium text-ink hover:underline" %>
+            <% if method.email? %>
+              <%= link_to method.value, method.href, class: "min-w-0 truncate font-medium text-ink hover:underline" %>
+            <% else %>
+              <%= phone_link method.value, class: "min-w-0 truncate font-medium text-ink hover:underline" %>
+            <% end %>
             <% if method.label %><span class="text-sm2 text-muted"><%= method.label %></span><% end %>
           </li>
           <% if method.undeliverable? %>

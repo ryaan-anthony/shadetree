@@ -59,8 +59,8 @@
 
       <%= card title: "Invoices" do %>
         <div class="grid gap-4 sm:grid-cols-2">
-          <%= f.field :invoice_due_days, as: :number, label: "Days to pay, after sending", min: 0, max: 365,
-                      help: "0 means due on receipt." %>
+          <%= f.field :invoice_due_days, as: :number, label: "Days to pay, after it's issued", min: 0, max: 365,
+                      help: "An invoice is issued when you send it. 0 means due on receipt." %>
           <%= f.field :invoice_number_prefix, label: "Invoice number prefix", maxlength: 8, help: "Invoices are numbered #{@business.invoice_number_prefix.presence || "INV"}-0001…" %>
         </div>
         <%= f.field :invoice_terms, as: :textarea, label: "Invoice terms", optional: true, rows: 5,
@@ -79,7 +79,7 @@
       <%= card title: "Contact details" do %>
         <div class="grid gap-4 sm:grid-cols-2">
           <%= f.field :email, as: :email, label: "Business email", optional: true, placeholder: "office@example.com", autocomplete: "email" %>
-          <%= f.field :phone, as: :phone, label: "Phone", optional: true, placeholder: "(555) 123-4567", autocomplete: "tel", value: phone_number(@business.phone) %>
+          <%= f.field :phone, as: :phone, label: "Phone", optional: true, placeholder: "(555) 123-4567", autocomplete: "tel" %>
         </div>
         <%# A text input (not type=url) so "example.com" reaches the server, which adds https://. %>
         <%= f.field :website, optional: true, placeholder: "example.com", inputmode: "url", autocomplete: "url", spellcheck: false %>

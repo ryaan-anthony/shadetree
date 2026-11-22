@@ -26,11 +26,11 @@
         <%= link_to "Clear search", admin_catalog_items_path(archived: (1 if @showing_archived)), class: button_classes(:secondary) %>
       <% end %>
     <% elsif @showing_archived %>
-      <%= empty_state title: "No archived items", text: "Archived items are hidden from pickers but stay on old quotes and invoices.", icon: "archive" %>
+      <%= empty_state title: "No archived services", text: "Archived services are hidden from pickers but stay on old quotes and invoices.", icon: "archive" %>
     <% else %>
-      <%= empty_state title: "Your catalog is empty", text: "Start with common services for your kind of business and fill in your prices, or add your own one at a time.", icon: "package" do %>
+      <%= empty_state title: "No services yet", text: "Start with common services for your kind of business and fill in your prices, or add your own one at a time.", icon: "package" do %>
         <%= link_to admin_catalog_presets_path, class: button_classes do %><%= icon "zap" %> Add starter services<% end %>
-        <%= link_to new_admin_catalog_item_path, class: button_classes(:secondary) do %><%= icon "plus" %> Add an item<% end %>
+        <%= link_to new_admin_catalog_item_path, class: button_classes(:secondary) do %><%= icon "plus" %> Add a service<% end %>
       <% end %>
     <% end %>
   </div>

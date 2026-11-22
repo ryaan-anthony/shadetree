@@ -110,7 +110,7 @@ class Admin::ScheduleController < Admin::BaseController
 
   def grid_place = location_filter || current_business
 
-  # A member id from the drag ("none" for the "Nobody yet" column), only if they're in this business.
+  # A member id from the drag ("none" for the "Not assigned" column), only if they're in this business.
   def member_param(key)
     value = params[key].presence
     return nil if value.nil? || value == "none"

@@ -112,7 +112,7 @@
         <ul class="grid grid-cols-2 gap-3 sm:grid-cols-3" id="job-files">
           <% files.each do |file| %>
             <li class="min-w-0">
-              <%= link_to rails_blob_path(file, disposition: "inline"), target: "_blank", rel: "noopener", class: "block text-sm2 text-ink hover:underline" do %>
+              <%= link_to rails_blob_path(file, disposition: "inline"), target: "_blank", rel: "noopener", class: "block text-sm2 text-ink hover:underline", "aria-label": file.filename.to_s do %>
                 <% if file.image? %>
                   <%= image_tag rails_representation_path(file.variant(:web)), alt: file.filename.to_s, loading: "lazy", class: "aspect-[4/3] w-full rounded-control bg-sunken object-cover" %>
                 <% else %>

@@ -106,7 +106,7 @@ class Admin::LocationsTest < ActionDispatch::IntegrationTest
     as_business(@business) { LocationMember.create!(location:, user: tech) }
     @business.business_users.find_by(user: tech).deactivate!
     get admin_locations_path
-    assert_select "#location-#{location.uid}", /Nobody assigned/
+    assert_select "#location-#{location.uid}", /Not assigned/
   end
 
   test "a member's default location" do

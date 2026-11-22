@@ -83,8 +83,8 @@ class MessageTemplate < ApplicationRecord
   # Filled in for the preview, and for checking a template renders.
   SAMPLE = {
     "client_first_name" => "Maria", "client_name" => "Maria Lopez", "your_name" => "Dana",
-    "quote_number" => "Q-1041", "quote_title" => "Spring cleanup", "invoice_number" => "INV-2210", "invoice_title" => "Spring cleanup",
-    "total" => "$1,250.00", "document_number" => "Q-1041", "document_title" => "Spring cleanup", "balance" => "$450.00", "valid_until" => "Dec 19, 2026", "due_date" => "Dec 3, 2026",
+    "quote_number" => "Q-1041", "quote_title" => "Service call", "invoice_number" => "INV-2210", "invoice_title" => "Service call",
+    "total" => "$1,250.00", "document_number" => "Q-1041", "document_title" => "Service call", "balance" => "$450.00", "valid_until" => "Dec 19, 2026", "due_date" => "Dec 3, 2026",
     "visit_window" => "Tue, Nov 17 · 8–10 AM", "signer_name" => "Maria Lopez", "link" => "https://getshadetree.com/c/…"
   }.freeze
 

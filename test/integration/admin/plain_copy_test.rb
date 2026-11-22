@@ -39,7 +39,45 @@ class Admin::PlainCopyTest < ActionDispatch::IntegrationTest
     get admin_job_path(job)
     assert_select "a[href='tel:+12155551212']", /\(215\) 555-1212/
     get edit_admin_business_path
-    assert_select "input[name='business[phone]'][value=?]", "(215) 555-1212"
+    assert_select "input[name='business[phone]'][value=?]", "2155551212" # what's stored, not reformatted
+  end
+
+  test "saving settings keeps a phone number exactly as typed, wherever it's from" do
+    patch admin_business_path, params: { business: { name: @business.name, phone: "0412 345 678 ext 2" } }
+    assert_equal "0412 345 678 ext 2", @business.reload.phone
+    get edit_admin_business_path
+    assert_select "input[name='business[phone]'][value=?]", "0412 345 678 ext 2"
+    patch admin_business_path, params: { business: { name: @business.name, phone: "0412 345 678 ext 2" } }
+    assert_equal "0412 345 678 ext 2", @business.reload.phone, "saving again doesn't rewrite it"
+  end
+
+  test "a long file name with a dot in it doesn't break the quote builder" do
+    quote = as_business(@business) do
+      Quote.start(client: @maria).tap do |q|
+        q.attachments.attach(io: StringIO.new("%PDF-1.4"), filename: "Estimate.Nov 20 2026 final copy for the Smith family", content_type: "application/pdf")
+        q.save!
+      end
+    end
+    get edit_admin_quote_path(quote)
+    assert_response :success
+    assert_select "a[aria-label=?]", "Estimate.Nov 20 2026 final copy for the Smith family", text: /\AEstimate\.Nov.*…th family\z/
+  end
+
+  test "a request names its services, and an approval that doesn't verify says so" do
+    request = as_business(@business) { ServiceRequest.create!(client: @maria, source: "phone", description: "Bugs", services: %w[Ants Wasps Mice].map { { "name" => _1 } }) }
+    assert_equal "Request for Ants and 2 more", request.title
+    assert_equal "Request", as_business(@business) { ServiceRequest.new(services: []).title }
+
+    quote = as_business(@business) do
+      Quote.start(client: @maria).tap do |q|
+        q.sync_line_items([ { "key" => "a", "name" => "Spraying", "quantity" => "1", "unit_price" => "80" } ]) && q.save!
+        q.mark_sent!(by: @owner, channel: "link")
+        q.record_response!(:approve, by: @owner, signer_name: "Maria", message: "On the phone")
+        QuoteResponse.where(id: q.reload.approval.id).update_all(signature: "tampered") # as if changed in the database
+      end
+    end
+    get admin_quote_path(quote)
+    assert_select "p.text-danger", "This approval record doesn't verify."
   end
 
   test "approval evidence sits behind 'Reference'; no version number for owners" do
@@ -62,7 +100,7 @@ class Admin::PlainCopyTest < ActionDispatch::IntegrationTest
     assert_select "button[name=filter][value=to_invoice]", /Ready to invoice/
     get edit_admin_business_path(tab: "documents")
     assert_select "label", /Days a quote stays valid/
-    assert_select "label", /Days to pay, after sending/
+    assert_select "label", /Days to pay, after it's issued/
     get admin_hours_path
     assert_select "button", "Set Mon–Fri, 8 am–5 pm"
     get admin_catalog_items_path
