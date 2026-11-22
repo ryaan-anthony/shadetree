@@ -3,7 +3,8 @@
 module RolesHelper
   def role_options(target, custom_roles, built_in: BusinessUser::ROLES)
     options = built_in.map { [ _1.humanize, _1 ] } + custom_roles.map { [ _1.name, _1.choice ] }
-    options.select { |_, choice| current_membership.can_assign_role?(target, choice) || choice == target.role_choice }
+    # A member keeps their own role in the list; a new invitee (unsaved) has none to keep.
+    options.select { |_, choice| current_membership.can_assign_role?(target, choice) || (target.persisted? && choice == target.role_choice) }
   end
 
   def role_event_member(data) = User.find_by(id: data["member_id"])&.full_name || "a former member"

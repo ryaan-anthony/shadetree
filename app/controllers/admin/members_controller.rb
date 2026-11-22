@@ -24,7 +24,7 @@ class Admin::MembersController < Admin::BaseController
   end
 
   def deactivate
-    return deny_change unless current_membership.can_assign_role?(@member, @member.role_choice)
+    return deny_change unless current_membership.can_change_access?(@member)
     return redirect_to(admin_team_path, alert: "You can't deactivate yourself.") if @member == current_membership
 
     if @member.deactivate!
@@ -35,7 +35,7 @@ class Admin::MembersController < Admin::BaseController
   end
 
   def reactivate
-    return deny_change unless current_membership.can_assign_role?(@member, @member.role_choice)
+    return deny_change unless current_membership.can_change_access?(@member)
     return redirect_to(admin_team_path, alert: "That person deleted their Shadetree account.") if @member.user.deleted? # ACC-06
     # BIL-01: a reactivated member counts toward the plan's team size again.
     entitlements = current_business.entitlements
