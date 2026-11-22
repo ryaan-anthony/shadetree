@@ -67,6 +67,9 @@ table is the source of truth: change both together.
   resumable; progress is visible until complete.
 - **R13** A demo/sample mode lets a new owner see a pre-filled quote before entering real data
   (may be satisfied by sample data seeded and clearly labeled).
+- **R15** New owners get a short, skippable tour of the real screens when they create a
+  business, and a one-line tip the first time they open each main area. Both are role-aware and
+  can be restarted from Help (owner request, 2026-11-21).
 
 ## Decisions
 
@@ -89,6 +92,7 @@ table is the source of truth: change both together.
 | [ACC-05](../specs/accounts/ACC-05-onboarding.md) | Guided onboarding | M2 | CAT-01, CAT-05, QTE-03, QTE-04 |
 | [ACC-06](../specs/accounts/ACC-06-account-settings.md) | Account settings & deletion | M5 | ACC-01 |
 | [ACC-07](../specs/accounts/ACC-07-custom-roles.md) | Custom roles | M5 | ACC-04, BIL-01 |
+| [ACC-08](../specs/accounts/ACC-08-guided-tour.md) | Guided tour and first-time tips | M6 | ACC-05, ACC-04 |
 
 ## Backlog (M6)
 
