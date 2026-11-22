@@ -3,9 +3,12 @@ class Admin::QuoteAttachmentsController < Admin::BaseController
   # OPS-03: what support may do while viewing as a member
   impersonation :allowed
   requires_permission :office
+  include OwnQuoteAccess
+  allow_any_member only: :destroy # QTE-07: also on their own drafts
 
   def destroy
-    quote = Quote.find_by_param!(params[:quote_id])
+    scope = reachable_quotes or return
+    quote = scope.find_by_param!(params[:quote_id])
     return redirect_to(admin_quotes_path, alert: "Quote #{quote.number} can't be edited.") unless quote.editable?
 
     attachment = quote.attachments.find(params[:id])

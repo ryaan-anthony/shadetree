@@ -245,6 +245,7 @@ Rails.application.routes.draw do
       member do
         patch :done
         patch :pass_back, path: "pass-back"
+        post :quote # QTE-07
       end
       resources :notes, only: :create, controller: "my_request_notes"
       resources :photos, only: %i[create destroy], controller: "my_request_photos"

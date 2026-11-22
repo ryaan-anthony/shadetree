@@ -322,6 +322,10 @@ class Quote < ApplicationRecord
 
   # Starts a draft for a client with the business's defaults: next number, expiry, terms,
   # and the tax rates new documents get (none for a tax-exempt client).
+  # QTE-07: the drafts someone who quotes their assigned requests may open: ones they made from a
+  # request, never sent (a sent quote revised by the office is a draft again, but not theirs).
+  def self.own_drafts_for(user) = where(created_by_id: user.id, status: "draft", revision: 1).where.not(service_request_id: nil)
+
   def self.start(client:, property: nil, created_by: nil, location: nil)
     create!(client:, property: property || client.billing_property || client.properties.first, created_by:, location:)
   end

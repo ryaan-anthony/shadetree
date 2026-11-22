@@ -93,9 +93,21 @@ class ServiceRequest < ApplicationRecord
   # CLI-04: a draft quote from this request: its client and property (a property for the
   # typed address if the request has none, now that a staff member has checked it), its
   # services as lines with today's catalog prices (the location's, CAT-08), and its photos.
-  def create_quote!(by:)
+  # `once: true` (QTE-07, from a follow-up) re-checks under the lock: a request archived
+  # meanwhile is refused, and one just quoted (two clicks at once) raises AlreadyQuoted with
+  # that quote. From the inbox a request may have several quotes (CLI-04).
+  class AlreadyQuoted < StandardError
+    attr_reader :quote
+
+    def initialize(quote) = super("This request was just quoted (#{quote.number}).").tap { @quote = quote }
+  end
+
+  def create_quote!(by:, once: false)
     transaction do
       lock!
+      raise ArgumentError, "This request was archived meanwhile." if once && status == "archived"
+      raise AlreadyQuoted, quotes.reorder(:id).last if once && status == "quoted" && quotes.exists?
+
       property = self.property || property_matching_address
       quote = Quote.start(client:, property:, created_by: by, location:)
       items = CatalogItem.where(id: services.map { _1["catalog_item_id"] }).index_by(&:id)

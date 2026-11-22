@@ -12,13 +12,13 @@
   <div id="follow-up-action">
     <% if follow_up.done? %>
       <% to = follow_up.pass_back_to %>
-      <% next_step = if can?(:office) then to ? "Create the quote, or pass it back with what you found." : "Create the quote, or reassign it."
+      <% next_step = if can?(:office) || can?(:quote_requests) then to ? "Create the quote, or pass it back with what you found." : "Create the quote, or #{can?(:office) ? "reassign it" : "ask the office to reassign it"}."
                      else to ? "Pass it back with what you found." : "Ask the office to reassign it."
                      end %>
       <div class="banner banner-success"><%= icon "check-circle" %><p>Done <%= local_time(follow_up.done_at) %>. <%= next_step %></p></div>
       <div class="mt-3 grid gap-2 sm:grid-cols-2">
-        <% if can?(:office) %>
-          <%= button_to quote_admin_service_request_path(request_record), class: "#{button_classes(:primary)} h-auto min-h-12 w-full justify-center", form: { class: "contents" } do %><%= icon "file-plus" %> Create quote<% end %>
+        <% if can?(:office) || can?(:quote_requests) %><%# QTE-07: their role lets them quote it %>
+          <%= button_to quote_admin_my_request_path(request_record), class: "#{button_classes(:primary)} h-auto min-h-12 w-full justify-center", form: { class: "contents" } do %><%= icon "file-plus" %> Create quote<% end %>
         <% end %>
         <% if to %>
           <div class="contents" data-controller="modal">
