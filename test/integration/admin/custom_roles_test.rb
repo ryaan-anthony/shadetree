@@ -40,6 +40,13 @@ class Admin::CustomRolesTest < ActionDispatch::IntegrationTest
     assert_select "#role-admin a[href=?]", new_admin_role_path(from: "admin"), text: "Duplicate"
     assert_select "#role-owner a", text: "Duplicate", count: 0
     Permissions::GROUPS.each_key { assert_select "#role-admin dt", text: _1 }
+    # QTE-07 (owner, 2026-11-22): Technicians quote the requests given to them; the office sends.
+    assert_select "#role-technician", /drafts quotes for the requests given to them/
+    assert_select "#role-technician li", /Quote the requests given to them.*\(yes\)/m
+    assert_select "#role-technician li", /Send the quotes they drafted.*\(no\)/m
+    get new_admin_role_path(from: "technician")
+    assert_select "input#permission_quote_requests[checked]"
+    assert_select "input#permission_send_own_quotes:not([checked])"
   end
 
   test "only Owners manage roles" do
@@ -140,7 +147,8 @@ class Admin::CustomRolesTest < ActionDispatch::IntegrationTest
   end
 
   test "a custom role with team management can't hand out, or touch, more than it has, or promote itself" do
-    lead = create_role(name: "Team lead", permissions: %w[manage_team field_work])
+    # With quote_requests: built-in Technicians have it since 2026-11-22 (QTE-07).
+    lead = create_role(name: "Team lead", permissions: %w[manage_team field_work quote_requests])
     user = member_with_custom_role(lead)
     me = @business.business_users.find_by!(user:)
     tech = @business.business_users.find_by!(user: member_with_role(:technician))
@@ -162,6 +170,42 @@ class Admin::CustomRolesTest < ActionDispatch::IntegrationTest
     get admin_team_path
     assert_select "#member-#{admin.uid} select", false
     assert_select "#member-#{tech.uid} option[value=admin]", false
+  end
+
+  # ACC-07 and QTE-07 (owner, 2026-11-22): without "Quote assigned requests", a team lead can't
+  # give the Technician role (it isn't offered), but still invites people with roles within theirs.
+  test "a team lead without quote_requests invites a visits-only role, and isn't offered Technician" do
+    lead = create_role(name: "Team lead", permissions: %w[manage_team field_work])
+    crew = create_role(name: "Crew", permissions: %w[field_work])
+    get admin_roles_path
+    assert_select "#role-#{lead.uid}-technician-hint", /Can't give the Technician role/
+    assert_select "#role-#{crew.uid}-technician-hint", 0
+    user = member_with_custom_role(lead)
+    tech = @business.business_users.find_by!(user: member_with_role(:technician))
+    as_member(user)
+
+    get admin_team_path
+    assert_select "select[name='invitation[role]'] option[value=technician]", 0, "not offered, rather than refused"
+    assert_select "select[name='invitation[role]'] option[value=?]", crew.choice
+    post admin_invitations_path, params: { invitation: { email: "crew@example.com", role: crew.choice } }
+    assert_equal crew.id, Invitation.unscoped.find_by!(email: "crew@example.com").role_id
+    post admin_invitations_path, params: { invitation: { email: "tech@example.com", role: "technician" } }
+    assert_nil Invitation.unscoped.find_by(email: "tech@example.com")
+    # Removing access isn't granting it: they deactivate and reactivate Technicians (owner, 2026-11-22).
+    get admin_team_path
+    assert_select "#member-#{tech.uid} form[action=?]", deactivate_admin_member_path(tech)
+    assert_select "#member-#{tech.uid} select", 0, "but can't change their role"
+    patch deactivate_admin_member_path(tech)
+    assert_not tech.reload.active?
+    get admin_team_path
+    assert_select "form[action=?]", reactivate_admin_member_path(tech)
+    patch reactivate_admin_member_path(tech)
+    assert tech.reload.active?
+    patch admin_member_path(tech), params: { member: { role: crew.choice } }
+    assert_equal "technician", tech.reload.role, "changing a Technician's role still needs covering them"
+    admin = @business.business_users.find_by!(user: member_with_role(:admin))
+    patch deactivate_admin_member_path(admin)
+    assert admin.reload.active?, "an Admin is still out of reach"
   end
 
   test "the invitation page shows a custom role's name" do

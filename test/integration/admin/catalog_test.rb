@@ -23,8 +23,8 @@ class Admin::CatalogTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "the picker search is open to office roles" do
-    assert_permission_matrix(owner: true, admin: true, technician: false) do
+  test "the picker search is open to office roles, and to Technicians, who quote requests given to them (QTE-07)" do
+    assert_permission_matrix(owner: true, admin: true, technician: true) do
       get search_admin_catalog_items_path(format: :json)
     end
   end

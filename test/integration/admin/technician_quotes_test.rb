@@ -96,9 +96,11 @@ class Admin::TechnicianQuotesTest < ActionDispatch::IntegrationTest
     assert_not_found_across_businesses { get edit_admin_quote_path(@office_quote) }
   end
 
-  test "without the permission, a technician can't quote, build or search the catalog" do
+  test "without the permission (a custom role with visits only), they can't quote, build or search the catalog" do
     tech = member_with_role(:technician)
     as_business(@business) do
+      visits_only = Role.create!(name: "Crew", permissions: %w[field_work])
+      @business.business_users.find_by!(user: tech).update!(role: "custom", role_id: visits_only.id)
       @request_record.follow_up.update_columns(user_id: tech.id)
     end
     sign_in tech
@@ -113,10 +115,65 @@ class Admin::TechnicianQuotesTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
-  test "Owners and Admins can quote assigned requests; a custom role can be given it, Technicians can't by default" do
+  test "Owners, Admins and built-in Technicians quote assigned requests; only Owners and Admins send their own (owner, 2026-11-22)" do
     assert Permissions.granted?("admin", :quote_requests)
-    assert_not Permissions.granted?("technician", :quote_requests)
+    assert Permissions.granted?("technician", :quote_requests)
+    assert_not Permissions.granted?("technician", :send_own_quotes), "review is still required"
     assert_includes Permissions::GRANTABLE, :quote_requests
+    assert_includes Permissions::GRANTABLE, :send_own_quotes
+  end
+
+  test "a built-in Technician quotes a done follow-up and gets Ready for review, not Send; existing ones included" do
+    tech = member_with_role(:technician) # a built-in role, defined in code: no data to change for existing members
+    as_business(@business) { @request_record.follow_up.update_columns(user_id: tech.id) }
+    sign_in tech
+    post switch_admin_business_path, params: { business: @business.uid }
+    get admin_my_request_path(@request_record)
+    assert_select "form[action=?] button", quote_admin_my_request_path(@request_record), /Create quote/
+    quote = quote_it
+    assert_match "Nothing is sent until the office sends it", flash[:notice]
+    get edit_admin_quote_path(quote)
+    assert_select "button[form=ready-for-review-form]", /Ready for review/
+    assert_select "a[href=?]", new_admin_quote_send_path(quote), 0
+    get new_admin_quote_send_path(quote)
+    assert_response :forbidden
+    post admin_quote_send_path(quote), params: { channel: "link" }
+    assert_response :forbidden
+    get search_admin_catalog_items_path(format: :json, q: "mow")
+    assert_response :success
+    get edit_admin_quote_path(@office_quote)
+    assert_response :not_found, "other quotes stay out of reach"
+    get admin_service_requests_path
+    assert_response :forbidden
+
+    post ready_admin_quote_path(quote), params: { lock_version: as_business(@business) { quote.reload.lock_version } }
+    assert_redirected_to edit_admin_quote_path(quote)
+    assert_equal tech, as_business(@business) { quote.reload.ready_for_review_by }
+  end
+
+  test "at the plan's limit, someone who doesn't send sees when the office can, not the plan notice" do
+    @business.update!(plan_overrides: { "features" => { "custom_roles" => true }, "limits" => { "team_members" => nil, "quotes_sent" => 0 } })
+    quote = quote_it
+    get edit_admin_quote_path(quote)
+    assert_select "#quote-limit-notice", 0, "no plan talk for someone who never sends"
+    assert_select "#office-sends-later", /The office can't send quotes on the current plan yet/
+    assert_no_match(/bigger plan|See plans/, css_select("main").text)
+
+    as_business(@business) { @senior.update!(permissions: %w[field_work quote_requests send_own_quotes]) }
+    get edit_admin_quote_path(quote)
+    assert_select "#quote-limit-notice"
+    assert_select "#office-sends-later", 0
+  end
+
+  test "a built-in Technician whose follow-up isn't done, or isn't theirs, can't quote it" do
+    tech = member_with_role(:technician)
+    sign_in tech
+    post switch_admin_business_path, params: { business: @business.uid }
+    post quote_admin_my_request_path(@request_record)
+    assert_response :not_found, "not assigned to them"
+    as_business(@business) { @request_record.follow_up.update_columns(user_id: tech.id, done_at: nil, done_by_id: nil) }
+    get admin_my_request_path(@request_record)
+    assert_select "form[action=?]", quote_admin_my_request_path(@request_record), 0
   end
 
   test "once the office has sent it, it's not theirs again, even when revised back to a draft" do

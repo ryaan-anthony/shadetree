@@ -30,7 +30,9 @@ class QuotePdfDownloadsTest < ActionDispatch::IntegrationTest
     end
     sign_out :user
     with_fake_pdf_renderer do
-      assert_permission_matrix(owner: true, admin: true, technician: false) { get pdf_admin_quote_path(@quote) }
+      assert_permission_matrix(owner: true, admin: true) { get pdf_admin_quote_path(@quote) }
+      as_technician { get pdf_admin_quote_path(@quote) }
+      assert_response :not_found, "QTE-07: Technicians reach only their own drafts from requests"
     end
   end
 

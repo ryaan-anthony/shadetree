@@ -19,7 +19,9 @@ module Permissions
   ROLES = {
     "owner" => CATALOG.keys,
     "admin" => %i[manage_team business_settings office schedule field_work quote_requests send_own_quotes export_data],
-    "technician" => %i[field_work]
+    # QTE-07 (owner, 2026-11-22): Technicians quote the requests given to them, and the office
+    # checks and sends what they draft (no send_own_quotes).
+    "technician" => %i[field_work quote_requests]
   }.freeze
 
   # ACC-07: what a custom role may include, grouped by area, in plain words. Owner-only

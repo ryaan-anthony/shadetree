@@ -16,6 +16,17 @@ module PermissionHelpers
     user
   end
 
+  # Signs in a new built-in Technician of `business` and makes the request, for denials that
+  # aren't a 403 (QTE-07: someone who quotes requests gets "not found" for other quotes).
+  def as_technician(business: businesses(:one), &request)
+    user = member_with_role(:technician, business:)
+    sign_in user
+    post switch_admin_business_path, params: { business: business.uid }
+    instance_exec(&request)
+  ensure
+    sign_out user if user
+  end
+
   def assert_permission_matrix(business: businesses(:one), **expected, &request)
     unknown = expected.keys.map(&:to_s) - BusinessUser::ROLES
     raise ArgumentError, "Unknown roles #{unknown}" if unknown.any?

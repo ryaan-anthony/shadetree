@@ -58,7 +58,7 @@ class Admin::MyRequestsTest < ActionDispatch::IntegrationTest
 
     get admin_my_request_path(@request_record)
     assert_select "button", /Pass back to John Doe/
-    assert_select "form[action=?]", quote_admin_my_request_path(@request_record), 0, "a technician without the permission can't make quotes (QTE-07)"
+    assert_select "form[action=?]", quote_admin_my_request_path(@request_record), 1, "built-in Technicians quote it (QTE-07, owner, 2026-11-22)"
     patch pass_back_admin_my_request_path(@request_record), params: { note: "About 40 m; two posts rotten." }
     assert_redirected_to admin_my_day_path
     assert_equal [ @owner, false, Date.new(2026, 11, 23), "anytime" ], [ follow_up.user, follow_up.done?, follow_up.scheduled_on, follow_up.timing ]
@@ -149,12 +149,12 @@ class Admin::MyRequestsTest < ActionDispatch::IntegrationTest
       BusinessUser.find_by(user: admin).deactivate!
     end
     get admin_my_request_path(@request_record)
-    assert_select ".banner-success", /Ask the office to reassign it\./
+    assert_select ".banner-success", /Create the quote, or ask the office to reassign it\./
     assert_select "button", { text: /Pass back/, count: 0 }
 
     as_business(@business) { follow_up.update_columns(assigned_by_id: nil) }
     get admin_my_request_path(@request_record)
-    assert_select ".banner-success", /Ask the office to reassign it\./
+    assert_select ".banner-success", /Create the quote, or ask the office to reassign it\./
   end
 
   test "a deleted assigner can't be passed back to, and isn't told it's done" do
@@ -168,7 +168,7 @@ class Admin::MyRequestsTest < ActionDispatch::IntegrationTest
     patch done_admin_my_request_path(@request_record)
     assert_equal "Done.", flash[:notice]
     get admin_my_request_path(@request_record)
-    assert_select ".banner-success", /Ask the office to reassign it\./
+    assert_select ".banner-success", /Create the quote, or ask the office to reassign it\./
   end
 
   test "editing the details leaves it done; moving or handing it on makes it to do again" do

@@ -140,7 +140,9 @@ class Admin::LocationPricingTest < ActionDispatch::IntegrationTest
   test "only Owners and Admins re-price or set location prices and taxes" do
     quote, invoice = draft_at(@main), draft_at(@main, invoice: true)
     sign_out :user
-    assert_permission_matrix(owner: true, admin: true, technician: false) { patch reprice_admin_quote_path(quote), params: { lock_version: 0 } }
+    assert_permission_matrix(owner: true, admin: true) { patch reprice_admin_quote_path(quote), params: { lock_version: 0 } }
+    as_technician { patch reprice_admin_quote_path(quote), params: { lock_version: 0 } }
+    assert_response :not_found, "QTE-07: Technicians reach only their own drafts from requests"
     assert_permission_matrix(owner: true, admin: true, technician: false) { patch reprice_admin_invoice_path(invoice), params: { lock_version: 0 } }
     assert_permission_matrix(owner: true, admin: true, technician: false) { patch admin_catalog_item_path(@mowing), params: { catalog_item: { name: "Mowing", location_price_inputs: { @north.uid => "70" } } } }
     assert_permission_matrix(owner: true, admin: true, technician: false) { patch admin_location_path(@north), params: { location: { name: "North yard", own_tax_rates: "0" } } }

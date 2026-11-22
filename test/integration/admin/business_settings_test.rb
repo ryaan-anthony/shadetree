@@ -13,6 +13,11 @@ class Admin::BusinessSettingsTest < ActionDispatch::IntegrationTest
     assert_permission_matrix(owner: true, admin: true, technician: false) { get edit_admin_business_path(tab: "documents") }
   end
 
+  test "Technicians see prices says it covers visits only; quoting shows prices (QTE-07, owner, 2026-11-22)" do
+    get edit_admin_business_path(tab: "documents")
+    assert_select "label", /Technicians see prices.*On the visits they're sent to.*Technicians drafting a quote see the catalog prices\./m
+  end
+
   test "the business tab edits profile, contact, structured address, time zone and currency" do
     get edit_admin_business_path
     %w[name industry description email phone website address_line1 address_line2 city region postal_code country timezone currency].each do |field|

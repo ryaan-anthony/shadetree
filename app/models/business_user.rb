@@ -145,6 +145,16 @@ class BusinessUser < ApplicationRecord
 
   def custom_roles_allowed? = business.entitlements.feature?(:custom_roles)
 
+  # Deactivating or reactivating `target` (their role unchanged). As can_assign_role?, except that
+  # anyone who manages the team may do it to a Technician: since Technicians quote requests
+  # (QTE-07), a lead without that would otherwise be refused, and removing access isn't granting
+  # it (owner, 2026-11-22). Admins and other roles still need covering, as before.
+  def can_change_access?(target)
+    return true if can?(:manage_team) && target.business_id == business_id && target.role == "technician"
+
+    can_assign_role?(target, target.role_choice)
+  end
+
   # ACC-08: where this member is with the guided tour (product measurement, no personal data).
   # start begins the first run; step moves it on; finish and end close it. Once the first run
   # has ended its outcome stays: taking the tour again from Help only stamps tour_replayed_at,

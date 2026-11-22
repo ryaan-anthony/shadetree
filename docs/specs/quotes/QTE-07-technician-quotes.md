@@ -26,9 +26,9 @@ assigned to them, without seeing anything else in the office.
 
 - [x] A new role permission, "Quote assigned requests", lets a member create a quote from a
       request assigned to them, pre-filled as from the inbox (CLI-04), and edit it until sent.
-      It can be given to any role (ACC-07); Owners and Admins already can.
+      It can be given to any role (ACC-07); Owners, Admins and Technicians already can.
       *From a done follow-up on their day; theirs to edit (not delete) until it's sent. Owners and
-      Admins have both permissions; others get them through a custom role.*
+      Admins have both permissions, built-in Technicians this one; others get them through a custom role.*
 - [x] A second permission, "Send their own quotes", lets them send it. Without it, they mark
       the draft "Ready for review", which tells the people who manage quotes (NTF-02), and
       those people send it.
@@ -52,16 +52,25 @@ assigned to them, without seeing anything else in the office.
 - Permissions quote_requests and send_own_quotes (docs/plans/02-accounts.md). OwnQuoteAccess
   limits these members to drafts they made from requests; "Ready for review" records an event
   and tells the office (NTF-02 "A quote is ready to check").
-- Dev seeds: Riley (senior@example.com), a "Senior tech", has a draft marked ready for review.
+- Dev seeds: Marcus (tech@example.com), a built-in Technician, has a draft marked ready for
+  review; Riley (senior@example.com), a "Senior tech" who also sends their own quotes, has a done
+  site visit to quote and send.
+- At the plan's quote limit, people who don't send see when the office can send it, not the
+  plan notice. Built-in roles are defined in code, so existing businesses' Technicians have
+  "Quote assigned requests" too. A custom role that manages the team can only hand out Technician if it has it.
 
 ## Decisions
 
 - Field techs can build quotes for requests assigned to them, behind two permissions (draft;
   send), so an owner can require review (owner approved the feature set, 2026-11-21).
-- The built-in Technician role gets neither; a business gives them through a custom role.
+- The built-in Technician role gets "Quote assigned requests" by default, existing businesses'
+  too; review stays required, as "Send their own quotes" stays off for it (owner, 2026-11-22).
+- Technicians drafting a quote see catalog prices even with "Technicians see prices" off; the
+  setting's help says so: "On the visits they're sent to… Technicians drafting a quote see the
+  catalog prices." (owner, 2026-11-22).
 - Deleting a draft stays with the office.
-- Changing a draft after marking it ready takes it back until it's marked again (proposed,
-  pending the owner).
+- Changing a draft after marking it ready takes it back from the office until it's marked again:
+  kept as built; owner to confirm (owner, 2026-11-22).
 - Someone sending their own quote sends to the client's emails on file, and can't send a copy
   of an approved one; anything else goes through the office.
 - Drafts someone made from requests while they were office staff stay theirs if their role

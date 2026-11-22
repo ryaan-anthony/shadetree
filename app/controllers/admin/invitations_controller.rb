@@ -11,7 +11,8 @@ class Admin::InvitationsController < Admin::BaseController
   def create
     # The role is checked against the inviter's own rights before it's used (ACC-04).
     choice = params.dig(:invitation, :role).to_s.presence || "technician"
-    unless current_membership.can_assign_role?(BusinessUser.new(business: current_business, role: "technician"), choice)
+    # The invitee has no role yet: a stand-in with no permissions, so only the role given is checked.
+    unless current_membership.can_assign_role?(BusinessUser.new(business: current_business, role: BusinessUser::CUSTOM), choice)
       return redirect_to admin_team_path, alert: choice == "owner" ? "Only owners can invite owners." : "That role can't be given here."
     end
 

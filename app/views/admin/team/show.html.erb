@@ -25,7 +25,7 @@
                 </td>
                 <td class="text-muted"><%= member.last_active_at ? "#{time_ago_in_words(member.last_active_at)} ago" : "Not yet" %></td>
                 <td class="text-right">
-                  <% if member != current_membership && current_membership.can_assign_role?(member, member.role_choice) %>
+                  <% if member != current_membership && current_membership.can_change_access?(member) %>
                     <%= button_to "Deactivate", deactivate_admin_member_path(member), method: :patch, class: button_classes(:ghost, :sm),
                                   form: { data: { turbo_confirm: "#{member.user.full_name} will lose access to #{current_business.name} right away. Their name stays on past work.", turbo_confirm_button: "Deactivate" } } %>
                   <% elsif member == current_membership %>
@@ -77,7 +77,7 @@
                 <p class="font-semibold text-ink"><%= member.user.full_name %></p>
                 <p class="text-sm2 text-muted"><%= member.role_name %> · <%= member.user.deleted? ? "deleted their account" : "deactivated" %> <%= member.deactivated_at ? "#{time_ago_in_words(member.deactivated_at)} ago" : "" %></p>
               </div>
-              <% if !member.user.deleted? && current_membership.can_assign_role?(member, member.role_choice) %>
+              <% if !member.user.deleted? && current_membership.can_change_access?(member) %>
                 <%= button_to "Reactivate", reactivate_admin_member_path(member), method: :patch, class: button_classes(:secondary, :sm) %>
               <% end %>
             </li>
@@ -92,8 +92,8 @@
     <% if entitlements.within?(:team_members) %>
       <%= form_with model: @invitation, url: admin_invitations_path do |f| %>
         <%= f.field :email, as: :email, required: true, placeholder: "name@example.com" %>
-        <%= f.field :role, as: :select, choices: role_options(BusinessUser.new(business: current_business, role: "technician"), @custom_roles, built_in: BusinessUser::ROLES.reverse),
-                    help: safe_join([ "Technicians see their own visits. Admins run the office. Owners also handle billing. ",
+        <%= f.field :role, as: :select, choices: role_options(BusinessUser.new(business: current_business, role: BusinessUser::CUSTOM), @custom_roles, built_in: BusinessUser::ROLES.reverse),
+                    help: safe_join([ "Technicians see their own visits and draft quotes for the office to send. Admins run the office. Owners also handle billing. ",
                                       (link_to("See what each role can do", admin_roles_path, class: "underline") if can?(:manage_owners)) ].compact) %>
         <%= f.submit_button "Send invitation", class: "mt-4 w-full" %>
       <% end %>

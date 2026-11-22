@@ -20,7 +20,7 @@ businesses that are already digital.
 | --- | --- | --- |
 | **Owner** | Runs the business, often also does the work. Non-technical, mobile-first. | Send a professional quote in under 3 minutes; know what needs attention today; get paid faster. |
 | **Office admin** | Part-time help answering phones, building quotes, scheduling. | Fast data entry, a clear calendar, one list of what's outstanding. |
-| **Technician** | Does the work in the field. | Today's visits, address, client contact, notes/photos, mark done. Nothing else. |
+| **Technician** | Does the work in the field. | Today's visits, address, client contact, notes/photos, mark done; drafts quotes for requests given to them, for the office to check and send. Nothing else. |
 | **Client** | The business's customer (homeowner, property manager). | Request, approve, pick a time and pay **without creating an account**. |
 | **Operator** | Us — the people running Shadetree. | See every tenant's health, support them safely, bill them fairly. |
 
@@ -128,7 +128,7 @@ These apply to every spec; acceptance criteria assume them without repeating the
 - **Tenancy:** A member can only ever see and change data of businesses they belong to. Every
   feature includes a test proving cross-tenant access is denied.
 - **Roles:** Owner > Admin > Technician. Technicians see only what is assigned to them plus the
-  client details needed to do the work. Each spec states any role rules that differ.
+  client details needed to do the work, and draft quotes for their requests for review (QTE-07). Each spec states any role rules that differ.
 - **Performance:** Primary pages render server-side in under 300 ms (p95) at launch scale;
   client-facing pages are usable on a 3G connection and score ≥ 90 on mobile Lighthouse.
 - **Accessibility:** WCAG 2.1 AA for client-facing pages; keyboard and screen-reader usable
