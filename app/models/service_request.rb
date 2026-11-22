@@ -54,6 +54,13 @@ class ServiceRequest < ApplicationRecord
   # kept: uids are case-sensitive).
   def reference = "R-#{uid.first(8)}"
 
+  # #289: how staff name it in lists (the reference is for support, shown on the request page).
+  def title
+    return "Request" if service_names.empty?
+
+    "Request for #{service_names.first}#{" and #{service_names.size - 1} more" if service_names.size > 1}"
+  end
+
   # CLI-04: opening a request records that this member has seen it.
   def viewed_by!(user)
     ServiceRequestView.upsert({ business_id:, service_request_id: id, user_id: user.id, viewed_at: Time.current },
