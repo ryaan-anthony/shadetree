@@ -46,7 +46,7 @@ class Admin::InvoicesController < Admin::BaseController
 
   def edit; end
 
-  # The builder's autosave and its explicit Save, as for quotes: the whole draft with the
+  # The builder's autosave (and its Save draft fallback), as for quotes: the whole draft with the
   # lock_version it was rendered from, so a stale tab is refused instead of overwriting.
   def update
     saved = Invoice.transaction do

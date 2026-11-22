@@ -124,9 +124,11 @@
         <div class="border-t border-line pt-3"><%= render "admin/quotes/totals", quote: @invoice, totals: %></div>
       </div>
     <% end %>
-    <%# #289: one way to save: as you go (the status at the top says when). Without JavaScript, a button. %>
-    <noscript><%= f.submit_button "Save draft", class: "w-full" %></noscript>
-    <p class="text-center text-sm2 text-muted" id="autosave-note">Changes save as you go. Send it from the top of the page when it’s ready.</p>
+    <%# #289: one way to save: as you go. The status repeats here (the header's is read out), so a
+        failure isn't missed on a long draft. The button only shows if autosave isn't running. %>
+    <%= f.submit_button "Save draft", class: "w-full", data: { quote_builder_target: "fallback" } %>
+    <p class="text-center text-sm2 text-muted" id="autosave-note">Changes save as you go: <span class="save-status" data-quote-builder-target="status" aria-hidden="true">Saved</span>.
+      Send it from the top of the page when it’s ready.</p>
   </aside>
 <% end %>
 </div>

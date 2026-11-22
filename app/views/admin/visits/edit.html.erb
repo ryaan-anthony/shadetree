@@ -1,6 +1,6 @@
 <% content_for :title, "Change visit" %>
 <%= page_header "Change visit", lede: "#{@job.number} #{@job.title}: #{@visit_label}" %>
 <div class="form-split">
+  <%= render "admin/visits/job_summary", job: @job, visit: @visit %>
   <%= render "form" %>
-  <%= render "admin/visits/job_summary", job: @job %>
 </div>

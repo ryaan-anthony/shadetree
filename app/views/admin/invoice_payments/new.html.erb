@@ -5,6 +5,18 @@
   <%= link_to "Cancel", staff_invoice_path(@invoice), class: button_classes(:ghost) %>
 <% end %>
 <div class="form-split">
+<%# #289: what's owed, first (phones and screen readers get it before the form); beside it on wide screens. %>
+<aside class="form-split-aside" aria-labelledby="payment-summary-h">
+  <%= card id: "payment-invoice-summary" do %>
+    <h2 class="card-title" id="payment-summary-h">What's owed</h2>
+    <dl class="mt-3 space-y-2 text-sm">
+      <div class="flex justify-between gap-2"><dt class="text-muted">Total</dt><dd class="money text-ink"><%= money(@invoice.total) %></dd></div>
+      <% if @invoice.payments? %><div class="flex justify-between gap-2"><dt class="text-muted">Paid so far</dt><dd class="money text-ink"><%= money(@invoice.amount_paid) %></dd></div><% end %>
+      <div class="flex justify-between gap-2 border-t border-line pt-2"><dt class="font-semibold text-ink">Left to pay</dt><dd class="money font-semibold text-ink"><%= money(@invoice.balance) %></dd></div>
+      <% if @invoice.due_on %><div class="flex justify-between gap-2"><dt class="text-muted">Due</dt><dd class="text-ink"><%= local_date(@invoice.due_on) %></dd></div><% end %>
+    </dl>
+  <% end %>
+</aside>
 <%= form_with model: @payment, scope: :payment, url: admin_invoice_payments_path(@invoice), method: :post, class: "min-w-0" do |f| %>
   <%= card title: @invoice.client.display_name, subtitle: "Invoice #{@invoice.number}" do %><%# the amounts are beside it (#289) %>
     <%= render "fields", f:, payment: @payment %>
@@ -17,14 +29,5 @@
     <% end %>
     <%= f.submit_button "Record payment", class: "mt-4 w-full sm:w-auto" %>
   <% end %>
-<% end %>
-<%# #289: the invoice beside the form on wide screens %>
-<%= card title: "Invoice #{@invoice.number}", id: "payment-invoice-summary" do %>
-  <dl class="space-y-2 text-sm">
-    <div class="flex justify-between gap-2"><dt class="text-muted">Total</dt><dd class="money text-ink"><%= money(@invoice.total) %></dd></div>
-    <% if @invoice.payments? %><div class="flex justify-between gap-2"><dt class="text-muted">Paid so far</dt><dd class="money text-ink"><%= money(@invoice.amount_paid) %></dd></div><% end %>
-    <div class="flex justify-between gap-2 border-t border-line pt-2"><dt class="font-semibold text-ink">Left to pay</dt><dd class="money font-semibold text-ink"><%= money(@invoice.balance) %></dd></div>
-    <% if @invoice.due_on %><div class="flex justify-between gap-2"><dt class="text-muted">Due</dt><dd class="text-ink"><%= local_date(@invoice.due_on) %></dd></div><% end %>
-  </dl>
 <% end %>
 </div>

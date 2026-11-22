@@ -66,10 +66,9 @@ Conventions from the QA/accessibility audit (#274), for every staff page:
 - **Checks:** `test/system/accessibility_test.rb` runs axe-core (WCAG 2.1 A/AA) on key pages.
 - #289: every Turbo form's submit button says what it's doing while it runs ("Creating…",
   "Sending…"), from one hook (`submitting.js`); `data-turbo-submits-with` overrides it.
-- #289: `.form-split` puts a form (up to 42rem) beside a 20rem summary card on wide screens and
-  stacks them on phones; used by Schedule a visit (the job), Record a payment (the invoice) and
-  Log a request (what happens next).
-
+- #289: `.form-split` puts a form (up to 42rem) beside a 20rem summary from 80rem wide, and
+  stacks them below that; a `.form-split-aside` goes in column 2 wherever it is in the page, so a
+  summary can come first for phones and screen readers (Schedule a visit, Record a payment).
 ## Out of scope
 
 - Brand color application per business beyond the client layout hook (CAT-02).

@@ -1,6 +1,6 @@
 <% content_for :title, "Schedule a visit" %>
 <%= page_header "Schedule a visit", lede: "#{@job.number} #{@job.title} for #{@job.client.display_name}#{", #{@job.property.one_line}" if @job.property}" %>
 <div class="form-split">
+  <%= render "admin/visits/job_summary", job: @job, visit: @visit %>
   <%= render "form" %>
-  <%= render "admin/visits/job_summary", job: @job %>
 </div>

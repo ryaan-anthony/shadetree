@@ -160,7 +160,12 @@
 
   /* #289: a form with what it's about beside it on wide screens (the summary stacks after it on phones). */
   .form-split { display: grid; gap: 1rem; align-items: start; }
-  @media (min-width: 64rem) { .form-split { grid-template-columns: minmax(0, 42rem) 20rem; } }
+  /* 80rem: wide enough for the 42rem form beside the sidebar (from 960px) and the card. */
+  @media (min-width: 80rem) {
+    .form-split { grid-template-columns: minmax(0, 42rem) 20rem; }
+    .form-split > .form-split-aside { grid-column: 2; grid-row: 1; }
+    .form-split > :not(.form-split-aside) { grid-column: 1; grid-row: 1; }
+  }
 
   .card { background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
   .card-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.875rem 1.125rem; border-bottom: 1px solid var(--color-line); }
@@ -555,6 +560,9 @@
   }
 
   .save-status { font-size: 0.8125rem; color: var(--color-muted); white-space: nowrap; }
+  /* #289: a save that didn't go through can't look like "Saved". */
+  .save-status[data-state="error"] { color: var(--color-danger); font-weight: 600; white-space: normal; }
+  .save-status[data-state="error"]::before { content: "⚠ "; }
 
   .client-logo-image { display: block; flex: none; height: 2.5rem; width: auto; min-width: 2.5rem; max-width: 12rem; object-fit: contain; object-position: left center; }
   .client-card { background: #fff; border: 1px solid var(--color-line); border-radius: var(--radius-dialog); box-shadow: var(--shadow-raised); }

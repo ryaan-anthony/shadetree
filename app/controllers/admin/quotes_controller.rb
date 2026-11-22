@@ -114,7 +114,7 @@ class Admin::QuotesController < Admin::BaseController
     redirect_to edit_admin_quote_path(@quote), alert: error.message
   end
 
-  # The builder's autosave and its explicit Save. The form always sends the whole draft
+  # The builder's autosave (and its Save draft fallback, #289). The form always sends the whole draft
   # (every line, in order), with the lock_version it was rendered from; a save from a stale
   # tab is refused instead of overwriting newer work.
   def update
