@@ -175,7 +175,7 @@ Rails.application.routes.draw do
     patch "tour", to: "tours#update", as: :tour
     patch "tips/:key", to: "tips#update", as: :tip, constraints: { key: Regexp.union(FirstTimeTips::KEYS) }
     delete "tips", to: "tips#reset", as: :tips
-    patch "tips", to: "tips#preference", as: :tips_preference
+    patch "tips/preference", to: "tips#preference", as: :tips_preference
 
     # The request inbox (CLI-04)
     resources :service_requests, path: "requests", only: %i[index show new create] do

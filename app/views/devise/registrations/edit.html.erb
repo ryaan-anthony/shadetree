@@ -38,7 +38,7 @@
     <% end %>
   <% end %>
 
-  <% if current_user.has_business? %><%# ACC-08 %>
+  <% if tips_setting? %><%# ACC-08 %>
     <%= card title: t("guidance.tips.setting_title"), class: "mt-4", id: "tips-setting" do %>
       <div class="flex flex-wrap items-center justify-between gap-3">
         <p class="text-sm text-subtle"><%= current_user.tips_off? ? t("guidance.tips.setting_off") : t("guidance.tips.setting_on") %></p>

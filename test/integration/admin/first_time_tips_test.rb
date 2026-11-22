@@ -58,6 +58,7 @@ class Admin::FirstTimeTipsTest < ActionDispatch::IntegrationTest
     assert_select "#help-menu ~ .menu form[action=?] button", admin_tips_path, text: /Show tips again/
     delete admin_tips_path, headers: { "HTTP_REFERER" => admin_service_requests_url }
     assert_redirected_to admin_service_requests_url
+    assert_response :see_other
     assert_equal "Tips will show again the first time you open each page.", flash[:notice]
     assert_empty @membership.reload.tips
     follow_redirect!
@@ -72,6 +73,53 @@ class Admin::FirstTimeTipsTest < ActionDispatch::IntegrationTest
     assert_select ".tip", 0, "off for this person"
     patch admin_tips_preference_path, params: { off: false }
     assert_not users(:one).reload.tips_off?
+    patch admin_tips_preference_path, params: { off: true }
+    patch admin_tips_preference_path # no choice given: tips on, not an error
+    assert_redirected_to edit_user_registration_path
+    assert_not users(:one).reload.tips_off?
+  end
+
+  test "turning tips off is for the person, in every business" do
+    other = business_users(:one_member_of_two)
+    other.update!(role: "admin") # users(:one) in business two too
+    assert FirstTimeTips.for(other, "admin/invoices", "index")
+    users(:one).update!(tips_off: true)
+    assert_nil FirstTimeTips.for(@membership.reload, "admin/invoices", "index")
+    assert_nil FirstTimeTips.for(other.reload, "admin/invoices", "index")
+    assert_raises(ArgumentError) { @membership.record_tip!("billing", "seen") }
+  end
+
+  test "no tip on a refusal or a suspended business's page, and nothing to show again for technicians" do
+    tech = User.create!(email: "crew@example.com", password: "password123", first_name: "Crew", confirmed_at: Time.current)
+    BusinessUser.create!(business: @business, user: tech, role: "technician")
+    sign_in tech
+    get admin_service_requests_path
+    assert_response :forbidden
+    assert_select ".tip", 0
+    get admin_my_day_path
+    assert_select "#help-menu ~ .menu", text: /Take the tour again/
+    assert_select "#help-menu ~ .menu", text: /Show tips again/, count: 0
+    get edit_user_registration_path
+    assert_select "#tips-setting", 0
+
+    sign_in users(:one)
+    @business.update_columns(suspended_at: Time.current)
+    get admin_service_requests_path
+    assert_response :forbidden
+    assert_select ".tip", 0
+  end
+
+  # The tips' permissions match what each page needs, so nobody gets a tip for a page they can't open.
+  test "each tip's permission is the one its pages require" do
+    FirstTimeTips::PAGES.each do |key, (pages, permission)|
+      pages.each do |page|
+        path, action = page.split("#")
+        controller = "#{path.camelize}Controller".constantize
+        rules = controller.authorization_rules.select { _1.applies?(action) }
+        rules = rules.select(&:only).presence || rules
+        assert_equal [ permission ], rules.map(&:permission), "#{key}: #{page}"
+      end
+    end
   end
 
   test "only tips for pages the role can use" do
@@ -94,6 +142,7 @@ class Admin::FirstTimeTipsTest < ActionDispatch::IntegrationTest
     post ops_business_impersonation_path(businesses(:two)), params: { member: owner.uid, reason: "Ticket: walking through setup" }
     get admin_invoices_path
     assert_select "#tip-invoices[data-tip-record-value=false]"
+    assert_select "#help-menu ~ .menu", text: /Show tips again/, count: 0
 
     patch admin_tip_path("invoices"), params: { event: "seen" }, as: :json
     assert_response :forbidden

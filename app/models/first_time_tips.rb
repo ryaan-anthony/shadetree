@@ -25,4 +25,7 @@ module FirstTimeTips
   end
 
   def self.text(key) = I18n.t("guidance.tips.#{key}")
+
+  # Whether the member's role can open any page with a tip.
+  def self.any_for?(membership) = membership&.active? && PAGES.values.any? { |_, permission| membership.can?(permission) }
 end

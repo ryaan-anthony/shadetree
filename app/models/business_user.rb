@@ -165,10 +165,12 @@ class BusinessUser < ApplicationRecord
 
   # ACC-08: a first-time tip was shown ("seen") or hidden ("dismissed"); the first time is kept.
   def record_tip!(key, event)
+    raise ArgumentError, "Unknown tip #{key.inspect}" unless FirstTimeTips::KEYS.include?(key)
+
     field = { "seen" => "seen_at", "dismissed" => "dismissed_at" }.fetch(event.to_s)
     with_lock do
       entry = tips.fetch(key, {})
-      update!(tips: tips.merge(key => { field => Time.current.iso8601 }.merge(entry))) unless entry.key?(field)
+      update_columns(tips: tips.merge(key => { field => Time.current.iso8601 }.merge(entry))) unless entry.key?(field)
     end
   end
 

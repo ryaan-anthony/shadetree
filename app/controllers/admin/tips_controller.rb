@@ -16,11 +16,11 @@ class Admin::TipsController < Admin::BaseController
   def reset
     Current.membership.update!(tips: {})
     current_user.update!(tips_off: false)
-    redirect_back_or_to admin_root_path, notice: t("guidance.tips.shown_again")
+    redirect_back_or_to admin_root_path, notice: t("guidance.tips.shown_again"), status: :see_other
   end
 
   def preference
-    current_user.update!(tips_off: ActiveModel::Type::Boolean.new.cast(params[:off]))
+    current_user.update!(tips_off: params[:off].to_s == "true")
     redirect_to edit_user_registration_path, notice: (current_user.tips_off? ? t("guidance.tips.setting_off") : t("guidance.tips.setting_on"))
   end
 end
