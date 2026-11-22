@@ -35,9 +35,13 @@ class GuidedTour
   def stops = @stops ||= (page == :office ? office_stops : field_stops)
   def keys = stops.map(&:key)
 
-  # The last stop leads to the first unfinished checklist step: [label, the step's element id].
+  # Checklist steps only some roles can act on; the others see them, with nothing to press.
+  STEP_PERMISSIONS = { "payments" => :billing }.freeze
+
+  # The last stop leads to the first unfinished checklist step this person can act on:
+  # [label, the step's element id].
   def next_step
-    step = checklist? && checklist.required.find { !_1.done }
+    step = checklist? && checklist.required.find { !_1.done && can?(STEP_PERMISSIONS.fetch(_1.key, :business_settings)) }
     [ I18n.t("guidance.tour.finish_to_step", step: step.title), "setup-#{step.key}" ] if step
   end
 

@@ -31,6 +31,13 @@ class GuidedTourTest < ActiveSupport::TestCase
     assert_no_match(/plan/, admin_tour.stops.map(&:text).join)
   end
 
+  test "the last stop skips checklist steps the person can't act on (getting paid online is the Owner's)" do
+    step = ->(key, title) { SetupChecklist::Step.new(key:, title:, text: "", done: false, optional: false, action: "") }
+    checklist = Struct.new(:required) { def visible? = true }.new([ step.("payments", "Get paid online"), step.("client", "Add a client") ])
+    assert_equal [ "Next: Get paid online", "setup-payments" ], GuidedTour.for(business_users(:one), checklist:).next_step
+    assert_equal [ "Next: Add a client", "setup-client" ], GuidedTour.for(member(:admin), checklist:).next_step
+  end
+
   test "with the checklist done, Home points at the menu and the tour ends without a next step" do
     @business.update!(onboarded_at: Time.current)
     owner_tour = tour(business_users(:one))
