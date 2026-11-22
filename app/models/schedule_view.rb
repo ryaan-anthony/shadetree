@@ -62,9 +62,7 @@ class ScheduleView
     @visits ||= begin
       scope = Visit.where(scheduled_on: dates.first..dates.last).where.not(status: "cancelled")
                    .includes(:assignees, job: %i[client property location]).in_order
-      scope = scope.where.missing(:assignments) if @member == "unassigned"
-      scope = scope.where(id: VisitAssignment.where(user_id: @member).select(:visit_id)) if @member && @member != "unassigned"
-      scope.to_a.each { _1.association(:business).target = business } # labels need its time zone; not one query per visit
+      for_member(scope).to_a.each { _1.association(:business).target = business } # labels need its time zone; not one query per visit
     end
   end
 
@@ -235,8 +233,9 @@ class ScheduleView
   # read as "nothing booked").
   def next_visit_after
     return if visits.any?
+    return @next_visit_after if defined?(@next_visit_after)
 
-    Visit.where(scheduled_on: (dates.last + 1)..).where.not(status: "cancelled").in_order.first
+    @next_visit_after = for_member(Visit.open.where(scheduled_on: [ dates.last + 1, place.today ].max..)).in_order.first
   end
 
   # The grid's clock: the filtered location's time zone (CAT-07), else the business's.
@@ -245,6 +244,14 @@ class ScheduleView
   private
 
   def by_date = @by_date ||= items.group_by(&:scheduled_on)
+
+  # The people filter: one member's visits, or the unassigned ones.
+  def for_member(scope)
+    return scope.where.missing(:assignments) if @member == "unassigned"
+    return scope.where(id: VisitAssignment.where(user_id: @member).select(:visit_id)) if @member
+
+    scope
+  end
 
   # Every visit in the period, unfiltered, for the member list's counts (ids and minutes only).
   def all_visits_in_period

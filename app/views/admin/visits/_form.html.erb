@@ -72,6 +72,9 @@
             </label>
           <% end %>
         </div>
+        <% if visit.new_record? && @sole_crew && visit.assignee_ids == [ @sole_crew.user_id ] %><%# #289 %>
+          <p class="help" id="sole-crew-hint"><%= @sole_crew.user_id == current_user.id ? "You're" : "#{@sole_crew.user.full_name} is" %> the only one on the team who works visits.</p>
+        <% end %>
       </fieldset>
 
       <%= f.field :instructions, as: :textarea, optional: true, rows: 3, maxlength: 2_000, label: "Instructions for this visit",

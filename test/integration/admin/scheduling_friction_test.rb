@@ -28,14 +28,34 @@ class Admin::SchedulingFrictionTest < ActionDispatch::IntegrationTest
     assert_equal [ tech.id ], ticked, "a slot in someone's row still chooses them"
   end
 
-  test "an empty week says nothing is waiting and points to the next visit" do
+  def book(on, **attributes)
+    as_business(@business) do
+      @job.visits.create!(scheduled_on: on, timing: "window", start_time: "08:00", window_end_time: "10:00", duration_minutes: 45, **attributes)
+          .tap { @job.update_columns(status: "scheduled") }
+    end
+  end
+
+  test "an empty week points to the next open visit, for the same people, from today on" do
     travel_to Time.utc(2026, 11, 18, 15) do
-      as_business(@business) { @job.visits.create!(scheduled_on: Date.new(2026, 11, 23), timing: "window", start_time: "08:00", window_end_time: "10:00", duration_minutes: 45) && @job.update_columns(status: "scheduled") }
+      done = book(Date.new(2026, 11, 23))
+      as_business(@business) { done.update_columns(status: "completed") }
+      tech = member_with_role(:technician)
+      unassigned = book(Date.new(2026, 11, 30))
+      book(Date.new(2026, 11, 10)) # still open, but in the past
+      mine = book(Date.new(2026, 12, 7)).tap { |v| as_business(@business) { v.assignments.create!(business: @business, user: tech) } }
+
       get admin_schedule_path(date: "2026-11-18")
-      assert_select "#nothing-to-book", /No jobs are waiting for a visit\.\s*Next visit: Mon, Nov 23/
-      assert_select "#nothing-to-book a[href*='date=2026-11-23']"
-      get admin_schedule_path(date: "2026-11-23")
-      assert_select "#nothing-to-book a", 0, "the week with the visit doesn't point elsewhere"
+      assert_select "#next-visit a[href*='date=2026-11-30']", "Next visit: Mon, Nov 30", "a done visit doesn't count"
+      get admin_schedule_path(date: "2026-11-18", member: tech.id)
+      assert_select "#next-visit a[href*='date=2026-12-07']", "Next visit: Mon, Dec 7", "the same person's next visit"
+      get admin_schedule_path(date: "2026-11-18", member: "unassigned")
+      assert_select "#next-visit a[href*='date=2026-11-30']"
+      get admin_schedule_path(date: "2026-11-02")
+      assert_select "#next-visit a[href*='date=2026-11-30']", 1, "from a past week: the next one from today, not Nov 10"
+      get admin_schedule_path(date: "2026-11-30")
+      assert_select "#next-visit", 0, "the week with the visit doesn't point elsewhere"
+      assert_select "#nothing-to-book", /No jobs are waiting for a visit/
+      assert mine && unassigned
     end
   end
 

@@ -11,7 +11,7 @@
           <%= link_to "Clear search", admin_jobs_path(filter: @filter), class: button_classes(:secondary), data: { turbo_frame: "_top" } %>
         <% end %>
       <% else %>
-        <% done = @filter == "open" ? Job.filtered("completed").count : 0 %>
+        <% done = @filter == "open" ? (@counts&.dig("completed") || Job.filtered("completed").count) : 0 %>
         <%= empty_state title: (@filter == "open" ? "Nothing to do" : "Nothing here"),
                         text: { "unscheduled" => "No jobs are waiting for a visit.", "open" => "Every job is finished." }.fetch(@filter) { "No jobs are #{Job::FILTERS.fetch(@filter).downcase} right now." },
                         icon: "job" do %>

@@ -15,18 +15,27 @@ class VisitDateEntryTest < ApplicationSystemTestCase
   end
 
   test "typing a date fills it in, and the picker button is the field's own" do
+    # The crew of one this business has: its owner works visits, so they're ticked.
+    assert_equal [ users(:one).id ], as_business(@business) { @business.business_users.active.select { _1.can?(:field_work) }.map(&:user_id) }
     visit new_admin_job_visit_path(@job)
     field = find_field("Date (or first day)")
-    field.click
-    execute_script("arguments[0].focus()", field) # the month part first
-    field.send_keys("12232026")
-    assert_equal "2026-12-23", field.value
+    # Blur, then focus by script, so the cursor starts in the first part. Which part that is
+    # depends on the browser's locale (month first in the US, day first in the UK), so the
+    # keystrokes follow its order.
+    keys = evaluate_script(<<~JS)
+      new Intl.DateTimeFormat(undefined, { year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(2026, 11, 23))
+        .filter((p) => ["year", "month", "day"].includes(p.type)).map((p) => p.value).join("")
+    JS
+    execute_script("arguments[0].blur(); arguments[0].focus()", field)
+    field.send_keys(keys)
+    assert_field "Date (or first day)", with: "2026-12-23"
 
     covered = evaluate_script(<<~JS)
       (() => { const r = document.getElementById("visit_scheduled_on").getBoundingClientRect()
                return document.elementFromPoint(r.right - 12, r.top + r.height / 2)?.id })()
     JS
     assert_equal "visit_scheduled_on", covered
-    assert_selector "input[name='visit[assignee_ids][]'][type=checkbox]:checked", count: 1 # the one-person crew is going
+    assert_selector "input[name='visit[assignee_ids][]'][type=checkbox]:checked", count: 1
+    assert_selector "#sole-crew-hint", text: "You're the only one on the team who works visits."
   end
 end

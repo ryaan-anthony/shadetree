@@ -71,9 +71,9 @@ when, where and how to reach the business.
 - The emails are recorded per NTF-01 against the job (`related: job`, kinds `visit_scheduled`,
   `visit_changed`, `visit_cancelled`, `visit_reminder`) and listed on the job page, with one
   about to go shown as pending.
-- #289: the job page explains the wait: "We'll email Maria Lopez at 9:38 PM. We wait a few
-  minutes after your last change, so several changes arrive as one email." No "send now".
-
+- #289: a change is only queued for the client when it's a kind the business sends (and the
+  client has an email); the job page promises the email only then ("We'll email Maria Lopez at
+  9:38 PM", or "shortly" once that's passed), and explains the wait. No "send now".
 ## Out of scope
 
 - SMS confirmations/reminders, "on my way" messages, client confirmation/reschedule requests

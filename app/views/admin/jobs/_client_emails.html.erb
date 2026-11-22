@@ -1,12 +1,16 @@
 <%# locals: (job:) -%>
 <%# JOB-05: the visit emails the client was sent (NTF-01's record), and one about to go. %>
 <% messages = job.email_messages.recent.limit(10).to_a %>
-<% if messages.any? || job.client_notice_due_at %>
+<% pending = job.client_notice_pending? %><%# #289: only an email that will really go %>
+<% if messages.any? || pending %>
   <%= card title: "Emails to the client", id: "client-emails", flush: true do %>
     <ul class="list">
-      <% if job.client_notice_due_at %>
-        <%# #289: why it waits, in plain words %>
-        <li class="items-start text-sm2" id="client-notice-pending"><div class="min-w-0 flex-1"><p class="text-ink">We'll email <%= job.client.display_name %> at <%= local_time(job.client_notice_due_at, format: :time) %></p>
+      <% if pending %>
+        <% due = job.client_notice_due_at %>
+        <% zone = job.location.time_zone %>
+        <li class="items-start text-sm2" id="client-notice-pending"><div class="min-w-0 flex-1">
+          <p class="text-ink">We'll email <%= job.client.display_name %>
+            <% if due <= Time.current %>shortly.<% else %>at <span class="whitespace-nowrap"><%= local_time(due, format: :time, zone:) %><%= " #{time_zone_label(zone)}" unless zone.tzinfo == ActiveSupport::TimeZone[current_business.time_zone].tzinfo %></span>.<% end %></p>
           <p class="text-muted">We wait a few minutes after your last change, so several changes arrive as one email.</p></div><%= badge "Waiting", tone: :info %></li>
       <% end %>
       <% messages.each do |message| %>

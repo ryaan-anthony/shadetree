@@ -57,6 +57,8 @@ work (windows, "anytime"), and helpful about conflicts without being bossy.
 
 ## Implementation notes
 
-- #289: when exactly one active member works visits, "Who's going" starts with them ticked. The
-  date stays the browser's own field: typed dates work and its picker is reachable (a system test
-  checks both), so no custom date control was added.
+- #289: when exactly one active member works visits (`Business#sole_member_who_can`), "Who's
+  going" starts with them ticked and says why. An owner plus an office admin who both can work
+  visits pre-ticks nobody, until default assignees arrive (#284). The date stays the browser's own
+  field: typed dates work and its picker is reachable (a system test checks both, in the
+  browser's locale), so no custom date control was added.

@@ -49,14 +49,8 @@ class VisitClientNotice
   private
 
   def change_for(visit)
-    told, now = visit.client_told, visit.client_state
-    if now["state"] == "cancelled"
-      Change.new(visit, "cancelled", nil) if told&.dig("state") == "booked"
-    elsif told.nil? || told["state"] == "cancelled"
-      Change.new(visit, "scheduled", nil)
-    elsif !visit.client_up_to_date?
-      Change.new(visit, "changed", told["when"])
-    end
+    kind = visit.client_change_kind or return
+    Change.new(visit, kind, (visit.client_told["when"] if kind == "changed"))
   end
 
   def recipient = @job.client.primary_email&.value

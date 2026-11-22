@@ -160,6 +160,14 @@ class Job < ApplicationRecord
   # last of them, so a burst of edits (or a booking moved straight away) doesn't become several.
   CLIENT_NOTICE_DELAY = 3.minutes
 
+  # #289: the visit email this job's waiting changes would send now, if any: the client has an
+  # address and at least one change is of a kind the business sends. What the job page promises.
+  def client_notice_pending?
+    return false if client_notice_due_at.nil? || client.primary_email.nil?
+
+    visits.where(status: %w[scheduled cancelled]).any? { (kind = _1.client_change_kind) && business.client_visit_email?(kind) }
+  end
+
   def queue_client_notice!
     due = CLIENT_NOTICE_DELAY.from_now
     update_columns(client_notice_due_at: due)
