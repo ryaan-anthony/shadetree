@@ -1,10 +1,10 @@
 <%# locals: (f:, follow_up:, optional: false) -%>
 <%# CLI-07: who follows a request up, how and when. `optional` (logging a request) adds "Not assigned", and shows the rest once someone's picked. %>
-<%# Who can be assigned (RequestFollowUp.assignable?: office, until JOB-06). Someone who has it but no longer could is listed, marked, and isn't kept by accident. %>
+<%# Who can be assigned (RequestFollowUp.assignable?: any role with My day or the request page). Someone who has it but no longer could is listed, marked, and isn't kept by accident. %>
 <% members = current_business.business_users.active.includes(:user).select { RequestFollowUp.assignable?(_1) }.sort_by { _1.user.full_name.downcase } %>
 <% current = follow_up.persisted? && follow_up.user_id_was && members.none? { _1.user_id == follow_up.user_id_was } ? User.find_by(id: follow_up.user_id_was) : nil %>
 <% choices = members.map { [ "#{_1.user.full_name} (#{_1.role_name})", _1.user_id ] } %>
-<% choices.unshift([ "#{current.full_name} (can't keep it: can no longer see requests)", current.id, { disabled: true } ]) if current %>
+<% choices.unshift([ "#{current.full_name} (can't keep it: their role can't follow requests up)", current.id, { disabled: true } ]) if current %>
 <% blank = optional ? "Not assigned" : ("Choose someone" if current) %>
 <% choices.unshift([ blank, "" ]) if blank %>
 <% selected = current && follow_up.user_id == current.id ? "" : follow_up.user_id %>

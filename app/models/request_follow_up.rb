@@ -18,6 +18,7 @@ class RequestFollowUp < ApplicationRecord
   belongs_to_business_record :service_request
   belongs_to :user, optional: true # the assignee (assignee_is_member says when there is none)
   belongs_to :assigned_by, class_name: "User", optional: true
+  belongs_to :done_by, class_name: "User", optional: true # JOB-06
 
   normalizes :instructions, with: ->(value) { value.to_s.strip.presence }
 
@@ -47,7 +48,11 @@ class RequestFollowUp < ApplicationRecord
   def assignee_ids = [ user_id ].compact
 
   # The day it's on has passed and it's still to do.
-  def overdue? = scheduled_on < place.today
+  def overdue? = !done? && scheduled_on < place.today
+
+  # JOB-06: the assignee has done the visit or made the call. It stays theirs until they create
+  # the quote or pass the request back (or the office moves it on).
+  def done? = done_at.present?
 
   # Assigns `request` (to someone new, or the same person at another time, or with other
   # details): attributes are the form's (user, kind, scheduled_on, timing, start_time,
@@ -64,6 +69,7 @@ class RequestFollowUp < ApplicationRecord
       before, before_user = (follow_up.state if follow_up.persisted?), (follow_up.user if follow_up.persisted?)
       follow_up.assign_attributes(attributes)
       follow_up.assigned_by = by if follow_up.new_record? || follow_up.user_id_changed?
+      follow_up.done_at = follow_up.done_by = nil # JOB-06: assigned again, so to do again
       follow_up.save!
       request.update!(status: "in_progress") if request.status == "new"
       follow_up.record_change(before, before_user, by:)
@@ -84,9 +90,9 @@ class RequestFollowUp < ApplicationRecord
     notify("request_changed", user, "No longer yours: #{summary}, #{when_label}", by:, body: ENDINGS[reason])
   end
 
-  # Who can follow requests up: members who can see requests (office), until JOB-06 shows
-  # follow-ups on My day.
-  def self.assignable?(membership) = membership.active? && membership.can?(:office)
+  # Who can follow requests up (JOB-06): any role that works from My day (field_work) or the
+  # request page (office).
+  def self.assignable?(membership) = membership.active? && (membership.can?(:office) || membership.can?(:field_work))
 
   # Someone deactivated, removed from the business, deleting their account or given a role that
   # can't follow requests up: their follow-ups end (in each request's history), and the requests
@@ -106,6 +112,42 @@ class RequestFollowUp < ApplicationRecord
   # What it is now, for the history: who, how, when (Visit#snapshot's keys) and for how long.
   def state = snapshot.merge("user_id" => user_id, "kind" => kind, "duration_minutes" => duration_minutes)
 
+  # JOB-06: the assignee marks it done; whoever assigned it hears (NTF-02). The request stays In
+  # progress. Raises NotOpen if it's already done, or the request has been closed meanwhile.
+  def done!(by:)
+    service_request.with_lock do
+      reload
+      raise NotOpen, "This is already marked done." if done?
+      raise NotOpen, "This request is #{service_request.status_label.downcase}." unless service_request.open?
+
+      update!(done_at: Time.current, done_by: by)
+      ServiceRequestEvent.record!(service_request, :done, by:, from: state)
+      if assigned_by && assigned_by.id != by&.id
+        NotificationType.deliver("request_follow_up_done", business:, subject: service_request, actor: by, to: [ assigned_by ],
+                                 title: "Done: #{by&.full_name || "The"} #{summary}", body: "Ready for a quote, or for what comes next.",
+                                 path: Rails.application.routes.url_helpers.admin_service_request_path(service_request))
+      end
+    end
+    self
+  end
+
+  # JOB-06: hands the request back to whoever assigned it, for today, anytime, with what the
+  # assignee found as an internal note. Raises NotOpen when there's nobody to pass it back to.
+  def pass_back!(by:, note: nil)
+    to = assigned_by
+    eligible = to && to.id != user_id && business.business_users.active.find_by(user_id: to.id)&.then { self.class.assignable?(_1) }
+    raise NotOpen, "There's nobody to pass this back to. Ask the office to reassign it." unless eligible
+
+    request = service_request
+    ServiceRequest.transaction do
+      request.notes.create!(business:, user: by, body: note) if note.present?
+      request.passing_back = note.to_s # record_change tells it apart from a reassignment
+      self.class.assign!(request, { user: to, scheduled_on: request.location&.today || business.today, timing: "anytime" }, by:)
+    ensure
+      request.passing_back = nil
+    end
+  end
+
   # The history lines and notices for what assign! just changed from `before` (nil when new).
   def record_change(before, before_user, by:)
     after = state
@@ -114,11 +156,14 @@ class RequestFollowUp < ApplicationRecord
 
     moved = after.slice("on", "timing", "starts_at", "window_ends_at") != before.slice("on", "timing", "starts_at", "window_ends_at")
     details = %w[kind duration_minutes instructions].select { _1 == "instructions" ? saved_change_to_instructions? : before[_1] != after[_1] }
-    ServiceRequestEvent.record!(service_request, :reassigned, by:, from_user_id: before["user_id"], to_user_id: user_id) if before["user_id"] != user_id
-    ServiceRequestEvent.record!(service_request, :rescheduled, by:, from: before, to: after) if moved
-    ServiceRequestEvent.record!(service_request, :updated, by:, changed: details, from: before, to: after) if details.any?
+    passed_back = before["user_id"] != user_id && by&.id == before["user_id"] && service_request.passing_back
+    ServiceRequestEvent.record!(service_request, passed_back ? :passed_back : :reassigned, by:, from_user_id: before["user_id"], to_user_id: user_id) if before["user_id"] != user_id
+    ServiceRequestEvent.record!(service_request, :rescheduled, by:, from: before, to: after) if moved && !passed_back # passing back sets today, anytime
+    ServiceRequestEvent.record!(service_request, :updated, by:, changed: details, from: before, to: after) if details.any? && !passed_back
 
-    if before_user && before_user.id != user_id
+    if passed_back
+      notify("request_assigned", user, "Passed back to you: #{summary}", by:, body: service_request.passing_back.presence)
+    elsif before_user && before_user.id != user_id
       notify("request_changed", before_user, "No longer yours: #{summary}, #{before["when"].sub(/, #{business.today.year} ·/, " ·")}", by:,
              body: "It's been given to someone else on the team.") # no name, so ACC-06 has none to scrub
       notify("request_assigned", user, "Yours to follow up: #{summary}, #{when_label}", by:, body: instructions)
@@ -128,15 +173,19 @@ class RequestFollowUp < ApplicationRecord
     end
   end
 
-  # NTF-02: tells the person concerned (not whoever did it). The notice opens the request for
-  # those who can see requests, and their day for everyone else (JOB-06 shows it there).
+  # NTF-02: tells the person concerned (not whoever did it). The notice opens the follow-up on
+  # their day (JOB-06) for those who work from My day, else the request; once it's no longer
+  # theirs, My day or the request page.
   def notify(kind, person, title, by:, body: nil)
     return if person.nil? || person.id == by&.id
 
     paths = Rails.application.routes.url_helpers
-    office = business.business_users.active.find_by(user: person)&.can?(:office)
-    NotificationType.deliver(kind, business:, subject: service_request, actor: by, to: [ person ], title:, body:,
-                                   path: office ? paths.admin_service_request_path(service_request) : paths.admin_my_day_path)
+    member = business.business_users.active.find_by(user: person)
+    theirs = person.id == user_id && !destroyed?
+    path = if member&.can?(:field_work) then theirs ? paths.admin_my_request_path(service_request) : paths.admin_my_day_path
+    else paths.admin_service_request_path(service_request)
+    end
+    NotificationType.deliver(kind, business:, subject: service_request, actor: by, to: [ person ], title:, body:, path:)
   end
 
   private
@@ -181,6 +230,6 @@ class RequestFollowUp < ApplicationRecord
     return errors.add(:user_id, "Choose who follows it up.") if user.nil?
 
     member = business.business_users.active.find_by(user_id:)
-    errors.add(:user_id, "Only people on your team who can see requests can be assigned.") unless member && self.class.assignable?(member)
+    errors.add(:user_id, "Only people on your team can be assigned.") unless member && self.class.assignable?(member)
   end
 end

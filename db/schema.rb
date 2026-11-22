@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_22_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_22_110000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -1170,6 +1170,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_100000) do
     t.integer "lock_version", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "done_at"
+    t.bigint "done_by_id"
     t.index ["business_id", "user_id", "scheduled_on"], name: "idx_on_business_id_user_id_scheduled_on_2376eebb24"
     t.index ["service_request_id"], name: "index_request_follow_ups_on_service_request_id", unique: true
     t.index ["uid"], name: "index_request_follow_ups_on_uid", unique: true
@@ -1214,7 +1216,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_100000) do
     t.index ["business_id"], name: "index_service_request_events_on_business_id"
     t.index ["service_request_id"], name: "index_service_request_events_on_service_request_id"
     t.index ["user_id"], name: "index_service_request_events_on_user_id"
-    t.check_constraint "kind::text = ANY (ARRAY['assigned'::character varying, 'reassigned'::character varying, 'rescheduled'::character varying, 'updated'::character varying, 'unassigned'::character varying, 'ended'::character varying]::text[])", name: "service_request_events_kind"
+    t.check_constraint "kind::text = ANY (ARRAY['assigned'::character varying, 'reassigned'::character varying, 'rescheduled'::character varying, 'updated'::character varying, 'unassigned'::character varying, 'ended'::character varying, 'done'::character varying, 'passed_back'::character varying]::text[])", name: "service_request_events_kind"
   end
 
   create_table "service_request_notes", force: :cascade do |t|
@@ -1618,6 +1620,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_100000) do
   add_foreign_key "request_follow_ups", "businesses", on_delete: :cascade
   add_foreign_key "request_follow_ups", "service_requests", on_delete: :cascade
   add_foreign_key "request_follow_ups", "users", column: "assigned_by_id", on_delete: :nullify
+  add_foreign_key "request_follow_ups", "users", column: "done_by_id", on_delete: :nullify
   add_foreign_key "request_follow_ups", "users", on_delete: :cascade
   add_foreign_key "role_events", "businesses", on_delete: :cascade
   add_foreign_key "role_events", "roles", on_delete: :nullify

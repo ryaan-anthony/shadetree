@@ -23,6 +23,14 @@ class RequestFollowUpTest < ActiveSupport::TestCase
         .tap { BusinessUser.create!(user: _1, business:, role: role.to_s) }
   end
 
+  # A custom role (ACC-07) with only these permissions.
+  def custom_member(name, permissions)
+    @business.update!(plan_overrides: { "features" => { "custom_roles" => true }, "limits" => { "team_members" => nil } })
+    role = as_business(@business) { Role.create!(name: "Role #{SecureRandom.hex(2)}", permissions:) }
+    User.create!(email: "#{name.downcase}-#{SecureRandom.hex(3)}@example.com", password: "password123", first_name: name, confirmed_at: Time.current)
+        .tap { BusinessUser.create!(user: _1, business: @business, role: "custom", role_id: role.id) }
+  end
+
   def assign(request = @request, by: @owner, **attrs)
     as_business(@business) do
       defaults = request.reload.follow_up ? {} : { user: @pat, scheduled_on: @business.today }
@@ -40,7 +48,10 @@ class RequestFollowUpTest < ActiveSupport::TestCase
     assert_equal "in_progress", as_business(@business) { @request.reload.status }
     assert_equal [ [ "assigned", nil ] ], history
     assert_equal [ "request_assigned", "Yours to follow up: site visit for Maria Lopez, Mon, Nov 23 · Anytime" ], notices(@pat).first.first(2)
-    assert_equal "/admin/requests/#{@request.uid}", as_business(@business) { Notification.find_by(user: @pat).path }
+    assert_equal "/admin/my-day/requests/#{@request.uid}", as_business(@business) { Notification.find_by(user: @pat).path }, "JOB-06: on their day"
+    office_only = custom_member("Olive", %w[office])
+    assign(as_business(@business) { ServiceRequest.create!(client: @maria, source: "phone", description: "Desk") }, user: office_only)
+    assert_match %r{\A/admin/requests/}, as_business(@business) { Notification.find_by(user: office_only).path }, "no My day, so the request page"
 
     call = assign(as_business(@business) { ServiceRequest.create!(client: @maria, source: "phone", description: "Quote by phone") },
                   kind: "call", timing: "exact", start_time: "14:00", duration_minutes: nil)
@@ -114,11 +125,13 @@ class RequestFollowUpTest < ActiveSupport::TestCase
     assert sql.any? { _1.include?("FOR UPDATE") && _1.include?("service_requests") }, "move_to! locks the request"
   end
 
-  test "only active members of this business who can see requests can be assigned, on every change" do
+  test "any role that works from My day or the request page can be assigned; nobody else, on every change" do
     error = assert_raises(ActiveRecord::RecordInvalid) { assign(user: users(:two)) }
-    assert_match "Only people on your team who can see requests", error.message
+    assert_match "Only people on your team can be assigned", error.message
     tech = member("Tia", :technician)
-    assert_raises(ActiveRecord::RecordInvalid, "until JOB-06 shows follow-ups on My day") { assign(user: tech) }
+    other = as_business(@business) { ServiceRequest.create!(client: @maria, source: "phone", description: "Shed") }
+    assert_equal tech, assign(other, user: tech).user, "JOB-06: technicians too"
+    assert_raises(ActiveRecord::RecordInvalid, "a role with neither My day nor requests") { assign(user: custom_member("Dee", %w[schedule])) }
     assert_raises(ActiveRecord::RecordInvalid) { assign(user: nil) }
 
     assign
@@ -140,8 +153,12 @@ class RequestFollowUpTest < ActiveSupport::TestCase
     tia = member("Tia", :admin)
     assign(third, user: tia)
     as_business(@business) { BusinessUser.find_by(user: tia).update!(role: "technician") }
+    assert_equal tia, as_business(@business) { third.reload.follow_up&.user }, "a technician can keep it (JOB-06)"
+    dispatcher = as_business(@business) { Role.create!(name: "Dispatcher", permissions: %w[schedule]) }
+    @business.update!(plan_overrides: { "features" => { "custom_roles" => true }, "limits" => { "team_members" => nil } })
+    as_business(@business) { BusinessUser.find_by(user: tia).update!(role: "custom", role_id: dispatcher.id) }
     assert_equal [ "new", nil, "role_changed" ], as_business(@business) { [ third.reload.status, third.follow_up, third.events.last.data["reason"] ] },
-                 "a role that can't see requests ends it too"
+                 "a role with neither My day nor requests ends it"
 
     @business.remove_user(@sam)
     assert_equal [ "new", nil ], as_business(@business) { [ other.reload.status, other.follow_up ] }
@@ -225,6 +242,28 @@ class RequestFollowUpTest < ActiveSupport::TestCase
     end
     assert_raises(ActiveRecord::RecordInvalid) { as_business(@business) { RequestFollowUp.create!(service_request: theirs, user: @pat, scheduled_on: Date.current) } }
     as_business(@business) { assert_empty ServiceRequest.where(id: theirs.id) }
+  end
+
+  test "JOB-06: done isn't overdue or in the way; assigning again makes it to do again; passing back needs someone to pass to" do
+    follow_up = assign(scheduled_on: Date.new(2026, 11, 20), timing: "exact", start_time: "10:00")
+    assert follow_up.overdue?
+    as_business(@business) { follow_up.done!(by: @pat) }
+    assert_not follow_up.reload.overdue?
+    other = as_business(@business) { ServiceRequest.new(client: @maria).build_follow_up(user: @pat, scheduled_on: Date.new(2026, 11, 20), timing: "exact", start_time: "10:00").tap(&:validate) }
+    assert_empty as_business(@business) { VisitWarnings.for([ other ]) }.grep(/site visit/), "a done one doesn't clash"
+    assign(scheduled_on: Date.new(2026, 11, 24))
+    assert_not follow_up.reload.done?
+
+    self_assigned = assign(as_business(@business) { ServiceRequest.create!(client: @maria, source: "phone", description: "Roof") }, by: @pat)
+    assert_raises(RequestFollowUp::NotOpen) { as_business(@business) { self_assigned.pass_back!(by: @pat) } }
+  end
+
+  test "JOB-06: site photos are cleaned and capped like a visit's" do
+    as_business(@business) do
+      assert_nil @request.add_site_photo_from(Rack::Test::UploadedFile.new(file_fixture("logo.png"), "image/png"), by: @pat)
+      assert_equal [ 1, @pat.id ], [ @request.site_photos.count, @request.site_photos.first.blob.metadata["uploaded_by"] ]
+      assert_match "isn't a photo", @request.add_site_photo_from(Rack::Test::UploadedFile.new(file_fixture("logo.png"), "text/plain", original_filename: "notes.txt").tap { _1.tempfile.write("x") && _1.tempfile.rewind }, by: @pat).to_s
+    end
   end
 
   private

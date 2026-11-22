@@ -61,7 +61,7 @@ class Admin::RequestInboxFollowUpsTest < ActionDispatch::IntegrationTest
     tech = User.create!(email: "tia@example.com", password: "password123", first_name: "Tia", confirmed_at: Time.current)
     BusinessUser.create!(user: tech, business: @business, role: "technician")
     get admin_service_requests_path
-    assert_select "select#assignee-filter option", { text: /Tia/, count: 0 }, "nobody can give her requests yet (JOB-06), so she has none"
+    assert_select "select#assignee-filter option", /Tia/, "JOB-06: technicians can be given requests"
 
     as_business(@business) { @nobodys.move_to!("archived") }
     get admin_service_requests_path(status: "archived", assignee: "unassigned")

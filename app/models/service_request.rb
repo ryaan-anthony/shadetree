@@ -26,6 +26,15 @@ class ServiceRequest < ApplicationRecord
   has_many_attached :photos do |attachable|
     attachable.variant :web, resize_to_limit: [ 640, 640 ], preprocessed: true
   end
+  # JOB-06: photos the assignee takes on a site visit, with visits' limits (SitePhotos).
+  has_many_attached :site_photos do |attachable|
+    attachable.variant :thumb, resize_to_fill: [ 320, 320 ], preprocessed: true
+    attachable.variant :web, resize_to_limit: [ 1600, 1600 ]
+  end
+  include SitePhotos
+
+  # JOB-06: set while the assignee passes it back (the note), for the history and notice.
+  attr_accessor :passing_back
 
   normalizes :description, with: ->(value) { value.to_s.strip.presence }
   normalizes :timing, :contact_name, :contact_phone, with: ->(value) { value.to_s.squish.presence }
@@ -105,6 +114,10 @@ class ServiceRequest < ApplicationRecord
       quote
     end
   end
+
+  # JOB-06: one photo from the assignee on site. Returns an error sentence, or nil.
+  def add_site_photo_from(file, by:) = add_site_photo(site_photos, file, by:, max: Visit::MAX_PHOTOS, max_bytes: Visit::PHOTO_MAX_BYTES,
+                                                                     full: "This request already has the most site photos it can (#{Visit::MAX_PHOTOS}).")
 
   def service_names = services.map { _1["name"] }
 
