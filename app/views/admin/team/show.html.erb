@@ -26,7 +26,7 @@
                 <td class="text-muted"><%= member.last_active_at ? "#{time_ago_in_words(member.last_active_at)} ago" : "Not yet" %></td>
                 <td class="text-right">
                   <% if member != current_membership && current_membership.can_change_access?(member) %>
-                    <%= button_to "Deactivate", deactivate_admin_member_path(member), method: :patch, class: button_classes(:tertiary, :sm),
+                    <%= button_to "Deactivate", deactivate_admin_member_path(member), method: :patch, class: button_classes(:destructive, :sm),
                                   form: { data: { turbo_confirm: "#{member.user.full_name} will lose access to #{current_business.name} right away. Their name stays on past work.", turbo_confirm_button: "Deactivate" } } %>
                   <% elsif member == current_membership %>
                     <span class="text-xs text-muted">You</span>

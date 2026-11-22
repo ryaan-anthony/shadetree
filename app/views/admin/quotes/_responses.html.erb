@@ -18,7 +18,7 @@
               <%= f.field :message, as: :textarea, label: "How they approved", rows: 3, maxlength: QuoteResponse::MESSAGE_MAX, required: true,
                           placeholder: "e.g. Approved on the phone on Tuesday" %>
               <div class="flex justify-end gap-2">
-                <button type="button" class="<%= button_classes(:secondary) %>" data-action="modal#close">Cancel</button>
+                <button type="button" class="<%= button_classes(:tertiary) %>" data-action="modal#close">Cancel</button>
                 <%= f.submit_button "Mark approved" %>
               </div>
             <% end %>

@@ -30,7 +30,7 @@
                   <%= text_area_tag :note, nil, id: "pass-back-note", rows: 4, maxlength: 5_000, class: "textarea" %>
                 </div>
                 <div class="flex justify-end gap-2">
-                  <button type="button" class="<%= button_classes(:secondary) %>" data-action="modal#close">Not yet</button>
+                  <button type="button" class="<%= button_classes(:tertiary) %>" data-action="modal#close">Not yet</button>
                   <%= submit_tag "Pass it back", class: button_classes, name: nil %>
                 </div>
               <% end %>

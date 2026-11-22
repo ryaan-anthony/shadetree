@@ -45,8 +45,9 @@
       <%= empty_state title: "No archived services", text: "Archived services are hidden from pickers but stay on old quotes and invoices.", icon: "archive" %>
     <% else %>
       <%= empty_state title: "No services yet", text: "Start with common services for your kind of business and fill in your prices, or add your own one at a time.", icon: "package" do %>
-        <%= link_to admin_catalog_presets_path, class: button_classes do %><%= icon "zap" %> Add starter services<% end %>
-        <%= link_to new_admin_catalog_item_path, class: button_classes(:secondary) do %><%= icon "plus" %> Add a service<% end %>
+        <%# PLT-14: the page's own actions, rank and wording %>
+        <%= link_to admin_catalog_presets_path, class: button_classes(:secondary) do %><%= icon "zap" %> Add starter services<% end %>
+        <%= link_to new_admin_catalog_item_path, class: button_classes do %><%= icon "plus" %> Add service<% end %>
       <% end %>
     <% end %>
   </div>
