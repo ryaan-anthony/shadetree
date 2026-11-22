@@ -120,9 +120,10 @@ export default class extends Controller {
     const form = button.form
     if (this.dirty) this.save()
     await this.saving
-    if (this.dirty || this.conflict || !form) return
+    if (this.dirty || this.conflict || this.failed || !form) return
     const lock = this.formTarget.querySelector(`#${this.scopeValue}_lock_version`)
     if (lock && form.elements.lock_version) form.elements.lock_version.value = lock.value
+    this.leaving = true // #289: saved; the page this submit leads to isn't held by the leave guard
     form.requestSubmit(button)
   }
 
