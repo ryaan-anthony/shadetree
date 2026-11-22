@@ -10,7 +10,8 @@ module ClientEventsHelper
     when "request_received"
       [ "inbox", "Request #{subject&.reference} received#{" (entered by staff)" if subject&.created_by_id}", subject && admin_service_request_path(subject) ]
     when "quote_sent"
-      [ "send", "Quote #{subject&.number} sent #{CHANNELS[data["channel"]]} #{revision_note(data)}".squish, subject && staff_quote_path(subject) ]
+      what = data["copy"] ? "Copy of approved quote" : "Quote" # #289
+      [ "send", "#{what} #{subject&.number} sent #{CHANNELS[data["channel"]]} #{revision_note(data) unless data["copy"]}".squish, subject && staff_quote_path(subject) ]
     when "quote_viewed", "invoice_viewed"
       kind = event.kind.delete_suffix("_viewed")
       [ "eye", "#{event.client.display_name} opened #{kind} #{subject&.number}", subject && (kind == "quote" ? staff_quote_path(subject) : staff_invoice_path(subject)) ]

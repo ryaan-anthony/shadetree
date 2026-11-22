@@ -261,12 +261,15 @@ class Quote < ApplicationRecord
       raise ArgumentError, "a #{status} quote can't be sent" unless draft? || sent? || copy_sendable?
       raise ArgumentError, "the client's details were erased" if client.erased? # INS-02
 
+      copy = approved? # #289: a copy of what was approved: not usage, not a first quote, no automations
       # QTE-07: sent, so no longer waiting for review (the quote's history keeps who marked it).
       update!(status: "sent", sent_at: Time.current, sent_by: by, ready_for_review_at: nil, ready_for_review_by: nil) if draft?
-      # ACC-05: when the business sent its first quote, for time-to-first-quote (no PII).
-      @first_quote_sent = Business.where(id: business_id, first_quote_sent_at: nil).update_all(first_quote_sent_at: Time.current) == 1
-      UsageEvent.record!("quote_sent", self, at: sent_at || Time.current)
-      ClientEvent.record!(client, :quote_sent, subject: self, by:, channel:, revision:) # CLI-05
+      unless copy
+        # ACC-05: when the business sent its first quote, for time-to-first-quote (no PII).
+        @first_quote_sent = Business.where(id: business_id, first_quote_sent_at: nil).update_all(first_quote_sent_at: Time.current) == 1
+        UsageEvent.record!("quote_sent", self, at: sent_at || Time.current)
+      end
+      ClientEvent.record!(client, :quote_sent, subject: self, by:, channel:, revision:, **(copy ? { copy: true } : {})) # CLI-05
       sends.create!(business:, user: by, channel:, recipient:, cc:, email_message:, revision:)
     end
   end

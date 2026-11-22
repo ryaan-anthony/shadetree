@@ -90,6 +90,8 @@ build custom rules from a fixed list of triggers, conditions and actions.
   (`automation_form_controller.js`) shows only what fits the trigger. Quotes, invoices (with
   their payments) and jobs show their runs. Without the feature, the history stays read-only.
 - Dev seeds: `AutomationRecipe.install!("quote_follow_up", by: user)` inside the business.
+- #289: a copy of an approved quote isn't a send: it starts no "quote sent" automation; and the
+  "invoice a completed job" action leaves a $0.00 (or credit) invoice as a draft.
 
 ## Open questions
 

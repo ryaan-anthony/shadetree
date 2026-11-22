@@ -33,10 +33,15 @@ class QuoteActivity
   end
 
   def sends
+    approved_at = quote.approval&.created_at
     quote.sends.includes(:user, :email_message).map do |send|
       by = " by #{send.user.full_name}" if send.user
       what = send.revision > 1 ? "Revision #{send.revision}" : nil
-      title = send.channel == "email" ? "#{what || "Emailed"}#{" emailed" if what} to #{send.recipient}#{by}" : "#{what ? "#{what} sent as a link" : "Link copied"}#{by}"
+      title = if approved_at && send.created_at > approved_at # #289: only copies go out after the approval
+        "Copy of approved quote #{send.channel == "email" ? "emailed to #{send.recipient}" : "sent as a link"}#{by}"
+      elsif send.channel == "email" then "#{what || "Emailed"}#{" emailed" if what} to #{send.recipient}#{by}"
+      else "#{what ? "#{what} sent as a link" : "Link copied"}#{by}"
+      end
       detail = "Not delivered: #{send.email_message.error.presence || send.email_message.status_label.downcase}" if send.email_message&.problem?
       Entry.new(at: send.created_at, icon: "send", title:, detail:)
     end

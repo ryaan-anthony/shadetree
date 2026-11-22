@@ -116,7 +116,13 @@ class Admin::MoneyTrustTest < ActionDispatch::IntegrationTest
 
   test "an approved quote can be sent again as a copy: it stays approved and isn't counted" do
     quote = approve(quote_for("Grace", email: "grace@example.com"))
-    usage = as_business(@business) { UsageEvent.where(subject: quote).count }
+    # The worst case: no usage event and no first quote yet (a quote approved some other way).
+    as_business(@business) do
+      UsageEvent.where(subject: quote).delete_all
+      AutomationRule.create!(name: "On send", trigger: "quote_sent", delay_minutes: 0, conditions: {}, actions: [ { "type" => "notify_team", "team" => "office" } ])
+    end
+    @business.update_columns(first_quote_sent_at: nil)
+    used = as_business(@business) { Entitlements.for(@business).used(:quotes_sent) }
     get admin_quote_path(quote)
     assert_select "a[href=?]", new_admin_quote_send_path(quote), text: /Send again/
 
@@ -132,8 +138,14 @@ class Admin::MoneyTrustTest < ActionDispatch::IntegrationTest
       perform_enqueued_jobs
     end
     assert_equal "approved", as_business(@business) { quote.reload.status }
-    assert_equal usage, as_business(@business) { UsageEvent.where(subject: quote).count }
+    assert_equal used, as_business(@business) { Entitlements.for(@business).used(:quotes_sent) }, "a copy is never usage"
+    assert_nil @business.reload.first_quote_sent_at, "nor a first quote"
+    assert_equal 0, as_business(@business) { AutomationRun.count }, "nor does it start quote-sent automations"
     assert_match(/Approved/, ActionMailer::Base.deliveries.last.text_part.body.to_s)
+    get admin_quote_path(quote)
+    assert_select "#quote-activity", /Copy of approved quote emailed to grace@example\.com/
+    get admin_client_path(as_business(@business) { quote.client })
+    assert_select "#client-timeline", /Copy of approved quote #{quote.number} sent by email/
   end
 
   test "an archived approved quote isn't sent again" do
