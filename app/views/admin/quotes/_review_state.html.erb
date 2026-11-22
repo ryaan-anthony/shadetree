@@ -1,0 +1,10 @@
+<%# locals: (quote:) -%>
+<%# QTE-07: a draft's hand-over, for someone who doesn't send it: waiting for the office, or the button.
+    The button saves anything pending first (quote_builder#saveAndSubmit), then hands it over. %>
+<span class="contents" id="review-state">
+  <% if quote.ready_for_review? %>
+    <span class="text-sm2 text-muted" id="ready-for-review">Ready for review: the office sends it</span>
+  <% else %>
+    <button type="submit" form="ready-for-review-form" class="<%= button_classes(:primary) %>" data-action="quote-builder#saveAndSubmit"><%= icon "check-square" %> Ready for review</button>
+  <% end %>
+</span>

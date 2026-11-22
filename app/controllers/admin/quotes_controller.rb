@@ -101,9 +101,17 @@ class Admin::QuotesController < Admin::BaseController
   def edit; end
 
   # QTE-07: their draft, handed to the office to check and send.
+  # Only for those who don't send it themselves; refused from a page older than the quote.
   def ready
+    return redirect_to(edit_admin_quote_path(@quote), alert: "You send this quote yourself.") unless own_quotes_only? && !can?(:send_own_quotes)
+    if params[:lock_version].to_s != @quote.lock_version.to_s
+      return redirect_to(edit_admin_quote_path(@quote), alert: "This quote changed since you last saw it. Check it, then mark it ready again.")
+    end
+
     @quote.mark_ready_for_review!(by: current_user)
     redirect_to edit_admin_quote_path(@quote), notice: "Marked ready for review. The office will check it and send it."
+  rescue ArgumentError => error
+    redirect_to edit_admin_quote_path(@quote), alert: error.message
   end
 
   # The builder's autosave and its explicit Save. The form always sends the whole draft
@@ -119,6 +127,8 @@ class Admin::QuotesController < Admin::BaseController
       # A failed save keeps nothing from this request (lines, files), not just the quote row.
       @quote.save || raise(ActiveRecord::Rollback)
     end
+    # QTE-07: the person who marked it ready changed it, so it's theirs again until marked again.
+    @review_cleared = (@quote.clear_ready_for_review! || true) if saved && own_quotes_only? && @quote.ready_for_review_at
     response.set_header("X-Lock-Version", @quote.lock_version.to_s)
     respond_to do |format|
       format.turbo_stream { render :update, status: (saved ? :ok : :unprocessable_content) }

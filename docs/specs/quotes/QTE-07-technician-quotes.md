@@ -60,5 +60,9 @@ assigned to them, without seeing anything else in the office.
   send), so an owner can require review (owner approved the feature set, 2026-11-21).
 - The built-in Technician role gets neither; a business gives them through a custom role.
 - Deleting a draft stays with the office.
+- Changing a draft after marking it ready takes it back until it's marked again (proposed,
+  pending the owner).
+- Someone sending their own quote sends to the client's emails on file, and can't send a copy
+  of an approved one; anything else goes through the office.
 - Drafts someone made from requests while they were office staff stay theirs if their role
   later becomes quote-only (accepted for now).

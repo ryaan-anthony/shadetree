@@ -16,11 +16,8 @@
   <% if !own_quotes_only? || can?(:send_own_quotes) %><%# QTE-07: their own drafts, if their role sends them %>
   <%= link_to new_admin_quote_send_path(@quote, from: ("setup" if from_setup?)), class: button_classes(:primary),
               data: { action: "quote-builder#saveAndGo" } do %><%= icon "send" %> Send<% end %>
-  <% elsif @quote.ready_for_review? %>
-    <span class="text-sm2 text-muted" id="ready-for-review">Ready for review: the office sends it</span>
   <% else %>
-    <%# Saves anything pending first (quote_builder#saveAndSubmit), then hands it over. %>
-    <button type="submit" form="ready-for-review-form" class="<%= button_classes(:primary) %>" data-action="quote-builder#saveAndSubmit"><%= icon "check-square" %> Ready for review</button>
+    <%= render "review_state", quote: @quote %>
   <% end %>
   <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
     <button type="button" class="<%= button_classes(:ghost, :icon) %>" data-menu-target="button" data-action="menu#toggle"

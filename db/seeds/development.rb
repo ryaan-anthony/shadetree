@@ -302,8 +302,10 @@ Tenancy.with_business(business) do
   BusinessUser.find_or_create_by!(business:, user: riley) { _1.assign_attributes(role: "custom", role_id: senior_role.id) }
   unless Quote.exists?(created_by: riley)
     client = Client.order(:id).first
+    mulch = CatalogItem.active.find_by(name: "Mulch installation") || CatalogItem.active.first
     request = ServiceRequest.create!(client:, property: client.properties.first, source: "phone", created_by: owner, status: "in_progress",
-                                     description: "Wants the beds edged and mulched before spring.")
+                                     description: "Wants the beds edged and mulched before spring.",
+                                     services: mulch ? [ { "catalog_item_id" => mulch.id, "name" => mulch.name } ] : [])
     follow_up = request.create_follow_up!(business:, user: riley, assigned_by: owner, kind: "visit", scheduled_on: business.today - 1,
                                           timing: "exact", start_time: "10:00", done_at: 1.day.ago, done_by: riley)
     ServiceRequestEvent.record!(request, :assigned, by: owner, to: follow_up.state)

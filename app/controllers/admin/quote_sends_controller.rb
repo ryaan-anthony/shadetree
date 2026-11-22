@@ -61,7 +61,8 @@ class Admin::QuoteSendsController < Admin::BaseController
   # drafted from requests (resends of them too); anyone else is refused.
   def set_quote
     scope = if !own_quotes_only? then Quote.all
-    elsif can?(:send_own_quotes) then Quote.where(created_by_id: current_user.id, revision: 1).where.not(service_request_id: nil) # never a revision the office started
+    elsif can?(:send_own_quotes) && can?(:quote_requests) # never a revision the office started, nor a copy of an approved one
+      Quote.where(created_by_id: current_user.id, revision: 1, status: %w[draft sent]).where.not(service_request_id: nil)
     else return deny!(:office, "can't send quotes")
     end
     @quote = scope.includes(:client, :line_items).find_by_param!(params[:quote_id])
@@ -95,6 +96,7 @@ class Admin::QuoteSendsController < Admin::BaseController
   def send_email
     @form = QuoteSendForm.new(params.expect(quote_send: %i[to cc subject message]))
     valid = @form.valid? # (clears errors, so the daily limit is added after)
+    only_on_file if valid && own_quotes_only?
     @form.errors.add(:base, "This quote has been emailed #{EMAILS_PER_QUOTE_PER_DAY} times today. Try again tomorrow.") if too_many_today?
     @template_choices = template_choices unless valid && @form.errors.empty?
     return render(:new, status: :unprocessable_content) unless valid && @form.errors.empty?
@@ -111,6 +113,13 @@ class Admin::QuoteSendsController < Admin::BaseController
     end
     track_first_quote
     redirect_after_setup_step after_send_path(@quote), notice: "Quote #{@quote.number} is on its way to #{@form.to}."
+  end
+
+  # QTE-07: someone sending their own quote sends to the client's addresses on file only.
+  def only_on_file
+    on_file = @quote.client.contact_methods.select(&:email?).map { _1.value.downcase }
+    outside = [ @form.to, *@form.cc_list ].compact.reject { on_file.include?(_1.downcase) }
+    @form.errors.add(:base, "Send it to the client's email on file. Ask the office to send it anywhere else.") if outside.any?
   end
 
   # MKT-04: the funnel's last step, when this send was the business's first.

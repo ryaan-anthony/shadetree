@@ -12,3 +12,6 @@
   <%= turbo_stream.replace "quote_tax_rates" do %><%= render "tax_rates", quote: @quote %><% end %>
   <%= turbo_stream.update "quote_property" do %><%= render "property_select", client: @quote.client, selected: @quote.property&.uid %><% end %>
 <% end %>
+<% if @review_cleared %><%# QTE-07: back to "Ready for review" %>
+  <%= turbo_stream.replace "review-state" do %><%= render "review_state", quote: @quote %><% end %>
+<% end %>
