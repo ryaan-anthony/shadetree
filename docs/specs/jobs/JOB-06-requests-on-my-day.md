@@ -39,6 +39,8 @@ creates the quote or hands it back or on.
       tells whoever assigned it (NTF-02).
 - [ ] From a done follow-up, the assignee can create a quote if their role allows it (QTE-07 for
       technicians), or pass it back to the person who assigned it with a note.
+- [ ] Requests can be assigned to members of any role (CLI-07 limits it to people who can see
+      requests until follow-ups show on My day).
 - [ ] People who can manage requests can also reassign or reschedule from My day.
 - [ ] Assignees see only the requests assigned to them, and only while assigned. Direct links to
       other requests, the inbox, prices and other clients are refused, with tests for roles and

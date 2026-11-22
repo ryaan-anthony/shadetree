@@ -1,5 +1,14 @@
 <%= page_header "Requests", lede: "New work from your request form and phone calls." do %>
-  <%= render "admin/shared/location_filter", path: admin_service_requests_path, keep: { status: @status } %>
+  <%= render "admin/shared/location_filter", path: admin_service_requests_path, keep: { status: @status, assignee: @assignee } %>
+  <%# CLI-07: who's following them up. %>
+  <%= form_with url: admin_service_requests_path, method: :get, class: "w-full sm:w-56", data: { turbo_action: "advance" } do %>
+    <%= hidden_field_tag :status, @status, id: nil %>
+    <label class="sr-only" for="assignee-filter">Assigned to</label>
+    <%= select_tag :assignee, options_for_select([ [ "Assigned to anyone", "" ], [ "Assigned to me", "mine" ], [ "Not assigned", "unassigned" ] ] +
+                                                 @assignee_choices.map { [ "Assigned to #{_1.full_name}", _1.id ] }, @assignee),
+                   id: "assignee-filter", class: "select", data: { controller: "submit-form", action: "change->submit-form#submit" } %>
+    <noscript><%= submit_tag "Show", class: button_classes(:secondary, :sm), name: nil %></noscript>
+  <% end %>
   <% if current_business.request_form_enabled? %>
     <span data-controller="clipboard">
       <input type="hidden" value="<%= public_request_url(current_business.handle) %>" data-clipboard-target="source">
@@ -11,7 +20,7 @@
 
 <nav class="tabs mb-4" aria-label="Requests by status" data-controller="tabs">
   <% ServiceRequest::STATUSES.each do |status| %>
-    <%= link_to admin_service_requests_path(status:), class: "tab", "aria-current": ("page" if status == @status) do %>
+    <%= link_to admin_service_requests_path(status:, assignee: @assignee), class: "tab", "aria-current": ("page" if status == @status) do %>
       <%= ServiceRequest::LABELS.fetch(status) %> <span class="tabular text-sm2 font-normal text-muted"><%= @counts[status].to_i %></span>
     <% end %>
   <% end %>
@@ -19,12 +28,12 @@
 
 <% if @requests.empty? %>
   <div class="card">
-    <% if @status == "new" %>
+    <% if @status == "new" && @assignee.nil? %>
       <%= empty_state title: "You're all caught up", text: current_business.request_form_enabled? ? "New requests from your form and the ones you log show up here." : "Turn on your request form in Settings to take requests online, or log one from a call.", icon: "inbox" do %>
         <%= link_to new_admin_service_request_path, class: button_classes(:secondary) do %><%= icon "plus" %> Log a request<% end %>
       <% end %>
     <% else %>
-      <%= empty_state title: "Nothing here", text: "No requests are #{ServiceRequest::LABELS.fetch(@status).downcase} right now.", icon: "inbox" %>
+      <%= empty_state title: "Nothing here", text: "No requests#{" with that filter" if @assignee} are #{ServiceRequest::LABELS.fetch(@status).downcase} right now.", icon: "inbox" %>
     <% end %>
   </div>
 <% else %>
@@ -47,6 +56,14 @@
                               (pluralize(request.photos.size, "photo") if request.photos.attached?),
                               (request.property&.one_line || request.address_line) ].compact, " · ") %>
             </span>
+            <% if (follow_up = request.follow_up) %><%# CLI-07 %>
+              <span class="mt-1 flex flex-wrap items-center gap-x-2 text-sm2 text-ink">
+                <span class="inline-flex min-w-0 items-center gap-1.5"><%= icon(follow_up.visit? ? "map-pin" : "phone", class: "size-3.5 shrink-0 text-muted") %><span><%= follow_up.user.full_name %> · <%= follow_up.kind_label %>, <%= follow_up.when_label %></span></span>
+                <% if follow_up.overdue? %><%= badge "Overdue", tone: :danger %><% end %>
+              </span>
+            <% elsif request.status == "in_progress" %><%# a New one is plainly nobody's yet %>
+              <span class="mt-1 block text-sm2 text-muted">Not assigned</span>
+            <% end %>
           <% end %>
         </li>
       <% end %>
