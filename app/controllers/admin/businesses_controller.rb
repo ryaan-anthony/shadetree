@@ -95,8 +95,11 @@ class Admin::BusinessesController < Admin::BaseController
   # JOB-05: the visit-email switches, on Settings → Messages (owner, 2026-11-22). Kinds not
   # given keep their setting.
   def update_visit_emails
-    @business.update!(params.require(:business).permit(client_visit_emails: Business::CLIENT_VISIT_EMAILS.keys))
-    redirect_to admin_message_templates_path, notice: "Visit emails saved."
+    if @business.update(params.require(:business).permit(client_visit_emails: Business::CLIENT_VISIT_EMAILS.keys))
+      redirect_to admin_message_templates_path, notice: "Visit emails saved."
+    else # another of the business's settings needs fixing first; say which
+      redirect_to admin_message_templates_path, alert: "Visit emails not saved: #{@business.errors.full_messages.to_sentence}"
+    end
   end
 
   def branding_params

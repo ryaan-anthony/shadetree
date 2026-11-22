@@ -121,6 +121,30 @@ class ClientVisitEmailsTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
+  test "the Quotes, jobs & invoices form no longer changes visit emails" do
+    patch admin_business_path(tab: "documents"), params: { business: { quote_expiry_days: "30", client_visit_emails: { scheduled: "0", reminder: "0" } } }
+    assert_redirected_to edit_admin_business_path(tab: "documents")
+    assert @business.reload.client_visit_email?(:scheduled)
+    assert @business.client_visit_email?(:reminder)
+  end
+
+  test "on Starter (templates view only) the switches still save" do
+    @business.update!(plan: plans(:starter), plan_overrides: {})
+    get admin_message_templates_path
+    assert_select ".banner", /View only on Starter/
+    assert_select "form#visit-emails-form input[type=submit][value=?]", "Save visit emails"
+    patch admin_business_path(tab: "messages"), params: { business: { client_visit_emails: { changed: "0" } } }
+    assert_redirected_to admin_message_templates_path
+    assert_not @business.reload.client_visit_email?(:changed)
+  end
+
+  test "a business setting that needs fixing first is named, not a bare error page" do
+    @business.update_columns(quote_expiry_days: 0)
+    patch admin_business_path(tab: "messages"), params: { business: { client_visit_emails: { changed: "0" } } }
+    assert_redirected_to admin_message_templates_path
+    assert_match "Visit emails not saved:", flash[:alert]
+  end
+
   def visit_line = css_select("#client-notice-pending").first&.text.to_s.squish
 
   test "the job promises an email only when one will go (#289)" do

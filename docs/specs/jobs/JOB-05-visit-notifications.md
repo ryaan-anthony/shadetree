@@ -74,10 +74,13 @@ when, where and how to reach the business.
 - #289: a change is only queued for the client when it's a kind the business sends (and the
   client has an email); the job page promises the email only then ("We'll email Maria Lopez at
   9:38 PM", or "shortly" once that's passed), and explains the wait. No "send now".
+
 ## Decisions
 
-- The visit-email switches (booked, moved, cancelled, reminder) live on Settings → Messages, not
+- The visit-email switches (booked, moved, cancelled) live on Settings → Messages, not
   "Quotes, jobs & invoices": same settings, new place (owner, 2026-11-22).
+- The day-before reminder's switch, in the same card, moved with them (coordinator; owner to
+  confirm).
 
 ## Out of scope
 
