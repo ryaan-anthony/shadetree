@@ -46,7 +46,7 @@ from Help.
       respects reduced motion, and the axe check passes with it open.
 - [ ] Stops and tips are written in the product's plain voice, from the person's point of view,
       with no jargon. Wording lives in one place so it's easy to edit.
-- [ ] Whether the tour was finished or skipped, and at which stop, is recorded per person for
+- [x] Whether the tour was finished or skipped, and at which stop, is recorded per person for
       product measurement, without personal data, alongside ACC-05's time-to-first-quote.
 - [ ] Tests cover the offer, role variants, skip and resume, the tips showing once, restarting
       from Help, keyboard use and mobile.
@@ -57,11 +57,27 @@ from Help.
 - Tours for operators (OPS).
 - A third-party tour service that sends user data elsewhere.
 
-## Open questions
+## Decisions
 
-- Should the tour start on its own after the business is created, or only when the owner chooses
-  it? Proposed: offer it on Home after the first page load. One click to start, one to skip.
-- Should invited Admins get the office tour too, or just tips? Proposed: tips only, with the tour
-  available from Help.
-- Should the tour use the sample quote (Q-SAMPLE) to show what clients see? Proposed: yes, at the
-  Quotes stop, with "See what your client sees".
+- The tour is offered once on Home after the business is created: one click starts it, one
+  skips it (owner, 2026-11-21).
+- Invited Admins get the tips; the tour is available to them from Help (owner, 2026-11-21).
+- The Quotes stop uses the sample quote (Q-SAMPLE) to show what clients see (owner, 2026-11-21).
+
+## Implementation notes
+
+- Built in-house (Stimulus, no tour library). Stops point at `data-tour="…"` attributes, never
+  at position or copy; Home's checklist and the menu links carry them. Wording:
+  `config/locales/guidance.en.yml`; which stops a role gets: `GuidedTour`.
+- Only the person who creates a business is offered it (businesses that existed before aren't);
+  technicians start theirs from their My day welcome ("Show me around"), everyone from Help.
+- Per membership: `tour_status` (offered, started, finished, skipped), `tour_stop` (reached, or
+  where it ended; "offer" when skipped there), offered and ended times. `bin/rails
+  onboarding:tour` reports outcomes, where people stopped and the median time to first quote
+  for each; counts only.
+- Proposed, pending the owner: the first run's outcome is kept once it ends, and taking the
+  tour again from Help only stamps `tour_replayed_at`. This keeps the measurement honest: a
+  replay can't overwrite a skip, or turn a finished tour back into started.
+- Support viewing as a member sees the tour but never records it (the endpoint is read-only
+  under impersonation, and the page doesn't report moves).
+- Dev seeds: `new@example.com` owns a brand-new business with the offer and checklist showing.

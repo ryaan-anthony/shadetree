@@ -171,6 +171,9 @@ Rails.application.routes.draw do
     patch "setup/show", to: "onboarding#show", as: :show_setup
     patch "welcome/dismiss", to: "onboarding#dismiss_welcome", as: :dismiss_welcome
 
+    # Guided tour (ACC-08)
+    patch "tour", to: "tours#update", as: :tour
+
     # The request inbox (CLI-04)
     resources :service_requests, path: "requests", only: %i[index show new create] do
       member do

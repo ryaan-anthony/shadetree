@@ -1,0 +1,26 @@
+<%# locals: (tour:) -%>
+<%# ACC-08: the guided tour. One non-modal dialog that moves from stop to stop, pointing at the
+    element with data-tour="<target>"; a bottom sheet on phones. tour_controller.js runs it. %>
+<div data-controller="tour"
+     data-tour-tour-value="<%= tour.as_json.to_json %>"
+     data-tour-url-value="<%= admin_tour_path %>"
+     data-tour-record-value="<%= record_guidance? %>"
+     data-tour-scope-value="<%= current_business.uid %>"
+     data-tour-autostart-value="<%= params[:tour] == "start" %>"
+     data-tour-count-value="<%= t("guidance.tour.count", at: "%{at}", of: "%{of}") %>"
+     data-tour-next-value="<%= t("guidance.tour.next") %>"
+     data-tour-done-value="<%= t("guidance.tour.done") %>">
+  <div class="tour" role="dialog" aria-modal="false" aria-labelledby="tour-title" aria-describedby="tour-count tour-text"
+       tabindex="-1" hidden data-tour-target="dialog" data-action="keydown->tour#keydown" id="tour">
+    <p class="tour-count" id="tour-count" data-tour-target="count"></p>
+    <h2 class="tour-title" id="tour-title" data-tour-target="title"></h2>
+    <p class="tour-text" id="tour-text" data-tour-target="text"></p>
+    <a class="tour-link" data-tour-target="link" hidden></a>
+    <div class="tour-actions">
+      <button type="button" class="<%= button_classes(:ghost, :sm) %>" data-action="tour#end"><%= t("guidance.tour.end") %></button>
+      <span class="flex-1"></span>
+      <button type="button" class="<%= button_classes(:secondary, :sm) %>" data-tour-target="back" data-action="tour#back"><%= t("guidance.tour.back") %></button>
+      <button type="button" class="<%= button_classes(:primary, :sm) %>" data-tour-target="next" data-action="tour#next"></button>
+    </div>
+  </div>
+</div>
