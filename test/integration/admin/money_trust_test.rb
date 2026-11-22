@@ -187,4 +187,28 @@ class Admin::MoneyTrustTest < ActionDispatch::IntegrationTest
       assert_nil helper.quote_allowance(Entitlements.for(@business)), "no limit, nothing to say"
     end
   end
+
+  test "a technician sending their own $0.00 quote is asked first too (QTE-07)" do
+    @business.update!(plan_overrides: { "features" => { "custom_roles" => true }, "limits" => { "team_members" => nil } })
+    role = as_business(@business) { Role.create!(name: "Senior tech", permissions: %w[field_work quote_requests send_own_quotes]) }
+    tech = User.create!(email: "marcus@example.com", password: "password123", first_name: "Marcus", confirmed_at: Time.current)
+    BusinessUser.create!(user: tech, business: @business, role: "custom", role_id: role.id)
+    quote = as_business(@business) do
+      client = Client.create!(display_name: "Maria", contact_methods_attributes: [ { kind: "phone", value: "2155551212" } ])
+      request = ServiceRequest.create!(client:, source: "phone", description: "Ants")
+      RequestFollowUp.assign!(request, { user: tech, scheduled_on: @business.today }, by: @owner).done!(by: tech)
+      request
+    end
+    sign_in tech
+    post switch_admin_business_path, params: { business: @business.uid }
+    post quote_admin_my_request_path(quote)
+    draft = as_business(@business) { Quote.order(:id).last }
+    patch admin_quote_path(draft), params: { quote: { lock_version: draft.lock_version, lines_present: "1",
+                                                      lines: { "0" => { key: "k1", name: "Inspection", quantity: "1", unit_price: "0" } } } }, as: :turbo_stream
+    get new_admin_quote_send_path(draft)
+    assert_select "#zero-total-warning", /comes to \$0\.00/
+    post admin_quote_send_path(draft), params: { channel: "link" }
+    assert_redirected_to new_admin_quote_send_path(draft)
+    assert as_business(@business) { draft.reload.draft? }
+  end
 end
