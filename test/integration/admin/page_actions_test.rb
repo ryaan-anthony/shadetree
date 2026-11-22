@@ -14,16 +14,26 @@ class Admin::PageActionsTest < ActionDispatch::IntegrationTest
   def visit_page(key) = get(StaffPages.find(@pages, key).path).tap { assert_response :success }
   def header_primaries = css_select(".page-head .btn-primary").reject { _1.ancestors("dialog").any? }.map { _1.text.squish }
 
-  # Owner, 2026-11-22: the quote page's Primary is the next step, and a cancelled job counts as none.
-  test "the quote page's Primary: Create job, then Create invoice, then none" do
+  # Owner, 2026-11-22: the quote page's Primary is the next step. A cancelled job is reopened
+  # (interim until the multi-job spec: a quote has one job).
+  test "the quote page's Primary: Create job or Reopen job, then Create invoice, then none" do
     expected = { quote_sent: [], quote_changes: [], quote_declined: [], quote_expired: [], quote_archived: [],
-                 quote_approved: [ "Create job" ], quote_job_cancelled: [ "Create job" ],
+                 quote_approved: [ "Create job" ], quote_job_cancelled: [ "Reopen job" ],
                  quote_with_job: [ "Create invoice" ], quote_billed: [] }
     actual = expected.keys.index_with do |key|
       visit_page(key)
       header_primaries
     end
     assert_equal expected, actual
+
+    visit_page(:quote_job_cancelled)
+    job = css_select(".page-head a.btn-secondary").find { _1.text.squish.start_with?("Job ") }
+    form = css_select(".page-head form").find { _1.at_css("button.btn-primary")&.text&.squish == "Reopen job" }
+    assert_equal "#{job["href"]}/reopen", form["action"]
+    patch form["action"]
+    assert_redirected_to job["href"]
+    follow_redirect!
+    assert_select ".page-head button", "Complete" # open again (nothing booked: Schedule visit is its Primary)
 
     visit_page(:quote_billed)
     assert_select ".page-head a.btn-secondary", /\AJob J-\d+\z/
