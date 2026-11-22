@@ -111,10 +111,16 @@ class ScheduleView
   # always has someone), at the filtered location when there is one.
   def follow_ups
     @follow_ups ||= if @show_follow_ups && @member != "unassigned"
-      scope = RequestFollowUp.where(scheduled_on: dates.first..dates.last).includes(:user, service_request: %i[client property location])
+      # JOB-08: shown as Busy, a follow-up needs only its person and its location's clock; the
+      # viewer's own are shown in full, so their client and property are loaded too.
+      shown = @show_follow_ups == :busy ? [ :user, { service_request: :location } ] : [ :user, { service_request: %i[client property location] } ]
+      scope = RequestFollowUp.where(scheduled_on: dates.first..dates.last).includes(*shown)
       scope = scope.where(user_id: @member) if @member
       scope = scope.where(service_request_id: ServiceRequest.where(location_id: @location.id).select(:id)) if @location
-      scope.to_a.each { _1.association(:business).target = business }.map { visible(_1) }
+      found = scope.to_a.each { _1.association(:business).target = business }
+      own = found.select { _1.user_id == @viewer&.id }.map(&:service_request)
+      ActiveRecord::Associations::Preloader.new(records: own, associations: %i[client property]).call if @show_follow_ups == :busy && own.any?
+      found.map { visible(_1) }
     else
       []
     end

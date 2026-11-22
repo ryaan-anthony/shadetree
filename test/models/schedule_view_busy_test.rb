@@ -37,6 +37,7 @@ class ScheduleViewBusyTest < ActiveSupport::TestCase
     items = view(viewer: @tech).items
     assert_equal [ RequestFollowUp, ScheduleView::Busy ], items.map(&:class)
     assert_equal @site.follow_up, items.first
+    assert items.first.service_request.association(:client).loaded?, "its client, loaded with it"
   end
 
   test "people who see requests, and people who see nothing of them, are as before" do
