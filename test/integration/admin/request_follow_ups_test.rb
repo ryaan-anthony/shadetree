@@ -70,6 +70,8 @@ class Admin::RequestFollowUpsTest < ActionDispatch::IntegrationTest
     follow_redirect!
     assert_select "#follow-up", /Marcus Reyes.*Site visit, Tue, Nov 24 · 2 pm.*About 1 h/m
     assert_select "#history li", /Assigned to Marcus Reyes: site visit, Tue, Nov 24, 2026 · 2 pm/
+    get admin_client_path(@maria)
+    assert_match "Site visit booked for Tue, Nov 24, 2026 · 2 pm (request)", response.body, "named by its services (none here), not its R- reference"
 
     admin = member_with_role(:admin)
     assign(user_id: admin.id, kind: "call", scheduled_on: "2026-11-25", lock_version: follow_up.lock_version)
