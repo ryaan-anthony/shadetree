@@ -26,12 +26,15 @@
             <% if current_business && current_user %>
               <%# OPS-05: the Help menu: ask Shadetree, from whatever page this is. %>
               <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
-                <button type="button" class="<%= button_classes(:ghost, :icon) %>" data-menu-target="button" data-action="menu#toggle" aria-haspopup="true" aria-expanded="false" aria-label="Help" id="help-menu">
+                <button type="button" class="<%= button_classes(:ghost, :icon) %>" data-menu-target="button" data-action="menu#toggle" aria-haspopup="true" aria-expanded="false" aria-label="Help" id="help-menu" data-tour="help">
                   <%= icon "help-circle", class: "size-5" %>
                 </button>
                 <div class="menu right-0 top-full mt-1 w-56" data-menu-target="menu" hidden>
                   <%= link_to new_admin_support_ticket_path(from: request.path), class: "menu-item" do %><%= icon "message-square" %> Ask Shadetree for help<% end %>
                   <%= link_to admin_support_tickets_path, class: "menu-item" do %><%= icon "life-buoy" %> Your questions<% end %>
+                  <% if (help_tour = GuidedTour.for(Current.membership)) %><%# ACC-08 %>
+                    <%= link_to (help_tour.page == :field ? admin_my_day_path(tour: "start") : admin_root_path(tour: "start")), class: "menu-item" do %><%= icon "map" %> <%= t("guidance.tour.again") %><% end %>
+                  <% end %>
                 </div>
               </div>
               <%# NTF-02: the notification center, with this member's unread count in this business. %>
@@ -52,6 +55,7 @@
         </main>
       </div>
     </div>
+    <% if (tour = guided_tour_here) %><%= render "layouts/app/tour", tour: %><% end %><%# ACC-08 %>
     <%= flash_toasts %>
     <%= render "components/confirm_dialog" %>
     <%= inline_styles_tag %>

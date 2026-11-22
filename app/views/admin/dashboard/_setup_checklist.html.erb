@@ -6,7 +6,7 @@
 <%= card title: "Get to your first quote", subtitle: "#{checklist.done_count} of #{checklist.required.size} done",
          actions: button_to("Hide", admin_dismiss_setup_path, method: :patch, class: button_classes(:ghost, :sm),
                             form: { class: "contents" }),
-         flush: true do %>
+         flush: true, data: { tour: "checklist" } do %>
   <ul class="list">
     <% checklist.steps.each do |step| %>
       <li id="setup-<%= step.key %>" class="flex-wrap sm:flex-nowrap">

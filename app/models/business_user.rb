@@ -145,6 +145,21 @@ class BusinessUser < ApplicationRecord
 
   def custom_roles_allowed? = business.entitlements.feature?(:custom_roles)
 
+  # ACC-08: where this member is with the guided tour (product measurement, no personal data).
+  # start begins a run (again, from Help); step moves it on; finish and end close it. Moves
+  # outside a run, and stops the tour doesn't have, change nothing.
+  def record_tour!(event, stop)
+    now = Time.current
+    case event.to_s
+    when "start" then update!(tour_status: "started", tour_stop: stop, tour_ended_at: nil)
+    when "step" then update!(tour_stop: stop) if tour_status == "started"
+    when "finish" then update!(tour_status: "finished", tour_stop: stop, tour_ended_at: now) if tour_status == "started"
+    when "end" then update!(tour_status: "skipped", tour_stop: stop, tour_ended_at: now) if tour_status.in?(%w[offered started])
+    end
+  end
+
+  def tour_offered? = tour_status == "offered"
+
   # The permissions this membership's role grants (ignoring whether it's active).
   def permission_set = custom_role? ? Array(custom_role_record&.permissions).map(&:to_sym) : Permissions::ROLES.fetch(role, [])
 

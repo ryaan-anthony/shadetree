@@ -35,21 +35,21 @@
   <nav class="side-nav" aria-label="Primary">
     <% if current_business %>
       <% if can?(:office) || can?(:business_settings) %>
-        <%= side_link "Home", admin_root_path, icon: "home", active: controller_name == "dashboard" %>
+        <%= side_link "Home", admin_root_path, icon: "home", active: controller_name == "dashboard", tour: "home" %>
       <% end %>
       <% if can?(:field_work) %>
-        <%= side_link "My day", admin_my_day_path, icon: "sun", active: controller_name.in?(%w[my_day my_visits my_requests]) %>
+        <%= side_link "My day", admin_my_day_path, icon: "sun", active: controller_name.in?(%w[my_day my_visits my_requests]), tour: "my_day" %>
       <% end %>
       <% if can?(:office) %>
-        <%= side_link "Requests", admin_service_requests_path, icon: "inbox", active: controller_name.in?(%w[service_requests service_request_notes]),
+        <%= side_link "Requests", admin_service_requests_path, icon: "inbox", active: controller_name.in?(%w[service_requests service_request_notes]), tour: "requests",
                       count: ServiceRequest.where(status: "new").count %>
         <%= side_link "Clients", admin_clients_path, icon: "users", active: controller_name == "clients" %>
-        <%= side_link "Quotes", admin_quotes_path, icon: "quote", active: controller_name.in?(%w[quotes quote_attachments]) %>
+        <%= side_link "Quotes", admin_quotes_path, icon: "quote", active: controller_name.in?(%w[quotes quote_attachments]), tour: "quotes" %>
         <%= side_link "Jobs", admin_jobs_path, icon: "job", active: controller_name.in?(%w[jobs quote_jobs]) %>
-        <%= side_link "Invoices", admin_invoices_path, icon: "invoice", active: controller_name.in?(%w[invoices job_invoices quote_invoices invoice_attachments]) %>
+        <%= side_link "Invoices", admin_invoices_path, icon: "invoice", active: controller_name.in?(%w[invoices job_invoices quote_invoices invoice_attachments]), tour: "invoices" %>
       <% end %>
       <% if can?(:schedule) %>
-        <%= side_link "Schedule", admin_schedule_path, icon: "calendar", active: controller_name == "schedule" %>
+        <%= side_link "Schedule", admin_schedule_path, icon: "calendar", active: controller_name == "schedule", tour: "schedule" %>
       <% end %>
       <% if can?(:business_settings) || can?(:manage_team) %>
         <p class="side-group">Business</p>
@@ -59,7 +59,7 @@
       <% end %>
       <% if can?(:business_settings) %>
         <%= side_link "Catalog", admin_catalog_items_path, icon: "package", active: controller_name == "catalog_items" %>
-        <%= side_link "Settings", edit_admin_business_path, icon: "settings", active: controller_name == "businesses" && action_name.in?(%w[edit update]) %>
+        <%= side_link "Settings", edit_admin_business_path, icon: "settings", active: controller_name == "businesses" && action_name.in?(%w[edit update]), tour: "settings" %>
       <% end %>
     <% else %>
       <%= side_link "Set up your business", new_admin_business_path, icon: "briefcase", active: true %>

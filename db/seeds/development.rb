@@ -424,3 +424,12 @@ Tenancy.with_business(business) do
                                    method_detail: "Visa ending 4242 (Apple Pay)")
   end
 end
+
+# ACC-08: a brand-new owner, offered the guided tour on Home with the setup checklist showing.
+# The demo owner is offered it too; the demo technician can take the short one from My day.
+new_owner = demo_user("new@example.com", "Sam", "Rivera", demo_password)
+Business.find_or_create_by!(name: "Rivera Pest Control", owner: new_owner) do |b|
+  b.industry = "pest"
+  b.timezone = "America/Chicago"
+  b.currency = "USD"
+end

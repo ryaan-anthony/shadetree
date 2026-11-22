@@ -5,6 +5,8 @@
   <%= render "admin/shared/location_filter", path: admin_root_path if can?(:office) %>
 <% end %>
 
+<%= render "tour_offer" if Current.membership&.tour_offered? %><%# ACC-08 %>
+
 <% if can?(:office) %>
   <%= render "admin/usage/limit_notice", entitlements: dashboard.entitlements %>
   <%# How the month is going. %>

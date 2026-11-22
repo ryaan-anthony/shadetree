@@ -1,0 +1,57 @@
+# ACC-08: every word of the guided tour (and, below it, the first-time tips), in one place.
+# Plain words, from the person's side, a sentence or two each. GuidedTour picks the stops a
+# person's role can use; a stop's key matches the data-tour="…" attribute it points at.
+en:
+  guidance:
+    tour:
+      offer:
+        title: "New here? Take a quick look around"
+        text: "Two minutes, six stops, pointing at the real screens. You can stop whenever you like."
+        start: "Take a 2-minute tour"
+        skip: "Skip"
+        start_field: "Show me around"
+        skipped: "No problem. The tour is in the Help menu whenever you want it."
+      label: "Tour"
+      count: "Stop %{at} of %{of}"
+      back: "Back"
+      next: "Next"
+      done: "Done"
+      end: "End tour"
+      finish_to_step: "Next: %{step}"
+      again: "Take the tour again"
+      office:
+        home_checklist:
+          title: "Start here"
+          text: "This is Home. The checklist gets you to your first sent quote; each step opens the real screen and brings you back here."
+        home:
+          title: "Start here"
+          text: "This is Home. It shows what needs you today: new requests, quotes waiting on clients, jobs to book and money owed."
+        requests:
+          title: "Requests"
+          text: "New work lands here, from your online request form or from calls you log. One click turns a request into a quote."
+        quotes:
+          title: "Quotes"
+          text: "Every quote you send, and where it stands. Clients approve from a link, no account needed."
+          link: "See what a client sees"
+        schedule:
+          title: "Schedule"
+          text: "Book visits and choose who's going. Your crew sees their visits on their phones."
+        invoices:
+          title: "Invoices"
+          text: "Bill for finished work, record payments and see who still owes you."
+        settings_owner:
+          title: "Settings"
+          text: "Your business details, hours, taxes and branding, and your plan. Clients see these on every quote."
+        settings:
+          title: "Settings"
+          text: "Your business details, hours, taxes and branding. Clients see these on every quote."
+      field:
+        my_day:
+          title: "My day"
+          text: "Your visits for today, in order. Tap one for the address, how to get in and what to do."
+        coming_up:
+          title: "Coming up"
+          text: "Visits booked for you over the next two weeks. When the office changes one, it changes here too."
+        help:
+          title: "Help"
+          text: "Stuck? Ask Shadetree from here, on any page. You can take this tour again from here too."

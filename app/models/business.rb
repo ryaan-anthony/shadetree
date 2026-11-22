@@ -333,7 +333,7 @@ class Business < ApplicationRecord
   end
 
   def add_owner_to_business_users
-    # Automatically add the owner to business_users with owner role
-    business_users.create!(user: owner, role: "owner", active: true) unless business_users.exists?(user: owner)
+    # Automatically add the owner to business_users with owner role; they're offered the tour (ACC-08)
+    business_users.create!(user: owner, role: "owner", active: true, tour_status: "offered", tour_offered_at: Time.current) unless business_users.exists?(user: owner)
   end
 end
