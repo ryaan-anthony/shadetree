@@ -43,6 +43,8 @@ optimization before basic scheduling existed.
 - **R12** Technicians cannot see prices or invoices unless the business allows it (setting).
 - **R15** Request follow-ups (site visits and calls, 04-clients R18) sit on My day and the staff
   calendar next to job visits, and are moved and reassigned the same ways.
+- **R16** People who schedule but can't see requests see others' follow-ups as anonymous "Busy"
+  time, so they can plan around them without seeing the requests.
 
 ### Client communication
 - **R13** The client receives a confirmation when a visit is scheduled or changed or cancelled,
@@ -71,6 +73,7 @@ optimization before basic scheduling existed.
 | [JOB-05](../specs/jobs/JOB-05-visit-notifications.md) | Visit confirmations & reminders | M3 | JOB-02, NTF-01, PLT-12 |
 | [JOB-06](../specs/jobs/JOB-06-requests-on-my-day.md) | Request follow-ups on My day | M6 | CLI-07, JOB-04 |
 | [JOB-07](../specs/jobs/JOB-07-requests-on-calendar.md) | Request follow-ups on the calendar | M6 | CLI-07, JOB-03 |
+| [JOB-08](../specs/jobs/JOB-08-busy-blocks.md) | Busy blocks for schedulers without requests | M6 | JOB-07, ACC-07 |
 
 ## Backlog (M6)
 

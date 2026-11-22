@@ -31,6 +31,8 @@ invoice generation, dunning, payment-method storage, proration and financial rep
 - **R4** Billable usage (quotes sent, decided G3) is counted per business per billing period,
   exactly once per event, and is visible to the business ("3 of 5 quotes sent this month").
 - **R5** Free plans reset on calendar month; paid plans reset on their billing cycle.
+- **R14** Usage is visible at a glance from every staff page: quotes used of the limit and the
+  reset date, for the people who look after it.
 
 ### Limit enforcement
 - **R6** Approaching a limit (e.g. 80%) shows a non-blocking notice. At the limit, the gated
@@ -70,6 +72,7 @@ invoice generation, dunning, payment-method storage, proration and financial rep
 | [BIL-03](../specs/billing/BIL-03-limit-enforcement.md) | Limit enforcement & upgrade prompts | M5 | BIL-02 |
 | [BIL-04](../specs/billing/BIL-04-subscriptions.md) | Subscriptions via hosted checkout | M5 | BIL-01 |
 | [BIL-05](../specs/billing/BIL-05-subscription-lifecycle.md) | Trials, failed payments & downgrades | M5 | BIL-04, BIL-03 |
+| [BIL-06](../specs/billing/BIL-06-quota-meter.md) | Quota meter | M6 | BIL-03, BIL-05 |
 
 ## Backlog (M6)
 

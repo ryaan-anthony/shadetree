@@ -49,7 +49,7 @@ calendar, look different from job visits, and can be moved and reassigned the sa
 - Client self-booking of site visits (backlog, decision D1).
 - Calendar feeds (backlog).
 - A "Busy" block for roles that schedule but can't see requests, so they see a person's
-  follow-up time without its details (later, if wanted).
+  follow-up time without its details (JOB-08).
 
 ## Implementation notes
 
