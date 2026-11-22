@@ -28,7 +28,8 @@ class GuidedTourBrowserTest < ApplicationSystemTestCase
 
       page.send_keys(:tab)
     end
-    flunk "Tab never reached #{text.inspect}"
+    seen = evaluate_script("[...document.querySelectorAll('a[href], button, [tabindex]')].filter((e) => e.getClientRects().length).map((e) => e.textContent.trim().slice(0, 30)).join(' | ')")
+    flunk "Tab never reached #{text.inspect}. On the page: #{seen}. Main: #{evaluate_script("document.getElementById('main')?.innerText?.slice(0, 300)")}"
   end
 
   def focused_id = evaluate_script("document.activeElement?.id")
