@@ -1,0 +1,11 @@
+<%# locals: (photo:, request_record:, number:, removable: true) -%>
+<%# JOB-06: one of the site photos on a request, as on a visit (admin/my_visits/_photo). %>
+<li class="relative">
+  <%= link_to rails_representation_path(photo.variant(:web)), target: "_blank", rel: "noopener", class: "block" do %>
+    <%= image_tag rails_representation_path(photo.variant(:thumb)), alt: "Site photo #{number}", loading: "lazy", class: "aspect-square w-full rounded-control bg-sunken object-cover" %>
+  <% end %>
+  <% if removable %>
+    <%= button_to admin_my_request_photo_path(request_record, photo), method: :delete, class: "absolute right-0 top-0 grid size-11 place-items-center text-white", "aria-label": "Remove site photo #{number}",
+                  form: { data: { turbo_confirm: "Remove this photo?", turbo_confirm_button: "Remove" } } do %><span class="grid size-7 place-items-center rounded-full bg-black/60"><%= icon "x", class: "size-4" %></span><% end %>
+  <% end %>
+</li>

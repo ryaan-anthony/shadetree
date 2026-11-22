@@ -1,0 +1,92 @@
+require "test_helper"
+
+# JOB-06: requests a member is following up, on My day among their visits; notes and photos from
+# site; what the office sees of them.
+class Admin::MyDayFollowUpsTest < ActionDispatch::IntegrationTest
+  setup do
+    travel_to Time.utc(2026, 11, 23, 15) # a Monday, 10 am in New York
+    @business = businesses(:one)
+    @business.update!(timezone: "America/New_York")
+    @owner = users(:one)
+    @tech = User.create!(email: "marcus@example.com", password: "password123", first_name: "Marcus", last_name: "Reyes", confirmed_at: Time.current)
+    BusinessUser.create!(user: @tech, business: @business, role: "technician")
+    today = Date.new(2026, 11, 23)
+    as_business(@business) do
+      maria = Client.create!(display_name: "Maria Lopez", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ],
+                             properties_attributes: [ { address_line1: "12 Elm St", city: "Austin", billing: true } ])
+      job = Job.create!(client: maria, property: maria.properties.first, title: "Spring cleanup")
+      book = ->(at) { job.visits.new(scheduled_on: today, timing: "exact", start_time: at, duration_minutes: 60, assignee_ids: [ @tech.id ]).tap { _1.schedule!(by: @owner) } }
+      @one_pm, @three_pm = book.("13:00"), book.("15:00")
+      request = ->(name, **when_) do
+        client = Client.create!(display_name: name, contact_methods_attributes: [ { kind: "phone", value: "555010#{rand(1000..9999)}" } ])
+        ServiceRequest.create!(client:, source: "phone", description: "Fence for #{name}").tap { RequestFollowUp.assign!(_1, { user: @tech, **when_ }, by: @owner) }
+      end
+      @two_pm = request.("Sam Ortiz", scheduled_on: today, timing: "exact", start_time: "14:00")
+      @anytime = request.("Ana Diaz", scheduled_on: today, kind: "call")
+      @overdue = request.("Lee Park", scheduled_on: today - 3)
+      @next_week = request.("Kim Chu", scheduled_on: today + 7, timing: "window", start_time: "09:00", window_end_time: "11:00")
+      @too_far = request.("Far Away", scheduled_on: today + 20)
+      other = Client.create!(display_name: "Not Theirs", contact_methods_attributes: [ { kind: "phone", value: "5550100199" } ])
+      @not_mine = ServiceRequest.create!(client: other, source: "phone", description: "Nope").tap { RequestFollowUp.assign!(_1, { user: @owner, scheduled_on: today }, by: @owner) }
+    end
+    sign_in @tech
+    post switch_admin_business_path, params: { business: @business.uid }
+  end
+
+  def photo = Rack::Test::UploadedFile.new(file_fixture("logo.png"), "image/png", original_filename: "fence.png")
+
+  test "follow-ups sit among the visits: timed in time order, anytime after, overdue with earlier, the next two weeks after" do
+    get admin_my_day_path
+    today = css_select("li[id^=my-]").map { _1["id"] }.first(4) # Today comes first
+    assert_equal [ "my-visit-#{@one_pm.uid}", "my-request-#{@two_pm.uid}", "my-visit-#{@three_pm.uid}", "my-request-#{@anytime.uid}" ], today
+    assert_select "#my-request-#{@two_pm.uid}", /2 pm.*Site visit for a request.*Sam Ortiz.*Fence for Sam Ortiz/m
+    assert_select "#my-request-#{@anytime.uid}", /Anytime.*Call for a request.*Ana Diaz/m
+    assert_select ".card", /Still open from earlier.*Lee Park/m
+    assert_select ".card", /Coming up.*Kim Chu/m
+    assert_select "#my-request-#{@too_far.uid}", 0
+    assert_select "#my-request-#{@not_mine.uid}", 0
+  end
+
+  test "a done follow-up stays, marked, until it's quoted or passed back" do
+    patch done_admin_my_request_path(@two_pm)
+    get admin_my_day_path
+    assert_select "#my-request-#{@two_pm.uid} .badge", "Done"
+  end
+
+  test "notes and photos from site, on their own request only; the office sees them" do
+    post admin_my_request_notes_path(@two_pm), params: { service_request_note: { body: "Two posts rotten" } }
+    assert_redirected_to admin_my_request_path(@two_pm, anchor: "notes")
+    post admin_my_request_photos_path(@two_pm), params: { photos: [ photo ] }, xhr: true
+    assert_response :created
+    assert_select "img[alt='Site photo 1']"
+    post admin_my_request_photos_path(@not_mine), params: { photos: [ photo ] }, xhr: true
+    assert_response :not_found
+    post admin_my_request_notes_path(@not_mine), params: { service_request_note: { body: "x" } }
+    assert_response :not_found
+    get admin_my_request_path(@two_pm)
+    assert_select "#notes li", /Two posts rotten.*Marcus Reyes/m
+    assert_select "#request-site-photos li", 1
+
+    attachment = as_business(@business) { @two_pm.site_photos.sole }
+    sign_in @owner
+    post switch_admin_business_path, params: { business: @business.uid }
+    get admin_service_request_path(@two_pm)
+    assert_select "#site-photos img[alt='Site photo 1 of 1']"
+    assert_select "#notes li", /Two posts rotten/
+    delete admin_my_request_photo_path(@two_pm, attachment)
+    assert_response :not_found, "only the person following it up manages its site photos"
+
+    sign_in @tech
+    post switch_admin_business_path, params: { business: @business.uid }
+    delete admin_my_request_photo_path(@two_pm, attachment)
+    assert_redirected_to admin_my_request_path(@two_pm, anchor: "photos")
+  end
+
+  test "My day stays quick with follow-ups on it" do
+    queries = 0
+    callback = ->(*, payload) { queries += 1 unless payload[:name] == "SCHEMA" || payload[:cached] }
+    ActiveSupport::Notifications.subscribed(callback, "sql.active_record") { get admin_my_day_path }
+    assert_response :success
+    assert_operator queries, :<, 30
+  end
+end

@@ -1,0 +1,16 @@
+<%# locals: (follow_up:) -%>
+<%# JOB-06: a request the member is following up, among their visits; labelled so it isn't taken for a job visit. %>
+<% request_record = follow_up.service_request %>
+<li id="my-request-<%= request_record.uid %>" class="p-0">
+  <%= link_to admin_my_request_path(request_record), class: "flex min-w-0 flex-1 items-start gap-3 px-4 py-3.5" do %>
+    <span class="w-20 shrink-0 pt-0.5 text-sm font-semibold text-ink"><%= follow_up.time_label.delete_prefix("Arrive ") %></span>
+    <span class="min-w-0 flex-1">
+      <span class="flex items-center gap-1.5 text-sm2 font-medium text-canopy"><%= icon(follow_up.visit? ? "map-pin" : "phone", class: "size-3.5 shrink-0") %><%= follow_up.kind_label %> for a request</span>
+      <span class="block truncate font-semibold text-ink"><%= request_record.client.display_name %></span>
+      <span class="block truncate text-sm2 text-muted"><%= request_record.property&.one_line || request_record.address_line || "No address given" %></span>
+      <span class="block truncate text-sm2 text-subtle"><%= request_record.service_names.join(", ").presence || truncate(request_record.description.to_s, length: 80) %> · about <%= follow_up.duration_label %></span>
+    </span>
+    <% if follow_up.done? %><%= badge "Done", tone: :success %><% end %>
+    <%= icon "chevron-right", class: "mt-1 size-4 shrink-0 text-faint" %>
+  <% end %>
+</li>
