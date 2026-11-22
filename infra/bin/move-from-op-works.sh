@@ -1,5 +1,5 @@
 #!/bin/sh
-# One time (ADR 0026): move Shadetree's SES, email-routing and Worker resources from
+# One time (ADR 0027): move Shadetree's SES, email-routing and Worker resources from
 # op-works' tf-config state into this directory's state. Only state moves; nothing in AWS or
 # Cloudflare is created, changed or destroyed, and the SMTP access keys keep their secrets.
 #

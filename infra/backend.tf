@@ -1,5 +1,5 @@
 # Shadetree's own cloud config: SES for outgoing email, Email Routing and the support-email
-# Worker for incoming email, and their getshadetree.com DNS records (ADR 0026).
+# Worker for incoming email, and their getshadetree.com DNS records (ADR 0027).
 # Run by hand from this directory; no CI applies it. See README.md here.
 #
 # State: the homelab's existing bucket, under this repository's own prefix. If Shadetree

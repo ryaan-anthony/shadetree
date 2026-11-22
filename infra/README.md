@@ -1,6 +1,6 @@
 # Shadetree infrastructure
 
-Shadetree's own cloud config: outgoing email through Amazon SES, incoming support email through Cloudflare Email Routing and the `support-email-worker` Worker, and their getshadetree.com DNS records ([ADR 0026](../docs/adr/0026-cloud-config-in-this-repository.md)). The VMs, the tunnel and PostgreSQL are in the op-works repository; this directory is only what belongs to the app.
+Shadetree's own cloud config: outgoing email through Amazon SES, incoming support email through Cloudflare Email Routing and the `support-email-worker` Worker, and their getshadetree.com DNS records ([ADR 0027](../docs/adr/0026-cloud-config-in-this-repository.md)). The VMs, the tunnel and PostgreSQL are in the op-works repository; this directory is only what belongs to the app.
 
 It is run **by hand** from a laptop. No CI applies it, and no workflow here needs a self-hosted runner.
 

@@ -13,7 +13,7 @@
    top. Since July 2025 it only passes on mail that passes SPF or DKIM.
 2. The routing rule for the environment's support address runs that environment's
    **shadetree-support-email Worker** (`infra/support-email-worker`, deployed once per
-   environment with the routing rules by Terraform `infra/email.tf`, [ADR 0026](../adr/0026-cloud-config-in-this-repository.md)).
+   environment with the routing rules by Terraform `infra/email.tf`, [ADR 0027](../adr/0026-cloud-config-in-this-repository.md)).
    Production is `support@getshadetree.com`; staging is `support-staging@getshadetree.com` (the
    apex, since `staging.getshadetree.com` is the tunnel's CNAME). Each Worker posts to its own
    environment with its own secret. It:

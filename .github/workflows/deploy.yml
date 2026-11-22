@@ -141,11 +141,12 @@ jobs:
           VISIBLE_TLS_KEY: ${{ vars.TLS_KEY }}
           VISIBLE_SMTP_PASSWORD: ${{ vars.SMTP_PASSWORD }}
           VISIBLE_STRIPE_SECRET_KEY: ${{ vars.STRIPE_SECRET_KEY }}
+          VISIBLE_SENTRY_DSN: ${{ vars.SENTRY_DSN }}
           HIDDEN_APP_HOST: ${{ secrets.APP_HOST }}
           HIDDEN_DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           HIDDEN_DB_NETWORK: ${{ secrets.DB_NETWORK }}
         run: |
-          for name in SECRET_KEY_BASE DATABASE_PASSWORD TLS_KEY SMTP_PASSWORD STRIPE_SECRET_KEY; do
+          for name in SECRET_KEY_BASE DATABASE_PASSWORD TLS_KEY SMTP_PASSWORD STRIPE_SECRET_KEY SENTRY_DSN; do
             visible="VISIBLE_$name"
             [ -z "${!visible}" ] || { echo "::error::$name is set as a variable, which anyone with read access can see: delete it, rotate it, and set it as a secret of the $ENVIRONMENT environment"; exit 1; }
           done
@@ -225,6 +226,7 @@ jobs:
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
           STRIPE_CONNECT_WEBHOOK_SECRET: ${{ secrets.STRIPE_CONNECT_WEBHOOK_SECRET }}
           INBOUND_EMAIL_SECRET: ${{ secrets.INBOUND_EMAIL_SECRET }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           APP_HOST: ${{ vars.APP_HOST }}
           PGHOST: ${{ vars.DB_HOST || 'postgres' }}
           DATABASE_NAME: ${{ vars.DB_NAME }}
@@ -250,6 +252,9 @@ jobs:
           SLOW_QUERY_MS: ${{ vars.SLOW_QUERY_MS }}
           JOB_BACKLOG_THRESHOLD: ${{ vars.JOB_BACKLOG_THRESHOLD }}
           JOB_WAIT_THRESHOLD: ${{ vars.JOB_WAIT_THRESHOLD }}
+          JOB_FAILED_THRESHOLD: ${{ vars.JOB_FAILED_THRESHOLD }}
+          JOB_ALERT_REPEAT_MINUTES: ${{ vars.JOB_ALERT_REPEAT_MINUTES }}
+          SENTRY_ENVIRONMENT: ${{ vars.SENTRY_ENVIRONMENT }}
           JOB_CONCURRENCY: ${{ vars.JOB_CONCURRENCY }}
           BACKUP_MAX_AGE_HOURS: ${{ vars.BACKUP_MAX_AGE_HOURS }}
           RAILS_LOG_LEVEL: ${{ vars.RAILS_LOG_LEVEL }}
@@ -281,15 +286,19 @@ jobs:
           [[ "$TRIAL_DAYS" =~ ^([0-9]{1,3})?$ ]] || { echo "::error::TRIAL_DAYS must be a whole number of days (0 turns trials off), or unset"; exit 1; }
           [[ "$BILLING_GRACE_DAYS" =~ ^([0-9]{1,3})?$ ]] || { echo "::error::BILLING_GRACE_DAYS must be a whole number of days, or unset"; exit 1; }
           [[ "$TRIAL_PLAN" =~ ^([a-z][a-z0-9_-]*)?$ ]] || { echo "::error::TRIAL_PLAN must be a plan's key, like pro, or unset"; exit 1; }
-          for name in SLOW_REQUEST_MS SLOW_QUERY_MS JOB_BACKLOG_THRESHOLD JOB_WAIT_THRESHOLD JOB_CONCURRENCY BACKUP_MAX_AGE_HOURS SMTP_PORT; do
+          # Optional: Sentry (ADR 0027). Unset, errors and alerts reach the log only.
+          [[ -z "$SENTRY_DSN" || "$SENTRY_DSN" =~ ^https://[0-9a-f]+@[A-Za-z0-9.-]+/[0-9]+$ ]] || { echo "::error::SENTRY_DSN must be the project's DSN, like https://<key>@o0.ingest.us.sentry.io/<project>"; exit 1; }
+          [[ "$SENTRY_ENVIRONMENT" =~ ^([a-z][a-z0-9_-]*)?$ ]] || { echo "::error::SENTRY_ENVIRONMENT must be a lowercase name, or unset"; exit 1; }
+          if [ -z "$SENTRY_DSN" ]; then echo "::warning::SENTRY_DSN is not set: errors and alerts reach the log only (docs/runbooks/operations.md, Monitoring)"; fi
+          for name in SLOW_REQUEST_MS SLOW_QUERY_MS JOB_BACKLOG_THRESHOLD JOB_WAIT_THRESHOLD JOB_FAILED_THRESHOLD JOB_ALERT_REPEAT_MINUTES JOB_CONCURRENCY BACKUP_MAX_AGE_HOURS SMTP_PORT; do
             [[ "${!name}" =~ ^([0-9]+)?$ ]] || { echo "::error::$name must be a whole number, or unset"; exit 1; }
           done
           settings=(SECRET_KEY_BASE DATABASE_PASSWORD SMTP_USERNAME SMTP_PASSWORD STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET
-                    STRIPE_CONNECT_WEBHOOK_SECRET INBOUND_EMAIL_SECRET APP_HOST TRUSTED_PROXIES PGHOST DATABASE_NAME DATABASE_USER
+                    STRIPE_CONNECT_WEBHOOK_SECRET INBOUND_EMAIL_SECRET SENTRY_DSN SENTRY_ENVIRONMENT APP_HOST TRUSTED_PROXIES PGHOST DATABASE_NAME DATABASE_USER
                     MAIL_FROM SMTP_ADDRESS SMTP_PORT MAIL_SANDBOX MAIL_ALLOWLIST MAIL_SANDBOX_TO SUPPORT_EMAIL ANALYTICS_HOST ANALYTICS_DOMAIN
                     STRIPE_PUBLISHABLE_KEY STRIPE_CONNECT_CLIENT_ID INBOUND_EMAIL_ENABLED STRIPE_AUTOMATIC_TAX TRIAL_DAYS
                     TRIAL_PLAN BILLING_GRACE_DAYS STRUCTURED_LOGS SLOW_REQUEST_MS SLOW_QUERY_MS JOB_BACKLOG_THRESHOLD JOB_WAIT_THRESHOLD
-                    JOB_CONCURRENCY BACKUP_MAX_AGE_HOURS RAILS_LOG_LEVEL)
+                    JOB_FAILED_THRESHOLD JOB_ALERT_REPEAT_MINUTES JOB_CONCURRENCY BACKUP_MAX_AGE_HOURS RAILS_LOG_LEVEL)
           written=("${settings[@]}" SOLID_QUEUE_IN_PUMA APP_ENVIRONMENT APP_REVISION TLS_CERT_BASE64 TLS_KEY_BASE64)
           for name in "${settings[@]}"; do
             [[ "${!name}" != *$'\n'* ]] || { echo "::error::$name holds a line break"; exit 1; }
@@ -302,7 +311,7 @@ jobs:
             [[ "$line" =~ ^[A-Z][A-Z0-9_]*= ]] || { echo "::error::EXTRA_SETTINGS: a line is not NAME=value"; exit 1; }
             name="${line%%=*}"
             # Nothing the deploy writes itself, and no secret or connection setting, can be set or overridden here.
-            if [[ " ${written[*]} " == *" $name "* || "$name" =~ ^(STRIPE_|PG|TLS_|DATABASE_|SMTP_|MAIL_|SECRET_KEY_BASE|RAILS_MASTER_KEY|INBOUND_EMAIL_) ]]; then
+            if [[ " ${written[*]} " == *" $name "* || "$name" =~ ^(STRIPE_|PG|TLS_|DATABASE_|SMTP_|MAIL_|SENTRY_|SECRET_KEY_BASE|RAILS_MASTER_KEY|INBOUND_EMAIL_) ]]; then
               echo "::error::EXTRA_SETTINGS may not set $name: use its own variable or secret"; exit 1
             fi
             lines+=("$line")

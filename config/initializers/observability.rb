@@ -10,9 +10,17 @@ Rails.application.configure do
   config.x.observability.job_backlog_threshold = Observability.env_integer("JOB_BACKLOG_THRESHOLD", 100)
   config.x.observability.job_wait_threshold = Observability.env_integer("JOB_WAIT_THRESHOLD", 600)
 
-  # The error tracker plugs in here once it's chosen (PLT-10 open question), for example:
-  #   Observability.tracker = ->(error, payload) { SomeTracker.notify(error, payload) }
-  # Until then reports go to the log only.
+  config.x.observability.job_failed_threshold = Observability.env_integer("JOB_FAILED_THRESHOLD", 1)
+  config.x.observability.job_alert_repeat_minutes = Observability.env_integer("JOB_ALERT_REPEAT_MINUTES", 60)
+
+  # The error tracker (ADR 0027): Sentry, only with SENTRY_DSN (staging and production). Its own
+  # request capture is taken out of the stack; everything reaches it through ErrorSubscriber.
+  config.middleware.delete Sentry::Rails::CaptureExceptions
+  config.middleware.delete Sentry::Rails::RescuedExceptionInterceptor
+  if Observability::SentryTracker.enabled?
+    Sentry.init { Observability::SentryTracker.configure(_1) }
+    Observability.tracker = Observability::SentryTracker.new
+  end
 
   Rails.error.add_middleware(Observability::ErrorContext.new)
   Rails.error.subscribe(Observability::ErrorSubscriber.new)
