@@ -58,6 +58,8 @@ starter services, optional branding, and their first quote — with every step s
   send your first quote, get paid online (Stripe). The business details a quote needs open first
   from the quote step; branding moved out of the checklist (it's in Settings, and ACC-08's tour
   shows it). It stays until all four are done or the member hides it.
+- #289 D: My day stays out of the menu for office staff; they reach it from Home's "Your day"
+  (JOB-04). Built as is (owner, 2026-11-22).
 
 ## Implementation notes
 
