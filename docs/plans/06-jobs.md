@@ -21,6 +21,9 @@ optimization before basic scheduling existed.
 - **R3** Job page shows client & property, line items, notes, attachments/photos, visits, and
   links to the originating quote and resulting invoice(s).
 - **R4** Completing a job prompts creating an invoice (07-payments).
+- **R17** An approved quote's lines can be shared among several jobs: each line is in at most one
+  job that isn't cancelled, a cancelled job frees its lines, and a line is completed once.
+  Invoicing the quote bills the lines whose jobs are completed.
 
 ### Visits
 - **R5** A job has one or more visits. A visit has a date, either a start time or an arrival
@@ -74,6 +77,7 @@ optimization before basic scheduling existed.
 | [JOB-06](../specs/jobs/JOB-06-requests-on-my-day.md) | Request follow-ups on My day | M6 | CLI-07, JOB-04 |
 | [JOB-07](../specs/jobs/JOB-07-requests-on-calendar.md) | Request follow-ups on the calendar | M6 | CLI-07, JOB-03 |
 | [JOB-08](../specs/jobs/JOB-08-busy-blocks.md) | Busy blocks for schedulers without requests | M6 | JOB-07, ACC-07 |
+| [JOB-09](../specs/jobs/JOB-09-multiple-jobs-per-quote.md) | Multiple jobs per quote | M6 | JOB-01, PAY-01, PLT-14 |
 
 ## Backlog (M6)
 
