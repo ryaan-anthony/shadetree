@@ -2,9 +2,10 @@
 
 <div class="max-w-3xl space-y-4">
   <%= card title: "Tax rates", subtitle: "Rates marked default apply to taxable items on new quotes and invoices.", flush: true,
-           actions: link_to(new_admin_tax_rate_path, class: button_classes(:secondary, :sm)) { icon("plus") + " Add rate" } do %>
+           actions: (link_to(new_admin_tax_rate_path, class: button_classes(:secondary, :sm)) { icon("plus") + " Add a tax rate" } if @rates.any?) do %>
+    <%# One way to add a rate at a time: the empty state's button, then this one in the header. %>
     <% if @rates.empty? %>
-      <%= empty_state title: "No tax rates", text: "Quotes and invoices show no tax. If you charge sales tax, add your rate here; add a second one if you collect two (state and county, GST and PST).", icon: "percent" do %>
+      <%= empty_state title: "No tax rates", text: "Quotes and invoices show no tax. If you charge sales tax, add your rate here; add a second one if you collect two (state and county, GST and PST).", level: 3, icon: "percent" do %>
         <%= link_to new_admin_tax_rate_path, class: button_classes do %><%= icon "plus" %> Add a tax rate<% end %>
       <% end %>
     <% else %>

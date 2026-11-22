@@ -1,13 +1,19 @@
 <%# locals: (messages:) %>
 <%# flash[:undo] ({ "path", "params" }) puts an Undo button on the notice (JOB-03's calendar moves). %>
+<%# Errors are role="alert" (announced as they appear). A Turbo visit swaps the whole body, and a
+    live region that arrives with its text isn't read out, so the other toasts are read through
+    #announcer, which stays on the page between visits (role="status" on them too would read
+    them twice). Toasts are data-turbo-temporary: a page restored by Back doesn't bring them. %>
 <% undo = messages.delete("undo") %>
-<div class="toast-stack" id="flash" aria-live="polite" role="status">
+<div id="announcer" class="sr-only" role="status" aria-live="polite" aria-atomic="true" data-turbo-permanent></div>
+<div class="toast-stack" id="flash">
   <% messages.each do |key, message| %>
     <% tone = flash_tone(key) %>
     <% with_undo = undo.is_a?(Hash) && tone == :success %>
-    <div class="toast <%= "toast-danger" if tone == :danger %>" data-controller="dismiss" data-dismiss-after-value="<%= tone == :danger || with_undo ? 0 : 6000 %>">
+    <div class="toast <%= "toast-danger" if tone == :danger %>" <%= tag.attributes(role: ("alert" if tone == :danger)) %> data-turbo-temporary
+         data-controller="dismiss<%= " announce" unless tone == :danger %>" data-dismiss-after-value="<%= tone == :danger || with_undo ? 0 : 6000 %>">
       <%= icon tone %>
-      <span><%= message %></span>
+      <span data-announce-target="text"><%= message %></span>
       <% if with_undo %>
         <%= button_to "Undo", undo["path"], method: :patch, params: undo["params"], class: "font-semibold underline underline-offset-2", form: { class: "contents" } %>
       <% end %>

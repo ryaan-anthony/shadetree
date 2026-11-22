@@ -42,6 +42,29 @@ consistent screens quickly.
 Visual reference: [`docs/mockups/design-system.html`](../../mockups/design-system.html) and the
 screens in [`docs/mockups`](../../mockups/README.md). Treat them as design direction, not code.
 
+## Implementation notes
+
+Conventions from the QA/accessibility audit (#274), for every staff page:
+
+- **Landmarks:** the app layout has a `<header>` (top bar), the sidebar's `<nav>`, `<main>`, and
+  the sidebar's foot (you, sign out, legal links) as the `<footer>`; the operator console too.
+- **Headings:** one H1 per page (`page_header`). Empty states are H2 (`empty_state`),
+  `level: 3` inside a titled card (its title is an H2), `level: 1` when they are the page.
+- **Names:** a link or button repeated down a page names its row ("Download CSV: Clients",
+  "Add here: Lawn care"), starting with its visible words. Tabs mark the current one with
+  `aria-current="page"`; filter buttons use `aria-pressed`.
+- **Status messages:** error toasts are `role="alert"`; other toasts are read through
+  `#announcer`, a polite live region kept across Turbo visits (joined when several arrive,
+  emptied after a few seconds, silent on Back). `role="status"` only on content that updates.
+- **Dates:** records, documents and emails always carry the year. Pages about now (today,
+  this week, what's coming up) leave it off while it's this year (`friendly_date`, or
+  `local_date`/`local_time` with `year: :auto`); today's and this week's pages never show it.
+- **Time zones:** a page with times on one day names the zone once ("Times in Eastern Time
+  (US & Canada)"), never on each time.
+- **Contrast:** `muted` is #5e6d82 (was #64748b, 4.44:1 on the page background): 5.27:1 on
+  white, 4.92 on canvas, 4.77 on sunken. `faint` is never text.
+- **Checks:** `test/system/accessibility_test.rb` runs axe-core (WCAG 2.1 A/AA) on key pages.
+
 ## Out of scope
 
 - Brand color application per business beyond the client layout hook (CAT-02).

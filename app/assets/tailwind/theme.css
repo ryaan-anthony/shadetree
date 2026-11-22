@@ -4,7 +4,8 @@
  * and a CSS variable (var(--color-canopy)) for the component classes.
  *
  * Contrast (WCAG 2.1 AA, 4.5:1 for body text): ink, body, subtle, muted, canopy, and every
- * semantic foreground pass on white and on their own -50 tint. `faint` is for placeholders,
+ * semantic foreground pass on white and on their own -50 tint; muted also passes on canvas
+ * (the app's page background) and sunken. `faint` is for placeholders,
  * borders and decoration only, never for text a user must read.
  */
 @theme static {
@@ -15,7 +16,7 @@
   --color-ink-2: #1e293b;
   --color-body: #1e293b;
   --color-subtle: #475569;
-  --color-muted: #64748b;
+  --color-muted: #5e6d82; /* 5.27:1 on white, 4.92 on canvas, 4.77 on sunken (QA #274; was #64748b) */
   --color-faint: #94a3b8;
   --color-line: #e2e8f0;
   --color-line-2: #eef2f6;

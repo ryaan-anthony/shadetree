@@ -35,6 +35,8 @@ class Admin::BusinessesController < Admin::BaseController
     @business = current_business
     @tab = params[:tab].presence_in(SETTINGS_TABS) || "business"
     attributes = @tab == "branding" ? branding_params : settings_params
+    # The search-engine choice only applies while requests are on; with them off it's ignored.
+    attributes = attributes.except(:request_form_indexable) if attributes.key?(:request_form_indexable) && !ActiveModel::Type::Boolean.new.cast(attributes.fetch(:request_form_enabled, @business.request_form_enabled))
 
     if @business.update(attributes)
       redirect_after_setup_step edit_admin_business_path(tab: (@tab unless @tab == "business")), notice: "Settings saved."

@@ -16,7 +16,7 @@
                   <% options = role_options(member, @custom_roles) %>
                   <% if member != current_membership && options.size > 1 && current_membership.can_assign_role?(member, member.role_choice) %>
                     <%= form_with url: admin_member_path(member), method: :patch, scope: :member, class: "flex items-center gap-2" do |f| %>
-                      <%= f.select :role, options, { selected: member.role_choice }, class: "select h-8 w-36 text-sm2", "aria-label": "Role for #{member.user.full_name}" %>
+                      <%= f.select :role, options, { selected: member.role_choice }, id: dom_id(member, :role), class: "select h-8 w-36 text-sm2", "aria-label": "Role for #{member.user.full_name}" %>
                       <%= f.submit "Save", class: button_classes(:secondary, :sm) %>
                     <% end %>
                   <% else %>
@@ -41,7 +41,7 @@
 
     <%= card title: "Invitations", flush: true do %>
       <% if @invitations.empty? %>
-        <%= empty_state title: "No open invitations", text: "Invite your crew so they can see their visits on their phones.", icon: "user-plus" %>
+        <%= empty_state title: "No open invitations", text: "Invite your crew so they can see their visits on their phones.", level: 3, icon: "user-plus" %>
       <% else %>
         <ul class="list">
           <% @invitations.each do |invitation| %>

@@ -8,8 +8,9 @@
     <link rel="manifest" href="<%= pwa_manifest_path(format: :json) %>">
   </head>
   <body class="bg-canvas text-sm text-body">
-    <%= render "layouts/impersonation_banner" %>
+    <%# The skip link is the first tab stop, before the support banner; z-[200] keeps it above that sticky banner. %>
     <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[200] btn btn-secondary">Skip to content</a>
+    <%= render "layouts/impersonation_banner" %>
     <div class="shell" data-controller="drawer" data-action="keydown->drawer#closeOnEscape">
       <div class="side-scrim" data-drawer-target="scrim" data-action="click->drawer#close" hidden></div>
       <%= render "layouts/app/sidebar" %>

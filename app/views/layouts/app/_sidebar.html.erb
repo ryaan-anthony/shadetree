@@ -1,4 +1,6 @@
-<aside id="app-sidebar" class="side" data-drawer-target="panel" aria-label="Main">
+<%# A plain container, not <aside>: it holds the app's own navigation, not complementary content.
+    Its foot (you, sign out, legal links) is the page's footer landmark. %>
+<div id="app-sidebar" class="side" data-drawer-target="panel">
   <div class="side-top">
     <% if current_business %>
       <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
@@ -64,7 +66,7 @@
     <% end %>
   </nav>
 
-  <div class="side-foot">
+  <footer class="side-foot">
     <div class="flex items-center gap-2.5 px-1 text-[0.8125rem] text-slate-200">
       <%= avatar current_user.full_name.presence || current_user.email %>
       <%= link_to edit_user_registration_path, class: "min-w-0 flex-1 rounded-md hover:text-white", title: "Your account" do %>
@@ -76,5 +78,5 @@
       <% end %>
     </div>
     <p class="mt-2 px-1 text-xs text-side-text"><%= link_to "Terms", terms_path, class: "hover:text-white" %> · <%= link_to "Privacy", privacy_path, class: "hover:text-white" %> · <%= link_to "Legal", legal_path, class: "hover:text-white" %></p>
-  </div>
-</aside>
+  </footer>
+</div>

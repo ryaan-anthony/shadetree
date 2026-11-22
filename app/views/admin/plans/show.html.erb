@@ -10,19 +10,21 @@
         <% limit = @entitlements.limit(key) %>
         <div class="flex items-baseline justify-between gap-3" id="limit-<%= key %>">
           <dt class="text-subtle"><%= label %><% if key == "team_members" %><span class="block text-sm2 text-muted">Counting you and pending invitations</span><% end %></dt>
-          <dd class="font-semibold text-ink"><%= limit ? "#{@entitlements.used(key)} of #{limit}" : "#{@entitlements.used(key)}, no limit" %></dd>
+          <dd class="font-semibold text-ink"><%= plan_limit_usage(limit, @entitlements.used(key), plan) %></dd>
         </div>
       <% end %>
     </dl>
-    <ul class="mt-4 space-y-1.5 border-t border-line pt-4 text-sm" aria-label="Features">
+    <%# Each feature and whether it's included, on one row: a term and its value, like the limits. %>
+    <dl class="mt-4 space-y-1.5 border-t border-line pt-4 text-sm" aria-label="Features" id="plan-features">
       <% Plan::FEATURES.each do |key, label| %>
         <% included = @entitlements.feature?(key) %>
-        <li class="flex items-center gap-2 <%= included ? "text-ink" : "text-muted" %>">
-          <%= icon(included ? "check" : "minus", class: "size-4 #{included ? "text-success" : "text-faint"}") %>
-          <span><%= label %></span><span class="sr-only"><%= included ? "(included)" : "(not included)" %></span>
-        </li>
+        <div class="flex items-center gap-2" id="feature-<%= key %>">
+          <%= icon(included ? "check" : "minus", class: "size-4 shrink-0 #{included ? "text-success" : "text-faint"}") %>
+          <dt class="min-w-0 flex-1 <%= included ? "text-ink" : "text-muted" %>"><%= label %></dt>
+          <dd class="shrink-0 text-sm2 <%= included ? "font-medium text-success" : "text-muted" %>"><%= included ? "Included" : "Not included" %></dd>
+        </div>
       <% end %>
-    </ul>
+    </dl>
     <p class="mt-4 text-sm2 text-muted" id="usage-resets">Your quote count resets on <%= local_date(@entitlements.period.resets_on) %>.</p>
     <%= render "billing", subscription: @subscription, business: @business %>
   <% end %>
@@ -66,14 +68,15 @@
       <% Plan::LIMITS.each do |key, label| %>
         <tr class="border-b border-line">
           <th scope="row" class="p-3 text-left font-normal text-subtle"><%= label %></th>
-          <% @plans.each do |option| %><td class="p-3 text-ink <%= "bg-sunken" if option == plan %>"><%= option.limits[key] || "Unlimited" %></td><% end %>
+          <% @plans.each do |option| %><td class="p-3 text-ink <%= "bg-sunken" if option == plan %>"><%= { nil => "Unlimited", 0 => "Not included" }.fetch(option.limits[key]) { option.limits[key] } %></td><% end %>
         </tr>
       <% end %>
       <% Plan::FEATURES.each do |key, label| %>
         <tr class="border-b border-line last:border-b-0">
           <th scope="row" class="p-3 text-left font-normal text-subtle"><%= label %></th>
           <% @plans.each do |option| %>
-            <td class="p-3 <%= "bg-sunken" if option == plan %>"><%= option.features[key] ? icon("check", label: "Included", class: "size-4 text-success") : icon("minus", label: "Not included", class: "size-4 text-faint") %></td>
+            <%# relative: keeps the visually hidden text inside the scrolling table, so it can't widen the page. %>
+            <td class="relative p-3 <%= "bg-sunken" if option == plan %>"><%= option.features[key] ? icon("check", class: "size-4 text-success") : icon("minus", class: "size-4 text-faint") %><span class="sr-only"><%= option.features[key] ? "Included" : "Not included" %></span></td>
           <% end %>
         </tr>
       <% end %>
