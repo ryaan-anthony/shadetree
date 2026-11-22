@@ -58,6 +58,7 @@ class Admin::DataExportsTest < ActionDispatch::IntegrationTest
                  row.values_at("Name", "Emails", "Phones", "Tags", "Tax exempt", "Created")
     invoice = download("invoices").first
     assert_equal [ "1240.00", "0.00", "1240.00", "USD" ], invoice.values_at("Total", "Paid", "Balance", "Currency")
+    assert_no_match(/\A(due_on_receipt|net_\d+|custom)\z/, invoice["Payment terms"], "in words, as clients see them (owner, 2026-11-22)")
     line = download("invoice_lines").first
     assert_equal [ "Mowing", "2.0", "620.00" ], line.values_at("Item", "Quantity", "Unit price")
   end
