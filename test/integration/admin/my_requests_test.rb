@@ -28,6 +28,7 @@ class Admin::MyRequestsTest < ActionDispatch::IntegrationTest
   def follow_up = as_business(@business) { @request_record.reload.follow_up }
 
   test "the assignee sees who, where, how to reach them, what was asked, the instructions and the office's notes" do
+    as_business(@business) { @request_record.photos.attach(io: file_fixture("logo.png").open, filename: "fence.png", content_type: "image/png") }
     get admin_my_request_path(@request_record)
     assert_response :success
     assert_select "h1", "Maria Lopez"
@@ -38,6 +39,8 @@ class Admin::MyRequestsTest < ActionDispatch::IntegrationTest
     assert_select "p", "(512) 555-0123"
     assert_select "p", /Side gate code 4417/
     assert_select "#request", /Fence leaning after the storm.*Before Christmas.*Measure the run/m
+    assert_select "#request img[alt='Photo 1 from Maria Lopez']", 1, "the client's photos"
+    assert_select "#notes li", /She mentioned a dog in the yard\..*John Doe/m
     assert_select "a[href=?]", admin_service_request_path(@request_record), 0, "no office links"
     assert_select "a[href=?]", admin_client_path(@maria), 0
   end
@@ -80,11 +83,38 @@ class Admin::MyRequestsTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
     get admin_client_path(@maria)
     assert_response :forbidden
+    get admin_catalog_items_path
+    assert_response :forbidden, "no prices"
 
+    post admin_my_request_photos_path(@request_record), params: { photos: [ Rack::Test::UploadedFile.new(file_fixture("logo.png"), "image/png") ] }, xhr: true
+    photo = as_business(@business) { @request_record.site_photos.sole }
+    patch done_admin_my_request_path(@request_record)
     sign_in users(:two)
     post switch_admin_business_path, params: { business: businesses(:two).uid }
     assert_not_found_across_businesses { get admin_my_request_path(@request_record) }
     assert_not_found_across_businesses { patch done_admin_my_request_path(@request_record) }
+    assert_not_found_across_businesses { post admin_my_request_photos_path(@request_record), params: { photos: [ Rack::Test::UploadedFile.new(file_fixture("logo.png"), "image/png") ] }, xhr: true }
+    assert_not_found_across_businesses { delete admin_my_request_photo_path(@request_record, photo) }
+    assert_not_found_across_businesses { post admin_my_request_notes_path(@request_record), params: { service_request_note: { body: "x" } } }
+    assert_not_found_across_businesses { patch pass_back_admin_my_request_path(@request_record), params: { note: "x" } }
+    as_business(@business) do
+      assert_equal [ 1, 1, @tech ], [ @request_record.site_photos.count, @request_record.notes.count, @request_record.follow_up.user ], "nothing changed"
+    end
+  end
+
+  test "the office sees Done on the request and in the inbox" do
+    sign_in @owner
+    post switch_admin_business_path, params: { business: @business.uid }
+    get admin_service_request_path(@request_record)
+    assert_select "#follow-up .badge", { text: "Done", count: 0 }
+    get admin_service_requests_path(status: "in_progress")
+    assert_select "#request-#{@request_record.uid} .badge", { text: "Done", count: 0 }
+
+    as_business(@business) { follow_up.done!(by: @tech) }
+    get admin_service_request_path(@request_record)
+    assert_select "#follow-up .badge", "Done"
+    get admin_service_requests_path(status: "in_progress")
+    assert_select "#request-#{@request_record.uid} .badge", "Done"
   end
 
   test "office staff who have it can create the quote from it, and move or reassign it" do
