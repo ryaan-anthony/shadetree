@@ -57,11 +57,9 @@ from Help.
 - Tours for operators (OPS).
 - A third-party tour service that sends user data elsewhere.
 
-## Open questions
+## Decisions
 
-- Should the tour start on its own after the business is created, or only when the owner chooses
-  it? Proposed: offer it on Home after the first page load. One click to start, one to skip.
-- Should invited Admins get the office tour too, or just tips? Proposed: tips only, with the tour
-  available from Help.
-- Should the tour use the sample quote (Q-SAMPLE) to show what clients see? Proposed: yes, at the
-  Quotes stop, with "See what your client sees".
+- The tour is offered once on Home after the business is created: one click starts it, one
+  skips it (owner, 2026-11-21).
+- Invited Admins get the tips; the tour is available to them from Help (owner, 2026-11-21).
+- The Quotes stop uses the sample quote (Q-SAMPLE) to show what clients see (owner, 2026-11-21).
