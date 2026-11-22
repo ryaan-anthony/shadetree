@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_22_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_22_150100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -1018,7 +1018,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_150000) do
     t.index ["business_id", "quote_id", "occurred_at"], name: "index_quote_events_on_business_id_and_quote_id_and_occurred_at"
     t.index ["quote_id"], name: "index_quote_events_on_quote_id"
     t.index ["user_id"], name: "index_quote_events_on_user_id"
-    t.check_constraint "kind::text = ANY (ARRAY['archived'::character varying::text, 'unarchived'::character varying::text, 'expiry_extended'::character varying::text, 'duplicated'::character varying::text, 'revised'::character varying::text, 'repriced'::character varying::text, 'ready_for_review'::character varying::text])", name: "quote_events_kind"
+    t.check_constraint "kind::text = ANY (ARRAY['archived'::character varying::text, 'unarchived'::character varying::text, 'expiry_extended'::character varying::text, 'duplicated'::character varying::text, 'revised'::character varying::text, 'repriced'::character varying::text, 'ready_for_review'::character varying::text, 'sent_without_review'::character varying::text])", name: "quote_events_kind"
   end
 
   create_table "quote_line_items", force: :cascade do |t|

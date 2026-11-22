@@ -145,9 +145,10 @@ class Admin::QuoteSendsTest < ActionDispatch::IntegrationTest
     assert_equal 0, usage_count
   end
 
-  test "technicians can't send; other businesses' quotes aren't found" do
+  test "technicians can't send the office's quotes (QTE-08: only their own drafts); other businesses' quotes aren't found" do
     sign_out :user
-    assert_permission_matrix(owner: true, admin: true, technician: false) { get new_admin_quote_send_path(@quote) }
+    assert_permission_matrix(owner: true, admin: true) { get new_admin_quote_send_path(@quote) }
+    as_technician { get(new_admin_quote_send_path(@quote)) && assert_response(:not_found) }
 
     sign_in users(:one)
     post switch_admin_business_path, params: { business: @business.uid }

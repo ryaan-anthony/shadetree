@@ -18,6 +18,7 @@ class Admin::QuoteSendsController < Admin::BaseController
 
   before_action :set_quote
   before_action :require_sendable
+  before_action :require_without_review, if: :without_review?
   before_action :require_confirmed_sender, only: :create
   before_action :require_quote_allowance, only: :create
   zero_total_guard :@quote, path: :new_admin_quote_send_path
@@ -33,7 +34,11 @@ class Admin::QuoteSendsController < Admin::BaseController
   def create
     params[:channel] == "link" ? send_link : send_email
   rescue QuoteLimitReached
+    return redirect_to(edit_admin_quote_path(@quote), alert: quote_limit_message) if without_review?
+
     redirect_to new_admin_quote_send_path(@quote, from: ("setup" if from_setup?)), alert: quote_limit_message
+  rescue NeedsReview => error
+    redirect_to edit_admin_quote_path(@quote), alert: needs_review_message(error.message)
   end
 
   private
@@ -42,6 +47,7 @@ class Admin::QuoteSendsController < Admin::BaseController
   # Resends and revisions of quotes already sent never count.
   def require_quote_allowance
     return if !@quote.counts_toward_usage? || current_business.entitlements.can_send_new_quote?
+    return redirect_to(edit_admin_quote_path(@quote), alert: quote_limit_message) if without_review?
 
     redirect_to new_admin_quote_send_path(@quote, from: ("setup" if from_setup?)), alert: quote_limit_message
   end
@@ -57,7 +63,43 @@ class Admin::QuoteSendsController < Admin::BaseController
     raise QuoteLimitReached unless Entitlements.for(current_business).can_send_new_quote?
   end
 
-  def quote_limit_message = "You've used this period's quotes. New quotes can be sent again on #{l(current_business.entitlements.period.resets_on)}."
+  def quote_limit_message
+    message = "You've used this period's quotes. New quotes can be sent again on #{l(current_business.entitlements.period.resets_on)}."
+    return message unless without_review? # QTE-08: no grace send; theirs can still go to the office
+
+    "#{message} Ask #{current_business.owner.first_name.presence || "the owner"} about a bigger plan, or mark it ready for review."
+  end
+
+  # QTE-08: a technician who doesn't send their own quotes sends a draft of theirs that's only
+  # services they may send without review, at their prices. Checked here, and again inside the
+  # send's transaction with the quote row locked, so a late autosave can't slip a change through.
+  class NeedsReview < StandardError; end
+
+  def without_review? = !@quote.nil? && SendWithoutReview.applies_to?(@quote, Current.membership)
+
+  def require_without_review
+    check = SendWithoutReview.new(@quote)
+    redirect_to edit_admin_quote_path(@quote), alert: needs_review_message(check.reason) unless check.qualifies?
+  end
+
+  def needs_review_message(reason) = "This quote needs the office's review (#{reason}). Mark it ready for review instead."
+
+  # Inside the transaction: the quote as committed now, locked; returns what qualified it.
+  def recheck_without_review!
+    return unless without_review?
+
+    fresh = Quote.lock.includes(:business, :client, :service_request, line_items: :catalog_item).find(@quote.id)
+    raise ActiveRecord::RecordNotFound unless SendWithoutReview.applies_to?(fresh, Current.membership) # sent meanwhile (a double submit)
+
+    check = SendWithoutReview.new(fresh)
+    raise NeedsReview, check.reason unless check.qualifies?
+
+    @without_review_grounds = check.grounds
+  end
+
+  def record_without_review
+    QuoteEvent.record!(@quote, :sent_without_review, by: current_user, **@without_review_grounds) if @without_review_grounds
+  end
 
   # QTE-07: office staff send any quote; members with "Send their own quotes" only the ones they
   # drafted from requests (resends of them too); anyone else is refused.
@@ -65,6 +107,7 @@ class Admin::QuoteSendsController < Admin::BaseController
     scope = if !own_quotes_only? then Quote.all
     elsif can?(:send_own_quotes) && can?(:quote_requests) # never a revision the office started, nor a copy of an approved one
       Quote.where(created_by_id: current_user.id, revision: 1, status: %w[draft sent]).where.not(service_request_id: nil)
+    elsif can?(:quote_requests) then Quote.own_drafts_for(current_user) # QTE-08: only drafts that can go without review (below)
     else return deny!(:office, "can't send quotes")
     end
     @quote = scope.includes(:client, :line_items).find_by_param!(params[:quote_id])
@@ -88,7 +131,9 @@ class Admin::QuoteSendsController < Admin::BaseController
   def send_link
     Quote.transaction do
       claim_quote_allowance!
+      recheck_without_review!
       @quote.mark_sent!(by: current_user, channel: "link")
+      record_without_review
       @quote.client_link!
     end
     track_first_quote
@@ -107,7 +152,9 @@ class Admin::QuoteSendsController < Admin::BaseController
     # email job is enqueued only after commit, so a quote is never "sent" without its email.
     Quote.transaction do
       claim_quote_allowance!
+      recheck_without_review!
       quote_send = @quote.mark_sent!(by: current_user, channel: "email", recipient: @form.to, cc: @form.cc_header)
+      record_without_review
       link = @quote.client_link!
       email = QuoteMailer.send_later(:sent, business: current_business, to: @form.to, kind: "quote_sent", related: @quote,
                                             quote_id: @quote.id, revision: @quote.revision, link_id: link.id, subject: @form.subject, message: @form.message, cc: @form.cc_header)

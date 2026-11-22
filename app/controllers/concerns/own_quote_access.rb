@@ -5,10 +5,18 @@ module OwnQuoteAccess
   extend ActiveSupport::Concern
 
   included do
-    helper_method :own_quotes_only?
+    helper_method :own_quotes_only?, :without_review_check
   end
 
   private
+
+  # QTE-08: for a member who doesn't send their own quotes, whether this draft of theirs can go
+  # without review (nil when that doesn't apply to them or it).
+  def without_review_check(quote)
+    return unless SendWithoutReview.applies_to?(quote, Current.membership)
+
+    (@without_review_checks ||= {})[quote.id] ||= SendWithoutReview.new(quote)
+  end
 
   # Not office staff: limited to their own drafts from requests.
   def own_quotes_only? = !can?(:office)

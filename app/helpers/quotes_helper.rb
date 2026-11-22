@@ -1,4 +1,11 @@
 module QuotesHelper
+  # QTE-08: whether a technician can send this draft without review right now: it qualifies, the
+  # plan's quotes aren't used up (no grace send), and their email is confirmed (ACC-01).
+  def send_without_review_now?(quote)
+    check = without_review_check(quote)
+    check&.qualifies? && current_business.entitlements.can_send_new_quote? && current_user.can_send_to_clients?
+  end
+
   # Where a quote opens for staff: the builder for a draft, its own page once it's sent (QTE-06).
   def staff_quote_path(quote) = quote.editable? ? edit_admin_quote_path(quote) : admin_quote_path(quote)
 

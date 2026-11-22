@@ -69,10 +69,18 @@ class QuoteActivity
         from = event.data["from"] ? " from #{I18n.l(Date.parse(event.data["from"]))}" : ""
         Entry.new(at: event.occurred_at, icon: "calendar", title: "Valid-until date moved#{from} to #{I18n.l(Date.parse(event.data["to"]))}#{by}")
       when "ready_for_review" then Entry.new(at: event.occurred_at, icon: "check-square", title: "Marked ready for review#{by}") # QTE-07
+      when "sent_without_review" then without_review(event, by) # QTE-08
       when "revised" then Entry.new(at: event.occurred_at, icon: "edit-3", title: "Revision #{event.data["revision"]} started#{by}")
       when "repriced" then Entry.new(at: event.occurred_at, icon: "tag", title: "#{Array(event.data["changed"]).join(" and ").capitalize} set for #{event.data["location"]}#{by}")
       end
     end
+  end
+
+  # QTE-08: why it went without the office: only those services, at their prices (and within the cap).
+  def without_review(event, by)
+    cap = " (within the #{event.data["cap"]} cap)" if event.data["cap"]
+    detail = "Only services technicians can send without review, at their prices: #{Array(event.data["services"]).to_sentence}. Total #{event.data["total"]}#{cap}."
+    Entry.new(at: event.occurred_at, icon: "zap", title: "Sent without review#{by}", detail:)
   end
 
   # The end of the valid-until day, if it passed while the client still hadn't answered.
