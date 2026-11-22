@@ -124,4 +124,25 @@ class Admin::HomeTest < ActionDispatch::IntegrationTest
     techs.each { book(_1) }
     assert_equal one, count.call, "more visits and people, the same queries"
   end
+
+  test "a follow-up's page (My requests) counts as My day: current for a technician, Home's section for the office" do
+    tech = member_with_role(:technician)
+    request = as_business(@business) do
+      ServiceRequest.create!(client: @maria, source: "phone", description: "Ants").tap do |r|
+        RequestFollowUp.assign!(r, { user: tech, scheduled_on: @business.today }, by: @owner)
+      end
+    end
+    other = as_business(@business) do
+      ServiceRequest.create!(client: @maria, source: "phone", description: "Wasps").tap do |r|
+        RequestFollowUp.assign!(r, { user: @owner, kind: "call", scheduled_on: @business.today }, by: @owner)
+      end
+    end
+    get admin_my_request_path(other)
+    assert_select "nav[aria-label=Primary] a[aria-current=true][href=?]", admin_root_path
+
+    sign_in tech
+    post switch_admin_business_path, params: { business: @business.uid }
+    get admin_my_request_path(request)
+    assert_select "nav[aria-label=Primary] a[aria-current=page][href=?]", admin_my_day_path
+  end
 end
