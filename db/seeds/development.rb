@@ -303,7 +303,11 @@ Tenancy.with_business(business) do
   # NTF-04: the quote follow-up recipe (Settings → Automations; runs need a plan with automations).
   AutomationRecipe.install!("quote_follow_up", by: owner) unless AutomationRule.exists?(recipe: "quote_follow_up")
   # ACC-07: a role of the business's own (Team → Roles; giving it needs a plan with custom roles).
-  Role.create_with(permissions: %w[schedule field_work]).find_or_create_by!(name: "Dispatcher")
+  dispatcher_role = Role.create_with(permissions: %w[schedule field_work]).find_or_create_by!(name: "Dispatcher")
+  # JOB-08: Dee (dispatch@example.com) is a Dispatcher: the schedule and My day, not requests, so
+  # the demo week's request follow-ups are "Busy" on her calendar.
+  dee = demo_user("dispatch@example.com", "Dee", "Morgan", demo_password)
+  BusinessUser.find_or_create_by!(business:, user: dee) { _1.assign_attributes(role: "custom", role_id: dispatcher_role.id) }
   # QTE-07 (owner, 2026-11-22): built-in Technicians quote the requests given to them and the
   # office sends what they draft: Marcus (tech@example.com) has a draft, from a site visit he did,
   # marked ready for review. Riley (senior@example.com) is a "Senior tech", a custom role that
@@ -351,7 +355,7 @@ unless ContactMessage.handled.exists?
                          body: "Do you support recurring weekly visits?", notified_at: 3.days.ago, created_at: 3.days.ago, handled_at: 2.days.ago)
 end
 
-puts "Demo data ready. Sign in as owner@example.com, admin@example.com, tech@example.com or senior@example.com " \
+puts "Demo data ready. Sign in as owner@example.com, admin@example.com, tech@example.com, senior@example.com or dispatch@example.com " \
      "with password #{demo_password}."
 
 # ACC-06: a second signed-in browser for the demo owner, so the account page's list has two.

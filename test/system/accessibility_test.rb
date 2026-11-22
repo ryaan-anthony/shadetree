@@ -66,6 +66,33 @@ class AccessibilityTest < ApplicationSystemTestCase
     assert_current_path admin_my_request_path(request)
   end
 
+  # JOB-08: Busy blocks for someone who schedules but can't see requests: the week, a day by
+  # person, by status, and the phone agenda with its folded earlier days.
+  test "the calendar with Busy blocks passes axe, wide and on a phone" do
+    @business.update!(plan_overrides: { "features" => { "custom_roles" => true }, "limits" => { "team_members" => nil } })
+    monday = @business.today.beginning_of_week
+    Tenancy.with_business(@business) do
+      client = Client.create!(display_name: "Maria Lopez", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ])
+      ServiceRequest.create!(client:, source: "phone", description: "Fence").then { RequestFollowUp.assign!(_1, { user: users(:one), scheduled_on: monday, timing: "exact", start_time: "10:00" }, by: users(:one)) }
+      ServiceRequest.create!(client:, source: "phone", description: "Hedges").then { RequestFollowUp.assign!(_1, { user: users(:one), kind: "call", scheduled_on: monday + 6 }, by: users(:one)) }
+      dispatcher = Role.create!(name: "Dispatcher", permissions: %w[schedule])
+      dee = User.create!(email: "dee@example.com", password: "password123", first_name: "Dee", confirmed_at: Time.current)
+      BusinessUser.create!(user: dee, business: @business, role: "custom", role_id: dispatcher.id)
+    end
+    Capybara.reset_sessions!
+    visit new_user_session_path
+    sign_in_with_form("dee@example.com")
+    assert_text "Schedule"
+    paths = [ admin_schedule_path(date: monday.iso8601), admin_schedule_path(date: monday.iso8601, view: "day"), admin_schedule_path(date: monday.iso8601, color: "status") ]
+    assert_accessible(*paths)
+    assert_selector ".cal-busy", text: "Busy"
+    page.driver.browser.manage.window.resize_to(390, 844)
+    assert_accessible(*paths)
+    assert_selector "#schedule-agenda", text: "Busy"
+  ensure
+    page.driver.browser.manage.window.resize_to(1400, 1400)
+  end
+
   # JOB-06: a done follow-up, with a site photo they can remove, on My day and its own page, and
   # its Pass back dialog open.
   test "a done follow-up, its site photo and the Pass back dialog pass axe" do
