@@ -190,6 +190,21 @@ class Admin::AccessibilityAuditTest < ActionDispatch::IntegrationTest
     get admin_team_path
     assert_select "#invitation-#{invitation.uid} button[aria-label=?]", "Resend the invitation to crew@example.com", "Resend"
     assert_select "#invitation-#{invitation.uid} button[aria-label=?]", "Revoke the invitation to crew@example.com", "Revoke"
+    assert_select "#invitation-#{invitation.uid} button[aria-label=?]", "Copy link to the invitation for crew@example.com", /Copy link/
+
+    closure = as_business(@business) { Closure.create!(reason: "Thanksgiving", starts_on: @business.today + 10) }
+    get admin_hours_path
+    assert_select "#closure-#{closure.uid} a.menu-item[aria-label=?]", "Edit Thanksgiving", /Edit/
+    assert_select "#closure-#{closure.uid} button.menu-item[aria-label=?]", "Remove Thanksgiving", /Remove/
+
+    client = as_business(@business) do
+      Client.create!(display_name: "Maria Lopez", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ],
+                     properties_attributes: [ { label: "Rental #2", address_line1: "1 Elm St" }, { address_line1: "2 Oak Ave" } ])
+    end
+    get edit_admin_client_path(client)
+    assert_select "button[data-action='nested-fields#remove'][aria-label=?]", "Remove Rental #2", /Remove/
+    assert_select "button[data-action='nested-fields#remove'][aria-label=?]", "Remove 2 Oak Ave"
+    assert_select "template button[data-action='nested-fields#remove'][aria-label=?]", "Remove new property"
   end
 
   test "the sample quote has its own page title" do

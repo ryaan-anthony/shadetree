@@ -1,6 +1,7 @@
 <%# locals: (f:, inline: false) -%>
 <%# One property (service address). %>
 <% property = f.object %>
+<% remove_label = property.name.present? ? "Remove #{property.name}" : (f.index.is_a?(Integer) ? "Remove property #{f.index + 1}" : "Remove new property") %>
 <fieldset class="nested-row space-y-3 border-t border-line pt-4 first:border-t-0 first:pt-0" data-nested-fields-target="row" <%= "hidden" if property.marked_for_destruction? %>>
   <legend class="sr-only">Property</legend>
   <%= f.hidden_field :id if property.persisted? %>
@@ -8,7 +9,7 @@
   <% unless inline %>
     <div class="flex items-end gap-2">
       <div class="min-w-0 flex-1"><%= f.field :label, optional: true, placeholder: "Rental #2", maxlength: 60 %></div>
-      <button type="button" class="<%= button_classes(:tertiary, :sm) %> mb-0.5" data-action="nested-fields#remove"><%= icon "trash" %> Remove</button>
+      <button type="button" class="<%= button_classes(:tertiary, :sm) %> mb-0.5" data-action="nested-fields#remove" aria-label="<%= remove_label %>"><%= icon "trash" %> Remove</button>
     </div>
   <% end %>
   <%= f.field :address_line1, required: false, autocomplete: "off", placeholder: "123 Main St" %>

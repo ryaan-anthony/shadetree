@@ -56,7 +56,7 @@
               <div class="flex flex-wrap items-center gap-1.5" data-controller="clipboard">
                 <% if invitation.pending? %>
                   <input type="hidden" value="<%= invitation_url(invitation.token) %>" data-clipboard-target="source">
-                  <button type="button" class="<%= button_classes(:tertiary, :sm) %>" data-action="clipboard#copy" data-clipboard-target="button"><%= icon "link" %> Copy link</button>
+                  <button type="button" class="<%= button_classes(:tertiary, :sm) %>" data-action="clipboard#copy" data-clipboard-target="button" aria-label="Copy link to the invitation for <%= invitation.email %>"><%= icon "link" %> Copy link</button>
                 <% end %>
                 <%= button_to "Resend", resend_admin_invitation_path(invitation), class: button_classes(:secondary, :sm), "aria-label": "Resend the invitation to #{invitation.email}" %>
                 <%= button_to "Revoke", revoke_admin_invitation_path(invitation), method: :patch, class: button_classes(:tertiary, :sm), "aria-label": "Revoke the invitation to #{invitation.email}",
