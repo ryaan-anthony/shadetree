@@ -1,6 +1,6 @@
 # 0017. Transactional email over SMTP
 
-- **Status:** Accepted
+- **Status:** Accepted; superseded in part by [0028](0028-generic-bounce-event-endpoint.md) (bounces after acceptance)
 - **Date:** 2026-11-16
 - **Specs:** NTF-01, ACC-01, ACC-03, QTE-04, PAY-02, JOB-05
 - **Supersedes:** [0011](0011-transactional-email-postmark.md)

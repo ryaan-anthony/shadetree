@@ -53,11 +53,13 @@ testimonials, blog, newsletter, demo booking, industry pages, and a knowledge ba
 | [MKT-03](../specs/marketing/MKT-03-legal-pages.md) | Legal & trust pages | M5 | PLT-05 |
 | [MKT-04](../specs/marketing/MKT-04-seo-analytics.md) | SEO, performance & analytics | M5 | MKT-01 |
 
+The help center with how-to articles is specified as
+[OPS-06](../specs/operator/OPS-06-help-centre.md), public at `/help`.
+
 ## Backlog (M6)
 
 - Industry landing pages ("Quoting software for lawn care") driven by industry data.
 - Blog / changelog.
-- Help center with how-to articles.
 - Comparison pages vs incumbents.
 - Referral and affiliate landing pages.
 
