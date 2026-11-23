@@ -27,7 +27,10 @@ class Job < ApplicationRecord
   has_many :email_messages, as: :related, dependent: :nullify # JOB-05: what the client was sent
   has_many :visits, inverse_of: :job, dependent: :restrict_with_exception # JOB-02
   after_update :keep_visit_clock_times, if: :saved_change_to_location_id? # CAT-07
-  has_many :invoices, dependent: :restrict_with_exception # PAY-01: one or more (progress billing)
+  # PAY-01: one or more (progress billing). PAY-06: through invoice_jobs, as a quote's invoice can
+  # bill several jobs.
+  has_many :invoice_jobs, dependent: :restrict_with_exception
+  has_many :invoices, through: :invoice_jobs
   has_many :claims, class_name: "JobClaim", inverse_of: :job, dependent: :restrict_with_exception # JOB-09: its share of the quote
   has_many :work_entries, -> { order(:created_at, :id) }, inverse_of: :job, dependent: :restrict_with_exception # JOB-09
   accepts_nested_attributes_for :line_items, allow_destroy: true, reject_if: :blank_new_line?
@@ -68,12 +71,16 @@ class Job < ApplicationRecord
   FILTERS = { "open" => "Not finished", "unscheduled" => "Needs scheduling", "scheduled" => "Scheduled", "in_progress" => "In progress",
               "completed" => "Completed", "to_invoice" => "Ready to invoice", "cancelled" => "Cancelled", "all" => "All" }.freeze
 
-  # INS-01: finished, and not billed yet: no invoice that went out (a draft or a void one
-  # doesn't count) for the job, or for the quote it came from (a deposit invoice).
+  # INS-01: finished, and not billed yet. PAY-06: a job from a quote stays until each of its lines
+  # has a final bill on an invoice that went out (a draft or a void one doesn't count), so another
+  # job's invoice from the same quote doesn't hide it, and a job with no lines left counts as billed.
+  # A job without a quote, as before: until an invoice for it went out.
   def self.ready_to_invoice
-    sent = Invoice.where.not(status: "void").where.not(sent_at: nil)
-    where(status: "completed").where.not(id: sent.where.not(job_id: nil).select(:job_id))
-                              .where("jobs.quote_id IS NULL OR jobs.quote_id NOT IN (?)", sent.where.not(quote_id: nil).select(:quote_id))
+    sent = Invoice.where.not(status: "void").where.not(sent_at: nil).select(:id)
+    billed = InvoiceLineItem.final_bills.where(invoice_id: sent).where.not(job_line_item_id: nil).select(:job_line_item_id)
+    unbilled = JobLineItem.where("job_line_items.job_id = jobs.id").where.not(id: billed)
+    where(status: "completed").where("(jobs.quote_id IS NULL AND jobs.id NOT IN (:invoiced)) OR (jobs.quote_id IS NOT NULL AND EXISTS (:unbilled))",
+                                     invoiced: InvoiceJob.where(invoice_id: sent).select(:job_id), unbilled:)
   end
 
   def self.filtered(filter)

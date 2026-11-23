@@ -44,6 +44,10 @@ class Invoice < ApplicationRecord
   has_many :payments, -> { chronological }, inverse_of: :invoice, dependent: :restrict_with_exception # PAY-05
   has_many :sends, -> { recent }, class_name: "InvoiceSend", inverse_of: :invoice, dependent: :delete_all
   has_many :email_messages, as: :related, dependent: :nullify
+  # PAY-06: every job it bills (a quote's invoice can bill several); `job` is the first of them.
+  has_many :invoice_jobs, inverse_of: :invoice, dependent: :delete_all
+  has_many :jobs, -> { order(:id) }, through: :invoice_jobs
+  after_save { invoice_jobs.find_or_create_by!(job_id:) if job_id && saved_change_to_job_id? }
 
   normalizes :title, with: ->(value) { value.to_s.squish.presence }
   normalizes :message, :internal_notes, :terms, with: ->(value) { value.to_s.strip.presence }
@@ -191,6 +195,7 @@ class Invoice < ApplicationRecord
 
       previous = revisions.last
       restore_snapshot(previous.snapshot)
+      save!(validate: false) # the lines first, while it's a draft: lines are only inserted on drafts (PAY-06)
       assign_attributes(status: previous.status, revision: previous.number, pdf_blob_id: previous.pdf_blob_id, pdf_digest: nil)
       save!(validate: false)
       previous.destroy!
@@ -228,7 +233,7 @@ class Invoice < ApplicationRecord
       "message" => message, "terms" => terms, "currency" => currency, "tax_rates" => tax_rates, "prices_include_tax" => prices_include_tax,
       "discount" => discount_value&.to_s, "discount_kind" => discount_kind, "subtotal_cents" => subtotal_cents, "tax_cents" => tax_cents,
       "total_cents" => total_cents,
-      "lines" => current_line_items.map { _1.attributes.slice(*%w[name description quantity unit unit_price_cents taxable discount_kind]).merge("discount" => _1.discount_value&.to_s) },
+      "lines" => current_line_items.map { _1.attributes.slice(*%w[name description quantity unit unit_price_cents taxable discount_kind]).merge("discount" => _1.discount_value&.to_s, **_1.links) },
       "files" => attachments_attachments.includes(:blob).map { { "blob_id" => _1.blob_id, "filename" => _1.filename.to_s } }
     }
   end
@@ -535,8 +540,12 @@ class Invoice < ApplicationRecord
   def restore_snapshot(data)
     assign_attributes(data.slice(*%w[title issued_on due_on payment_terms message terms tax_rates prices_include_tax]))
     set_discount(data["discount_kind"], data["discount"])
-    lines = data["lines"].map { _1.slice(*%w[name description quantity unit taxable discount_kind]).merge("key" => SecureRandom.uuid, "discount_value" => _1["discount"]) }
-    sync_line_items(lines).zip(data["lines"]) { |item, line| item.unit_price_cents = line["unit_price_cents"] }
+    # PAY-06: a line keeps its key (so it's the same row, with its claim) and what it bills.
+    lines = data["lines"].map { _1.slice(*%w[name description quantity unit taxable discount_kind]).merge("key" => _1["key"] || SecureRandom.uuid, "discount_value" => _1["discount"]) }
+    sync_line_items(lines).zip(data["lines"]) do |item, line|
+      item.unit_price_cents = line["unit_price_cents"]
+      item.assign_attributes(line.slice(*%w[job_line_item_id quote_line_item_id final tax_rates])) if line.key?("final")
+    end
     kept = data["files"].pluck("blob_id")
     attachments_attachments.each do |file|
       next if kept.include?(file.blob_id)
@@ -581,7 +590,7 @@ class Invoice < ApplicationRecord
     return unless client
 
     errors.add(:property, "must be one of this client's properties") if property && property.client_id != client_id
-    errors.add(:job, "must be for the same client") if job && job.client_id != client_id
+    errors.add(:job, "must be for the same client") if (Array(job) + jobs.to_a).any? { _1.client_id != client_id }
     errors.add(:quote, "must be for the same client") if quote && quote.client_id != client_id
   end
 

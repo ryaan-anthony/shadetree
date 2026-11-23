@@ -99,7 +99,8 @@ class Admin::InvoicesTest < ActionDispatch::IntegrationTest
     assert_redirected_to edit_admin_invoice_path(invoice)
     as_business(@business) do
       invoice.sync_line_items([ { "key" => "a", "name" => "Walk-in repair", "quantity" => "1", "unit_price" => "120" } ])
-      invoice.update!(tax_rates: [], status: "sent", amount_paid_cents: 2000)
+      invoice.update!(tax_rates: []) # lines go on drafts only (PAY-06)
+      invoice.update!(status: "sent", amount_paid_cents: 2000)
     end
     get admin_client_path(@maria)
     assert_select "a[href=?]", admin_invoice_path(invoice), text: /#{invoice.number}/
