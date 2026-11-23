@@ -1,7 +1,8 @@
 # ACC-06: every sign-in starts a UserSession for that browser; each request checks it's still
 # active (and notes the activity); signing out ends it. A browser whose session was signed out
 # from another device is signed out on its next request, and so is one with no session at all
-# (there's no other way to sign it out later).
+# (there's no other way to sign it out later). Staff pages then send it to sign in with a note;
+# public pages (ApplicationController.public_page) just show, signed out (#317).
 Rails.application.config.after_initialize do
   tracked = ->(user, opts) { opts[:scope] == :user && user.is_a?(User) }
   request_for = ->(auth) { ActionDispatch::Request.new(auth.env) }
@@ -28,6 +29,9 @@ Rails.application.config.after_initialize do
       session.seen!(request_for.(auth))
     else
       auth.logout(:user)
+      # Public pages (client links, the request form, marketing) still show, signed out (#317).
+      next if request_for.(auth).controller_instance.try(:public_page?)
+
       throw :warden, scope: :user, message: :session_ended
     end
   end

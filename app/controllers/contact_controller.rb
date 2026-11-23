@@ -1,6 +1,7 @@
 # MKT-02: the contact form. Messages are kept and emailed to the team (ContactMessage); bots
 # are kept out by PLT-13's guards (hidden field, form token, a rate limit per network).
 class ContactController < ApplicationController
+  public_page!
   layout "marketing"
   ATTEMPTS = { limit: 5, within: 10.minutes }.freeze
 

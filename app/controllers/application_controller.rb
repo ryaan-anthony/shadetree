@@ -7,6 +7,12 @@ class ApplicationController < ActionController::Base
 
   helper_method :feature?, :current_user_session
 
+  # Pages anyone may open, signed in or not: client links, the request form, the marketing
+  # site. A browser whose session was ended elsewhere (ACC-06) is signed out quietly there and
+  # still sees the page; staff pages send it to sign in with a note (#317).
+  class_attribute :public_page, instance_writer: false, default: false
+  def self.public_page! = self.public_page = true
+
   # For lookups a page fires in the background (search-as-you-type, duplicate checks): their
   # responses don't write the session cookie. The cookie store rewrites the whole session on
   # every response, so a lookup that finishes after a form submit would otherwise overwrite
