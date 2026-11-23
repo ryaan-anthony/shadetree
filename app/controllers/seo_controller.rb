@@ -2,6 +2,7 @@
 # client links stay out of search engines; public marketing pages, and request pages of
 # businesses that chose to be found, are listed.
 class SeoController < ApplicationController
+  public_page!
   PAGES = %i[root_path features_path pricing_path about_path contact_path terms_path privacy_path].freeze
   # The operator console isn't listed: it answers "not found" to everyone else.
   PRIVATE = %w[/admin /c/ /invitations/ /users/ /up$].freeze

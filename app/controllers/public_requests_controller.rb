@@ -7,6 +7,7 @@
 # (per business) and on requests per business. Anything but the hidden field shows the form
 # again, filled in.
 class PublicRequestsController < ApplicationController
+  public_page!
   layout "client"
 
   ATTEMPTS_PER_IP = [ 10, 10.minutes ].freeze # per business, so one page's traffic can't block another's

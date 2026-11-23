@@ -1,6 +1,7 @@
 # MKT-03: Shadetree's legal and trust pages (LegalDocument), each with its effective date and
 # change history; earlier versions stay readable.
 class LegalController < ApplicationController
+  public_page!
   layout "marketing"
 
   def index

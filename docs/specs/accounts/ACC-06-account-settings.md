@@ -69,7 +69,8 @@ Part 1 (settings page, sessions):
 - Signing out another browser (`Users::BrowserSessionsController`) ends it on its next request
   ("signed out from another device"); "Sign out of all other browsers", a new password and a
   password reset end every other session too (and any session Devise turns away is ended in
-  the list).
+  the list). Public pages (`public_page!`: client links, the request form, marketing) sign an
+  ended browser out quietly and still show (#317).
 
 Part 2 (deletion):
 - "Delete your account" on the account page lists what happens, needs the password, and confirms.
