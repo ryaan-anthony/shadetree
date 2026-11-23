@@ -752,10 +752,10 @@
   .cal-indigo { background: var(--color-cal-indigo); border-color: var(--color-cal-indigo-line); color: var(--color-cal-indigo-ink); }
   .cal-orange { background: var(--color-cal-orange); border-color: var(--color-cal-orange-line); color: var(--color-cal-orange-ink); }
   .cal-none { background: var(--color-neutral-tint); border-color: var(--color-faint); color: var(--color-cal-none-ink); border-left-style: dashed; }
-  /* PLT-17: by status, the colour map's tones. Scheduled keeps its lighter sky tint so it stays
-     apart from In progress (info); the legend names both. */
+  /* PLT-17: by status, the colour map's tones. In progress is a clearly deeper blue fill and edge,
+     Scheduled keeps its lighter sky tint, so the two stay apart (owner, 2026-11-23); the legend names both. */
   .cal-status-scheduled { background: var(--color-cal-sky); border-color: var(--color-cal-sky-line); color: var(--color-cal-sky-ink); }
-  .cal-status-in-progress { background: var(--color-info-50); border-color: var(--color-info); color: var(--color-info-ink); }
+  .cal-status-in-progress { background: var(--color-info-300); border-color: var(--color-info-ink); color: var(--color-info-ink); }
   .cal-status-completed { background: var(--color-cal-done); border-color: var(--color-cal-done-line); color: var(--color-cal-done-ink); }
   /* JOB-07: a request follow-up: a dashed edge, so it isn't taken for a job visit; a call, lighter still. */
   .cal-request { border-style: dashed; border-width: 1px 1px 1px 3px; }

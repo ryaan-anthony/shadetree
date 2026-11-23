@@ -51,6 +51,7 @@
   --color-info-50: #eff6ff;
   --color-info-100: #dbeafe;
   --color-info-ink: #1e3a8a;
+  --color-info-300: #93c5fd; /* PLT-17: a visit in progress on the calendar, deeper than Scheduled's sky (owner, 2026-11-23) */
   --color-warning: #b45309;
   --color-warning-50: #fffbeb;
   --color-warning-100: #fef3c7;

@@ -1,7 +1,7 @@
 require "test_helper"
 
-# PLT-17: the calendar's "Color by status" follows the colour map. In progress takes the info
-# tint (it was amber); Scheduled keeps its lighter sky tint so the two stay apart; the legend
+# PLT-17: the calendar's "Color by status" follows the colour map. In progress takes a deeper info
+# blue (it was amber); Scheduled keeps its lighter sky tint so the two stay apart; the legend
 # names each in the map's words, and a started or finished visit says so in words too.
 class Admin::ScheduleStatusColoursTest < ActionDispatch::IntegrationTest
   setup do
@@ -31,9 +31,9 @@ class Admin::ScheduleStatusColoursTest < ActionDispatch::IntegrationTest
     assert_select "ul[aria-label='Status colors'] li", text: "Completed"
   end
 
-  test "In progress is the info tint and Scheduled keeps its sky tint" do
+  test "In progress is a deeper info blue and Scheduled keeps its sky tint" do
     css = Rails.root.join("app/assets/tailwind/components.css").read
-    assert_includes css, ".cal-status-in-progress { background: var(--color-info-50); border-color: var(--color-info); color: var(--color-info-ink); }"
+    assert_includes css, ".cal-status-in-progress { background: var(--color-info-300); border-color: var(--color-info-ink); color: var(--color-info-ink); }"
     assert_includes css, ".cal-status-scheduled { background: var(--color-cal-sky);"
     assert_equal :info, StatusHelper::MAP[:visit]["in_progress"].first
   end
