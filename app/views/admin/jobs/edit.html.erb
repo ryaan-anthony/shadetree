@@ -1,2 +1,5 @@
 <%= page_header "Edit #{@job.number}", lede: @job.title_was %>
-<%= render "form" %>
+<div class="form-split">
+  <%= render "summary", job: @job %>
+  <%= render "form" %>
+</div>

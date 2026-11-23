@@ -3,7 +3,7 @@
 <%# Today never carries the year, days coming up only outside this year (PLT-05); the zone is named once. %>
 <%= page_header "My day", lede: safe_join([ friendly_date(current_business.today, year: false), " · Times in #{time_zone_label(current_business.time_zone)}" ]) %>
 
-<div class="max-w-2xl space-y-4">
+<div class="form-split space-y-4">
   <%# ACC-05: a technician's one-screen welcome. %>
   <% if Current.membership && !Current.membership.can?(:office) && Current.membership.welcome_dismissed_at.nil? %>
     <%= card title: "Welcome to #{current_business.name}" do %>

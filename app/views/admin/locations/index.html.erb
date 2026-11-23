@@ -2,7 +2,7 @@
 <%= render "admin/businesses/settings_header", current: "locations" %>
 <% can_add = current_business.entitlements.feature?(:locations) %>
 
-<div class="max-w-3xl space-y-4">
+<div class="space-y-4">
   <% unless can_add %>
     <div class="banner banner-info"><%= icon "info" %>
       <p><%= Location.plan_message %> <%= link_to "See plans", admin_plan_path, class: "font-semibold text-ink underline-offset-2 hover:underline" %></p></div>

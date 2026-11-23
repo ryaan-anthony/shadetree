@@ -1,6 +1,6 @@
 <%= render "admin/businesses/settings_header", current: "messages" %>
 
-<div class="max-w-3xl space-y-4">
+<div class="space-y-4">
   <%# JOB-05: which visit emails go. Moved here from "Quotes, jobs & invoices" (owner, 2026-11-22). %>
   <%= form_with model: current_business, url: admin_business_path(tab: "messages"), method: :patch, id: "visit-emails-form" do |f| %>
     <%= card title: "Visit emails to clients", subtitle: "Sent to the client's email address, from your business, with a link to their visit." do %>

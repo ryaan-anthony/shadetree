@@ -4,7 +4,7 @@
 <% end %>
 <%= render "form", role: @role, editable: @editable %>
 <% if @events.any? %>
-  <%= card title: "History", flush: true, class: "mt-6 max-w-2xl" do %>
+  <%= card title: "History", flush: true, class: "mt-6 form-split" do %>
     <ul class="list">
       <% @events.each do |event| %>
         <li class="text-sm">

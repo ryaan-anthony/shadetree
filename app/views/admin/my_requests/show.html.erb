@@ -7,7 +7,7 @@
   <%= link_to admin_my_day_path, class: button_classes(:tertiary) do %><%= icon "arrow-left" %> My day<% end %>
 <% end %>
 
-<div class="max-w-2xl space-y-4">
+<div class="form-split space-y-4">
   <%# The one thing to do next, big enough to hit with a gloved thumb. %>
   <div id="follow-up-action">
     <% if follow_up.done? %>

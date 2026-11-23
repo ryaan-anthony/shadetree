@@ -3,7 +3,7 @@
 <% amount, unit = automation_delay_parts(rule.delay_minutes.to_i) %>
 <% templates = MessageTemplate.custom.order(:name) %>
 <% action_for = ->(type) { rule.actions.find { _1["type"] == type } } %>
-<%= form_with model: rule, scope: :automation_rule, url:, method:, class: "max-w-2xl space-y-4",
+<%= form_with model: rule, scope: :automation_rule, url:, method:, class: "form-split space-y-4",
               data: { controller: "automation-form" } do |f| %>
   <%= card do %>
     <% if rule.errors.any? %>

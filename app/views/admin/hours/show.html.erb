@@ -5,7 +5,7 @@
 <% problem_days = problems.any? ? hours.problems_by_day : {} %>
 <% zone = @place.time_zone %>
 
-<div class="max-w-3xl space-y-4">
+<div class="form-split space-y-4">
   <% if @business.multiple_locations? %><%# CAT-07: each location has its own hours and closures %>
     <nav class="flex flex-wrap gap-2" aria-label="Location">
       <% @business.active_locations.then { @location && !_1.include?(@location) ? _1 + [ @location ] : _1 }.each do |location| %>

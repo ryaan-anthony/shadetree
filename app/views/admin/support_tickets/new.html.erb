@@ -1,6 +1,6 @@
 <% content_for :title, "Ask for help" %>
 <%= page_header "Ask for help", lede: "Tell us what's going on. We'll see which page you came from, and your browser, so you don't need to." %>
-<%= card class: "max-w-2xl" do %>
+<%= card class: "form-split" do %>
   <%= form_with model: @ticket, url: admin_support_tickets_path, multipart: true do |f| %>
     <% if @ticket.errors.any? %><div class="banner banner-warning mb-4" role="alert"><p><%= @ticket.errors.full_messages.to_sentence %></p></div><% end %>
     <%= f.hidden_field :page %>

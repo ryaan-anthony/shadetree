@@ -1,6 +1,6 @@
 <%# JOB-01: a job from scratch, or a job's details. The client is chosen once, when it's created. %>
 <% new_job = @job.new_record? %>
-<%= form_with model: @job, url: (new_job ? admin_jobs_path : admin_job_path(@job)), class: "max-w-2xl space-y-4",
+<%= form_with model: @job, url: (new_job ? admin_jobs_path : admin_job_path(@job)), class: "min-w-0 space-y-4",
               data: { controller: "property-loader", property_loader_url_value: property_options_admin_quotes_path,
                       property_loader_name_value: "job[property]", action: "client-picker:change->property-loader#load" } do |f| %>
   <% line_errors = @job.errors.attribute_names.any? { _1.to_s.start_with?("line_items") } %>
@@ -17,9 +17,7 @@
           <p class="error-text" role="alert"><%= icon "alert-circle" %><%= @job.errors[:client].first %></p>
         <% end %>
         <%= render "admin/clients/picker", name: "job[client]", selected: @job.client %>
-      <% else %>
-        <div><p class="label">Client</p><p class="text-sm text-ink"><%= @job.client.display_name %></p></div>
-      <% end %>
+      <% end %><%# an existing job's client is in the summary beside the form (PLT-16) %>
       <%= turbo_frame_tag "quote_property", class: "block", data: { property_loader_target: "frame" } do %>
         <%= render "admin/quotes/property_select", client: @job.client, selected: @job.property&.uid, name: "job[property]" %>
       <% end %>

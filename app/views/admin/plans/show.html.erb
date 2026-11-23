@@ -3,7 +3,7 @@
 <%= render "admin/businesses/settings_header", current: "plan" %>
 <% plan = @entitlements.plan %>
 
-<div class="max-w-2xl">
+<div class="form-split">
   <%= card title: "You're on #{plan.name}", subtitle: plan.description, id: "current-plan" do %>
     <dl class="space-y-3 text-sm">
       <% Plan::LIMITS.each do |key, label| %>

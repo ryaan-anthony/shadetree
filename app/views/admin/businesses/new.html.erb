@@ -1,6 +1,6 @@
 <% first = current_business.nil? %>
 <% content_for :title, first ? "Set up your business" : "Create a business" %>
-<div class="mx-auto w-full max-w-lg py-4 sm:py-10">
+<div class="form-split">
   <%= page_header (first ? "Set up your business" : "Create another business"),
                   lede: (first ? "Two quick answers and you're in. Everything else can wait." : "You'll be its owner. Switch between businesses from the menu at the top of the sidebar.") %>
 

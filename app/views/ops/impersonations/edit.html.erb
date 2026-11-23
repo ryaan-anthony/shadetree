@@ -1,6 +1,6 @@
 <% content_for :title, "Allow changes" %>
 <%= page_header "Allow changes as #{impersonation.user.full_name}?", lede: "You'll be able to change #{impersonation.business.name}'s records as this member. Every change is recorded in the audit log. Passwords and emails, billing and plans, payment accounts, Owners' roles and deleting the business stay blocked." %>
-<%= card class: "mt-4 max-w-2xl" do %>
+<%= card class: "mt-4 form-split" do %>
   <%= form_with url: ops_impersonation_path, method: :patch do %>
     <%= hidden_field_tag :mode, "write" %>
     <div class="field"><label class="label" for="reason">Why do you need to make changes?</label><%= text_area_tag :reason, params[:reason], rows: 3, class: "textarea", id: "reason", required: true, maxlength: 500 %></div>

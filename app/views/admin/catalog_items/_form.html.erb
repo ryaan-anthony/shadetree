@@ -1,4 +1,4 @@
-<%= form_with model: @item, url: (@item.persisted? ? admin_catalog_item_path(@item) : admin_catalog_items_path), class: "max-w-2xl space-y-4" do |f| %>
+<%= form_with model: @item, url: (@item.persisted? ? admin_catalog_item_path(@item) : admin_catalog_items_path), class: "form-split space-y-4" do |f| %>
   <% if @item.errors.any? %>
     <div class="banner banner-danger" role="alert"><%= icon "alert-circle" %>
       <p><%= @item.errors.count == 1 ? "One thing" : "#{@item.errors.count} things" %> to fix before saving. Each one is marked below.</p>

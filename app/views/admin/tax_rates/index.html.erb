@@ -1,6 +1,6 @@
 <%= render "admin/businesses/settings_header", current: "taxes" %>
 
-<div class="max-w-3xl space-y-4">
+<div class="space-y-4">
   <%= card title: "Tax rates", subtitle: "Rates marked default apply to taxable items on new quotes and invoices.", flush: true,
            actions: (link_to(new_admin_tax_rate_path, class: button_classes(:secondary, :sm)) { icon("plus") + " Add a tax rate" } if @rates.any?) do %>
     <%# One way to add a rate at a time: the empty state's button, then this one in the header. %>

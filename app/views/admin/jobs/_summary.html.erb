@@ -1,0 +1,15 @@
+<%# locals: (job:) -%>
+<%# PLT-16: who the job is for and the quote it came from (the property is chosen in the form), beside the form on wide screens (first on phones). %>
+<aside class="form-split-aside" aria-labelledby="job-summary-h">
+  <%= card id: "job-summary" do %>
+    <h2 class="card-title" id="job-summary-h">Client and quote</h2>
+    <div class="mt-3 space-y-3 text-sm">
+      <p class="text-ink"><%= link_to job.client.display_name, admin_client_path(job.client), class: "font-medium hover:underline" %></p>
+      <% if (phone = job.client.primary_phone) %><p><%= phone_link(phone.value, class: "text-ink hover:underline") %></p><% end %>
+      <% if job.quote %>
+        <p class="border-t border-line pt-3 text-subtle">From quote <%= link_to job.quote.number, staff_quote_path(job.quote), class: "font-medium text-ink hover:underline" %>
+          <% if job.quote.title.present? %><br><span class="text-ink"><%= job.quote.title %></span><% end %></p>
+      <% end %>
+    </div>
+  <% end %>
+</aside>

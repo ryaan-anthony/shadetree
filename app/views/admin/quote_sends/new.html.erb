@@ -37,7 +37,7 @@
 <% elsif zero_total? && !zero_total_confirmed? %>
   <%# #289: a $0.00 quote waits for "Send it at $0.00" (above). %>
 <% else %>
-<div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+<div class="form-split">
   <%= card title: "Email it", subtitle: "Your message, a button to the quote page, and the PDF attached. Replies come to you." do %>
     <%= form_with model: @form, scope: :quote_send, url: admin_quote_send_path(@quote), method: :post do |f| %>
   <%= hidden_field_tag :from, "setup", id: nil if from_setup? %>
@@ -57,7 +57,7 @@
     <% end %>
   <% end %>
 
-  <div class="space-y-4">
+  <div class="form-split-aside space-y-4">
     <%= card title: "Send the link yourself", subtitle: "Text or WhatsApp it from your phone.#{" Getting the link marks the quote as sent." unless @quote.approved?}" do %>
       <% if @link %>
         <div data-controller="clipboard" class="space-y-2">

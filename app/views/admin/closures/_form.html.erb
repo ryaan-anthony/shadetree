@@ -1,4 +1,4 @@
-<%= form_with model: @closure, url: (@closure.persisted? ? admin_closure_path(@closure) : admin_closures_path(location: @closure.location)), class: "max-w-xl space-y-4" do |f| %>
+<%= form_with model: @closure, url: (@closure.persisted? ? admin_closure_path(@closure) : admin_closures_path(location: @closure.location)), class: "form-split space-y-4" do |f| %>
   <% if @closure.errors[:base].any? %>
     <div class="banner banner-danger" role="alert"><%= icon "alert-circle" %><p><%= @closure.errors[:base].to_sentence %></p></div>
   <% end %>

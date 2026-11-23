@@ -204,13 +204,23 @@
     .meter::-moz-progress-bar { background: Highlight; }
   }
 
-  /* #289: a form with what it's about beside it on wide screens (the summary stacks after it on phones). */
-  .form-split { display: grid; gap: 1rem; align-items: start; }
+  /* PLT-16: the two page containers. Wide is the content area itself (.content): lists, detail pages,
+     Home and Schedule add no width of their own. Form (#303's column) is 42rem on the same left
+     edge, with an optional aside (.form-split-aside: a summary or help) beside it on wide screens;
+     the aside stacks where it is in the page on phones. */
+  .form-split { max-width: 42rem; }
+  .form-split:has(> .form-split-aside) { display: grid; gap: 1rem; align-items: start; }
   /* 80rem: wide enough for the 42rem form beside the sidebar (from 960px) and the card. */
   @media (min-width: 80rem) {
-    .form-split { grid-template-columns: minmax(0, 42rem) 20rem; }
+    .form-split:has(> .form-split-aside) { max-width: none; grid-template-columns: minmax(0, 42rem) 20rem; }
     .form-split > .form-split-aside { grid-column: 2; grid-row: 1; }
     .form-split > :not(.form-split-aside) { grid-column: 1; grid-row: 1; }
+  }
+  /* Branding's live preview: a 22rem aside, beside the form from 1024px (lg) (owner, 2026-11-23). */
+  @media (min-width: 64rem) {
+    .form-split-lg:has(> .form-split-aside) { max-width: none; grid-template-columns: minmax(0, 42rem) 22rem; }
+    .form-split-lg > .form-split-aside { grid-column: 2; grid-row: 1; }
+    .form-split-lg > :not(.form-split-aside) { grid-column: 1; grid-row: 1; }
   }
 
   .card { background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
