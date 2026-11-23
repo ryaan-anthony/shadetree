@@ -112,6 +112,9 @@
             <%= f.field :price, as: :money, label: "Price", help: "Before tax." %>
             <%= f.field :notes, as: :textarea, optional: true, placeholder: "Gate code, pets, parking…" %>
             <div class="field"><%= f.check :reminders, label: "Send visit reminders", hint: "A text the day before each visit." %></div>
+            <%# PLT-22: the one file upload pattern. Without JavaScript it's the plain file field. %>
+            <%= f.file_drop :logo, label: "Upload a logo", noun: "Logo", prompt: "Drop your logo here", types: Business::LOGO_TYPES,
+                            types_label: "PNG, JPEG or WebP", max_bytes: Business::LOGO_MAX_BYTES %>
           <% end %>
         <% end %>
         <%= card title: "Errors", subtitle: "Invalid fields after submit" do %>

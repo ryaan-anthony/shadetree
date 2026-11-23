@@ -10,6 +10,8 @@
 #     <%= f.field :visit_on, as: :date %>
 #     <%= f.field :price, as: :money, currency: "$" %>
 #     <%= f.check :reminders, label: "Send reminders", hint: "A day before each visit." %>
+#     <%= f.file_drop :logo, prompt: "Drop your logo here", types: Business::LOGO_TYPES,
+#                     types_label: "PNG, JPEG or WebP", max_bytes: 5.megabytes %>
 #     <%= f.submit_button "Save client" %>
 #   <% end %>
 #
@@ -55,6 +57,28 @@ class ShadetreeFormBuilder < ActionView::Helpers::FormBuilder
             (hint ? @template.tag.span(hint, class: "check-hint") : "".html_safe)
         end
     end
+  end
+
+  # A file field shown as a drop area: the kit's file upload (PLT-22, R28). The page has a
+  # plain file field, which uploads without JavaScript; file_drop_controller.js turns it into
+  # the drop area and shows the chosen file's name and preview, and checks the type and size,
+  # before saving. It dispatches file-drop:chosen ({ file, url, problem }) for a live preview.
+  def file_drop(method, prompt:, types:, types_label:, max_bytes:, label: nil, help: nil, noun: label_text(method), **options)
+    id = options[:id] ||= field_id(method)
+    errors = error_messages(method)
+    megabytes = max_bytes / 1.megabyte
+    options[:"aria-invalid"] = "true" if errors.any?
+    options[:"aria-labelledby"] = "#{id}_label" # not the drop area's text as well
+    options[:"aria-describedby"] = [ "#{id}_limits", ("#{id}_help" if help), ("#{id}_error" if errors.any?), "#{id}_check" ].compact.join(" ")
+    options[:accept] = types.join(",")
+    options[:data] = (options[:data] || {}).merge(file_drop_target: "input", action: "change->file-drop#chosen")
+    input = file_field(method, merge_class(options, "input file-drop-input py-1.5"))
+    @template.render "components/file_drop",
+                     id:, input:, prompt:, help:, errors:, label: label || label_text(method),
+                     limits: "#{types_label}, up to #{megabytes} MB.",
+                     values: { types: types.join(","), max_bytes:,
+                               type_error: "#{noun} must be a #{types_label} image.",
+                               size_error: "#{noun} must be smaller than #{megabytes} MB." }
   end
 
   # variant and size: as button_classes (PLT-14), e.g. f.submit_button "Sign in", size: :lg

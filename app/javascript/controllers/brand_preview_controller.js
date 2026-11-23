@@ -2,21 +2,17 @@ import { Controller } from "@hotwired/stimulus"
 
 // Live preview for the branding settings (CAT-02): keeps the hex field, color picker and
 // preset swatches in step, recolors the sample client page, warns about low contrast with
-// the same WCAG thresholds as Branding, and previews a chosen logo before it's uploaded.
+// the same WCAG thresholds as Branding, and previews a chosen logo before it's uploaded (the
+// logo's drop area, file_drop_controller.js, checks it and owns the preview URL, PLT-22).
 export default class extends Controller {
   static targets = ["hex", "picker", "swatch", "warnings", "preview", "previewLogo", "previewMark", "previewName",
-    "logoInput", "logoError", "removeLogo", "currentLogo"]
+    "removeLogo", "currentLogo"]
   // savedLogo comes from the server, not the page, so a page restored from Turbo's cache
   // (with a since-revoked blob: preview) still shows the saved logo.
-  static values = { maxBytes: Number, types: String, minText: Number, minPage: Number, savedLogo: String }
+  static values = { minText: Number, minPage: Number, savedLogo: String }
 
   connect() {
-    this.objectUrl = null
     this.render()
-  }
-
-  disconnect() {
-    if (this.objectUrl) URL.revokeObjectURL(this.objectUrl)
   }
 
   pick(event) {
@@ -33,16 +29,9 @@ export default class extends Controller {
     this.render()
   }
 
-  logoChosen() {
-    const file = this.logoInputTarget.files[0]
-    let problem = null
-    if (file && !this.typesValue.split(",").includes(file.type)) problem = "Logo must be a PNG, JPEG or WebP image."
-    else if (file && file.size > this.maxBytesValue) problem = `Logo must be smaller than ${Math.round(this.maxBytesValue / 1048576)} MB.`
-    this.logoErrorTarget.textContent = problem ? problem : ""
-    this.logoInputTarget.setAttribute("aria-invalid", problem ? "true" : "false")
-
-    if (this.objectUrl) URL.revokeObjectURL(this.objectUrl)
-    this.objectUrl = file && !problem ? URL.createObjectURL(file) : null
+  // file-drop:chosen: the chosen logo's preview URL, or null (none, or one it refused).
+  logoChosen(event) {
+    this.objectUrl = event.detail.url
     this.render()
   }
 
