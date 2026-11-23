@@ -374,6 +374,19 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # PLT-18: one format per data type.
+  check :zero_is_money, if: ->(page) { page.kind.in?(%i[list detail]) } do |_page, html|
+    html.css(".money, td.num").select { _1.text.strip == "—" }
+        .reject { _1.ancestors("tr").first&.text.to_s.include?("Void") } # a void invoice's balance: nothing to pay
+        .map { "a dash where an amount belongs, in #{_1.ancestors("tr, li").first&.text.to_s.squish.truncate(60).inspect}" }
+  end
+
+  STRIPE_ID = /\b(?:pi|ch|py|re|cs)_[A-Za-z0-9]{6,}/
+  check :stripe_ids_only_in_payments, if: ->(page) { !page.ops? } do |_page, html|
+    page_text = html.dup.tap { |doc| doc.css("#invoice-payments").each(&:remove) }.text
+    page_text.scan(STRIPE_ID).map { "Stripe's #{_1} outside the invoice's Payments card" }
+  end
+
   setup do
     @business = businesses(:one)
     @owner = users(:one)

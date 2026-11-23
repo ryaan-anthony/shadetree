@@ -166,6 +166,7 @@ module StaffPages
       page :job_unbooked, "Job: open, no visit", admin_job_path(@unbooked_job), :detail
       page :job_completed, "Job: completed", admin_job_path(@completed_job), :detail
       page :job_cancelled, "Job: cancelled", admin_job_path(@cancelled_job), :detail
+      page :job_paid, "Job: invoiced and paid online", admin_job_path(@paid_job), :detail
       page :my_visit, "Visit on My day", admin_my_visit_path(@visit), :detail
       page :schedule_visit, "Visit on the schedule", admin_schedule_visit_path(@visit), :detail, head: false
       page :invoice_sent, "Invoice: sent", admin_invoice_path(@sent_invoice), :detail
@@ -289,6 +290,7 @@ module StaffPages
       @unbooked_job = job("Shed removal")
       @completed_job = job("Spring aeration").tap { _1.complete!(by: user) }
       @cancelled_job = job("Pressure washing").tap { _1.cancel!(by: user, notify_client: false) }
+      Job.create!(client: @client, property: @client.primary_property, created_by: user, title: "Estimate visit") # no items: "$0.00" in the list (PLT-18)
     end
 
     def invoices
@@ -298,7 +300,10 @@ module StaffPages
       @part_paid_invoice = sent_invoice("Fence painting").tap { pay(_1, _1.total_cents / 2) }
       @payment = @part_paid_invoice.payments.first
       @overdue_invoice = sent_invoice("Drain clearing").tap { _1.update_columns(issued_on: business.today - 40, due_on: business.today - 10) }
-      @paid_invoice = sent_invoice("Edging").tap { pay(_1, _1.total_cents) }
+      @paid_invoice = sent_invoice("Edging").tap do |invoice| # paid online: Stripe's reference only in Payments (PLT-18)
+        invoice.record_online_payment!(intent_id: "pi_staffPages0001", amount_cents: invoice.total_cents, currency: invoice.currency, method_detail: "Visa ending 4242")
+      end
+      @paid_job = @paid_invoice.job
       @void_invoice = sent_invoice("Lights").tap { _1.void!(reason: "Billed twice", by: user) }
       @online_invoice = sent_invoice("Hedge edging").tap do |invoice| # PAY-04: paid by card, with Stripe's reference
         invoice.record_online_payment!(intent_id: "pi_staffpages0001", amount_cents: invoice.total_cents, currency: invoice.currency, method_detail: "Visa ending 4242")

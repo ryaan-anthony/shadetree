@@ -13,5 +13,5 @@
     <div class="w-36"><%= f.field :start_time, as: :time, required: false, label: "Start", step: 300, "aria-describedby": "arrival-zone" %></div>
     <div class="hidden w-36 group-has-[#timing-window:checked]:block"><%= f.field :window_end_time, as: :time, required: false, label: "Latest arrival", step: 300, "aria-describedby": "arrival-zone" %></div>
   </div>
-  <p class="mt-2 text-sm2 text-muted" id="arrival-zone">In <%= zone_name %> time.</p>
+  <p class="mt-2 text-sm2 text-muted" id="arrival-zone">Times in <%= zone_name %>.</p>
 </fieldset>

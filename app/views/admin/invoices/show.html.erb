@@ -45,7 +45,7 @@
           <li class="items-start text-sm">
             <div class="min-w-0 flex-1"><p class="font-medium text-ink"><%= line.name %></p>
               <% if line.description %><p class="whitespace-pre-line text-sm2 text-muted"><%= line.description %></p><% end %>
-              <p class="text-sm2 text-muted"><%= line.quantity_label %> × <%= money(line.unit_price) %></p></div>
+              <p class="text-sm2 text-muted"><%= line_quantity(line) %></p></div>
             <span class="money font-semibold text-ink"><%= money(totals.lines[index].subtotal) %></span>
           </li>
         <% end %>

@@ -82,7 +82,7 @@
 
     <%# Pages are buttons of the filter form, so the current search and filters carry over. %>
     <nav class="pagination mt-4" aria-label="Pagination">
-      <p>Showing <span class="tabular font-semibold text-ink"><%= ((@page - 1) * Admin::ClientsController::PER_PAGE) + 1 %>–<%= [ @page * Admin::ClientsController::PER_PAGE, @total_count ].min %></span> of <span class="tabular"><%= @total_count %></span></p>
+      <p>Showing <span class="tabular"><%= ((@page - 1) * Admin::ClientsController::PER_PAGE) + 1 %>–<%= [ @page * Admin::ClientsController::PER_PAGE, @total_count ].min %></span> of <span class="tabular"><%= @total_count %></span></p>
       <div class="pagination-links">
         <button type="submit" form="client-filters" name="page" value="<%= @page - 1 %>" class="<%= button_classes(:secondary, :sm) %>" <%= "disabled" if @page <= 1 %>><%= icon "chevron-left" %> Previous</button>
         <button type="submit" form="client-filters" name="page" value="<%= @page + 1 %>" class="<%= button_classes(:secondary, :sm) %>" <%= "disabled" if @page >= @total_pages %>>Next <%= icon "chevron-right" %></button>

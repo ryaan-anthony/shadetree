@@ -103,9 +103,9 @@ class Webhooks::OnlinePaymentsTest < ActionDispatch::IntegrationTest
     sign_in users(:one)
     post switch_admin_business_path, params: { business: @business.uid }
     get admin_invoice_path(@invoice)
-    assert_select "#payment-#{payment.uid}", /Partly refunded.*Paid online.*Stripe pi_1, \$50\.00 refunded/m
+    assert_select "#payment-#{payment.uid}", /Partly refunded.*Paid online.*Stripe reference: pi_1, \$50\.00 refunded/m
     assert_select "#payment-#{payment.uid} a[aria-label^=Change]", false, "online payments can't be changed here"
-    assert_match(/Refund in Stripe: \$50\.00 of \$200\.00, Visa ending 4242 \(pi_1\)/, response.body)
+    assert_match(/Refund in Stripe: \$50\.00 of \$200\.00, Visa ending 4242, received/, response.body) # PLT-18: Stripe's ID only in Payments
 
     deliver("charge.dispute.created", { id: "dp_1", object: "dispute", charge: "ch_1", payment_intent: "pi_1", amount: 15_000, status: "needs_response", reason: "fraudulent" })
     assert_equal "Disputed", payments.first.adjustment_label

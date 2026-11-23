@@ -19,7 +19,9 @@ module InvoicesHelper
   def payment_summary_text(summary)
     method = Payment::METHODS.fetch(summary["method"], summary["method"]).downcase
     method = summary["detail"] if summary["detail"] # PAY-04: "Visa ending 4242"
-    method = "#{method} (#{summary["reference"]})" if summary["reference"]
+    # A recorded payment's reference (a check number) is the business's own; an online one's is
+    # Stripe's, shown only in the invoice's Payments card (PLT-18).
+    method = "#{method} (#{summary["reference"]})" if summary["reference"] && summary["method"].in?(Payment::RECORDED_METHODS)
     "#{money(Money.new(summary["amount_cents"].to_i, summary["currency"]))}, #{method}, received #{l(Date.iso8601(summary["received_on"]))}"
   end
 
