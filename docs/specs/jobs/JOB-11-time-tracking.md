@@ -75,7 +75,8 @@ work only: timesheets and payroll are out of scope.
   overlapping typed entries are allowed with a warning (owner, 2026-11-22).
 - A timer left running gets a reminder at the end of business hours and stops at 12 hours,
   marked "Check this time". Started offline, it keeps the phone's start time (up to 24 hours
-  back), marked "recorded offline". Stored in UTC, shown in the visit's location zone (owner, 2026-11-22).
+  back), marked "recorded offline". Stored in UTC, shown in the visit's location zone
+  (owner, 2026-11-22).
 - Clients see hours only as the hourly line's quantity on the invoice, with no per-person
   times. The office sees a job's time on the job page (owner, 2026-11-22).
 - The settings are in Settings → Jobs, changed by Owners, Admins and ACC-07 roles that manage
