@@ -56,6 +56,10 @@ module TeamProfile
     super
   end
 
+  # A stored photo, not one chosen in a form that hasn't saved (a page re-shown with errors can't
+  # link to a file that isn't stored yet).
+  def photo_saved? = photo.attached? && attachment_changes["photo"].nil? && photo.blob.persisted?
+
   def removing_photo? = ActiveModel::Type::Boolean.new.cast(remove_photo) && attachment_changes["photo"].nil?
 
   # The profile fields that differ from what's saved, by their FIELDS keys (before save).

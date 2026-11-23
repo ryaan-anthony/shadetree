@@ -81,6 +81,10 @@ class ComponentsHelperTest < ActionView::TestCase
     assert_equal [ "John Doe", "avatar object-cover avatar-lg" ], [ html["alt"], html["class"] ]
     assert_match %r{/rails/active_storage/representations/}, html["src"]
     assert_equal "", Nokogiri::HTML.fragment(member_avatar(member)).at("img")["alt"]
+
+    member.photo = Rack::Test::UploadedFile.new(file_fixture("face.jpg"), "image/jpeg") # chosen, not saved
+    assert_not member.photo_saved?
+    assert_dom_equal '<span class="avatar" title="John Doe" aria-hidden="true">JD</span>', member_avatar(member)
   end
 
   test "avatar shows up to two initials" do

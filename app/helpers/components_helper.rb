@@ -74,11 +74,12 @@ module ComponentsHelper
   # ACC-09: a team member's face for staff pages: their photo, else their initials (the avatar
   # above). Beside their name the image is decorative (alt ""); alone, its alt is the full name.
   # size: :sm (lists), :md (rows), :lg (the profile page). `member` is a BusinessUser, with its
-  # photo preloaded in lists (BusinessUser.with_attached_photo).
+  # photo preloaded in lists (BusinessUser.with_attached_photo). A photo chosen but not yet
+  # saved (a form re-shown with errors) shows the initials.
   def member_avatar(member, size: :sm, decorative: true, **attributes)
     name = member.user.full_name
     extra = [ ("avatar-#{size}" unless size == :sm), attributes.delete(:class) ].compact
-    unless member.photo.attached?
+    unless member.photo_saved?
       label = decorative ? { "aria-hidden": true } : { role: "img", "aria-label": name }
       return avatar(name, class: extra.join(" ").presence, **label, **attributes)
     end
