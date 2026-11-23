@@ -30,7 +30,7 @@
   <div class="min-w-0 space-y-4">
     <% if invoice.sends.any? %><%= render "sent_panel", invoice: %><% end %>
     <%= card do %>
-      <dl class="grid gap-4 text-sm sm:grid-cols-4">
+      <dl class="grid gap-4 text-sm sm:grid-cols-4" id="invoice-summary">
         <div><dt class="text-sm2 text-muted">Status</dt><dd class="mt-1"><%= invoice_status_badge(invoice) %></dd></div>
         <div><dt class="text-sm2 text-muted">Issued</dt><dd class="mt-1 text-ink"><%= local_date(invoice.issued_on) %></dd></div>
         <div><dt class="text-sm2 text-muted">Due</dt><dd class="mt-1 text-ink"><%= local_date(invoice.due_on) %> <span class="text-muted">(<%= invoice.terms_label %>)</span></dd></div>
@@ -54,7 +54,7 @@
     <% end %>
 
     <% if (files = invoice.saved_attachments).any? %>
-      <%= card title: "Attachments", flush: true do %>
+      <%= card title: "Photos and files", flush: true do %>
         <ul class="list"><% files.each do |file| %>
           <li class="text-sm"><%= icon(file.image? ? "image" : "file-text", class: "size-4 text-faint") %>
             <%= attachment_link file, class: "min-w-0 flex-1 truncate hover:underline" %></li>
@@ -67,7 +67,7 @@
     <% end %>
   </div>
 
-  <aside class="space-y-4">
+  <aside class="rail space-y-4">
     <% unless invoice.void? && invoice.payments.none? %><%= render "payments", invoice: %><% end %>
     <% if invoice.revisions.any? %>
       <%= card title: "Revisions", flush: true do %>
@@ -79,7 +79,8 @@
     <%= card title: "History", flush: true do %>
       <ol class="list">
         <% invoice.events.includes(:user).each do |event| %>
-          <li class="text-sm2"><span class="min-w-0 flex-1 text-ink"><%= invoice_event_text(event) %></span><span class="text-muted"><%= local_time(event.occurred_at) %></span></li>
+          <%# PLT-20: the when under the what, so neither is squeezed. %>
+          <li class="flex-col items-start gap-0.5 text-sm2"><span class="text-ink"><%= invoice_event_text(event) %></span><span class="text-muted"><%= local_time(event.occurred_at) %></span></li>
         <% end %>
       </ol>
     <% end %>

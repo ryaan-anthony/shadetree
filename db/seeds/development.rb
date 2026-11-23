@@ -133,6 +133,10 @@ Tenancy.with_business(business) do
     quote = Quote.start(client:, created_by: owner)
     quote.title = title
     quote.sync_line_items([ { "key" => "seed-0", "name" => title, "quantity" => "1", "unit_price" => "240", "taxable" => "1" } ])
+    if action == :request_changes # PLT-20: a photo, so the staff quote's document card shows its files
+      photo = (Vips::Image.xyz(800, 600)[1] / 6 + [ 110, 140, 90 ]).cast(:uchar).jpegsave_buffer
+      quote.attachments.attach(io: StringIO.new(photo), filename: "side-yard.jpg", content_type: "image/jpeg")
+    end
     quote.save!
     quote.mark_sent!(by: owner, channel: "link")
     link = quote.client_link!

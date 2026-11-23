@@ -60,6 +60,31 @@ class Client::QuotePageTest < ActionDispatch::IntegrationTest
     assert_equal 2, as_business(@business) { @link.reload.views_count }
   end
 
+  # PLT-20: the staff page's summary and header say the client, property, dates and status, so
+  # its document card is the rest; "View as client" still shows the client's whole document.
+  test "the staff quote page shows the document without its header; View as client shows all of it" do
+    set_quote(sent_at: Time.current, expires_on: @business.today + 30)
+    sign_in users(:one)
+    post switch_admin_business_path, params: { business: @business.uid }
+    get admin_quote_path(@quote)
+    assert_select "h2.sr-only", "Quote"
+    assert_select "#quote-summary", /Valid until/
+    assert_select ".page-head", /for Maria Lopez \(Lopez Rentals\), 12 Elm St/ # the company, which the document's header said
+    assert_select "#quote-document" do
+      assert_select ".quote-doc-head, .quote-doc-title, .quote-doc-meta", count: 0
+      assert_select ".quote-doc-message", "Thanks for having us out."
+      assert_select ".quote-doc-lines tbody tr", 2
+      assert_select ".quote-doc-terms", /Net 15\./
+    end
+    assert_select "#quote-files-h", "Photos and files"
+    assert_select "a[title=?]", "yard.png"
+
+    get preview_admin_quote_path(@quote)
+    assert_select ".quote-doc-title", "Spring cleanup"
+    assert_select ".quote-doc-meta", /Prepared for.*Maria Lopez.*Lopez Rentals.*12 Elm St.*Sent on.*Valid until.*Status/m
+    assert_select "#attachments-h", "Photos and files"
+  end
+
   test "staff previewing a link get staff routes for files and the PDF, and no client actions" do
     set_quote(expires_on: @business.today - 1)
     sign_in users(:one)
