@@ -34,6 +34,7 @@ class Admin::BusinessesController < Admin::BaseController
   def update
     @business = current_business
     return update_visit_emails if params[:tab] == "messages"
+    return update_team_profiles if params[:tab] == "team_profiles" # ACC-09
 
     @tab = params[:tab].presence_in(SETTINGS_TABS) || "business"
     attributes = @tab == "branding" ? branding_params : settings_params
@@ -99,6 +100,15 @@ class Admin::BusinessesController < Admin::BaseController
       redirect_to admin_message_templates_path, notice: "Visit emails saved."
     else # another of the business's settings needs fixing first; say which
       redirect_to admin_message_templates_path, alert: "Visit emails not saved: #{@business.errors.full_messages.to_sentence}"
+    end
+  end
+
+  # ACC-09: "Show team profiles to clients", on Settings → Messages (owner, 2026-11-22).
+  def update_team_profiles
+    if @business.update(params.require(:business).permit(:show_team_profiles))
+      redirect_to admin_message_templates_path(anchor: "team-profiles"), notice: @business.show_team_profiles? ? "Clients can now see who's coming." : "Team profiles are hidden from clients."
+    else
+      redirect_to admin_message_templates_path, alert: "Not saved: #{@business.errors.full_messages.to_sentence}"
     end
   end
 

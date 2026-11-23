@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_22_160000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_22_160100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -234,6 +234,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_160000) do
     t.datetime "billing_check_at"
     t.boolean "online_partial_payments", default: false, null: false
     t.bigint "without_review_cap_cents"
+    t.boolean "show_team_profiles", default: false, null: false
     t.index ["active"], name: "index_businesses_on_active"
     t.index ["billing_check_at"], name: "index_businesses_on_billing_check_at", where: "(billing_check_at IS NOT NULL)"
     t.index ["billing_status"], name: "index_businesses_on_billing_status"

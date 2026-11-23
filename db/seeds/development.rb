@@ -409,6 +409,23 @@ unless User.where.not(deleted_at: nil).exists?
   former.delete_account!
 end
 
+# ACC-09: team profiles. Marcus has a photo, title and work phone (Priya set his title, so his
+# Team row has a history); Priya and Dana have photos and titles; Dee has none (initials). Clients
+# see none of it until "Show team profiles to clients" is on (Settings → Messages).
+demo_face = lambda do |rgb| # a plain face-like disc stands in for a photo
+  image = (Vips::Image.black(400, 400) + rgb).cast(:uchar).copy(interpretation: :srgb)
+  { io: StringIO.new(image.draw_circle([ 224, 186, 160 ], 200, 170, 110, fill: true).jpegsave_buffer), filename: "face.jpg", content_type: "image/jpeg" }
+end
+{ "tech@example.com" => [ "Lead technician", "(555) 380-4415", [ 52, 120, 84 ] ], "admin@example.com" => [ "Office manager", nil, [ 120, 84, 150 ] ],
+  "owner@example.com" => [ "Owner", nil, [ 160, 96, 60 ] ] }.each do |email, (title, phone, rgb)|
+  member = business.business_users.find_by(user: User.find_by(email:)) or next
+  next if member.photo.attached?
+
+  member.update!(photo: demo_face.(rgb), title:, work_phone: phone, bio: ("Eight years on mowers and hedges. Ask me about drainage." if phone))
+end
+marcus = business.business_users.find_by(user: User.find_by(email: "tech@example.com"))
+ProfileEvent.record!(marcus, %w[title], by: User.find_by(email: "admin@example.com")) if marcus && Tenancy.with_business(business) { ProfileEvent.none? }
+
 # CLI-06: a finished client import with a couple of rows that didn't go in, to see the summary.
 Tenancy.with_business(business) do
   unless ClientImport.exists?

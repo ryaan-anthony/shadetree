@@ -22,6 +22,16 @@
     <% end %>
   <% end %>
 
+  <%# ACC-09: whether clients see who's coming (photo, first name, title and a phone). %>
+  <%= form_with model: current_business, url: admin_business_path(tab: "team_profiles"), method: :patch, id: "team-profiles" do |f| %>
+    <%= card title: "Team profiles", subtitle: "Who's coming to the client's door." do %>
+      <%= f.check :show_team_profiles, label: "Show team profiles to clients",
+                  hint: "Visit messages and pages can then show the people going: their photo, first name, title and work phone (or #{current_business.name}'s number). Never a last name, email or personal number." %>
+      <p class="mt-3 text-sm2 text-muted">People add their photo and title from <span class="font-medium text-ink">Your profile</span> in the menu; you can edit anyone's from <%= link_to "Team", admin_team_path, class: "underline" %>.</p>
+      <%= f.submit_button "Save team profiles", class: "mt-4" %>
+    <% end %>
+  <% end %>
+
   <% unless @editable %>
     <div class="banner banner-info"><%= icon "info" %>
       <p><span class="font-semibold">View only on <%= current_business.plan.name %>.</span> You can read every email below; changing them comes with <%= comes_with(:message_templates) %>. <%= link_to "See plans", admin_plan_path, class: "font-semibold underline" %><%= ". Messages you've already customized keep sending as they are." if @templates.any? %></p>

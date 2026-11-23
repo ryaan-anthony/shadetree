@@ -38,6 +38,7 @@ Rails.application.routes.draw do
   post "c/:token/quote/update", to: "client/quotes#request_update", as: :request_quote_update
   get "c/:token/quote/files/:id", to: "client/document_files#show", as: :client_quote_file, defaults: { kind: "quote" }
   get "c/:token/invoice/files/:id", to: "client/document_files#show", as: :client_invoice_file, defaults: { kind: "invoice" } # PAY-02
+  get "c/:token/team/:id/photo", to: "client/team_photos#show", as: :client_team_photo # ACC-09: on a visit's page
   get "c/:token/invoice/pdf", to: "client/invoices#pdf", as: :client_invoice_pdf
   post "c/:token/invoice/pay", to: "client/invoice_payments#create", as: :client_invoice_pay # PAY-04: to Stripe Checkout
   get "c/:token/invoice/paid", to: "client/invoice_payments#show", as: :client_invoice_paid # PAY-04: back from it
