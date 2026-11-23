@@ -62,6 +62,53 @@
   --color-violet: #6d28d9;
   --color-violet-50: #f5f3ff;
 
+  /* PLT-17: the kit's own shades, moved here with their values unchanged. Staff views, helpers
+     and components.css take colours only from tokens (test/helpers/colour_tokens_test.rb). */
+  --color-wash: #f8fafc; /* table heads, card and dialog feet, input addons, a hovered secondary */
+  --color-neutral-tint: #f1f5f9; /* the neutral pill and the empty-state icon */
+  --color-line-strong: #cbd5e1; /* a hovered secondary's border, flow nodes, setup steps */
+  --color-row-hover: #fafbfc;
+  --color-danger-line: #f5c2c2; /* the destructive button's border */
+  --color-danger-field: #e57373; /* an invalid field's border */
+  --color-danger-soft: #fca5a5; /* the danger toast's icon, on ink */
+  --color-shade: #eef0f3; /* closed hours on the calendar, striped with canvas */
+  --color-client-canvas: #f4f5f7; /* client pages' background, and Branding's preview of them */
+  --color-overlay: #000000; /* behind icons on photos, at 60% */
+  --color-side-edge: #070c17;
+  --color-side-icon: #8390a6;
+  --color-side-bright: #e2e8f0; /* the sidebar's foot and quota text, a hovered link */
+  --color-side-outline: #334155;
+
+  /* Team calendar (JOB-03): each person's colour (tint, edge, text), and Completed by status. */
+  --color-cal-sky: #e0f2fe;
+  --color-cal-sky-line: #0284c7;
+  --color-cal-sky-ink: #0c4a6e;
+  --color-cal-violet: #ede9fe;
+  --color-cal-violet-line: #7c3aed;
+  --color-cal-violet-ink: #4c1d95;
+  --color-cal-amber: #fef3c7;
+  --color-cal-amber-line: #d97706;
+  --color-cal-amber-ink: #78350f;
+  --color-cal-rose: #ffe4e6;
+  --color-cal-rose-line: #e11d48;
+  --color-cal-rose-ink: #881337;
+  --color-cal-teal: #ccfbf1;
+  --color-cal-teal-line: #0d9488;
+  --color-cal-teal-ink: #134e4a;
+  --color-cal-lime: #ecfccb;
+  --color-cal-lime-line: #65a30d;
+  --color-cal-lime-ink: #365314;
+  --color-cal-indigo: #e0e7ff;
+  --color-cal-indigo-line: #4f46e5;
+  --color-cal-indigo-ink: #312e81;
+  --color-cal-orange: #ffedd5;
+  --color-cal-orange-line: #ea580c;
+  --color-cal-orange-ink: #7c2d12;
+  --color-cal-none-ink: #334155;
+  --color-cal-done: #dcfce7;
+  --color-cal-done-line: #16a34a;
+  --color-cal-done-ink: #14532d;
+
   /* Per-business brand. The client layout overrides these on <body> from the business's settings. */
   --color-brand: #047857;
   --color-brand-button: #047857; /* the brand, darkened only if no text color reads on it */

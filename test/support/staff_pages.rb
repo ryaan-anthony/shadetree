@@ -88,6 +88,7 @@ module StaffPages
       page :jobs, "Jobs", admin_jobs_path, :list
       page :invoices, "Invoices", admin_invoices_path, :list
       page :schedule, "Schedule", admin_schedule_path, :list
+      page :schedule_by_status, "Schedule: by status", admin_schedule_path(color: "status"), :list # PLT-17
       page :services, "Services", admin_catalog_items_path, :list
       page :notifications, "Notifications", admin_notifications_path, :list
       page :help, "Help", admin_support_tickets_path, :list

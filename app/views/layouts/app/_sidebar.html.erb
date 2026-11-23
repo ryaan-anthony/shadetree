@@ -70,7 +70,7 @@
 
   <% if current_business && !current_business.suspended? && (can?(:office) || can?(:business_settings)) %><%= render "layouts/app/quota_meter" %><% end %><%# BIL-06: not on a suspended business's refusal page %>
   <footer class="side-foot">
-    <div class="flex items-center gap-2.5 px-1 text-sm2 text-slate-200">
+    <div class="flex items-center gap-2.5 px-1 text-sm2 text-side-bright">
       <%= avatar current_user.full_name.presence || current_user.email %>
       <%= link_to edit_user_registration_path, class: "min-w-0 flex-1 rounded-md hover:text-white", title: "Your account" do %>
         <p class="truncate font-medium"><%= current_user.full_name.presence || current_user.email %></p>

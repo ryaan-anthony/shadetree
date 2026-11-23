@@ -1,5 +1,5 @@
 <%# locals: (message:, operator_view: false) -%>
-<li class="items-start <%= "bg-amber-50" if message.internal? %>" id="message-<%= message.id %>">
+<li class="items-start <%= "bg-warning-50" if message.internal? %>" id="message-<%= message.id %>">
   <div class="min-w-0 flex-1">
     <p class="text-sm2 text-muted">
       <span class="font-semibold text-ink"><%= operator_view && message.from_operator? ? (message.author&.email || "A former operator") : message.author_label %></span>
