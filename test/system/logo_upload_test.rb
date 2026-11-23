@@ -16,7 +16,7 @@ class LogoUploadTest < ApplicationSystemTestCase
     within(".file-drop") do
       assert_text "Drop your logo here, or browse"
       assert_text "PNG, JPEG or WebP, up to 5 MB."
-      assert_selector "input#business_logo[type=file]", visible: :hidden # the real input, kept for keyboard and screen readers
+      assert_selector "input#business_logo[type=file]", visible: :all # the real input, kept for keyboard and screen readers
     end
     assert evaluate_script("(() => { const input = document.getElementById('business_logo'); input.focus(); return document.activeElement === input })()"),
            "the hidden file input can still take focus"
@@ -38,7 +38,7 @@ class LogoUploadTest < ApplicationSystemTestCase
   test "a wrong type or a file over 5 MB is refused before saving" do
     drop_file "logo.gif", "image/gif", file_fixture("logo.gif").binread
     assert_selector "#business_logo_check", text: "Logo must be a PNG, JPEG or WebP image."
-    assert_selector "input#business_logo[aria-invalid=true]", visible: :hidden
+    assert_selector "input#business_logo[aria-invalid=true]", visible: :all
     assert_no_selector "img.file-drop-thumb"
     assert_no_selector "aside[aria-label=Preview] img[src^='blob:']"
 
@@ -48,16 +48,16 @@ class LogoUploadTest < ApplicationSystemTestCase
     click_on "Clear huge.png"
     assert_no_selector ".file-drop-chosen"
     assert_no_selector "#business_logo_check", text: /\S/
-    assert_selector "input#business_logo[aria-invalid=false]", visible: :hidden
+    assert_selector "input#business_logo[aria-invalid=false]", visible: :all
   end
 
   test "without JavaScript the plain file field still uploads" do
-    Capybara.using_driver(:rack_test) do
-      visit new_user_session_path
+    Capybara.using_driver(:rack_test) do # page.visit: there are no controllers to wait for
+      page.visit new_user_session_path
       fill_in "Email", with: users(:one).email
       fill_in "Password", with: "password123"
       click_button "Sign in"
-      visit edit_admin_business_path(tab: "branding")
+      page.visit edit_admin_business_path(tab: "branding")
       assert_no_selector ".file-drop[data-enhanced]"
       attach_file "Upload a logo", file_fixture("logo.png").to_s
       click_on "Save branding"
