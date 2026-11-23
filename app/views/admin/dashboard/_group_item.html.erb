@@ -6,6 +6,9 @@
 <% when :changes_requested, :awaiting_answer %>
   <% title, path = "#{item.number}#{" · #{item.title}" if item.title}", staff_quote_path(item) %>
   <% meta = key == :awaiting_answer && item.sent_at ? safe_join([ "Sent ", local_time_ago(item.sent_at) ]) : money(item.total) %>
+<% when :work_not_booked %><%# JOB-09 %>
+  <% to_do = item.line_items.select { _1.to_do_quantity.positive? } %>
+  <% title, path, meta = "#{item.number}#{" · #{item.title}" if item.title}", staff_quote_path(item), "#{pluralize(to_do.size, "service")} to book" %>
 <% when :to_schedule, :to_invoice %>
   <% title, path, meta = "#{item.number} · #{item.title}", admin_job_path(item), money(item.total) %>
 <% when :overdue %>

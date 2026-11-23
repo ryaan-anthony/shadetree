@@ -1,6 +1,6 @@
 # INS-01: what needs the office now, for the dashboard. Each group is a count and its top few
 # records, each ready to link: new requests, quotes with changes asked for, quotes awaiting an
-# answer (oldest first), jobs with nothing booked, today's visits by person, finished jobs not
+# answer (oldest first), approved work no job has taken yet (JOB-09), jobs with nothing booked, today's visits by person, finished jobs not
 # yet billed and overdue invoices (oldest first). Plus how the month is going.
 class ActionDashboard
   TOP = 5
@@ -21,10 +21,11 @@ class ActionDashboard
       group(:new_requests, "New requests", ServiceRequest.where(status: "new").includes(:client).order(:created_at, :id), [ :admin_service_requests_path, {} ]),
       group(:changes_requested, "Changes asked for", quotes.where(status: "changes_requested").order(:updated_at, :id), [ :admin_quotes_path, { filter: "changes_requested" } ]),
       group(:awaiting_answer, "Quotes awaiting an answer", Quote.filtered("awaiting", today:).includes(:client).order(:sent_at, :id), [ :admin_quotes_path, { filter: "awaiting" } ]),
+      (group(:work_not_booked, "Work not booked", quotes.with_work_to_do.includes(:line_items).order(:updated_at, :id), [ :admin_quotes_path, { filter: "approved" } ]) if QuoteWork.split?(business)),
       group(:to_schedule, "Jobs to schedule", Job.where(status: "unscheduled").includes(:client).order(:created_at, :id), [ :admin_jobs_path, { filter: "unscheduled" } ]),
       group(:to_invoice, "Ready to invoice", Job.ready_to_invoice.includes(:client).order(:completed_at, :id), [ :admin_jobs_path, { filter: "to_invoice" } ]),
       group(:overdue, "Overdue invoices", Invoice.where(status: Invoice::OUTSTANDING).where(due_on: ...today).includes(:client).order(:due_on, :id), [ :admin_invoices_path, { filter: "overdue" } ])
-    ]
+    ].compact
   end
 
   # Today's open and done visits, by the people on them ("Not assigned" last).

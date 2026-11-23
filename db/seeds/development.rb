@@ -234,6 +234,40 @@ Tenancy.with_business(business) do
   end
 end
 
+# JOB-09: a quote's work split among jobs (with split_jobs on: bin/rails flags:enable[split_jobs]):
+# 6 of 10 trees this week, with the technician's and the owner's logged work and a stump ground
+# on site that still needs a price; the rest of the trees and the gutters still to do. Made
+# directly with picks, so it works with the flag off too.
+Tenancy.with_business(business) do
+  owner = User.find_by!(email: "owner@example.com")
+  tech = User.find_by(email: "tech@example.com")
+  client = Client.order(:id).third || Client.order(:id).first
+  if client && !Quote.exists?(title: "Backyard trees and gutters")
+    quote = Quote.start(client:, created_by: owner)
+    quote.title = "Backyard trees and gutters"
+    quote.set_discount("amount", "50")
+    quote.sync_line_items([ { "key" => "seed-0", "name" => "Tree removal", "quantity" => "10", "unit" => "visit", "unit_price" => "120", "taxable" => "1" },
+                            { "key" => "seed-1", "name" => "Gutter cleaning", "quantity" => "1", "unit_price" => "165", "taxable" => "1" } ])
+    quote.save!
+    quote.mark_sent!(by: owner, channel: "link")
+    auto = business.auto_create_jobs
+    business.update_columns(auto_create_jobs: false) # this one is made by hand, from part of the quote
+    quote.record_response!(:approve, by: owner, signer_name: client.display_name, message: "Agreed on site")
+    business.update_columns(auto_create_jobs: auto)
+    trees = quote.line_items.find_by!(key: "seed-0")
+    split = Feature.overrides.key?("split_jobs")
+    Feature.overrides["split_jobs"] = true unless split
+    job = Job.from_quote!(quote.reload, by: owner, picks: { trees.id => "6" })
+    Feature.overrides.delete("split_jobs") unless split
+    visit = job.visits.new(scheduled_on: business.today, timing: "exact", start_time: "09:00", duration_minutes: 240,
+                           assignee_ids: [ tech&.id, owner.id ].compact, created_by: owner).tap { _1.schedule!(by: owner, notify_client: false) }
+    line = job.line_items.first
+    job.log_work!(user: tech, by: tech, visit:, totals: { line.id => 4 }) if tech
+    job.log_work!(user: owner, by: owner, visit:, totals: { line.id => 1 })
+    job.add_site_line!(user: tech || owner, by: tech || owner, visit:, name: "Stump grinding", quantity: 1)
+  end
+end
+
 # CLI-03: the request form, on, with a request from someone new.
 business.update!(request_form_enabled: true)
 Tenancy.with_business(business) do

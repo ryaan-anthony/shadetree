@@ -54,6 +54,10 @@ class Quote < ApplicationRecord
   before_validation :note_catalog_prices # QTE-08
 
   scope :drafts, -> { where(status: "draft") }
+  # JOB-09: approved, with a line some of whose quantity no job holds yet ("Work not booked").
+  scope :with_work_to_do, -> { where(status: "approved").where(<<~SQL.squish) }
+    EXISTS (SELECT 1 FROM quote_line_items WHERE quote_line_items.quote_id = quotes.id AND quote_line_items.claimed_quantity < quote_line_items.quantity)
+  SQL
   scope :unarchived, -> { where(archived_at: nil) }
   scope :archived, -> { where.not(archived_at: nil) }
 

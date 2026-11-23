@@ -123,7 +123,10 @@ class DataExport < ApplicationRecord
       column("Internal notes", &:internal_notes)
       column("Location") { _1.location.name }
     end,
-    Table.new("quote_lines", "Quote line items", "Each line on each quote.", scope: -> { QuoteLineItem.includes(:quote) }, cursor: %i[quote_id position id], &lines.("quote", "Quote number")),
+    Table.new("quote_lines", "Quote line items", "Each line on each quote.", scope: -> { QuoteLineItem.includes(:quote) }, cursor: %i[quote_id position id]) do
+      instance_exec(&lines.("quote", "Quote number"))
+      column("In jobs", number: true, flag: :split_jobs) { _1.claimed_quantity.to_d.to_s("F") } # JOB-09
+    end,
     # QTE-05: each client answer with its evidence; the IP address is here, not on any page (QA #274).
     Table.new("quote_responses", "Quote responses", "Each approval, decline and change request, with who gave it and its evidence.",
               scope: -> { QuoteResponse.includes(:quote, :recorded_by) }, cursor: %i[quote_id id]) do
@@ -163,7 +166,38 @@ class DataExport < ApplicationRecord
       column("Internal notes", &:internal_notes)
       column("Location") { _1.location.name }
     end,
-    Table.new("job_lines", "Job line items", "Each line on each job.", scope: -> { JobLineItem.includes(:job) }, cursor: %i[job_id position id], &lines.("job", "Job number")),
+    Table.new("job_lines", "Job line items", "Each line on each job.", scope: -> { JobLineItem.includes(:job, claim: :quote_line_item) }, cursor: %i[job_id position id]) do
+      instance_exec(&lines.("job", "Job number"))
+      # JOB-09: the quote line it does (by position, as quote_lines lists it) and how much of it the job holds.
+      column("Quote line position", number: true, flag: :split_jobs) { _1.claim&.quote_line_item&.position }
+      column("Claimed from quote", number: true, flag: :split_jobs) { _1.claim&.quantity&.to_d&.to_s("F") }
+      column("Needs a price", flag: :split_jobs, &:price_pending)
+    end,
+    # JOB-09: who holds each quote line's work: a job (with or without its own line) or, billed
+    # straight from the quote, an invoice line; and whether the claim is live.
+    Table.new("job_claims", "Quote work in jobs", "How much of each quote line each job holds, or an invoice billed straight from the quote.",
+              scope: -> { JobClaim.includes(:job, :job_line_item, quote_line_item: :quote, invoice_line_item: :invoice) }, cursor: %i[quote_line_item_id id], flag: :split_jobs) do
+      column("Quote number") { _1.quote_line_item.quote.number }
+      column("Quote line position", number: true) { _1.quote_line_item.position }
+      column("Item") { _1.quote_line_item.name }
+      column("Job number") { _1.job&.number }
+      column("Job line position", number: true) { _1.job_line_item&.position }
+      column("Invoice number") { _1.invoice_line_item&.invoice&.number }
+      column("Quantity", number: true) { _1.quantity.to_d.to_s("F") }
+      column("Live") { _1.job ? _1.job.status != "cancelled" : !_1.invoice_line_item&.invoice&.void? }
+    end,
+    # JOB-09: every entry of the work log: who did what on which line, from which visit.
+    Table.new("work_log", "Work log", "What each person logged on each job line, from which visit; a correction is another row.",
+              scope: -> { WorkEntry.includes(:job, :job_line_item, :visit, :user, :recorded_by) }, flag: :split_jobs) do
+      column("Job number") { _1.job.number }
+      column("Item", &:item_name) # kept when the line is removed
+      column("Visit ID") { _1.visit&.uid }
+      column("Done by") { name_of.(_1.user) }
+      column("Quantity", number: true) { _1.quantity.to_d.to_s("F") }
+      column("Source", &:source)
+      column("Logged by") { name_of.(_1.recorded_by) }
+      column("Logged at", &:created_at)
+    end,
     Table.new("visits", "Visits", "Each scheduled visit, by date, with who was on it.", scope: -> { Visit.includes(:assignees, job: :client) }, cursor: %i[scheduled_on id]) do
       column("Visit ID", &:uid)
       column("Job number") { _1.job.number }
@@ -228,6 +262,9 @@ class DataExport < ApplicationRecord
   ].index_by(&:key).freeze
 
   def self.table(key) = TABLES.fetch(key.to_s)
+
+  # The tables the current business gets (a table behind a release flag only once it's on).
+  def self.tables = TABLES.values.select(&:available?)
 
   # Logs a CSV download; returns [csv, filename].
   def self.download!(key, by:)
