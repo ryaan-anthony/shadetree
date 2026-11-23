@@ -63,9 +63,10 @@ nobody loses data because a card expired.
 
 ## Implementation notes
 
-- `Billing::PlanResolver` works the plan out in one order: an operator's comp (until its end
-  date), a live Stripe subscription (to the end of a cancelled period; while past due, until
-  the grace period from `subscriptions.past_due_since` ends), the business's trial, then Free.
+- `Billing::PlanResolver` works the plan out in one order: a live Stripe subscription (to the
+  end of a cancelled period; while past due, until the grace period from
+  `subscriptions.past_due_since` ends), an operator's comp (until its end date), the business's
+  trial, then Free.
   It keeps `businesses.billing_status` (free, trialing, active, past_due, comped) and
   `billing_check_at`; `BillingChecksJob` (hourly) re-resolves businesses that are due and sends
   trial reminders (3 days and 1 day before, once each, `Billing::TrialReminders`).
