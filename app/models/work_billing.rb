@@ -136,8 +136,12 @@ module WorkBilling
 
     invoice = Invoice.new(client: quote.client, property: quote.property, quote:, created_by: by, title: quote.title, currency: quote.currency)
     invoice.copy_pricing_from(quote, lines: [])
+    percent_only!(invoice) if split # PAY-08: fixed discounts come as shares
     items = invoice.sync_line_items(BuiltDocument.rows_from(rows.map(&:first)))
-    items.zip(rows) { |item, (line, quantity, final)| item.assign_attributes(quantity:, quote_line_item_id: line.id, final:) }
+    items.zip(rows) do |item, (line, quantity, final)|
+      item.assign_attributes(quantity:, quote_line_item_id: line.id, final:)
+      item.set_discount(nil, nil) if split && item.discount_kind == "amount"
+    end
     invoice.save!
     invoice
   end

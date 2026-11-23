@@ -195,7 +195,6 @@ class Invoice < ApplicationRecord
       assign_attributes(status: previous.status, revision: previous.number, pdf_blob_id: previous.pdf_blob_id, pdf_digest: nil)
       save!(validate: false)
       previous.destroy!
-      @restoring = nil
       record!(:revision_discarded, by:, revision: previous.number + 1)
     end
   end
@@ -203,7 +202,8 @@ class Invoice < ApplicationRecord
   # Cancels an invoice that went out, with a reason; it stays on record, numbered, as Void. A
   # draft that never went out is deleted instead, and one with payments can't be voided (record
   # the money back first, PAY-05). Void and reissue is how a sent invoice is corrected at launch.
-  def voidable? = !void? && sent_at.present? && !payments?
+  # PAY-08: progress credited on a later invoice that went out is voided after that one.
+  def voidable? = !void? && sent_at.present? && !payments? && !credited_later?
 
   def void!(reason:, by:)
     reason = reason.to_s.squish
@@ -212,11 +212,11 @@ class Invoice < ApplicationRecord
     transaction do
       lock_with_quote!
       discard_revision!(by:) if revising?
-      raise ArgumentError, "Invoice #{number} can't be voided#{" while it has payments" if payments?}." unless voidable?
       # PAY-08: progress credited on a later invoice that went out stays until that one is voided.
-      if billing_credits? && (later = crediting_invoices.pluck(:number)).any?
+      if credited_later? && (later = crediting_invoices.pluck(:number)).any?
         raise ArgumentError, "Invoice #{number} is credited on #{later.to_sentence}. Void #{later.one? ? "it" : "them"} first."
       end
+      raise ArgumentError, "Invoice #{number} can't be voided#{" while it has payments" if payments?}." unless voidable?
 
       # Skips validation, as revise! does: an old row that no longer validates can still be voided.
       assign_attributes(status: "void", voided_at: Time.current, voided_by: by, void_reason: reason.first(200))
@@ -414,9 +414,12 @@ class Invoice < ApplicationRecord
   def record!(kind, by: nil, **data) = InvoiceEvent.record!(self, kind, by:, **data)
 
   # PAY-06: every change of an invoice takes its quote's lock first (JOB-09's order: the quote,
-  # then its lines), then the invoice's row, as billing does, so they can't deadlock.
+  # then its lines), then the invoice's row, as billing does, so they can't deadlock. PAY-08: an
+  # invoice for a job without a quote takes the job's lock first, as its billing does.
   def lock_with_quote!
-    QuoteWork.lock!(quote_id) if quote_id
+    if quote_id then QuoteWork.lock!(quote_id)
+    elsif job_id then WorkBilling.lock!(jobs: [ job_id ])
+    end
     lock!
   end
 
@@ -560,8 +563,7 @@ class Invoice < ApplicationRecord
       item.unit_price_cents = line["unit_price_cents"]
       item.assign_attributes(line.slice(*%w[job_line_item_id quote_line_item_id final tax_rates discount_share_cents])) if line.key?("final")
     end
-    # PAY-08: the shares and credits it was sent with, not worked out again.
-    @restoring = true
+    # PAY-08: the shares and credits it was sent with (a sent invoice's aren't worked out again).
     self.quote_discount_share_cents = data["quote_discount_share_cents"].to_i
     credits.each(&:mark_for_destruction)
     data["credits"].to_a.each { credits.build(**_1.symbolize_keys, business:) }

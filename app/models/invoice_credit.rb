@@ -32,7 +32,7 @@ class InvoiceCredit < ApplicationRecord
   def tax_rate_list = tax_rates.map { Pricing::TaxRate.new(name: _1["name"], percent: _1["percent"]) }
 
   # A negative line, so tax is worked out on what's left.
-  def to_pricing = Pricing::Line.new(quantity: 1, unit_price: Money.new(sign * amount_cents, invoice.currency), tax_rates: tax_rate_list)
+  def to_pricing = Pricing::Line.new(quantity: 1, unit_price: Money.new(sign * amount_cents, invoice.currency), tax_rates: tax_rate_list, credit: true)
 
   def label = "#{kind == "progress" ? "Billed earlier" : "Over-billed"} on #{source_invoice.number}"
 

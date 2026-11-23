@@ -6,7 +6,7 @@ module Pricing
   # 2. A line discount (percent or fixed, never more than the line) comes off that line.
   # 3. Subtotal = sum of discounted lines.
   # 4. A document discount comes off the subtotal and is spread across lines in proportion
-  #    to their amounts (cent-exact, never onto a credit line), so each tax rate sees its
+  #    to their amounts (cent-exact; never onto a PAY-08 credit), so each tax rate sees its
   #    correct base.
   #    PAY-08: an invoice's share of its quote's fixed discount comes off alongside it (`share`),
   #    and a line's share of its quote line's fixed discount comes off that line (Line#share).
@@ -53,7 +53,7 @@ module Pricing
 
       @subtotal = Money.sum(line_subtotals, currency)
       @discount = [ discount_for(document_discount, @subtotal) + @share, [ @subtotal, Money.zero(currency) ].max ].min
-      spread = @discount.allocate(line_subtotals.map { [ _1.cents, 0 ].max }) # not onto credit lines
+      spread = @discount.allocate(raw_lines.zip(line_subtotals).map { |line, amount| line.credit ? 0 : amount.cents }) # PAY-08: not onto credits
       taxable = line_subtotals.zip(spread).map { |amount, share| amount - share }
 
       @lines = raw_lines.each_with_index.map do |line, i|

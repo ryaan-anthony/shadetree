@@ -45,11 +45,26 @@ class BillingLedger
   def self.for(invoice) = new(quote: invoice.quote, job: (invoice.job unless invoice.quote), except: invoice)
 
   # A line's subtotal in cents: quantity × price, less its own discount and share.
-  def self.subtotal_cents(line) = Pricing::DocumentTotals.new(currency: line.document_currency, lines: [ line.to_pricing([]) ]).lines.first.subtotal.cents
+  def self.subtotal_cents(line, currency = line.document_currency) = Pricing::DocumentTotals.new(currency:, lines: [ line.to_pricing([]) ]).lines.first.subtotal.cents
 
   # --- Progress and credits ---------------------------------------------------------------
 
-  def amount_cents(progress_line) = (@amounts ||= {})[progress_line.id] ||= self.class.subtotal_cents(progress_line)
+  def amount_cents(progress_line) = (@amounts ||= {})[progress_line.id] ||= subtotal(progress_line)
+
+  # The tax rates a progress line was charged at, which its credits use.
+  def rates_of(progress_line)
+    return [] unless progress_line.taxable
+
+    progress_line.own_tax_rate_list || progress_line.invoice.tax_rate_list
+  end
+
+  # What the client paid for these cents of a progress line: with its tax (already in a
+  # tax-inclusive price), each rate rounded.
+  def with_tax_cents(cents, progress_line)
+    return cents if progress_line.invoice.prices_include_tax
+
+    cents + rates_of(progress_line).sum { (cents * _1.percent / 100).round(0, Money::ROUNDING).to_i }
+  end
 
   # Progress that went out, less what's been credited of it.
   def remaining_cents(progress_line)
@@ -69,17 +84,20 @@ class BillingLedger
 
   def pool(home) = (@pools ||= @progress.group_by { home(_1) })[home].to_a
 
-  # Nothing left to bill: a job line with a final bill (or on a cancelled job); a quote line with
-  # nothing to do whose live claims are all billed. `billed` adds this invoice's final bills.
+  # Nothing left to bill: a job line with a final bill that went out (or on a cancelled job); a
+  # quote line with nothing to do whose live claims are all billed so, direct bills included.
+  # `billed` adds this invoice's final bills. (A draft's final bill is still to come: it credits
+  # the progress when it's sent.)
   def nothing_left?(home, billed: [])
     kind, id = home
-    billed_ids = billed_job_line_ids + billed.filter_map(&:job_line_item_id)
+    billed_ids = sent_finals.filter_map(&:job_line_item_id).to_set + billed.filter_map(&:job_line_item_id)
     if kind == :job
       job_line = @job_lines[id]
       return job_line.nil? || billed_ids.include?(id) || @jobs_by_id[job_line.job_id].status == "cancelled"
     end
     line = @quote_lines[id] or return true
-    line.to_do_quantity <= 0 && live_job_lines(line).all? { billed_ids.include?(_1.id) }
+    line.to_do_quantity <= 0 && live_job_lines(line).all? { billed_ids.include?(_1.id) } &&
+      @finals.select { _1.quote_line_item_id == id && _1.job_line_item_id.nil? }.all? { _1.invoice.sent_at }
   end
 
   def over_billed_cents(billed: []) = over_billed(billed:).sum { remaining_cents(_1) }
@@ -92,51 +110,60 @@ class BillingLedger
   # Credits for an invoice's final bills: [[line, cap_cents]] in order, each cap what this bill
   # takes for the line after its discount share. Each line takes min(progress not yet credited,
   # what's left of its cap): its job line's own first, then its quote line's. Then over-billing,
-  # up to what's left of the invoice. Returns attributes for InvoiceCredit.
-  def credits_for(lines_with_caps, others_cap: 0)
+  # up to what's left of the invoice. `bases` ({ tax rate => cents }) is what each rate is charged
+  # on: a credit never takes one below zero, so tax and the total stay at zero or more; what it
+  # can't take stays over-billed for the next invoice. Returns attributes for InvoiceCredit.
+  def credits_for(lines_with_caps, others_cap: 0, bases: {})
     left = Hash.new { |hash, line| hash[line] = remaining_cents(line) }
+    bases = Hash.new(0).merge(bases)
     credits = []
+    take = lambda do |kind, progress, cap|
+      rates = rates_of(progress)
+      amount = [ left[progress], cap, *rates.map { bases[_1] } ].min
+      next 0 unless amount.positive?
+
+      credits << credit(kind, progress, amount)
+      left[progress] -= amount
+      rates.each { bases[_1] -= amount }
+      amount
+    end
     lines_with_caps.each do |line, cap|
       [ home(line), ([ :quote, line.quote_line_item_id ] if line.quote_line_item_id) ].compact.uniq.each do |from|
-        pool(from).each do |progress|
-          take = [ left[progress], cap ].min
-          next unless take.positive?
-
-          credits << credit(:progress, progress, take)
-          left[progress] -= take
-          cap -= take
-        end
+        pool(from).each { cap -= take.(:progress, _1, cap) }
       end
       others_cap += cap
     end
-    over_billed(billed: lines_with_caps.map(&:first)).each do |progress|
-      take = [ left[progress], others_cap ].min
-      next unless take.positive?
-
-      credits << credit(:over_billed, progress, take)
-      left[progress] -= take
-      others_cap -= take
-    end
+    over_billed(billed: lines_with_caps.map(&:first)).each { others_cap -= take.(:over_billed, _1, others_cap) }
     credits.each_with_index.map { |attributes, position| attributes.merge(position:) }
   end
 
   # --- What's left to bill as progress ----------------------------------------------------
 
   # A job line: its subtotal less progress on it, nothing once it has a final bill; never more
-  # than what's left of its quote line.
+  # than what's left of its quote line. Quote work is valued after its expected share of the
+  # quote's fixed discount: with $100 off $1,000, at most $900 goes up front (owner, 2026-11-23).
   def left_cents(line)
     case line
     when JobLineItem
       job = @jobs_by_id[line.job_id]
       return 0 if billed_job_line_ids.include?(line.id) || job.nil? || job.status == "cancelled"
 
-      own = self.class.subtotal_cents(line) - held(@progress.select { _1.job_line_item_id == line.id })
       quote_line = @quote_lines[line.claim&.quote_line_item_id]
+      own = (quote_line ? after_share(subtotal(line)) : subtotal(line)) - held(@progress.select { _1.job_line_item_id == line.id })
       [ own, (left_cents(quote_line) if quote_line) ].compact.min.clamp(0..)
     when QuoteLineItem
-      billed = @finals.select { _1.quote_line_item_id == line.id }.sum { self.class.subtotal_cents(_1) }
-      (kept_value_cents(line) - billed - held(@progress.select { _1.quote_line_item_id == line.id })).clamp(0..)
+      billed = @finals.select { _1.quote_line_item_id == line.id }.sum { subtotal(_1) }
+      (after_share(kept_value_cents(line) - billed) - held(@progress.select { _1.quote_line_item_id == line.id })).clamp(0..)
     end
+  end
+
+  # Cents of quote work less their expected share of a fixed quote discount D: × (S − D) ÷ S.
+  def after_share(cents)
+    total = shares? && quote.discount_kind == "amount" ? quote.discount_amount_cents.to_i : 0
+    return cents unless total.positive? && cents.positive?
+
+    base = (@base ||= discount_base_cents)
+    base.positive? ? round(cents * [ base - total, 0 ].max / base.to_d) : cents
   end
 
   # --- Discount shares ---------------------------------------------------------------------
@@ -180,10 +207,10 @@ class BillingLedger
     base = discount_base_cents(current: work)
     return 0 unless base.positive?
 
-    billed = (sent_finals.select(&:quote_line_item_id) + work).sum { self.class.subtotal_cents(_1) }
+    billed = (sent_finals.select(&:quote_line_item_id) + work).sum { subtotal(_1) }
     target = [ total, round(total * billed / base.to_d) ].min
     others = Invoice.where(quote_id: quote.id).where.not(sent_at: nil).where.not(status: "void").where.not(id: @except_id).sum(:quote_discount_share_cents)
-    (target - others).clamp(0, work.sum { self.class.subtotal_cents(_1) })
+    (target - others).clamp(0, work.sum { subtotal(_1) })
   end
 
   # Recurring quotes don't share (JOB-10).
@@ -191,12 +218,13 @@ class BillingLedger
 
   # --- Summaries for the quote and job pages ----------------------------------------------
 
-  # { billed:, credited:, over_billed: } in cents, for the quote, or only a job's own lines.
+  # { billed:, credited:, over_billed: } in cents with tax, as the client was charged, for the
+  # quote, or only a job's own lines.
   def summary(job: nil)
     lines = job ? @progress.select { (jl = @job_lines[_1.job_line_item_id]) && jl.job_id == job.id } : @progress
     sent = lines.select { _1.invoice.sent_at }
-    { billed: sent.sum { amount_cents(_1) }, credited: sent.sum { @used.fetch(_1.id, 0) },
-      over_billed: (over_billed & lines).sum { remaining_cents(_1) } }
+    { billed: sent.sum { with_tax_cents(amount_cents(_1), _1) }, credited: sent.sum { with_tax_cents(@used.fetch(_1.id, 0), _1) },
+      over_billed: (over_billed & lines).sum { with_tax_cents(remaining_cents(_1), _1) } }
   end
 
   private
@@ -204,6 +232,16 @@ class BillingLedger
   def credit(kind, progress, amount)
     { kind: kind.to_s, source_invoice_id: progress.invoice_id, source_line_item_id: progress.id, amount_cents: amount, sign: -1,
       tax_rates: (progress.taxable ? progress.tax_rates || progress.invoice.tax_rates : []) }
+  end
+
+  # A line's subtotal in its document's currency, without loading its document again.
+  def subtotal(line)
+    currency = case line
+    when JobLineItem then @jobs_by_id[line.job_id]&.currency
+    when InvoiceLineItem then line.invoice.currency
+    else quote&.currency
+    end
+    self.class.subtotal_cents(line, currency || line.document_currency)
   end
 
   # Progress held on a line: what's on invoices that aren't void, less what's been credited.

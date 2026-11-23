@@ -24,7 +24,7 @@ class ProgressBillingAndDiscountShares < ActiveRecord::Migration[8.1]
       t.references :invoice, null: false, foreign_key: { on_delete: :cascade }
       t.string :kind, null: false
       t.references :source_invoice, null: false, foreign_key: { to_table: :invoices }
-      t.references :source_line_item, foreign_key: { to_table: :invoice_line_items }
+      t.references :source_line_item, foreign_key: { to_table: :invoice_line_items, on_delete: :cascade } # a draft's credit goes with it
       t.bigint :amount_cents, null: false
       t.integer :sign, null: false, default: -1
       t.jsonb :tax_rates, null: false, default: []
