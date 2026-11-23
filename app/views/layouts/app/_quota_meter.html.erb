@@ -1,0 +1,38 @@
+<%# BIL-06: quotes sent this usage period, at the foot of the sidebar (and the phone drawer), for
+    people with office access or business settings. Assistive technology reads its text, in a
+    "Quote usage" region: the label, "6 of 5 used · Limit reached" (the real count) and the reset
+    date. The bar is decoration and hidden from it: a role=meter's value text (needed for "6 of 5"
+    and the date) isn't passed on by Chrome, which would leave a bare number. The Plan link is only
+    for people who can open Settings → Plan. Counted once per page with the business's
+    entitlements (the number Home and Settings → Plan show). %>
+<% entitlements = current_business.entitlements %>
+<% plan, period = entitlements.plan, entitlements.period %>
+<% limit, used = entitlements.limit(:quotes_sent), entitlements.used(:quotes_sent) %>
+<% trial_ends = current_business.trial_ends_at&.in_time_zone(current_business.time_zone)&.to_date if current_business.billing_status == "trialing" %>
+<% trial_ends = nil unless trial_ends && trial_ends < period.resets_on %>
+<section class="quota" id="quota-meter" aria-label="Quote usage"><%# a region, so screen reader users can jump to it %>
+  <div class="flex items-start justify-between gap-2">
+    <% if limit.nil? %>
+      <p class="quota-text" id="quota-unlimited"><%= pluralize(used, "quote") %> sent <%= quote_allowance_period(entitlements) %><%= quote_allowance_trial(entitlements) %> · no limit</p>
+    <% elsif limit.zero? %>
+      <p class="quota-text" id="quota-not-included">Sending quotes isn't included on <%= plan.name %>.</p>
+    <% else %>
+      <p class="quota-label"><%= quote_allowance_label(entitlements) %></p>
+    <% end %>
+    <% if can?(:business_settings) %>
+      <%= link_to "Plan", admin_plan_path, class: "quota-link", id: "quota-plan-link", "aria-label": "Plan: see your plan and usage" %>
+    <% end %>
+  </div>
+  <% if limit&.positive? %>
+    <% state = entitlements.quote_sending %>
+    <% word = { approaching: "Nearly used, #{limit - used} left", blocked: "Limit reached" }[state] %>
+    <div class="quota-bar quota-<%= state %>" aria-hidden="true">
+      <span class="<%= inline_style("width: #{[ used * 100 / limit, 100 ].min}%") %>"></span>
+    </div>
+    <p class="quota-text">
+      <span class="quota-count" id="quota-count"><%= used %> of <%= limit %></span><span class="sr-only"> used</span><% if word %> · <span class="quota-state"><%= word %></span><% end %>
+    </p>
+    <p class="quota-text" id="quota-resets">Resets <%= l(period.resets_on, format: "%b %-d") %><% if trial_ends %> · Trial ends <%= l(trial_ends, format: "%b %-d") %><% end %></p>
+  <% end %>
+</section>
+<%= inline_styles_tag %>

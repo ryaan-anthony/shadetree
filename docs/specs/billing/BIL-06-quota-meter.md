@@ -25,37 +25,45 @@ of the limit and the reset date. The existing notices stay.
 
 ## Acceptance criteria
 
-- [ ] Every staff page (desktop sidebar and the phone drawer) shows the meter for the current
+- [x] Every staff page (desktop sidebar and the phone drawer) shows the meter for the current
       business to people with office access or business settings (Owners, Admins, custom roles
       with either), always, however little is used: a label, a bar, "3 of 5" and "Resets Dec 1"
       (the reset date in the business's time zone, BIL-02). Others don't see it.
-- [ ] The label says what it counts, as #289's wording does: "Free quotes this month", or
+- [x] The label says what it counts, as #289's wording does: "Free quotes this month", or
       "Starter quotes this billing period".
-- [ ] The bar's state follows BIL-03: normal; approaching (from the warning threshold); then
+- [x] The bar's state follows BIL-03: normal; approaching (from the warning threshold); then
       "Limit reached" once used reaches the limit (no grace send). Each state is said in words as
       well as colour, using the theme's tones. Over the limit, which only happens after a
       downgrade mid-period, it reads "6 of 5 · Limit reached" with the bar full.
-- [ ] Unlimited plans show the count without a bar ("42 quotes sent this billing period · no
+- [x] Unlimited plans show the count without a bar ("42 quotes sent this billing period · no
       limit"). A plan that doesn't include sending says so (linked as below).
-- [ ] During a trial it shows the trial plan's limit, marked "(trial)", and "Trial ends Dec 3"
+- [x] During a trial it shows the trial plan's limit, marked "(trial)", and "Trial ends Dec 3"
       when the trial ends before the reset (BIL-05). A lapsed or past-due business shows the plan
       it's on now.
-- [ ] After a plan change mid-period, the next page shows the new plan's label and limit, with
+- [x] After a plan change mid-period, the next page shows the new plan's label and limit, with
       the count and reset date of the usage period then in force (BIL-02), matching Settings →
       Plan.
-- [ ] The meter links to Settings → Plan only for people with business settings (which that page
+- [x] The meter links to Settings → Plan only for people with business settings (which that page
       needs); for everyone else it's plain text.
-- [ ] It's readable by assistive technology as one meter with its value and limit ("3 of 5 free
+- [x] It's readable by assistive technology as one meter with its value and limit ("3 of 5 free
       quotes used, resets December 1"); over the limit the value is held at the limit and the
       text gives the real number ("6 of 5"). It meets contrast on the sidebar, has no animation,
       and fits at 360 px.
-- [ ] The count is the same number Settings → Plan and Home show, is current on each page load,
+- [x] The count is the same number Settings → Plan and Home show, is current on each page load,
       and adds at most one fast query per page.
-- [ ] BIL-03's notices (builder, send page, Home) and Home's allowance line are unchanged.
-- [ ] Operators viewing as a member (OPS-03) see it read-only, by that member's rules.
-- [ ] Tests cover each state (over the limit after a downgrade too), unlimited and not-included plans, a trial, a
+- [x] BIL-03's notices (builder, send page, Home) and Home's allowance line are unchanged.
+- [x] Operators viewing as a member (OPS-03) see it read-only, by that member's rules.
+- [x] Tests cover each state (over the limit after a downgrade too), unlimited and not-included plans, a trial, a
       mid-period plan change, who sees it, the link rule, and that another business's usage is
       never shown.
+
+## Implementation notes
+
+- A sidebar partial (also the phone drawer) using the business's entitlements, so the count is
+  the one query Home, the notices and Settings → Plan already make. Not on a suspended business.
+- Read as text in a "Quote usage" region ("6 of 5 used · Limit reached, Resets Dec 1"), with the
+  bar hidden: Chrome doesn't pass on a meter's value text, which would leave a bare, clamped
+  number (review of #341). Approaching adds how many are left ("Nearly used, 1 left").
 
 ## Out of scope
 
@@ -75,3 +83,4 @@ of the limit and the reset date. The existing notices stay.
   decision 2026-11-22: no grace send; built in #328).
 - Operators viewing as a member see it read-only, with the Plan link only if that member could
   open the Plan page (coordinator, follows existing behaviour).
+- The approaching state reads "Nearly used" (coordinator).
