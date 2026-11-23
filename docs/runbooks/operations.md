@@ -477,8 +477,20 @@ arrives through `Observability::ErrorSubscriber`. No tracing, profiling or logs 
 organisation's data region as you prefer), and in Project settings → Security & Privacy turn on
 "Data scrubber" and "Use default scrubbers" and "Prevent storing of IP addresses" as a second layer.
 Copy the DSN (Project settings → Client keys) into the `SENTRY_DSN` secret of both GitHub
-environments, then re-run the last deploy of each. Staging and production share the project and
-are told apart by environment. Alerts: the default "new issue" email rule; add a rule for the
+environments, then re-run the last deploy of each. Never put the DSN in the code, an issue or a
+chat: anyone holding it can send events and spend the month's quota (if one leaks, revoke that key
+in Client keys and make a new one). To check it works, run `bin/rails sentry:test` in the app
+container (`docker exec shadetree-production bin/rails sentry:test`, or `shadetree-staging`): a
+test ZeroDivisionError and a "Sentry test message" alert should appear in Issues, tagged with the
+environment.
+
+Sentry's own setup page suggests `stackprof`, `send_default_pii = true`, logs, the logger patch,
+and tracing and profiling at 100%. We leave all of them out on purpose: they would send request
+headers, IPs and log lines (client personal data, PLT-10) and spend the free plan's quotas. The
+gems are `sentry-ruby` and `sentry-rails` only, and every setting lives in
+`Observability::SentryTracker.configure`, not a generated `config/initializers/sentry.rb`. Staging
+and production share the project and are told apart by environment.
+Alerts: the default "new issue" email rule; add a rule for the
 `job-health` Cron monitor (created on its first check-in) to email on failure or missed check-in.
 
 **Free-tier limits** (Developer plan, checked 2026-11-22): 5,000 errors a month, one user,

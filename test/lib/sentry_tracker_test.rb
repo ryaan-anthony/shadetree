@@ -44,6 +44,15 @@ class SentryTrackerTest < ActionDispatch::IntegrationTest
     assert_empty Array(event.to_json_compatible.dig("breadcrumbs", "values"))
   end
 
+  test "sentry:test sends one error and one alert, each scrubbed and marked as ours" do
+    Observability::SentryTracker.send_test!
+    error, alert = sentry_events
+    assert_equal "ZeroDivisionError", error.exception.values.last.type
+    assert_equal "Sentry test message", alert.message
+    assert_equal %w[error warning], [ error.level.to_s, alert.level.to_s ]
+    sentry_events.each { assert_private(_1) }
+  end
+
   test "with no SENTRY_DSN, Sentry stays off" do
     previous = ENV.delete("SENTRY_DSN")
     assert_not Observability::SentryTracker.enabled?
