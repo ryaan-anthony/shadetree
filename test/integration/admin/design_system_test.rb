@@ -244,6 +244,19 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # A form page's own two columns (a fixed-width track) are the Form container's aside, not a grid
+  # of their own. Detail pages' rails and the schedule are Wide, and the builders are out of scope.
+  COLUMNS = /\A(?:[a-z0-9-]+:)*grid-cols-\[[^\]]*\d(?:rem|px)/
+
+  check :form_columns_are_the_form_container, if: ->(page) { page.kind == :form && !page.key.end_with?("_builder") } do |_page, html|
+    html.css("main [class]").reject { _1.ancestors(INSIDE).any? || _1.ancestors(".form-split").any? || classes(_1).include?("form-split") }.filter_map do |node|
+      columns = classes(node).grep(COLUMNS)
+      next if columns.empty? || !(node.matches?(BLOCKS) || node.at_css(BLOCKS))
+
+      "#{node.name}.#{classes(node).first(3).join(".")} has #{columns.join(" ")}: use .form-split with a .form-split-aside"
+    end
+  end
+
   setup do
     @business = businesses(:one)
     @owner = users(:one)
@@ -254,8 +267,8 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
   # Renders each page once and runs every check on it.
   def sweep(pages)
     pages.flat_map do |page|
-      get page.path
-      next [ "#{page}: #{response.status}" ] unless response.successful?
+      page.params ? post(page.path, params: page.params) : get(page.path)
+      next [ "#{page}: #{response.status}" ] unless response.status == page.status
 
       html = Nokogiri::HTML5(response.body)
       CHECKS.flat_map do |name, (applies, block)|
@@ -276,12 +289,30 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
     assert_empty run.("<div class='relative max-w-md'><input type='search'></div><select class='max-w-xs'></select>")
   end
 
+  test "PLT-16: a form page's own fixed-width columns are flagged; the Form container's aren't" do
+    applies, block = CHECKS.fetch(:form_columns_are_the_form_container)
+    form = StaffPages::Page.new(key: :demo, name: "Demo", path: "/", kind: :form)
+    run = ->(body) { instance_exec(form, Nokogiri::HTML5("<main>#{body}</main>"), &block) }
+    assert_equal 1, run.("<form class='grid lg:grid-cols-[1fr_24rem]'><div class='card'></div><aside></aside></form>").size
+    assert_empty run.("<form class='form-split'><div class='card'><div class='grid sm:grid-cols-[8rem_1fr]'></div></div></form>")
+    assert_not applies.call(StaffPages::Page.new(key: :demo, name: "Demo", path: "/", kind: :detail))
+  end
+
   test "every staff page passes the design-system checks" do
     problems = sweep(StaffPages.empty) # before any records exist
     pages = StaffPages.build(@business, @owner)
     problems += sweep(pages.reject(&:ops?))
+    states = StaffPages.states(@business).group_by(&:as)
+    problems += sweep(states[:owner])
+    sign_in member_with_role(:technician)
+    post switch_admin_business_path, params: { business: @business.uid }
+    problems += sweep(states[:technician])
     sign_in_operator(@owner)
     problems += sweep(pages.select(&:ops?))
+    sign_in @owner
+    post switch_admin_business_path, params: { business: @business.uid }
+    @business.update_columns(suspended_at: Time.current) # last: nothing else opens while it's suspended
+    problems += sweep(states[:suspended])
     assert_empty problems, problems.join("\n")
   end
 end

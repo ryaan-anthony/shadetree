@@ -7,14 +7,15 @@
 #   pages.each { |page| get page.path }                       # page.key, page.name, page.kind
 #   StaffPages.find(pages, :quote_approved)                   # one page by its key
 #   StaffPages.empty                                          # the lists with nothing in them (before build)
+#   StaffPages.states(business)                               # pages only a state shows (after build; see there)
 #
-# kind: :list, :form, :detail, :settings, :empty, or :ops (the operator console: sign in with
+# kind: :list, :form, :detail, :settings, :empty, :state (states), or :ops (the operator console: sign in with
 # sign_in_operator). head: false for a page with no page header (.page-head): only the
 # schedule's visit panel, by design (PLT-15 gave the rest page_header).
 # Add a page here when you add one to the app; a state worth checking gets its own entry.
 module StaffPages
-  Page = Data.define(:key, :name, :path, :kind, :head) do
-    def initialize(key:, name:, path:, kind:, head: true) = super
+  Page = Data.define(:key, :name, :path, :kind, :head, :status, :params, :as) do
+    def initialize(key:, name:, path:, kind:, head: true, status: 200, params: nil, as: :owner) = super
     def detail? = kind == :detail
     def ops? = kind == :ops
     def to_s = "#{name} (#{path})"
@@ -24,6 +25,21 @@ module StaffPages
 
   def build(business, user)
     Builder.new(business, user).pages
+  end
+
+  # PLT-16: pages a GET as the Owner doesn't show, for the design-system sweep: a form shown again
+  # after a mistake (params: POSTed), a member's refusal (as: :technician) and a suspended
+  # business (as: :suspended, after everything else). status: what the page answers with.
+  def states(business)
+    helpers = Rails.application.routes.url_helpers
+    client = Tenancy.with_business(business) { Client.find_by!(display_name: "Maria Lopez") } # made by build
+    [ Page.new(key: :new_client_note, name: "Client note: not saved", path: helpers.admin_client_notes_path(client), kind: :form,
+               status: 422, params: { client_note: { body: "" } }),
+      Page.new(key: :not_allowed, name: "Not available with your role", path: helpers.admin_settings_path, kind: :state, head: false,
+               status: 403, as: :technician),
+      Page.new(key: :suspended, name: "Business suspended", path: helpers.admin_root_path, kind: :state, head: false, status: 403, as: :suspended),
+      Page.new(key: :suspended_new, name: "Can't add a business", path: helpers.new_admin_business_path, kind: :state, head: false,
+               status: 403, as: :suspended) ]
   end
 
   def find(pages, key) = pages.find { _1.key == key } || raise(KeyError, "No staff page #{key.inspect}")
@@ -110,6 +126,7 @@ module StaffPages
       page :new_template, "New message template", new_admin_custom_message_template_path, :form
       page :edit_template, "Edit message template", edit_admin_custom_message_template_path(@template), :form
       page :new_location, "New location", new_admin_location_path, :form
+      page :new_business, "Create a business", new_admin_business_path, :form
       page :edit_location, "Edit location", edit_admin_location_path(@location), :form
       page :edit_closure, "Edit closure", edit_admin_closure_path(@closure), :form
       page :edit_client_note, "Edit a client note", edit_admin_client_note_path(@client, @note), :form

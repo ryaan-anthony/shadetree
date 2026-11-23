@@ -3,8 +3,8 @@
 <%= form_with model: template, url:, method:,
               data: { controller: "template-editor", template_editor_url_value: preview_url,
                       action: "input->template-editor#refresh" },
-              class: "grid gap-6 lg:grid-cols-[1fr_24rem]" do |f| %>
-  <div class="space-y-4">
+              class: "form-split" do |f| %>
+  <div class="min-w-0 space-y-4">
     <%= card do %>
       <% if template.errors[:base].any? %>
         <div class="banner banner-warning mb-4" role="alert"><%= icon "alert-circle" %><p><%= template.errors[:base].join(" ") %></p></div>
@@ -40,7 +40,7 @@
       <p class="text-sm text-muted">Editing messages is part of a paid plan. <%= link_to "See plans", admin_plan_path, class: "font-semibold text-canopy hover:underline" %></p>
     <% end %>
   </div>
-  <aside aria-label="Preview">
+  <aside class="form-split-aside" aria-label="Preview">
     <div class="mb-2 flex items-center justify-between gap-3">
       <% if preview_records.any? %>
         <label class="label mb-0" for="preview_record">Preview</label>

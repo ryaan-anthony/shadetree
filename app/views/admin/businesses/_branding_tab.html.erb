@@ -1,7 +1,7 @@
 <%# Logo and brand color, with a live preview of a client page (CAT-02). %>
 <% branding = @business.branding %>
 <%= form_with model: @business, url: admin_business_path(tab: "branding"), method: :patch,
-              class: "form-split",
+              class: "form-split form-split-lg",
               data: { controller: "brand-preview",
                       brand_preview_saved_logo_value: (url_for(branding.logo(:web)) if branding.logo?),
                       action: "file-drop:chosen->brand-preview#logoChosen",

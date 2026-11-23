@@ -56,28 +56,27 @@ Triage: [#314 triage](../../audits/314-triage.md).
   its right (owner, 2026-11-22).
 - My day stays one column. It's the technician's phone page, and office staff reach it from
   Home's "Your day" (#301). Wide is for office pages (owner, 2026-11-22).
+- Every form is 42rem. The set-up, suspended and not-allowed pages sit left-aligned at the Form
+  width; settings lists, Notifications and support tickets use the full Wide width; Edit job's
+  client line moves into its aside (owner, 2026-11-23).
+- Branding's live preview sits beside the form from 1024px, as before, at 22rem (owner, 2026-11-23).
 
 ## Implementation notes
 
-- My day's visit and request pages, and the schedule's visit and follow-up panels opened as pages,
-  stay one column at the Form width too: they're the same technician pages (following the My day
-  decision).
-- Lists that sit under Settings (taxes, locations, roles, messages, automations) are Wide like
-  every list; the settings pages with a form or account details (business tabs, hours, notification
-  settings, payments, plan, starter services) use Form.
+- My day's visit and request pages and the schedule's panels opened as pages stay at the Form
+  width (the My day decision). Settings pages with a form or account details use Form.
 - Wide is the content area itself (`.content`, up to 80rem): a page adds no width of its own.
   Form is `.form-split`, #303's column, now 42rem everywhere; with a `.form-split-aside` child it
   becomes the column plus a 20rem aside from 1280px, stacked before or after it (page order) below.
   Both are on the style guide's "Page containers" section.
-- Edit job shows the client (with phone) and the quote it came from in the aside; the form's
-  read-only "Client" line moved there. New job has no aside (the client is picked in the form).
-- Branding's form and preview use the Form container (preview in the aside); the set-up, suspended
-  and not-allowed pages moved from centred cards to the Form column, and the operator console's
-  edit cards to Form as well. The console's own layout width (72rem) is its Wide; its two-factor
+- Edit job's aside, "Client and quote", has the client's phone and the quote it came from. New
+  job has none (the client is picked in the form).
+- Branding (`.form-split-lg`), the message template editor, client import and send quote/invoice
+  put their preview, help or rail in the aside. The operator console's edit cards use Form too. The console's own layout width (72rem) is its Wide; its two-factor
   sign-in pages stay centred like sign-in.
-- The design-system sweep's `page_width_is_a_container` check flags any `max-w-*` outside cards,
-  dialogs, menus, tables and fields (a block holding controls and no card, such as a search box).
-  `max-w-prose` is a paragraph's measure. The shared page list gains edit location, edit closure,
-  edit client note, edit payment and delete role.
+- Checks: `page_width_is_a_container` flags any `max-w-*` outside cards, dialogs, menus, tables
+  and fields; `form_columns_are_the_form_container` flags a form page's own `grid-cols-[…rem]`
+  outside `.form-split`. The shared list gains more forms and `StaffPages.states` (a note not
+  saved, not allowed, suspended, can't add a business).
 - Dev seeds: none new. The demo's jobs from approved quotes show the Edit job aside.
 

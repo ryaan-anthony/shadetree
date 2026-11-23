@@ -19,7 +19,7 @@
 <%= render "admin/sends/zero_total", document: @invoice, noun: "invoice", edit_path: edit_admin_invoice_path(@invoice),
            confirm_path: new_admin_invoice_send_path(@invoice, zero_total: ZeroTotalGuard::CONFIRMED) %>
 <% unless zero_total? && !zero_total_confirmed? %><%# #289: a $0.00 invoice waits for "Send it at $0.00" (above) %>
-<div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+<div class="form-split">
   <%= card title: "Email it", subtitle: "Your message, a button to the invoice page, and the PDF attached. Replies come to you." do %>
     <%= form_with model: @form, scope: :invoice_send, url: admin_invoice_send_path(@invoice), method: :post do |f| %>
       <%= hidden_field_tag :zero_total, ZeroTotalGuard::CONFIRMED, id: nil if zero_total_confirmed? %>
@@ -38,7 +38,7 @@
     <% end %>
   <% end %>
 
-  <div class="space-y-4">
+  <div class="form-split-aside space-y-4">
     <%= card title: "Send the link yourself", subtitle: "Text or WhatsApp it from your phone. Getting the link marks the invoice as sent." do %>
       <% if @link %>
         <div data-controller="clipboard" class="space-y-2">

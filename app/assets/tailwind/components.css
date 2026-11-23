@@ -216,6 +216,12 @@
     .form-split > .form-split-aside { grid-column: 2; grid-row: 1; }
     .form-split > :not(.form-split-aside) { grid-column: 1; grid-row: 1; }
   }
+  /* Branding's live preview: a 22rem aside, beside the form from 1024px (lg) (owner, 2026-11-23). */
+  @media (min-width: 64rem) {
+    .form-split-lg:has(> .form-split-aside) { max-width: none; grid-template-columns: minmax(0, 42rem) 22rem; }
+    .form-split-lg > .form-split-aside { grid-column: 2; grid-row: 1; }
+    .form-split-lg > :not(.form-split-aside) { grid-column: 1; grid-row: 1; }
+  }
 
   .card { background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
   .card-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.875rem 1.125rem; border-bottom: 1px solid var(--color-line); }
