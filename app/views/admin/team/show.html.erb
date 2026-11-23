@@ -26,7 +26,7 @@
                 <td class="text-muted"><%= member.last_active_at ? "#{time_ago_in_words(member.last_active_at)} ago" : "Not yet" %></td>
                 <td class="text-right">
                   <% if member != current_membership && current_membership.can_change_access?(member) %>
-                    <%= button_to "Deactivate", deactivate_admin_member_path(member), method: :patch, class: button_classes(:destructive, :sm),
+                    <%= button_to "Deactivate", deactivate_admin_member_path(member), method: :patch, class: button_classes(:destructive, :sm), "aria-label": "Deactivate #{member.user.full_name}",
                                   form: { data: { turbo_confirm: "#{member.user.full_name} will lose access to #{current_business.name} right away. Their name stays on past work.", turbo_confirm_button: "Deactivate", turbo_confirm_variant: "destructive" } } %>
                   <% elsif member == current_membership %>
                     <span class="text-xs text-muted">You</span>
@@ -56,10 +56,10 @@
               <div class="flex flex-wrap items-center gap-1.5" data-controller="clipboard">
                 <% if invitation.pending? %>
                   <input type="hidden" value="<%= invitation_url(invitation.token) %>" data-clipboard-target="source">
-                  <button type="button" class="<%= button_classes(:tertiary, :sm) %>" data-action="clipboard#copy" data-clipboard-target="button"><%= icon "link" %> Copy link</button>
+                  <button type="button" class="<%= button_classes(:tertiary, :sm) %>" data-action="clipboard#copy" data-clipboard-target="button" aria-label="Copy link to the invitation for <%= invitation.email %>"><%= icon "link" %> Copy link</button>
                 <% end %>
-                <%= button_to "Resend", resend_admin_invitation_path(invitation), class: button_classes(:secondary, :sm) %>
-                <%= button_to "Revoke", revoke_admin_invitation_path(invitation), method: :patch, class: button_classes(:tertiary, :sm),
+                <%= button_to "Resend", resend_admin_invitation_path(invitation), class: button_classes(:secondary, :sm), "aria-label": "Resend the invitation to #{invitation.email}" %>
+                <%= button_to "Revoke", revoke_admin_invitation_path(invitation), method: :patch, class: button_classes(:tertiary, :sm), "aria-label": "Revoke the invitation to #{invitation.email}",
                               form: { data: { turbo_confirm: "Revoke the invitation to #{invitation.email}? The link will stop working.", turbo_confirm_button: "Revoke", turbo_confirm_variant: "destructive" } } %>
               </div>
             </li>
@@ -78,7 +78,7 @@
                 <p class="text-sm2 text-muted"><%= member.role_name %> · <%= member.user.deleted? ? "deleted their account" : "deactivated" %> <%= member.deactivated_at ? "#{time_ago_in_words(member.deactivated_at)} ago" : "" %></p>
               </div>
               <% if !member.user.deleted? && current_membership.can_change_access?(member) %>
-                <%= button_to "Reactivate", reactivate_admin_member_path(member), method: :patch, class: button_classes(:secondary, :sm) %>
+                <%= button_to "Reactivate", reactivate_admin_member_path(member), method: :patch, class: button_classes(:secondary, :sm), "aria-label": "Reactivate #{member.user.full_name}" %>
               <% end %>
             </li>
           <% end %>

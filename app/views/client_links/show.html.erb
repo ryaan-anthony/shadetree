@@ -1,4 +1,5 @@
 <% if @sample %>
+  <% content_for :title, "Sample quote · #{@business.name}" %>
   <%# ACC-05: a sample quote, built in memory with the business's branding; nothing is saved. %>
   <div class="banner banner-info mb-4" role="status">
     <%= icon "eye" %>

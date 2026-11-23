@@ -79,7 +79,7 @@
               </p>
               <div class="flex items-center gap-1">
                 <% if @showing_archived %>
-                  <%= button_to "Restore", restore_admin_catalog_item_path(item), method: :patch, class: button_classes(:secondary, :sm) %>
+                  <%= button_to "Restore", restore_admin_catalog_item_path(item), method: :patch, class: button_classes(:secondary, :sm), "aria-label": "Restore #{item.name}" %>
                 <% else %>
                   <% unless @query.present? %>
                     <%= button_to move_admin_catalog_item_path(item, direction: -1), method: :patch, class: button_classes(:tertiary, :sm, :icon), disabled: index.zero?, "aria-label": "Move #{item.name} up" do %><%= icon "arrow-up" %><% end %>
@@ -88,10 +88,10 @@
                   <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
                     <button type="button" class="<%= button_classes(:tertiary, :sm, :icon) %>" data-menu-target="button" data-action="menu#toggle" aria-haspopup="true" aria-expanded="false" aria-label="More actions for <%= item.name %>"><%= icon "more-horizontal" %></button>
                     <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
-                      <%= link_to edit_admin_catalog_item_path(item), class: "menu-item" do %><%= icon "edit-2" %> Edit<% end %>
-                      <%= link_to new_admin_catalog_item_path(duplicate_of: item.uid), class: "menu-item" do %><%= icon "copy" %> Duplicate<% end %>
+                      <%= link_to edit_admin_catalog_item_path(item), class: "menu-item", "aria-label": "Edit #{item.name}" do %><%= icon "edit-2" %> Edit<% end %>
+                      <%= link_to new_admin_catalog_item_path(duplicate_of: item.uid), class: "menu-item", "aria-label": "Duplicate #{item.name}" do %><%= icon "copy" %> Duplicate<% end %>
                       <div class="menu-sep"></div>
-                      <%= button_to archive_admin_catalog_item_path(item), method: :patch, class: "menu-item", form: { class: "contents" } do %><%= icon "archive" %> Archive<% end %>
+                      <%= button_to archive_admin_catalog_item_path(item), method: :patch, class: "menu-item", form: { class: "contents" }, "aria-label": "Archive #{item.name}" do %><%= icon "archive" %> Archive<% end %>
                     </div>
                   </div>
                 <% end %>
