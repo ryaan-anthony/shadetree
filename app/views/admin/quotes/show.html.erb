@@ -3,9 +3,16 @@
 <% totals = quote.totals %>
 <% content_for :title, "#{quote.number}#{" #{quote.title}" if quote.title}" %>
 <%= page_header (quote.title || "Quote #{quote.number}"), lede: safe_join([ "#{quote.number} for ", link_to(quote.client.display_name, admin_client_path(quote.client), class: "font-medium text-ink hover:underline"), (", #{quote.property.one_line}" if quote.property), location_badge(quote) ].compact) do %>
-  <% if (job = quote.job) %>
-    <%= link_to admin_job_path(job), class: button_classes(:primary) do %><%= icon "job" %> Job <%= job.number %><% end %>
-  <% elsif quote.approved? %>
+  <%# PLT-14: the Primary is the next step: Create job, or Reopen job when its job was cancelled (interim
+      until the multi-job spec; owner, 2026-11-22), then Create invoice; links to them are Secondary. %>
+  <% job = quote.job %>
+  <% live_job = job unless job&.status == "cancelled" %>
+  <% if job %>
+    <%= link_to admin_job_path(job), class: button_classes(:secondary) do %><%= icon "job" %> Job <%= job.number %><% end %>
+  <% end %>
+  <% if quote.approved? && job && !live_job %>
+    <%= button_to reopen_admin_job_path(job), method: :patch, class: button_classes(:primary), form: { class: "contents" } do %><%= icon "rotate-ccw" %> Reopen job<% end %>
+  <% elsif quote.approved? && !job %>
     <%= button_to admin_quote_job_path(quote), class: button_classes(:primary), form: { class: "contents" } do %><%= icon "job" %> Create job<% end %>
   <% end %>
   <%# #289: once it's billed, the invoice is the next step, not a second one (that's in the menu). %>
@@ -15,7 +22,7 @@
   <% elsif (latest_invoice = billed.last) %>
     <%= link_to admin_invoice_path(latest_invoice), class: button_classes(:secondary), id: "quote-invoice-link" do %><%= icon "invoice" %> Invoice <%= latest_invoice.number %><% end %>
   <% elsif quote.approved? %>
-    <%= button_to admin_quote_invoices_path(quote), class: button_classes(:secondary), form: { class: "contents" } do %><%= icon "invoice" %> Create invoice<% end %>
+    <%= button_to admin_quote_invoices_path(quote), class: button_classes(live_job ? :primary : :secondary), form: { class: "contents" } do %><%= icon "invoice" %> Create invoice<% end %>
   <% end %>
   <% if quote.revisable? %>
     <%= button_to revise_admin_quote_path(quote), class: button_classes(:secondary),
@@ -49,7 +56,7 @@
       <%= form_with url: duplicate_admin_quote_path(quote), class: "space-y-4" do %>
         <%= render "admin/clients/picker", name: "client", required: true %>
         <div class="flex justify-end gap-2">
-          <button type="button" class="<%= button_classes(:secondary) %>" data-action="modal#close">Cancel</button>
+          <button type="button" class="<%= button_classes(:tertiary) %>" data-action="modal#close">Cancel</button>
           <%= submit_tag "Make a copy", class: button_classes(:primary), name: nil %>
         </div>
       <% end %>
@@ -86,7 +93,7 @@
                                        min: current_business.today + 1, max: current_business.today + Quote::MAX_VALIDITY, class: "input", required: true %>
                     </div>
                     <div class="flex justify-end gap-2">
-                      <button type="button" class="<%= button_classes(:secondary) %>" data-action="modal#close">Cancel</button>
+                      <button type="button" class="<%= button_classes(:tertiary) %>" data-action="modal#close">Cancel</button>
                       <%= submit_tag "Save date", class: button_classes(:primary), name: nil %>
                     </div>
                   <% end %>

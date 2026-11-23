@@ -9,8 +9,8 @@
         <%= text_field_tag :reason, nil, id: "void_reason", class: "input", maxlength: 200, required: true, placeholder: "Billed twice" %>
       </div>
       <div class="flex justify-end gap-2">
-        <button type="button" class="<%= button_classes(:secondary) %>" data-action="modal#close">Keep invoice</button>
-        <%= submit_tag "Void invoice", class: button_classes(:destructive), name: nil %>
+        <button type="button" class="<%= button_classes(:tertiary) %>" data-action="modal#close">Keep invoice</button>
+        <%= submit_tag "Void invoice", class: button_classes(:destructive_solid), name: nil %>
       </div>
     <% end %>
   <% end %>

@@ -43,7 +43,7 @@
         </div>
       </fieldset>
       <div class="flex justify-end gap-2">
-        <button type="button" class="<%= button_classes(:secondary) %>" data-action="modal#close">Keep as is</button>
+        <button type="button" class="<%= button_classes(:tertiary) %>" data-action="modal#close">Keep as is</button>
         <%= submit_tag warnings.present? ? "Move anyway" : "Move visit", class: button_classes(:primary), name: nil %>
       </div>
     <% end %>

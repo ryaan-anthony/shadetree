@@ -1,5 +1,9 @@
 <%= page_header @client.display_name, lede: @client.company_name do %>
   <% unless @client.erased? %><%= link_to edit_admin_client_path(@client), class: button_classes(:secondary) do %><%= icon "edit-2" %> Edit<% end %><% end %>
+  <%# PLT-14: a new quote is the next step for a client, so it's the page's Primary. %>
+  <% unless @client.archived? || @client.erased? %>
+    <%= button_to admin_quotes_path, params: { "quote[client]" => @client.uid }, class: button_classes(:primary), form: { class: "contents" } do %><%= icon "plus" %> New quote<% end %>
+  <% end %>
   <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
     <button type="button" class="<%= button_classes(:tertiary, :icon) %>" data-menu-target="button" data-action="menu#toggle"
             aria-haspopup="true" aria-expanded="false" aria-label="More actions"><%= icon "more-horizontal" %></button>
@@ -68,9 +72,8 @@
     <% next_visits = Visit.open.in_order.where(job_id: jobs.map(&:id)).includes(:business).group_by(&:job_id).transform_values(&:first) %>
     <%= card title: "Work", flush: true,
              actions: (unless @client.archived?
-                         safe_join([ link_to(new_admin_invoice_path(client: @client.uid), class: button_classes(:tertiary, :sm)) { icon("plus") + " New invoice" },
-                                     link_to(new_admin_job_path(client: @client.uid), class: button_classes(:tertiary, :sm)) { icon("plus") + " New job" },
-                                     button_to(admin_quotes_path, params: { "quote[client]" => @client.uid }, class: button_classes(:secondary, :sm), form: { class: "contents" }) { icon("plus") + " New quote" } ], " ")
+                         safe_join([ link_to(new_admin_job_path(client: @client.uid), class: button_classes(:secondary, :sm)) { icon("plus") + " New job" },
+                                     link_to(new_admin_invoice_path(client: @client.uid), class: button_classes(:secondary, :sm)) { icon("plus") + " New invoice" } ], " ")
                        end) do %>
       <ul class="list">
         <% if requests.any? %>

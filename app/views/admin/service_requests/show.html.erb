@@ -2,11 +2,19 @@
 <% client = request_record.client %>
 <%= page_header client.display_name, lede: safe_join([ "#{request_record.matched_existing_client || request_record.source != "form" ? "Existing client" : "New client"} · #{request_record.source_label}#{" · logged by #{request_record.created_by.full_name}" if request_record.created_by} · #{l(request_record.created_at.in_time_zone(current_business.time_zone), format: :long)}", location_badge(request_record) ].compact) do %>
   <% (ServiceRequest::STATUSES - [ request_record.status, "quoted" ]).each do |status| %>
-    <%= button_to status_admin_service_request_path(request_record, status:), method: :patch, class: button_classes(:secondary), form: { class: "contents" } do %>
+    <%= button_to status_admin_service_request_path(request_record, status:), method: :patch, class: button_classes(status == "archived" ? :destructive : :secondary), form: { class: "contents" } do %>
       <%= { "new" => "Mark new", "in_progress" => "Mark in progress", "archived" => "Archive" }.fetch(status) %>
     <% end %>
   <% end %>
-  <%= button_to quote_admin_service_request_path(request_record), class: button_classes, form: { class: "contents" } do %><%= icon "file-plus" %> Create quote<% end %>
+  <% if client.archived? %><%# PLT-14: the server refuses it, so it looks it (the line below says why) %>
+    <span class="<%= button_classes %>" role="button" aria-disabled="true" aria-describedby="request-client-archived"><%= icon "file-plus" %> Create quote</span>
+  <% else %>
+    <%= button_to quote_admin_service_request_path(request_record), class: button_classes, form: { class: "contents" } do %><%= icon "file-plus" %> Create quote<% end %>
+  <% end %>
+<% end %>
+<% if client.archived? %>
+  <p class="-mt-2 mb-4 text-sm2 text-muted" id="request-client-archived"><%= client.display_name %> is archived.
+    <%= link_to "Restore them", admin_client_path(client), class: "font-medium text-ink underline-offset-2 hover:underline" %> to quote this request.</p>
 <% end %>
 
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">

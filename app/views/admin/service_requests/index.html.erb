@@ -30,7 +30,7 @@
   <div class="card">
     <% if @status == "new" && @assignee.nil? %>
       <%= empty_state title: "You're all caught up", text: current_business.request_form_enabled? ? "New requests from your form and the ones you log show up here." : "Turn on your request form in Settings to take requests online, or log one from a call.", icon: "inbox" do %>
-        <%= link_to new_admin_service_request_path, class: button_classes(:secondary) do %><%= icon "plus" %> Log a request<% end %>
+        <%= link_to new_admin_service_request_path, class: button_classes do %><%= icon "plus" %> Log a request<% end %>
       <% end %>
     <% else %>
       <%= empty_state title: "Nothing here", text: "No requests#{" with that filter" if @assignee} are #{ServiceRequest::LABELS.fetch(@status).downcase} right now.", icon: "inbox" %>
