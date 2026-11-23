@@ -54,7 +54,7 @@
     <% end %>
 
     <% if (files = invoice.saved_attachments).any? %>
-      <%= card title: "Attachments", flush: true do %>
+      <%= card title: "Photos and files", flush: true do %>
         <ul class="list"><% files.each do |file| %>
           <li class="text-sm"><%= icon(file.image? ? "image" : "file-text", class: "size-4 text-faint") %>
             <%= attachment_link file, class: "min-w-0 flex-1 truncate hover:underline" %></li>

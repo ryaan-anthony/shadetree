@@ -131,6 +131,7 @@ module StaffPages
       page :quote_job_cancelled, "Quote: approved, job cancelled", admin_quote_path(@job_cancelled), :detail
       page :quote_with_job, "Quote: job, no invoice", admin_quote_path(@with_job), :detail
       page :quote_billed, "Quote: job and invoice", admin_quote_path(@billed), :detail
+      page :quote_link_after_bounce, "Quote: link copied after a bounce", admin_quote_path(@bounced), :detail
       page :job, "Job: open, with a visit", admin_job_path(@job), :detail
       page :job_unbooked, "Job: open, no visit", admin_job_path(@unbooked_job), :detail
       page :job_completed, "Job: completed", admin_job_path(@completed_job), :detail
@@ -142,6 +143,7 @@ module StaffPages
       page :invoice_overdue, "Invoice: overdue", admin_invoice_path(@overdue_invoice), :detail
       page :invoice_paid, "Invoice: paid", admin_invoice_path(@paid_invoice), :detail
       page :invoice_void, "Invoice: void", admin_invoice_path(@void_invoice), :detail
+      page :invoice_paid_online, "Invoice: paid online", admin_invoice_path(@online_invoice), :detail
       page :support_ticket, "Support ticket", admin_support_ticket_path(@ticket), :detail
       page :client_import, "Client import: finished", admin_client_import_path(@finished_import), :detail
     end
@@ -236,6 +238,12 @@ module StaffPages
       @job_cancelled.reload.job.cancel!(by: user, notify_client: false)
       @with_job = quote("Tree removal").tap { respond(_1, :approve) }
       @billed = quote("Mulching").tap { respond(_1, :approve) }
+      @bounced = quote("Hedge planting", send: false).tap do |quote| # its email bounced, then the link was copied
+        email = EmailMessage.create!(kind: "quote_sent", to: "maria-lopez@example.com", related: quote)
+        quote.mark_sent!(by: user, channel: "email", recipient: email.to, email_message: email)
+        email.mark!("failed", error: "The mail server refused the email (554 5.7.1).")
+        quote.mark_sent!(by: user, channel: "link")
+      end
       Invoice.from_job!(@billed.reload.job, by: user)
     end
 
@@ -255,6 +263,9 @@ module StaffPages
       @overdue_invoice = sent_invoice("Drain clearing").tap { _1.update_columns(issued_on: business.today - 40, due_on: business.today - 10) }
       @paid_invoice = sent_invoice("Edging").tap { pay(_1, _1.total_cents) }
       @void_invoice = sent_invoice("Lights").tap { _1.void!(reason: "Billed twice", by: user) }
+      @online_invoice = sent_invoice("Hedge edging").tap do |invoice| # PAY-04: paid by card, with Stripe's reference
+        invoice.record_online_payment!(intent_id: "pi_staffpages0001", amount_cents: invoice.total_cents, currency: invoice.currency, method_detail: "Visa ending 4242")
+      end
     end
 
     def client(name)

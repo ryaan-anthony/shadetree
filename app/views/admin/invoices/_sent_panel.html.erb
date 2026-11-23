@@ -7,7 +7,7 @@
       <%# PLT-15: a fixed title; when and who is body text under it, never part of the heading. %>
       <h2 id="sent-panel-h" class="card-title">Sent</h2>
       <% if invoice.sent_at || invoice.sent_by %>
-        <p class="mt-0.5 text-sm text-body" id="sent-panel-when"><%= local_time(invoice.sent_at) if invoice.sent_at %><%= " by #{invoice.sent_by.full_name}" if invoice.sent_by %></p>
+        <p class="mt-0.5 text-sm2 text-muted" id="sent-panel-when"><%= local_time(invoice.sent_at) if invoice.sent_at %><%= " by #{invoice.sent_by.full_name}" if invoice.sent_by %></p>
       <% end %>
     </div>
     <% if invoice.sendable? %>

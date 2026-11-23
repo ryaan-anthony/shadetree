@@ -80,6 +80,10 @@ Triage: [#314 triage](../../audits/314-triage.md).
 
 - The staff quote page drops the repeats from its document card. "View as client" shows the
   client's exact version (owner, 2026-11-22).
+- Accepted from the build (owner, 2026-11-23): the header line gives the property on one line
+  and the client's company after their name; the staff quote page drops the client-facing status
+  wording; History shows each time under its event; the Payments card's bold row is "Paid";
+  contact details in a rail wrap rather than being cut.
 - The document card's lines and totals are the document, so a line amount or the totals' Total
   matching the strip's isn't a repeat; the test checks the rest of the card.
 - "One step more muted": content is ink (or subtle for notes), its who and when is muted.

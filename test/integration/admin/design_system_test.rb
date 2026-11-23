@@ -213,7 +213,7 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
   end
 
   check :rail_text_isnt_cut do |_page, html|
-    html.css(".rail .truncate, .rail .break-all").map { "the rail cuts #{_1.text.squish.truncate(40).inspect} (#{_1["class"]})" }.uniq
+    html.css(".rail .truncate, .rail .break-all, .rail .text-ellipsis, .rail [class*='line-clamp-']").map { "the rail cuts #{_1.text.squish.truncate(40).inspect} (#{_1["class"]})" }.uniq
   end
 
   check :rail_metadata_is_muted do |_page, html|

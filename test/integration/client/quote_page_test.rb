@@ -67,7 +67,9 @@ class Client::QuotePageTest < ActionDispatch::IntegrationTest
     sign_in users(:one)
     post switch_admin_business_path, params: { business: @business.uid }
     get admin_quote_path(@quote)
+    assert_select "h2.sr-only", "Quote"
     assert_select "#quote-summary", /Valid until/
+    assert_select ".page-head", /for Maria Lopez \(Lopez Rentals\), 12 Elm St/ # the company, which the document's header said
     assert_select "#quote-document" do
       assert_select ".quote-doc-head, .quote-doc-title, .quote-doc-meta", count: 0
       assert_select ".quote-doc-message", "Thanks for having us out."
