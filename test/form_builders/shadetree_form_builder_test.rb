@@ -34,6 +34,36 @@ class ShadetreeFormBuilderTest < ActionView::TestCase
     assert_select "p.error-text#sample_name_error", /Name can.t be blank/
   end
 
+  # PLT-22: a caller's own description (Branding's "where the color shows") isn't dropped.
+  test "field keeps the caller's aria-describedby beside its help and error" do
+    record = Record.new(name: "").tap(&:validate)
+    render inline: <<~ERB, locals: { record: }
+      <%= form_with model: record, url: "/x" do |f| %><%= f.field :name, help: "As on invoices.", "aria-describedby": "note warnings" %><%= f.field :notes, as: :textarea, optional: true, "aria-describedby": "note" %><% end %>
+    ERB
+    assert_select "input#sample_name[aria-describedby='sample_name_help sample_name_error note warnings']"
+    assert_select "textarea#sample_notes[aria-describedby=note]"
+  end
+
+  test "file_drop: a real file field in a drop area, with the caller's ARIA and actions kept" do
+    record = Record.new.tap { _1.errors.add(:name, LogoUpload::TYPE_ERROR) }
+    render inline: <<~ERB, locals: { record: }
+      <%= form_with model: record, url: "/x" do |f| %>
+        <%= f.file_drop :name, label: "Upload a logo", prompt: "Drop your logo here", types: %w[image/png], types_label: "PNG",
+                        max_bytes: 5.5.megabytes, help: "Wide works best.", "aria-describedby": "note", "aria-labelledby": "section",
+                        data: { action: "change->other#go" } %>
+      <% end %>
+    ERB
+    assert_select ".file-drop[data-file-drop-type-error-value='Name must be a PNG file'][data-file-drop-size-error-value='Name must be smaller than 5.5 MB']"
+    assert_select "#sample_name_limits", "PNG, up to 5.5 MB."
+    assert_select "input#sample_name[type=file][accept='image/png'][aria-invalid=true][aria-labelledby='sample_name_label section']" \
+                  "[aria-describedby='sample_name_limits sample_name_help sample_name_error sample_name_check note']" \
+                  "[data-action='change->other#go change->file-drop#chosen'][data-file-drop-target=input]"
+    assert_select "p.error-text#sample_name_error[data-file-drop-target=serverError] svg"
+    assert_select "p.error-text#sample_name_check[hidden] svg" # filled in before saving; read out by the announce line
+    assert_select ".file-drop .text-action", "browse"
+    assert_select ".file-drop-chosen button.btn-tertiary.btn-sm", "Clear"
+  end
+
   test "select, date, time and money inputs" do
     render inline: <<~ERB, locals: { record: Record.new(price: "12.50") }
       <%= form_with model: record, url: "/x" do |f| %>

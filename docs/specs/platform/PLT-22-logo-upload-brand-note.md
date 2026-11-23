@@ -56,9 +56,11 @@ colour applies. Triage: [#314 triage](../../audits/314-triage.md).
   `.file-drop` classes, in the style guide). The page has a label, a plain file field and its
   limits; the controller makes the zone a drop area, hides the real input only visually
   (Tab, Enter/Space, the picker and screen readers stay the browser's), puts a dropped file
-  into it, and shows its name, size and preview. Type and size are checked before saving
-  with the server's messages; the server's checks (`LogoUpload`, #358) are unchanged.
-- The input is named by its label only, and described by the limits, help and check lines.
+  into it, and shows its name, size and preview. Type and size are refused before saving in
+  `LogoUpload`'s own words (`TYPE_ERROR`, `size_error`), read out once; the server's checks
+  (#358) are unchanged. A file dropped beside the zone is ignored rather than opened.
+- The input is named by its label only, and described by the limits, help and check lines;
+  `f.field` and `f.file_drop` keep a caller's own `aria-describedby` (and labelledby, actions).
 - `brand_preview` takes the chosen logo from `file-drop:chosen` instead of checking it itself.
 - The colour sentence describes the presets, picker and hex field (`aria-describedby`).
 - Dev seeds: none new. The demo business has no logo, so Branding shows the empty drop area.

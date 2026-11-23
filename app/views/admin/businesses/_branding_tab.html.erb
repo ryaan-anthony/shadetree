@@ -26,6 +26,7 @@
         <div class="min-w-0 flex-1 basis-64 space-y-2">
           <%= f.file_drop :logo, label: branding.logo? ? "Replace logo" : "Upload a logo", prompt: "Drop your logo here",
                           types: Business::LOGO_TYPES, types_label: "PNG, JPEG or WebP", max_bytes: Business::LOGO_MAX_BYTES,
+                          type_error: LogoUpload::TYPE_ERROR, size_error: LogoUpload.size_error(Business::LOGO_MAX_BYTES),
                           help: "A wide logo on a transparent background works best." %>
           <% if branding.logo? %>
             <%= f.check :remove_logo, label: "Remove logo", hint: "Your name and initials are used instead.",

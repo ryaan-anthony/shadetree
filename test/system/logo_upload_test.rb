@@ -37,17 +37,46 @@ class LogoUploadTest < ApplicationSystemTestCase
 
   test "a wrong type or a file over 5 MB is refused before saving" do
     drop_file "logo.gif", "image/gif", file_fixture("logo.gif").binread
-    assert_selector "#business_logo_check", text: "Logo must be a PNG, JPEG or WebP image."
+    assert_selector "#business_logo_check", text: "Logo must be a PNG, JPEG or WebP image"
+    assert_selector "[data-file-drop-target=announce]", text: "logo.gif: Logo must be a PNG, JPEG or WebP image", visible: :all
     assert_selector "input#business_logo[aria-invalid=true]", visible: :all
     assert_no_selector "img.file-drop-thumb"
     assert_no_selector "aside[aria-label=Preview] img[src^='blob:']"
 
     drop_file "huge.png", "image/png", nil, LogoUpload::MAX_BYTES + 1
-    assert_selector "#business_logo_check", text: "Logo must be smaller than 5 MB."
+    assert_selector "#business_logo_check", text: "Logo must be smaller than 5 MB"
 
     click_on "Clear huge.png"
     assert_no_selector ".file-drop-chosen"
-    assert_no_selector "#business_logo_check", text: /\S/
+    assert_no_selector "#business_logo_check" # hidden again
+    assert_selector "input#business_logo[aria-invalid=false]", visible: :all
+  end
+
+  test "a file dropped beside the drop area doesn't leave the page" do
+    fill_in "Hex", with: "#9a3412" # unsaved
+    prevented = evaluate_script(<<~JS)
+      (() => {
+        const transfer = new DataTransfer()
+        transfer.items.add(new File([new Uint8Array(10)], "logo.png", { type: "image/png" }))
+        const drop = new DragEvent("drop", { bubbles: true, cancelable: true, dataTransfer: transfer })
+        document.querySelector("h1").dispatchEvent(drop)
+        return drop.defaultPrevented
+      })()
+    JS
+    assert prevented
+    assert_field "Hex", with: "#9a3412"
+    assert_no_selector ".file-drop-chosen"
+  end
+
+  test "the server's refusal is set aside once a new file passes" do
+    drop_file "logo.gif", "image/gif", file_fixture("logo.gif").binread
+    click_on "Save branding"
+    assert_selector "#business_logo_error", text: "Logo must be a PNG, JPEG or WebP image"
+    assert_selector "input#business_logo[aria-describedby~=business_logo_error]", visible: :all
+
+    drop_file "logo.png", "image/png", file_fixture("logo.png").binread
+    assert_no_selector "#business_logo_error"
+    assert_no_selector "input#business_logo[aria-describedby~=business_logo_error]", visible: :all
     assert_selector "input#business_logo[aria-invalid=false]", visible: :all
   end
 

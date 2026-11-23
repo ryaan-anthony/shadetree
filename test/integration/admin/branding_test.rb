@@ -69,9 +69,11 @@ class Admin::BrandingTest < ActionDispatch::IntegrationTest
                       "[aria-labelledby=business_logo_label][aria-describedby='business_logo_limits business_logo_help business_logo_check']"
         assert_select "#business_logo_limits", "PNG, JPEG or WebP, up to 5 MB."
       end
-      assert_select "#business_logo_check[role=status]"
+      assert_select "#business_logo_check[hidden]"
+      assert_select "[data-file-drop-target=announce][role=status]"
     end
-    assert_select "[data-file-drop-type-error-value='Logo must be a PNG, JPEG or WebP image.'][data-file-drop-size-error-value='Logo must be smaller than 5 MB.']"
+    # Before saving, the field refuses a file in the server's own words (LogoUpload).
+    assert_select "[data-file-drop-type-error-value='Logo must be a PNG, JPEG or WebP image'][data-file-drop-size-error-value='Logo must be smaller than 5 MB']"
   end
 
   test "a logo over 5 MB is refused beside the field" do
@@ -94,6 +96,8 @@ class Admin::BrandingTest < ActionDispatch::IntegrationTest
     assert_select "fieldset[aria-describedby=brand-color-where] legend", "Presets"
     assert_select "input#brand_picker[aria-describedby=brand-color-where]"
     assert_select "input#business_brand_color[aria-describedby='brand-color-where brand-color-warnings']"
+    patch admin_business_path(tab: "branding"), params: { business: { brand_color: "orange" } }
+    assert_select "input#business_brand_color[aria-describedby='business_brand_color_error brand-color-where brand-color-warnings']" # review: kept with an error
 
     get admin_root_path
     assert_select ".biz-switch .biz-logo", "TB" # the initials tile keeps the brand color...

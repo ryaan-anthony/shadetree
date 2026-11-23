@@ -12,7 +12,7 @@ module SitePhotos
     return full if attachment.count >= max
 
     result = LogoUpload.clean_photo(file, max_bytes:)
-    return "#{file.respond_to?(:original_filename) ? file.original_filename : "That file"} #{result.error.sub("must be a PNG, JPEG or WebP image", "isn't a photo we can use (PNG, JPEG or WebP)")}." if result.error
+    return "#{file.respond_to?(:original_filename) ? file.original_filename : "That file"} #{result.error.sub(LogoUpload::TYPE_ERROR, "isn't a photo we can use (PNG, JPEG or WebP)")}." if result.error
 
     with_lock do
       next full if attachment.count >= max

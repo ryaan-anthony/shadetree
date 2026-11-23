@@ -31,7 +31,7 @@ module DocumentAttachments
         attachments.attach(file)
       else
         result = LogoUpload.clean_photo(file, max_bytes: ATTACHMENT_MAX_BYTES)
-        next @attachment_errors << "#{name} #{result.error.sub("must be a PNG, JPEG or WebP image", "must be a photo (PNG, JPEG, WebP) or a PDF")}" if result.error
+        next @attachment_errors << "#{name} #{result.error.sub(LogoUpload::TYPE_ERROR, "must be a photo (PNG, JPEG, WebP) or a PDF")}" if result.error
 
         attachments.attach(result.attachable)
       end
