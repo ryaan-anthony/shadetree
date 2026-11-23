@@ -27,42 +27,53 @@ existing tones. Triage: [#314 triage](../../audits/314-triage.md).
 
 ## Acceptance criteria
 
-- [ ] One documented map from meaning to tone (Decisions), shown on the style guide with every
+- [x] One documented map from meaning to tone (Decisions), shown on the style guide with every
       status: quotes, jobs, visits, invoices, requests, follow-ups, automations and their runs,
       support tickets, and the quota meter's states (BIL-06).
-- [ ] Every status pill on staff pages comes from that one map, so the same status has the same
+- [x] Every status pill on staff pages comes from that one map, so the same status has the same
       tone on its own page, in lists, on the client page, on Home, in My day and in
       Notifications. A test walks every status of every record type and checks its tone
       against the map.
-- [ ] The calendar's "Color by status" follows the map. In progress changes from amber to the
+- [x] The calendar's "Color by status" follows the map. In progress changes from amber to the
       info tint, a visual change on the calendar only. Scheduled keeps its lighter sky tint so
       the two stay apart, and the legend names both.
-- [ ] Words carry the meaning as well as the colour: no status is shown by colour alone.
-- [ ] One severity per event. An undelivered email, a failed payment or a failed automation
+- [x] Words carry the meaning as well as the colour: no status is shown by colour alone.
+- [x] One severity per event. An undelivered email, a failed payment or a failed automation
       step gets the danger treatment (icon, colour and wording) on the record's page, in
       lists, on the client page and its timeline, and in Notifications. Other event icons are
       neutral.
-- [ ] Role labels on Team are plain with no dot, the Owner's included.
-- [ ] Colours come only from the theme's tokens. A test scans the source of the staff views,
+- [x] Role labels on Team are plain with no dot, the Owner's included.
+- [x] Colours come only from the theme's tokens. A test scans the source of the staff views,
       helpers and the kit's stylesheet, outside the token file. It ignores comments, allows
       white, and exempts the brand helper and Branding's presets (business colours are data).
       It fails on a hex colour, an arbitrary colour value or a raw palette class.
-- [ ] Hard-coded colours move into tokens with the same values (no visual change):
+- [x] Hard-coded colours move into tokens with the same values (no visual change):
   - the calendar's person and status colours;
   - the kit's hard-coded borders and hovers;
   - the support message's internal-note tint;
   - the setup checklist's step border;
   - the sidebar foot's text;
   - Branding preview's client background.
-- [ ] Contrast stays AA for every pill on white and on its tint, and the accessibility check
+- [x] Contrast stays AA for every pill on white and on its tint, and the accessibility check
       passes.
-- [ ] Desktop (1280) and phone (390) screenshots of Quotes, Jobs, Invoices, a client page,
+- [x] Desktop (1280) and phone (390) screenshots of Quotes, Jobs, Invoices, a client page,
       Schedule (by status) and Notifications.
 
 ## Out of scope
 
 - New colours. Only the existing success, info, warning, danger, neutral and violet tones.
 - The calendar's per-person colours (they show who, not status). Client-facing pages and PDFs.
+
+## Implementation notes
+
+- `StatusHelper::MAP` (type → status → tone and words) and `status_badge`; the style guide shows
+  it. `status_helper_test.rb` walks every status; the `status_pills_follow_the_map` check sweeps
+  `StaffPages` (now with Schedule by status). A dotted pill is a status; plain pills are labels.
+- `danger_flag` draws the inline danger treatment; `event_severity_test.rb` covers each place.
+- New tokens in `theme.css` (`wash`, `neutral-tint`, `line-strong`, `cal-*`, `side-*`, …);
+  translucent shades are `color-mix()` of tokens. `colour_tokens_test.rb` scans the source;
+  `status_contrast_test.rb` checks pills and calendar blocks for AA. Dev seeds: a visit in
+  progress this week and a failed automation step on a completed job.
 
 ## Decisions
 
@@ -84,3 +95,5 @@ existing tones. Triage: [#314 triage](../../audits/314-triage.md).
   tones, so nothing changes (review of #332).
 - The calendar's In progress follows the map and turns from amber to info. Scheduled keeps its
   lighter sky tint (owner, 2026-11-22).
+- Pills the map doesn't name (emails, payments, import rows) keep today's tones; Completed is
+  "Completed" on the calendar legend too. A failed payment is a failed plan renewal (#381).
