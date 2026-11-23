@@ -9,6 +9,7 @@
       <% if job.property %><div><dt class="text-sm2 text-muted">Where</dt><dd class="text-ink"><%= job.property.one_line %></dd></div><% end %>
       <div><dt class="text-sm2 text-muted">Who's going</dt><dd class="mt-1 text-ink"><%= render "admin/team/crew", users: visit.assignees.to_a %></dd></div>
       <div><dt class="text-sm2 text-muted">How long</dt><dd class="text-ink">About <%= visit.duration_label %> · <%= visit.status_label %></dd></div>
+      <% if (label = on_the_way_label(visit)) %><div><dt class="text-sm2 text-muted">Client told</dt><dd class="text-ink"><%= label %></dd></div><% end %><%# JOB-12 %>
       <% if visit.instructions %><div><dt class="text-sm2 text-muted">Instructions</dt><dd class="whitespace-pre-line text-ink"><%= visit.instructions %></dd></div><% end %>
     </dl>
     <div class="mt-4 flex flex-wrap gap-2">

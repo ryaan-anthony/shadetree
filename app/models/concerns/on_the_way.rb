@@ -145,7 +145,7 @@ module OnTheWay
   end
 
   def minutes_between(one, other)
-    minutes = ((one - other).abs / 60).round
-    minutes < 60 || (minutes % 60).nonzero? ? "#{minutes} minutes" : "#{minutes / 60} hour#{"s" if minutes > 60}"
+    hours, minutes = ((one - other).abs / 60).round.divmod(60)
+    [ ("#{hours} hour#{"s" if hours > 1}" if hours.positive?), ("#{minutes} minutes" if minutes.positive?) ].compact.join(" ")
   end
 end

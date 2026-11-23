@@ -108,9 +108,12 @@ class Admin::MyVisitOnTheWayTest < ActionDispatch::IntegrationTest
     post on_the_way, params: { minutes: 30 }
     assert_match "no email address we can use", flash[:notice]
     follow_redirect!
-    assert_select "#visit-action a[href='tel:5550100100']", /Call/
     body = ERB::Util.url_encode("Hi, it's Marcus from #{@business.name}. I'm on the way, arriving about 11:15 am.")
-    assert_select "#visit-action a[href=?]", "sms:5550100100?&body=#{body}", /Text/
+    assert_select "main a[href=?]", "sms:5550100100?&body=#{body}", /Text/
+    assert_select "main a[href='tel:5550100100']", 1, "once on the visit's page"
+    get admin_my_day_path
+    assert_select "#my-visit-#{@visit.uid} a[href='tel:5550100100']", /Call/
+    assert_select "#my-visit-#{@visit.uid} a[href=?]", "sms:5550100100?&body=#{body}", /Text/
   end
 
   test "off, not today, started, or an erased client: no button, and a send is refused" do

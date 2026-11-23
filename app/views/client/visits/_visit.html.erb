@@ -11,6 +11,21 @@
 <% elsif visit.status == "completed" %>
   <div class="banner banner-success mb-4" role="status"><%= icon "check-circle" %><p class="flex-1 font-semibold">This visit is done. Thank you!</p></div>
 <% end %>
+<% if visit.on_the_way? %>
+  <%# JOB-12: who's coming and when: photo, first name and title only (ACC-09); past the time,
+      "any minute" for an hour, then it goes. The business's name when no one can be named. %>
+  <% team = visit.on_the_way_team %>
+  <% who = team.any? ? team.map(&:client_first_name).to_sentence : @business.name %>
+  <section class="client-card mb-4 p-6 sm:p-8" id="on-the-way" aria-labelledby="on-the-way-title">
+    <p class="text-sm2 font-semibold text-muted">On the way</p>
+    <h2 class="mt-1 text-xl font-bold text-ink" id="on-the-way-title">
+      <% if visit.on_the_way_late? %><%= who %> should be with you any minute<% else %><%= who %> <%= team.size > 1 ? "are" : "is" %> on the way, arriving about <%= visit.on_the_way_time_label %><% end %>
+    </h2>
+    <% if team.any? && client_link %>
+      <ul class="mt-4 space-y-3"><% team.each do |member| %><li><%= render "client/team/member", member:, client_link: %></li><% end %></ul>
+    <% end %>
+  </section>
+<% end %>
 <div class="client-card p-6 sm:p-8">
   <p class="text-sm2 text-muted">Your visit with <%= @business.name %></p>
   <h1 class="mt-1 text-2xl font-bold text-ink <%= "line-through" if visit.status == "cancelled" %>"><%= visit.scheduled_on.strftime("%A, %B %-d") %></h1>

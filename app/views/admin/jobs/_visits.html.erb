@@ -16,7 +16,8 @@
           </div>
           <div class="min-w-0 flex-1">
             <p class="font-medium text-ink"><%= visit.scheduled_on.strftime("%a") %>, <%= visit.time_label.sub(/\AArrive/, "arrive").sub("Anytime", "anytime") %>
-              <% unless visit.status == "scheduled" %><%= visit_status_badge(visit) %><% end %></p>
+              <% unless visit.status == "scheduled" %><%= visit_status_badge(visit) %><% end %>
+              <% if (label = on_the_way_label(visit)) %><span class="ml-1 text-sm2 font-semibold text-ink"><%= label %></span><% end %></p><%# JOB-12 %>
             <p class="text-sm2 text-muted">About <%= visit.duration_label %><%= " · Not assigned" if visit.assignees.empty? %></p>
             <% if visit.assignees.any? %><div class="mt-1.5 text-sm2"><%= render "admin/team/crew", users: visit.assignees.to_a %></div><% end %><%# ACC-09 %>
             <% if visit.instructions %><p class="mt-1 whitespace-pre-line text-sm2 text-subtle"><%= visit.instructions %></p><% end %>

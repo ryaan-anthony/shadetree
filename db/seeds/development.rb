@@ -426,6 +426,25 @@ end
 marcus = business.business_users.find_by(user: User.find_by(email: "tech@example.com"))
 ProfileEvent.record!(marcus, %w[title], by: User.find_by(email: "admin@example.com")) if marcus && Tenancy.with_business(business) { ProfileEvent.none? }
 
+# JOB-12: "On my way" is on for the demo business (off for real ones until they choose), and
+# Marcus is on the way to one of today's visits: set directly, so nobody is emailed. His name and
+# photo show on the client's card once "Show team profiles to clients" is on.
+Tenancy.with_business(business) do
+  business.update!(client_visit_emails: { "on_my_way" => "1" }) unless business.client_visit_emails.key?("on_my_way")
+  tech = User.find_by(email: "tech@example.com")
+  # A client without an email address, so the history's "not emailed" is true.
+  client = Client.where.not(id: ClientContactMethod.where(kind: "email").select(:client_id)).where(erased_at: nil).order(:id).first
+  if tech && client && !Job.exists?(title: "Hedge touch-up")
+    job = Job.create!(client:, property: client.primary_property, created_by: owner, title: "Hedge touch-up")
+    visit = job.visits.new(scheduled_on: business.today, timing: "anytime", duration_minutes: 60, assignee_ids: [ tech.id ], created_by: owner)
+    visit.schedule!(by: owner, notify_client: false)
+    arrives_at = OnTheWay.round_to_five(30.minutes.from_now.in_time_zone(business.time_zone))
+    visit.update_columns(on_the_way_arrives_at: arrives_at, on_the_way_by_id: tech.id)
+    VisitEvent.record!(visit, :on_the_way, by: tech, arrives_at: arrives_at.utc.iso8601, emailed: false, why_not: "no_email")
+    ClientEvent.record!(client, :visit_on_the_way, subject: visit, by: tech, arrives_at: arrives_at.utc.iso8601)
+  end
+end
+
 # CLI-06: a finished client import with a couple of rows that didn't go in, to see the summary.
 Tenancy.with_business(business) do
   unless ClientImport.exists?
