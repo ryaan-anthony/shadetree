@@ -41,9 +41,6 @@ client's side and treated signatures as a separate legal-compliance epic.
   exactly what was approved (version). The approved quote can't be edited.
 - **R13** After approval, the client sees next steps (e.g. "We'll contact you to schedule").
   Later: deposit payment and self-scheduling (backlog).
-- **R22** Once approved, the client's quote page shows each line's progress (to do, booked,
-  done, billed, not going ahead with a note) and the money: approved, billed, deposits and still
-  expected. Work that won't be done is marked "Not going ahead"; the quote then closes.
 - **R14** Expired quotes can be viewed but not approved; the client can ask for a refresh.
 
 ### Lifecycle
@@ -59,6 +56,12 @@ client's side and treated signatures as a separate legal-compliance epic.
   duplicate, archive, mark approved on the client's behalf (records who and why) and resend.
 - **R21** A business can mark services that technicians may send quotes for without office
   review; a draft made only of those services, at their prices, can be sent by its technician.
+- **R22** Once approved, the client's quote page shows each line's progress (to do, booked,
+  done, billed, not going ahead with a note) and the money: approved, billed, deposits and still
+  expected. Work that won't be done is marked "Not going ahead"; the quote then closes.
+- **R23** An approved quote can be changed during the work (change orders): a change that raises
+  the total needs the client's approval again; reductions and new discounts apply at once, and
+  the client is told.
 
 ### PDF
 - **R19** Every quote renders as a branded PDF that matches the web view and is suitable for
@@ -86,7 +89,8 @@ client's side and treated signatures as a separate legal-compliance epic.
 | [QTE-06](../specs/quotes/QTE-06-quote-lifecycle.md) | Quote list, lifecycle & revisions | M2 | QTE-04, QTE-05 |
 | [QTE-07](../specs/quotes/QTE-07-technician-quotes.md) | Quotes from assigned requests | M6 | JOB-06, QTE-01, ACC-07 |
 | [QTE-08](../specs/quotes/QTE-08-auto-approved-services.md) | Services technicians send without review | M6 | QTE-07, CAT-03, BIL-03 |
-| [QTE-09](../specs/quotes/QTE-09-quote-progress-for-clients.md) | Quote progress for clients | M6 | JOB-09, PAY-06, CLI-05 |
+| [QTE-09](../specs/quotes/QTE-09-quote-progress-for-clients.md) | Quote progress for clients | M6 | JOB-09, PAY-06, PAY-08, CLI-05 |
+| [QTE-10](../specs/quotes/QTE-10-change-orders.md) | Change orders | M6 | QTE-06, JOB-09 |
 
 ## Backlog (M6)
 
@@ -104,6 +108,7 @@ client's side and treated signatures as a separate legal-compliance epic.
 1. Can a business edit the terms per quote, or only globally? Recommend default from settings,
    editable per quote.
 2. On revision after approval: allowed (creates new revision requiring re-approval) or blocked?
-   Recommend blocked; duplicate instead.
+   Recommend blocked; duplicate instead. *Changed for work in progress: change orders (R23,
+   QTE-10; owner, 2026-11-22).*
 3. Do we show "viewed" receipts to the business? (Some clients find it intrusive.) Recommend yes.
 4. Should declined/expired quotes count toward usage? Recommend yes — the send is the usage.

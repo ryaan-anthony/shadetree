@@ -23,10 +23,10 @@ Nothing implemented. The original plan bundled client payments with a large set 
 - **R4** A sent invoice can be edited only by voiding and re-issuing, or by explicit revision,
   keeping an audit of changes. Paid invoices are locked.
 - **R5** Invoice list with filters (status, overdue), search and totals outstanding.
-
 - **R17** An invoice bills completed work: a job's bills that job, and a quote's bills all its
   completed jobs not yet billed, again as more finish. Each takes its share of a fixed quote
-  discount, progress billing stays, and nothing is billed twice (locks and a database backstop).
+  discount, progress billing stays (credited when the work is billed; over-billing is credited
+  on the next invoice), and nothing is billed twice (locks and a database backstop).
 - **R18** A deposit is an invoice against an approved quote, not tied to work; later invoices for
   the quote credit it until it's used up.
 
@@ -77,7 +77,8 @@ Nothing implemented. The original plan bundled client payments with a large set 
 | [PAY-04](../specs/payments/PAY-04-online-payment.md) | Client pays online | M4 | PAY-02, PAY-03 |
 | [PAY-05](../specs/payments/PAY-05-recorded-payments.md) | Recorded payments & balances | M4 | PAY-01 |
 | [PAY-06](../specs/payments/PAY-06-billing-completed-work.md) | Billing completed work | M6 | JOB-09, PAY-01 |
-| [PAY-07](../specs/payments/PAY-07-deposits.md) | Deposits | M6 | PAY-06, PAY-05 |
+| [PAY-07](../specs/payments/PAY-07-deposits.md) | Deposits | M6 | PAY-08, PAY-05, QTE-09 |
+| [PAY-08](../specs/payments/PAY-08-progress-billing-discount-shares.md) | Progress billing and discount shares | M6 | PAY-06 |
 
 ## Backlog (M6)
 

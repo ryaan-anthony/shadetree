@@ -24,7 +24,7 @@ optimization before basic scheduling existed.
 - **R17** An approved quote's lines, or parts of their quantities, can be shared among several
   jobs. Across a line's jobs that aren't cancelled, the quantity never exceeds the line's;
   completing a job is final (its quantity becomes what was done), and cancelling one frees its
-  quantities. Billing is 07-payments R17.
+  quantities. Billing is 07-payments R17; changing an approved quote is 05-quotes R23.
 - **R18** A recurring quote, approved once, produces a job per occurrence from the same lines,
   each billed when completed.
 
@@ -81,7 +81,7 @@ optimization before basic scheduling existed.
 | [JOB-07](../specs/jobs/JOB-07-requests-on-calendar.md) | Request follow-ups on the calendar | M6 | CLI-07, JOB-03 |
 | [JOB-08](../specs/jobs/JOB-08-busy-blocks.md) | Busy blocks for schedulers without requests | M6 | JOB-07, ACC-07 |
 | [JOB-09](../specs/jobs/JOB-09-jobs-as-parts-of-a-quote.md) | Jobs as parts of a quote | M6 | JOB-01, PLT-11, PLT-14 |
-| [JOB-10](../specs/jobs/JOB-10-recurring-jobs.md) | Recurring jobs | M6 | JOB-09, PAY-06, JOB-02 |
+| [JOB-10](../specs/jobs/JOB-10-recurring-jobs.md) | Recurring jobs | M6 | JOB-09, PAY-06, JOB-02, QTE-09, QTE-01 |
 
 ## Backlog (M6)
 

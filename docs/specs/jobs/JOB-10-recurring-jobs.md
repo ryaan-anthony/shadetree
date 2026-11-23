@@ -3,7 +3,7 @@ id: JOB-10
 title: Recurring jobs
 domain: jobs
 milestone: M6
-depends_on: [JOB-09, PAY-06, JOB-02]
+depends_on: [JOB-09, PAY-06, JOB-02, QTE-09, QTE-01]
 ---
 # JOB-10 · Recurring jobs
 
@@ -26,37 +26,55 @@ completed. It's the first growth item in 06-jobs and the biggest driver of reten
       every N months), the first date, and an end (after N times, on a date, or until stopped).
       The client page and PDF say so ("Monthly from Jan 5, 12 times; $85.00 each").
 - [ ] Approval covers every occurrence at the quote's prices. Each occurrence becomes a job with
-      the quote's lines at their full quantities, numbered as usual and titled "Title (3 of 12)".
-      Its lines aren't claimed (JOB-09): each occurrence takes them in full.
-- [ ] Jobs are made ahead (question 1), each with a visit on its date, and each follows JOB-02
+      the quote's lines at full quantities, fixed discounts included, titled "Title (3 of 12)"
+      (no end: question 4). Its lines aren't claimed (JOB-09): each occurrence takes them.
+- [ ] Jobs are made up to 60 days ahead plus the next occurrence, each with a visit on its date
+      using the series' crew and arrival window (changeable per visit), and each follows JOB-02
       onwards: rescheduling, completion, cancelling one without touching the others.
-- [ ] Each completed occurrence is billed on its own (PAY-06); NTF-04 "invoice the job" works for
-      each one.
-- [ ] Staff can stop the series (future occurrences not yet made won't be) and skip one occurrence.
-- [ ] The quote page shows the series: done, upcoming, skipped; the client page (QTE-09) shows the
-      next date, how many are done, and what's been billed.
-- [ ] A recurring quote counts once toward plan usage (BIL-02), when sent.
+- [ ] The client gets one "Your schedule" email when a series starts, listing the coming dates.
+      Made visits don't send JOB-05's "visit booked" emails or fire NTF-04 visit_scheduled; later
+      changes and the usual reminders go as now. The series history records what was held back.
+- [ ] Each occurrence is billed on its own, per job line (PAY-06); NTF-04 "invoice the job" works
+      for each. PAY-08's progress billing and discount shares don't apply to recurring quotes.
+- [ ] Staff can stop the series (no more jobs are made) and skip an occurrence.
+- [ ] The quote page shows the series: done, upcoming, skipped. The client page (QTE-09) shows the
+      next date, how many are done and what's been billed; the quote closes when the series ends.
 - [ ] Office access makes and manages series; technicians see each job's visits as now (tested).
       Another business's series are not found.
-- [ ] Works at 360 px. Tests: each frequency and end, month ends and DST, making jobs ahead,
-      skipping, stopping, billing per occurrence, usage, roles, tenancy.
+- [ ] Works at 360 px. Tests: each frequency and end, month ends (the 31st is the month's last
+      day), DST, making ahead and catching up, idempotent runs, skipping, stopping, the summary
+      email and held-back notices, billing per occurrence, roles, tenancy.
 
 ## Out of scope
 
 - Batch invoicing of several occurrences (07-payments backlog), autopay, client self-scheduling.
+- Changing a running series: a new quote replaces it (decision below).
 
 ## Decisions
 
 - A recurring quote produces a job per occurrence from the same lines; each is billed when
   completed. Its own spec, the first M6 growth item in 06-jobs (owner, 2026-11-22).
+- Jobs are made for the next occurrence plus 60 days, nightly; visits take the series' crew and
+  window. A price change is a new quote, the old series stopping at the switch date. An approved
+  recurring quote doesn't expire. A monthly 31st is the month's last day. A fixed discount
+  applies to each occurrence in full (owner, 2026-11-22).
+- One "Your schedule" summary email when a series starts; after that only changes and the usual
+  reminders, so there's no burst of "visit booked" emails (owner, 2026-11-22).
+
+## Implementation notes
+
+- `job_series` (quote, frequency, first date, end, stopped at), `jobs.series_id` and
+  `.occurrence` with a unique index on both, so making a job is idempotent (skip on conflict);
+  skipped occurrences are stored on the series.
+- A `config/recurring.yml` entry runs nightly per business under `Tenancy.with_business`,
+  reporting one business's error and going on, as `AutomationsDueJob` does. The horizon is
+  `business.today` + 60 days, and a missed run catches up.
 
 ## Open questions
 
-1. How far ahead are jobs made? Recommend the next occurrence plus 60 days, made by a nightly job.
-2. Who goes on the visits? Recommend the crew and arrival window set on the series, changeable
-   per visit.
-3. Changing the price mid-series? Recommend a new quote; the old series stops at the switch date.
-4. Does an approved recurring quote expire? Recommend no: it runs until its end or is stopped.
-5. A monthly occurrence on the 31st? Recommend the month's last day.
-6. A fixed quote discount? Recommend it applies to each occurrence in full, as the quote shows
-   prices per occurrence.
+1. The automatic job on approval (JOB-01) for a recurring quote? Recommend no: the series makes
+   the jobs.
+2. Deposits on a recurring quote? Recommend allowed, credited against occurrences in order.
+3. A client archived or erased mid-series? Recommend archiving stops new jobs (staff are told
+   which dates are left) and erasure stops the series.
+4. The title of a series with no end? Recommend "Title (3)", the occurrence number alone.
