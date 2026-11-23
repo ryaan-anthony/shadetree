@@ -82,16 +82,18 @@ shows team profiles (ACC-09). It's off until the business turns it on.
 - A business-level switch only, no per-member opt-out (owner, 2026-11-22).
 - One tap on My day for an assigned visit: 15, 30, 45 or 60 minutes or a custom time, with a
   warning outside the arrival window (owner, 2026-11-22).
+- Several technicians: the sender "and Dee", each with a photo (owner, 2026-11-22).
+- Sending doesn't start the visit; Start stays separate (owner, 2026-11-22).
+- Every plan, on the location's clock (owner, 2026-11-22).
+- The card stays an hour after the time passes (owner, 2026-11-22).
+- A small "On the way" label on the staff schedule, no team notification (owner, 2026-11-22).
+- The card is on the visit page; clients have no job page (owner, 2026-11-22).
+- Exact-time visits warn beyond 15 minutes either side of the start (owner, 2026-11-22).
+- An update emails only when the time moves 10 minutes or more (owner, 2026-11-22).
+- No usable email: tap-to-text from the tech's own phone, not metered SMS (owner, 2026-11-22).
+- At the hourly email limit it isn't sent, with no 15-minute delay (owner, 2026-11-22).
+- At most one send a minute and 5 a day per visit (owner, 2026-11-22).
 
 ## Open questions
 
-- Several technicians? Recommend the sender plus the others ("and Dee"), each with a photo.
-- Does sending start the visit? Recommend no; Start stays separate.
-- Plan gating? Recommend every plan. Time zones? Recommend the location's clock.
-- Card after the time passes? Recommend an hour. On the staff schedule? Recommend a small label.
-- Clients have a page per visit, not per job, so the card is on the visit page. Recommend enough.
-- Exact-time visits: recommend warning beyond 15 minutes either side of the start.
-- Update emails only when the time moves 10+ minutes? Recommend yes.
-- No client email: recommend tap-to-text from the tech's own phone (free, no metered SMS).
-- At the hourly email limit: recommend not sending rather than JOB-05's 15-minute delay,
-  since a late "on my way" is worse than none.
+- None.

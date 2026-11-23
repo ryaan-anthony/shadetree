@@ -33,9 +33,9 @@ about a visit (JOB-12 "On my way" first), so they know who is coming to their do
       `manage_owners` edit an Owner's (ACC-07's rule). Anyone else is refused, with role and
       cross-tenant tests.
 - [ ] Photos reuse the existing photo cleaning: PNG, JPEG or WebP, up to 10 MB and 8,000 px a
-      side, at least 128 px; turned the right way up, then re-encoded with all metadata (EXIF,
-      GPS) removed. Shown as a centred square (round on screen), no crop tool; Replace and
-      Remove work, and so does a phone camera at 360 px.
+      side, at least 128 px; re-encoded with all metadata (EXIF, GPS) removed, and upright (the
+      shared orientation fix; see Decisions). Shown as a centred square (round on screen), no
+      crop tool; Replace and Remove work, and so does a phone camera at 360 px.
 - [ ] Without a photo, initials show (the kit's avatar); clients see the first initial only.
 - [ ] Staff see photos and titles on the Team page, on visit assignees in the schedule and on
       job pages, and on My day (the person and their crew-mates on each visit). Lists stay fast.
@@ -60,12 +60,12 @@ about a visit (JOB-12 "On my way" first), so they know who is coming to their do
       the name that viewer may see ("Marcus" for clients, "Marcus Reed" for staff). The upload is
       labelled, errors are announced, and axe passes on the profile page, Team and My day.
 - [ ] Tests cover editing rights, metadata removal (a photo with GPS comes out without it),
-      orientation, size limits, the client setting, deactivation, deletion, impersonation and
+      size limits, the client setting, deactivation, deletion, impersonation and
       tenancy. Dev seeds give Marcus a photo and title; one crew member has none.
 
 ## Out of scope
 
-- Naming the crew in booking confirmations and reminders (JOB-05): open question below.
+- Naming the crew in booking confirmations, reminders or the visit page (backlog; Decisions).
 - A public "Meet the team" page, ratings or reviews of members, per-member opt-out (owner).
 
 ## Decisions
@@ -74,22 +74,23 @@ about a visit (JOB-12 "On my way" first), so they know who is coming to their do
   (owner, 2026-11-22).
 - Showing profiles to clients is a business-level setting, with no per-member opt-out
   (owner, 2026-11-22).
+- **Phone privacy:** an optional work phone on the profile, falling back to the business's (the
+  job's location's), so a tech's personal number is never shown by default; neither set, no
+  phone (owner, 2026-11-22).
+- Bios need no office approval: `manage_team` can edit or clear any bio, changes are recorded
+  and the member is told (owner, 2026-11-22).
+- Without a photo, initials show; clients see the first initial only (owner, 2026-11-22).
+- One profile per business, not per person (owner, 2026-11-22).
+- Title (40 characters) and bio (200) are two fields: "Marcus · Lead technician"
+  (owner, 2026-11-22).
+- "Show team profiles to clients" lives on the Team page, for `business_settings`, linked from
+  Settings → Messages (owner, 2026-11-22).
+- Naming the crew on confirmations, reminders and the visit page is backlog: crews change after
+  booking (owner, 2026-11-22).
+- Photos coming out sideways (the shared cleaning dropped the orientation tag without turning
+  the image) is fixed in its own PR, as it affects visit and request photos on main today;
+  ACC-09 relies on that fix rather than carrying it (owner, 2026-11-22).
 
 ## Open questions
 
-- **Phone privacy (important).** The owner chose to show "a phone number". Recommend an optional
-  work phone on the profile that falls back to the business's phone, so a tech's personal number
-  is never exposed by default (as written above).
-- Do bios need office approval? Recommend no: `manage_team` can edit or clear any bio, changes
-  are recorded and the member is told.
-- Default image without a photo? Recommend initials (as written).
-- One profile per business or per person? Recommend per business: a title, bio and work phone
-  belong to the job, and a person in two businesses may differ.
-- Title and bio as two fields (40 and 200 characters)? Recommend yes: "Marcus · Lead technician".
-- Where does "Show team profiles to clients" live? Recommend the Team page, for people with
-  `business_settings`, linked from Settings → Messages next to "On my way".
-- Name the crew in confirmations, reminders and the visit page once profiles are on? Recommend
-  backlog: crews change after booking, so naming them early can mislead.
-- The photo cleaning on main drops the orientation tag without turning the image, so portrait
-  phone photos (visit and request photos too) can come out sideways. Recommend fixing it in the
-  shared cleaning as part of this spec.
+- None.
