@@ -11,52 +11,48 @@ depends_on: [JOB-01, PLT-11, PLT-14]
 
 ## Summary
 
-Today an approved quote becomes one job with all its lines. Real work splits: gutters this
-week, 6 of 10 trees next month. Approval makes every line "to do" for its full quantity; staff
-make jobs from whatever is ready. Completing a job is final, cancelling one gives its quantities
-back. Billing is PAY-06 and PAY-08, the client's view QTE-09, changes to the quote QTE-10.
+Today an approved quote becomes one job with all its lines. Real work splits: gutters this week,
+6 of 10 trees next month. Approval makes every line "to do"; staff make jobs from whatever is
+ready, and the crew log what they did. Completing a job is final; cancelling gives its work back.
+Billing is PAY-06 and PAY-08, the client's view QTE-09, changing the quote QTE-10.
 
 ## User stories
 
 - As an owner, I want 6 of a quote's 10 trees done now and the rest in spring, without a new quote.
-- As an owner, I want a cancelled job's work back as "to do", ready for another job.
+- As a technician, I want to log my 4 trees while Riley logs his 2, without either of us losing it.
 
 ## Acceptance criteria
 
-- [ ] **Create job** on an approved quote opens a picker of its lines with what's to do ("4 of
-      10 to do"), each ticked at its full remaining quantity, which can be lowered. Ticked lines
-      are copied with that quantity, the client, property, notes and files (JOB-01). A job needs
-      one line above zero. With nothing to do there's no Create job.
-- [ ] More jobs take what's left the same way. Asking for more than is left is refused, naming
-      the jobs that hold it. A resubmitted picker (a double click) opens the job it already made.
-- [ ] The automatic job on approval (JOB-01) and NTF-04's "Create job" take everything to do;
-      with nothing left they're skipped and say why. Recurring quotes are JOB-10's.
-- [ ] A line's fixed discount is shared by quantity across its jobs, the last claim taking the
-      cent left over. A job from a quote carries no fixed quote discount: PAY-08 shares it on
-      invoices. A percent discount is copied as now.
-- [ ] Completing a job asks what was done per quote line (starting at what was booked); the job's
-      quantity becomes that, and a shortfall isn't freed or rebooked. More done than booked claims
-      the line's free quantity; past the quote's, see
-      Decisions. A completed job's lines can't change.
-- [ ] Raising a quote line's quantity on an open job claims free quantity; past the quote's it
-      needs a change order (QTE-10). Lowering it, or removing the line, frees the difference.
-      Lines added on the job are its own.
-- [ ] Cancelling a job before it's completed frees its quantities. Reopening a cancelled job is
-      refused while what it held isn't free; reopening a completed job is refused while an
-      invoice that isn't void bills it, and otherwise claims back what it was booked for. Both
-      the quote page's Create job and the job page's Reopen stay.
-- [ ] A quote line's live claims never exceed its quantity, enforced by the database, so two
-      people creating jobs at once can't both take the same trees (Implementation notes).
-- [ ] Job pages say "From Q-0004: 2 of 3 services" and link the quote's other jobs; the quote
-      page lists each line's jobs, quantities and statuses, and links "Jobs (2)".
-- [ ] Every use of a quote's single job is changed (list in #356); billing's uses are PAY-06's.
-- [ ] Existing data and the export follow the Implementation notes, behind a PLT-11 flag.
-- [ ] Office access only (Owner, Admin, ACC-07 roles); technicians see their visit's job lines
-      (JOB-04); a test shows QTE-07/08 quote-only members see no job. Another business's quote
-      lines are not found. The picker and completion quantities work at 360 px.
-- [ ] Tests: splits, repeated jobs, the race, a resubmitted picker, shortfalls and overruns,
-      raising and lowering, cancel, both reopens, discount shares, automatic jobs, the migration
-      both ways and its reconcile check, export, roles, tenancy.
+- [ ] **Create job** on an approved quote opens a picker of what's to do ("4 of 10 to do"), each
+      line ticked at its remaining quantity, which can be lowered; ticked lines are copied with the
+      client, property, notes and files (JOB-01). A job needs one line above zero.
+- [ ] More jobs take what's left; asking for more is refused, naming the jobs that hold it. A
+      resubmitted picker opens the job it made. The automatic job on approval (JOB-01) and NTF-04's
+      "Create job" take everything to do, or are skipped saying why. Recurring quotes: JOB-10.
+- [ ] A line's fixed discount is shared by quantity across its jobs, the last claim taking the left
+      over cent. Jobs carry no fixed quote discount (PAY-08 shares it); a percent one is copied.
+- [ ] Anyone assigned to one of the job's visits logs the work from that visit (My day, JOB-04):
+      quantities done per line, lines added on site (question 2), notes and photos. Each entry
+      keeps who, which visit and when; the job page shows them per line ("Marcus 4, Riley 2").
+      Two people logging at once never overwrite each other (Implementation notes).
+- [ ] Completing the job stays with office access and a visit with its assignees, as now. It
+      starts at the logged totals (else what was booked); the job's quantity becomes what's
+      confirmed, and a shortfall isn't freed. More done than booked claims free quantity; past
+      the quote's, see Decisions. Once completed, its lines and entries can't change.
+- [ ] Raising a quote line on an open job claims free quantity; past the quote's it needs a change
+      order (QTE-10). Lowering or removing it frees the difference. Lines added on site are its own.
+- [ ] Cancelling an open job frees its quantities. Reopening a cancelled job is refused while what
+      it held isn't free; a completed one, while an invoice that isn't void bills it (otherwise it
+      claims back what it was booked for). The quote's Create job and the job's Reopen both stay.
+- [ ] A quote line's live claims never exceed its quantity, enforced by the database: two people
+      can't both take the same trees.
+- [ ] Job pages say "From Q-0004: 2 of 3 services"; the quote page lists each line's jobs and
+      statuses ("Jobs (2)"). Every use of a quote's single job changes (list in #356).
+- [ ] Making, completing, cancelling and reopening jobs stay with office access (Owner, Admin,
+      ACC-07 roles); QTE-07/08 quote-only members see no job (tested). Another business's lines
+      are not found. The picker, logging and completion work at 360 px.
+- [ ] Tests: splits, the race, a resubmitted picker, two people logging, shortfalls, overruns,
+      raise, lower, cancel, reopens, discounts, automatic jobs, migration, export, roles, tenancy.
 
 ## Decisions
 
@@ -65,28 +61,39 @@ back. Billing is PAY-06 and PAY-08, the client's view QTE-09, changes to the quo
 - Completing is final: the quantity becomes what was done, and a shortfall isn't freed. The rest
   is finished by a change order (QTE-10) or a new quote for it (owner, 2026-11-22).
 - Cancelling before completion frees its lines and quantities to "to do" (owner, 2026-11-22).
-- Job title: the quote's when the job takes everything, else its lines ("Gutter clean, Windows";
-  "Tree removal (6 of 10)"), editable. To-do quantity can be added to an open job ("Add from
-  Q-0004"). A completed job reopens only while no invoice that isn't void bills it
-  (owner, 2026-11-22).
+- Job title: the quote's when the job takes everything, else its lines ("Tree removal (6 of
+  10)"), editable. To-do work can be added to an open job ("Add from Q-0004"). A completed job
+  reopens only while no invoice that isn't void bills it (owner, 2026-11-22).
 - INS-01 gets a "Work not booked" group (approved quotes with to-do work, oldest first); to-do
   work never expires. Archiving keeps line states and leaves that group (owner, 2026-11-22).
-- More done than the quote's quantity: the job completes with the quoted quantity, and a
-  change order (QTE-10) for the extra bills once approved (owner, 2026-11-22).
+- More done than the quote's quantity: the job completes with the quoted quantity, and a change
+  order (QTE-10) for the extra bills once approved (owner, 2026-11-22).
+- Several technicians can be assigned to a job, and each can log the work (owner, 2026-11-22).
 
 ## Implementation notes
 
-- Claims are rows: `job_claims` (job, quote line, optional job line, quantity), and each job line
-  keeps `quote_line_item_id` (on delete set null: quote lines go only on drafts; jobs are
-  cancelled, not deleted). `quote_line_items.claimed_quantity` is the sum of live claims, kept by
-  one atomic update with a check (claimed + not going ahead, QTE-09, ≤ quantity). The update takes
-  the row lock, so concurrent claims queue and the loser fails the check; a sum across rows can't
-  be a constraint. Lock order: quote, then job, then quote lines by id. A failed check rolls back
-  to a savepoint and reports the lines. The picker carries a one-time token.
-- Migration: each job that isn't cancelled claims its quote's lines, clamped to their quantities.
-  Job lines match quote lines in position order on catalog item, name and unit price; a quote line
-  with no match is claimed by that job without a job line. No total changes. A reconcile test
-  checks claimed = the sum of live claims. Down raises once a quote has more than one job.
-- Claims are kept whether the flag is on or off; the flag can't be turned on before PAY-06 ships.
-- Export (new columns at the end): job lines get their quote line and claim; quote lines what's
-  claimed, done and not going ahead.
+- Claims are rows: `job_claims` (job, quote line, optional job line, quantity); job lines keep
+  `quote_line_item_id` (on delete set null: quote lines go only on drafts; jobs are cancelled,
+  not deleted). `quote_line_items.claimed_quantity` (sum of live claims) changes by one atomic
+  update with a check against the quantity (plus QTE-09's not going ahead); its row lock queues
+  rivals and the loser fails the check. Lock order: quote, job, quote lines by id; a failed check
+  rolls back to a savepoint. The picker carries a one-time token.
+- Logging is a ledger: `work_entries` (job line, visit, user, quantity, time), append-only; a
+  correction is another entry, and a line's done quantity is their sum. Chosen over `lock_version`
+  because phones on patchy signal would hit stale-version retries, while appends never conflict
+  and are the history. An entry takes the job's row lock and checks it's open; completion takes
+  the quote's, then the job's, then sums and runs the claim check, so nothing lands after it.
+- Migration: each live job claims its quote's lines, clamped to their quantities, matching job
+  lines in position order on catalog item, name and unit price (unmatched: a claim with no job
+  line). No total changes; a reconcile test checks claimed = Σ live claims; down raises once a
+  quote has two jobs.
+- Claims are kept with the PLT-11 flag on or off; it can't be turned on before PAY-06 ships.
+- Export (new columns at the end): job lines get their quote line and claim, quote lines what's
+  claimed, done and not going ahead; a work log table has one row per entry.
+
+## Open questions
+
+1. Can one technician correct another's entry? Recommend no: each corrects their own while the
+   job is open (as a new entry); the office corrects anyone's.
+2. Lines a technician adds on site: priced how? Recommend a catalog service at its price, or an
+   unpriced custom line the office prices before invoicing; price visibility stays as JOB-04.

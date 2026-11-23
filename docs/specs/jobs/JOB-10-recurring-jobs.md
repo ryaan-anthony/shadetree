@@ -29,8 +29,9 @@ completed. It's the first growth item in 06-jobs and the biggest driver of reten
       the quote's lines at full quantities, fixed discounts included, titled "Title (3 of 12)"
       (no end: "Title (3)"). Its lines aren't claimed (JOB-09): each occurrence takes them.
 - [ ] Jobs are made up to 60 days ahead plus the next occurrence, each with a visit on its date
-      using the series' crew and arrival window (changeable per visit), and each follows JOB-02
-      onwards: rescheduling, completion, cancelling one without touching the others.
+      using the series' crew (one or more members) and arrival window, changeable per visit. Each
+      follows JOB-02 onwards (rescheduling, completion, cancelling one alone), and each of its
+      technicians logs the work as JOB-09 describes.
 - [ ] The client gets one "Your schedule" email when a series starts, listing the coming dates.
       Made visits don't send JOB-05's "visit booked" emails or fire NTF-04 visit_scheduled; later
       changes and the usual reminders go as now. The series history records what was held back.
