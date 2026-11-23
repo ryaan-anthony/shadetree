@@ -343,13 +343,13 @@ class Visit < ApplicationRecord
     end
   end
 
-  # The client cards and messages that show people now, each a callable giving the user ids it
-  # shows for a visit. Nothing does yet: JOB-12's "On the way" card is the first to add one.
-  # A client can only load the photo of someone one of these shows (Client::TeamPhotosController).
-  class_attribute :client_team_cards, instance_writer: false, default: []
+  # The user ids that client cards and messages about this visit show now. None do yet: JOB-12's
+  # "On the way" card is the first, and adds the people it shows here. A client can only load
+  # the photo of someone listed (Client::TeamPhotosController).
+  def client_team_card_user_ids = []
 
   def client_team_shown
-    ids = client_team_cards.flat_map { _1.call(self) }
+    ids = client_team_card_user_ids
     ids.empty? ? [] : client_team.select { ids.include?(_1.user_id) }
   end
 

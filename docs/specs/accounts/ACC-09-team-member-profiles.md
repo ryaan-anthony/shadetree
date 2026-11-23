@@ -74,8 +74,9 @@ a visit (JOB-12 "On my way" first), so they know who is coming to their door.
 
 ## Implementation notes
 
-- Clients get `Visit#client_team_shown` (none without a first name), empty until JOB-12's card joins
-  `Visit.client_team_cards`. History keeps field names, not values. Seeds: Marcus, Priya, Dana.
+- Clients get `Visit#client_team_shown` (nobody without a first name), empty until JOB-12 fills
+  `Visit#client_team_card_user_ids`. History keeps field names only. Seeds: Marcus, Priya, Dana.
+
 ## Decisions
 
 - Clients may see a member's photo, first name only, a short bio or title, and a phone number;

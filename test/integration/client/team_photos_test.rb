@@ -5,6 +5,13 @@ require "test_helper"
 # name and title; a photo loads only through the visit's link, checked on every request, then
 # a storage URL that expires in 5 minutes. Another member's photo can't be fetched.
 class Client::TeamPhotosTest < ActionDispatch::IntegrationTest
+  # Stands in for JOB-12's card, which will list who it shows in Visit#client_team_card_user_ids.
+  module ShownOnACard
+    mattr_accessor :ids
+    def client_team_card_user_ids = ShownOnACard.ids ? ShownOnACard.ids.call(self) : super
+  end
+  Visit.prepend(ShownOnACard) unless Visit < ShownOnACard
+
   setup do
     @business = businesses(:one)
     @business.update!(plan_overrides: { "limits" => { "team_members" => nil } }, show_team_profiles: true)
@@ -20,11 +27,10 @@ class Client::TeamPhotosTest < ActionDispatch::IntegrationTest
       @visit.schedule!(by: users(:one), notify_client: false)
       @token = @visit.client_link!.token
     end
-    @previous_cards = Visit.client_team_cards
-    Visit.client_team_cards = [ ->(visit) { visit.assignments.map(&:user_id) } ] # stands in for JOB-12's card: everyone on it
+    ShownOnACard.ids = ->(visit) { visit.assignments.map(&:user_id) } # everyone on it
   end
 
-  teardown { Visit.client_team_cards = @previous_cards }
+  teardown { ShownOnACard.ids = nil }
 
   def face = Rack::Test::UploadedFile.new(file_fixture("face.jpg"), "image/jpeg")
   def membership(user) = @business.business_users.find_by!(user:)
@@ -66,7 +72,7 @@ class Client::TeamPhotosTest < ActionDispatch::IntegrationTest
     assert_response :not_found
     @marcus.update_columns(first_name: "Marcus")
 
-    Visit.client_team_cards = []
+    ShownOnACard.ids = ->(_) { [] }
     photo(@marcus)
     assert_response :not_found
   end
@@ -80,6 +86,19 @@ class Client::TeamPhotosTest < ActionDispatch::IntegrationTest
     other.update!(photo: face)
     as_business(@business) { @token = @visit.reload.client_link!.token }
     get client_team_photo_path(@token, other.uid)
+    assert_response :not_found
+  end
+
+  test "an expired link cuts the photo off" do
+    expires_at = as_business(@business) { ClientLink.active.find_by!(linkable: @visit).expires_at }
+    travel_to(expires_at + 1.minute) { photo(@marcus) }
+    assert_response :gone
+  end
+
+  test "with no card showing anyone (as now, before JOB-12), no photo loads" do
+    ShownOnACard.ids = nil
+    assert_empty as_business(@business) { @visit.reload.client_team_shown }
+    photo(@marcus)
     assert_response :not_found
   end
 
