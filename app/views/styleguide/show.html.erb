@@ -9,7 +9,7 @@
         <code>app/views/components</code> and <code>ComponentsHelper</code>.</p>
     </div>
     <nav class="flex flex-wrap gap-x-4 gap-y-1 text-sm2 font-medium" aria-label="Sections">
-      <% %w[Brand Colors Type Buttons Forms Badges Cards Tables Dialogs Feedback Navigation Icons Layouts].each do |name| %>
+      <% %w[Brand Colors Type Buttons Forms Badges Cards Tables Dialogs Feedback Navigation Icons Containers Layouts].each do |name| %>
         <a class="text-canopy hover:underline" href="#<%= name.downcase %>"><%= name %></a>
       <% end %>
     </nav>
@@ -299,6 +299,28 @@
         <button type="submit" class="<%= button_classes(:secondary, :sm) %>">Submit</button>
       </form>
       <%= render "admin/clients/quick_create", button: false %>
+    </section>
+
+    <section id="containers" aria-labelledby="containers-h">
+      <h2 id="containers-h" class="section-title mb-3">Page containers</h2>
+      <p class="mb-3 max-w-prose text-sm2 text-muted">Every staff page uses one of two widths, both on the same left edge; a test
+        checks every page in the shared list for any other. Widths inside cards, dialogs and fields are free.</p>
+      <dl class="space-y-4">
+        <div>
+          <dt class="font-semibold text-ink">Wide</dt>
+          <dd class="text-sm2 text-muted">Lists, detail pages, Home and Schedule: the content area's full width (up to 80rem), with no wrapper width.</dd>
+          <dd class="mt-2 rounded-card border border-dashed border-control bg-sunken p-3 text-sm2 text-muted" id="container-wide">Wide: the whole content area</dd>
+        </div>
+        <div>
+          <dt class="font-semibold text-ink">Form <code class="font-normal">.form-split</code></dt>
+          <dd class="text-sm2 text-muted">Every form page, settings and My day: a 42rem column. An optional <code>.form-split-aside</code>
+            (what the form is about, or help) sits beside it from 1280px wide and stacks on phones. Without one, nothing is reserved.</dd>
+          <dd class="form-split mt-2" id="container-form">
+            <aside class="form-split-aside rounded-card border border-dashed border-control bg-sunken p-3 text-sm2 text-muted">Aside: a summary or help (optional)</aside>
+            <div class="rounded-card border border-dashed border-control bg-surface p-3 text-sm2 text-muted">Form: 42rem</div>
+          </dd>
+        </div>
+      </dl>
     </section>
 
     <section id="layouts" aria-labelledby="layouts-h">

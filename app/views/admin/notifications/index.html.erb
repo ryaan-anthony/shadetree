@@ -7,7 +7,7 @@
   <% end %>
 <% end %>
 
-<div class="max-w-3xl">
+<div>
   <% if @notifications.empty? %>
     <% kinds = NotificationType.for(current_membership).map { _1.label.downcase } %>
     <div class="card"><%= empty_state title: "Nothing yet", text: (kinds.any? ? "You'll see #{kinds.to_sentence} here." : "Things that need you will show up here."), icon: "bell" %></div>

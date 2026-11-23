@@ -1,6 +1,6 @@
 <%# OPS-04: starting a new business while one of yours is suspended. %>
 <% content_for :title, "Can't add a business" %>
-<div class="mx-auto max-w-xl py-10" id="business-suspended-new">
+<div class="form-split" id="business-suspended-new">
   <%= card do %>
     <%= empty_state level: 1, title: "You can't add a business right now", icon: "lock",
                     text: "#{@suspended_business.name} is suspended, so new businesses are on hold until it's sorted out. Your other businesses work as usual." do %>

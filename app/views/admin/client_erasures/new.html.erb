@@ -1,6 +1,6 @@
 <% content_for :title, "Erase #{@client.display_name}" %>
 <%= page_header "Erase #{@client.display_name}'s details", lede: "For when a client asks you to forget them." %>
-<div class="max-w-2xl">
+<div class="form-split">
   <%= card do %>
     <p class="text-sm font-medium text-ink">This removes:</p>
     <ul class="mt-1 list-disc space-y-1 pl-5 text-sm text-subtle">

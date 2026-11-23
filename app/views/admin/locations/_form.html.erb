@@ -3,7 +3,7 @@
 <% members = current_business.business_users.active.includes(:user).sort_by { _1.user.full_name.downcase } %>
 <% sent = params.dig(:location, :member_ids) %>
 <% working = sent ? members.select { Array(sent).include?(_1.uid) }.map(&:user_id) : @location.location_members.map(&:user_id) %>
-<%= form_with model: @location, url: (@location.persisted? ? admin_location_path(@location) : admin_locations_path), class: "max-w-3xl space-y-4" do |f| %>
+<%= form_with model: @location, url: (@location.persisted? ? admin_location_path(@location) : admin_locations_path), class: "form-split space-y-4" do |f| %>
   <% if @location.errors[:base].any? %>
     <div class="banner banner-danger" role="alert"><%= icon "alert-circle" %><p><%= @location.errors[:base].to_sentence %></p></div>
   <% end %>

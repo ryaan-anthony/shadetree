@@ -4,7 +4,7 @@ class StyleguideControllerTest < ActionDispatch::IntegrationTest
   test "shows every component section" do
     get styleguide_path
     assert_response :success
-    %w[colors type buttons forms badges cards tables dialogs feedback navigation icons layouts].each do |id|
+    %w[colors type buttons forms badges cards tables dialogs feedback navigation icons containers layouts].each do |id|
       assert_select "section##{id}"
     end
     assert_select "dialog#confirm-dialog"
@@ -26,6 +26,15 @@ class StyleguideControllerTest < ActionDispatch::IntegrationTest
     assert_match(/\.page-title \{ font-size: var\(--type-page-title-phone\);/, kit)
     assert_match(/\.table-head \{ font-size: var\(--type-small\); font-weight: 600; color: var\(--color-muted\);/, kit)
     assert_match(/\.figure \{ font-size: var\(--type-figure\); font-weight: 600;/, kit)
+  end
+
+  test "PLT-16: the two page containers are on the style guide" do
+    get styleguide_path
+    assert_equal [ "Wide", "Form .form-split" ], css_select("section#containers dt").map { _1.text.squish }
+    assert_select "#container-form.form-split > aside.form-split-aside"
+    kit = Rails.root.join("app/assets/tailwind/components.css").read
+    assert_match(/\.form-split \{ max-width: 42rem; \}/, kit)
+    assert_match(/\.form-split:has\(> \.form-split-aside\) \{ max-width: none; grid-template-columns: minmax\(0, 42rem\) 20rem; \}/, kit)
   end
 
   test "renders flash as a toast" do

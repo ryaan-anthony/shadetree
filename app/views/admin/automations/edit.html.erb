@@ -3,10 +3,10 @@
   <%= link_to admin_automations_path, class: button_classes(:tertiary) do %><%= icon "arrow-left" %> Automations<% end %>
 <% end %>
 <%= render "form", rule: @rule, url: admin_automation_path(@rule), method: :patch %>
-<div class="mt-4 max-w-2xl">
+<div class="form-split mt-4">
   <%= button_to (@rule.enabled_was ? "Turn off" : "Turn on"), toggle_admin_automation_path(@rule), method: :patch, class: button_classes(:secondary, :sm) %>
 </div>
-<div class="mt-8 max-w-2xl border-t border-line pt-5">
+<div class="form-split mt-8 border-t border-line pt-5">
   <p class="text-sm text-muted">Deleting it stops anything still waiting. What it already did stays in the activity list.</p>
   <%= button_to "Delete automation", admin_automation_path(@rule), method: :delete, class: button_classes(:destructive, :sm) + " mt-2",
                 form: { data: { turbo_confirm: "Delete “#{@rule.name}”? Anything still waiting won't run.", turbo_confirm_variant: "destructive" } } %>

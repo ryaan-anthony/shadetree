@@ -1,6 +1,6 @@
 <%= page_header "Add starter services", lede: "Common services for your kind of business. Pick the ones you offer; you can rename, price or remove them afterwards." %>
 
-<div class="max-w-3xl space-y-4">
+<div class="form-split space-y-4">
   <% if @presets.size > 1 %>
     <%= form_with url: admin_catalog_presets_path, method: :get, class: "flex items-end gap-2" do %>
   <%= hidden_field_tag :from, "setup", id: nil if from_setup? %>

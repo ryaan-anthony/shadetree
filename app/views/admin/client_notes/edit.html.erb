@@ -3,7 +3,7 @@
 <%= page_header "Edit note", lede: "On #{@client.display_name}'s timeline. Only your team sees it." do %>
   <%= link_to "Cancel", admin_client_path(@client), class: button_classes(:tertiary) %>
 <% end %>
-<%= form_with model: @note, scope: :client_note, url: admin_client_note_path(@client, @note), method: :patch, class: "max-w-2xl" do |f| %>
+<%= form_with model: @note, scope: :client_note, url: admin_client_note_path(@client, @note), method: :patch, class: "form-split" do |f| %>
   <%= card do %>
     <%= f.field :body, as: :textarea, label: "Note", rows: 5, maxlength: 5000 %>
     <%= f.submit_button "Save note", class: "mt-4 w-full sm:w-auto" %>

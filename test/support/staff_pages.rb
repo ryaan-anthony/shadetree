@@ -110,6 +110,11 @@ module StaffPages
       page :new_template, "New message template", new_admin_custom_message_template_path, :form
       page :edit_template, "Edit message template", edit_admin_custom_message_template_path(@template), :form
       page :new_location, "New location", new_admin_location_path, :form
+      page :edit_location, "Edit location", edit_admin_location_path(@location), :form
+      page :edit_closure, "Edit closure", edit_admin_closure_path(@closure), :form
+      page :edit_client_note, "Edit a client note", edit_admin_client_note_path(@client, @note), :form
+      page :edit_payment, "Edit a payment", edit_admin_invoice_payment_path(@part_paid_invoice, @payment), :form
+      page :delete_role, "Delete a role", delete_admin_role_path(@role), :form
     end
 
     def details
@@ -193,7 +198,8 @@ module StaffPages
       @erased_client = client("Grace Chen")
       @service = CatalogItem.create!(name: "Mowing", unit: "visit", unit_price: "45")
       @tax_rate = TaxRate.create!(name: "State", percent: "6.25")
-      Location.create!(name: "North yard")
+      @location = Location.create!(name: "North yard")
+      @closure = Closure.create!(reason: "Thanksgiving", starts_on: business.today + 30)
       @role = Role.create!(name: "Dispatcher", permissions: %w[office])
       @automation = AutomationRule.create!(name: "Tell the office", trigger: "quote_sent", actions: [ { "type" => "notify_team", "team" => "office" } ])
       @template = MessageTemplate.create!(name: "Spring offer", subject: "Spring", body: "Hello")
@@ -207,6 +213,7 @@ module StaffPages
       jobs
       invoices
 
+      @note = ClientNote.create!(client: @client, user:, body: "Prefers morning visits.")
       @archived_client.archive!
       ClientErasure.new(@erased_client, by: user).erase!
       @operator_note = business.operator_notes.create!(author: user, body: "Asked about a second location.")
@@ -260,6 +267,7 @@ module StaffPages
       @draft_invoice = Invoice.from_job!(job("Leaf removal"), by: user)
       @sent_invoice = sent_invoice("Window cleaning")
       @part_paid_invoice = sent_invoice("Fence painting").tap { pay(_1, _1.total_cents / 2) }
+      @payment = @part_paid_invoice.payments.first
       @overdue_invoice = sent_invoice("Drain clearing").tap { _1.update_columns(issued_on: business.today - 40, due_on: business.today - 10) }
       @paid_invoice = sent_invoice("Edging").tap { pay(_1, _1.total_cents) }
       @void_invoice = sent_invoice("Lights").tap { _1.void!(reason: "Billed twice", by: user) }

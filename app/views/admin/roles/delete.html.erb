@@ -2,7 +2,7 @@
 <%= page_header "Delete #{@role.name}" do %>
   <%= link_to admin_roles_path, class: button_classes(:tertiary) do %><%= icon "arrow-left" %> Roles<% end %>
 <% end %>
-<div class="max-w-xl">
+<div class="form-split">
   <%= card do %>
     <%= form_with url: admin_role_path(@role), method: :delete, class: "space-y-4" do %>
       <% if @members.any? %>

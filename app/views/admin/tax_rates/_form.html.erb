@@ -1,4 +1,4 @@
-<%= form_with model: @rate, url: (@rate.persisted? ? admin_tax_rate_path(@rate) : admin_tax_rates_path), class: "max-w-xl space-y-4" do |f| %>
+<%= form_with model: @rate, url: (@rate.persisted? ? admin_tax_rate_path(@rate) : admin_tax_rates_path), class: "form-split space-y-4" do |f| %>
   <% if @rate.errors[:base].any? %>
     <div class="banner banner-danger" role="alert"><%= icon "alert-circle" %><p><%= @rate.errors[:base].to_sentence %></p></div>
   <% end %>

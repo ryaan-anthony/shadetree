@@ -1,5 +1,5 @@
 <% content_for :title, "Not available" %>
-<div class="card mx-auto mt-6 max-w-lg">
+<div class="card form-split">
   <%= empty_state level: 1, title: "This isn't available with your role",
                   text: "Ask an owner or admin of #{current_business&.name || "this business"} if you need access.",
                   icon: "lock" do %>

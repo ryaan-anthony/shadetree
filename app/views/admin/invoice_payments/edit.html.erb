@@ -3,7 +3,7 @@
 <%= page_header "Change a payment", lede: "On invoice #{@invoice.number} for #{@invoice.client.display_name}. The invoice's history keeps what it was and why it changed." do %>
   <%= link_to "Cancel", admin_invoice_path(@invoice), class: button_classes(:tertiary) %>
 <% end %>
-<div class="max-w-2xl space-y-4">
+<div class="form-split space-y-4">
   <%= form_with model: @payment, scope: :payment, url: admin_invoice_payment_path(@invoice, @payment), method: :patch do |f| %>
     <%= card do %>
       <%= render "fields", f:, payment: @payment %>

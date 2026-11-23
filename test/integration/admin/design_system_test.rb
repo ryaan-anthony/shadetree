@@ -226,6 +226,24 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
     end.uniq
   end
 
+  # PLT-16: a page is Wide (the content area's full width, no limit of its own) or Form (.form-split:
+  # #303's form column, with an optional aside). Any other max width on a page-level block fails.
+  # Widths inside cards, dialogs, tables and fields aren't checked; a block holding form controls
+  # and no card is a field (a search box, a date). max-w-prose is a paragraph's measure.
+  WIDTH = /\A(?:[a-z0-9-]+:)*max-w-(?!none\z|full\z|prose\z)/
+  INSIDE = ".card, dialog, .modal, .menu, table, .field, .quote-doc".freeze
+  CONTROLS = "input:not([type=hidden]), select, textarea".freeze
+  BLOCKS = ".card, table, section, h2, h3".freeze
+
+  check :page_width_is_a_container do |_page, html|
+    html.css("main [class]").reject { _1.ancestors(INSIDE).any? }.filter_map do |node|
+      widths = classes(node).grep(WIDTH)
+      next if widths.empty? || node.matches?(CONTROLS) || (node.at_css(CONTROLS) && !node.matches?(BLOCKS) && !node.at_css(BLOCKS))
+
+      "#{node.name}.#{classes(node).first(3).join(".")} has #{widths.join(" ")}: use the Wide or Form container"
+    end
+  end
+
   setup do
     @business = businesses(:one)
     @owner = users(:one)
@@ -244,6 +262,18 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
         applies.call(page) ? instance_exec(page, html, &block).map { "#{page} [#{name}]: #{_1}" } : []
       end
     end
+  end
+
+  test "PLT-16: the width check flags a page-level width, not one inside a card, dialog or field" do
+    applies, block = CHECKS.fetch(:page_width_is_a_container)
+    page = StaffPages::Page.new(key: :demo, name: "Demo", path: "/", kind: :form)
+    run = ->(body) { applies.call(page) && instance_exec(page, Nokogiri::HTML5("<main>#{body}</main>"), &block) }
+    assert_equal 1, run.("<div class='max-w-3xl'><section class='card'></section></div>").size
+    assert_equal 1, run.("<form class='mx-auto max-w-lg'><div class='card'><input></div></form>").size
+    assert_equal 1, run.("<section class='card lg:max-w-[40rem]'><input></section>").size
+    assert_empty run.("<div class='form-split'><aside class='form-split-aside'></aside><form></form></div>")
+    assert_empty run.("<div class='card'><div class='max-w-xs'></div></div><dialog><p class='max-w-md'></p></dialog>")
+    assert_empty run.("<div class='relative max-w-md'><input type='search'></div><select class='max-w-xs'></select>")
   end
 
   test "every staff page passes the design-system checks" do

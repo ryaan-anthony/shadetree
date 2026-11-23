@@ -2,7 +2,7 @@
 <% content_for :title, "Email settings" %>
 <%= page_header "Email settings", lede: "Everything shows in Notifications. Choose what you also get by email from #{current_business.name}." %>
 
-<%= form_with url: settings_admin_notifications_path, method: :patch, class: "max-w-2xl space-y-4" do %>
+<%= form_with url: settings_admin_notifications_path, method: :patch, class: "form-split space-y-4" do %>
   <%= card title: "Email me when" do %>
     <% if @types.empty? %>
       <p class="text-sm2 text-muted">Nothing to choose yet.</p>

@@ -5,7 +5,7 @@
 <% members = current_business.business_users.includes(:user).select { (_1.active? && _1.can?(:field_work)) || visit.assignee_ids.include?(_1.user_id) }.sort_by { _1.user.full_name.downcase } %>
 <% zone = @job.location.time_zone %><%# CAT-07: the job's location's zone %>
 <% zone_name = ActiveSupport::TimeZone::MAPPING.key(zone.tzinfo.identifier) || zone.tzinfo.identifier.split("/").last.tr("_", " ") %>
-<%= form_with model: visit, url: (visit.new_record? ? admin_job_visits_path(@job) : admin_job_visit_path(@job, visit)), class: "min-w-0 max-w-2xl space-y-4" do |f| %>
+<%= form_with model: visit, url: (visit.new_record? ? admin_job_visits_path(@job) : admin_job_visit_path(@job, visit)), class: "min-w-0 space-y-4" do |f| %>
   <% problems = visit.errors.reject { _1.attribute.in?(%i[scheduled_on start_time window_end_time duration_minutes instructions]) }.map(&:full_message) %>
   <% if problems.any? %><div class="banner banner-danger" role="alert"><%= icon "alert-circle" %><p><%= problems.to_sentence %></p></div><% end %>
   <%= f.hidden_field :lock_version if visit.persisted? %>
