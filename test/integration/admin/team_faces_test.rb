@@ -60,6 +60,14 @@ class Admin::TeamFacesTest < ActionDispatch::IntegrationTest
     assert_select "li", /#{@tech.full_name}\s*Lead technician/
   end
 
+  test "a deactivated member on a visit keeps their face and title for staff" do
+    @business.business_users.find_by!(user: @tech).deactivate!
+    as_member(@owner)
+    get admin_job_path(@job)
+    assert_select "#visit-#{@visit.uid} li", /#{@tech.full_name}\s*Lead technician/
+    assert_select "#visit-#{@visit.uid} li img.avatar", 1
+  end
+
   test "more people on the team don't mean more queries" do
     as_member(@owner)
     get admin_team_path

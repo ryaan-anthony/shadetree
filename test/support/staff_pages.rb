@@ -74,6 +74,9 @@ module StaffPages
     def pages
       # Plan features, so their pages show rather than send you to Plan.
       business.update!(plan_overrides: { "features" => %w[automations message_templates locations custom_roles].index_with(true) })
+      # ACC-09: a profile photo, so the photo (not only initials) is checked on Team, My day and the menu.
+      face = Rails.root.join("test/fixtures/files/face.jpg")
+      business.business_users.find_by!(user:).update!(photo: { io: face.open, filename: "face.jpg" }, title: "Owner")
       Tenancy.with_business(business) { records }
       lists + forms + details + settings + ops
       @pages
