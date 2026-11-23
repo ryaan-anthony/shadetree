@@ -1,4 +1,5 @@
 class Users::PasswordsController < Devise::PasswordsController
+  public_page! # the reset link in the email: whoever follows it usually can't sign in (#378)
   # OPS-03: what support may do while viewing as a member
   impersonation :blocked # account settings
   layout "marketing"

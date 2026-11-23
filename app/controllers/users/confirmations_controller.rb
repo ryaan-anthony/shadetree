@@ -1,4 +1,5 @@
 class Users::ConfirmationsController < Devise::ConfirmationsController
+  public_page! # the link in the confirmation email (#378)
   # OPS-03: what support may do while viewing as a member
   impersonation :blocked # account settings
   layout "marketing"

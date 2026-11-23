@@ -1,4 +1,5 @@
 class Users::UnlocksController < Devise::UnlocksController
+  public_page! # the link in the unlock email (#378)
   # OPS-03: what support may do while viewing as a member
   impersonation :blocked # account settings
   layout "marketing"
