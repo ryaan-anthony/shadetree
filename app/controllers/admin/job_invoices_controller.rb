@@ -9,7 +9,7 @@ class Admin::JobInvoicesController < Admin::BaseController
 
   def create
     job = Job.find_by_param!(params[:job_id])
-    invoice = progress? ? WorkBilling.bill_progress!(job, by: current_user) : Invoice.from_job!(job, by: current_user)
+    invoice = progress? ? WorkBilling.bill_progress!(job, by: current_user, discount: params[:discount]) : Invoice.from_job!(job, by: current_user, discount: params[:discount])
     redirect_to edit_admin_invoice_path(invoice), notice: "#{progress? ? "Progress invoice" : "Invoice"} #{invoice.number} started from job #{job.number}."
   rescue ActiveRecord::RecordInvalid => error
     redirect_to admin_job_path(job), alert: "Couldn't start an invoice: #{error.record.errors.full_messages.to_sentence}"

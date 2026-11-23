@@ -144,7 +144,7 @@ class Admin::InvoicesController < Admin::BaseController
   def builder_params
     params.require(:invoice).permit(
       :lock_version, :lines_present, :client, :property, :location, :title, :message, :internal_notes, :terms, :issued_on, :payment_terms, :due_on,
-      :prices_include_tax, :discount_kind, :discount_value, tax_rates: [], attachments: [], job_photos: [],
+      :prices_include_tax, :discount_kind, :discount_value, :quote_discount_applied, tax_rates: [], attachments: [], job_photos: [],
       lines: [ %i[key catalog_item name description quantity unit unit_price taxable discount_kind discount_value] ]
     )
   end
@@ -162,6 +162,7 @@ class Admin::InvoicesController < Admin::BaseController
     @invoice.set_discount(attrs[:discount_kind], attrs[:discount_value]) if attrs.key?(:discount_kind)
     @invoice.tax_rate_list = chosen_tax_rates(attrs[:tax_rates]) if attrs.key?(:tax_rates) && !@client_changed
     @invoice.sync_line_items((attrs[:lines] || {}).values) if attrs.key?(:lines) || attrs[:lines_present]
+    @invoice.quote_discount_applied = attrs[:quote_discount_applied] if attrs.key?(:quote_discount_applied) && @invoice.sent_at.nil? # PAY-08
     @invoice.attach_files(attrs[:attachments]) if attrs[:attachments].present?
     @invoice.attach_job_photos(attrs[:job_photos]) if attrs[:job_photos].present?
   end

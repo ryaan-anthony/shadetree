@@ -95,11 +95,11 @@ class Invoice < ApplicationRecord
   # JOB-09: lines added on site without a price are priced by the office first.
   class Unpriced < StandardError; end
 
-  def self.from_job!(job, by: nil) = WorkBilling.bill_job!(job, by:)
+  def self.from_job!(job, by: nil, discount: nil) = WorkBilling.bill_job!(job, by:, discount:)
 
   # PAY-01: an approved quote, billed. PAY-06 (WorkBilling): its completed jobs' unbilled lines, or
   # with no jobs its own lines directly.
-  def self.from_quote!(quote, by: nil) = WorkBilling.bill_quote!(quote, by:)
+  def self.from_quote!(quote, by: nil, discount: nil) = WorkBilling.bill_quote!(quote, by:, discount:)
 
   def copy_pricing_from(document, lines: document.current_line_items)
     assign_attributes(tax_rates: document.tax_rates, prices_include_tax: document.prices_include_tax,

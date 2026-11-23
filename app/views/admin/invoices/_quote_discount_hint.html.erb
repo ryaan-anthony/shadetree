@@ -1,0 +1,6 @@
+<%# locals: (invoice:, range:) -%>
+<% if range[:min].positive? %>
+  At least <%= money(Money.new(range[:min], invoice.currency)) %> now; there's only <%= money(Money.new(range[:work_left], invoice.currency)) %> of work left.
+<% else %>
+  Up to <%= money(Money.new(range[:max], invoice.currency)) %> on this invoice. What isn't used carries forward; the last invoice takes the rest.
+<% end %>

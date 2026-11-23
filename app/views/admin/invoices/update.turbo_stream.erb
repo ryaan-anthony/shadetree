@@ -6,6 +6,9 @@
 <% if @location_changed %><%# CAT-08 %>
   <%= turbo_stream.update "location_reprice" do %><%= render "admin/locations/reprice", document: @invoice %><% end %>
 <% end %>
+<% if (range = @invoice.quote_discount_range) %><%# PAY-08: the range moves with the lines %>
+  <%= turbo_stream.update "quote_discount_hint" do %><%= render "admin/invoices/quote_discount_hint", invoice: @invoice, range: %><% end %>
+<% end %>
 <%= turbo_stream.update "builder_errors" do %><%= render "admin/quotes/errors", quote: @invoice %><% end %>
 <%= turbo_stream.replace "invoice_lock_version" do %><input type="hidden" name="invoice[lock_version]" id="invoice_lock_version" value="<%= @invoice.lock_version %>" autocomplete="off"><% end %>
 <%# The worked-out due date and its errors; the terms and date controls stay as the user left them. %>

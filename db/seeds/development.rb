@@ -703,9 +703,9 @@ end
 
 # PAY-08: "Roof replacement" with a $100 fixed discount: half the roof billed up front as progress
 # (sent), then the job completed and its final invoice a draft that credits the $500 before tax
-# and takes its share of the discount. The gutters are still to do. Made last, and its send
-# counted before this billing period, so the rest of the demo (numbers, the quote allowance) and
-# the help screenshots taken from it stay as they were.
+# and applies all $100 of the quote's discount (owner, 2026-11-23). The gutters are still to do.
+# Made last, and its send counted before this billing period, so the rest of the demo (numbers,
+# the quote allowance) and the help screenshots taken from it stay as they were.
 Tenancy.with_business(business) do
   owner = User.find_by!(email: "owner@example.com")
   client = Client.order(:id).fourth || Client.order(:id).first
@@ -730,7 +730,7 @@ Tenancy.with_business(business) do
     early.reload.save!
     early.mark_sent!(by: owner, channel: "link")
     job.reload.complete!(by: owner)
-    Invoice.from_job!(job.reload, by: owner)
+    Invoice.from_job!(job.reload, by: owner, discount: "100")
     Feature.overrides.delete("split_jobs") unless split
   end
 end

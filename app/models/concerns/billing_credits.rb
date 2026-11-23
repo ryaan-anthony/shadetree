@@ -17,6 +17,7 @@ module BillingCredits
   extend ActiveSupport::Concern
 
   KINDS = %w[work progress].freeze
+  APPLY_ALL = 1_000_000_000_000 # "Apply all": as much of the quote's discount as the range allows
 
   included do
     has_many :credits, -> { order(:position, :id).includes(:source_invoice) }, class_name: "InvoiceCredit", inverse_of: :invoice,
@@ -25,9 +26,11 @@ module BillingCredits
     validates :kind, inclusion: { in: KINDS }
     validate :progress_within_what_is_left, if: -> { progress? && status_in_database.in?([ nil, "draft" ]) && billing_credits? }
     validate :keeps_credited_progress, if: -> { progress? && billing_credits? && sent_version }
-    validate :progress_matches_on_tax_inclusion, if: -> { draft? && billing_credits? }
+    validate :progress_matches_on_tax_inclusion, if: -> { status_in_database.in?([ nil, "draft" ]) && billing_credits? }
     validate :keeps_its_credits, if: -> { kind == "work" && sent_at_in_database && draft? && credits.any? && errors.empty? }
     before_save :work_out_credits, prepend: true, if: -> { kind == "work" && sent_at_in_database.nil? && status_in_database.in?([ nil, "draft" ]) && billing_credits? }
+    before_save :choose_progress_discount, prepend: true, if: -> { progress? && sent_at_in_database.nil? && status_in_database.in?([ nil, "draft" ]) && billing_credits? }
+    validate :progress_leaves_room_for_the_discount, if: -> { progress? && status_in_database.in?([ nil, "draft" ]) && sent_at_in_database.nil? && billing_credits? }
     before_save { @progress_changed = progress? && sent_at_in_database && line_items.any?(&:changed_for_autosave?) }
     after_save(if: -> { @progress_changed }) { rework_drafts! }
   end
@@ -47,6 +50,28 @@ module BillingCredits
   def pre_tax_credits = credits.reject(&:marked_for_destruction?).select(&:pre_tax?)
 
   def quote_discount_share = Money.new(quote_discount_share_cents.to_i, currency)
+
+  # The builder's "Apply now" (dollars, or "all"): staff's choice of how much of the quote's
+  # discount this invoice applies (owner, 2026-11-23). It's held to the range on each save.
+  def quote_discount_applied=(value)
+    value = value.to_s.strip
+    self.quote_discount_chosen_cents = if value == "all" then APPLY_ALL
+    elsif value.empty? then nil
+    else [ Money.parse(value, currency).cents, 0 ].max
+    end
+  rescue ArgumentError
+    errors.add(:quote_discount_applied, "isn't an amount")
+  end
+
+  # For the builder: { left:, min:, max:, work_left: } in cents, or nil when there's nothing to
+  # choose (no discount left, not quote work, sent already).
+  def quote_discount_range
+    return unless billing_credits? && quote && sent_at.nil? && draft?
+
+    lock_billing!
+    range = discount_range(BillingLedger.for(self))
+    range if range[:left].positive?
+  end
 
   # What the client sees (owner, 2026-11-23): one "Credit from INV-0004" per invoice credited, as
   # it charged: each source's credits with their own tax at their own rates. Only the rounding
@@ -130,19 +155,74 @@ module BillingCredits
     lines = current_line_items
     finals = lines.select { _1.final && (_1.job_line_item_id || _1.quote_line_item_id) }
     share_lines(ledger, lines, finals)
-    self.quote_discount_share_cents = ledger.quote_share_cents(finals)
-
-    # Each final bill takes, at most, what this invoice charges for its line: net of the share and
-    # this invoice's own discount, before tax (the same measure as the progress it credits).
-    priced = totals(credits: false)
-    net = lines.zip(priced.lines).to_h { |line, result| [ line, [ result.taxable.cents, 0 ].max ] }
-    caps = finals.map { |line| [ line, net[line], rates_for(line) ] }
-    others = lines.reject { _1.job_line_item_id || _1.quote_line_item_id }.sum { net[_1] }
-    wanted = ledger.credits_for(caps, others_cap: others, bases: tax_bases(priced))
+    range = discount_range(ledger, finals:)
+    self.quote_discount_share_cents = range[:applied]
+    wanted = credits_wanted(ledger, finals)
     return if wanted == pre_tax_credits.map { _1.snapshot.symbolize_keys }
 
     credits.each(&:mark_for_destruction)
     wanted.each { credits.build(**_1, business:) }
+  end
+
+  # Each final bill takes, at most, what this invoice charges for its line: net of the applied
+  # discount and this invoice's own, before tax (the same measure as the progress it credits).
+  def credits_wanted(ledger, finals)
+    lines = current_line_items
+    priced = totals(credits: false)
+    net = lines.zip(priced.lines).to_h { |line, result| [ line, [ result.taxable.cents, 0 ].max ] }
+    caps = finals.map { |line| [ line, net[line], rates_for(line) ] }
+    others = lines.reject { _1.job_line_item_id || _1.quote_line_item_id }.sum { net[_1] }
+    ledger.credits_for(caps, others_cap: others, bases: tax_bases(priced))
+  end
+
+  # The quote's discount this invoice may apply (owner, 2026-11-23), in cents:
+  # - left: what's still to apply, less other invoices that aren't void;
+  # - max: left, and no more than this invoice charges after its credits (a final bill) or charges
+  #   (progress);
+  # - min: what the work left after it can't absorb: left less (work still to bill − progress not
+  #   yet credited, after this bill's credits). On progress its own charge also waits to be
+  #   credited, so applying some now leaves the work room to take the rest;
+  # - applied: staff's choice (nil: $0, "Apply later") held to [min, max].
+  def discount_range(ledger, finals: nil)
+    left = ledger.outstanding_cents
+    return { left: 0, min: 0, max: 0, applied: 0, work_left: 0 } unless left.positive?
+
+    saved = quote_discount_share_cents
+    self.quote_discount_share_cents = 0
+    charge = totals(credits: false).lines.sum { [ _1.taxable.cents, 0 ].max }
+    if progress?
+      room = ledger.work_left_cents - ledger.uncredited_cents - charge
+      min = [ left - room, 0 ].max
+      max = [ left, charge ].min
+    else
+      finals ||= current_line_items.select { _1.final && (_1.job_line_item_id || _1.quote_line_item_id) }
+      credited = credits_wanted(ledger, finals).sum { _1[:amount_cents] }
+      room = ledger.work_left_cents(billed: finals) - (ledger.uncredited_cents - credited)
+      min = [ left - room, 0 ].max
+      max = [ left, charge - credited ].min
+    end
+    self.quote_discount_share_cents = saved
+    max = [ max, 0 ].max
+    applied = (quote_discount_chosen_cents || 0).clamp(0, max)
+    { left:, min: [ min, max ].min, max:, applied: [ applied, min ].max.clamp(0, max), work_left: [ room, 0 ].max, short: min > max }
+  end
+
+  def choose_progress_discount
+    lock_billing!
+    self.quote_discount_share_cents = discount_range(BillingLedger.for(self))[:applied]
+  end
+
+  # A progress invoice can't charge so much that the work left can't take the rest of the
+  # quote's discount, even with all of it applied now.
+  def progress_leaves_room_for_the_discount
+    return unless quote_id
+
+    lock_billing!
+    range = discount_range(BillingLedger.for(self))
+    return unless range[:short]
+
+    errors.add(:base, "This leaves too little work to take the rest of the quote's discount " \
+                      "(#{Money.new(range[:left], currency).format}). Lower it, or apply the discount on it.")
   end
 
   # What each tax rate is charged on before credits.
@@ -256,7 +336,9 @@ module BillingCredits
       errors.add(:prices_include_tax, source ? "must match #{source.number} (#{source.prices_include_tax ? "prices include tax" : "tax is added"})" \
                                              : "must match #{mismatched.to_sentence}, whose progress it credits")
     end
-    progress_matches_on_tax_rates(ledger) if ledger && kind == "work"
+    # A work invoice is made even when its progress was taxed otherwise (it credits none of that),
+    # so staff can match the tax on the draft; saving it again or sending it is refused till then.
+    progress_matches_on_tax_rates(ledger) if ledger && kind == "work" && persisted?
   end
 
   # A progress invoice is taxed as its job or quote is, line by line, so its final can credit it.
@@ -266,11 +348,21 @@ module BillingCredits
     ledger = BillingLedger.for(self)
     current_line_items.select { _1.job_line_item_id || _1.quote_line_item_id }.each do |line|
       work = line.job_line_item_id ? ledger.job_line(line.job_line_item_id) : ledger.quote_line(line.quote_line_item_id)
-      next if work.nil? || (line.taxable == work.taxable && line.tax_rates.nil?)
+      next if work.nil?
 
-      errors.add(:base, "#{line.name.presence || "Item"} is taxed as on #{source.number}, so the final invoice can credit it.")
+      unless line.taxable == work.taxable && line.tax_rates.nil?
+        next errors.add(:base, "#{line.name.presence || "Item"} is taxed as on #{source.number}, so the final invoice can credit it.")
+      end
+      # Progress on a quote line a live job holds is taxed as that job will bill it.
+      other = work.is_a?(QuoteLineItem) ? ledger.live_jobs_of(work).reject { _1.tax_rate_list.to_set == tax_rate_list.to_set && _1.prices_include_tax == prices_include_tax } : []
+      next if other.empty?
+
+      errors.add(:base, "#{line.name.presence || "Item"} is on #{other.map(&:number).to_sentence}, taxed at #{taxed(other.first.tax_rate_list)}: " \
+                        "bill its progress from #{other.one? ? "that job's" : "each job's"} page.")
     end
   end
+
+  def taxed(list) = list.any? ? list.map { "#{_1.name} #{_1.percent.to_d.round(4).to_s("F").sub(/\.?0+\z/, "")}%" }.to_sentence : "no tax"
 
   # A final bill credits its line's progress at the rates it was charged at: a line taxed
   # otherwise is refused, so the credit always equals what was charged.
@@ -280,9 +372,10 @@ module BillingCredits
       other = ledger.pools_of(line).select { ledger.remaining_cents(_1).positive? && ledger.rates_of(_1).to_set != rates }
       next if other.empty?
 
-      taxed = ->(list) { list.any? ? list.map { "#{_1.name} #{_1.percent.to_d.round(4).to_s("F").sub(/\.?0+\z/, "")}%" }.to_sentence : "no tax" }
-      errors.add(:base, "#{line.name.presence || "Item"} is taxed at #{taxed.(rates.to_a)}, but #{other.map { _1.invoice.number }.uniq.to_sentence} " \
-                        "charged #{taxed.(ledger.rates_of(other.first))} for it. Tax it the same to credit that, or void #{other.one? ? "it" : "them"} first.")
+      sources = other.map(&:invoice).uniq
+      undo = sources.all?(&:voidable?) ? "void #{sources.one? ? "it" : "them"} first" : "refund #{sources.one? ? "its" : "their"} payments and void #{sources.one? ? "it" : "them"} first"
+      errors.add(:base, "#{line.name.presence || "Item"} is taxed at #{taxed(rates.to_a)}, but #{sources.map(&:number).to_sentence} " \
+                        "charged #{taxed(ledger.rates_of(other.first))} for it. Set this invoice's tax to #{taxed(ledger.rates_of(other.first))} to credit it, or #{undo}.")
     end
   end
 end

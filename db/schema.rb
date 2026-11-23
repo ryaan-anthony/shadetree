@@ -806,6 +806,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_100000) do
     t.datetime "checkout_expires_at"
     t.string "kind", default: "work", null: false
     t.bigint "quote_discount_share_cents", default: 0, null: false
+    t.bigint "quote_discount_chosen_cents"
     t.index ["business_id", "location_id"], name: "index_invoices_on_business_id_and_location_id"
     t.index ["business_id", "number"], name: "index_invoices_on_business_id_and_number", unique: true
     t.index ["business_id", "status", "due_on"], name: "index_invoices_on_business_id_and_status_and_due_on"
@@ -826,6 +827,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_100000) do
     t.check_constraint "due_on >= issued_on", name: "invoices_due_after_issue"
     t.check_constraint "kind::text = ANY (ARRAY['work'::character varying, 'progress'::character varying]::text[])", name: "invoices_kind"
     t.check_constraint "payment_terms::text = ANY (ARRAY['due_on_receipt'::character varying::text, 'net_7'::character varying::text, 'net_15'::character varying::text, 'net_30'::character varying::text, 'custom'::character varying::text])", name: "invoices_payment_terms"
+    t.check_constraint "quote_discount_chosen_cents IS NULL OR quote_discount_chosen_cents >= 0", name: "invoices_quote_discount_chosen_nonnegative"
     t.check_constraint "quote_discount_share_cents >= 0", name: "invoices_quote_discount_share_nonnegative"
     t.check_constraint "status::text = ANY (ARRAY['draft'::character varying::text, 'sent'::character varying::text, 'partially_paid'::character varying::text, 'paid'::character varying::text, 'void'::character varying::text])", name: "invoices_status"
   end

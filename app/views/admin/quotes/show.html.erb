@@ -36,7 +36,11 @@
     <% elsif billed.one? %>
       <%= link_to admin_invoice_path(billed.first), class: button_classes(:secondary), id: "quote-invoice-link" do %><%= icon "invoice" %> <%= billed.first.kind_label %> <%= billed.first.number %><% end %>
     <% end %>
-    <% if unbilled || direct %>
+    <% discount_left = (BillingLedger.new(quote:).outstanding_cents if quote.approved?).to_i %><%# PAY-08: asked when there's some %>
+    <% if (unbilled || direct) && discount_left.positive? %>
+      <%= render "admin/invoices/create_with_discount", url: admin_quote_invoices_path(quote), label: "Create invoice", left: discount_left, currency: quote.currency,
+                                                        id: "quote-create-invoice", button_class: button_classes(unbilled ? :primary : :secondary) %>
+    <% elsif unbilled || direct %>
       <%= button_to admin_quote_invoices_path(quote), class: button_classes(unbilled ? :primary : :secondary), form: { class: "contents" } do %><%= icon "invoice" %> Create invoice<% end %>
     <% end %>
   <% else %>
@@ -67,7 +71,7 @@
     <%# PAY-08: before the work is done, part of it can be billed as progress (credited on the final invoice). %>
     <% if split && quote.approved? && !quote.recurring? && (quote.line_items.any? { _1.to_do_quantity.positive? } || jobs.any?(&:open?)) %>
       <%= button_to admin_quote_invoices_path(quote, progress: 1), class: "menu-item", id: "quote-progress-invoice",
-                    form: { class: "contents", data: { turbo_confirm: "Bill part of #{quote.number} before it's done? A progress invoice is credited when the work is billed.", turbo_confirm_button: "Create progress invoice" } } do %><%= icon "plus" %> Create progress invoice<% end %>
+                    form: { class: "contents", data: { turbo_confirm: "Bill part of #{quote.number} before it's done? A progress invoice is credited when the work is billed.#{" The draft asks how much of the quote's discount to apply now." if discount_left.to_i.positive?}", turbo_confirm_button: "Create progress invoice" } } do %><%= icon "plus" %> Create progress invoice<% end %>
     <% end %>
     <% if billed.any? && !split %><%# PAY-06: with split jobs the header's Create invoice bills what's left %>
       <%= button_to admin_quote_invoices_path(quote), class: "menu-item",

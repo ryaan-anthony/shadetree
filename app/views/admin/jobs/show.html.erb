@@ -54,7 +54,11 @@
     <%# PAY-06 (split jobs): ready while some of its lines aren't billed; before, until it has an invoice. %>
     <% uninvoiced = split ? billable : job.invoices.none? %>
     <p class="flex-1">Completed <%= local_time(job.completed_at) %><%= " by #{job.completed_by.full_name}" if job.completed_by %>.<%= " Ready to invoice." if uninvoiced %></p>
-    <% if uninvoiced %>
+    <% banner_left = uninvoiced && split && job.quote&.approved? ? BillingLedger.new(quote: job.quote).outstanding_cents : 0 %>
+    <% if uninvoiced && banner_left.positive? %><%# PAY-08: how much of the quote's discount to apply %>
+      <%= render "admin/invoices/create_with_discount", url: admin_job_invoices_path(job), label: "Create invoice", left: banner_left, currency: job.currency,
+                                                        id: "job-banner-invoice", button_class: button_classes(:primary, :sm) %>
+    <% elsif uninvoiced %>
       <%= button_to admin_job_invoices_path(job), class: button_classes(:primary, :sm), form: { class: "contents" } do %><%= icon "invoice" %> Create invoice<% end %>
     <% end %></div>
 <% elsif job.status == "cancelled" %>
@@ -80,9 +84,17 @@
     <% invoices = job.invoices.order(:created_at, :id).to_a %>
     <% billed = invoices.reject(&:void?) %><%# #289: a second invoice is possible (progress billing), but never the obvious button %>
     <%# PAY-08: before it's done, part of it can be billed as progress (credited on its final invoice). %>
-    <% create = if split
+    <%# PAY-08: with some of the quote's discount left, each asks how much to apply now (owner, 2026-11-23). %>
+    <% discount_left = (split && job.quote&.approved? ? BillingLedger.new(quote: job.quote).outstanding_cents : 0) %>
+    <% progress_ok = job.open? && !job.quote&.recurring? %>
+    <% create = if split && discount_left.positive?
+                  safe_join([ (render("admin/invoices/create_with_discount", url: admin_job_invoices_path(job, progress: 1), label: "Create progress invoice", left: discount_left, currency: job.currency,
+                                      id: "job-progress-invoice", button_class: button_classes(:tertiary, :sm), confirm: "Bill part of #{job.number} before it's done. A progress invoice is credited when the work is billed.") if progress_ok),
+                              (render("admin/invoices/create_with_discount", url: admin_job_invoices_path(job), label: "Create invoice", left: discount_left, currency: job.currency,
+                                      id: "job-create-invoice", button_class: button_classes(:secondary, :sm)) if billable) ].compact, " ").presence
+                elsif split
                   safe_join([ (button_to(admin_job_invoices_path(job, progress: 1), class: button_classes(:tertiary, :sm), id: "job-progress-invoice",
-                                         form: { class: "contents", data: { turbo_confirm: "Bill part of #{job.number} before it's done? A progress invoice is credited when the work is billed.", turbo_confirm_button: "Create progress invoice" } }) { icon("plus") + " Create progress invoice" } if job.open? && !job.quote&.recurring?),
+                                         form: { class: "contents", data: { turbo_confirm: "Bill part of #{job.number} before it's done? A progress invoice is credited when the work is billed.", turbo_confirm_button: "Create progress invoice" } }) { icon("plus") + " Create progress invoice" } if progress_ok),
                               (button_to(admin_job_invoices_path(job), class: button_classes(:secondary, :sm), form: { class: "contents" }) { icon("plus") + " Create invoice" } if billable) ].compact, " ").presence
                 else
                   button_to(admin_job_invoices_path(job), class: button_classes(billed.any? ? :tertiary : :secondary, :sm),

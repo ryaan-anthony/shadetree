@@ -116,6 +116,7 @@
             <%= text_field_tag "invoice[discount_value]", @invoice.discount_value, id: "invoice_discount_value", inputmode: "decimal", class: "input text-right tabular", placeholder: "0" %>
           </div>
         </div>
+        <%= render "quote_discount", invoice: @invoice %>
         <%= render "admin/quotes/tax_rates", quote: @invoice, scope: "invoice" %>
         <div class="border-t border-line pt-3"><%= render "admin/quotes/totals", quote: @invoice, totals: %></div>
       </div>

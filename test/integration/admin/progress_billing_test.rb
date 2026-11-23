@@ -77,7 +77,11 @@ class Admin::ProgressBillingTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?] button#quote-progress-invoice", admin_quote_invoices_path(@quote, progress: 1), /Create progress invoice/
     job = make
     get admin_job_path(job)
-    assert_select "form[action=?] button#job-progress-invoice", admin_job_invoices_path(job, progress: 1)
+    assert_select "button#job-progress-invoice", /Create progress invoice/
+    assert_select "#job-progress-invoice-dialog form[action=?]", admin_job_invoices_path(job, progress: 1) do
+      assert_select "label", /Quote discount: \$100\.00 left\. Apply now/
+      assert_select "button[name=discount][value=all]", "Apply all"
+    end
 
     early = as_business(@business) do
       WorkBilling.bill_progress!(job, by: users(:one)).tap do |invoice|
@@ -96,7 +100,7 @@ class Admin::ProgressBillingTest < ActionDispatch::IntegrationTest
     final = as_business(@business) { Invoice.last }
     get edit_admin_invoice_path(final)
     assert_select "#quote_totals .quote-totals-credit", /Billed earlier on #{early.number}\s*−\$900\.00/
-    assert_select "#quote_totals", /Share of the quote's discount\s*−\$100\.00/
+    assert_select "#quote_totals", /Quote discount\s*−\$100\.00/
     assert_equal 0, final.total_cents
     as_business(@business) { final.reload.mark_sent!(by: users(:one), channel: "link") }
 
@@ -163,5 +167,27 @@ class Admin::ProgressBillingTest < ActionDispatch::IntegrationTest
     many = [ admin_quote_path(@quote), admin_job_path(job) ].map { count.(_1) }
     puts "queries #{few} -> #{many}" if ENV["SHOW_QUERIES"]
     few.zip(many).each { |before, after| assert_operator after - before, :<=, 2, "#{before} queries with 2 progress invoices, #{after} with 12" }
+  end
+
+  test "the quote's discount: chosen when creating, changed on the draft, Apply all, and the minimum explained" do
+    as_business(@business) do
+      @quote.line_items.build(key: "g", name: "Gutters", quantity: 1, position: 1).tap { _1.unit_price = "100" }.save!
+      @quote.update_columns(discount_kind: "amount", discount_amount_cents: 300_00)
+    end
+    roof, gutters = as_business(@business) { @quote.reload.line_items.map { |line| Job.from_quote!(@quote.reload, picks: { line.id => "1" }) } }
+    as_business(@business) { roof.reload.complete!(by: users(:one)) }
+    post admin_job_invoices_path(roof, discount: "250")
+    invoice = as_business(@business) { Invoice.last }
+    assert_equal 250_00, invoice.quote_discount_share_cents
+    get edit_admin_invoice_path(invoice)
+    assert_select "#quote_discount_field label", /Quote discount: \$300\.00 left\. Apply now/
+    assert_select "#invoice_quote_discount_applied[value=?]", "250.00"
+
+    patch admin_invoice_path(invoice), params: { invoice: { quote_discount_applied: "0" } }, as: :turbo_stream
+    assert_equal 200_00, invoice.reload.quote_discount_share_cents, "held to the minimum"
+    assert_match "At least $200.00 now; there's only $100.00 of work left.", response.body
+    patch admin_invoice_path(invoice), params: { invoice: { quote_discount_applied: "all" } }
+    assert_equal 300_00, invoice.reload.quote_discount_share_cents
+    assert gutters
   end
 end
