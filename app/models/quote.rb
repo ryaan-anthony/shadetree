@@ -324,7 +324,7 @@ class Quote < ApplicationRecord
   # after a template fix), the quote's own content (any saved edit bumps lock_version) and status,
   # and the client and property it names. Not the letterhead or the expiry date: a sent PDF
   # keeps the business's details as sent, and says "Valid until" either way.
-  PDF_VERSION = 1
+  PDF_VERSION = 2
   def pdf_fingerprint
     [ PDF_VERSION, id, lock_version, status, client.updated_at.to_f, property&.updated_at.to_f ].join(":")
   end

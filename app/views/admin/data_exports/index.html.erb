@@ -1,6 +1,6 @@
 <% content_for :title, "Your data" %>
 <%= render "admin/businesses/settings_header", current: "data" %>
-<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+<div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
   <%= card title: "Download as spreadsheets", subtitle: "Your data is yours: download any of it, any time, on any plan. Each file opens in Excel, Numbers or Google Sheets.", flush: true do %>
     <ul class="list" id="export-tables">
       <% DataExport::TABLES.each_value do |table| %>

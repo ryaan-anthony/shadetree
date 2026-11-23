@@ -73,7 +73,7 @@
     <%= link_to "Send it again", new_admin_quote_send_path(quote), class: "font-medium text-ink underline-offset-2 hover:underline" %></p>
 <% end %>
 <%= render "admin/quotes/from_request", quote: %>
-<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+<div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
   <div class="min-w-0 space-y-4">
     <%= card do %>
       <dl class="grid gap-4 text-sm sm:grid-cols-4">

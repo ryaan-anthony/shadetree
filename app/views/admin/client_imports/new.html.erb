@@ -1,6 +1,6 @@
 <% content_for :title, "Import clients" %>
 <%= page_header "Import clients", lede: "Bring your list over from a spreadsheet or another tool." %>
-<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+<div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
   <%= card title: "Upload a CSV file" do %>
     <ol class="list-decimal space-y-1.5 pl-5 text-sm text-subtle">
       <li>Export your clients as CSV from your spreadsheet or old tool, or fill in <%= link_to "our template", template_admin_client_imports_path, class: "font-medium text-canopy hover:underline" %>.</li>

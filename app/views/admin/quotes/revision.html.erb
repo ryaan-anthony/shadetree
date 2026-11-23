@@ -7,7 +7,7 @@
   <%= link_to admin_quote_path(@quote), class: button_classes(:secondary) do %><%= icon "arrow-left" %> Back to the quote<% end %>
 <% end %>
 
-<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+<div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
   <%= card title: (snap["title"] || "Quote #{snap["number"]}") do %>
     <dl class="mb-4 grid gap-3 text-sm sm:grid-cols-3">
       <div><dt class="text-sm2 text-muted">Prepared for</dt><dd class="text-ink"><%= snap["client"] %></dd></div>

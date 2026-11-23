@@ -2,7 +2,7 @@
   <% if can?(:manage_owners) %><%= link_to admin_roles_path, class: button_classes(:secondary) do %><%= icon "shield" %> Roles<% end %><% end %>
 <% end %>
 
-<div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+<div class="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
   <div class="space-y-4">
     <%= card title: "Members", subtitle: pluralize(@active.size, "person"), flush: true do %>
       <div class="table-wrap">

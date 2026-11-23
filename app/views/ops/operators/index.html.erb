@@ -1,7 +1,7 @@
 <% content_for :title, "Operators" %>
 <h1 class="page-title">Operators</h1>
 <p class="page-lede">People who run Shadetree. Granting or revoking access asks for a fresh code.</p>
-<div class="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+<div class="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
   <%= card flush: true do %>
     <ul class="list" id="operators">
       <% @operators.each do |operator| %>

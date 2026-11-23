@@ -1,7 +1,7 @@
 <% content_for :title, "Message from #{@message.name}" %>
 <p><%= link_to "← Contact messages", ops_contact_messages_path(tab: tab_for(@message)), class: "text-sm2 text-muted hover:underline" %></p>
 <h1 class="page-title mt-2 break-words">Message from <%= @message.name %></h1>
-<div class="mt-6 grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+<div class="mt-6 grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
   <%= card do %>
     <div class="mb-3 flex flex-wrap gap-2" id="message-status">
       <% if @message.spam? %>
@@ -12,14 +12,14 @@
         <%= badge "Open", tone: :info %>
       <% end %>
     </div>
-    <dl class="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-[8rem_1fr]">
+    <dl class="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-[8rem_minmax(0,1fr)]">
       <% [ [ "Email", mail_to(@message.email, class: "break-all hover:underline") ],
            [ "Business", @message.business_name ],
            [ "Industry", (@message.industry_name if @message.industry) ],
            [ "Received", local_time(@message.created_at) ],
            [ "Handled", local_time(@message.handled_at) ] ].each do |label, value| %>
         <% next if value.blank? %>
-        <dt class="text-muted"><%= label %></dt><dd class="min-w-0 text-ink"><%= value %></dd>
+        <dt class="text-muted"><%= label %></dt><dd class="min-w-0 break-words text-ink"><%= value %></dd>
       <% end %>
     </dl>
     <h2 class="mt-5 text-sm font-semibold text-ink">Message</h2>
