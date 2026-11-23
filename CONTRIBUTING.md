@@ -75,8 +75,7 @@ notifies nobody. It never raises: problems are reported and can't break the acti
 ## Pull requests
 
 - **Small and focused.** Aim for under ~400 changed lines excluding generated files. A spec that
-  needs more becomes several PRs; merge partial work behind a feature flag (once PLT-11 lands)
-  rather than holding a long-lived branch.
+  needs more becomes several PRs; merge partial work behind a feature flag rather than holding a long-lived branch.
 - **Link the issue.** Use `Part of #N` on intermediate PRs and `Closes #N` on the final one.
 - **Tick the acceptance criteria** the PR satisfies, using the PR template.
 - **Show the UI.** Include mobile (360 px) and desktop screenshots for any UI change.
