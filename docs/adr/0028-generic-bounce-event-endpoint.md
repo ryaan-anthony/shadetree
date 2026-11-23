@@ -31,28 +31,38 @@ has a signed ingress for support email (ADR 0021) and a store-once event pattern
 
 ## Decision
 
-The app exposes one inbound bounce-event endpoint. A post is accepted only with a valid
-`v1=` HMAC-SHA256 over `<timestamp>.<body>`, keyed with a secret from the environment (at least
-32 characters; without it the endpoint is not found), within 5 minutes, under a size cap, with
-failed attempts rate limited per IP as on the support ingress. The body is either a delivery
-status notification or our versioned JSON event; both become the same normalised event (id,
-type, Message-ID, reference, recipient, status code, time). Events are stored once (by event id, else a
-digest of the body) and processed in the background. An event matches an `EmailMessage` by our
-Message-ID or reference header, and only if its recipient is one the email went to; permanent failures go through
-`EmailMessage#mark!` with send time's rules (mailbox statuses bounce and suppress, other
-permanent statuses fail without blaming the address), so the existing warning, timeline,
-notification and Resend follow. Only ids, type, status code, a reason category and times are
-kept; diagnostic text, addresses and payloads are never stored or logged. An optional bounce
-mailbox on the existing inbound-email path feeds parsed DSN emails into the same processing.
+- **Endpoint:** `POST /inbound/email_events`, with `X-Shadetree-Timestamp` and
+  `X-Shadetree-Signature` (`v1=` + hex HMAC-SHA256 over `<timestamp>.<body>`), keyed with a
+  per-environment secret from the environment (at least 32 characters; without it the endpoint
+  is not found). Refused: bad signatures, timestamps more than 5 minutes off, bodies over
+  256 KB. Failed attempts are rate limited per IP, as on the support ingress.
+- **Formats:** a delivery status notification (RFC 3464 fields) or our own strict, versioned
+  JSON event, documented in a runbook. Both become one normalised event (id, type, Message-ID,
+  reference, recipient, status and reply codes, time). App code names no provider.
+- **Forwarder:** a provider that can't post our format gets a small forwarder, kept in `infra/`
+  (ADR 0026). It verifies the provider's own signature and freshness before re-signing, uses
+  each environment's own secret, and never logs addresses.
+- **In the request:** verify, parse, then match and check the recipient. An event matches an
+  `EmailMessage` by our Message-ID or its existing reference header (`X-Shadetree-Email`, the
+  email's uid), and only if the recipient is its To or a CC on its send. Unmatched events and
+  those more than 14 days after the email was sent are counted and dropped.
+- **Stored, then enqueued:** once per event id (else a body digest): type, status code, reason
+  category, time, the email and the recipient's role (To or CC). Never the address, diagnostic
+  text or payload, in rows or logs. Rows are deleted after 90 days.
+- **Processing:** the background job applies send time's rules through `EmailMessage#mark!`
+  (mailbox statuses bounce and block the address; other permanent statuses fail without
+  blaming it). The error carries a code `reply_code` can read, and a late event is never
+  "our side". NTF-05 sets the product rules (CCs, complaints, answered or paid documents).
+- **Fallback:** an optional bounce mailbox on the existing inbound-email path feeds parsed
+  bounce emails into the same processing, only if the relay keeps our envelope sender.
 
 ## Consequences
 
 - Late bounces show like send-time refusals; switching providers is configuration only.
-- A provider that can't sign our way needs a small forwarder, kept as configuration in `infra/`
-  (ADR 0026), not in the app.
-- A relay may rewrite the Message-ID, so each client email also carries an opaque reference
-  header, and an event matches on either (owner, 2026-11-22).
-- The lookup by Message-ID spans businesses (`Tenancy.across_businesses`), reviewed like any bypass.
+- A relay may rewrite the Message-ID; the reference header covers that (owner, 2026-11-22).
+- The lookup spans businesses (`Tenancy.across_businesses`), reviewed like any bypass.
+- The relay keeps its own suppression list. Clearing an address in the app doesn't clear it
+  there, so the operations runbook gets that step.
 - New settings for PLT-09's list and the operations runbook: the endpoint secret, and the
   bounce address when the fallback is on. Each environment has its own secret.
 - **Cost:** none at launch: one endpoint, a small table purged after 90 days, a background job
