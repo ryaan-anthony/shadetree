@@ -12,6 +12,22 @@ class ProgressBillingTest < ActiveSupport::TestCase
 
   teardown { assert_empty as_business(@business) { JobClaim.unreconciled_lines.pluck(:id) }, "claimed = the sum of live claims" }
 
+  # Owner, 2026-11-23: "Credit from INV-x" equals what INV-x charged. Every progress invoice whose
+  # lines are all credited, on invoices that went out, was credited exactly what it charged.
+  teardown do
+    as_business(@business) do
+      Invoice.where(kind: "progress").where.not(sent_at: nil).where.not(status: "void").find_each do |progress|
+        used = InvoiceCredit.counted.where(source_invoice_id: progress.id).sum(:amount_cents)
+        next unless used.positive? && used == progress.totals.lines.sum { _1.taxable.cents }
+
+        shown = Invoice.where(id: InvoiceCredit.counted.where(source_invoice_id: progress.id).select(:invoice_id))
+                       .sum { |invoice| invoice.client_credits.sum { |source, amount| source == progress ? amount.cents : 0 } }
+        # Tax rounds once per rate on each invoice: within a cent per rate.
+        assert_in_delta progress.total_cents, shown, progress.totals.taxes.size, "Credit from #{progress.number} equals what it charged"
+      end
+    end
+  end
+
   # An approved quote with these lines ([key, name, quantity, price]).
   def approved_quote(lines, tax: nil, discount: nil, line_discounts: {}, untaxed: [], percent: nil, inclusive: false, quick: false)
     @quote = as_business(@business) do
@@ -503,5 +519,163 @@ class ProgressBillingTest < ActiveSupport::TestCase
       @client ||= @quote.client
     end
     assert_operator credited, :>, 25, "most scenarios bill progress first"
+  end
+
+  test "credit order: a line's own progress, then its quote line's, then over-billing; each capped by the bill" do
+    approved_quote([ [ "t", "Tree removal", 10, 100 ], [ "g", "Gutters", 1, 300 ], [ "s", "Shed", 1, 200 ] ])
+    shed_job = make(s: 1)
+    shed_early = send!(lower(progress(shed_job), "Shed" => 200))
+    trees_early = send!(lower(progress(@quote), "Tree removal" => 100, "Gutters" => nil))
+    job = make(t: 10, g: 1)
+    own = send!(lower(progress(job), "Tree removal" => 400, "Gutters" => nil))
+    as_business(@business) { shed_job.reload.cancel!(by: @owner, reason: "Not now", notify_client: false) }
+    # The shed's progress is on its quote line now, with nothing left to bill once a job that
+    # takes it does none of it and is billed ($0).
+    send!(bill_job(complete(make(s: 1), "Shed" => 0)))
+
+    final = bill_job(complete(job))
+    assert_equal [ [ "progress", own.number, 400_00 ], [ "progress", trees_early.number, 100_00 ], [ "over_billed", shed_early.number, 200_00 ] ],
+                 credits(final).first(3)
+    assert_equal 1300_00 - 700_00, final.total_cents
+  end
+
+  test "a quote line's fixed discount is shared by quantity billed, and the quote's by work, with the cap and carry" do
+    approved_quote([ [ "t", "Tree removal", 10, 100 ] ], line_discounts: { "t" => 50 })
+    first = send!(bill_job(complete(make(t: 3))))
+    assert_equal 15_00, as_business(@business) { first.line_items.sole.discount_share_cents }, "min($50, round($50 × 3 ÷ 10))"
+    second = send!(bill_job(complete(make(t: 7))))
+    assert_equal 35_00, as_business(@business) { second.line_items.sole.discount_share_cents }
+
+    approved_quote([ [ "a", "A", 1, 100 ], [ "b", "B", 1, 100 ], [ "c", "C", 1, 100 ] ], discount: "150")
+    a = send!(bill_job(complete(make(a: 1))))
+    assert_equal 50_00, a.quote_discount_share_cents
+    as_business(@business) { line("b").update_columns(unit_price_cents: 20_00) } # a reduction (QTE-10)
+    b = send!(bill_job(complete(make(b: 1))))
+    assert_equal 20_00, b.quote_discount_share_cents, "target $82 less $50, capped at B's $20"
+    c = send!(bill_job(complete(make(c: 1))))
+    assert_equal 80_00, c.quote_discount_share_cents, "the $12 held back falls into the last target"
+  end
+
+  test "a staff discount on a draft is kept apart from the share; a percent discount applies to each invoice" do
+    approved_quote([ [ "a", "A", 1, 100 ], [ "b", "B", 1, 100 ] ], discount: "50")
+    first = bill_job(complete(make(a: 1)))
+    as_business(@business) { first.reload.tap { _1.set_discount("amount", "10") }.save! }
+    send!(first)
+    assert_equal [ 25_00, 35_00 ], [ first.quote_discount_share_cents, first.discount_total_cents ]
+    second = send!(bill_job(complete(make(b: 1))))
+    assert_equal 25_00, second.quote_discount_share_cents, "the staff edit doesn't skew the next share"
+
+    approved_quote([ [ "r", "Roof", 1, 1000 ] ])
+    as_business(@business) { @quote.update_columns(discount_kind: "percent", discount_percent: 10) }
+    job = make(r: 1)
+    early = send!(lower(progress(job), "Roof" => 500))
+    final = bill_job(complete(job))
+    assert_equal [ 450_00, 450_00 ], [ early.total_cents, final.total_cents ], "10% off each: $900 in all"
+  end
+
+  test "a void: drafts work out credits again; progress credited on an invoice that went out can't be voided first" do
+    approved_quote([ [ "r", "Roof", 1, 1000 ] ])
+    job = make(r: 1)
+    early = send!(lower(progress(job), "Roof" => 500))
+    final = bill_job(complete(job))
+    assert_equal 500_00, final.total_cents
+    as_business(@business) { early.reload.void!(reason: "Wrong amount", by: @owner) }
+    assert_empty credits(final), "the draft worked its credits out again"
+    assert_equal 1000_00, final.reload.total_cents
+
+    approved_quote([ [ "r", "Roof", 1, 1000 ] ])
+    job = make(r: 1)
+    early = send!(lower(progress(job), "Roof" => 500))
+    final = send!(bill_job(complete(job)))
+    error = assert_raises(ArgumentError) { as_business(@business) { early.reload.void!(reason: "Oops", by: @owner) } }
+    assert_equal "Invoice #{early.number} is credited on #{final.number}. Void it first.", error.message
+  end
+
+  test "progress can't pass what's left of a line; a completed job and a recurring quote get none" do
+    approved_quote([ [ "r", "Roof", 1, 1000 ] ])
+    job = make(r: 1)
+    send!(lower(progress(job), "Roof" => 600))
+    second = progress(job)
+    assert_equal 400_00, second.reload.subtotal_cents, "what's left of the line"
+    error = assert_raises(ActiveRecord::RecordInvalid) { lower(second, "Roof" => 500) }
+    assert_match "Roof: only $400.00 is left to bill.", error.message
+    assert_match "is left to bill as progress", assert_raises(WorkBilling::Refused) { send!(lower(second, "Roof" => 400)) && progress(job) }.message
+    assert_match "Progress billing is for work not done yet", assert_raises(WorkBilling::Refused) { progress(complete(job)) }.message
+  end
+
+  test "a discarded revision puts back the shares and credits it was sent with" do
+    approved_quote([ [ "r", "Roof", 1, 1000 ] ], discount: "100")
+    job = make(r: 1)
+    early = send!(lower(progress(job), "Roof" => 500))
+    final = send!(bill_job(complete(job)))
+    sent_with = [ final.quote_discount_share_cents, credits(final), final.total_cents ]
+    assert_equal [ 100_00, [ [ "progress", early.number, 500_00 ] ], 400_00 ], sent_with
+    as_business(@business) do
+      final.reload.revise!(by: @owner)
+      final.reload.tap { _1.set_discount("amount", "50") }.save!
+      final.reload.discard_revision!(by: @owner)
+    end
+    assert_equal sent_with, [ final.reload.quote_discount_share_cents, credits(final), final.total_cents ]
+  end
+end
+
+# Two drafts that would both credit the same over-billing, sent at once: the quote's lock queues
+# the second, which works its credits out again and finds it used.
+class ProgressBillingRaceTest < ActiveSupport::TestCase
+  self.use_transactional_tests = false
+
+  test "two drafts sent at once credit over-billing once" do
+    business = businesses(:one)
+    owner = users(:one)
+    Feature.overrides["split_jobs"] = true
+    quote = as_business(business) do
+      client = Client.create!(display_name: "Race", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ])
+      Quote.start(client:).tap do
+        _1.sync_line_items([ [ "t", 10, "100" ], [ "g", 1, "300" ], [ "s", 1, "300" ] ].map { |key, quantity, price| { "key" => key, "name" => key, "quantity" => quantity.to_s, "unit_price" => price } })
+        _1.save!
+        _1.update_columns(status: "approved")
+      end
+    end
+    drafts = as_business(business) do
+      lines = quote.line_items.index_by(&:key)
+      early = WorkBilling.bill_progress!(quote, by: owner)
+      early.line_items.each { _1.key == early.line_items.first.key ? _1.assign_attributes(unit_price: "80") : _1.mark_for_destruction }
+      early.save!
+      early.mark_sent!(by: owner, channel: "link")
+      trees = Job.from_quote!(quote.reload, by: owner, picks: { lines["t"].id => "10" })
+      trees.complete!(by: owner, done: { trees.line_items.sole.id => "6" })
+      Invoice.from_job!(trees.reload, by: owner).mark_sent!(by: owner, channel: "link")
+      %w[g s].map do |key|
+        job = Job.from_quote!(quote.reload, by: owner, picks: { lines[key].id => "1" })
+        job.complete!(by: owner)
+        Invoice.from_job!(job.reload, by: owner)
+      end
+    end
+    assert_equal [ 200_00, 200_00 ], as_business(business) { drafts.map { _1.reload.credits.sum(:amount_cents) } }, "both drafts show it"
+
+    drafts.map do |draft|
+      Thread.new do
+        ActiveRecord::Base.connection_pool.with_connection { as_business(business) { Invoice.find(draft.id).mark_sent!(by: owner, channel: "link") } }
+      end
+    end.each(&:join)
+    assert_equal 200_00, as_business(business) { InvoiceCredit.counted.where(invoice_id: drafts.map(&:id)).sum(:amount_cents) }
+  ensure
+    Feature.overrides.delete("split_jobs")
+    if quote
+      as_business(business) do
+        client_id = quote.client_id
+        invoices = Invoice.where(client_id:)
+        InvoiceCredit.where(invoice_id: invoices.select(:id)).delete_all
+        invoices.order(id: :desc).each { _1.update_columns(status: "draft") && _1.destroy! }
+        jobs = Job.where(client_id:)
+        JobClaim.where(job_id: jobs.select(:id)).delete_all
+        Visit.where(job_id: jobs.select(:id)).delete_all
+        jobs.delete_all
+        QuoteLineItem.where(quote_id: quote.id).delete_all
+        Quote.where(client_id:).delete_all
+        Client.find(client_id).destroy!
+      end
+      ActiveRecord::Base.connection.execute("DELETE FROM document_sequences WHERE business_id = #{business.id.to_i}")
+    end
   end
 end
