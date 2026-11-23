@@ -1,8 +1,9 @@
 # PAY-08: what's been billed of a quote's work (or of a job without a quote), read once under
 # PAY-06's lock: final bills, progress billed before the work was done, and what's been credited.
-# Amounts are line subtotals in cents (after the line's own discount and share, before the
-# invoice's discount and tax); a credit is a negative line, so the invoice's discount and tax
-# apply to what's left as they did to the progress.
+# Progress and credits are what the progress invoice charged for a line, net of its discounts
+# (the quote's percent, any typed on it) and before tax: discounts on a progress invoice apply
+# to the cash collected on it, and a final bill deducts only that net amount (owner, 2026-11-23).
+# What's left of a line to bill is measured in line subtotals (before an invoice's discount).
 #
 # - Progress on a job line is credited on that line's final bill; progress on a quote line, or on
 #   the line of a job later cancelled, on its quote line's final bills (its "home").
@@ -49,7 +50,8 @@ class BillingLedger
 
   # --- Progress and credits ---------------------------------------------------------------
 
-  def amount_cents(progress_line) = (@amounts ||= {})[progress_line.id] ||= subtotal(progress_line)
+  # What its invoice charged for a progress line, net of that invoice's discounts, before tax.
+  def amount_cents(progress_line) = charged(progress_line.invoice).fetch(progress_line.id) { subtotal(progress_line) }
 
   # The tax rates a progress line was charged at, which its credits use.
   def rates_of(progress_line)
@@ -113,6 +115,8 @@ class BillingLedger
   # up to what's left of the invoice. `bases` ({ tax rate => cents }) is what each rate is charged
   # on: a credit never takes one below zero, so tax and the total stay at zero or more; what it
   # can't take stays over-billed for the next invoice. Returns attributes for InvoiceCredit.
+  # A line's progress is credited only at the tax rates it was charged at (BillingCredits refuses
+  # a bill whose line is taxed otherwise), so a credit always equals what was charged.
   def credits_for(lines_with_caps, others_cap: 0, bases: {})
     left = Hash.new { |hash, line| hash[line] = remaining_cents(line) }
     bases = Hash.new(0).merge(bases)
@@ -127,15 +131,16 @@ class BillingLedger
       rates.each { bases[_1] -= amount }
       amount
     end
-    lines_with_caps.each do |line, cap|
-      [ home(line), ([ :quote, line.quote_line_item_id ] if line.quote_line_item_id) ].compact.uniq.each do |from|
-        pool(from).each { cap -= take.(:progress, _1, cap) }
-      end
+    lines_with_caps.each do |line, cap, rates|
+      pools_of(line).each { cap -= take.(:progress, _1, cap) if rates.nil? || rates_of(_1).to_set == rates.to_set }
       others_cap += cap
     end
     over_billed(billed: lines_with_caps.map(&:first)).each { others_cap -= take.(:over_billed, _1, others_cap) }
     credits.each_with_index.map { |attributes, position| attributes.merge(position:) }
   end
+
+  # The progress a final bill would credit: its job line's, then its quote line's.
+  def pools_of(line) = [ home(line), ([ :quote, line.quote_line_item_id ] if line.quote_line_item_id) ].compact.uniq.flat_map { pool(_1) }
 
   # --- What's left to bill as progress ----------------------------------------------------
 
@@ -244,8 +249,23 @@ class BillingLedger
     self.class.subtotal_cents(line, currency || line.document_currency)
   end
 
-  # Progress held on a line: what's on invoices that aren't void, less what's been credited.
-  def held(lines) = lines.sum { [ amount_cents(_1) - @used.fetch(_1.id, 0), 0 ].max }
+  # Progress held on a line, in line subtotals: what's on invoices that aren't void, less the part
+  # credited (a credit is net, so it frees its share of the line's subtotal).
+  def held(lines)
+    lines.sum do |line|
+      gross = subtotal(line)
+      net = amount_cents(line)
+      used = @used.fetch(line.id, 0)
+      next gross unless used.positive? && net.positive?
+
+      (gross * [ net - used, 0 ].max / net.to_d).round(0, Money::ROUNDING).to_i
+    end
+  end
+
+  # { line id => net charged } for an invoice's lines: its taxable amounts, before tax.
+  def charged(invoice)
+    (@charged ||= {})[invoice.id] ||= invoice.current_line_items.map(&:id).zip(invoice.totals(credits: false).lines.map { _1.taxable.cents }).to_h
+  end
 
   def billed_job_line_ids = @billed_job_line_ids ||= @finals.filter_map(&:job_line_item_id).to_set
 

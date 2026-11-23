@@ -1715,7 +1715,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_100000) do
   add_foreign_key "invitations", "users", column: "accepted_by_id", on_delete: :nullify
   add_foreign_key "invitations", "users", column: "invited_by_id", on_delete: :nullify
   add_foreign_key "invoice_credits", "businesses"
-  add_foreign_key "invoice_credits", "invoice_line_items", column: "source_line_item_id", on_delete: :cascade
+  add_foreign_key "invoice_credits", "invoice_line_items", column: "source_line_item_id", on_delete: :nullify
   add_foreign_key "invoice_credits", "invoices", column: "source_invoice_id"
   add_foreign_key "invoice_credits", "invoices", on_delete: :cascade
   add_foreign_key "invoice_events", "businesses"

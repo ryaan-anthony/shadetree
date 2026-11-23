@@ -10,7 +10,8 @@ module Pricing
   #    correct base.
   #    PAY-08: an invoice's share of its quote's fixed discount comes off alongside it (`share`),
   #    and a line's share of its quote line's fixed discount comes off that line (Line#share).
-  #    Progress credited (PAY-08) is a negative line, so it's taken off before tax.
+  #    Progress credited (PAY-08) is a credit line (Line#credit): what that invoice charged, net
+  #    of its discounts, taken off after this one's discount and before tax.
   # 5. Tax is calculated once per rate on the sum of the lines carrying it, then rounded,
   #    not per line. Rates on the same line apply side by side, never compounded.
   # 6. Tax-inclusive prices: the tax inside each group of lines sharing the same rates is
@@ -27,7 +28,7 @@ module Pricing
     LineResult = Data.define(:line, :amount, :discount, :subtotal, :taxable)
     TaxResult = Data.define(:rate, :base, :amount)
 
-    attr_reader :currency, :lines, :discount, :share, :taxes, :subtotal, :total
+    attr_reader :currency, :lines, :discount, :share, :credit_total, :taxes, :subtotal, :total
 
     def initialize(currency:, lines:, discount: nil, prices_include_tax: false, share: nil)
       @currency = Money.currency(currency).code
@@ -51,16 +52,20 @@ module Pricing
       line_discounts = raw_lines.zip(line_amounts).map { |line, amount| line_discount_for(line, amount) }
       line_subtotals = line_amounts.zip(line_discounts).map { |amount, off| amount - off }
 
-      @subtotal = Money.sum(line_subtotals, currency)
+      # PAY-08: a credit is money already charged, net of that invoice's discounts: it isn't in the
+      # subtotal or discounted again, and comes off after the discount, before tax.
+      work = raw_lines.each_index.reject { raw_lines[_1].credit }
+      @subtotal = Money.sum(work.map { line_subtotals[_1] }, currency)
+      @credit_total = Money.sum(raw_lines.each_index.select { raw_lines[_1].credit }.map { line_subtotals[_1] }, currency)
       @discount = [ discount_for(document_discount, @subtotal) + @share, [ @subtotal, Money.zero(currency) ].max ].min
-      spread = @discount.allocate(raw_lines.zip(line_subtotals).map { |line, amount| line.credit ? 0 : amount.cents }) # PAY-08: not onto credits
+      spread = @discount.allocate(raw_lines.zip(line_subtotals).map { |line, amount| line.credit ? 0 : amount.cents })
       taxable = line_subtotals.zip(spread).map { |amount, share| amount - share }
 
       @lines = raw_lines.each_with_index.map do |line, i|
         LineResult.new(line:, amount: line_amounts[i], discount: line_discounts[i], subtotal: line_subtotals[i], taxable: taxable[i])
       end
       @taxes = prices_include_tax? ? inclusive_taxes(raw_lines, taxable) : exclusive_taxes(raw_lines, taxable)
-      after_discount = @subtotal - @discount
+      after_discount = @subtotal - @discount + @credit_total
       @total = prices_include_tax? ? after_discount : after_discount + Money.sum(@taxes.map(&:amount), currency)
     end
 

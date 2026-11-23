@@ -13,12 +13,14 @@ class ProgressBillingTest < ActiveSupport::TestCase
   teardown { assert_empty as_business(@business) { JobClaim.unreconciled_lines.pluck(:id) }, "claimed = the sum of live claims" }
 
   # An approved quote with these lines ([key, name, quantity, price]).
-  def approved_quote(lines, tax: nil, discount: nil, line_discounts: {}, untaxed: [])
+  def approved_quote(lines, tax: nil, discount: nil, line_discounts: {}, untaxed: [], percent: nil, inclusive: false)
     @quote = as_business(@business) do
       client = Client.create!(display_name: "Pat Lee", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ], properties_attributes: [ { address_line1: "4 Oak Rd", billing: true } ])
       quote = Quote.start(client:, created_by: @owner)
       quote.tax_rate_list = tax ? [ Pricing::TaxRate.new(name: "State", percent: tax) ] : []
       quote.set_discount("amount", discount) if discount
+      quote.set_discount("percent", percent) if percent
+      quote.prices_include_tax = inclusive
       quote.sync_line_items(lines.map do |key, name, quantity, price|
         { "key" => key, "name" => name, "quantity" => quantity.to_s, "unit_price" => price.to_s, "taxable" => (untaxed.include?(key) ? "0" : "1"),
           **(line_discounts[key] ? { "discount_kind" => "amount", "discount_value" => line_discounts[key].to_s } : {}) }
@@ -56,6 +58,8 @@ class ProgressBillingTest < ActiveSupport::TestCase
     end
   end
 
+  # "Credit from INV-x" as the client sees it, with its tax: what that invoice charged.
+  def client_credits(invoice) = as_business(@business) { invoice.reload.client_credits.map { [ _1.number, _2.cents ] } }
   def credits(invoice) = as_business(@business) { invoice.reload.credits.map { [ _1.kind, _1.source_invoice.number, _1.amount_cents ] } }
   def cents(invoice) = as_business(@business) { invoice.reload }.then { [ _1.subtotal_cents, _1.discount_total_cents, _1.tax_cents, _1.total_cents ] }
 
@@ -69,7 +73,7 @@ class ProgressBillingTest < ActiveSupport::TestCase
 
     final = bill_job(complete(job))
     assert_equal [ [ "progress", early.number, 500_00 ] ], credits(final)
-    assert_equal [ 500_00, 0, 50_00, 550_00 ], cents(final), "$1,000 less $500 billed earlier, then 10% tax"
+    assert_equal [ 1000_00, 0, 50_00, 550_00 ], cents(final), "$1,000 less $500 billed earlier, then 10% tax"
     assert_equal "Billed earlier on #{early.number}", as_business(@business) { final.credits.sole.label }
     assert_equal 1100_00, early.total_cents + final.total_cents, "$1,000 + $100 tax in all"
   end
@@ -83,7 +87,7 @@ class ProgressBillingTest < ActiveSupport::TestCase
     second = complete(make(t: 6), "Tree removal" => 5)
     final = send!(bill_job(second))
     assert_equal [ [ "progress", early.number, 300_00 ] ], credits(final), "min($300, $500)"
-    assert_equal [ 200_00, 0, 0, 200_00 ], cents(final)
+    assert_equal [ 500_00, 0, 0, 200_00 ], cents(final)
     assert_equal 500_00, early.total_cents + final.total_cents, "$500 for $500 of work"
   end
 
@@ -167,7 +171,7 @@ class ProgressBillingTest < ActiveSupport::TestCase
     job = make(r: 1)
     early = send!(lower(progress(job), "Roof" => 500))
     final = bill_job(complete(job))
-    assert_equal 500_00, final.reload.subtotal_cents
+    assert_equal 550_00, final.reload.total_cents
     as_business(@business) { early.reload.revise!(by: @owner) }
     lower(early, "Roof" => nil)
     assert_empty credits(final), "its credit went with the line"
@@ -180,7 +184,7 @@ class ProgressBillingTest < ActiveSupport::TestCase
     assert lower(early, {}), "saving it unchanged is fine"
     assert_match "credited on #{final.number}", assert_raises(ActiveRecord::RecordInvalid) { lower(early, "Roof" => 400) }.message
     error = assert_raises(ActiveRecord::RecordInvalid) { as_business(@business) { early.reload.tap { _1.tax_rate_list = [] }.save! } }
-    assert_match "its amount and tax stay as billed", error.message
+    assert_match "its amount, discount and tax stay as charged", error.message
     assert_not as_business(@business) { early.reload.discard_revision!(by: @owner) && early.reload.voidable? }, "Void waits for #{final.number}"
   end
 
@@ -219,5 +223,82 @@ class ProgressBillingTest < ActiveSupport::TestCase
     draft = bill_quote
     assert_equal 0, as_business(@business) { BillingLedger.new(quote: @quote.reload).over_billed_cents }
     assert_equal [ [ "progress", early.number, 800_00 ] ], credits(draft)
+  end
+
+  # Owner, 2026-11-23: a progress invoice's discounts apply to the cash collected on it; the final
+  # deducts only the net amount it charged, so "Credit from" equals what it charged.
+  test "B1: the quote's percent discount and tax: full progress, then the final comes to $0 and credits what was charged" do
+    approved_quote([ [ "r", "Roof", 1, 1000 ] ], tax: "10", percent: "10")
+    job = make(r: 1)
+    early = send!(progress(job))
+    assert_equal 990_00, early.total_cents
+    final = bill_job(complete(job))
+    assert_equal [ [ "progress", early.number, 900_00 ] ], credits(final), "net of the 10%, before tax"
+    assert_equal [ 0, [ [ early.number, 990_00 ] ] ], [ final.total_cents, client_credits(final) ]
+  end
+
+  test "B1: the same with prices that include tax" do
+    approved_quote([ [ "r", "Roof", 1, 1000 ] ], tax: "10", percent: "10", inclusive: true)
+    job = make(r: 1)
+    early = send!(progress(job))
+    final = bill_job(complete(job))
+    assert_equal [ 900_00, 0, [ [ early.number, 900_00 ] ] ], [ early.total_cents, final.total_cents, client_credits(final) ]
+  end
+
+  test "B1: a staff percent typed on the final caps its credit at what it charges; the rest is over-billed" do
+    approved_quote([ [ "r", "Roof", 1, 1000 ] ], tax: "10")
+    job = make(r: 1)
+    early = send!(progress(job))
+    final = bill_job(complete(job))
+    as_business(@business) { final.reload.tap { _1.set_discount("percent", "10") }.save! }
+    assert_equal [ [ "progress", early.number, 900_00 ] ], credits(final)
+    assert_equal [ 0, [ [ early.number, 990_00 ] ] ], [ final.total_cents, client_credits(final) ]
+    send!(final)
+    assert_equal 110_00, as_business(@business) { BillingLedger.new(quote: @quote.reload).summary[:over_billed] }, "$100 and its tax, charged"
+  end
+
+  test "B3: a discount typed on a progress invoice applies to the cash it collected: the final credits only that" do
+    approved_quote([ [ "r", "Roof", 1, 1000 ] ], tax: "10")
+    job = make(r: 1)
+    early = progress(job)
+    as_business(@business) { early.reload.tap { _1.set_discount("percent", "50") }.save! }
+    send!(early)
+    assert_equal 550_00, early.total_cents
+    final = bill_job(complete(job))
+    assert_equal [ [ "progress", early.number, 500_00 ] ], credits(final)
+    assert_equal [ 550_00, [ [ early.number, 550_00 ] ] ], [ final.total_cents, client_credits(final) ]
+    assert_equal 1100_00, early.total_cents + final.total_cents, "each dollar of work billed once: $1,000 and its tax"
+  end
+
+  test "B2: a credited progress invoice's own discount can't change on a revision" do
+    approved_quote([ [ "r", "Roof", 1, 1000 ] ], tax: "10")
+    job = make(r: 1)
+    early = send!(lower(progress(job), "Roof" => 500))
+    send!(bill_job(complete(job)))
+    as_business(@business) { early.reload.revise!(by: @owner) }
+    error = assert_raises(ActiveRecord::RecordInvalid) { as_business(@business) { early.reload.tap { _1.set_discount("amount", "300") }.save! } }
+    assert_match "its amount, discount and tax stay as charged", error.message
+  end
+
+  test "S1: a final bill taxed differently from its line's progress is refused, so the credit equals what was charged" do
+    approved_quote([ [ "r", "Roof", 1, 1000 ] ], tax: "10")
+    job = make(r: 1)
+    early = send!(lower(progress(job), "Roof" => 500))
+    final = bill_job(complete(job))
+    error = assert_raises(ActiveRecord::RecordInvalid) { as_business(@business) { final.reload.tap { _1.tax_rate_list = [ Pricing::TaxRate.new(name: "State", percent: "11") ] }.save! } }
+    assert_match "Roof is taxed at State 11%, but #{early.number} charged State 10% for it", error.message
+    error = assert_raises(ActiveRecord::RecordInvalid) { as_business(@business) { final.reload.tap { _1.line_items.to_a.sole.taxable = false }.save! } }
+    assert_match "Roof is taxed at no tax", error.message
+  end
+
+  test "a void invoice keeps its credits when the progress line they pointed at goes" do
+    approved_quote([ [ "r", "Roof", 1, 1000 ] ])
+    job = make(r: 1)
+    early = send!(lower(progress(job), "Roof" => 500))
+    final = send!(bill_job(complete(job)))
+    as_business(@business) { final.reload.void!(reason: "Redo", by: @owner) }
+    as_business(@business) { early.reload.revise!(by: @owner) }
+    lower(early, "Roof" => nil)
+    assert_equal [ 1, nil ], as_business(@business) { [ final.reload.credits.count, final.credits.first.source_line_item_id ] }, "the void invoice's record stays"
   end
 end

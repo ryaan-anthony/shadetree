@@ -118,8 +118,10 @@ class Pricing::DocumentTotalsTest < ActiveSupport::TestCase
   test "PAY-08: a document discount isn't spread onto a credit, but still is onto a typed negative line; shares come off" do
     typed = totals([ line(1, "100"), line(1, "-20") ], discount: Pricing::Discount.percent(10))
     assert_equal [ usd("90"), usd("-18") ], typed.lines.map(&:taxable)
-    credited = totals([ line(1, "100"), line(1, "-20", credit: true) ], discount: Pricing::Discount.percent(10))
-    assert_equal [ usd("92"), usd("-20") ], credited.lines.map(&:taxable)
+    credited = totals([ line(1, "100", tax_rates: [ @state ]), line(1, "-20", credit: true, tax_rates: [ @state ]) ], discount: Pricing::Discount.percent(10))
+    assert_equal [ usd("90"), usd("-20") ], credited.lines.map(&:taxable), "a credit isn't discounted again"
+    assert_equal [ usd("100"), usd("10"), usd("-20") ], [ credited.subtotal, credited.discount, credited.credit_total ]
+    assert_equal usd("70") + credited.tax_total, credited.total
     shared = Pricing::DocumentTotals.new(currency: "USD", lines: [ line(2, "50", share: usd("15")) ], share: usd("10"))
     assert_equal [ usd("85"), usd("10"), usd("75") ], [ shared.subtotal, shared.discount, shared.total ]
   end

@@ -45,6 +45,15 @@ module BillingCredits
 
   def quote_discount_share = Money.new(quote_discount_share_cents.to_i, currency)
 
+  # What the client sees (owner, 2026-11-23): one "Credit from INV-0004" per invoice credited,
+  # with the tax that came with it, so it's what they paid; together the difference credits make.
+  def client_credits
+    groups = pre_tax_credits.group_by(&:source_invoice)
+    return [] if groups.empty?
+
+    (totals(credits: false).total - totals.total).allocate(groups.values.map { _1.sum(&:amount_cents) }).zip(groups.keys).map { [ _2, _1 ] }
+  end
+
   # #289: the $0 rule looks at the total before credits (PAY-08).
   def sendable_total? = totals(credits: false).total.positive?
 
@@ -81,11 +90,13 @@ module BillingCredits
     share_lines(ledger, lines, finals)
     self.quote_discount_share_cents = ledger.quote_share_cents(finals)
 
-    work = finals.select(&:quote_line_item_id)
-    parts = quote_discount_share.allocate(work.map { BillingLedger.subtotal_cents(_1, currency) })
-    caps = finals.map { |line| [ line, BillingLedger.subtotal_cents(line, currency) - (work.index(line) ? parts[work.index(line)].cents : 0) ] }
-    others = lines.reject { _1.job_line_item_id || _1.quote_line_item_id }.sum { BillingLedger.subtotal_cents(_1, currency) }.clamp(0..)
-    wanted = ledger.credits_for(caps, others_cap: others, bases: tax_bases)
+    # Each final bill takes, at most, what this invoice charges for its line: net of the share and
+    # this invoice's own discount, before tax (the same measure as the progress it credits).
+    priced = totals(credits: false)
+    net = lines.zip(priced.lines).to_h { |line, result| [ line, [ result.taxable.cents, 0 ].max ] }
+    caps = finals.map { |line| [ line, net[line], rates_for(line) ] }
+    others = lines.reject { _1.job_line_item_id || _1.quote_line_item_id }.sum { net[_1] }
+    wanted = ledger.credits_for(caps, others_cap: others, bases: tax_bases(priced))
     return if wanted == pre_tax_credits.map { _1.snapshot.symbolize_keys }
 
     credits.each(&:mark_for_destruction)
@@ -93,9 +104,11 @@ module BillingCredits
   end
 
   # What each tax rate is charged on before credits.
-  def tax_bases
-    totals(credits: false).lines.each_with_object(Hash.new(0)) { |line, bases| line.line.tax_rates.each { bases[_1] += line.taxable.cents } }
+  def tax_bases(priced = totals(credits: false))
+    priced.lines.each_with_object(Hash.new(0)) { |line, bases| line.line.tax_rates.each { bases[_1] += line.taxable.cents } }
   end
+
+  def rates_for(line) = line.taxable ? (line.own_tax_rate_list || tax_rate_list) : []
 
   # Each quote line's fixed discount, shared over this invoice's bills of it in order.
   def share_lines(ledger, lines, finals)
@@ -137,26 +150,29 @@ module BillingCredits
     BillingLedger.subtotal_cents(InvoiceLineItem.new(line.attributes.merge(line.changed_attributes).except("id")), currency)
   end
 
-  # Progress credited on a later invoice stays as it was billed: void that invoice first.
+  # Progress credited on a later invoice stays as it was charged: its amount, discount and tax.
+  # Void that invoice first.
   def keeps_credited_progress
     used = InvoiceCredit.counted.where(source_line_item_id: line_items.filter_map(&:id)).where.not(invoice_id: id).group(:source_line_item_id).sum(:amount_cents)
     return if used.empty?
 
+    charged = current_line_items.zip(totals(credits: false).lines).to_h { |line, result| [ line, result.taxable.cents ] }
     short = line_items.select do |line|
-      (taken = used[line.id]) && (line.marked_for_destruction? || BillingLedger.subtotal_cents(line, currency) < taken || line.taxable_changed? || line.tax_rates_changed?)
+      (taken = used[line.id]) && (line.marked_for_destruction? || charged[line].to_i < taken || line.taxable_changed? || line.tax_rates_changed?)
     end
-    short = line_items.select { used[_1.id] } if short.empty? && (tax_rates_changed? || prices_include_tax_changed?)
+    whole = tax_rates_changed? || prices_include_tax_changed? || discount_kind_changed? || discount_percent_changed? || discount_amount_cents_changed?
+    short = line_items.select { used[_1.id] } if short.empty? && whole
     return if short.empty?
 
     errors.add(:base, "#{short.map { _1.name.presence || "Item" }.to_sentence} #{short.one? ? "is" : "are"} credited on " \
-                      "#{crediting_invoices.pluck(:number).to_sentence}, so its amount and tax stay as billed. Void that invoice first.")
+                      "#{crediting_invoices.pluck(:number).to_sentence}, so its amount, discount and tax stay as charged. Void that invoice first.")
   end
 
   # A sent work invoice's revision keeps its shares and credits: it can't go below them.
   def keeps_its_credits
     before = totals(credits: false)
     after = totals
-    return unless after.subtotal.negative? || after.discount < before.discount || after.taxes.any? { _1.amount.negative? }
+    return unless (after.subtotal - after.discount + after.credit_total).negative? || after.discount < before.discount || after.taxes.any? { _1.amount.negative? }
 
     errors.add(:base, "That takes #{number} below what it credits for #{pre_tax_credits.map { _1.source_invoice.number }.uniq.to_sentence}. Void it and bill again instead.")
   end
@@ -165,13 +181,29 @@ module BillingCredits
   # credited at a different base): a progress invoice matches its work, a work invoice its progress.
   def progress_matches_on_tax_inclusion
     source = progress? ? (quote || job) : nil
+    ledger = BillingLedger.for(self) unless source
     mismatched = if source then source.prices_include_tax != prices_include_tax
     else
-      BillingLedger.for(self).progress.select { _1.invoice.sent_at && _1.invoice.prices_include_tax != prices_include_tax }.map { _1.invoice.number }.uniq.presence
+      ledger.progress.select { _1.invoice.sent_at && _1.invoice.prices_include_tax != prices_include_tax }.map { _1.invoice.number }.uniq.presence
     end
-    return unless mismatched
+    if mismatched
+      errors.add(:prices_include_tax, source ? "must match #{source.number} (#{source.prices_include_tax ? "prices include tax" : "tax is added"})" \
+                                             : "must match #{mismatched.to_sentence}, whose progress it credits")
+    end
+    progress_matches_on_tax_rates(ledger) if ledger && kind == "work"
+  end
 
-    errors.add(:prices_include_tax, source ? "must match #{source.number} (#{source.prices_include_tax ? "prices include tax" : "tax is added"})" \
-                                           : "must match #{mismatched.to_sentence}, whose progress it credits")
+  # A final bill credits its line's progress at the rates it was charged at: a line taxed
+  # otherwise is refused, so the credit always equals what was charged.
+  def progress_matches_on_tax_rates(ledger)
+    current_line_items.select { _1.final && (_1.job_line_item_id || _1.quote_line_item_id) }.each do |line|
+      rates = rates_for(line).to_set
+      other = ledger.pools_of(line).select { ledger.remaining_cents(_1).positive? && ledger.rates_of(_1).to_set != rates }
+      next if other.empty?
+
+      taxed = ->(list) { list.any? ? list.map { "#{_1.name} #{_1.percent.to_d.round(4).to_s("F").sub(/\.?0+\z/, "")}%" }.to_sentence : "no tax" }
+      errors.add(:base, "#{line.name.presence || "Item"} is taxed at #{taxed.(rates.to_a)}, but #{other.map { _1.invoice.number }.uniq.to_sentence} " \
+                        "charged #{taxed.(ledger.rates_of(other.first))} for it. Tax it the same to credit that, or void #{other.one? ? "it" : "them"} first.")
+    end
   end
 end
