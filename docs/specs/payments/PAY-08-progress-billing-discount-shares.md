@@ -90,7 +90,7 @@ invoices in proportion to the work each bills, so a part-done quote never carrie
   PAY-06's lock; `BillingCredits` works shares and credits out on each draft save, and
   `WorkBilling.bill_progress!` makes progress invoices. Behind `split_jobs`.
 - A credit is what the progress invoice charged for the line (the sent version while revised),
-  net of its discounts, before tax; it comes off after the final's discount at the same rates.
+  net of its discounts, before tax; it comes off after the final's discount at its work's rates.
 - Over-billed counts a final bill once it went out. Fit: PAY-07 adds deposit and take_back to
   both kind checks, keeps deposit credits in `work_out_credits`, and `nothing_due?` uses
   `total_due`; JOB-10 skips `percent_only!` on recurring quotes; QTE-09 adds Not going ahead to
