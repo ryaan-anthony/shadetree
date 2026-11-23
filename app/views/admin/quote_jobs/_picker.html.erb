@@ -1,0 +1,35 @@
+<%# locals: (quote:, lines:, url:, submit:, token: nil) -%>
+<%# JOB-09: what's still to do on the quote, each line ticked at its remaining quantity, which can
+    be lowered. Lines all in other jobs say which. %>
+<% held = JobClaim.live.where(quote_line_item_id: lines.map(&:id)).where.not(job_id: nil).includes(:job).order(:job_id).group_by(&:quote_line_item_id) %>
+<%= form_with url:, method: :post, id: "job-picker" do %>
+  <%= hidden_field_tag :picker_token, token, id: nil if token %>
+  <%= card flush: true do %>
+    <ul class="list" aria-label="Services on quote <%= quote.number %>">
+      <% lines.each do |line| %>
+        <% to_do = line.to_do_quantity %>
+        <% holders = Array(held[line.id]).map { "#{_1.job.number} has #{QuoteWork.number(_1.quantity)}" } %>
+        <li class="flex-wrap items-center gap-3" id="pick-<%= line.key %>">
+          <% if to_do.positive? %>
+            <label class="check min-w-0 flex-1" for="pick_<%= line.key %>">
+              <%= check_box_tag "picks[#{line.key}][take]", "1", true, id: "pick_#{line.key}" %>
+              <span><span class="font-medium text-ink"><%= line.name.presence || "Item" %></span>
+                <span class="block text-sm2 text-muted"><%= QuoteWork.number(to_do) %> of <%= line.quantity_label %> to do<%= " · #{holders.to_sentence}" if holders.any? %></span></span>
+            </label>
+            <%= number_field_tag "picks[#{line.key}][quantity]", QuoteWork.number(to_do), min: 0, max: QuoteWork.number(to_do), step: "any", inputmode: "decimal",
+                                 class: "input w-24 text-right", id: "pick_#{line.key}_quantity", "aria-label": "How many of #{line.name.presence || "Item"}" %>
+          <% else %>
+            <div class="min-w-0 flex-1">
+              <p class="font-medium text-muted"><%= line.name.presence || "Item" %></p>
+              <p class="text-sm2 text-muted"><%= holders.any? ? "All in #{holders.to_sentence}" : "Nothing to do" %></p>
+            </div>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+  <div class="mt-4 flex justify-end gap-2">
+    <%= link_to "Cancel", (token ? admin_quote_path(quote) : admin_job_path(@job)), class: button_classes(:tertiary) %>
+    <%= submit_tag submit, class: button_classes(:primary), name: nil %>
+  </div>
+<% end %>

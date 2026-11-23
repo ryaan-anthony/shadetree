@@ -1,9 +1,17 @@
 <%# JOB-01: everything about a job: its visits (JOB-02) and its invoices (PAY-01). %>
 <% job = @job %>
 <% totals = job.totals %>
+<% split = QuoteWork.split?(current_business) %>
+<%# JOB-09: "From Q-0004: 2 of 3 services" when a quote's work is split among jobs. %>
+<% from_quote = if job.quote && split
+                  safe_join([ " · from ", link_to(job.quote.number, admin_quote_path(job.quote), class: "font-medium text-ink hover:underline"),
+                              ": #{job.claims.count} of #{pluralize(job.quote.line_items.size, "service")}" ])
+                elsif job.quote
+                  safe_join([ " · from ", link_to("quote #{job.quote.number}", admin_quote_path(job.quote), class: "font-medium text-ink hover:underline") ])
+                end %>
 <% content_for :title, "#{job.number} #{job.title}" %>
 <%= page_header job.title, lede: safe_join([ "#{job.number} for ", link_to(job.client.display_name, admin_client_path(job.client), class: "font-medium text-ink hover:underline"),
-                                              (safe_join([ " · from ", link_to("quote #{job.quote.number}", admin_quote_path(job.quote), class: "font-medium text-ink hover:underline") ]) if job.quote), location_badge(job) ].compact) do %>
+                                              from_quote, location_badge(job) ].compact) do %>
   <% if job.open? %>
     <%= link_to edit_admin_job_path(job), class: button_classes(:secondary) do %><%= icon "edit-2" %> Edit<% end %>
     <%# PLT-14 (owner, 2026-11-22): with nothing booked, the next step is a visit; then Complete. %>
@@ -11,8 +19,12 @@
     <% if unbooked %>
       <%= link_to new_admin_job_visit_path(job), class: button_classes(:primary) do %><%= icon "calendar" %> Schedule visit<% end %>
     <% end %>
-    <%= button_to complete_admin_job_path(job), method: :patch, class: button_classes(unbooked ? :secondary : :primary),
-                  form: { class: "contents", data: { turbo_confirm: ["Mark #{job.number} completed?", (" Visits not started yet are cancelled." if job.visits.scheduled.exists?)].join, turbo_confirm_button: "Complete job" } } do %><%= icon "check" %> Complete<% end %>
+    <% if split %>
+      <%= render "admin/jobs/complete", job:, rank: unbooked ? :secondary : :primary %>
+    <% else %>
+      <%= button_to complete_admin_job_path(job), method: :patch, class: button_classes(unbooked ? :secondary : :primary),
+                    form: { class: "contents", data: { turbo_confirm: ["Mark #{job.number} completed?", (" Visits not started yet are cancelled." if job.visits.scheduled.exists?)].join, turbo_confirm_button: "Complete job" } } do %><%= icon "check" %> Complete<% end %>
+    <% end %>
     <div class="contents" data-controller="modal">
       <button type="button" class="<%= button_classes(:destructive) %>" data-action="modal#open" data-modal-target="return" aria-haspopup="dialog">Cancel job</button>
       <%= modal id: "job-cancel", title: "Cancel #{job.number}?", description: "It moves to Cancelled, with any open visits. You can reopen it later." do %>
@@ -80,7 +92,8 @@
     <% end %>
 
     <%= card title: "Work to do", subtitle: (job.quote ? "Copied from quote #{job.quote.number}." : nil), flush: true,
-             actions: (link_to("Edit items", edit_admin_job_path(job, items: 1, anchor: "job-items"), class: button_classes(:secondary, :sm)) if job.open?) do %>
+             actions: (safe_join([ (link_to(new_admin_job_work_path(job), class: button_classes(:secondary, :sm)) { icon("plus") + " Add to-do work" } if split && job.quote&.line_items&.any? { _1.to_do_quantity.positive? }),
+                                   link_to("Edit items", edit_admin_job_path(job, items: 1, anchor: "job-items"), class: button_classes(:secondary, :sm)) ].compact, " ") if job.open?) do %>
       <% lines = job.line_items.to_a %>
       <% if lines.empty? %>
         <p class="px-5 py-4 text-sm2 text-muted">No items yet. Add them to invoice from this job, or let the instructions say what it is.</p>

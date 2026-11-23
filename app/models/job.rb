@@ -235,7 +235,7 @@ class Job < ApplicationRecord
       raise NotOpen, "#{number} is already #{status_label.downcase}." unless open?
 
       if QuoteWork.split?(business)
-        QuoteWork.confirm!(self, (done || done_so_far).transform_keys(&:to_i), quote_lines)
+        QuoteWork.confirm!(self, done_so_far.merge(done.to_h.transform_keys(&:to_i)), quote_lines)
         line_items.reset
       end
       update!(status: "completed", completed_at: Time.current, completed_by: by)

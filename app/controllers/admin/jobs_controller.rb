@@ -53,6 +53,9 @@ class Admin::JobsController < Admin::BaseController
     else
       render :edit, status: :unprocessable_content
     end
+  rescue QuoteWork::Refused => error # JOB-09: more than the quote has to do
+    @job.errors.add(:base, error.message)
+    render :edit, status: :unprocessable_content
   rescue ActiveRecord::StaleObjectError
     redirect_to edit_admin_job_path(@job), alert: "#{@job.number} was changed in another tab or by someone else. Here's the latest version."
   rescue ActiveRecord::RecordNotFound
@@ -62,7 +65,7 @@ class Admin::JobsController < Admin::BaseController
   end
 
   def complete
-    @job.complete!(by: current_user)
+    @job.complete!(by: current_user, done: done_param)
     redirect_to admin_job_path(@job), notice: "Job #{@job.number} completed."
   rescue Job::NotOpen, QuoteWork::Refused => error
     redirect_to admin_job_path(@job), alert: error.message
@@ -83,6 +86,14 @@ class Admin::JobsController < Admin::BaseController
   end
 
   private
+
+  # JOB-09: what was done on each line, from the Complete dialog ({ job line id => quantity }).
+  def done_param
+    rows = params[:done]
+    return unless rows.respond_to?(:key?) && QuoteWork.split?(current_business)
+
+    @job.line_items.each_with_object({}) { |line, done| (value = rows[line.id.to_s].to_s.strip).match?(/\A-?\d*\.?\d+\z/) && done[line.id] = value }
+  end
 
   def set_job = @job = Job.includes(:client, :property, :quote, line_items: :catalog_item).find_by_param!(params[:id])
 

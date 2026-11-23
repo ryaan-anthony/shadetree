@@ -1,0 +1,28 @@
+<%# locals: (job:, rank:) -%>
+<%# JOB-09: completing confirms what was done on each line, starting at what the crew logged (else
+    what was booked). It's final: a shortfall isn't freed, and the lines can't change after. %>
+<% done = job.done_so_far %>
+<div class="contents" data-controller="modal">
+  <button type="button" class="<%= button_classes(rank) %>" data-action="modal#open" data-modal-target="return" aria-haspopup="dialog"><%= icon "check" %> Complete</button>
+  <%= modal id: "job-complete", title: "Complete #{job.number}?",
+            description: "Confirm what was done. Completing is final: anything not done stays off this job, and visits not started yet are cancelled." do %>
+    <%= form_with url: complete_admin_job_path(job), method: :patch, class: "space-y-4" do %>
+      <% if job.line_items.any? %>
+        <ul class="space-y-3" aria-label="What was done">
+          <% job.line_items.each do |line| %>
+            <li class="flex items-center gap-3">
+              <label class="min-w-0 flex-1 text-sm text-ink" for="done_<%= line.id %>"><%= line.name %>
+                <span class="block text-sm2 text-muted">Booked <%= line.quantity_label %></span></label>
+              <%= number_field_tag "done[#{line.id}]", QuoteWork.number(done.fetch(line.id, line.quantity)), min: 0, step: "any", inputmode: "decimal",
+                                   class: "input w-24 text-right", id: "done_#{line.id}" %>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+      <div class="flex justify-end gap-2">
+        <button type="button" class="<%= button_classes(:tertiary) %>" data-action="modal#close">Not yet</button>
+        <%= submit_tag "Complete job", class: button_classes(:primary), name: nil %>
+      </div>
+    <% end %>
+  <% end %>
+</div>

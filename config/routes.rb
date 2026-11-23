@@ -213,7 +213,7 @@ Rails.application.routes.draw do
       resources :attachments, only: :destroy, controller: "quote_attachments"
       resource :send, only: %i[new create], controller: "quote_sends" # QTE-04
       resource :approval, only: :create, controller: "quote_approvals" # QTE-05: on the client's behalf
-      resource :job, only: :create, controller: "quote_jobs" # JOB-01: an approved quote becomes a job
+      resource :job, only: %i[new create], controller: "quote_jobs" # JOB-01: an approved quote becomes a job; JOB-09: its picker
       resources :invoices, only: :create, controller: "quote_invoices" # PAY-01: an approved quote, billed
     end
 
@@ -270,6 +270,7 @@ Rails.application.routes.draw do
     resources :jobs, only: %i[index show new create edit update] do
       post :search, on: :collection # POST keeps client names out of URLs
       resources :invoices, only: :create, controller: "job_invoices" # PAY-01: the job's work, billed
+      resource :work, only: %i[new create], controller: "job_work" # JOB-09: more to-do work from its quote
       member do
         patch :complete
         patch :cancel
