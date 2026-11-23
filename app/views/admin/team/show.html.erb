@@ -11,8 +11,13 @@
           <tbody>
             <% @active.each do |member| %>
               <tr id="member-<%= member.uid %>">
-                <td class="primary"><%= member.user.full_name %><span class="sub"><%= member.user.email %></span>
-                  <%= render "admin/team/profile_links", member:, history: @profile_history.fetch(member.id, []) %></td>
+                <td class="primary min-w-0">
+                  <div class="flex items-start gap-3">
+                    <%= member_avatar member, size: :md %><%# ACC-09 %>
+                    <div class="min-w-0 max-sm:wrap-anywhere"><%= member.user.full_name %><span class="sub"><%= [ member.title, member.user.email ].compact.join(" · ") %></span>
+                      <%= render "admin/team/profile_links", member:, history: @profile_history.fetch(member.id, []) %></div>
+                  </div>
+                </td>
                 <td>
                   <% options = role_options(member, @custom_roles) %>
                   <% if member != current_membership && options.size > 1 && current_membership.can_assign_role?(member, member.role_choice) %>
@@ -74,6 +79,7 @@
         <ul class="list">
           <% @deactivated.each do |member| %>
             <li>
+              <%= member_avatar member, size: :md %><%# ACC-09: kept for staff and history %>
               <div class="min-w-0 flex-1">
                 <p class="font-semibold text-ink"><%= member.user.full_name %></p>
                 <p class="text-sm2 text-muted"><%= member.role_name %> · <%= member.user.deleted? ? "deleted their account" : "deactivated" %> <%= local_date_ago(member.deactivated_at) %></p>

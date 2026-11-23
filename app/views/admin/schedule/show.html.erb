@@ -32,6 +32,7 @@
         <% s.members.each do |user| %>
           <li class="p-0"><%= link_to admin_schedule_path(schedule_link_params(s, member: user.id)), class: "flex flex-1 items-center gap-2 px-4 py-2.5 #{"font-semibold" if s.member == user.id}", "aria-current": ("true" if s.member == user.id) do %>
             <span class="cal-dot cal-<%= s.color_for(user) %>" aria-hidden="true"></span>
+            <%= user_avatar user %><%# ACC-09 %>
             <span class="min-w-0 flex-1 truncate text-ink"><%= user.full_name %></span>
             <span class="tabular text-sm2 text-muted"><%= booked_hours_label(s.booked_hours[user.id]) %></span>
           <% end %></li>

@@ -126,6 +126,6 @@
 
   <% others = visit.assignees.reject { _1.id == current_user.id } %>
   <% if others.any? %>
-    <p class="text-sm2 text-muted">Also going: <%= others.map(&:full_name).to_sentence %></p>
+    <div class="text-sm2"><p class="mb-1.5 text-muted">Also going</p><%= render "admin/team/crew", users: others %></div><%# ACC-09 %>
   <% end %>
 </div>
