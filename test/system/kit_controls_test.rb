@@ -121,4 +121,31 @@ class KitControlsTest < ApplicationSystemTestCase
     assert_selector "#settings-nav ul.segmented a.segment[aria-current=page]", text: "Hours"
     assert_axe_clean "Hours"
   end
+
+  # Owner, 2026-11-23: Requests search as you type too; the status region outside the frame says what's shown.
+  test "requests search as you type and the result is announced" do
+    Tenancy.with_business(@business) do
+      client = Client.create!(display_name: "Maria Lopez", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ])
+      ServiceRequest.create!(client:, source: "phone", description: "Fence repair")
+      ServiceRequest.create!(client:, source: "phone", description: "Gutter guards")
+    end
+    visit admin_service_requests_path
+    assert_no_button "Search"
+    find_field("Search requests").fill_in(with: "gutter")
+    assert_no_text "Fence repair"
+    assert_text "Gutter guards"
+    assert_selector "#request_results_status[role=status]", text: "1 request matching gutter", visible: :all
+    assert_current_path admin_service_requests_path # client names stay out of the URL
+    assert_axe_clean "the requests list"
+  end
+
+  test "a settings group's pages wrap on a phone instead of scrolling" do
+    page.driver.browser.manage.window.resize_to(390, 844)
+    visit edit_admin_business_path(tab: "branding")
+    widths = evaluate_script("(() => { const s = document.querySelector('#settings-nav ul.segmented'); return [s.scrollWidth, s.clientWidth, document.documentElement.scrollWidth] })()")
+    assert_equal widths[1], widths[0], "nothing hidden sideways"
+    assert_operator widths[2], :<=, 390
+  ensure
+    page.driver.browser.manage.window.resize_to(1400, 1400)
+  end
 end

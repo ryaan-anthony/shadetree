@@ -43,7 +43,7 @@ Make one of each and use it everywhere. Triage: [#314 triage](../../audits/314-t
       the settings pills, and the tour's tests pass unchanged.
 - [x] Integration tests over the shared page list (PLT-14) fail when a list page has a search
       form with a submit button, or a switch that isn't the tabs or segmented component.
-- [x] Desktop (1280) and phone (390) screenshots of Quotes, Services & prices, Schedule, Plan
+- [ ] Desktop (1280) and phone (390) screenshots of Quotes, Services & prices, Schedule, Plan
       and a settings page.
 
 ## Implementation notes
@@ -55,8 +55,12 @@ Make one of each and use it everywhere. Triage: [#314 triage](../../audits/314-t
   Home/End, Escape back to the button, Tab moves on and closes it. It's `max-content` wide and
   shifts back on screen on phones. The business switcher keeps its own trigger with the same ARIA.
 - Lists put search first, then tabs. Services search into a frame (GET, so Enter works without
-  JavaScript); its tabs sit in the frame to keep the search. Requests have no search box.
-- Settings keep their group tabs; a group's pages and Hours' locations are segmented controls.
+  JavaScript); its tabs sit in the frame to keep the search. Requests post to `#search` like
+  Quotes, by client or description, within the tab and assignee.
+- Each list has one status region outside its results frame (`results_status`), announcing
+  every render. A pressed filter tab hides a leftover zero-count one.
+- Settings keep their group tabs; a group's pages and Hours' locations are segmented controls,
+  which wrap rather than scroll. The ops console's message tabs use the kit (all shown).
 - `design_system_test.rb` adds `kit_menus`, `search_as_you_type`, `one_switch_style` and
   `no_empty_tabs`; `kit_controls_test.rb` drives them by keyboard with axe.
 - Dev seeds: an archived "Snow plowing" service, so Services shows its Archived tab.
@@ -69,5 +73,6 @@ Make one of each and use it everywhere. Triage: [#314 triage](../../audits/314-t
 ## Decisions
 
 - Zero-count status tabs are hidden, except "All" and the current one (owner, 2026-11-22).
+- Requests get the same search-as-you-type box as the other lists (owner, 2026-11-23).
 - No initials avatars in client rows for now. They take width on phones for little
   information. Revisit after these specs ship (owner, 2026-11-22).

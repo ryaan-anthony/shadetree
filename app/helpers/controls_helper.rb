@@ -32,7 +32,6 @@ module ControlsHelper
     options = choices.map do |key, (text, option_attributes)|
       switch_option(key, text, key == selected, "segment", href:, name:, radio:, **option_attributes.to_h)
     end
-    attributes[:data] = { controller: "tabs" }.merge(attributes[:data].to_h) if href # scrolls the current one into view
     switch_group(options, "segmented", label, label_id:, radio:, list: href.present?, **attributes)
   end
 

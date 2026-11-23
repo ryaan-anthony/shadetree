@@ -284,12 +284,13 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
     end
   end
 
-  # PLT-19: a switch (a pressed button, a current-page link or a hidden radio) is the kit's tabs
-  # or segmented control. Not checked: the sidebar, pagination, the brand colour presets (a
-  # colour picker) and the top bar's Notifications link.
-  SWITCH = 'main [aria-pressed], main a[aria-current="page"], main input[type=radio].sr-only'.freeze
+  # PLT-19: a switch (a pressed button, a current link or a hidden radio) is the kit's tabs or
+  # segmented control. Not checked: the sidebar, pagination, the brand colour presets (a colour
+  # picker), the top bar's Notifications link and the schedule's Crew list (a list of people with
+  # their hours, each row a filter).
+  SWITCH = 'main [aria-pressed], main a[aria-current="page"], main a[aria-current="true"], main input[type=radio].sr-only'.freeze
   check :one_switch_style do |_page, html|
-    html.css(SWITCH).reject { _1.ancestors(".tabs, .segmented, .pagination").any? || _1["data-brand-preview-target"] == "swatch" }
+    html.css(SWITCH).reject { _1.ancestors(".tabs, .segmented, .pagination, #schedule-members").any? || _1["data-brand-preview-target"] == "swatch" }
         .map { "#{label(_1).presence || _1["value"]} is a switch outside the kit's tabs and segmented control" } +
       html.css(".tab").reject { _1.ancestors(".tabs").any? }.map { "#{label(_1)} is a tab outside .tabs" } +
       html.css(".segment").reject { _1.ancestors(".segmented").any? }.map { "#{label(_1)} is a segment outside .segmented" }
@@ -299,7 +300,7 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
   check :no_empty_tabs do |_page, html|
     html.css(".tabs .tab:has(.tab-count)").filter_map do |tab|
       next unless tab.at_css(".tab-count").text.strip == "0"
-      next if tab["value"] == "all" || tab.matches?('[aria-current="page"], [aria-pressed="true"]') || tab.text.squish.start_with?("All ")
+      next if tab.key?("data-tabs-keep") || tab.matches?('[aria-current="page"], [aria-pressed="true"]')
 
       "#{label(tab)} is shown at 0"
     end

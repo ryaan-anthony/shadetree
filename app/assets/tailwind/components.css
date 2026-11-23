@@ -431,18 +431,16 @@
 
   /* ---------- Segmented control (PLT-19): one of a few options on the same view; Plan's white pill ---------- */
   .segmented {
-    position: relative; /* the offset parent, for the tabs controller keeping the current one in view */
     display: inline-flex;
     max-width: 100%;
     gap: 2px;
     margin: 0;
+    flex-wrap: wrap; /* a long set (a settings group's pages on a phone) wraps; nothing scrolls out of sight */
     padding: 0.1875rem;
-    overflow-x: auto;
     border: 1px solid var(--color-line);
     border-radius: var(--radius-control);
     background: var(--color-sunken);
     list-style: none;
-    scrollbar-width: none;
   }
   .segmented > li { display: flex; }
   .segment {
