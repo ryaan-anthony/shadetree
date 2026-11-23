@@ -66,21 +66,17 @@ global controls. Triage: [#314 triage](../../audits/314-triage.md).
 
 ## Implementation notes
 
-- Scale: `--type-*` tokens in `theme.css`; `.page-title`, `.section-title`, `.card-title` (also
-  the empty state's, a dialog's and the tour's title) and `.table-head` use them. Dialog (17 px)
-  and tour (16 px) titles move to the 15 px title step. Style guide → Type lists the steps.
-- `page_header` lays out title and actions (the title keeps at least 18rem, then the actions
-  wrap under it), so the quote and schedule actions sit on the right like the other pages.
-  The support ticket, new business and operator console pages use it; back links become a
-  Tertiary action. Only the schedule's visit panel has no header (`head: false`).
-- The staff quote page renders the client document without its title (`title: false`).
-- Checks in `design_system_test.rb` over `StaffPages`: top bar global only, one H1 in the
-  page header, no date in an H2 or H3, no sentence as an H2 or H3 (over 8 words or ending in a
-  period; dialog questions and H1 record names exempt), "Sent", headings on one step, heading
-  levels in order. A "date" is one with a year, a numeric date or a clock time: a calendar's
-  day label ("Monday, Nov 23") heads a group. The client document embedded on the quote page
-  keeps the client pages' type.
-- Dev seeds: the demo business has default quote terms, so its quotes show the Terms heading.
+- Scale: `--type-*` tokens in `theme.css` (`--type-body`, `--type-small` among them), used by
+  `.page-title`, `.section-title`, `.card-title` (and the empty state's, dialog's and tour's
+  titles), `.table-head` and `.figure`. Style guide → Type lists the steps.
+- `page_header`: the title keeps at least 18rem, then the actions wrap under it. Support
+  ticket, new business and operator console pages use it; back links are Tertiary actions.
+  Only the schedule's visit panel has none (`head: false`). The staff quote page renders the
+  client document without its title, which keeps the client pages' type.
+- `design_system_test.rb` checks over `StaffPages`: top bar, one H1 in the header, dates and
+  sentences in H2/H3, "Sent", headings on one step, any size utility off the scale, heading
+  order.
+- Dev seeds: default quote terms, so a quote's document shows its Terms heading.
 
 ## Decisions
 
@@ -94,3 +90,10 @@ global controls. Triage: [#314 triage](../../audits/314-triage.md).
   supersedes #274's decision that the schedule heading includes "Schedule" and the year
   (owner, 2026-11-21). The year still shows, in the subtitle.
 - The top bar never shows the page title, even on phones after scrolling (owner, 2026-11-22).
+- The scale adds a figure step, 18 px semibold, for a stat's number; 12 px text, the
+  calendar's hours and the sidebar's sizes move onto the scale, and any other size fails a
+  test (owner, 2026-11-23).
+- Dialog and tour titles use the 15 px title step. A heading's "date" has a year, is numeric
+  or has a clock time, so a calendar day label ("Monday, Nov 23") stays an H2. A heading over
+  8 words or ending in a period is a sentence; dialog questions and H1 record names are
+  exempt. The operator console is in scope (owner, 2026-11-23).
