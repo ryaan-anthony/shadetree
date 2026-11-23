@@ -27,8 +27,9 @@ optimization before basic scheduling existed.
   quantities. Billing is 07-payments R17; changing an approved quote is 05-quotes R23.
 - **R18** A recurring quote, approved once, produces a job per occurrence from the same lines,
   each billed when completed.
-- **R19** Team members track time on visits and general work, rounded as the business sets; on
-  hourly lines, tracked hours are what's done and billed. General time never bills a client.
+- **R19** Technicians track time on client work (a visit or its job), rounded as the business
+  sets; on hourly lines, tracked hours are what's done and billed. Timesheets and payroll aren't
+  in scope.
 
 ### Visits
 - **R5** A job has one or more visits. A visit has a date, either a start time or an arrival
