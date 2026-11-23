@@ -49,5 +49,6 @@ completes the quote lifecycle around building, sending and approving.
 ## Open questions
 
 - ~~Should revising an approved quote be blocked (recommended, 05-quotes open question 2)?~~
-  Yes: an approved quote can only be duplicated.
+  Yes: an approved quote can only be duplicated. *For work in progress, change orders now allow
+  it (QTE-10; owner, 2026-11-22).*
 - ~~Is "Viewed" a status or just an indicator?~~ An indicator shown alongside Sent.

@@ -13,7 +13,8 @@ Nothing implemented. The original plan bundled client payments with a large set 
 ## Requirements
 
 ### Invoices
-- **R1** Create an invoice from a job, from an approved quote, or from scratch. Line items,
+- **R1** Create an invoice from a job, from an approved quote, or from scratch (with JOB-09, a
+  quote's invoice bills its completed jobs: R17). Line items,
   discounts and taxes behave exactly as on quotes.
 - **R2** Invoice fields: number (sequential per business, prefix configurable), issue date, due
   date (from payment terms: due on receipt, net 7/15/30, custom), message, terms, internal notes.
@@ -22,6 +23,12 @@ Nothing implemented. The original plan bundled client payments with a large set 
 - **R4** A sent invoice can be edited only by voiding and re-issuing, or by explicit revision,
   keeping an audit of changes. Paid invoices are locked.
 - **R5** Invoice list with filters (status, overdue), search and totals outstanding.
+- **R17** An invoice bills completed work: a job's bills that job, and a quote's bills all its
+  completed jobs not yet billed, again as more finish. Each takes its share of a fixed quote
+  discount, progress billing stays (credited when the work is billed; over-billing is credited
+  on the next invoice), and nothing is billed twice (locks and a database backstop).
+- **R18** A deposit is an invoice against an approved quote, not tied to work; later invoices for
+  the quote credit it until it's used up.
 
 ### Delivery
 - **R6** Send by email (button to client link + PDF), or copy link. Branded PDF matches web view.
@@ -69,10 +76,13 @@ Nothing implemented. The original plan bundled client payments with a large set 
 | [PAY-03](../specs/payments/PAY-03-connect-payments.md) | Connect online payments | M4 | CAT-01, ACC-04 |
 | [PAY-04](../specs/payments/PAY-04-online-payment.md) | Client pays online | M4 | PAY-02, PAY-03 |
 | [PAY-05](../specs/payments/PAY-05-recorded-payments.md) | Recorded payments & balances | M4 | PAY-01 |
+| [PAY-06](../specs/payments/PAY-06-billing-completed-work.md) | Billing completed work | M6 | JOB-09, PAY-01 |
+| [PAY-07](../specs/payments/PAY-07-deposits.md) | Deposits | M6 | PAY-08, PAY-05, QTE-09 |
+| [PAY-08](../specs/payments/PAY-08-progress-billing-discount-shares.md) | Progress billing and discount shares | M6 | PAY-06 |
 
 ## Backlog (M6)
 
-- Deposits required on quote approval.
+- Deposits required on quote approval (deposits themselves: PAY-07).
 - Overdue invoice reminders (automatic, configurable).
 - ACH / bank debit; saved payment methods; autopay for recurring jobs.
 - Tips on payment.

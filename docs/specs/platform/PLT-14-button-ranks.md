@@ -73,7 +73,8 @@ design-system checks run over. Triage: [#314 triage](../../audits/314-triage.md)
   2026-11-22).
 - Tertiary is today's borderless grey button. The green text link stays only for actions
   inside a sentence ("None yet. Add instructions") and isn't a rank (owner, 2026-11-22).
-- The quote page's job and invoice links become Secondary. Its Primary (owner, 2026-11-22):
+- The quote page's job and invoice links become Secondary. Its Primary (owner, 2026-11-22; PAY-06
+  restates it for quotes split across jobs and replaces the interim cancelled-job case, #353):
   - an approved quote with no job → **Create job** (today's button);
   - a job but no invoice → **Create invoice**;
   - otherwise no Primary. "Revise" on a quote with changes requested stays Secondary.
