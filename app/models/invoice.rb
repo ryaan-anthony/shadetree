@@ -190,6 +190,7 @@ class Invoice < ApplicationRecord
       raise ArgumentError, "Invoice #{number} isn't being revised." unless revising?
 
       previous = revisions.last
+      check_discard_against_credits!(previous) # PAY-08
       restore_snapshot(previous.snapshot)
       # The lines first, while it's a draft: lines are only inserted on drafts (PAY-06). It can't
       # clash with another bill: a revision never frees invoiced work (owner, 2026-11-23).

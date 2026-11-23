@@ -195,17 +195,32 @@ module WorkBilling
       invoice.copy_pricing_from(source, lines: [])
       percent_only!(invoice)
       items = invoice.sync_line_items(BuiltDocument.rows_from(rows.map(&:first)))
-      items.zip(rows) do |item, (line, left)|
+      items.zip(rows) do |item, (line, _)|
         item.assign_attributes(job_line_item_id: (line.id if job), quote_line_item_id: (job ? line.claim&.quote_line_item_id : line.id), final: false)
         item.set_discount(nil, nil) if item.discount_kind == "amount"
-        next unless BillingLedger.subtotal_cents(item) > left
-
-        item.set_discount(nil, nil)
-        item.assign_attributes(quantity: 1, unit: nil, unit_price_cents: left)
       end
+      fit_progress!(invoice, items.zip(rows.map(&:last)))
       invoice.save!
       invoice.record!(:created, by:, from: job ? "job" : "quote", number: source.number)
       invoice
+    end
+  end
+
+  # Each progress line charges, net of the invoice's discounts, at most what's left of its line (the
+  # final's net for the rest): one over becomes 1 × the price that charges what's left, found from
+  # what the discounts leave of it, then lowered a cent at a time for rounding.
+  def fit_progress!(invoice, items_with_left)
+    8.times do
+      over = items_with_left.zip(invoice.totals(credits: false).lines).select { |(_, left), result| result.taxable.cents > left }
+      break if over.empty?
+
+      over.each do |(item, left), result|
+        gross = result.subtotal.cents
+        price = result.taxable.cents.positive? ? (left * gross / result.taxable.cents.to_d).floor : left
+        price = [ price, item.unit_price_cents.to_i - 1 ].min if item.quantity.to_d == 1
+        item.set_discount(nil, nil) if item.discount_kind == "amount"
+        item.assign_attributes(quantity: 1, unit: nil, unit_price_cents: [ price, 0 ].max)
+      end
     end
   end
 

@@ -51,7 +51,9 @@ class BillingLedger
   # --- Progress and credits ---------------------------------------------------------------
 
   # What its invoice charged for a progress line, net of that invoice's discounts, before tax.
-  def amount_cents(progress_line) = charged(progress_line.invoice).fetch(progress_line.id) { subtotal(progress_line) }
+  # While it's being revised, what the version the client was sent charged (owner, 2026-11-23:
+  # credits follow the money charged, never an unsent change).
+  def amount_cents(progress_line) = charged(progress_line.invoice).fetch(progress_line.key, 0)
 
   # The tax rates a progress line was charged at, which its credits use.
   def rates_of(progress_line)
@@ -144,9 +146,11 @@ class BillingLedger
 
   # --- What's left to bill as progress ----------------------------------------------------
 
-  # A job line: its subtotal less progress on it, nothing once it has a final bill; never more
-  # than what's left of its quote line. Quote work is valued after its expected share of the
-  # quote's fixed discount: with $100 off $1,000, at most $900 goes up front (owner, 2026-11-23).
+  # What's left of a line to bill as progress, net: what the final would charge for the rest of it
+  # after the discount it will apply (the quote's percent or its expected share of a fixed one, a
+  # lone job's own), less progress held on it. A progress invoice never charges a line more than
+  # the final would (owner, 2026-11-23): with $100 off $1,000, at most $900 goes up front. A job
+  # line has nothing left once it has a final bill, and never more than its quote line.
   def left_cents(line)
     case line
     when JobLineItem
@@ -154,12 +158,30 @@ class BillingLedger
       return 0 if billed_job_line_ids.include?(line.id) || job.nil? || job.status == "cancelled"
 
       quote_line = @quote_lines[line.claim&.quote_line_item_id]
-      own = (quote_line ? after_share(subtotal(line)) : subtotal(line)) - held(@progress.select { _1.job_line_item_id == line.id })
+      own = after_discounts(subtotal(line), job) - held(@progress.select { _1.job_line_item_id == line.id })
       [ own, (left_cents(quote_line) if quote_line) ].compact.min.clamp(0..)
     when QuoteLineItem
       billed = @finals.select { _1.quote_line_item_id == line.id }.sum { subtotal(_1) }
-      (after_share(kept_value_cents(line) - billed) - held(@progress.select { _1.quote_line_item_id == line.id })).clamp(0..)
+      (after_discounts(kept_value_cents(line) - billed) - held(@progress.select { _1.quote_line_item_id == line.id })).clamp(0..)
     end
+  end
+
+  # Line subtotal cents after the document discount the final will apply.
+  def after_discounts(cents, job = nil)
+    return cents unless cents.positive?
+
+    document = quote || job
+    case document&.discount_kind
+    when "percent" then round(cents * (100 - document.discount_percent.to_d) / 100)
+    when "amount" then quote ? after_share(cents) : lone_job_share(cents, job)
+    else cents
+    end
+  end
+
+  # A job without a quote keeps its own fixed discount D: × (its subtotal − D) ÷ its subtotal.
+  def lone_job_share(cents, job)
+    base = job.line_items.sum { subtotal(_1) }
+    base.positive? ? round(cents * [ base - job.discount_amount_cents.to_i, 0 ].max / base.to_d) : cents
   end
 
   # Cents of quote work less their expected share of a fixed quote discount D: × (S − D) ÷ S.
@@ -249,23 +271,12 @@ class BillingLedger
     self.class.subtotal_cents(line, currency || line.document_currency)
   end
 
-  # Progress held on a line, in line subtotals: what's on invoices that aren't void, less the part
-  # credited (a credit is net, so it frees its share of the line's subtotal).
-  def held(lines)
-    lines.sum do |line|
-      gross = subtotal(line)
-      net = amount_cents(line)
-      used = @used.fetch(line.id, 0)
-      next gross unless used.positive? && net.positive?
+  # Progress held on a line, net: what's on invoices that aren't void, less what's been credited.
+  def held(lines) = lines.sum { [ amount_cents(_1) - @used.fetch(_1.id, 0), 0 ].max }
 
-      (gross * [ net - used, 0 ].max / net.to_d).round(0, Money::ROUNDING).to_i
-    end
-  end
-
-  # { line id => net charged } for an invoice's lines: its taxable amounts, before tax.
-  def charged(invoice)
-    (@charged ||= {})[invoice.id] ||= invoice.current_line_items.map(&:id).zip(invoice.totals(credits: false).lines.map { _1.taxable.cents }).to_h
-  end
+  # { line key => net charged } for an invoice: the version the client was sent while it's being
+  # revised (Invoice#charged_by_key).
+  def charged(invoice) = (@charged ||= {})[invoice.id] ||= invoice.charged_by_key
 
   def billed_job_line_ids = @billed_job_line_ids ||= @finals.filter_map(&:job_line_item_id).to_set
 
