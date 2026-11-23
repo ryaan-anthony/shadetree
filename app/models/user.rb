@@ -86,6 +86,7 @@ class User < ApplicationRecord
                                   .where.not(business_id: sole_owner_memberships.map(&:business_id)).pluck(:business_id)
       ActiveRecord.after_all_transactions_commit { handed_over.each { UpdateBillingEmailJob.perform_later(_1) } } if handed_over.any?
       scrub_names_left_elsewhere
+      TeamProfile.erase_for!(self) # ACC-09: photo, title, bio and work phone, in every business
       business_users.active.update_all(active: false, deactivated_at: Time.current, updated_at: Time.current)
       user_sessions.delete_all
       update_columns(email: deleted_email, unconfirmed_email: nil, first_name: nil, last_name: nil,

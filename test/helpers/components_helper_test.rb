@@ -71,6 +71,18 @@ class ComponentsHelperTest < ActionView::TestCase
     assert_equal :info, flash_tone(:other)
   end
 
+  test "ACC-09: a member without a photo gets initials; with one, the photo, decorative beside their name" do
+    member = business_users(:one)
+    assert_dom_equal '<span class="avatar avatar-md" title="John Doe" aria-hidden="true">JD</span>', member_avatar(member, size: :md)
+    assert_dom_equal '<span class="avatar" title="John Doe" role="img" aria-label="John Doe">JD</span>', member_avatar(member, decorative: false)
+
+    member.update!(photo: Rack::Test::UploadedFile.new(file_fixture("face.jpg"), "image/jpeg"))
+    html = Nokogiri::HTML.fragment(member_avatar(member, decorative: false, size: :lg)).at("img")
+    assert_equal [ "John Doe", "avatar object-cover avatar-lg" ], [ html["alt"], html["class"] ]
+    assert_match %r{/rails/active_storage/representations/}, html["src"]
+    assert_equal "", Nokogiri::HTML.fragment(member_avatar(member)).at("img")["alt"]
+  end
+
   test "avatar shows up to two initials" do
     assert_dom_equal '<span class="avatar" title="Maria del Lopez">MD</span>', avatar("Maria del Lopez")
   end

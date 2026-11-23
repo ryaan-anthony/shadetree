@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_22_150100) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_22_160000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -162,6 +162,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_150100) do
     t.datetime "tour_ended_at"
     t.datetime "tour_replayed_at"
     t.jsonb "tips", default: {}, null: false
+    t.string "title"
+    t.text "bio"
+    t.string "work_phone"
     t.index ["business_id", "active"], name: "index_business_users_on_business_id_and_active"
     t.index ["business_id"], name: "index_business_users_on_business_id"
     t.index ["default_location_id"], name: "index_business_users_on_default_location_id"
@@ -171,6 +174,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_150100) do
     t.index ["user_id", "business_id"], name: "index_business_users_on_user_id_and_business_id", unique: true
     t.index ["user_id"], name: "index_business_users_on_user_id"
     t.check_constraint "(role::text = 'custom'::text) = (role_id IS NOT NULL)", name: "business_users_custom_role"
+    t.check_constraint "char_length(bio) <= 200", name: "business_users_bio_length"
+    t.check_constraint "char_length(title::text) <= 40", name: "business_users_title_length"
   end
 
   create_table "businesses", force: :cascade do |t|
@@ -986,6 +991,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_150100) do
     t.check_constraint "platform_fee_bps >= 0 AND platform_fee_bps <= 1000", name: "plans_platform_fee_bps"
   end
 
+  create_table "profile_events", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "business_user_id", null: false
+    t.bigint "user_id"
+    t.jsonb "data", default: {}, null: false
+    t.datetime "occurred_at", null: false
+    t.index ["business_id"], name: "index_profile_events_on_business_id"
+    t.index ["business_user_id"], name: "index_profile_events_on_business_user_id"
+    t.index ["user_id"], name: "index_profile_events_on_user_id"
+  end
+
   create_table "properties", force: :cascade do |t|
     t.bigint "business_id", null: false
     t.bigint "client_id", null: false
@@ -1600,6 +1616,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_150100) do
   add_foreign_key "payments", "businesses"
   add_foreign_key "payments", "invoices"
   add_foreign_key "payments", "users", column: "recorded_by_id"
+  add_foreign_key "profile_events", "business_users", on_delete: :cascade
+  add_foreign_key "profile_events", "businesses"
+  add_foreign_key "profile_events", "users", on_delete: :nullify
   add_foreign_key "properties", "businesses", on_delete: :cascade
   add_foreign_key "properties", "clients", on_delete: :cascade
   add_foreign_key "quote_events", "businesses"

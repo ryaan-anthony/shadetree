@@ -5,6 +5,8 @@
 # @attr [String] role User's role in the business: owner, admin or technician (see ACC-04)
 # @attr [Boolean] active Whether the user is active in this business
 class BusinessUser < ApplicationRecord
+  include TeamProfile # ACC-09
+
   belongs_to :user
   belongs_to :business
   belongs_to :default_location, class_name: "Location", optional: true # CAT-07

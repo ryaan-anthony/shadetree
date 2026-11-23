@@ -71,6 +71,22 @@ module ComponentsHelper
     tag.span(initials, class: [ "avatar", attributes.delete(:class) ].compact.join(" "), title: name, **attributes)
   end
 
+  # ACC-09: a team member's face for staff pages: their photo, else their initials (the avatar
+  # above). Beside their name the image is decorative (alt ""); alone, its alt is the full name.
+  # size: :sm (lists), :md (rows), :lg (the profile page). `member` is a BusinessUser, with its
+  # photo preloaded in lists (BusinessUser.with_attached_photo).
+  def member_avatar(member, size: :sm, decorative: true, **attributes)
+    name = member.user.full_name
+    extra = [ ("avatar-#{size}" unless size == :sm), attributes.delete(:class) ].compact
+    unless member.photo.attached?
+      label = decorative ? { "aria-hidden": true } : { role: "img", "aria-label": name }
+      return avatar(name, class: extra.join(" ").presence, **label, **attributes)
+    end
+
+    image_tag rails_representation_path(member.photo.variant(size == :lg ? :card : :thumb)), alt: (decorative ? "" : name),
+                                                                                       class: [ "avatar object-cover", *extra ].join(" "), loading: "lazy", **attributes
+  end
+
   # Flash messages as toasts. notice → success, alert → danger; other keys render neutral.
   def flash_toasts
     # A true/false flag passed through the flash (the contact form's "emailed") isn't a message.

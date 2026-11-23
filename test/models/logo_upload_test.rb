@@ -74,4 +74,11 @@ class LogoUploadTest < ActiveSupport::TestCase
     assert_equal [ 20, 40 ], [ image.width, image.height ]
     assert_not_includes image.get_fields, "orientation"
   end
+
+  test "photos take a minimum size when one is given (ACC-09's 128 px); by default any size goes" do
+    small = file_fixture("rotated-6.jpg").binread
+    assert_nil clean(small).error
+    result = LogoUpload.clean_photo({ io: StringIO.new(small), filename: "face.jpg" }, max_bytes: 5.megabytes, min_side: 128)
+    assert_equal "must be at least 128 pixels on each side", result.error
+  end
 end
