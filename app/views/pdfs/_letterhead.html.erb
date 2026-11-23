@@ -13,6 +13,6 @@
     <% if branding.logo? %><span class="font-semibold text-ink"><%= branding.name %></span><br><% end %>
     <% if contact.contact_label %><span class="font-medium text-ink"><%= contact.contact_label %></span><br><% end %><%# CAT-07 %>
     <% contact.address_lines.each do |line| %><%= line %><br><% end %>
-    <%= safe_join([ contact.contact_phone, contact.contact_email ].compact_blank, tag.br) %>
+    <%= safe_join([ phone_number(contact.contact_phone, business:), contact.contact_email ].compact_blank, tag.br) %>
   </address>
 </header>

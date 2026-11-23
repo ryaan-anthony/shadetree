@@ -220,7 +220,7 @@ module StaffPages
 
     def records
       @client = client("Maria Lopez", phone: "555.380.3141") # typed with dots: shown as (555) 380-3141 (PLT-18)
-      @archived_client = client("Sam Okafor")
+      @archived_client = client("Sam Okafor", phone: "215.555.1212 ext 4") # an extension: "(215) 555-1212 ext 4"
       @erased_client = client("Grace Chen")
       @service = CatalogItem.create!(name: "Mowing", unit: "visit", unit_price: "45")
       @tax_rate = TaxRate.create!(name: "State", percent: "6.25")

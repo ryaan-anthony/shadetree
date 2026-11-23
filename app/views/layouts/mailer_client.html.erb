@@ -39,7 +39,7 @@
             <tr>
               <td style="padding:18px 4px 4px;font-size:13px;line-height:1.6;color:#475569;">
                 <strong style="color:#0f172a;"><%= [ @business.name, contact.contact_label ].compact.join(" · ") %></strong>
-                <% [ address.presence, contact.contact_phone.presence, contact.contact_email.presence ].compact.each do |line| %><br><%= line %><% end %>
+                <% [ address.presence, phone_number(contact.contact_phone), contact.contact_email.presence ].compact.each do |line| %><br><%= line %><% end %>
               </td>
             </tr>
             <tr>

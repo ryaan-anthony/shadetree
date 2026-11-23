@@ -5,7 +5,7 @@
 
 --
 <% contact = @contact || @business %><%= [ @business.name, contact.contact_label ].compact.join(" · ") %>
-<%= [ contact.address_lines.join(", ").presence, contact.contact_phone.presence, contact.contact_email.presence ].compact.join("\n") %>
+<%= [ contact.address_lines.join(", ").presence, phone_number(contact.contact_phone), contact.contact_email.presence ].compact.join("\n") %>
 
 Reply to this email to reach <%= @business.name %>.
 <% if @branding.show_powered_by? %>Sent with Shadetree: <%= root_url %>

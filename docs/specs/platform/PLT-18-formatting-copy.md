@@ -62,7 +62,8 @@ Use one formatter per data type, everywhere. Triage: [#314 triage](../../audits/
 ## Out of scope
 
 - Other currencies and other countries' phone formats.
-- Client-facing pages, PDFs and emails, which already use the same formatters.
+- Restyling client-facing pages, PDFs and emails. They use the same formatters; the business's
+  phone in their letterhead and footer goes through the phone formatter too.
 - Menus whose items wrap (PLT-19).
 
 ## Implementation notes
@@ -77,13 +78,13 @@ Use one formatter per data type, everywhere. Triage: [#314 triage](../../audits/
 - Part 2: `contact_value` formats a client's phone in the Clients list, the picker (search JSON
   and the chosen client), duplicate matches and the import preview. `local_date_ago` shows an
   absolute date with "3 days ago" on hover, for tables and lists outside activity feeds;
-  `local_time_ago` (feeds only) adds the exact time for screen readers. Requests, Help, Team,
+  `local_time_ago` (feeds only) keeps the exact time as its title. Phones keep an extension as
+  typed ("(215) 555-1212 ext 4"). Requests, Help, Team,
   the client page's Requests and Emails cards and a few notes moved to absolute dates; the
   request and revision pages and the job's Visits card lost the full weekday. Checks
   `phones_formatted`, `absolute_dates_in_tables` and `full_weekday_only_where_planned`.
-- Not changed: the quote revision page keeps Qty and Price (it is the document as sent); a draft
-  invoice's Balance is its amount (only void has none); the operator console and the account
-  page's sign-in list are out of scope.
+- Not changed: the quote revision page keeps Qty and Price (it is the document as sent); the
+  operator console, the account page's sign-in list and automation run history are out of scope.
 - Dev seeds: Grace Chen (phone typed "555.380.3141") has a paid and a void invoice.
 
 ## Decisions

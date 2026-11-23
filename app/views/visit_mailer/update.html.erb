@@ -11,4 +11,4 @@
 </p>
 <% end %>
 <%= render "visit_mailer/items", items: @items, job: @job %>
-<p style="margin:16px 0 0;font-size:13px;color:#64748b;">Questions? Reply to this email<%= " or call #{@contact.contact_phone}" if @contact.contact_phone.present? %>.</p>
+<p style="margin:16px 0 0;font-size:13px;color:#64748b;">Questions? Reply to this email<%= " or call #{phone_number(@contact.contact_phone)}" if @contact.contact_phone.present? %>.</p>

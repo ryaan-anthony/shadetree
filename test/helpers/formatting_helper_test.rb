@@ -18,10 +18,10 @@ class FormattingHelperTest < ActionView::TestCase
     assert_nil local_time(nil)
   end
 
-  test "PLT-18: a relative time keeps its exact time on hover and for screen readers" do
+  test "PLT-18: a relative time keeps its exact time on hover (the accessible description too)" do
     travel_to Time.utc(2026, 3, 12, 13) do
       html = Time.use_zone("America/New_York") { local_time_ago(Time.utc(2026, 3, 9, 13)) }
-      assert_dom_equal '<time datetime="2026-03-09T13:00:00Z" title="Mar 9, 2026, 9:00 AM">3 days ago<span class="sr-only">, Mar 9, 2026, 9:00 AM</span></time>', html
+      assert_dom_equal '<time datetime="2026-03-09T13:00:00Z" title="Mar 9, 2026, 9:00 AM">3 days ago</time>', html
     end
   end
 
@@ -55,11 +55,19 @@ class FormattingHelperTest < ActionView::TestCase
     assert_equal "tel:+12155551212", phone_href("1 (215) 555-1212")
     assert_equal "+44 20 7946 0958", phone_number("+44 20 7946 0958")
     assert_equal "tel:+442079460958", phone_href("+44 20 7946 0958")
-    assert_equal "215-555-1212 x12", phone_number("215-555-1212 x12")
+    assert_equal "(215) 555-1212 x12", phone_number("215-555-1212 x12")
     assert_equal "tel:+12155551212", phone_href("215-555-1212 x12"), "the extension isn't dialled"
     assert_dom_equal '<a class="x" href="tel:+12155551212">(215) 555-1212</a>', phone_link("2155551212", class: "x")
     assert_nil phone_link("")
     assert_nil phone_number(nil)
+  end
+
+  test "PLT-18: an extension follows the formatted number, as typed" do
+    { "215-555-1212 ext 4" => "(215) 555-1212 ext 4", "215.555.1212 #2" => "(215) 555-1212 #2",
+      "+1 215 555 1212 extension 7" => "(215) 555-1212 extension 7", "2155551212x12" => "(215) 555-1212 x12",
+      "0412 345 678 ext 9" => "0412 345 678 ext 9" }.each do |typed, shown|
+      assert_equal shown, phone_number(typed), typed
+    end
   end
 
   test "tel: links leave off extensions, dial vanity letters, and skip text with nothing to dial" do
@@ -71,7 +79,7 @@ class FormattingHelperTest < ActionView::TestCase
       assert_equal href, phone_href(typed), typed
     end
     assert_equal "1-800-GOT-JUNK", phone_number("1-800-GOT-JUNK"), "vanity numbers are shown as typed"
-    assert_equal "215.555.1212 #2", phone_number("215.555.1212 #2")
+    assert_equal "(215) 555-1212 #2", phone_number("215.555.1212 #2"), "PLT-18: the extension follows as typed"
     [ "call us", "12345", "ask Bob", "Fax 555 111 2222 / cell 555 333 4444" ].each do |typed|
       assert_nil phone_href(typed), typed
       assert_equal typed, phone_link(typed), "#{typed}: plain text, no link"
@@ -115,7 +123,7 @@ class FormattingHelperTest < ActionView::TestCase
     assert_equal "2155551212", phone_number("2155551212"), "an Australian business's ten digits aren't North American"
     assert_equal "tel:2155551212", phone_href("2155551212")
     assert_equal "(215) 555-1212", phone_number("+1 215 555 1212"), "+1 is North American anywhere"
-    assert_equal "215-555-1212 x12", phone_number("215-555-1212 x12")
+    assert_equal "215-555-1212 x12", phone_number("215-555-1212 x12"), "an Australian business: as typed"
     assert_nil phone_number("  ")
   end
 

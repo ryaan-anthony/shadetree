@@ -33,13 +33,13 @@ module FormattingHelper
   end
 
   # local_time_ago(notification.created_at) => "3 days ago", with the exact local time as a
-  # tooltip, in the datetime attribute and for screen readers. PLT-18: only in activity feeds
+  # tooltip (also the accessible description, so screen readers get it once) and in the
+  # datetime attribute. PLT-18: only in activity feeds
   # (timelines, History, Notifications, Home's lists); tables and other lists use local_date_ago.
   def local_time_ago(time, zone: Time.zone)
     return if time.nil?
 
-    exact = l(time.in_time_zone(zone))
-    tag.time(datetime: time.utc.iso8601, title: exact) { safe_join([ "#{time_ago_in_words(time)} ago", tag.span(", #{exact}", class: "sr-only") ]) }
+    tag.time("#{time_ago_in_words(time)} ago", datetime: time.utc.iso8601, title: l(time.in_time_zone(zone)))
   end
 
   # PLT-18: when something happened, outside activity feeds: the absolute date ("Nov 19, 2026"),
@@ -62,13 +62,16 @@ module FormattingHelper
   # phone_number("2155551212")      => "(215) 555-1212" (a business in the US or Canada)
   # phone_number("+1 215-555-1212") => "(215) 555-1212" (anywhere)
   # phone_number("0412 345 678")    => "0412 345 678"
-  # North American numbers get the usual format; anything else (international numbers,
-  # extensions, vanity numbers, fictional 555-01xx ones) is shown as typed.
-  def phone_number(value)
+  # North American numbers get the usual format (an extension follows as typed); anything else
+  # (international numbers, vanity numbers, fictional 555-01xx ones) is shown as typed.
+  # phone_number("215-555-1212 ext 4") => "(215) 555-1212 ext 4": the extension kept as typed.
+  # business: whose country decides, where there's no current business (PDFs).
+  def phone_number(value, business: nil)
     text = value.to_s.strip
     number = phone_number_part(text)
-    digits = north_american_digits(number) unless number.match?(/[a-z]/i) || number != text
-    digits ? "(#{digits[0, 3]}) #{digits[3, 3]}-#{digits[6, 4]}" : text.presence
+    extension = text.delete_prefix(number).strip.presence
+    digits = north_american_digits(number, business) unless number.match?(/[a-z]/i)
+    digits ? [ "(#{digits[0, 3]}) #{digits[3, 3]}-#{digits[6, 4]}", extension ].compact.join(" ") : text.presence
   end
 
   # PLT-18: a client's email or phone as staff read it: a phone in the phone format above, an
@@ -166,18 +169,18 @@ module FormattingHelper
   # The ten digits of a North American number, or nil: +1 numbers, or 10 (or 1 + 10) digits for a
   # business in the US or Canada, whose area code and exchange start with 2-9 (#289: an
   # Australian 0412 345 678 is left as typed).
-  def north_american_digits(text)
+  def north_american_digits(text, business = nil)
     digits = text.gsub(/\D/, "")
     ten = if text.start_with?("+") then (digits[1..] if digits.length == 11 && digits.start_with?("1"))
-    elsif !north_american_business? then nil
+    elsif !north_american_business?(business) then nil
     elsif digits.length == 11 && digits.start_with?("1") then digits[1..]
     elsif digits.length == 10 then digits
     end
     ten if ten&.match?(/\A[2-9]\d\d[2-9]/)
   end
 
-  def north_american_business?
-    business = (current_business if respond_to?(:current_business, true)) || (@business if defined?(@business))
+  def north_american_business?(business = nil)
+    business ||= (current_business if respond_to?(:current_business, true)) || (@business if defined?(@business))
     business.respond_to?(:country) && business.country.to_s.upcase.in?(%w[US CA])
   end
 

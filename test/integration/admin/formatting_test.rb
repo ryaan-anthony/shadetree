@@ -64,6 +64,7 @@ class Admin::FormattingTest < ActionDispatch::IntegrationTest
       assert_select "td a[href='tel:5553803141']", "(555) 380-3141"
       assert_select "td time[title$=ago]", /\A\w{3} \d+, \d{4}\z/
     end
+    assert_match(/\(215\) 555-1212 ext 4/, page_text(:client_archived)) # the extension as typed
     post search_admin_clients_path(format: :json), params: { q: "Maria" }
     assert_equal "(555) 380-3141", response.parsed_body["clients"].first["contact"]
   end
