@@ -70,4 +70,45 @@ class Admin::ProgressBillingTest < ActionDispatch::IntegrationTest
     their_quote = as_business(businesses(:two)) { Quote.create!(client: theirs.client, title: "Theirs") }
     assert_not_found_across_businesses { post admin_quote_invoices_path(their_quote, progress: 1) }
   end
+
+  test "the pages: progress buttons before the work is done; credits and the share on the invoice; progress, credited and over-billed" do
+    as_business(@business) { @quote.update_columns(discount_kind: "amount", discount_amount_cents: 100_00) }
+    get admin_quote_path(@quote)
+    assert_select "form[action=?] button#quote-progress-invoice", admin_quote_invoices_path(@quote, progress: 1), /Create progress invoice/
+    job = make
+    get admin_job_path(job)
+    assert_select "form[action=?] button#job-progress-invoice", admin_job_invoices_path(job, progress: 1)
+
+    early = as_business(@business) do
+      WorkBilling.bill_progress!(job, by: users(:one)).tap do |invoice|
+        invoice.line_items.sole.update!(unit_price: "1000")
+        invoice.reload.mark_sent!(by: users(:one), channel: "link")
+      end
+    end
+    get admin_invoice_path(early)
+    assert_select "#invoice-progress", /Progress invoice/
+    as_business(@business) { job.reload.complete!(by: users(:one)) }
+    get admin_job_path(job)
+    assert_select "#job-progress-invoice", count: 0, text: nil
+    assert_select "#job-progress", /Progress billed\s*\$1,000\.00/
+
+    post admin_job_invoices_path(job)
+    final = as_business(@business) { Invoice.last }
+    get edit_admin_invoice_path(final)
+    assert_select "#quote_totals .quote-totals-credit", /Billed earlier on #{early.number}\s*−\$900\.00/
+    assert_select "#quote_totals", /Share of the quote's discount\s*−\$100\.00/
+    assert_equal 0, final.total_cents
+    as_business(@business) { final.reload.mark_sent!(by: users(:one), channel: "link") }
+
+    get admin_quote_path(@quote)
+    assert_select "#quote-progress", /Credited on final invoices\s*\$900\.00/
+    assert_select "#quote-progress", /Over-billed\s*\$100\.00/
+    assert_select "#quote-progress-invoice", count: 0
+    link = as_business(@business) { final.client_link! }
+    get client_link_path(link.token)
+    assert_select ".quote-doc-totals", /Billed earlier on #{early.number}\s*−\$900\.00/
+    link = as_business(@business) { early.client_link! }
+    get client_link_path(link.token)
+    assert_select ".quote-doc-kicker", "Progress invoice #{early.number}"
+  end
 end

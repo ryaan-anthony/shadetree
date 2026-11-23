@@ -64,6 +64,11 @@
   <%= link_to preview_admin_quote_path(quote), class: button_classes(:secondary), target: "_blank", rel: "noopener" do %><%= icon "eye" %> View as client<% end %>
   <div class="contents" data-controller="modal">
   <%= menu label: "More actions", button: { data: { modal_target: "return" } } do %>
+    <%# PAY-08: before the work is done, part of it can be billed as progress (credited on the final invoice). %>
+    <% if split && quote.approved? && !quote.recurring? && (quote.line_items.any? { _1.to_do_quantity.positive? } || jobs.any?(&:open?)) %>
+      <%= button_to admin_quote_invoices_path(quote, progress: 1), class: "menu-item", id: "quote-progress-invoice",
+                    form: { class: "contents", data: { turbo_confirm: "Bill part of #{quote.number} before it's done? A progress invoice is credited when the work is billed.", turbo_confirm_button: "Create progress invoice" } } do %><%= icon "plus" %> Create progress invoice<% end %>
+    <% end %>
     <% if billed.any? && !split %><%# PAY-06: with split jobs the header's Create invoice bills what's left %>
       <%= button_to admin_quote_invoices_path(quote), class: "menu-item",
                     form: { class: "contents", data: { turbo_confirm: "#{quote.number} already has #{billed.map(&:number).to_sentence}. Create another invoice?", turbo_confirm_button: "Create another invoice" } } do %><%= icon "plus" %> Create another invoice<% end %>
@@ -185,7 +190,8 @@
       <% end %>
     <% end %>
     <% if (invoices = quote.invoices.order(:created_at, :id).to_a).any? %>
-      <%= card title: "Invoices", id: "invoices", flush: true do %><%= render "admin/invoices/list", invoices: %><% end %>
+      <%= card title: "Invoices", id: "invoices", flush: true do %><%= render "admin/invoices/list", invoices: %>
+        <%= render "admin/invoices/progress_summary", summary: BillingLedger.new(quote:).summary, currency: quote.currency, id: "quote-progress" if split && quote.approved? %><% end %>
     <% end %>
     <%= card title: "Activity" do %>
       <ol class="space-y-3 text-sm2" id="quote-activity">

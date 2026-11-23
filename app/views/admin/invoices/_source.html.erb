@@ -1,6 +1,9 @@
 <%# locals: (invoice:) -%>
 <%# What the invoice bills: its jobs (PAY-06: a quote's invoice can bill several) and quote, linked both ways (PAY-01). %>
 <% jobs = invoice.jobs.to_a.presence || Array(invoice.job) %>
+<% if invoice.progress? %><%# PAY-08 %>
+  <p class="text-sm2 text-muted" id="invoice-progress">Progress invoice: it bills part of the work before it's done, and is credited on the final invoice.</p>
+<% end %>
 <% if jobs.any? || invoice.quote %>
   <% link = ->(text, path) { link_to(text, path, class: "font-medium text-ink hover:underline", data: { turbo_frame: "_top" }) } %>
   <p class="text-sm2 text-muted">For <%= safe_join([ (jobs.one? ? link.("job #{jobs.first.number}", admin_job_path(jobs.first)) : safe_join([ "jobs ", safe_join(jobs.map { link.(_1.number, admin_job_path(_1)) }, ", ") ]) if jobs.any?),

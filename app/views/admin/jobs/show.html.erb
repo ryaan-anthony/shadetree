@@ -79,14 +79,18 @@
         invoices include a quote's invoice that billed it with other jobs. %>
     <% invoices = job.invoices.order(:created_at, :id).to_a %>
     <% billed = invoices.reject(&:void?) %><%# #289: a second invoice is possible (progress billing), but never the obvious button %>
+    <%# PAY-08: before it's done, part of it can be billed as progress (credited on its final invoice). %>
     <% create = if split
-                  button_to(admin_job_invoices_path(job), class: button_classes(:secondary, :sm), form: { class: "contents" }) { icon("plus") + " Create invoice" } if billable
+                  safe_join([ (button_to(admin_job_invoices_path(job, progress: 1), class: button_classes(:tertiary, :sm), id: "job-progress-invoice",
+                                         form: { class: "contents", data: { turbo_confirm: "Bill part of #{job.number} before it's done? A progress invoice is credited when the work is billed.", turbo_confirm_button: "Create progress invoice" } }) { icon("plus") + " Create progress invoice" } if job.open? && !job.quote&.recurring?),
+                              (button_to(admin_job_invoices_path(job), class: button_classes(:secondary, :sm), form: { class: "contents" }) { icon("plus") + " Create invoice" } if billable) ].compact, " ").presence
                 else
                   button_to(admin_job_invoices_path(job), class: button_classes(billed.any? ? :tertiary : :secondary, :sm),
                             form: { class: "contents", data: (billed.any? ? { turbo_confirm: "#{job.number} already has #{billed.map(&:number).to_sentence}. Create another invoice?", turbo_confirm_button: "Create another invoice" } : {}) }) { icon("plus") + (billed.any? ? " Create another invoice" : " Create invoice") }
                 end %>
     <%= card title: "Invoices", id: "invoices", flush: true, actions: create do %>
       <%= render "admin/invoices/list", invoices:, empty: split ? "Not invoiced yet. Once it's completed, Create invoice bills what was done." : "Not invoiced yet. Create invoice copies this job's items, discount and taxes." %>
+      <%= render "admin/invoices/progress_summary", summary: BillingLedger.new(quote: job.quote, job:).summary(job:), currency: job.currency, id: "job-progress" if split %>
       <% job_payments = Payment.where(invoice_id: invoices.map(&:id)).includes(:invoice).chronological.to_a %>
       <% if job_payments.any? %><%# PAY-05: what's been paid on them; Stripe's reference is only on the invoice (PLT-18) %>
         <ul class="list border-t border-line" id="job-payments" aria-label="Payments">

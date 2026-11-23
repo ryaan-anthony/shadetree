@@ -294,6 +294,37 @@ Tenancy.with_business(business) do
   end
 end
 
+# PAY-08: "Roof replacement" with a $100 fixed discount: half the roof billed up front as progress
+# (sent), then the job completed and its final invoice a draft that credits the $500 before tax
+# and takes its share of the discount. The gutters are still to do.
+Tenancy.with_business(business) do
+  owner = User.find_by!(email: "owner@example.com")
+  client = Client.order(:id).fourth || Client.order(:id).first
+  if client && !Quote.exists?(title: "Roof replacement")
+    split = Feature.overrides.key?("split_jobs")
+    Feature.overrides["split_jobs"] = true unless split
+    quote = Quote.start(client:, created_by: owner)
+    quote.title = "Roof replacement"
+    quote.set_discount("amount", "100")
+    quote.sync_line_items([ { "key" => "seed-0", "name" => "Roof replacement", "quantity" => "1", "unit_price" => "1000", "taxable" => "1" },
+                            { "key" => "seed-1", "name" => "Gutter guards", "quantity" => "1", "unit_price" => "250", "taxable" => "1" } ])
+    quote.save!
+    quote.mark_sent!(by: owner, channel: "link")
+    auto = business.auto_create_jobs
+    business.update_columns(auto_create_jobs: false)
+    quote.record_response!(:approve, by: owner, signer_name: client.display_name, message: "Agreed by phone")
+    business.update_columns(auto_create_jobs: auto)
+    job = Job.from_quote!(quote.reload, by: owner, picks: { quote.line_items.first.id => "1" })
+    early = WorkBilling.bill_progress!(job, by: owner)
+    early.line_items.sole.update!(unit_price: "500")
+    early.reload.save!
+    early.mark_sent!(by: owner, channel: "link")
+    job.reload.complete!(by: owner)
+    Invoice.from_job!(job.reload, by: owner)
+    Feature.overrides.delete("split_jobs") unless split
+  end
+end
+
 # CLI-03: the request form, on, with a request from someone new.
 business.update!(request_form_enabled: true)
 Tenancy.with_business(business) do

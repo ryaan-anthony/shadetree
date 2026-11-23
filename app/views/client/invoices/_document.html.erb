@@ -5,7 +5,7 @@
 <% business = invoice.business %>
 <header class="quote-doc-head">
   <div class="min-w-0">
-    <p class="quote-doc-kicker">Invoice <%= invoice.number %></p>
+    <p class="quote-doc-kicker"><%= invoice.progress? ? "Progress invoice" : "Invoice" %> <%= invoice.number %></p>
     <h1 class="quote-doc-title"><%= invoice.title || "Invoice for #{invoice.client.display_name}" %></h1>
   </div>
   <dl class="quote-doc-meta">
