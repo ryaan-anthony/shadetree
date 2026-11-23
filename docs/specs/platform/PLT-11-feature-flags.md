@@ -34,17 +34,6 @@ in parallel without long-lived branches.
 - [x] The contributor guide explains when to use a flag and how to remove it once a feature is
       fully launched (flags have an owner and an expected removal milestone).
 
-## Implementation notes
-
-- In-house `Feature` module on a `feature_flags` table with a 30-second cache (ADR 0015).
-  `Feature.enabled?(name, business:)` works in jobs and mailers, and `feature?` in views and
-  controllers.
-- Flags are declared in `config/feature_flags.yml` with an owner and a removal milestone; an
-  undeclared flag is off and reported in development.
-- Runtime changes: `bin/rails flags:*` and the operator console's Flags page (OPS-04).
-- Tests use `with_feature` / `enable_feature` (test/support/feature_flag_helpers.rb).
-- CONTRIBUTING.md "Feature flags" covers when to add one and how to remove it.
-
 ## Out of scope
 
 - Plan-based feature gating (entitlements, BIL-01) — related but separate: flags are about
@@ -54,3 +43,14 @@ in parallel without long-lived branches.
 
 - ~~Use an established library or a small in-house implementation?~~ Resolved: in-house, on
   PostgreSQL with a 30-second cache (ADR 0015).
+
+## Implementation notes
+
+- In-house `Feature` module on a `feature_flags` table with a 30-second cache (ADR 0015).
+  `feature?` in views and controllers; `Feature.enabled?` defaults to `Current.business`, which
+  `ApplicationJob` restores. Platform mail delivery doesn't, so mailers pass `business:`.
+- Flags are declared in `config/feature_flags.yml` with an owner and a removal milestone; an
+  undeclared flag is off and reported in development.
+- Runtime changes: `bin/rails flags:*` and the operator console's Flags page (OPS-04).
+- Tests use `with_feature` / `enable_feature` (test/support/feature_flag_helpers.rb).
+- CONTRIBUTING.md "Feature flags" covers when to add one and how to remove it.
