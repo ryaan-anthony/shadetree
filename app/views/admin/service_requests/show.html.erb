@@ -17,11 +17,11 @@
     <%= link_to "Restore them", admin_client_path(client), class: "font-medium text-ink underline-offset-2 hover:underline" %> to quote this request.</p>
 <% end %>
 
-<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+<div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
   <div class="min-w-0 space-y-4">
     <%= card do %>
       <div class="mb-3"><%= badge request_record.status_label, tone: { "new" => :info, "in_progress" => :warning, "quoted" => :success, "archived" => :neutral }.fetch(request_record.status) %></div>
-      <dl class="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-[8rem_1fr]">
+      <dl class="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-[8rem_minmax(0,1fr)]">
         <% [ [ "Email", request_record.contact_email && mail_to(request_record.contact_email, class: "hover:underline") ],
              [ "Phone", phone_link(request_record.contact_phone, class: "hover:underline") ],
              [ "Address", request_record.property ? safe_join(request_record.property.address_lines, ", ") : request_record.address_line ],
@@ -29,7 +29,7 @@
              [ "Timing", request_record.timing ],
              [ "Reference", tag.span(request_record.reference, class: "font-mono text-sm2 text-muted", title: "Quote this if you contact Shadetree support") ] ].each do |label, value| %>
           <% next if value.blank? %>
-          <dt class="text-muted"><%= label %></dt><dd class="text-ink"><%= value %></dd>
+          <dt class="text-muted"><%= label %></dt><dd class="break-words text-ink"><%= value %></dd>
         <% end %>
       </dl>
       <% if request_record.matched_existing_client && request_record.source == "form" %>

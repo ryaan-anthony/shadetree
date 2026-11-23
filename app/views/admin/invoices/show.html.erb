@@ -26,7 +26,7 @@
   <%= render "admin/sends/delivery_warning", email: undelivered, document: invoice, resend_path: new_admin_invoice_send_path(invoice), id: "invoice-delivery-problem" %>
 <% end %>
 
-<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+<div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
   <div class="min-w-0 space-y-4">
     <% if invoice.sends.any? %><%= render "sent_panel", invoice: %><% end %>
     <%= card do %>

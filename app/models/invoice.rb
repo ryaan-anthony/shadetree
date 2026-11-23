@@ -445,7 +445,8 @@ class Invoice < ApplicationRecord
   def pdf_paper = PdfRenderer.paper_for(business.country)
   def store_pdf? = !draft?
   # 2: terms in words, for clients too (owner, 2026-11-22), so sent invoices' stored PDFs redo.
-  PDF_VERSION = 2
+  # 3: a long property address wraps instead of running into the next column (#412).
+  PDF_VERSION = 3
   def pdf_fingerprint
     [ PDF_VERSION, id, lock_version, status, amount_paid_cents, client.updated_at.to_f, property&.updated_at.to_f ].join(":")
   end
