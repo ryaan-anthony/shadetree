@@ -647,6 +647,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_100000) do
     t.index ["uid"], name: "index_invitations_on_uid", unique: true
   end
 
+  create_table "invoice_credits", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "invoice_id", null: false
+    t.string "kind", null: false
+    t.bigint "source_invoice_id", null: false
+    t.bigint "source_line_item_id"
+    t.bigint "amount_cents", null: false
+    t.integer "sign", default: -1, null: false
+    t.jsonb "tax_rates", default: [], null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["invoice_id"], name: "index_invoice_credits_on_invoice_id"
+    t.index ["source_invoice_id"], name: "index_invoice_credits_on_source_invoice_id"
+    t.index ["source_line_item_id"], name: "index_invoice_credits_on_source_line_item_id"
+    t.check_constraint "amount_cents > 0", name: "invoice_credits_amount_positive"
+    t.check_constraint "kind::text = ANY (ARRAY['progress'::character varying, 'over_billed'::character varying]::text[])", name: "invoice_credits_kind"
+    t.check_constraint "sign = ANY (ARRAY['-1'::integer, 1])", name: "invoice_credits_sign"
+  end
+
   create_table "invoice_events", force: :cascade do |t|
     t.bigint "business_id", null: false
     t.bigint "invoice_id", null: false
@@ -691,6 +711,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_100000) do
     t.boolean "final", default: false, null: false
     t.jsonb "tax_rates"
     t.string "invoice_status", default: "draft", null: false
+    t.bigint "discount_share_cents", default: 0, null: false
     t.index ["business_id"], name: "index_invoice_line_items_on_business_id"
     t.index ["catalog_item_id"], name: "index_invoice_line_items_on_catalog_item_id"
     t.index ["invoice_id", "key"], name: "index_invoice_line_items_on_invoice_id_and_key", unique: true
@@ -700,6 +721,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_100000) do
     t.index ["quote_line_item_id"], name: "index_invoice_line_items_on_quote_line_item_id"
     t.index ["quote_line_item_id"], name: "index_invoice_lines_one_final_bill_per_quote_line", unique: true, where: "(final AND ((invoice_status)::text <> 'void'::text) AND (job_line_item_id IS NULL))"
     t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying::text, 'amount'::character varying::text]))", name: "invoice_lines_discount_kind"
+    t.check_constraint "discount_share_cents >= 0", name: "invoice_line_items_discount_share_nonnegative"
     t.check_constraint "quantity >= 0::numeric", name: "invoice_lines_quantity_nonnegative"
   end
 
@@ -783,6 +805,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_100000) do
     t.string "checkout_session_url"
     t.bigint "checkout_amount_cents"
     t.datetime "checkout_expires_at"
+    t.string "kind", default: "work", null: false
+    t.bigint "quote_discount_share_cents", default: 0, null: false
     t.index ["business_id", "location_id"], name: "index_invoices_on_business_id_and_location_id"
     t.index ["business_id", "number"], name: "index_invoices_on_business_id_and_number", unique: true
     t.index ["business_id", "status", "due_on"], name: "index_invoices_on_business_id_and_status_and_due_on"
@@ -801,7 +825,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_100000) do
     t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying::text, 'amount'::character varying::text]))", name: "invoices_discount_kind"
     t.check_constraint "discount_percent IS NULL OR discount_percent >= 0::numeric AND discount_percent <= 100::numeric", name: "invoices_discount_percent_range"
     t.check_constraint "due_on >= issued_on", name: "invoices_due_after_issue"
+    t.check_constraint "kind::text = ANY (ARRAY['work'::character varying, 'progress'::character varying]::text[])", name: "invoices_kind"
     t.check_constraint "payment_terms::text = ANY (ARRAY['due_on_receipt'::character varying::text, 'net_7'::character varying::text, 'net_15'::character varying::text, 'net_30'::character varying::text, 'custom'::character varying::text])", name: "invoices_payment_terms"
+    t.check_constraint "quote_discount_share_cents >= 0", name: "invoices_quote_discount_share_nonnegative"
     t.check_constraint "status::text = ANY (ARRAY['draft'::character varying::text, 'sent'::character varying::text, 'partially_paid'::character varying::text, 'paid'::character varying::text, 'void'::character varying::text])", name: "invoices_status"
   end
 
@@ -1688,6 +1714,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_100000) do
   add_foreign_key "invitations", "roles"
   add_foreign_key "invitations", "users", column: "accepted_by_id", on_delete: :nullify
   add_foreign_key "invitations", "users", column: "invited_by_id", on_delete: :nullify
+  add_foreign_key "invoice_credits", "businesses"
+  add_foreign_key "invoice_credits", "invoice_line_items", column: "source_line_item_id"
+  add_foreign_key "invoice_credits", "invoices", column: "source_invoice_id"
+  add_foreign_key "invoice_credits", "invoices", on_delete: :cascade
   add_foreign_key "invoice_events", "businesses"
   add_foreign_key "invoice_events", "invoices"
   add_foreign_key "invoice_events", "users"

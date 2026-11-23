@@ -38,8 +38,9 @@ class InvoiceLineItem < ApplicationRecord
   # Its job's tax rates when the invoice's jobs differ; otherwise the invoice's.
   def own_tax_rate_list = tax_rates&.map { Pricing::TaxRate.new(name: _1["name"], percent: _1["percent"]) }
 
-  def to_pricing(rates) = super(own_tax_rate_list || rates)
+  # PAY-08: its share of its quote line's fixed discount comes off it too.
+  def to_pricing(rates) = super(own_tax_rate_list || rates).with(share: (Money.new(discount_share_cents, document_currency) if discount_share_cents.to_i.positive?))
 
   # What the revision record keeps, so a discarded revision puts the same line back.
-  def links = { "key" => key, "job_line_item_id" => job_line_item_id, "quote_line_item_id" => quote_line_item_id, "final" => final, "tax_rates" => tax_rates }
+  def links = { "key" => key, "job_line_item_id" => job_line_item_id, "quote_line_item_id" => quote_line_item_id, "final" => final, "tax_rates" => tax_rates, "discount_share_cents" => discount_share_cents }
 end

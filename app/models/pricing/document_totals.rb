@@ -6,7 +6,11 @@ module Pricing
   # 2. A line discount (percent or fixed, never more than the line) comes off that line.
   # 3. Subtotal = sum of discounted lines.
   # 4. A document discount comes off the subtotal and is spread across lines in proportion
-  #    to their amounts (cent-exact), so each tax rate sees its correct base.
+  #    to their amounts (cent-exact, never onto a credit line), so each tax rate sees its
+  #    correct base.
+  #    PAY-08: an invoice's share of its quote's fixed discount comes off alongside it (`share`),
+  #    and a line's share of its quote line's fixed discount comes off that line (Line#share).
+  #    Progress credited (PAY-08) is a negative line, so it's taken off before tax.
   # 5. Tax is calculated once per rate on the sum of the lines carrying it, then rounded,
   #    not per line. Rates on the same line apply side by side, never compounded.
   # 6. Tax-inclusive prices: the tax inside each group of lines sharing the same rates is
@@ -23,11 +27,12 @@ module Pricing
     LineResult = Data.define(:line, :amount, :discount, :subtotal, :taxable)
     TaxResult = Data.define(:rate, :base, :amount)
 
-    attr_reader :currency, :lines, :discount, :taxes, :subtotal, :total
+    attr_reader :currency, :lines, :discount, :share, :taxes, :subtotal, :total
 
-    def initialize(currency:, lines:, discount: nil, prices_include_tax: false)
+    def initialize(currency:, lines:, discount: nil, prices_include_tax: false, share: nil)
       @currency = Money.currency(currency).code
       @prices_include_tax = prices_include_tax
+      @share = share ? check_currency(share) : Money.zero(@currency)
       compute(lines, discount)
       freeze
     end
@@ -43,12 +48,12 @@ module Pricing
 
     def compute(raw_lines, document_discount)
       line_amounts = raw_lines.map { |line| check_currency(line.unit_price) * line.quantity }
-      line_discounts = raw_lines.zip(line_amounts).map { |line, amount| discount_for(line.discount, amount) }
+      line_discounts = raw_lines.zip(line_amounts).map { |line, amount| line_discount_for(line, amount) }
       line_subtotals = line_amounts.zip(line_discounts).map { |amount, off| amount - off }
 
       @subtotal = Money.sum(line_subtotals, currency)
-      @discount = discount_for(document_discount, @subtotal)
-      spread = @discount.allocate(line_subtotals.map(&:cents))
+      @discount = [ discount_for(document_discount, @subtotal) + @share, [ @subtotal, Money.zero(currency) ].max ].min
+      spread = @discount.allocate(line_subtotals.map { [ _1.cents, 0 ].max }) # not onto credit lines
       taxable = line_subtotals.zip(spread).map { |amount, share| amount - share }
 
       @lines = raw_lines.each_with_index.map do |line, i|
@@ -86,6 +91,14 @@ module Pricing
     end
 
     def rates_in_order(raw_lines) = raw_lines.flat_map(&:tax_rates).uniq
+
+    # Its own discount, then its share (never more than what's left of the line).
+    def line_discount_for(line, amount)
+      off = discount_for(line.discount, amount)
+      return off unless line.share&.positive? && amount.positive?
+
+      off + [ check_currency(line.share), amount - off ].min
+    end
 
     def discount_for(discount, amount)
       # No discount on nothing, or on credit lines (negative amounts).

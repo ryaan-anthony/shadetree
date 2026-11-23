@@ -15,6 +15,7 @@ class Invoice < ApplicationRecord
   include DocumentAttachments
   include HasPdf
   include EmailedDocument # QTE-04, PAY-02: delivery warnings
+  include BillingCredits # PAY-08: progress invoices, credits and discount shares
 
   STATUSES = %w[draft sent partially_paid paid void].freeze
   STATUS_LABELS = { "draft" => "Draft", "sent" => "Sent", "partially_paid" => "Partly paid", "paid" => "Paid", "void" => "Void" }.freeze
@@ -158,6 +159,7 @@ class Invoice < ApplicationRecord
       end
       record!(:sent, by:, channel:, revision:)
       ClientEvent.record!(client, :invoice_sent, subject: self, by:, channel:, revision:) # CLI-05
+      apply_payments!(by:) if status == "sent" && nothing_due? # PAY-08: Paid at once
       sends.create!(business:, user: by, channel:, recipient:, cc:, revision:)
     end
   end
@@ -193,6 +195,7 @@ class Invoice < ApplicationRecord
       assign_attributes(status: previous.status, revision: previous.number, pdf_blob_id: previous.pdf_blob_id, pdf_digest: nil)
       save!(validate: false)
       previous.destroy!
+      @restoring = nil
       record!(:revision_discarded, by:, revision: previous.number + 1)
     end
   end
@@ -210,12 +213,17 @@ class Invoice < ApplicationRecord
       lock_with_quote!
       discard_revision!(by:) if revising?
       raise ArgumentError, "Invoice #{number} can't be voided#{" while it has payments" if payments?}." unless voidable?
+      # PAY-08: progress credited on a later invoice that went out stays until that one is voided.
+      if billing_credits? && (later = crediting_invoices.pluck(:number)).any?
+        raise ArgumentError, "Invoice #{number} is credited on #{later.to_sentence}. Void #{later.one? ? "it" : "them"} first."
+      end
 
       # Skips validation, as revise! does: an old row that no longer validates can still be voided.
       assign_attributes(status: "void", voided_at: Time.current, voided_by: by, void_reason: reason.first(200))
       save!(validate: false)
       QuoteWork.release_direct!(JobClaim.where(invoice_line_item_id: line_items.select(:id)), keep: true) # JOB-09: no longer live
       record!(:voided, by:, reason: void_reason)
+      rework_drafts! # PAY-08: drafts work out their shares and credits again
       close_checkout_later # PAY-04
     end
   end
@@ -226,7 +234,7 @@ class Invoice < ApplicationRecord
       "title" => title, "issued_on" => issued_on.iso8601, "due_on" => due_on.iso8601, "payment_terms" => payment_terms,
       "message" => message, "terms" => terms, "currency" => currency, "tax_rates" => tax_rates, "prices_include_tax" => prices_include_tax,
       "discount" => discount_value&.to_s, "discount_kind" => discount_kind, "subtotal_cents" => subtotal_cents, "tax_cents" => tax_cents,
-      "total_cents" => total_cents,
+      "total_cents" => total_cents, "quote_discount_share_cents" => quote_discount_share_cents, "credits" => credits.map(&:snapshot),
       "lines" => current_line_items.map { _1.attributes.slice(*%w[name description quantity unit unit_price_cents taxable discount_kind]).merge("discount" => _1.discount_value&.to_s, **_1.links) },
       "files" => attachments_attachments.includes(:blob).map { { "blob_id" => _1.blob_id, "filename" => _1.filename.to_s } }
     }
@@ -550,8 +558,13 @@ class Invoice < ApplicationRecord
     lines = data["lines"].map { _1.slice(*%w[name description quantity unit taxable discount_kind]).merge("key" => _1["key"] || SecureRandom.uuid, "discount_value" => _1["discount"]) }
     sync_line_items(lines).zip(data["lines"]) do |item, line|
       item.unit_price_cents = line["unit_price_cents"]
-      item.assign_attributes(line.slice(*%w[job_line_item_id quote_line_item_id final tax_rates])) if line.key?("final")
+      item.assign_attributes(line.slice(*%w[job_line_item_id quote_line_item_id final tax_rates discount_share_cents])) if line.key?("final")
     end
+    # PAY-08: the shares and credits it was sent with, not worked out again.
+    @restoring = true
+    self.quote_discount_share_cents = data["quote_discount_share_cents"].to_i
+    credits.each(&:mark_for_destruction)
+    data["credits"].to_a.each { credits.build(**_1.symbolize_keys, business:) }
     kept = data["files"].pluck("blob_id")
     attachments_attachments.each do |file|
       next if kept.include?(file.blob_id)
