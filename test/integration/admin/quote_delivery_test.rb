@@ -107,7 +107,8 @@ class Admin::QuoteDeliveryTest < ActionDispatch::IntegrationTest
     assert_select "#quote-revision-2", /Emailed .* · Not delivered/
     assert_select "#quote-revision-1", /Emailed .* · Not delivered/
     response_uid = as_business(@business) { @quote.approval.uid }
-    assert_select "#response-#{response_uid}-undelivered", "The email for this revision wasn't delivered; Maria Lopez reached it from the quote's link."
+    assert_select "#response-#{response_uid}-undelivered", "Email not delivered. Maria Lopez reached this revision from the quote's link."
+    assert_select "#response-#{response_uid}-undelivered .text-danger svg" # PLT-17: danger, as everywhere
     get admin_quotes_path
     assert_select "#quote-#{@quote.uid} .badge-danger", 0
   end
