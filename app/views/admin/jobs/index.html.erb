@@ -18,6 +18,7 @@
   <%= tabs Job::FILTERS, current: @filter, label: "Show jobs", counts: @counts, name: "filter", class: "mt-4", data: { tabs_target: "row" } %>
 <% end %>
 
+<%= results_status "job_results" %>
 <%= render "results" %>
 
 <% unless current_business.auto_create_jobs %>

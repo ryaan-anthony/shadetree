@@ -1,0 +1,61 @@
+<%# The request list (CLI-04): on the page and as #search's frame response (PLT-19). Links open
+    whole pages (target _top). %>
+<%= turbo_frame_tag "request_results", target: "_top" do %>
+  <% if @requests.empty? %>
+    <div class="card">
+      <% if @query.present? %>
+        <%= empty_state title: "No requests match", text: "Try part of the client's name, phone or address, or what they asked for.", icon: "search" %>
+      <% elsif @status == "new" && @assignee.nil? %>
+        <%= empty_state title: "You're all caught up", text: current_business.request_form_enabled? ? "New requests from your form and the ones you log show up here." : "Turn on your request form in Settings to take requests online, or log one from a call.", icon: "inbox" do %>
+          <%= link_to new_admin_service_request_path, class: button_classes do %><%= icon "plus" %> Log a request<% end %>
+        <% end %>
+      <% else %>
+        <%= empty_state title: "Nothing here", text: "No requests#{" with that filter" if @assignee} are #{ServiceRequest::LABELS.fetch(@status).downcase} right now.", icon: "inbox" %>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="sr-only" data-results-summary><%= pluralize(@total_count, "request") %><%= " matching #{@query}" if @query.present? %></p>
+    <%= card flush: true do %>
+      <ul class="list">
+        <% @requests.each do |request| %>
+          <li id="request-<%= request.uid %>" class="p-0">
+            <%# No hover prefetch: opening a request records who saw it. %>
+            <%= link_to admin_service_request_path(request), class: "block min-w-0 flex-1 px-4 py-3", data: { turbo_prefetch: false } do %>
+              <span class="flex items-baseline justify-between gap-3">
+                <span class="min-w-0 truncate font-semibold text-ink">
+                  <% unless @seen_by_me.include?(request.id) %><span class="mr-1 inline-block size-2 rounded-full bg-canopy align-middle" title="Not opened by you"></span><span class="sr-only">Not opened by you. </span><% end %><%= request.client.display_name %><%= location_badge(request) %>
+                </span>
+                <span class="shrink-0 text-sm2 text-muted"><%= local_time_ago(request.created_at) %></span>
+              </span>
+              <% if request.service_names.any? %><span class="mt-0.5 block truncate text-sm2 text-ink"><%= request.service_names.join(", ") %></span><% end %>
+              <% if request.description %><span class="mt-0.5 block truncate text-sm2 text-subtle"><%= truncate(request.description, length: 160) %></span><% end %>
+              <span class="mt-1 block truncate text-sm2 text-muted">
+                <%= safe_join([ request.source == "form" ? request.source_label : "#{request.source_label}#{", logged by #{request.created_by.full_name}" if request.created_by}",
+                                (pluralize(request.photos.size, "photo") if request.photos.attached?),
+                                (request.property&.one_line || request.address_line) ].compact, " · ") %>
+              </span>
+              <% if (follow_up = request.follow_up) %><%# CLI-07 %>
+                <span class="mt-1 flex flex-wrap items-center gap-x-2 text-sm2 text-ink">
+                  <span class="inline-flex min-w-0 items-center gap-1.5"><%= icon(follow_up.visit? ? "map-pin" : "phone", class: "size-3.5 shrink-0 text-muted") %><span><%= follow_up.user.full_name %> · <%= follow_up.kind_label %>, <%= follow_up.when_label %></span></span>
+                  <% if follow_up.overdue? %><%= badge "Overdue", tone: :danger %><% end %>
+                  <% if follow_up.done? %><%= badge "Done", tone: :success %><% end %><%# JOB-06 %>
+                </span>
+              <% elsif request.status == "in_progress" %><%# a New one is plainly nobody's yet %>
+                <span class="mt-1 block text-sm2 text-muted">Not assigned</span>
+              <% end %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+    <% if @total_pages > 1 %>
+      <nav class="pagination mt-4" aria-label="Pagination">
+        <p>Showing <span class="tabular font-semibold text-ink"><%= ((@page - 1) * Admin::ServiceRequestsController::PER_PAGE) + 1 %>–<%= [ @page * Admin::ServiceRequestsController::PER_PAGE, @total_count ].min %></span> of <span class="tabular"><%= @total_count %></span></p>
+        <div class="pagination-links">
+          <button type="submit" form="request-filters" name="page" value="<%= @page - 1 %>" class="<%= button_classes(:secondary, :sm) %>" <%= "disabled" if @page <= 1 %>><%= icon "chevron-left" %> Previous</button>
+          <button type="submit" form="request-filters" name="page" value="<%= @page + 1 %>" class="<%= button_classes(:secondary, :sm) %>" <%= "disabled" if @page >= @total_pages %>>Next <%= icon "chevron-right" %></button>
+        </div>
+      </nav>
+    <% end %>
+  <% end %>
+<% end %>

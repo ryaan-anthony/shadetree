@@ -73,12 +73,13 @@ class Admin::ListTabsTest < ActionDispatch::IntegrationTest
   test "clients: the Archived tab shows once a client is archived" do
     maria = make_client("Maria Lopez")
     get admin_clients_path
-    assert_equal [ "Active" ], tab_labels
-    assert_select "fieldset.tabs input[type=radio][name=archived][form=client-filters][checked]", 1
+    assert_empty tab_labels, "a one-option group is no choice"
+
 
     as_business(@business) { maria.archive! }
     get admin_clients_path
     assert_equal %w[Active Archived], tab_labels
+    assert_select "fieldset.tabs input[type=radio][name=archived][form=client-filters][checked]", 1
     get admin_clients_path(archived: "1")
     assert_select "fieldset.tabs input[value='1'][checked]"
   end

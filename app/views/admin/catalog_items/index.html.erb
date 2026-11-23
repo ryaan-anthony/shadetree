@@ -16,6 +16,7 @@
   </div>
 <% end %>
 
+<%= results_status "service_results" %>
 <%= turbo_frame_tag "service_results", target: "_top" do %>
 <%= tabs({ "active" => "Active", "archived" => "Archived" }, current: @showing_archived ? "archived" : "active", label: "Services view",
          counts: { "archived" => @archived_count }, keep: %w[active], class: "mb-4",
@@ -54,6 +55,7 @@
     <% end %>
   </div>
 <% else %>
+  <p class="sr-only" data-results-summary><%= pluralize(@items.size, @showing_archived ? "archived service" : "service") %><%= " matching #{@query}" if @query.present? %></p>
   <div class="space-y-4">
     <% @groups.each do |category, items| %>
       <%= card title: category&.name || "Uncategorized", subtitle: pluralize(items.size, "item"), flush: true,

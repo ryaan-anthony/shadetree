@@ -18,7 +18,9 @@ module ControlsHelper
     options = shown.map do |key, (text, option_attributes)|
       count = counts&.[](key)
       text = safe_join([ text, (tag.span(count, class: "tab-count") if count) ].compact, " ")
-      switch_option(key, text, key == current, "tab", href:, name:, radio:, **option_attributes.to_h)
+      option_attributes = option_attributes.to_h
+      option_attributes[:data] = { tabs_keep: true }.merge(option_attributes[:data].to_h) if keep.include?(key)
+      switch_option(key, text, key == current, "tab", href:, name:, radio:, **option_attributes)
     end
     attributes[:data] = { controller: "tabs" }.merge(attributes[:data].to_h) if href
     switch_group(options, "tabs", label, radio:, **attributes)
@@ -51,6 +53,12 @@ module ControlsHelper
     panel = tag.div(capture(&items), id:, class: "menu #{align == :left ? "left-0" : "right-0"} top-full mt-1", data: { menu_target: "menu" }, hidden: true)
     data = { controller: "menu", action: "keydown->menu#keydown focusout->menu#focusout" }.merge(attributes.delete(:data).to_h)
     tag.div(trigger + panel, class: [ "relative", attributes.delete(:class) ].compact.join(" "), data:, **attributes)
+  end
+
+  # A list's status region, outside its results frame (PLT-19): announces each search or filter
+  # render from the frame's [data-results-summary] or empty-state title (results_status_controller.js).
+  def results_status(frame)
+    tag.p(class: "sr-only", role: "status", id: "#{frame}_status", data: { controller: "results-status", results_status_frame_value: frame })
   end
 
   private
