@@ -38,7 +38,7 @@ management.
 ### Account actions
 - **R9** Suspend / reactivate a business (suspended businesses can't sign in; client links show
   a neutral "unavailable" page; payments in flight still settle).
-- **R10** Comp a plan, extend a trial, apply a coupon (through the billing provider).
+- **R10** Comp a plan, extend a trial (in Shadetree), apply a coupon (through the billing provider).
 - **R11** Resend confirmation / reset password for a user. Delete a business and all its data
   (with confirmation and a waiting period), satisfying privacy erasure requests.
 - **R12** Edit plans (09-billing), industry presets (03-catalog) and feature flags (PLT-11).
@@ -64,6 +64,7 @@ management.
 | D2 | Financial reporting (MRR, churn) comes from the billing provider's dashboard at launch. | Duplicating it is wasted effort pre-scale. |
 | D3 | Impersonation is read-only by default. | Limits blast radius of mistakes and abuse. |
 | D4 | Console built in-app with the same UI foundation; no third-party admin framework unless an ADR argues for it. | Keeps one stack; operator needs are narrow. |
+| D6 | Comps and trial extensions change the plan in Shadetree only, not what Stripe bills; coupons change Stripe (owner, 2026-11-22). | What a business gets always matches what Stripe charges. |
 
 ## Specifications
 
