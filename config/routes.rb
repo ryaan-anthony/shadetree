@@ -253,6 +253,7 @@ Rails.application.routes.draw do
       end
       resources :notes, only: :create, controller: "my_visit_notes"
       resources :photos, only: %i[create destroy], controller: "my_visit_photos"
+      resource :on_the_way, only: %i[new create], path: "on-the-way", controller: "my_visit_on_the_way" # JOB-12
     end
     # JOB-06: requests the signed-in member is following up, while they're theirs.
     resources :my_requests, only: :show, path: "my-day/requests", controller: "my_requests" do
