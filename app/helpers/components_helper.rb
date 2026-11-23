@@ -10,7 +10,7 @@ module ComponentsHelper
   # The green inline text link (.text-action) isn't a button: only for actions inside a sentence.
   BUTTON_VARIANTS = %i[primary secondary tertiary destructive destructive_solid brand].freeze
   BUTTON_SIZES = %i[sm lg icon].freeze
-  BADGE_TONES = %i[neutral success info warning danger violet dark].freeze
+  BADGE_TONES = %i[neutral success info warning danger violet].freeze
 
   # Classes for a button-styled link or button:
   #   link_to "New quote", new_quote_path, class: button_classes

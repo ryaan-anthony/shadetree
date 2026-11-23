@@ -5,7 +5,7 @@
     <% sends.reverse_each do |send| %>
       <% email = send.email_message %>
       <li><%= send.channel == "email" ? "Emailed" : "Link copied" %> <%= local_time(send.created_at) %><% if email %> ·
-        <% if email.problem? %><span class="font-medium text-danger">Not delivered</span><% else %><%= email.status_label %><% end %><% end %></li>
+        <% if email.problem? %><%= danger_flag("Not delivered") %><% else %><%= email.status_label %><% end %><% end %></li>
     <% end %>
   </ul>
 <% end %>

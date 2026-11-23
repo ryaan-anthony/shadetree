@@ -2,8 +2,9 @@
 <% business = current_business %>
 <% if business.billing_status == "past_due" %>
   <% lapsed = business.plan.default %>
-  <div class="banner banner-warning mb-5 flex-wrap items-center" role="status" id="billing-banner">
-    <%= icon "credit-card" %>
+  <%# PLT-17: a failed payment is danger, as everywhere. %>
+  <div class="banner banner-danger mb-5 flex-wrap items-center" role="status" id="billing-banner">
+    <%= icon "alert-triangle" %>
     <p class="min-w-0 flex-1">
       <% if lapsed %>
         <span class="font-semibold">Your renewal wasn't paid, so you're on <%= business.plan.name %> for now.</span> Update your card and your plan comes back as soon as a payment goes through.

@@ -7,7 +7,7 @@
       <span class="text-muted">
         <%= local_time(send.created_at) %><%= " by #{send.user.full_name}" if send.user %>
         <% if (email = send.email_message) %>
-          · <span class="<%= email.problem? ? "font-medium text-danger" : "" %>"><%= email.status_label %></span><% if email.problem? && email.error %> (<%= email.error %>)<% end %>
+          · <% if email.problem? %><%= danger_flag(email.status_label) %><% else %><span><%= email.status_label %></span><% end %><% if email.problem? && email.error %> (<%= email.error %>)<% end %>
         <% end %>
       </span>
     </li>
