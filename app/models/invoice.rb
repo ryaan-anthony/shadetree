@@ -35,7 +35,7 @@ class Invoice < ApplicationRecord
   belongs_to :created_by, class_name: "User", optional: true
   belongs_to :sent_by, class_name: "User", optional: true
   belongs_to :voided_by, class_name: "User", optional: true
-  # JOB-09: a deleted draft frees the quote work it billed directly, before its lines go.
+  # JOB-09, PAY-06: a deleted draft frees the quote work it billed directly, before its lines go.
   before_destroy(prepend: true) { QuoteWork.release_direct!(JobClaim.where(invoice_line_item_id: line_items.select(:id))) }
   has_many :line_items, -> { order(:position, :id) }, class_name: "InvoiceLineItem", inverse_of: :invoice,
            dependent: :delete_all, autosave: true
@@ -47,7 +47,12 @@ class Invoice < ApplicationRecord
   # PAY-06: every job it bills (a quote's invoice can bill several); `job` is the first of them.
   has_many :invoice_jobs, inverse_of: :invoice, dependent: :delete_all
   has_many :jobs, -> { order(:id) }, through: :invoice_jobs
-  after_save { invoice_jobs.find_or_create_by!(job_id:) if job_id && saved_change_to_job_id? }
+  after_save do
+    next unless job_id && saved_change_to_job_id?
+
+    invoice_jobs.find_or_create_by!(job_id:)
+    association(:jobs).reset
+  end
 
   normalizes :title, with: ->(value) { value.to_s.squish.presence }
   normalizes :message, :internal_notes, :terms, with: ->(value) { value.to_s.strip.presence }
@@ -66,6 +71,9 @@ class Invoice < ApplicationRecord
   after_initialize { self.currency ||= (business || Current.business)&.currency_code if new_record? }
   before_validation :assign_number_and_defaults, on: :create
   before_validation :apply_payment_terms
+  # PAY-06: a draft's lines billing quote work change claims, so its save takes the quote's lock
+  # before writing its own row (JOB-09's order: the quote first).
+  before_save(if: -> { quote_id && persisted? && association(:line_items).loaded? && line_items.any?(&:changed_for_autosave?) }) { QuoteWork.lock!(quote_id) }
 
   # A new draft for a client, with the business's defaults (terms, due date, taxes).
   class NotApproved < StandardError; end
@@ -75,44 +83,22 @@ class Invoice < ApplicationRecord
   end
 
   # PAY-01: the job's work, billed: its client, property, items, discount and taxes. The job's
-  # quote (if any) is linked too. A job can be invoiced more than once (progress billing).
+  # quote (if any) is linked too. PAY-06 (WorkBilling): once completed, its unbilled lines as done.
   #
   # JOB-09: lines added on site without a price are priced by the office first.
   class Unpriced < StandardError; end
 
-  def self.from_job!(job, by: nil)
-    unpriced = job.line_items.select(&:price_pending)
-    raise Unpriced, "Price #{unpriced.map(&:name).to_sentence} first: added on site without a price." if unpriced.any?
+  def self.from_job!(job, by: nil) = WorkBilling.bill_job!(job, by:)
 
-    transaction do
-      invoice = new(client: job.client, property: job.property, job:, quote: job.quote, created_by: by, title: job.title, currency: job.currency)
-      invoice.copy_pricing_from(job)
-      invoice.save!
-      invoice.record!(:created, by:, from: "job", number: job.number)
-      invoice
-    end
-  end
+  # PAY-01: an approved quote, billed. PAY-06 (WorkBilling): its completed jobs' unbilled lines, or
+  # with no jobs its own lines directly.
+  def self.from_quote!(quote, by: nil) = WorkBilling.bill_quote!(quote, by:)
 
-  # PAY-01: an approved quote, billed as agreed (the quote's lines, not the job's on-site
-  # changes). Its job is linked when there is one.
-  def self.from_quote!(quote, by: nil)
-    raise NotApproved, "Only an approved quote can be invoiced." unless quote.approved?
-
-    transaction do
-      invoice = new(client: quote.client, property: quote.property, quote:, job: quote.first_job, created_by: by, title: quote.title, currency: quote.currency)
-      invoice.copy_pricing_from(quote)
-      invoice.save!
-      QuoteWork.claim_direct!(invoice, quote) # JOB-09
-      invoice.record!(:created, by:, from: "quote", number: quote.number)
-      invoice
-    end
-  end
-
-  def copy_pricing_from(document)
+  def copy_pricing_from(document, lines: document.current_line_items)
     assign_attributes(tax_rates: document.tax_rates, prices_include_tax: document.prices_include_tax,
                       discount_kind: document.discount_kind, discount_percent: document.discount_percent,
                       discount_amount_cents: document.discount_amount_cents)
-    sync_line_items(BuiltDocument.rows_from(document.current_line_items))
+    sync_line_items(BuiltDocument.rows_from(lines))
   end
 
   def draft? = status == "draft"
@@ -190,12 +176,17 @@ class Invoice < ApplicationRecord
   # revising invoice does this first, so the client never sees the unfinished edits.
   def discard_revision!(by:)
     transaction do
+      QuoteWork.lock!(quote_id) if quote_id # PAY-06: restored lines may claim quote work
       lock!
       raise ArgumentError, "Invoice #{number} isn't being revised." unless revising?
 
       previous = revisions.last
       restore_snapshot(previous.snapshot)
-      save!(validate: false) # the lines first, while it's a draft: lines are only inserted on drafts (PAY-06)
+      begin
+        save!(validate: false) # the lines first, while it's a draft: lines are only inserted on drafts (PAY-06)
+      rescue ActiveRecord::RecordNotUnique
+        raise ArgumentError, "Some of its work has been billed on another invoice since. Keep this revision, or void that invoice first."
+      end
       assign_attributes(status: previous.status, revision: previous.number, pdf_blob_id: previous.pdf_blob_id, pdf_digest: nil)
       save!(validate: false)
       previous.destroy!
@@ -213,6 +204,7 @@ class Invoice < ApplicationRecord
     raise ArgumentError, "Say why it's being voided." if reason.empty?
 
     transaction do
+      QuoteWork.lock!(quote_id) if quote_id # PAY-06: the quote first, as billing takes it
       lock!
       discard_revision!(by:) if revising?
       raise ArgumentError, "Invoice #{number} can't be voided#{" while it has payments" if payments?}." unless voidable?
@@ -590,7 +582,7 @@ class Invoice < ApplicationRecord
     return unless client
 
     errors.add(:property, "must be one of this client's properties") if property && property.client_id != client_id
-    errors.add(:job, "must be for the same client") if (Array(job) + jobs.to_a).any? { _1.client_id != client_id }
+    errors.add(:job, "must be for the same client") if (Array(job) + invoice_jobs.filter_map(&:job)).any? { _1.client_id != client_id }
     errors.add(:quote, "must be for the same client") if quote && quote.client_id != client_id
   end
 

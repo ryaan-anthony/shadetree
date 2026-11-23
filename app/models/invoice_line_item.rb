@@ -23,8 +23,13 @@ class InvoiceLineItem < ApplicationRecord
 
   def document_currency = invoice.currency
 
-  # JOB-09: a line removed from a draft frees the quote work it billed directly, before it goes.
+  # Direct billing (a quote line's final bill with no job) is a claim with no job (JOB-09): made
+  # with the line, following its quantity on a draft, and freed before the line goes.
+  after_create(if: :direct?) { QuoteWork.claim_direct!(self) }
+  after_update(if: -> { saved_change_to_quantity? && direct_claim }) { QuoteWork.follow_direct!(direct_claim, quantity) }
   before_destroy { QuoteWork.release_direct!(JobClaim.where(invoice_line_item_id: id)) }
+
+  def direct? = final && quote_line_item_id && job_line_item_id.nil?
 
   before_validation { self.business ||= invoice&.business }
 

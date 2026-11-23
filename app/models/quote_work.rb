@@ -80,25 +80,28 @@ module QuoteWork
     claim.delete
   end
 
-  # PAY-01's invoice from a quote with no live job bills its lines directly: each invoice line
-  # claims what's still free of its quote line, with no job, so it isn't offered as to do.
-  def claim_direct!(invoice, quote)
-    return if quote.jobs.where.not(status: "cancelled").exists?
+  # PAY-06's direct billing: an invoice line that's the final bill of a quote line with no job
+  # claims what's free of it, up to its quantity, so no job can take that work; a draft's autosave
+  # moves the claim with the line's quantity (more only from what's free). The caller holds the
+  # quote's lock (WorkBilling, or the invoice's save).
+  def claim_direct!(invoice_line)
+    line = lock!(invoice_line.quote_line_item.quote_id).fetch(invoice_line.quote_line_item_id)
+    quantity = [ invoice_line.quantity.to_d, line.to_do_quantity ].min
+    return unless quantity.positive?
 
-    lines = lock!(quote.id)
-    quote.line_items.sort_by { [ _1.position, _1.id ] }.zip(invoice.line_items.sort_by { [ _1.position, _1.id ] }).each do |quote_line, invoice_line|
-      line = lines.fetch(quote_line.id)
-      quantity = [ invoice_line&.quantity.to_d, line.to_do_quantity ].min
-      next unless invoice_line && quantity.positive?
-
-      JobClaim.create!(business: invoice.business, quote_line_item: line, invoice_line_item: invoice_line, quantity:)
-      bump!(line, quantity)
-    end
+    JobClaim.create!(business: invoice_line.business, quote_line_item: line, invoice_line_item: invoice_line, quantity:)
+    bump!(line, quantity)
   end
 
-  # PAY-06's direct billing, until it takes this over: a claim with no job is freed when its
-  # invoice line is deleted (a draft deleted, a line removed) and stops being live when the invoice
-  # is voided (`keep`), so the quote's lines stay reconciled.
+  def follow_direct!(claim, wanted)
+    line = lock!(claim.quote_line_item.quote_id).fetch(claim.quote_line_item_id)
+    wanted = [ wanted.to_d, claim.quantity.to_d + line.to_do_quantity ].min
+    bump!(line, wanted - claim.quantity.to_d)
+    claim.update!(quantity: wanted)
+  end
+
+  # A claim with no job is freed when its invoice line is deleted (a draft deleted, a line removed)
+  # and stops being live when the invoice is voided (`keep`), so the quote's lines stay reconciled.
   def release_direct!(claims, keep: false)
     claims = claims.where(job_id: nil).includes(:quote_line_item).to_a
     claims.group_by { _1.quote_line_item.quote_id }.each do |quote_id, held|
