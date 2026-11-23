@@ -49,10 +49,9 @@ until the business turns it on.
       reads "should be with you any minute" for an hour, then goes. Starting, completing,
       cancelling or moving the visit (day or time changed) removes it with no extra email (JOB-05's
       email, if on, says what changed). Reassigning only updates the names.
-- [ ] No usable email (none, bounced, suppressed): nothing is emailed and the sheet says so. It
-      offers tap-to-call and tap-to-text (message filled in) only after a notice, "The client will
-      see your own number", with the work or business phone to copy instead (tested). The time is
-      still recorded. Erased clients (INS-02) get no button.
+- [ ] No usable email (none, bounced, suppressed): nothing is emailed and the sheet says so, and
+      offers tap-to-call and tap-to-text (message filled in) from the technician's phone. The time
+      is still recorded. Erased clients (INS-02) get no button.
 - [ ] Only confirmed senders can send (ACC-01). Sends share the business's 30-an-hour client email
       budget with quote and invoice sends; at the limit the email isn't sent, the card still
       updates, and the sender is told. Support viewing as a member (OPS-03) can't send.
@@ -91,8 +90,9 @@ until the business turns it on.
   page (clients have no job page); exact visits warn at 15 minutes (owner, 2026-11-22).
 - Updates email at 10+ minutes; no email offers tap-to-text from the tech's phone; at the email
   limit it isn't sent; one send a minute, 5 a day (owner, 2026-11-22).
-- The own-number notice before tap-to-call or text; rounding to 5 minutes; off for existing
-  businesses; fixed wording; follow-ups out of scope (review, 2026-11-22).
+- Techs who call or text clients from a personal phone do so by their own choice; Shadetree
+  shows no warning (owner, 2026-11-22).
+- 5-minute rounding; off for existing businesses; fixed wording; no follow-ups (review, 2026-11-22).
 
 ## Open questions
 
