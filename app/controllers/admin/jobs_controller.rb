@@ -64,7 +64,7 @@ class Admin::JobsController < Admin::BaseController
   def complete
     @job.complete!(by: current_user)
     redirect_to admin_job_path(@job), notice: "Job #{@job.number} completed."
-  rescue Job::NotOpen => error
+  rescue Job::NotOpen, QuoteWork::Refused => error
     redirect_to admin_job_path(@job), alert: error.message
   end
 
@@ -78,7 +78,7 @@ class Admin::JobsController < Admin::BaseController
   def reopen
     @job.reopen!
     redirect_to admin_job_path(@job), notice: "Job #{@job.number} reopened."
-  rescue Job::NotOpen => error
+  rescue Job::NotOpen, QuoteWork::Refused => error
     redirect_to admin_job_path(@job), alert: error.message
   end
 

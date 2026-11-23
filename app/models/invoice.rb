@@ -35,6 +35,8 @@ class Invoice < ApplicationRecord
   belongs_to :created_by, class_name: "User", optional: true
   belongs_to :sent_by, class_name: "User", optional: true
   belongs_to :voided_by, class_name: "User", optional: true
+  # JOB-09: a deleted draft frees the quote work it billed directly, before its lines go.
+  before_destroy(prepend: true) { QuoteWork.release_direct!(JobClaim.where(invoice_line_item_id: line_items.select(:id))) }
   has_many :line_items, -> { order(:position, :id) }, class_name: "InvoiceLineItem", inverse_of: :invoice,
            dependent: :delete_all, autosave: true
   has_many :events, -> { order(:occurred_at, :id) }, class_name: "InvoiceEvent", inverse_of: :invoice, dependent: :delete_all
@@ -86,9 +88,10 @@ class Invoice < ApplicationRecord
     raise NotApproved, "Only an approved quote can be invoiced." unless quote.approved?
 
     transaction do
-      invoice = new(client: quote.client, property: quote.property, quote:, job: quote.job, created_by: by, title: quote.title, currency: quote.currency)
+      invoice = new(client: quote.client, property: quote.property, quote:, job: quote.first_job, created_by: by, title: quote.title, currency: quote.currency)
       invoice.copy_pricing_from(quote)
       invoice.save!
+      QuoteWork.claim_direct!(invoice, quote) # JOB-09
       invoice.record!(:created, by:, from: "quote", number: quote.number)
       invoice
     end
@@ -205,6 +208,7 @@ class Invoice < ApplicationRecord
       # Skips validation, as revise! does: an old row that no longer validates can still be voided.
       assign_attributes(status: "void", voided_at: Time.current, voided_by: by, void_reason: reason.first(200))
       save!(validate: false)
+      QuoteWork.release_direct!(JobClaim.where(invoice_line_item_id: line_items.select(:id)), keep: true) # JOB-09: no longer live
       record!(:voided, by:, reason: void_reason)
       close_checkout_later # PAY-04
     end

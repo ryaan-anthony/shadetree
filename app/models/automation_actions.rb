@@ -76,7 +76,7 @@ module AutomationActions
 
   def create_job(_action, quote, _run)
     return [ "skipped", "The quote isn't approved." ] unless quote.status == "approved"
-    return [ "skipped", "#{quote.job.number} already exists." ] if quote.job
+    return [ "skipped", "#{quote.first_job.number} already exists." ] if quote.first_job
 
     job = Job.from_quote!(quote)
     [ "done", "Created #{job.number}." ]

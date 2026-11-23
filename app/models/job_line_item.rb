@@ -10,6 +10,18 @@ class JobLineItem < ApplicationRecord
 
   belongs_to :job, inverse_of: :line_items
   belongs_to_business_record :catalog_item, optional: true
+  # JOB-09: the quote line it does (through its claim), and what was logged on it.
+  has_one :claim, class_name: "JobClaim", inverse_of: :job_line_item, dependent: nil # the key nullifies
+  has_one :quote_line_item, through: :claim
+  has_many :work_entries, -> { order(:created_at, :id) }, inverse_of: :job_line_item, dependent: nil # the key nullifies: the log stays
+
+  # JOB-09: on an open job its claim follows its quantity, and removing it frees what it held
+  # (the job took the locks before saving: Job#quote_lines).
+  after_update(if: -> { saved_change_to_quantity? && claim && job.open? }) { QuoteWork.follow!(self, job.quote_lines) }
+  before_destroy(if: -> { claim && job.open? }) { QuoteWork.unclaim!(claim, job.quote_lines) }
+
+  # Done so far: the sum of its log.
+  def logged_quantity = WorkEntry.where(job_line_item_id: id).sum(:quantity)
 
   # A nested new line gets its price before its job is attached.
   def document_currency = job&.currency || business&.currency_code || Current.business.currency_code

@@ -28,6 +28,8 @@ class Job < ApplicationRecord
   has_many :visits, inverse_of: :job, dependent: :restrict_with_exception # JOB-02
   after_update :keep_visit_clock_times, if: :saved_change_to_location_id? # CAT-07
   has_many :invoices, dependent: :restrict_with_exception # PAY-01: one or more (progress billing)
+  has_many :claims, class_name: "JobClaim", inverse_of: :job, dependent: :restrict_with_exception # JOB-09: its share of the quote
+  has_many :work_entries, -> { order(:created_at, :id) }, inverse_of: :job, dependent: :restrict_with_exception # JOB-09
   accepts_nested_attributes_for :line_items, allow_destroy: true, reject_if: :blank_new_line?
 
   MAX_LINES = 100
@@ -55,6 +57,8 @@ class Job < ApplicationRecord
   validate { errors.add(:client, "is archived") if client&.archived? && (new_record? || will_save_change_to_client_id?) }
 
   before_validation :assign_number_and_defaults, on: :create
+  before_save :lock_quote_work, if: -> { quote_id && persisted? }
+  after_save { @quote_lines = nil }
   # Prices typed into a new job's lines need its currency before it's saved.
   after_initialize { self.currency ||= (business || Current.business)&.currency_code if new_record? }
 
@@ -104,24 +108,39 @@ class Job < ApplicationRecord
   end
 
   # The job for an approved quote, made once: a second call (a double click, the automatic one
-  # racing the button) returns the same job.
+  # racing the button) returns the same job. JOB-09: its lines copy the quote's in full, as before,
+  # and each claims what's still free of its quote line, so the quote's lines know which job holds
+  # them (work billed straight from the quote, or held by another job, isn't claimed twice).
   def self.from_quote!(quote, by: nil)
-    return quote.job if quote.job
-    raise NotOpen, "Only an approved quote becomes a job." unless quote.status == "approved"
+    return quote.first_job if quote.first_job
 
+    transaction(requires_new: true) do # a savepoint: a failure here can't spoil a surrounding approval
+      lines = QuoteWork.lock!(quote.id)
+      quote.reload
+      raise NotOpen, "Only an approved quote becomes a job." unless quote.status == "approved"
+      next quote.first_job if quote.first_job
+
+      ordered = lines.values.sort_by { [ _1.position, _1.id ] }
+      job = build_for_quote(quote, ordered.map { [ _1, _1.quantity ] }, by:)
+      job.save!
+      job.line_items.zip(ordered).each { |job_line, line| QuoteWork.claim!(job, line, [ job_line.quantity, line.to_do_quantity ].min, job_line:) }
+      quote.attachments.each { job.attachments.attach(_1.blob) }
+      job
+    end
+  rescue ActiveRecord::RecordNotUnique
+    quote.reload.first_job || raise
+  end
+
+  # The job, its lines copied with what it takes.
+  def self.build_for_quote(quote, taken, by:)
     title = quote.title.presence || quote.line_items.first&.name.presence || "Work for #{quote.client.display_name}"
     job = new(client: quote.client, property: quote.property || quote.client.primary_property, quote:, created_by: by, currency: quote.currency,
-              title: title.truncate(120, separator: " "),
-              internal_notes: quote.internal_notes, tax_rates: quote.tax_rates, prices_include_tax: quote.prices_include_tax,
+              title: title.truncate(120, separator: " "), internal_notes: quote.internal_notes, tax_rates: quote.tax_rates, prices_include_tax: quote.prices_include_tax,
               discount_kind: quote.discount_kind, discount_percent: quote.discount_percent, discount_amount_cents: quote.discount_amount_cents)
-    quote.line_items.each { job.line_items.build(_1.attributes.slice(*JobLineItem::COPIED)).tap { |line| line.name = "Item" if line.name.blank? } }
-    transaction(requires_new: true) do # a savepoint: a failure here can't spoil a surrounding approval
-      job.save!
-      quote.attachments.each { job.attachments.attach(_1.blob) }
+    taken.each_with_index do |(line, quantity), index|
+      job.line_items.build(line.attributes.slice(*JobLineItem::COPIED).merge("quantity" => quantity, "position" => index)).tap { |job_line| job_line.name = "Item" if job_line.name.blank? }
     end
     job
-  rescue ActiveRecord::RecordNotUnique
-    quote.reload.job || raise
   end
 
   def status_label = LABELS.fetch(status)
@@ -134,7 +153,7 @@ class Job < ApplicationRecord
   # Completing a job doesn't email the client about visits it cancels (the work is done); they
   # simply count as what the client knows.
   def complete!(by:, notify_client: false)
-    with_lock do
+    under_quote_lock do
       raise NotOpen, "#{number} is already #{status_label.downcase}." unless open?
 
       update!(status: "completed", completed_at: Time.current, completed_by: by)
@@ -145,11 +164,14 @@ class Job < ApplicationRecord
     end
   end
 
+  # JOB-09: its quote lines are to do again (the claims are kept for a reopen).
   def cancel!(by:, reason: nil, notify_client: true)
-    with_lock do
+    under_quote_lock do
       raise NotOpen, "#{number} is already #{status_label.downcase}." unless open?
 
+      lines = quote_lines # the quote's lines before the visits (the lock order)
       update!(status: "cancelled", cancelled_at: Time.current, cancelled_by: by, cancel_reason: reason)
+      QuoteWork.release!(self, lines) if quote_id
       ended = visits.open.lock.to_a.each { _1.finish!("cancelled", by:, reason: "Job cancelled", notify: false) }
       tell_crew_job_ended(ended, "cancelled", by:)
       ended.first&.tell_client(notify_client, ended, by:)
@@ -209,11 +231,13 @@ class Job < ApplicationRecord
     update_columns(status: new_status, updated_at: Time.current) if new_status != status
   end
 
-  # Back to the status its visits give it, undoing Complete or Cancel.
+  # Back to the status its visits give it, undoing Complete or Cancel. JOB-09: a cancelled job
+  # takes back what it held, refused while that's in another job.
   def reopen!
-    with_lock do
+    under_quote_lock do
       raise NotOpen, "#{number} is already open." if open?
 
+      QuoteWork.reclaim!(self, quote_lines) if status == "cancelled" && quote_id
       update!(status: visit_status, completed_at: nil, completed_by: nil, cancelled_at: nil, cancelled_by: nil, cancel_reason: nil)
     end
   end
@@ -239,7 +263,30 @@ class Job < ApplicationRecord
     super(kept.each_with_index.map { |row, index| row.merge("position" => index) } + removed)
   end
 
+  # JOB-09: the quote's lines, locked in order (the quote and this job first), for claim changes.
+  def quote_lines
+    return {} unless quote_id
+
+    @quote_lines ||= QuoteWork.lock!(quote_id, jobs: [ id ])
+  end
+
   private
+
+  # JOB-09's lock order: the quote, then this job (reloaded, as with_lock does), then its visits
+  # and the quote's lines as the change needs them.
+  def under_quote_lock(&)
+    transaction do
+      Quote.where(id: quote_id).lock.pluck(:id) if quote_id
+      with_lock(&)
+    end
+  ensure
+    @quote_lines = nil
+  end
+
+  # A job form changing lines from a quote takes the locks before the job's row is written.
+  def lock_quote_work
+    quote_lines if association(:line_items).loaded? && line_items.any?(&:changed_for_autosave?)
+  end
 
   # CAT-07: a job moved to a location in another time zone keeps its visits' clock times (9 am
   # stays 9 am, on the new location's clock), rather than the same moments.

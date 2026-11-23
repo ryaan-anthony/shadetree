@@ -7,4 +7,7 @@
 #     remove_by: M3          # milestone by which the flag and its old code path are deleted
 #
 # Turn flags on and off at runtime with `bin/rails flags:...` (see CONTRIBUTING.md).
-{}
+split_jobs:
+  description: "Jobs as parts of a quote (JOB-09): the picker, split quantities, work logging and confirmed completion. Turn it on only once PAY-06 and PAY-08 ship."
+  owner: "@ryaan-anthony"
+  remove_by: M6
