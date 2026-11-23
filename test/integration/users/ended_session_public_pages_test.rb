@@ -22,8 +22,8 @@ class Users::EndedSessionPublicPagesTest < ActionDispatch::IntegrationTest
   end
 
   # A phone signed in, then signed out from a laptop.
-  def ended_browser
-    phone = open_session { _1.post user_session_path, params: { user: { email: @user.email, password: "password123" } }, headers: { "User-Agent" => PHONE } }
+  def ended_browser(remember: "0")
+    phone = open_session { _1.post user_session_path, params: { user: { email: @user.email, password: "password123", remember_me: remember } }, headers: { "User-Agent" => PHONE } }
     laptop = open_session { _1.post user_session_path, params: { user: { email: @user.email, password: "password123" } } }
     @phone_session = @user.user_sessions.active.find_by!(user_agent: PHONE)
     laptop.delete user_browser_session_path(@phone_session)
@@ -119,6 +119,36 @@ class Users::EndedSessionPublicPagesTest < ActionDispatch::IntegrationTest
     phone.assert_redirected_to invitation_path(invitation.token)
     assert invitation.reload.pending?, "not accepted"
     assert_not BusinessUser.unscoped.exists?(user: @user, business: businesses(:two))
+    assert_not @phone_session.reload.active?
+  end
+
+  test "a remember-me cookie is dropped with the ended session, so it can't sign the browser back in" do
+    { "sign-up" => -> { new_user_registration_path }, "password reset" => -> { edit_user_password_path(reset_password_token: @user.send(:set_reset_password_token)) } }.each do |name, path|
+      phone = ended_browser(remember: "1")
+      assert phone.cookies[:remember_user_token].present?, "#{name}: remembered"
+      phone.get path.(), headers: { "User-Agent" => PHONE }
+      assert_equal 200, phone.response.status, "#{name} shows"
+      assert_predicate phone.cookies[:remember_user_token], :blank?, "#{name}: the cookie is deleted"
+
+      phone.get admin_root_path, headers: { "User-Agent" => PHONE }
+      phone.assert_redirected_to new_user_session_path
+      assert_not @user.user_sessions.active.exists?(user_agent: PHONE), "#{name}: no new session"
+    end
+  end
+
+  test "changing or deleting the account from an ended browser redirects with the note and changes nothing" do
+    phone = ended_browser
+    phone.put user_registration_path, params: { user: { first_name: "Changed", current_password: "password123" } }, headers: { "User-Agent" => PHONE }
+    phone.assert_redirected_to new_user_session_path
+    assert_match ENDED, phone.flash[:alert]
+    assert_not_equal "Changed", @user.reload.first_name
+
+    phone = ended_browser
+    email = @user.email
+    phone.delete user_registration_path, params: { current_password: "password123" }, headers: { "User-Agent" => PHONE }
+    phone.assert_redirected_to new_user_session_path
+    assert_match ENDED, phone.flash[:alert]
+    assert_equal email, @user.reload.email, "not deleted"
     assert_not @phone_session.reload.active?
   end
 end
