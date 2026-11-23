@@ -17,15 +17,17 @@
     <%= link_to admin_job_path(job), class: button_classes(:secondary) do %><%= icon "job" %> Job <%= job.number %><% end %>
   <% end %>
   <%# #289: once it's billed, the invoice is the next step, not a second one (that's in the menu). %>
-  <% billed = quote.approved? ? (quote.invoices.to_a + jobs.flat_map { _1.invoices.to_a }).uniq.reject(&:void?).sort_by(&:created_at) : [] %>
+  <% billed = quote.approved? ? Invoice.where(quote_id: quote.id).or(Invoice.where(id: InvoiceJob.where(job_id: jobs.map(&:id)).select(:invoice_id))).where.not(status: "void").order(:created_at, :id).to_a : [] %>
   <% if split %>
     <%# PAY-06: Create invoice is the Primary while completed work is unbilled, else Create job while
         work is to do (Secondary when both), else neither. With no live job the quote is billed
-        directly: a Secondary Create invoice beside Create job. The interim Reopen job is gone. %>
+        directly: a Secondary Create invoice beside Create job (owner, 2026-11-23). The interim
+        Reopen job is gone. %>
     <% live = jobs.reject { _1.status == "cancelled" } %>
     <% to_do = quote.approved? && quote.line_items.any? { _1.to_do_quantity.positive? } %>
-    <% unbilled = quote.approved? && live.any? { WorkBilling.billable?(_1) } %>
-    <% direct = to_do && live.empty? && !quote.recurring? %>
+    <% unbilled = quote.approved? && WorkBilling.billable_job_ids(live).any? %><%# two queries for all the jobs %>
+    <%# Hidden once every to-do line already has a direct bill that isn't void (it can't be billed again). %>
+    <% direct = to_do && live.empty? && !quote.recurring? && WorkBilling.directly_billable_lines(quote).any? %>
     <% if to_do %>
       <%= link_to new_admin_quote_job_path(quote), class: button_classes(unbilled ? :secondary : :primary) do %><%= icon "job" %> Create job<% end %>
     <% end %>

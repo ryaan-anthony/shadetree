@@ -2,6 +2,7 @@
 <% job = @job %>
 <% totals = job.totals %>
 <% split = QuoteWork.split?(current_business) %>
+<% billable = split && WorkBilling.billable?(job) %><%# PAY-06: worked out once for the banner and the Invoices card %>
 <%# JOB-09: "From Q-0004: 2 of 3 services" when a quote's work is split among jobs. %>
 <% from_quote = if job.quote && split
                   safe_join([ " · from ", link_to(job.quote.number, admin_quote_path(job.quote), class: "font-medium text-ink hover:underline"),
@@ -51,7 +52,7 @@
 <% if job.status == "completed" %>
   <div class="banner banner-success mb-4"><%= icon "check-circle" %>
     <%# PAY-06 (split jobs): ready while some of its lines aren't billed; before, until it has an invoice. %>
-    <% uninvoiced = split ? WorkBilling.billable?(job) : job.invoices.none? %>
+    <% uninvoiced = split ? billable : job.invoices.none? %>
     <p class="flex-1">Completed <%= local_time(job.completed_at) %><%= " by #{job.completed_by.full_name}" if job.completed_by %>.<%= " Ready to invoice." if uninvoiced %></p>
     <% if uninvoiced %>
       <%= button_to admin_job_invoices_path(job), class: button_classes(:primary, :sm), form: { class: "contents" } do %><%= icon "invoice" %> Create invoice<% end %>
@@ -79,7 +80,7 @@
     <% invoices = job.invoices.order(:created_at, :id).to_a %>
     <% billed = invoices.reject(&:void?) %><%# #289: a second invoice is possible (progress billing), but never the obvious button %>
     <% create = if split
-                  button_to(admin_job_invoices_path(job), class: button_classes(:secondary, :sm), form: { class: "contents" }) { icon("plus") + " Create invoice" } if WorkBilling.billable?(job)
+                  button_to(admin_job_invoices_path(job), class: button_classes(:secondary, :sm), form: { class: "contents" }) { icon("plus") + " Create invoice" } if billable
                 else
                   button_to(admin_job_invoices_path(job), class: button_classes(billed.any? ? :tertiary : :secondary, :sm),
                             form: { class: "contents", data: (billed.any? ? { turbo_confirm: "#{job.number} already has #{billed.map(&:number).to_sentence}. Create another invoice?", turbo_confirm_button: "Create another invoice" } : {}) }) { icon("plus") + (billed.any? ? " Create another invoice" : " Create invoice") }

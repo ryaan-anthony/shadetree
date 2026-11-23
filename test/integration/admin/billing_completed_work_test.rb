@@ -109,4 +109,42 @@ class Admin::BillingCompletedWorkTest < ActionDispatch::IntegrationTest
     their_quote = as_business(businesses(:two)) { Quote.create!(client: theirs.client, title: "Theirs") }
     assert_not_found_across_businesses { post admin_quote_invoices_path(their_quote) }
   end
+
+  test "the quote page's billing checks don't grow with its jobs" do
+    count = lambda do
+      queries = 0
+      counter = ->(*, payload) { queries += 1 unless payload[:name].in?([ "SCHEMA", "TRANSACTION" ]) || payload[:cached] }
+      ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { get admin_quote_path(@quote) }
+      assert_response :success
+      queries
+    end
+    2.times { complete(make(trees: 1)) }
+    with_two = count.call
+    3.times { complete(make(trees: 1)) }
+    assert_equal with_two, count.call
+  end
+
+  test "the direct Create invoice is hidden once every line still to do already has a direct bill" do
+    post admin_quote_invoices_path(@quote)
+    invoice = as_business(@business) { Invoice.last }
+    as_business(@business) do # 3 trees lowered off the draft: to do, for a job, but not billed directly again
+      invoice.sync_line_items(invoice.line_items.map { { "key" => _1.key, "name" => _1.name, "quantity" => (_1.name == "Tree removal" ? "7" : _1.quantity).to_s, "unit_price" => _1.unit_price.to_s } })
+      invoice.save!
+    end
+    get admin_quote_path(@quote)
+    assert_select "a.btn-primary[href=?]", new_admin_quote_job_path(@quote), /Create job/
+    assert_select "form[action=?]", admin_quote_invoices_path(@quote), count: 0
+  end
+
+  test "the editor marks a line taxed at its own job's rates" do
+    trees, gutters = make(trees: 10), make(gutters: 1)
+    as_business(@business) { gutters.update_columns(tax_rates: [ { "name" => "County", "percent" => "5" } ]) }
+    [ trees, gutters ].each { complete(_1) }
+    post admin_quote_invoices_path(@quote)
+    invoice = as_business(@business) { Invoice.last }
+    get edit_admin_invoice_path(invoice)
+    gutters_key = as_business(@business) { invoice.line_items.find_by!(name: "Gutters").key }
+    assert_select "#line-taxes-#{gutters_key}", /Taxed at its job's rates: County 5%/
+    assert_select "[id^='line-taxes-']", count: 1
+  end
 end

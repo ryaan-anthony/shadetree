@@ -55,9 +55,9 @@ moment. Progress billing, credits and discount shares are PAY-08.
       NTF-04 and the export. Recurring occurrences are billed per job (JOB-10).
 - [x] Existing data: lines on invoices that aren't void are linked to the job or quote lines they
       came from. A quote invoice on a quote with a job links to that job's lines. Where a line
-      matches more than one such invoice, the earliest is its final bill and later ones become
-      progress (final false). Nothing is credited after the fact, and over-billing isn't worked
-      out for these quotes. "Ready to invoice" lists the same jobs before and after (tested).
+      matches more than one such invoice, the earliest sent is its final bill and later ones
+      become progress (final false). Nothing is credited after the fact, and over-billing isn't
+      worked out. Legacy work may reappear in "Ready to invoice" (owner, 2026-11-23).
 - [x] Export (new columns at the end): invoice lines get the job and quote line they bill and
       whether final; invoices the quote and every job. All of it behind JOB-09's flag.
 - [x] Technicians and quote-only members (QTE-07/08) still can't invoice; tests show it.
@@ -75,26 +75,26 @@ moment. Progress billing, credits and discount shares are PAY-08.
 - A job's invoice uses its lines as done on the job, including quantity changes and lines added
   on site. A job's Create invoice bills that job once completed; the quote's bills all completed,
   unbilled jobs in one invoice and can be used again (owner, 2026-11-22).
-- With automatic jobs off, the quote's Create invoice still bills the quote's lines directly
-  (owner, 2026-11-22).
+- With automatic jobs off, the quote's Create invoice bills its lines directly (owner, 2026-11-22).
 - Nothing is billed twice: locks plus a database backstop (owner, 2026-11-22).
 - With both unbilled and to-do work, Create invoice is the Primary; Create job is Secondary
-  (owner, 2026-11-22). Billing directly isn't completed work: its Create invoice is Secondary.
+  (owner, 2026-11-22). With no job, billing directly is Secondary (owner, 2026-11-23).
+- Invoiced work can't be changed without first cancelling the invoice: a revision frees nothing
+  (lowering holds work; a billed line can't come off); only voiding frees it (owner, 2026-11-23).
+- No backwards compatibility now: simple backfills, no legacy handling (owner, 2026-11-23).
 - Tax rounds per invoice and the difference isn't adjusted (coordinator; follows the owner's model).
 
 ## Implementation notes
 
-- `WorkBilling` builds every invoice from work. Behind `split_jobs`; off, billing is as before
-  (any status, again, the quote's lines as agreed), each line linked, repeats `final` false.
-- `invoice_line_items.job_line_item_id`, `.quote_line_item_id`, `.final` and `.tax_rates` (the
-  job's, when an invoice's jobs differ); `invoice_jobs`, which `Job#invoices` goes through
-  (`invoices.job_id` holds the first). Revision snapshots keep each line's key and links.
+- `WorkBilling` bills work. With `split_jobs` off: billing, "Ready to invoice", NTF-04 as before.
+- `invoice_line_items.job_line_item_id`, `.quote_line_item_id`, `.final`, `.tax_rates` (the job's;
+  mixed tax-inclusive jobs are refused); `invoice_jobs` (`invoices.job_id` holds the first).
 - Backstop DDL: unique `invoices (id, status)`; `invoice_line_items.invoice_status` NOT NULL
   DEFAULT 'draft', `attr_readonly`, backfilled; FK `(invoice_id, invoice_status)` → `invoices
   (id, status)` ON UPDATE/DELETE CASCADE (lines go on drafts only); unique `(job_line_item_id)`
   and `(quote_line_item_id) WHERE job_line_item_id IS NULL`, both `WHERE final AND
-  invoice_status <> 'void'`. `void!`, `discard_revision!` and a draft's save take the quote lock.
-- Direct billing: a claim with no job, made by the line, following its quantity on a draft, freed
-  on delete or void. `Quote#recurring?` is false until JOB-10.
-- Migration: matched by item, name and price, then item and name. Dev seeds: "Front hedges and
-  fence" (two completed jobs; the hedges billed, the fence ready to invoice).
+  invoice_status <> 'void'`. Every invoice change takes the quote lock before the invoice's.
+- Direct billing: a claim with no job, made by the line, never billing more than it covers;
+  only a never-sent draft frees by lowering. `Quote#recurring?` is false until JOB-10.
+- Fit: QTE-09's "Billed" ignores drafts; JOB-10 decides if one quote invoice combines occurrences.
+- Dev seeds: "Front hedges and fence" (the hedges billed, the fence ready to invoice).
