@@ -132,6 +132,7 @@ module StaffPages
       page :new_automation, "New automation", new_admin_automation_path, :form
       page :edit_automation, "Edit automation", edit_admin_automation_path(@automation), :form
       page :new_template, "New message template", new_admin_custom_message_template_path, :form
+      page :profile, "Your profile", edit_admin_profile_path, :form # ACC-09
       page :edit_template, "Edit message template", edit_admin_custom_message_template_path(@template), :form
       page :new_location, "New location", new_admin_location_path, :form
       page :new_business, "Create a business", new_admin_business_path, :form

@@ -1,0 +1,16 @@
+<%# locals: (member:, history:) -%>
+<%# ACC-09: the member's profile, and what teammates changed in it (who, what, when). %>
+<% if current_membership.can_edit_profile?(member) %>
+  <%= link_to (member == current_membership ? edit_admin_profile_path : edit_admin_member_profile_path(member)), class: "text-action mt-1 inline-block text-sm2",
+              "aria-label": "Profile: #{member.user.full_name}" do %>Profile<% end %>
+<% end %>
+<% if history.any? %>
+  <details class="mt-1 text-sm2" id="<%= dom_id(member, :profile_history) %>">
+    <summary class="cursor-pointer text-muted">Profile changes (<%= history.size %>)</summary>
+    <ul class="mt-1 space-y-0.5 text-muted">
+      <% history.first(10).each do |event| %>
+        <li><%= event.actor_label("A former member") %> changed the <%= event.summary %>, <%= local_time(event.occurred_at) %></li>
+      <% end %>
+    </ul>
+  </details>
+<% end %>

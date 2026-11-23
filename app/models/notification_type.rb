@@ -80,6 +80,9 @@ class NotificationType
     # CLI-06: to the person who started a client import.
     Definition.new(kind: "client_import_finished", label: "Your client import finishes", hint: "How many were added, skipped or couldn't be.",
                    permission: :office, email_by_default: true, icon: "upload", audience: :named),
+    # ACC-09: to a member whose profile a teammate changed.
+    Definition.new(kind: "profile_changed", label: "Your profile is changed", hint: "A teammate changes your photo, title, bio or work phone.",
+                   permission: Permissions::CATALOG.keys, email_by_default: false, icon: "user", audience: :named),
     # OPS-05: to the person who asked Shadetree for help.
     Definition.new(kind: "support_reply", label: "Shadetree support replies", hint: "An answer, or a ticket closed, on a question you asked us.",
                    permission: Permissions::CATALOG.keys, email_by_default: true, icon: "life-buoy", audience: :named)

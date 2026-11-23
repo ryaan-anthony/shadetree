@@ -156,7 +156,9 @@ Rails.application.routes.draw do
         patch :deactivate
         patch :reactivate
       end
+      resource :profile, only: %i[edit update], controller: "profiles" # ACC-09: someone else's
     end
+    resource :profile, only: %i[edit update] # ACC-09: your own, in this business
 
     # Client links (PLT-12)
     resources :client_links, only: [] do
