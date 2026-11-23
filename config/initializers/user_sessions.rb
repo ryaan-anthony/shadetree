@@ -2,7 +2,7 @@
 # active (and notes the activity); signing out ends it. A browser whose session was signed out
 # from another device is signed out on its next request, and so is one with no session at all
 # (there's no other way to sign it out later). Staff pages then send it to sign in with a note;
-# public pages (ApplicationController.public_page) just show, signed out (#317).
+# public pages (ApplicationController#public_page?) just show, signed out (#317, #378).
 Rails.application.config.after_initialize do
   tracked = ->(user, opts) { opts[:scope] == :user && user.is_a?(User) }
   request_for = ->(auth) { ActionDispatch::Request.new(auth.env) }

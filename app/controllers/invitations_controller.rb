@@ -3,7 +3,10 @@
 #  - signed in as someone else: explain, offer to sign out
 #  - signed out, existing account: sign in, then come back here
 #  - signed out, new person: set name and password; accepting confirms the email
+# A browser whose session was ended elsewhere (ACC-06) is signed out first, so it's treated as
+# signed out here and can't accept as the old user (#378).
 class InvitationsController < ApplicationController
+  public_page!
   # OPS-03: what support may do while viewing as a member
   impersonation :blocked # accepting would give lasting access
   layout "marketing"

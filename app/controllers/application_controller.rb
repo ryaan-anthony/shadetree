@@ -9,9 +9,12 @@ class ApplicationController < ActionController::Base
 
   # Pages anyone may open, signed in or not: client links, the request form, the marketing
   # site. A browser whose session was ended elsewhere (ACC-06) is signed out quietly there and
-  # still sees the page; staff pages send it to sign in with a note (#317).
+  # still sees the page; staff pages send it to sign in with a note (#317). `only:` limits it to
+  # some actions, e.g. sign-up but not the account page (#378), so the class value is true or a
+  # list of actions: ask #public_page? (the ended-session hook does).
   class_attribute :public_page, instance_writer: false, default: false
-  def self.public_page! = self.public_page = true
+  def self.public_page!(only: nil) = self.public_page = only ? Array(only).map(&:to_s) : true
+  def public_page? = public_page == true || (public_page.is_a?(Array) && public_page.include?(action_name))
 
   # For lookups a page fires in the background (search-as-you-type, duplicate checks): their
   # responses don't write the session cookie. The cookie store rewrites the whole session on

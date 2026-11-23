@@ -1,4 +1,5 @@
 class Users::RegistrationsController < Devise::RegistrationsController
+  public_page! only: %i[new create] # sign-up; the account page still needs a live session (#378)
   # OPS-03: what support may do while viewing as a member
   impersonation :read_only, only: %i[edit] # the account page, without its sign-ins
   impersonation :blocked # password, email, deleting the account
