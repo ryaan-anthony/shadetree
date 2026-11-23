@@ -20,6 +20,7 @@ class Admin::CatalogItemsController < Admin::BaseController
     @items = scope.search(@query).includes(:category).ordered
     @groups = @items.group_by(&:category).sort_by { |category, _| category ? [ 0, category.position, category.name ] : [ 1 ] }
     @archived_count = CatalogItem.archived.count
+    @without_review_count = CatalogItem.active.where(send_without_review: true).count # QTE-08
     # CAT-08: each item's prices at other locations (active ones, with several locations).
     @overrides = if current_business.multiple_locations?
       LocationPrice.joins(:location).merge(Location.active).where(catalog_item: @items).includes(:location, :business)
@@ -76,6 +77,20 @@ class Admin::CatalogItemsController < Admin::BaseController
     redirect_to admin_catalog_items_path(anchor: "item-#{@item.uid}")
   end
 
+  # QTE-08: the most a quote sent without review may total, tax included; blank for no cap.
+  def review_cap
+    business = current_business
+    business.without_review_cap = params[:without_review_cap].to_s.strip
+    business.valid? # only the cap's own errors count here; the rest of the settings aren't this form's
+    if (error = business.errors[:without_review_cap].first)
+      return redirect_to admin_catalog_items_path, alert: "The cap #{error}."
+    end
+
+    business.update_columns(without_review_cap_cents: business.without_review_cap_cents, updated_at: Time.current)
+    cap = business.without_review_cap
+    redirect_to admin_catalog_items_path, notice: cap ? "Quotes sent without review can total up to #{helpers.money(cap)}, tax included." : "No cap on quotes sent without review."
+  end
+
   # JSON for the item picker: active items matching ?q=, or the picker's recent ?uids= in
   # the order given (archived ones drop out).
   def search
@@ -99,7 +114,7 @@ class Admin::CatalogItemsController < Admin::BaseController
 
   def item_params
     params.require(:catalog_item).permit(:name, :description, :unit, :custom_unit, :unit_price, :taxable,
-                                         :duration_minutes, :show_on_request_form, :category_id, location_price_inputs: {}).tap do |permitted|
+                                         :duration_minutes, :show_on_request_form, :send_without_review, :category_id, location_price_inputs: {}).tap do |permitted|
       # Categories arrive as uids from the form.
       if permitted.key?(:category_id)
         permitted[:category_id] = CatalogCategory.find_by(uid: permitted[:category_id].to_s)&.id

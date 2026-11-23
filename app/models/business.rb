@@ -108,6 +108,10 @@ class Business < ApplicationRecord
   validates :quote_number_prefix, :invoice_number_prefix,
             format: { with: /\A[A-Z0-9][A-Z0-9-]{0,7}\z/, message: "use up to 8 capital letters, digits or dashes" }
   validates :quote_terms, :invoice_terms, length: { maximum: 5_000 }
+  # QTE-08: the most a quote technicians send without review may total, tax included (nil: no cap).
+  include HasMoney
+  money :without_review_cap, currency: -> { currency_code }
+  validate { errors.add(:without_review_cap, "can't be negative") if without_review_cap_cents&.negative? }
   validates :quote_approved_message, length: { maximum: 500 }
   before_validation :default_currency_from_country, if: :new_record?
   normalizes :quote_number_prefix, :invoice_number_prefix, with: ->(prefix) { prefix.to_s.strip.upcase }

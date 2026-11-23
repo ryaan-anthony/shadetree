@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_22_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_22_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -228,6 +228,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_140000) do
     t.string "billing_status", default: "free", null: false
     t.datetime "billing_check_at"
     t.boolean "online_partial_payments", default: false, null: false
+    t.bigint "without_review_cap_cents"
     t.index ["active"], name: "index_businesses_on_active"
     t.index ["billing_check_at"], name: "index_businesses_on_billing_check_at", where: "(billing_check_at IS NOT NULL)"
     t.index ["billing_status"], name: "index_businesses_on_billing_status"
@@ -268,6 +269,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_140000) do
     t.datetime "archived_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "send_without_review", default: false, null: false
     t.index ["business_id", "archived_at", "position"], name: "idx_on_business_id_archived_at_position_80c3676433"
     t.index ["business_id"], name: "index_catalog_items_on_business_id"
     t.index ["category_id"], name: "index_catalog_items_on_category_id"
@@ -1036,6 +1038,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_140000) do
     t.bigint "discount_amount_cents"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "catalog_price_cents"
     t.index ["business_id"], name: "index_quote_line_items_on_business_id"
     t.index ["catalog_item_id"], name: "index_quote_line_items_on_catalog_item_id"
     t.index ["quote_id", "key"], name: "index_quote_line_items_on_quote_id_and_key", unique: true

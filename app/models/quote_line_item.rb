@@ -13,4 +13,8 @@ class QuoteLineItem < ApplicationRecord
   before_validation { self.business ||= quote&.business }
 
   validates :key, presence: true, length: { maximum: 64 }
+
+  # QTE-08: whether it needs the price its service had when added (new, or its service changed):
+  # Quote#note_catalog_prices sets them together, a lookup per quote rather than per line.
+  def catalog_price_due? = new_record? || will_save_change_to_catalog_item_id?
 end

@@ -344,6 +344,7 @@ Rails.application.routes.draw do
         patch :move
       end
       get :search, on: :collection
+      patch :review_cap, on: :collection # QTE-08
     end
 
     # Dashboard
