@@ -47,6 +47,7 @@ engine with conditions, channels and timing offsets), and client notification pr
 | Quote approved (confirmation with the approved PDF) | Client | QTE-05 |
 | Quote viewed / approved / declined / changes requested | Team | QTE-05 |
 | Visit scheduled / changed / cancelled / reminder | Client | JOB-05 |
+| On my way / updated arrival time | Client | JOB-12 |
 | Visit assigned / changed | Technician | JOB-02 |
 | Invoice sent | Client | PAY-02 |
 | Payment receipt | Client | PAY-04 |
@@ -89,7 +90,8 @@ engine with conditions, channels and timing offsets), and client notification pr
 
 ## Backlog (M6)
 
-- SMS for quotes, visit reminders, invoices (opt-in, STOP handling, metered per plan).
+- SMS for quotes, visit reminders, invoices and "On my way" (JOB-12 is email only) (opt-in,
+  STOP handling, metered per plan).
 - Sending from a business's own domain (domain authentication per business).
 - Web push / PWA notifications for technicians.
 - Client-level communication preferences (beyond unsubscribe from optional messages).

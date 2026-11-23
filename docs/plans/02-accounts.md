@@ -73,6 +73,12 @@ table is the source of truth: change both together.
   business, and a one-line tip the first time they open each main area. Both are role-aware and
   can be restarted from Help (owner request, 2026-11-21).
 
+### Team profiles
+- **R16** Members have an optional profile per business (photo, title or short bio, work phone),
+  shown to staff across the app. When the business turns it on, clients see a member's photo,
+  first name, title or bio and a phone number on visit messages, and nothing more (owner
+  request, 2026-11-22).
+
 ## Decisions
 
 | # | Decision | Rationale |
@@ -95,6 +101,7 @@ table is the source of truth: change both together.
 | [ACC-06](../specs/accounts/ACC-06-account-settings.md) | Account settings & deletion | M5 | ACC-01 |
 | [ACC-07](../specs/accounts/ACC-07-custom-roles.md) | Custom roles | M5 | ACC-04, BIL-01 |
 | [ACC-08](../specs/accounts/ACC-08-guided-tour.md) | Guided tour and first-time tips | M6 | ACC-05, ACC-04 |
+| [ACC-09](../specs/accounts/ACC-09-team-member-profiles.md) | Team member profiles | M6 | ACC-06, ACC-07, JOB-03, JOB-04, OPS-03, INS-02 |
 
 ## Backlog (M6)
 

@@ -84,8 +84,8 @@ when, where and how to reach the business.
 
 ## Out of scope
 
-- SMS confirmations/reminders, "on my way" messages, client confirmation/reschedule requests
-  (backlog).
+- SMS confirmations/reminders, client confirmation/reschedule requests (backlog). "On my way"
+  emails are JOB-12.
 
 ## Open questions
 

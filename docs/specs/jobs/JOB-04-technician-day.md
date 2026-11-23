@@ -47,7 +47,7 @@ I mark it done. Build a fast, phone-first "My day" that works with gloves on and
 
 ## Out of scope
 
-- Offline mode, time tracking, materials, on-site signature, "on my way" texts (backlog).
+- Offline mode, time tracking, materials, on-site signature, "on my way" texts (backlog; the email is JOB-12).
 - Technicians creating quotes or invoices (backlog toggle).
 
 ## Open questions
