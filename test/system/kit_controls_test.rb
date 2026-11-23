@@ -90,7 +90,7 @@ class KitControlsTest < ApplicationSystemTestCase
     find("nav.tabs button.tab[value=awaiting]").send_keys(:enter)
     assert_selector "nav.tabs button.tab[value=awaiting][aria-pressed=true]"
     assert_selector "nav.tabs button.tab[value=all][aria-pressed=false]"
-    assert_equal "awaiting", evaluate_script("document.activeElement.value")
+    assert_selector "nav.tabs button.tab[value=awaiting]:focus" # back on it once the results arrive
     assert_axe_clean "the quotes list"
   end
 
