@@ -31,7 +31,7 @@ class Admin::ClientListTest < ActionDispatch::IntegrationTest
       assert_select "a[href='tel:5550100100']", "555-010-0100"
       assert_select "td", "12 Elm St, Austin"
       assert_select ".badge", "commercial"
-      assert_select "time[datetime]", /ago/
+      assert_select "time[datetime][title$=ago]", /\A\w{3} \d+, \d{4}\z/ # PLT-18: a date, how long ago on hover
     end
     assert_select "li#client-#{maria.uid}-row a[href=?]", admin_client_path(maria)
   end

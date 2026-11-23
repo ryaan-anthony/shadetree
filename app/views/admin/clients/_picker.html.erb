@@ -18,7 +18,7 @@
   <div class="flex items-center gap-3 rounded-lg border border-line bg-white px-3 py-2.5" data-client-picker-target="chosen" <%= "hidden" unless selected %>>
     <div class="min-w-0 flex-1">
       <p class="truncate font-semibold text-ink" data-client-picker-target="chosenName"><%= selected&.display_name %></p>
-      <p class="truncate text-sm2 text-muted" data-client-picker-target="chosenDetail"><%= [ selected&.primary_contact&.value, selected&.primary_property&.one_line ].compact.join(" · ") %></p>
+      <p class="truncate text-sm2 text-muted" data-client-picker-target="chosenDetail"><%= [ contact_value(selected&.primary_contact), selected&.primary_property&.one_line ].compact.join(" · ") %></p>
     </div>
     <button type="button" class="<%= button_classes(:tertiary, :sm) %>" data-action="client-picker#change">Change</button>
   </div>

@@ -1,5 +1,5 @@
 <% content_for :title, "Import clients" %>
-<%= page_header @import.filename, lede: "#{pluralize(number_with_delimiter(@import.total_rows), "row")} · uploaded #{time_ago_in_words(@import.created_at)} ago" do %>
+<%= page_header @import.filename, lede: "#{pluralize(number_with_delimiter(@import.total_rows), "row")} · uploaded #{l(@import.created_at.in_time_zone)}" do %>
   <%= link_to "Clients", admin_clients_path, class: button_classes(:secondary) %>
 <% end %>
 

@@ -43,7 +43,7 @@
 <%= render "admin/quotes/from_request", quote: @quote %>
 <% if @quote.ready_for_review? && !own_quotes_only? %><%# QTE-07: handed over by whoever drafted it %>
   <div class="banner banner-info mb-4" id="review-banner"><%= icon "check-square" %>
-    <p><%= @quote.ready_for_review_by&.full_name || "A former member" %> marked this ready for review <%= local_time_ago(@quote.ready_for_review_at) %>. Check it, then send it.</p></div>
+    <p><%= @quote.ready_for_review_by&.full_name || "A former member" %> marked this ready for review on <%= local_date_ago(@quote.ready_for_review_at, time_of_day: true) %>. Check it, then send it.</p></div>
 <% elsif @quote.created_by && @quote.created_by != current_user && @quote.service_request && !own_quotes_only? %>
   <p class="-mt-2 mb-4 text-sm2 text-muted" id="drafted-by">Drafted by <%= @quote.created_by.full_name %>.</p>
 <% end %>

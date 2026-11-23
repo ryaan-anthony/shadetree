@@ -18,6 +18,32 @@ class FormattingHelperTest < ActionView::TestCase
     assert_nil local_time(nil)
   end
 
+  test "PLT-18: a relative time keeps its exact time on hover and for screen readers" do
+    travel_to Time.utc(2026, 3, 12, 13) do
+      html = Time.use_zone("America/New_York") { local_time_ago(Time.utc(2026, 3, 9, 13)) }
+      assert_dom_equal '<time datetime="2026-03-09T13:00:00Z" title="Mar 9, 2026, 9:00 AM">3 days ago<span class="sr-only">, Mar 9, 2026, 9:00 AM</span></time>', html
+    end
+  end
+
+  test "PLT-18: outside feeds, the absolute date with how long ago on hover" do
+    travel_to Time.utc(2026, 3, 12, 13) do
+      html = Time.use_zone("America/New_York") { local_date_ago(Time.utc(2026, 3, 9, 13)) }
+      assert_dom_equal '<time datetime="2026-03-09T13:00:00Z" title="3 days ago">Mar 9, 2026</time>', html
+      assert_includes Time.use_zone("America/New_York") { local_date_ago(Time.utc(2026, 3, 9, 13), time_of_day: true) }, "Mar 9, 2026, 9:00 AM"
+    end
+  end
+
+  test "PLT-18: a line's quantity and price, and contact methods in their format" do
+    line = Struct.new(:quantity_label, :unit_price)
+    assert_equal "2 visits × $45.00", line_quantity(line.new("2 visits", Money.new(4500, "USD")))
+    assert_equal "2 visits", line_quantity(line.new("2 visits", nil))
+    as_business(current_business) do
+      assert_equal "(555) 380-3141", contact_value(ClientContactMethod.new(kind: "phone", value: "555.380.3141"))
+      assert_equal "a@example.com", contact_value(ClientContactMethod.new(kind: "email", value: "a@example.com"))
+    end
+    assert_nil contact_value(nil)
+  end
+
   test "local_date never shifts" do
     html = Time.use_zone("Pacific/Kiritimati") { local_date(Date.new(2026, 12, 1)) }
     assert_dom_equal '<time datetime="2026-12-01">Dec 1, 2026</time>', html

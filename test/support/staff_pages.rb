@@ -219,7 +219,7 @@ module StaffPages
     end
 
     def records
-      @client = client("Maria Lopez")
+      @client = client("Maria Lopez", phone: "555.380.3141") # typed with dots: shown as (555) 380-3141 (PLT-18)
       @archived_client = client("Sam Okafor")
       @erased_client = client("Grace Chen")
       @service = CatalogItem.create!(name: "Mowing", unit: "visit", unit_price: "45")
@@ -310,8 +310,9 @@ module StaffPages
       end
     end
 
-    def client(name)
-      Client.create!(display_name: name, contact_methods_attributes: [ { kind: "email", value: "#{name.parameterize}@example.com" } ],
+    def client(name, phone: nil)
+      contacts = [ { kind: "email", value: "#{name.parameterize}@example.com" }, ({ kind: "phone", value: phone } if phone) ].compact
+      Client.create!(display_name: name, contact_methods_attributes: contacts,
                      properties_attributes: [ { address_line1: "12 Elm St", city: "Asheville", region: "NC", postal_code: "28801" } ])
     end
 

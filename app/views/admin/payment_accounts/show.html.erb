@@ -21,7 +21,7 @@
       <% else %>
         <div class="banner banner-warning mt-3" id="restriction"><%= icon "alert-triangle" %><p><%= @account.restriction_reason %></p></div>
       <% end %>
-      <% if @account.synced_at %><p class="mt-3 text-sm2 text-muted">Last updated by Stripe <%= local_time_ago(@account.synced_at) %>.</p><% end %>
+      <% if @account.synced_at %><p class="mt-3 text-sm2 text-muted">Last updated by Stripe on <%= local_date_ago(@account.synced_at, time_of_day: true) %>.</p><% end %>
 
       <div class="mt-4 flex flex-wrap gap-2">
         <% if owner && @account.fixable_in_onboarding? %>

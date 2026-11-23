@@ -32,12 +32,23 @@ module FormattingHelper
     tag.time(text, datetime: time.utc.iso8601)
   end
 
-  # local_time_ago(client.last_activity_at) => "3 days ago", with the exact local time as a
-  # tooltip and in the datetime attribute.
+  # local_time_ago(notification.created_at) => "3 days ago", with the exact local time as a
+  # tooltip, in the datetime attribute and for screen readers. PLT-18: only in activity feeds
+  # (timelines, History, Notifications, Home's lists); tables and other lists use local_date_ago.
   def local_time_ago(time, zone: Time.zone)
     return if time.nil?
 
-    tag.time("#{time_ago_in_words(time)} ago", datetime: time.utc.iso8601, title: l(time.in_time_zone(zone)))
+    exact = l(time.in_time_zone(zone))
+    tag.time(datetime: time.utc.iso8601, title: exact) { safe_join([ "#{time_ago_in_words(time)} ago", tag.span(", #{exact}", class: "sr-only") ]) }
+  end
+
+  # PLT-18: when something happened, outside activity feeds: the absolute date ("Nov 19, 2026"),
+  # with how long ago on hover. time_of_day: true adds the time ("Nov 19, 2026, 9:00 AM").
+  def local_date_ago(time, time_of_day: false, zone: Time.zone)
+    return if time.nil?
+
+    local = time.in_time_zone(zone)
+    tag.time(time_of_day ? l(local) : l(local.to_date), datetime: time.utc.iso8601, title: "#{time_ago_in_words(time)} ago")
   end
 
   # Date-only values (due dates, closures) have no zone and are never shifted.
@@ -59,6 +70,17 @@ module FormattingHelper
     digits = north_american_digits(number) unless number.match?(/[a-z]/i) || number != text
     digits ? "(#{digits[0, 3]}) #{digits[3, 3]}-#{digits[6, 4]}" : text.presence
   end
+
+  # PLT-18: a client's email or phone as staff read it: a phone in the phone format above, an
+  # email as typed.
+  def contact_value(method)
+    return if method.nil?
+
+    method.phone? ? phone_number(method.value) : method.value
+  end
+
+  # What the client picker gets for a client (Client#as_picker_json), its contact formatted.
+  def client_picker_json(client) = client.as_picker_json.merge(contact: contact_value(client.primary_contact))
 
   PHONE_MIN_DIGITS = 7
   PHONE_MAX_DIGITS = 15 # E.164

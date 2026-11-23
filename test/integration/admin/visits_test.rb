@@ -53,7 +53,7 @@ class Admin::VisitsTest < ActionDispatch::IntegrationTest
                  [ visit.scheduled_on, visit.starts_at, visit.duration_minutes, as_business(@business) { visit.assignees.to_a }, visit.instructions, visit.created_by ]
     assert_equal "scheduled", @job.reload.status
     follow_redirect!
-    assert_select "#visit-#{visit.uid}", /Tuesday, arrive 8–10 am.*About 2 h.*#{@tech.full_name}.*Gate code 4417/m
+    assert_select "#visit-#{visit.uid}", /Tue, arrive 8–10 am.*About 2 h.*#{@tech.full_name}.*Gate code 4417/m
     assert_select "#visit-cancel-#{visit.uid} input[name=reason]", 1, "cancelling asks for a reason"
   end
 

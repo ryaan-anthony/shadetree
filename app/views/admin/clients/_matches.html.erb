@@ -9,7 +9,7 @@
         <% matches.each do |client| %>
           <li class="flex flex-wrap items-center justify-between gap-2">
             <span class="min-w-0"><span class="font-semibold"><%= client.display_name %></span>
-              <span class="text-sm2 text-muted"><%= [ client.primary_contact&.value, client.primary_property&.one_line ].compact.join(", ") %></span></span>
+              <span class="text-sm2 text-muted"><%= [ contact_value(client.primary_contact), client.primary_property&.one_line ].compact.join(", ") %></span></span>
             <% if inline %>
               <%= link_to "Use this client", picked_admin_client_path(client, inline: 1), class: button_classes(:secondary, :sm), data: { turbo_frame: "new_client" }, "aria-label": "Use this client: #{client.display_name}" %>
             <% else %>

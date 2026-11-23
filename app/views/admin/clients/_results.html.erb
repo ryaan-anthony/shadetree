@@ -41,7 +41,7 @@
               <%= avatar client.display_name %>
               <span class="min-w-0 flex-1">
                 <span class="block truncate font-semibold text-ink"><%= client.display_name %></span>
-                <span class="block truncate text-sm2 text-muted"><%= client.primary_contact&.value || "No contact details" %></span>
+                <span class="block truncate text-sm2 text-muted"><%= contact_value(client.primary_contact) || "No contact details" %></span>
                 <% if client.primary_property %><span class="block truncate text-sm2 text-muted"><%= client.primary_property.one_line %></span><% end %>
               </span>
               <%= icon "chevron-right", class: "size-4 shrink-0 text-faint" %>
@@ -70,10 +70,10 @@
                 <%= link_to client.display_name, admin_client_path(client), class: "primary hover:underline", data: { turbo_frame: "_top" } %>
                 <% if client.company_name %><span class="sub"><%= client.company_name %></span><% end %>
               </td>
-              <td class="text-sm2"><% if (contact = client.primary_contact) %><%= link_to contact.value, contact.href, class: "text-subtle hover:underline" %><% else %><span class="text-muted">None</span><% end %></td>
+              <td class="text-sm2"><% if (contact = client.primary_contact) %><%= link_to contact_value(contact), contact.href, class: "text-subtle hover:underline" %><% else %><span class="text-muted">None</span><% end %></td>
               <td class="max-w-64 truncate text-sm2 text-subtle"><%= client.primary_property&.one_line %></td>
               <td><span class="flex flex-wrap gap-1"><% client.tags.first(3).each do |tag| %><%= badge tag, dot: false %><% end %><% if client.tags.size > 3 %><span class="text-sm2 text-muted">+<%= client.tags.size - 3 %></span><% end %></span></td>
-              <td class="whitespace-nowrap text-right text-sm2 text-muted"><%= local_time_ago(client.last_activity_at) %></td>
+              <td class="whitespace-nowrap text-right text-sm2 text-muted"><%= local_date_ago(client.last_activity_at) %></td>
             </tr>
           <% end %>
         </tbody>
