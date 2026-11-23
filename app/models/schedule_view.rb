@@ -174,6 +174,13 @@ class ScheduleView
 
   def anytime_in(column) = visits_in(column).select(&:anytime?)
 
+  # JOB-08: the people Busy during an hour of a column (its slot says so, as Busy can't be focused).
+  def busy_during(column, hour)
+    from = place.local_time(column.date, format("%02d:00", hour))
+    timed = (@busy_in ||= {})[[ column.date, column.member_key ]] ||= visits_in(column).select { _1.is_a?(Busy) && !_1.anytime? }
+    timed.select { _1.starts_at < from + 1.hour && _1.ends_at > from }.map(&:user).uniq
+  end
+
   # The timed visits of a day, with their place on the grid. Visits that overlap share the
   # column's width side by side.
   def placed_in(column)

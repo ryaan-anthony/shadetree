@@ -45,15 +45,27 @@ module ScheduleHelper
     "#{label} #{visit.starts_at.in_time_zone(zone).strftime("%Z")}"
   end
 
+  # JOB-08: what screen readers hear for a Busy block: "Busy, 2 to 3 pm, Marcus", "Busy,
+  # arriving 2 to 4 pm CST, Marcus", "Busy, anytime, Marcus"; on the grid with its day, as a
+  # visit's is (", Monday, November 23").
+  def schedule_busy_label(busy, schedule, day: false)
+    zone = (" #{busy.starts_at.in_time_zone(busy.time_zone).strftime("%Z")}" unless busy.anytime? || busy.time_zone.tzinfo.identifier == schedule.place.time_zone.tzinfo.identifier)
+    "Busy, #{busy.spoken_time}#{zone}, #{busy_name(busy.user)}#{", #{busy.scheduled_on.strftime("%A, %B %-d")}" if day}"
+  end
+
+  def busy_name(user) = user.first_name.presence || user.full_name
+
   # A grid column's name for screen readers: its day, and whose it is in a day split by person.
   def schedule_column_label(column)
     [ column.date.strftime("%A, %B %-d"), (column.member == :none ? "Not assigned" : column.member&.full_name) ].compact.join(", ")
   end
 
   # QA #274: an empty hour on the grid, as a link to a new visit then (and with that person).
-  def schedule_slot_label(column, hour)
+  # JOB-08: and who's Busy then, since a Busy block can't be focused ("…, Marcus busy").
+  def schedule_slot_label(column, hour, busy: [])
     who = column.member.respond_to?(:full_name) ? ", with #{column.member.full_name}" : ""
-    "New visit, #{column.date.strftime("%A, %B %-d")}, #{format("%d:00 %s", ((hour - 1) % 12) + 1, hour < 12 ? "AM" : "PM")}#{who}"
+    then_busy = busy.any? ? ", #{busy.map { busy_name(_1) }.to_sentence} busy" : ""
+    "New visit, #{column.date.strftime("%A, %B %-d")}, #{format("%d:00 %s", ((hour - 1) % 12) + 1, hour < 12 ? "AM" : "PM")}#{who}#{then_busy}"
   end
 
   # The slot's day, time and person (?crew=, or the person the calendar is filtered to), what the
