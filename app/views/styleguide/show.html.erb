@@ -155,12 +155,11 @@
       <h2 id="badges-h" class="section-title mb-3">Badges and status pills</h2>
       <%= card do %>
         <div class="flex flex-wrap gap-2">
-          <%= badge "Draft" %>
-          <%= badge "Sent", tone: :info %>
-          <%= badge "Approved", tone: :success %>
-          <%= badge "Due soon", tone: :warning %>
-          <%= badge "Overdue", tone: :danger %>
-          <%= badge "Scheduled", tone: :violet %>
+          <%= status_badge(:quote, "draft") %>
+          <%= status_badge(:quote, "sent") %>
+          <%= status_badge(:quote, "approved") %>
+          <%= status_badge(:job, "unscheduled") %>
+          <%= status_badge(:invoice, "overdue") %>
           <%= badge "Owner", tone: :dark, dot: false %>
           <%= badge "No dot", dot: false %>
         </div>

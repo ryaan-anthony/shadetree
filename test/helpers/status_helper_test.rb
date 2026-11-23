@@ -30,6 +30,10 @@ class StatusHelperTest < ActionView::TestCase
                  automation: %w[off], automation_run: %w[skipped], quota: %w[ok] },
       danger: { quote: %w[declined], invoice: %w[overdue], follow_up: %w[overdue], email: %w[not_delivered], automation_run: %w[failed], quota: %w[blocked] }
     }
+    # Owner, 2026-11-23: the other pills follow the same meanings.
+    expected[:info][:email] = %w[sent]
+    expected[:neutral].merge!(client_import_row: %w[new], payment: %w[closed])
+    expected[:success][:payment] = %w[won prevented]
     expected.each do |tone, types|
       types.each do |type, statuses|
         statuses.each { assert_equal tone, status_tone(type, _1), "#{type} #{_1}" }

@@ -26,7 +26,7 @@
   <% if limit&.positive? %>
     <% state = entitlements.quote_sending %>
     <% word = { approaching: "Nearly used, #{limit - used} left", blocked: "Limit reached" }[state] %>
-    <div class="quota-bar quota-<%= state %>" aria-hidden="true">
+    <div class="quota-bar quota-<%= state %> quota-tone-<%= status_tone(:quota, state) %>" aria-hidden="true"><%# PLT-17: its fill from the map %>
       <span class="<%= inline_style("width: #{[ used * 100 / limit, 100 ].min}%") %>"></span>
     </div>
     <p class="quota-text">

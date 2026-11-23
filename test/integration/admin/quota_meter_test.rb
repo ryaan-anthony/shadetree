@@ -36,7 +36,7 @@ class Admin::QuotaMeterTest < ActionDispatch::IntegrationTest
     assert_select "#quota-meter .quota-text", text: "3 of 5 used"
     assert_select "#quota-resets", "Resets Dec 1"
     assert_select "#quota-meter .quota-state", 0, "normal needs no word"
-    assert_select "#quota-meter .quota-bar.quota-ok[aria-hidden=true]", 1, "the bar is decoration"
+    assert_select "#quota-meter .quota-bar.quota-ok.quota-tone-neutral[aria-hidden=true]", 1, "the bar is decoration"
     assert_select "#quota-meter [role=meter]", 0
     assert_select "#quota-plan-link[href=?]", admin_plan_path
   end
@@ -44,11 +44,11 @@ class Admin::QuotaMeterTest < ActionDispatch::IntegrationTest
   test "approaching, then Limit reached at the limit (no grace send), and over it after a downgrade" do
     sent(4)
     get admin_root_path
-    assert_select "#quota-meter .quota-bar.quota-approaching"
+    assert_select "#quota-meter .quota-bar.quota-approaching.quota-tone-warning"
     assert_select "#quota-meter .quota-text", /4 of 5 used\s*·\s*Nearly used, 1 left/
     sent(1)
     get admin_root_path
-    assert_select "#quota-meter .quota-bar.quota-blocked"
+    assert_select "#quota-meter .quota-bar.quota-blocked.quota-tone-danger"
     assert_select "#quota-meter .quota-text", /5 of 5 used\s*·\s*Limit reached/
 
     sent(1) # sent on a bigger plan, then downgraded mid-period
