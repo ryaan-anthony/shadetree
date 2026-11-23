@@ -21,7 +21,7 @@
       </div>
 
       <div class="space-y-3" data-controller="nested-fields">
-        <% unless inline %><h3 class="text-sm font-semibold text-ink">How to reach them</h3><% end %>
+        <% unless inline %><h2 class="text-sm font-semibold text-ink">How to reach them</h2><% end %>
         <%= f.fields_for :contact_methods do |cf| %><%= render "contact_method_fields", f: cf, inline: %><% end %>
         <% unless inline %>
           <% %w[email phone].each do |kind| %>
