@@ -1,6 +1,5 @@
 <% content_for :title, "Contact messages" %>
-<h1 class="page-title">Contact messages</h1>
-<p class="page-lede">What people send through the website's contact form, newest first. Spam is kept 30 days for checking; nobody was emailed about it.</p>
+<%= page_header "Contact messages", lede: "What people send through the website's contact form, newest first. Spam is kept 30 days for checking; nobody was emailed about it." %>
 <nav class="tabs mt-4" aria-label="Show messages">
   <% Ops::ContactMessagesController::TABS.each do |tab, label| %>
     <%= link_to ops_contact_messages_path(tab:), class: "tab", "aria-current": ("page" if tab == @tab) do %>

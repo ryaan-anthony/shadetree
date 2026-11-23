@@ -1,6 +1,7 @@
 <% content_for :title, "Message from #{@message.name}" %>
-<p><%= link_to "← Contact messages", ops_contact_messages_path(tab: tab_for(@message)), class: "text-sm2 text-muted hover:underline" %></p>
-<h1 class="page-title mt-2 break-words">Message from <%= @message.name %></h1>
+<%= page_header "Message from #{@message.name}" do %>
+  <%= link_to ops_contact_messages_path(tab: tab_for(@message)), class: button_classes(:tertiary) do %><%= icon "arrow-left" %> Contact messages<% end %>
+<% end %>
 <div class="mt-6 grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
   <%= card do %>
     <div class="mb-3 flex flex-wrap gap-2" id="message-status">

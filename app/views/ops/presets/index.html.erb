@@ -1,7 +1,6 @@
 <%# OPS-04: industry presets (CAT-05). %>
 <% content_for :title, "Industry presets" %>
-<h1 class="page-title">Industry presets</h1>
-<p class="page-lede">The starter services and visit length a new business in each industry is offered. Edits here survive deploys.</p>
+<%= page_header "Industry presets", lede: "The starter services and visit length a new business in each industry is offered. Edits here survive deploys." %>
 <%= card flush: true, class: "mt-4" do %>
   <ul class="list" id="presets">
     <% @presets.each do |preset| %>

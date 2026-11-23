@@ -1,6 +1,7 @@
 <% content_for :title, "Edit note" %>
-<p class="text-sm2"><%= link_to "← #{@business.name}", ops_business_path(@business, anchor: "notes"), class: "text-muted hover:underline" %></p>
-<h1 class="page-title mt-1">Edit note</h1>
+<%= page_header "Edit note" do %>
+  <%= link_to ops_business_path(@business, anchor: "notes"), class: button_classes(:tertiary) do %><%= icon "arrow-left" %> <%= @business.name %><% end %>
+<% end %>
 <%= card class: "mt-4 max-w-2xl" do %>
   <%= form_with model: @note, url: ops_business_note_path(@business, @note), method: :patch do |f| %>
     <%= f.field :body, as: :textarea, label: "Note", rows: 5, maxlength: 5000 %>

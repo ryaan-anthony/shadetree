@@ -9,12 +9,12 @@
 #   StaffPages.empty                                          # the lists with nothing in them (before build)
 #
 # kind: :list, :form, :detail, :settings, :empty, or :ops (the operator console: sign in with
-# sign_in_operator). head: false for a page with no page header (.page-head): the schedule's
-# visit panel by design; the operator console until PLT-15 part 2 gives it page_header.
+# sign_in_operator). head: false for a page with no page header (.page-head): only the
+# schedule's visit panel, by design (PLT-15 gave the rest page_header).
 # Add a page here when you add one to the app; a state worth checking gets its own entry.
 module StaffPages
   Page = Data.define(:key, :name, :path, :kind, :head) do
-    def initialize(key:, name:, path:, kind:, head: kind != :ops) = super
+    def initialize(key:, name:, path:, kind:, head: true) = super
     def detail? = kind == :detail
     def ops? = kind == :ops
     def to_s = "#{name} (#{path})"
@@ -60,7 +60,7 @@ module StaffPages
 
     private
 
-    def page(key, name, path, kind, head: kind != :ops) = @pages << Page.new(key:, name:, path:, kind:, head:)
+    def page(key, name, path, kind, head: true) = @pages << Page.new(key:, name:, path:, kind:, head:)
 
     def lists
       page :home, "Home", admin_root_path, :list

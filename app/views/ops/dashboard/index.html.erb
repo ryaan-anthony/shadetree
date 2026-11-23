@@ -1,6 +1,5 @@
 <% content_for :title, "Operator console" %>
-<h1 class="page-title">Operator console</h1>
-<p class="page-lede">Everything you do here is recorded in the audit log.</p>
+<%= page_header "Operator console", lede: "Everything you do here is recorded in the audit log." %>
 <% unless @append_only %>
   <div class="banner banner-warning mt-4" role="alert" id="audit-unprotected"><p>The audit log isn't protected in this database: the append-only triggers are missing. Run <code>bin/rails runner "AuditEntry.install_append_only_trigger!"</code>.</p></div>
 <% end %>

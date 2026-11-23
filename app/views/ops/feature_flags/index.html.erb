@@ -1,7 +1,6 @@
 <%# OPS-04: release flags (PLT-11), declared in config/feature_flags.yml. %>
 <% content_for :title, "Release flags" %>
-<h1 class="page-title">Release flags</h1>
-<p class="page-lede">Turn unfinished work on for some businesses, a share of them, or everyone. Changes take up to 30 seconds to reach every server.</p>
+<%= page_header "Release flags", lede: "Turn unfinished work on for some businesses, a share of them, or everyone. Changes take up to 30 seconds to reach every server." %>
 <% if @flags.empty? %>
   <%= card(class: "mt-4") { empty_state(title: "No flags declared", text: "Flags are declared in config/feature_flags.yml.", icon: "flag") } %>
 <% end %>

@@ -1,7 +1,6 @@
 <%# OPS-02: a person by email, and the businesses they belong to. %>
 <% content_for :title, "People" %>
-<h1 class="page-title">People</h1>
-<p class="page-lede">Find someone by email to see which businesses they belong to.</p>
+<%= page_header "People", lede: "Find someone by email to see which businesses they belong to." %>
 <%= form_with url: ops_users_path, method: :get, class: "mt-4 flex max-w-xl items-end gap-2" do %>
   <div class="field flex-1"><label class="label" for="email">Email</label><%= search_field_tag :email, @query, class: "input", id: "email", autocomplete: "off", required: true %></div>
   <%= submit_tag "Find", class: button_classes(:secondary), name: nil %>

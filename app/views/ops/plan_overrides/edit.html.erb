@@ -1,9 +1,9 @@
 <% content_for :title, "Limits and features for #{@business.name}" %>
 <% overrides = @business.plan_overrides %>
 <% plan = @business.plan %>
-<p class="text-sm2"><%= link_to "← #{@business.name}", ops_business_path(@business, anchor: "plan"), class: "text-muted hover:underline" %></p>
-<h1 class="page-title mt-1">Comp limits or features</h1>
-<p class="page-lede"><%= @business.name %> is on <%= plan.name %>. Anything left on “<%= plan.name %>'s” follows the plan. Nothing is billed or changed in the billing provider.</p>
+<%= page_header "Comp limits or features", lede: "#{@business.name} is on #{plan.name}. Anything left on “#{plan.name}'s” follows the plan. Nothing is billed or changed in the billing provider." do %>
+  <%= link_to ops_business_path(@business, anchor: "plan"), class: button_classes(:tertiary) do %><%= icon "arrow-left" %> <%= @business.name %><% end %>
+<% end %>
 <%= card class: "mt-4 max-w-2xl" do %>
   <%= form_with url: ops_business_plan_overrides_path(@business), method: :patch, data: { turbo_confirm: "Save these limits and features for #{@business.name}?" } do %>
     <fieldset><legend class="label">Limits</legend>

@@ -1,6 +1,5 @@
 <% content_for :title, "Audit log" %>
-<h1 class="page-title">Audit log</h1>
-<p class="page-lede">Every operator action, newest first. Entries can't be changed or deleted.</p>
+<%= page_header "Audit log", lede: "Every operator action, newest first. Entries can't be changed or deleted." %>
 <%= form_with url: ops_audit_entries_path, method: :get, class: "mt-4 grid gap-3 sm:grid-cols-5 sm:items-end" do %>
   <div class="field"><label class="label" for="operator">Operator</label><%= select_tag :operator, options_for_select(@operators, params[:operator]), include_blank: "Anyone", class: "select", id: "operator" %></div>
   <div class="field"><label class="label" for="action_name">Action</label><%= select_tag :action_name, options_for_select(@actions.map { [ AuditEntry::ACTIONS.fetch(_1, _1), _1 ] }, params[:action_name]), include_blank: "Any", class: "select", id: "action_name" %></div>
