@@ -51,12 +51,12 @@ class Admin::EmptyStatesTest < ActionDispatch::IntegrationTest
     assert_select ".empty .empty-title", "Nothing in the log yet"
   end
 
-  test "Schedule: an empty week or day says so on the desktop grid, with no later visit booked (#299)" do
-    get admin_schedule_path
-    assert_select "#next-visit.md\\:block", text: /Nothing booked this week\./
-    assert_select "#next-visit a", 0
-    get admin_schedule_path(date: (@business.today + 14).iso8601) # a week without today: the phone agenda's card too
-    assert_select "#schedule-agenda .empty-title", "Nothing booked this week"
+  test "Schedule: an empty week or day says so on every screen, with no later visit booked (#299)" do
+    get admin_schedule_path # the current week: on a phone too, not only today's "Nothing booked."
+    assert_select "#next-visit:not(.hidden)", text: /\ANothing booked this week\.\z/
+    assert_select "#next-visit .hidden, #next-visit a", 0
+    get admin_schedule_path(date: (@business.today + 14).iso8601)
+    assert_select "#next-visit", text: /Nothing booked this week\./
 
     get admin_schedule_path(view: "day", date: (@business.today + 1).iso8601)
     assert_select "#next-visit", text: /Nothing booked this day\./
