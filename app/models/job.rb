@@ -71,12 +71,17 @@ class Job < ApplicationRecord
   FILTERS = { "open" => "Not finished", "unscheduled" => "Needs scheduling", "scheduled" => "Scheduled", "in_progress" => "In progress",
               "completed" => "Completed", "to_invoice" => "Ready to invoice", "cancelled" => "Cancelled", "all" => "All" }.freeze
 
-  # INS-01: finished, and not billed yet. PAY-06: a job from a quote stays until each of its lines
-  # has a final bill on an invoice that went out (a draft or a void one doesn't count), so another
-  # job's invoice from the same quote doesn't hide it, and a job with no lines left counts as billed.
-  # A job without a quote, as before: until an invoice for it went out.
+  # INS-01: finished, and not billed yet: no invoice that went out (a draft or a void one doesn't
+  # count) for the job, or for the quote it came from. PAY-06, with split jobs: a job from a quote
+  # stays until each of its lines has a final bill on an invoice that went out, so another job's
+  # invoice from the same quote doesn't hide it, and a job with no lines left counts as billed.
   def self.ready_to_invoice
     sent = Invoice.where.not(status: "void").where.not(sent_at: nil).select(:id)
+    unless Current.business && QuoteWork.split?(Current.business)
+      return where(status: "completed").where.not(id: Invoice.where(id: sent).where.not(job_id: nil).select(:job_id))
+                                       .where("jobs.quote_id IS NULL OR jobs.quote_id NOT IN (?)", Invoice.where(id: sent).where.not(quote_id: nil).select(:quote_id))
+    end
+
     billed = InvoiceLineItem.final_bills.where(invoice_id: sent).where.not(job_line_item_id: nil).select(:job_line_item_id)
     unbilled = JobLineItem.where("job_line_items.job_id = jobs.id").where.not(id: billed)
     where(status: "completed").where("(jobs.quote_id IS NULL AND jobs.id NOT IN (:invoiced)) OR (jobs.quote_id IS NOT NULL AND EXISTS (:unbilled))",

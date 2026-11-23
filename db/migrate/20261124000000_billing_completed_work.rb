@@ -8,8 +8,9 @@
 # invoice_jobs lists every job an invoice bills (a quote's invoice can bill several); invoices.job_id
 # keeps one of them. A line can carry its own tax rates, its job's, when an invoice's jobs differ.
 #
-# Existing invoices that aren't void are linked to the lines they came from (backfill below);
-# where one line was billed more than once, the earliest invoice is its final bill.
+# Existing invoices that aren't void are linked to the lines they came from (a simple backfill:
+# there's no production data to protect, owner 2026-11-23); where one line was billed more than
+# once, the earliest sent invoice is its final bill.
 class BillingCompletedWork < ActiveRecord::Migration[8.1]
   def up
     add_reference :invoice_line_items, :job_line_item, foreign_key: { on_delete: :nullify }
@@ -47,19 +48,19 @@ class BillingCompletedWork < ActiveRecord::Migration[8.1]
     remove_reference :invoice_line_items, :job_line_item
   end
 
-  # Every invoice with a job lists it in invoice_jobs. Then each invoice that isn't void, oldest
-  # first, links its lines: one from a job (or from a quote with a job that isn't cancelled) to the
-  # job's lines, one billed straight from the quote to the quote's lines. A line is matched to the
-  # first unmatched line, in position order, with the same catalog item, name and unit price, then
-  # by catalog item and name alone. A job line keeps its quote line (its claim). The first invoice
-  # to bill a line is its final bill; later ones are progress. Nothing is credited after the fact.
+  # Every invoice with a job lists it in invoice_jobs. Then each invoice that isn't void, sent ones
+  # first, then oldest, links its lines: one from a job (or from a quote with a job that isn't
+  # cancelled) to the job's lines, one billed straight from the quote to the quote's lines. A line
+  # is matched to the first unmatched line, in position order, with the same catalog item, name and
+  # unit price, as JOB-09's claims were; anything else stays unlinked. A job line keeps its quote
+  # line (its claim). The first invoice to bill a line is its final bill; later ones are progress.
   def link_existing_invoices
     execute <<~SQL.squish
       INSERT INTO invoice_jobs (business_id, invoice_id, job_id, created_at, updated_at)
       SELECT business_id, id, job_id, now(), now() FROM invoices WHERE job_id IS NOT NULL
     SQL
     billed = Set.new
-    invoices = select_rows("SELECT id, business_id, job_id, quote_id FROM invoices WHERE status <> 'void' AND (job_id IS NOT NULL OR quote_id IS NOT NULL) ORDER BY created_at, id")
+    invoices = select_rows("SELECT id, business_id, job_id, quote_id FROM invoices WHERE status <> 'void' AND (job_id IS NOT NULL OR quote_id IS NOT NULL) ORDER BY sent_at IS NULL, created_at, id")
     invoices.each do |invoice_id, business_id, job_id, quote_id|
       job_id ||= select_value("SELECT id FROM jobs WHERE quote_id = #{quote_id.to_i} AND status <> 'cancelled' ORDER BY id LIMIT 1")
       targets = job_id ? job_lines(job_id) : quote_lines(quote_id)
@@ -96,18 +97,14 @@ class BillingCompletedWork < ActiveRecord::Migration[8.1]
     select_rows("SELECT id, catalog_item_id, name, unit_price_cents, id FROM quote_line_items WHERE quote_id = #{quote_id.to_i} ORDER BY position, id")
   end
 
-  # { invoice line id => [target id, quote line id] }: exact matches first, then by item and name.
+  # { invoice line id => [target id, quote line id] }: same catalog item, name and unit price.
   def match(lines, targets)
     free = targets.dup
-    matched = {}
-    [ ->(line, target) { line[1..3].map(&:to_s) == target[1..3].map(&:to_s) }, ->(line, target) { line[1..2].map(&:to_s) == target[1..2].map(&:to_s) } ].each do |same|
-      lines.each do |line|
-        next if matched.key?(line[0]) || !(target = free.find { same.(line, _1) })
+    lines.each_with_object({}) do |line, matched|
+      next unless (target = free.find { line[1..3].map(&:to_s) == _1[1..3].map(&:to_s) })
 
-        free.delete(target)
-        matched[line[0]] = [ target[0], target[4] ]
-      end
+      free.delete(target)
+      matched[line[0]] = [ target[0], target[4] ]
     end
-    matched.sort_by { |line_id, _| lines.index { _1[0] == line_id } }.to_h
   end
 end

@@ -1,10 +1,10 @@
 require "test_helper"
 require Rails.root.join("db/migrate/20261124000000_billing_completed_work.rb").to_s
 
-# PAY-06's migration on existing data: invoice lines that aren't void are linked to the job or
-# quote lines they came from, the earliest invoice of a line being its final bill and later ones
-# progress; a quote's invoice on a quote with a job links to the job's lines; "Ready to invoice"
-# lists the same jobs before and after. Lines carry their invoice's status.
+# PAY-06's migration on existing data, kept simple (owner, 2026-11-23): invoice lines that aren't
+# void are linked to the job or quote lines they came from (same item, name and price), the
+# earliest sent invoice of a line being its final bill and later ones progress; a quote's invoice
+# on a quote with a job links to the job's lines. Lines carry their invoice's status.
 class BillingCompletedWorkMigrationTest < ActiveSupport::TestCase
   setup do
     @business = businesses(:one)
@@ -54,19 +54,19 @@ class BillingCompletedWorkMigrationTest < ActiveSupport::TestCase
 
   def links(invoice) = as_business(@business) { invoice.line_items.reload.map { [ _1.job_line_item_id, _1.quote_line_item_id, _1.final ] } }
 
-  test "job invoices link to the job's lines and their quote lines; a second bill of a line is progress; void ones stay unlinked" do
+  test "job invoices link to the job's lines and their quote lines; a second bill of a line is progress; void and repriced lines stay unlinked" do
     quote = approved_quote("Pat", [ [ "Trees", 10, 100 ], [ "Gutters", 1, 200 ] ])
     job = job_for(quote)
     first, second, voided = 3.times.map { from_job(job) }
     sent(voided, status: "void")
-    as_business(@business) { first.line_items.last.update!(unit_price: "250") } # repriced on the invoice: matched by name
+    as_business(@business) { first.line_items.last.update!(unit_price: "250") } # repriced on the invoice: not matched
     forget_links
     migrate
 
     trees, gutters = as_business(@business) { job.line_items.to_a }
     quote_trees, quote_gutters = as_business(@business) { quote.line_items.to_a }
-    assert_equal [ [ trees.id, quote_trees.id, true ], [ gutters.id, quote_gutters.id, true ] ], links(first)
-    assert_equal [ [ trees.id, quote_trees.id, false ], [ gutters.id, quote_gutters.id, false ] ], links(second)
+    assert_equal [ [ trees.id, quote_trees.id, true ], [ nil, nil, false ] ], links(first)
+    assert_equal [ [ trees.id, quote_trees.id, false ], [ gutters.id, quote_gutters.id, true ] ], links(second)
     assert_equal [ [ nil, nil, false ], [ nil, nil, false ] ], links(voided)
     assert_equal [ first, second, voided ].map(&:id), as_business(@business) { job.invoices.order(:id).ids }
   end
@@ -87,15 +87,16 @@ class BillingCompletedWorkMigrationTest < ActiveSupport::TestCase
     assert_includes as_business(@business) { job.invoices.ids }, from_quote.id
   end
 
-  test "a quote billed directly links to its quote lines; a repeat is progress" do
+  test "a quote billed directly links to its quote lines; a sent invoice is the final bill before an older draft" do
     quote = approved_quote("Kim", [ [ "Trees", 10, 100 ], [ "Gutters", 1, 200 ] ])
-    first, second = 2.times.map { from_quote(quote) }
+    draft, sent_one = 2.times.map { from_quote(quote) }
+    sent(sent_one)
     forget_links
     migrate
 
     ids = as_business(@business) { quote.line_items.ids }
-    assert_equal ids.map { [ nil, _1, true ] }, links(first)
-    assert_equal ids.map { [ nil, _1, false ] }, links(second)
+    assert_equal ids.map { [ nil, _1, true ] }, links(sent_one)
+    assert_equal ids.map { [ nil, _1, false ] }, links(draft)
   end
 
   test "lines carry their invoice's status, and the database refuses a draft line on a sent invoice" do
@@ -120,7 +121,7 @@ class BillingCompletedWorkMigrationTest < ActiveSupport::TestCase
     assert_equal [ "void" ], as_business(@business) { first.line_items.reload.map(&:invoice_status) }
   end
 
-  test "Ready to invoice lists the same jobs before and after" do
+  test "with split jobs, Ready to invoice lists the same jobs before and after for matched data" do
     never = job_for(approved_quote("Never billed", [ [ "Trees", 3, 100 ] ]))
     billed = job_for(approved_quote("Billed", [ [ "Trees", 3, 100 ], [ "Mulch", 2, 30 ] ])).tap { sent(from_job(_1)) }
     twice = job_for(approved_quote("Twice", [ [ "Trees", 3, 100 ] ])).tap { |job| 2.times { sent(from_job(job)) } }
@@ -137,6 +138,7 @@ class BillingCompletedWorkMigrationTest < ActiveSupport::TestCase
     end
     sent(from_job(loose_billed))
     forget_links
+    enable_feature(:split_jobs) # the new rule; the data above was billed as before
     before = legacy_ready_to_invoice
     migrate
 
