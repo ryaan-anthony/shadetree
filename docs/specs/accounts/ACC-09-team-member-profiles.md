@@ -82,13 +82,14 @@ a visit (JOB-12 "On my way" first), so they know who is coming to their door.
   and the member is told (owner, 2026-11-22).
 - Initials without a photo; one profile per business; title (40) and bio (200) as two fields
   (owner, 2026-11-22).
-- The client setting moved from the accepted Team page to Settings → Messages, linked from Team:
-  it's a `business_settings` choice and Team needs `manage_team` (review, 2026-11-22).
+- "Show team profiles to clients" lives in Settings → Messages, linked from Team
+  (owner, 2026-11-22).
+- The client card shows photo, first name and title only; the bio stays on the member's profile
+  (owner, 2026-11-22).
 - Naming the crew on confirmations, reminders and the visit page is backlog (owner, 2026-11-22).
 - Upright photos come from #358, which fixes the shared cleaning for visit and request photos
   too; ACC-09 relies on it rather than carrying it (owner, 2026-11-22).
 
 ## Open questions
 
-- Does the client card show the bio? Recommend not: clients see the title; the bio stays on the
-  member's profile until there's a client-facing profile page.
+- None.
