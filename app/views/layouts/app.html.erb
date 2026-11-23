@@ -25,21 +25,16 @@
           <div class="ml-auto flex items-center gap-1.5">
             <% if current_business && current_user %>
               <%# OPS-05: the Help menu: ask Shadetree, from whatever page this is. %>
-              <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
-                <button type="button" class="<%= button_classes(:tertiary, :icon) %>" data-menu-target="button" data-action="menu#toggle" aria-haspopup="true" aria-expanded="false" aria-label="Help" id="help-menu" data-tour="help">
-                  <%= icon "help-circle", class: "size-5" %>
-                </button>
-                <div class="menu right-0 top-full mt-1 w-56" data-menu-target="menu" hidden>
-                  <%= link_to new_admin_support_ticket_path(from: request.path), class: "menu-item" do %><%= icon "message-square" %> Ask Shadetree for help<% end %>
-                  <%= link_to admin_support_tickets_path, class: "menu-item" do %><%= icon "life-buoy" %> Your questions<% end %>
-                  <% if (help_tour = GuidedTour.for(Current.membership)) %><%# ACC-08 %>
-                    <%= link_to (help_tour.page == :field ? admin_my_day_path(tour: "start") : admin_root_path(tour: "start")), class: "menu-item" do %><%= icon "map" %> <%= t("guidance.tour.again") %><% end %>
-                  <% end %>
-                  <% if tips_for_me? %>
-                    <%= button_to admin_tips_path, method: :delete, class: "menu-item w-full", form: { class: "contents" } do %><%= icon "zap" %> <%= t("guidance.tips.again") %><% end %>
-                  <% end %>
-                </div>
-              </div>
+              <%= menu label: "Help", icon_name: "help-circle", icon_class: "size-5", button: { id: "help-menu", data: { tour: "help" } } do %>
+                <%= link_to new_admin_support_ticket_path(from: request.path), class: "menu-item" do %><%= icon "message-square" %> Ask Shadetree for help<% end %>
+                <%= link_to admin_support_tickets_path, class: "menu-item" do %><%= icon "life-buoy" %> Your questions<% end %>
+                <% if (help_tour = GuidedTour.for(Current.membership)) %><%# ACC-08 %>
+                  <%= link_to (help_tour.page == :field ? admin_my_day_path(tour: "start") : admin_root_path(tour: "start")), class: "menu-item" do %><%= icon "map" %> <%= t("guidance.tour.again") %><% end %>
+                <% end %>
+                <% if tips_for_me? %>
+                  <%= button_to admin_tips_path, method: :delete, class: "menu-item w-full", form: { class: "contents" } do %><%= icon "zap" %> <%= t("guidance.tips.again") %><% end %>
+                <% end %>
+              <% end %>
               <%# NTF-02: the notification center, with this member's unread count in this business. %>
               <% unread = Notification.for_user(current_user).unread.count %>
               <%= link_to admin_notifications_path, class: "#{button_classes(:tertiary, :icon)} relative", "aria-label": (unread.positive? ? "Notifications, #{unread} unread" : "Notifications"),

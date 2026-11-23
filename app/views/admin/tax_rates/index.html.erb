@@ -19,14 +19,10 @@
               </p>
             </div>
             <span class="money font-semibold text-ink"><%= rate.percent_label %></span>
-            <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
-              <button type="button" class="<%= button_classes(:tertiary, :sm, :icon) %>" data-menu-target="button" data-action="menu#toggle"
-                      aria-haspopup="true" aria-expanded="false" aria-label="More actions for <%= rate.name %>"><%= icon "more-horizontal" %></button>
-              <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
-                <%= link_to edit_admin_tax_rate_path(rate), class: "menu-item", "aria-label": "Edit #{rate.label}" do %><%= icon "edit-2" %> Edit<% end %>
-                <%= button_to archive_admin_tax_rate_path(rate), method: :patch, class: "menu-item", form: { class: "contents" }, "aria-label": "Archive #{rate.label}" do %><%= icon "archive" %> Archive<% end %>
-              </div>
-            </div>
+            <%= menu label: "More actions for #{rate.name}", size: :sm do %>
+              <%= link_to edit_admin_tax_rate_path(rate), class: "menu-item", "aria-label": "Edit #{rate.label}" do %><%= icon "edit-2" %> Edit<% end %>
+              <%= button_to archive_admin_tax_rate_path(rate), method: :patch, class: "menu-item", form: { class: "contents" }, "aria-label": "Archive #{rate.label}" do %><%= icon "archive" %> Archive<% end %>
+            <% end %>
           </li>
         <% end %>
       </ul>

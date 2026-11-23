@@ -27,7 +27,27 @@ export default class extends Controller {
   open() {
     this.menuTarget.hidden = false
     this.buttonTarget.setAttribute("aria-expanded", "true")
+    this.keepOnScreen()
     this.items[0]?.focus()
+  }
+
+  // A menu opens towards the side its alignment says; where that would run off the screen (a
+  // button near a phone's left edge), it shifts back on.
+  keepOnScreen() {
+    const style = this.menuTarget.style
+    style.left = style.right = ""
+    const margin = 8
+    let box = this.menuTarget.getBoundingClientRect()
+    if (box.left < margin) {
+      style.right = "auto"
+      style.left = `${margin - (box.left - this.menuTarget.offsetLeft)}px`
+      box = this.menuTarget.getBoundingClientRect()
+    }
+    const over = box.right - (document.documentElement.clientWidth - margin)
+    if (over > 0) {
+      style.right = "auto"
+      style.left = `${this.menuTarget.offsetLeft - over}px`
+    }
   }
 
   close() {

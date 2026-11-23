@@ -14,28 +14,24 @@
   <%= link_to new_admin_invoice_send_path(@invoice), class: button_classes(:primary),
               data: { action: "quote-builder#saveAndGo" } do %><%= icon "send" %> <%= @invoice.revising? ? "Send revision" : "Send invoice" %><% end %>
   <span class="save-status" id="save_status" role="status" data-quote-builder-target="status">Saved</span>
-  <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
-    <button type="button" class="<%= button_classes(:tertiary, :icon) %>" data-menu-target="button" data-action="menu#toggle"
-            aria-haspopup="true" aria-expanded="false" aria-label="More actions"><%= icon "more-horizontal" %></button>
-    <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
-      <%= link_to pdf_admin_invoice_path(@invoice), class: "menu-item", data: { turbo: false, action: "quote-builder#download" } do %><%= icon "download" %> Download PDF<% end %>
-      <% if @invoice.payable? %>
-        <%= link_to new_admin_invoice_payment_path(@invoice), class: "menu-item", data: { action: "quote-builder#saveAndGo" } do %><%= icon "dollar-sign" %> Record a payment<% end %>
+  <%= menu label: "More actions" do %>
+    <%= link_to pdf_admin_invoice_path(@invoice), class: "menu-item", data: { turbo: false, action: "quote-builder#download" } do %><%= icon "download" %> Download PDF<% end %>
+    <% if @invoice.payable? %>
+      <%= link_to new_admin_invoice_payment_path(@invoice), class: "menu-item", data: { action: "quote-builder#saveAndGo" } do %><%= icon "dollar-sign" %> Record a payment<% end %>
+    <% end %>
+    <% if @invoice.revising? %>
+      <%= button_to discard_revision_admin_invoice_path(@invoice), class: "menu-item",
+                    form: { class: "contents", data: { turbo_confirm: "Discard your changes to #{@invoice.number}? It goes back to what #{@invoice.client.display_name} was sent.", turbo_confirm_button: "Discard changes", turbo_confirm_variant: "destructive" } } do %>
+        <%= icon "rotate-ccw" %> Discard changes
       <% end %>
-      <% if @invoice.revising? %>
-        <%= button_to discard_revision_admin_invoice_path(@invoice), class: "menu-item",
-                      form: { class: "contents", data: { turbo_confirm: "Discard your changes to #{@invoice.number}? It goes back to what #{@invoice.client.display_name} was sent.", turbo_confirm_button: "Discard changes", turbo_confirm_variant: "destructive" } } do %>
-          <%= icon "rotate-ccw" %> Discard changes
-        <% end %>
+    <% end %>
+    <% if @invoice.deletable? %>
+      <%= button_to admin_invoice_path(@invoice), method: :delete, class: "menu-item text-danger",
+                    form: { class: "contents", data: { turbo_confirm: "Delete draft invoice #{@invoice.number}? This can't be undone.", turbo_confirm_button: "Delete draft", turbo_confirm_variant: "destructive" } } do %>
+        <%= icon "trash" %> Delete draft
       <% end %>
-      <% if @invoice.deletable? %>
-        <%= button_to admin_invoice_path(@invoice), method: :delete, class: "menu-item text-danger",
-                      form: { class: "contents", data: { turbo_confirm: "Delete draft invoice #{@invoice.number}? This can't be undone.", turbo_confirm_button: "Delete draft", turbo_confirm_variant: "destructive" } } do %>
-          <%= icon "trash" %> Delete draft
-        <% end %>
-      <% end %>
-    </div>
-  </div>
+    <% end %>
+  <% end %>
 <% end %>
 
 <div id="builder_banner"></div>

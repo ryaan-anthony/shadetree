@@ -33,24 +33,20 @@
   <% end %>
   <%= link_to preview_admin_quote_path(quote), class: button_classes(:secondary), target: "_blank", rel: "noopener" do %><%= icon "eye" %> View as client<% end %>
   <div class="contents" data-controller="modal">
-  <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
-    <button type="button" class="<%= button_classes(:tertiary, :icon) %>" data-menu-target="button" data-modal-target="return" data-action="menu#toggle"
-            aria-haspopup="true" aria-expanded="false" aria-label="More actions"><%= icon "more-horizontal" %></button>
-    <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
-      <% if billed.any? %>
-        <%= button_to admin_quote_invoices_path(quote), class: "menu-item",
-                      form: { class: "contents", data: { turbo_confirm: "#{quote.number} already has #{billed.map(&:number).to_sentence}. Create another invoice?", turbo_confirm_button: "Create another invoice" } } do %><%= icon "plus" %> Create another invoice<% end %>
-      <% end %>
-      <%= link_to pdf_admin_quote_path(quote), class: "menu-item", data: { turbo: false } do %><%= icon "download" %> Download PDF<% end %>
-      <%= button_to duplicate_admin_quote_path(quote), class: "menu-item", form: { class: "contents" } do %><%= icon "copy" %> Duplicate<% end %>
-      <button type="button" class="menu-item" data-action="modal#open menu#close" aria-haspopup="dialog"><%= icon "users" %> Duplicate for another client</button>
-      <% if quote.archived? %>
-        <%= button_to unarchive_admin_quote_path(quote), method: :patch, class: "menu-item", form: { class: "contents" } do %><%= icon "rotate-ccw" %> Restore from archive<% end %>
-      <% elsif quote.archivable? %>
-        <%= button_to archive_admin_quote_path(quote), method: :patch, class: "menu-item", form: { class: "contents" } do %><%= icon "archive" %> Archive<% end %>
-      <% end %>
-    </div>
-  </div>
+  <%= menu label: "More actions", button: { data: { modal_target: "return" } } do %>
+    <% if billed.any? %>
+      <%= button_to admin_quote_invoices_path(quote), class: "menu-item",
+                    form: { class: "contents", data: { turbo_confirm: "#{quote.number} already has #{billed.map(&:number).to_sentence}. Create another invoice?", turbo_confirm_button: "Create another invoice" } } do %><%= icon "plus" %> Create another invoice<% end %>
+    <% end %>
+    <%= link_to pdf_admin_quote_path(quote), class: "menu-item", data: { turbo: false } do %><%= icon "download" %> Download PDF<% end %>
+    <%= button_to duplicate_admin_quote_path(quote), class: "menu-item", form: { class: "contents" } do %><%= icon "copy" %> Duplicate<% end %>
+    <button type="button" class="menu-item" data-action="modal#open menu#close" aria-haspopup="dialog"><%= icon "users" %> Duplicate for another client</button>
+    <% if quote.archived? %>
+      <%= button_to unarchive_admin_quote_path(quote), method: :patch, class: "menu-item", form: { class: "contents" } do %><%= icon "rotate-ccw" %> Restore from archive<% end %>
+    <% elsif quote.archivable? %>
+      <%= button_to archive_admin_quote_path(quote), method: :patch, class: "menu-item", form: { class: "contents" } do %><%= icon "archive" %> Archive<% end %>
+    <% end %>
+  <% end %>
     <%# Duplicate for another client: the client picker in a dialog. %>
     <%= modal id: "duplicate-for", title: "Duplicate for another client", description: "A new draft with the same lines, for the client you choose." do %>
       <%= form_with url: duplicate_admin_quote_path(quote), class: "space-y-4" do %>

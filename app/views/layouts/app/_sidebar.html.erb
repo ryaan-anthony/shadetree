@@ -3,9 +3,10 @@
 <div id="app-sidebar" class="side" data-drawer-target="panel">
   <div class="side-top">
     <% if current_business %>
-      <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
+      <%# The kit menu (PLT-19) with its own trigger: the business you're in. %>
+      <div class="relative" data-controller="menu" data-action="keydown->menu#keydown focusout->menu#focusout">
         <button type="button" class="biz-switch" data-menu-target="button" data-action="menu#toggle"
-                aria-haspopup="true" aria-expanded="false">
+                aria-expanded="false" aria-controls="business-menu">
           <%= business_mark(current_business) %>
           <span class="min-w-0 flex-1">
             <span class="block truncate text-sm font-semibold leading-tight"><%= current_business.name %></span>
@@ -13,7 +14,7 @@
           </span>
           <%= icon "selector", class: "size-4 text-side-text" %>
         </button>
-        <div class="menu left-0 right-0 top-full mt-1 w-auto" data-menu-target="menu" hidden>
+        <div class="menu left-0 right-0 top-full mt-1 w-auto" id="business-menu" data-menu-target="menu" hidden>
           <p class="menu-label">Switch business</p>
           <% current_user.businesses.order(:name).with_attached_logo.each do |business| %>
             <%= button_to switch_admin_business_path, params: { business: business.uid }, class: "menu-item",
