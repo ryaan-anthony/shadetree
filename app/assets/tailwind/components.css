@@ -348,10 +348,14 @@
   .modal-foot { display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0.875rem 1.25rem; border-top: 1px solid var(--color-line); background: var(--color-slate-50); }
 
   /* ---------- Menus ---------- */
+  /* PLT-19: as wide as its longest item, so items never wrap (a picker's listbox adds w-auto to
+     span its field). */
   .menu {
     position: absolute;
     z-index: 50;
+    width: max-content;
     min-width: 13.75rem;
+    max-width: calc(100vw - 1.5rem);
     padding: 0.375rem;
     border: 1px solid var(--color-line);
     border-radius: var(--radius-card);
@@ -369,6 +373,7 @@
     font-size: 0.875rem;
     text-align: left;
     text-decoration: none;
+    white-space: nowrap;
   }
   .menu-item:hover,
   .menu-item:focus-visible,
@@ -422,6 +427,43 @@
   /* relative: keeps the visually hidden radio inside the scrolling tab row, so it can't widen the page. */
   .tab-radio { cursor: pointer; position: relative; }
   .tab-radio:has(:focus-visible) { outline: 2px solid var(--color-canopy); outline-offset: 2px; border-radius: 4px; }
+  .tab-count { font-size: 0.8125rem; font-weight: 400; color: var(--color-muted); font-variant-numeric: tabular-nums; }
+
+  /* ---------- Segmented control (PLT-19): one of a few options on the same view; Plan's white pill ---------- */
+  .segmented {
+    display: inline-flex;
+    max-width: 100%;
+    gap: 2px;
+    margin: 0;
+    padding: 0.1875rem;
+    overflow-x: auto;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-control);
+    background: var(--color-sunken);
+    list-style: none;
+    scrollbar-width: none;
+  }
+  .segmented > li { display: flex; }
+  .segment {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.75rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    color: var(--color-subtle);
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .segment:hover { color: var(--color-ink); }
+  .segment[aria-current="page"],
+  .segment[aria-pressed="true"],
+  .segment-radio:has(:checked) { background: var(--color-surface); color: var(--color-ink); box-shadow: var(--shadow-card); }
+  .segment-radio { position: relative; }
+  .segment-radio:has(:focus-visible) { outline: 2px solid var(--color-canopy); outline-offset: 1px; }
 
   /* ---------- Flow rail: where a job is in quote → approve → schedule → work → invoice → paid ---------- */
   .flow { display: flex; align-items: center; width: 100%; min-width: max-content; margin: 0; padding: 0; list-style: none; }

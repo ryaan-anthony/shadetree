@@ -1,10 +1,12 @@
 import { Controller } from "@hotwired/stimulus"
 
-// A disclosure menu: button toggles, Esc or a click outside closes, arrow keys move focus.
+// The kit's menu (PLT-19, ControlsHelper#menu): a disclosure. The button toggles the panel
+// (aria-expanded); Escape or a click outside closes it and Tab moves on and closes it; the arrow
+// keys, Home and End move between its items.
 //
-//   <div data-controller="menu" class="relative">
-//     <button data-menu-target="button" data-action="menu#toggle" aria-expanded="false">…</button>
-//     <div data-menu-target="menu" class="menu" hidden>…menu-item links…</div>
+//   <div data-controller="menu" data-action="keydown->menu#keydown focusout->menu#focusout">
+//     <button data-menu-target="button" data-action="menu#toggle" aria-expanded="false" aria-controls="m1">…</button>
+//     <div id="m1" data-menu-target="menu" class="menu" hidden>…menu-item links and buttons…</div>
 //   </div>
 export default class extends Controller {
   static targets = ["button", "menu"]
@@ -34,18 +36,26 @@ export default class extends Controller {
     this.buttonTarget.setAttribute("aria-expanded", "false")
   }
 
+  // Focus left the menu and its button (Tab, or a click elsewhere): close it.
+  focusout(event) {
+    if (event.relatedTarget && !this.element.contains(event.relatedTarget)) this.close()
+  }
+
   keydown(event) {
+    if (this.menuTarget.hidden) {
+      if (event.key === "ArrowDown" && event.target === this.buttonTarget) { event.preventDefault(); this.open() }
+      return
+    }
     const items = this.items
     const index = items.indexOf(document.activeElement)
+    const move = { ArrowDown: index + 1, ArrowUp: index - 1, Home: 0, End: items.length - 1 }[event.key]
     if (event.key === "Escape") {
+      event.preventDefault()
       this.close()
       this.buttonTarget.focus()
-    } else if (event.key === "ArrowDown") {
+    } else if (move !== undefined && items.length) {
       event.preventDefault()
-      items[(index + 1) % items.length]?.focus()
-    } else if (event.key === "ArrowUp") {
-      event.preventDefault()
-      items[(index - 1 + items.length) % items.length]?.focus()
+      items[(move + items.length) % items.length].focus()
     }
   }
 

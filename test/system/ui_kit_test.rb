@@ -45,6 +45,32 @@ class UiKitTest < ApplicationSystemTestCase
     assert_equal "false", button["aria-expanded"]
   end
 
+  # PLT-19: the kit menu, by keyboard alone; it's as wide as its longest item.
+  test "menu keys: arrow down opens, Home and End, Tab moves on and closes" do
+    visit styleguide_path
+    button = find_button("Actions")
+    button.send_keys(:down)
+    assert_equal "true", button["aria-expanded"]
+    assert_equal "Edit", evaluate_script("document.activeElement.textContent").strip
+    page.send_keys(:end)
+    assert_equal "Delete", evaluate_script("document.activeElement.textContent").strip
+    page.send_keys(:home)
+    assert_equal "Edit", evaluate_script("document.activeElement.textContent").strip
+    page.send_keys(:up)
+    assert_equal "Delete", evaluate_script("document.activeElement.textContent").strip, "wraps round"
+    heights = [ "Edit", "Duplicate for another client" ].map { evaluate_script("arguments[0].getBoundingClientRect().height", find(".menu-item", text: _1)) }
+    assert_equal heights.first, heights.last, "the long item doesn't wrap"
+    page.send_keys(:tab)
+    assert_equal "false", button["aria-expanded"]
+    assert_selector "##{button["aria-controls"]}[hidden]", visible: :all
+  end
+
+  test "segmented radios move with the arrow keys" do
+    visit styleguide_path
+    find("#sg-segmented-radios input[value=monthly]", visible: :all).send_keys(:right)
+    assert find("#sg-segmented-radios input[value=yearly]", visible: :all).checked?
+  end
+
   test "toasts can be dismissed" do
     visit styleguide_path(toast: 1)
     within("#flash") { click_on "Dismiss" }
