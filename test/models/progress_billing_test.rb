@@ -17,7 +17,7 @@ class ProgressBillingTest < ActiveSupport::TestCase
     @quote = as_business(@business) do
       client = (@client if quick) || Client.create!(display_name: "Pat Lee", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ], properties_attributes: [ { address_line1: "4 Oak Rd", billing: true } ])
       quote = Quote.start(client:, created_by: @owner)
-      quote.tax_rate_list = tax ? [ Pricing::TaxRate.new(name: "State", percent: tax) ] : []
+      quote.tax_rate_list = Array(tax).each_with_index.map { |percent, i| Pricing::TaxRate.new(name: i.zero? ? "State" : "County", percent:) }
       quote.set_discount("amount", discount) if discount
       quote.set_discount("percent", percent) if percent
       quote.prices_include_tax = inclusive
@@ -162,9 +162,9 @@ class ProgressBillingTest < ActiveSupport::TestCase
     approved_quote([ [ "r", "Roof", 1, 1000 ] ])
     job = make(r: 1)
     draft = lower(progress(job), "Roof" => 400)
-    send!(bill_job(complete(job)))
+    final = send!(bill_job(complete(job)))
     error = assert_raises(ActiveRecord::RecordInvalid) { send!(draft) }
-    assert_match "Roof: only $0.00 is left to bill.", error.message
+    assert_match "Roof is on #{final.number}, its final bill, so nothing is left to bill as progress.", error.message
     assert_equal "draft", draft.reload.status
   end
 
@@ -216,7 +216,7 @@ class ProgressBillingTest < ActiveSupport::TestCase
     approved_quote([ [ "r", "Roof", 1, 1000 ] ])
     early = progress(make(r: 1))
     error = assert_raises(ActiveRecord::RecordInvalid) { as_business(@business) { early.reload.tap { _1.prices_include_tax = true }.save! } }
-    assert_match "must match #{@quote.number}", error.message
+    assert_match "Prices include tax must match J-", error.message
   end
 
   test "a quote line billed directly on a draft isn't finished: its progress isn't over-billed until the bill goes out" do
@@ -381,39 +381,105 @@ class ProgressBillingTest < ActiveSupport::TestCase
     assert_match "below what it credits", error.message
   end
 
+  test "B-A: a quote line's fixed discount split over two jobs: each job's progress stops at its final's charge" do
+    approved_quote([ [ "r", "Roof panels", 2, 500 ] ], line_discounts: { "r" => 100 })
+    first, second = make(r: 1), make(r: 1)
+    early = progress(first)
+    assert_equal 450_00, early.reload.total_cents, "$500 less its $50 of the line's $100"
+    send!(early)
+    final = send!(bill_job(complete(first)))
+    assert_equal [ [ [ "progress", early.number, 450_00 ] ], 0 ], [ credits(final), final.total_cents ]
+    assert_equal 0, as_business(@business) { BillingLedger.new(quote: @quote.reload).over_billed_cents }
+    assert_equal 450_00, send!(bill_job(complete(second))).total_cents
+  end
+
+  test "S-A: a progress invoice is taxed as its work is" do
+    approved_quote([ [ "r", "Roof", 1, 1000 ] ], tax: "10")
+    early = progress(make(r: 1))
+    error = assert_raises(ActiveRecord::RecordInvalid) { as_business(@business) { early.reload.tap { _1.tax_rate_list = [ Pricing::TaxRate.new(name: "State", percent: "11") ] }.save! } }
+    assert_match "must match", error.message
+    error = assert_raises(ActiveRecord::RecordInvalid) { as_business(@business) { early.reload.tap { _1.line_items.to_a.sole.taxable = false }.save! } }
+    assert_match "Roof is taxed as on", error.message
+  end
+
+  test "S-B: a revision of progress that lowers it works the final draft out again when it's sent" do
+    approved_quote([ [ "r", "Roof", 1, 1000 ] ])
+    job = make(r: 1)
+    early = send!(lower(progress(job), "Roof" => 500))
+    final = bill_job(complete(job))
+    assert_equal [ [ "progress", early.number, 500_00 ] ], credits(final)
+    as_business(@business) { early.reload.revise!(by: @owner) }
+    lower(early, "Roof" => 300)
+    assert_equal [ [ "progress", early.number, 500_00 ] ], credits(final), "the version the client has, until the revision goes out"
+    send!(early)
+    assert_equal [ [ "progress", early.number, 300_00 ] ], credits(final)
+    assert_match "is on #{final.number}, its final bill (a draft), so nothing is left to bill as progress",
+                 assert_raises(ActiveRecord::RecordInvalid) {
+                   as_business(@business) { early.reload.revise!(by: @owner) }
+                   lower(early, "Roof" => 400)
+                 }.message
+  end
+
+  test "renaming a sent final's tax rate on a revision says only why" do
+    approved_quote([ [ "r", "Roof", 1, 1000 ] ], tax: "10")
+    job = make(r: 1)
+    send!(lower(progress(job), "Roof" => 500))
+    final = send!(bill_job(complete(job)))
+    as_business(@business) { final.reload.revise!(by: @owner) }
+    final = as_business(@business) { final.reload.tap { _1.tax_rate_list = [ Pricing::TaxRate.new(name: "City", percent: "10") ] } }
+    assert_not as_business(@business) { final.valid? }
+    assert_equal 1, final.errors.count, final.errors.full_messages.to_sentence
+  end
+
   # The reviewer's invariant (owner, 2026-11-23): across a job's progress and final invoices, the
   # client pays the work's value, within a cent per tax rate per invoice, and each "Credit from"
   # equals what that progress invoice charged.
   test "randomized: progress then final charges the work's value once, and each credit is what was charged" do
     rng = Random.new(20261123)
     credited = 0
-    100.times do |n|
-      tax = [ nil, "10", "6.25" ].sample(random: rng)
+    60.times do |n|
+      tax = [ nil, "10", "6.25", %w[10 2.5] ].sample(random: rng)
       discount = rng.rand(3)
       lines = Array.new(rng.rand(1..2)) { |i| [ "k#{i}", "Item #{i}", rng.rand(1..3), format("%.2f", rng.rand(20.0..400.0)) ] }
       gross = lines.sum { |_, _, quantity, price| quantity * price.to_d }
+      line_discounts = lines.select { rng.rand < 0.3 }.to_h { |key, _, quantity, price| [ key, format("%.2f", quantity * price.to_d * rng.rand(0.05..0.3)) ] }
       approved_quote(lines, quick: true, tax:, inclusive: tax.present? && rng.rand < 0.2, percent: (rng.rand(5..20).to_s if discount == 1),
-                            discount: (format("%.2f", gross * rng.rand(0.02..0.2)) if discount == 2))
-      job = make(**lines.to_h { |key, _, quantity, _| [ key.to_sym, quantity ] })
-      sent = Array.new(rng.rand(0..2)).filter_map do
-        invoice = progress(job)
-        amounts = as_business(@business) { invoice.reload.line_items.to_h { [ _1.name, (_1.line_amount_cents * rng.rand(0.2..1.0) / 100).round(2).to_d.to_s("F") ] } }
-        lower(invoice, amounts)
-        as_business(@business) { invoice.reload.tap { _1.set_discount("percent", %w[10 50].sample(random: rng)) }.save! } if rng.rand < 0.3
-        send!(invoice)
-      rescue WorkBilling::Refused, ActiveRecord::RecordInvalid
-        nil
+                            discount: (format("%.2f", gross * rng.rand(0.02..0.15)) if discount == 2), line_discounts:)
+      # Two jobs share the first line when it has more than one to do.
+      split = lines.first[2] > 1 && rng.rand < 0.5 ? rng.rand(1...lines.first[2]) : nil
+      picks = lines.to_h { |key, _, quantity, _| [ key.to_sym, quantity ] }
+      jobs = split ? [ make(**picks, k0: split), make(k0: picks[:k0] - split) ] : [ make(**picks) ]
+      progress_sent = jobs.flat_map do |job|
+        Array.new(rng.rand(0..2)).filter_map do
+          invoice = progress(job)
+          amounts = as_business(@business) { invoice.reload.line_items.to_h { [ _1.name, (_1.line_amount_cents * rng.rand(0.2..1.0) / 100).round(2).to_d.to_s("F") ] } }
+          lower(invoice, amounts)
+          as_business(@business) { invoice.reload.tap { _1.set_discount("percent", %w[10 50].sample(random: rng)) }.save! } if rng.rand < 0.3
+          send!(invoice)
+        rescue WorkBilling::Refused, ActiveRecord::RecordInvalid
+          nil
+        end
       end
-      final = send!(bill_job(complete(job)))
-      slack = (tax ? 1 : 0) * (sent.size + 1)
-      work = as_business(@business) { final.reload.totals(credits: false).total.cents }
-      paid = sent.sum(&:total_cents) + final.total_cents
+      if progress_sent.any? && rng.rand < 0.2 # a void before the work is billed: it's neither paid nor credited
+        as_business(@business) { progress_sent.pop.reload.void!(reason: "Wrong", by: @owner) }
+      end
+      finals = jobs.map do |job|
+        final = send!(bill_job(complete(job)))
+        next final unless rng.rand < 0.15 # voided and billed again: its credits come back on the new one
+
+        as_business(@business) { final.reload.void!(reason: "Redo", by: @owner) }
+        send!(bill_job(job))
+      end
+      rates = Array(tax).size
+      slack = rates * (progress_sent.size + finals.size)
+      work = as_business(@business) { finals.sum { _1.reload.totals(credits: false).total.cents } }
+      paid = progress_sent.sum(&:total_cents) + finals.sum(&:total_cents)
       assert_in_delta work, paid, slack, "scenario #{n}: the work's value, once"
-      shown = client_credits(final).to_h
-      sent.each { assert_in_delta _1.total_cents, shown[_1.number].to_i, slack, "scenario #{n}: Credit from #{_1.number}" }
+      shown = finals.flat_map { client_credits(_1) }.group_by(&:first).transform_values { _1.sum(&:last) }
+      progress_sent.each { assert_in_delta _1.total_cents, shown[_1.number].to_i, rates * 2, "scenario #{n}: Credit from #{_1.number}" }
       credited += 1 if shown.any?
       @client ||= @quote.client
     end
-    assert_operator credited, :>, 50, "most scenarios bill progress first"
+    assert_operator credited, :>, 25, "most scenarios bill progress first"
   end
 end

@@ -153,7 +153,6 @@ class Invoice < ApplicationRecord
       lock_with_quote!
       raise ArgumentError, "Invoice #{number} can't be sent." unless sendable? && !client.erased? # INS-02
 
-      first_send = sent_at.nil?
       if draft?
         issued, due = dates_when_sent
         update!(status: "sent", sent_at: Time.current, sent_by: by, issued_on: issued, due_on: due)
@@ -161,7 +160,7 @@ class Invoice < ApplicationRecord
       record!(:sent, by:, channel:, revision:)
       ClientEvent.record!(client, :invoice_sent, subject: self, by:, channel:, revision:) # CLI-05
       apply_payments!(by:) if status == "sent" && nothing_due? # PAY-08: Paid at once
-      rework_drafts! if progress? && first_send # PAY-08: drafts can credit it now
+      rework_drafts! if progress? # PAY-08: drafts credit what it now charges
       sends.create!(business:, user: by, channel:, recipient:, cc:, revision:)
     end
   end

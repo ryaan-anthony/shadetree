@@ -158,12 +158,25 @@ class BillingLedger
       return 0 if billed_job_line_ids.include?(line.id) || job.nil? || job.status == "cancelled"
 
       quote_line = @quote_lines[line.claim&.quote_line_item_id]
-      own = after_discounts(subtotal(line), job) - held(@progress.select { _1.job_line_item_id == line.id })
+      own = after_discounts(subtotal(line) - expected_line_share(line, quote_line), job) - held(@progress.select { _1.job_line_item_id == line.id })
       [ own, (left_cents(quote_line) if quote_line) ].compact.min.clamp(0..)
     when QuoteLineItem
       billed = @finals.select { _1.quote_line_item_id == line.id }.sum { subtotal(_1) }
       (after_discounts(kept_value_cents(line) - billed) - held(@progress.select { _1.quote_line_item_id == line.id })).clamp(0..)
     end
+  end
+
+  # A job line's expected part of its quote line's fixed discount d: d × its quantity ÷ the line's.
+  def expected_line_share(job_line, quote_line)
+    return 0 unless shares? && quote_line&.discount_kind == "amount" && quote_line.quantity.to_d.positive?
+
+    [ round(quote_line.discount_amount_cents.to_i * job_line.quantity.to_d / quote_line.quantity.to_d), quote_line.discount_amount_cents.to_i ].min
+  end
+
+  # The invoices holding a line's final bills (drafts too), which leave nothing to bill as progress.
+  def final_invoices(work)
+    key = work.is_a?(JobLineItem) ? :job_line_item_id : :quote_line_item_id
+    @finals.select { _1.public_send(key) == work.id }.map(&:invoice).uniq
   end
 
   # Line subtotal cents after the document discount the final will apply.

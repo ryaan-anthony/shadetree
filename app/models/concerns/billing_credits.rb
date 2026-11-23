@@ -25,8 +25,8 @@ module BillingCredits
     validates :kind, inclusion: { in: KINDS }
     validate :progress_within_what_is_left, if: -> { progress? && status_in_database.in?([ nil, "draft" ]) && billing_credits? }
     validate :keeps_credited_progress, if: -> { progress? && billing_credits? && sent_version }
-    validate :keeps_its_credits, if: -> { kind == "work" && sent_at_in_database && draft? && credits.any? }
     validate :progress_matches_on_tax_inclusion, if: -> { draft? && billing_credits? }
+    validate :keeps_its_credits, if: -> { kind == "work" && sent_at_in_database && draft? && credits.any? && errors.empty? }
     before_save :work_out_credits, prepend: true, if: -> { kind == "work" && sent_at_in_database.nil? && status_in_database.in?([ nil, "draft" ]) && billing_credits? }
     before_save { @progress_changed = progress? && sent_at_in_database && line_items.any?(&:changed_for_autosave?) }
     after_save(if: -> { @progress_changed }) { rework_drafts! }
@@ -181,7 +181,13 @@ module BillingCredits
       left = work ? ledger.left_cents(work) : 0
       next if asked <= left
 
-      errors.add(:base, "#{group.first.name.presence || "Item"}: only #{Money.new(left, currency).format} is left to bill.")
+      finals = work && left.zero? ? ledger.final_invoices(work) : []
+      if finals.any?
+        errors.add(:base, "#{group.first.name.presence || "Item"} is on #{finals.map(&:number).to_sentence}, its final bill#{" (a draft)" if finals.all?(&:draft?)}, " \
+                          "so nothing is left to bill as progress.")
+      else
+        errors.add(:base, "#{group.first.name.presence || "Item"}: only #{Money.new(left, currency).format} is left to bill.")
+      end
     end
   end
 
@@ -236,8 +242,9 @@ module BillingCredits
   # Progress and the bills that credit it agree on whether prices include tax (else tax would be
   # credited at a different base): a progress invoice matches its work, a work invoice its progress.
   def progress_matches_on_tax_inclusion
-    source = progress? ? (quote || job) : nil
+    source = progress? ? (job || quote) : nil
     ledger = BillingLedger.for(self) unless source
+    progress_matches_its_work_on_tax_rates(source) if source
     mismatched = if source then source.prices_include_tax != prices_include_tax
     else
       ledger.progress.select { _1.invoice.sent_at && _1.invoice.prices_include_tax != prices_include_tax }.map { _1.invoice.number }.uniq.presence
@@ -247,6 +254,19 @@ module BillingCredits
                                              : "must match #{mismatched.to_sentence}, whose progress it credits")
     end
     progress_matches_on_tax_rates(ledger) if ledger && kind == "work"
+  end
+
+  # A progress invoice is taxed as its job or quote is, line by line, so its final can credit it.
+  def progress_matches_its_work_on_tax_rates(source)
+    return errors.add(:tax_rates, "must match #{source.number}'s, so the final invoice can credit it") if tax_rate_list.to_set != source.tax_rate_list.to_set
+
+    ledger = BillingLedger.for(self)
+    current_line_items.select { _1.job_line_item_id || _1.quote_line_item_id }.each do |line|
+      work = line.job_line_item_id ? ledger.job_line(line.job_line_item_id) : ledger.quote_line(line.quote_line_item_id)
+      next if work.nil? || (line.taxable == work.taxable && line.tax_rates.nil?)
+
+      errors.add(:base, "#{line.name.presence || "Item"} is taxed as on #{source.number}, so the final invoice can credit it.")
+    end
   end
 
   # A final bill credits its line's progress at the rates it was charged at: a line taxed
