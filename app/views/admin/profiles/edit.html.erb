@@ -13,7 +13,7 @@
       <div class="min-w-0 flex-1 space-y-2">
         <% photo_errors = @member.errors[:photo] %>
         <div class="field">
-          <%= f.label :photo, @member.photo.attached? ? "Replace photo" : "Add a photo", class: "label" %>
+          <%= f.label :photo, @member.photo_saved? ? "Replace photo" : "Add a photo", class: "label" %>
           <%= f.file_field :photo, accept: TeamProfile::PHOTO_TYPES.join(","), class: "input py-1.5",
                            "aria-invalid": (photo_errors.any? || nil), "aria-describedby": [ "photo-help", ("photo-error" if photo_errors.any?) ].compact.join(" ") %>
           <p class="help" id="photo-help">PNG, JPEG or WebP, up to <%= TeamProfile::PHOTO_MAX_BYTES / 1.megabyte %> MB and at least <%= TeamProfile::PHOTO_MIN_SIDE %> pixels a side. On a phone you can take one now.</p>
@@ -21,7 +21,7 @@
             <p class="error-text" id="photo-error" role="alert"><%= icon "alert-circle" %>Photo <%= photo_errors.to_sentence %></p>
           <% end %>
         </div>
-        <% if @member.photo.attached? %>
+        <% if @member.photo_saved? %>
           <%= f.check :remove_photo, label: "Remove photo", hint: "Initials are shown instead." %>
         <% end %>
       </div>

@@ -63,6 +63,32 @@ class Admin::ProfilesTest < ActionDispatch::IntegrationTest
     assert_not membership(tech).photo.attached?
   end
 
+  test "a good photo with another field wrong is re-shown, not a crash, and isn't kept" do
+    tech = member_with_role(:technician)
+    as_member(tech)
+    patch admin_profile_path, params: { business_user: { photo: face, work_phone: "12" } }
+    assert_response :unprocessable_content
+    assert_select "label", "Add a photo"
+    assert_select "#business_user_work_phone[aria-invalid=true]"
+    assert_not membership(tech).photo.attached?
+
+    patch admin_profile_path, params: { business_user: { photo: face } }
+    patch admin_profile_path, params: { business_user: { photo: face, work_phone: "12" } }
+    assert_response :unprocessable_content, "replacing one too"
+    assert_select "label", "Replace photo"
+    assert_select "img.avatar-lg", 1, "the stored photo"
+  end
+
+  test "a deactivated member's profile change is recorded but they aren't notified" do
+    tech = member_with_role(:technician)
+    target = membership(tech)
+    target.deactivate!
+    as_member(@owner)
+    patch admin_member_profile_path(target), params: { business_user: { title: "Seasonal" } }
+    assert_equal 1, history(target).size
+    assert_empty Tenancy.with_business(@business) { Notification.where(user: tech).to_a }
+  end
+
   test "people who manage the team edit others' profiles; the change is recorded and the member told" do
     tech = member_with_role(:technician)
     admin = member_with_role(:admin)

@@ -14,8 +14,12 @@ class Admin::ProfilesController < Admin::BaseController
     changed = @member.profile_changes
     if @member.save
       record_change(changed) if changed.any? && !own?
+      notify_member(changed) if changed.any? && !own? && @member.active?
       redirect_to (own? ? edit_admin_profile_path : admin_team_path), notice: changed.any? ? "Profile saved." : "Nothing changed."
     else
+      # A photo that came with a mistake elsewhere isn't stored: the page shows what is (choose it again).
+      @member.attachment_changes.delete("photo")
+      @member.association(:photo_attachment).reload
       render :edit, status: :unprocessable_content
     end
   end
@@ -36,6 +40,10 @@ class Admin::ProfilesController < Admin::BaseController
 
   def record_change(changed)
     ProfileEvent.record!(@member, changed, by: current_user)
+  end
+
+  # A deactivated member can't open the app, so isn't told.
+  def notify_member(changed)
     what = changed.map { TeamProfile::FIELDS.fetch(_1) }.to_sentence
     NotificationType.deliver("profile_changed", business: current_business, subject: @member, actor: current_user, to: [ @member.user ],
                                                 title: "#{current_user.full_name} changed your #{what} in #{current_business.name}", path: edit_admin_profile_path)
