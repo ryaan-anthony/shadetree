@@ -74,10 +74,10 @@ table is the source of truth: change both together.
   can be restarted from Help (owner request, 2026-11-21).
 
 ### Team profiles
-- **R16** Members have an optional profile per business (photo, title or short bio, work phone),
+- **R16** Members have an optional profile per business (photo, title, short bio, work phone),
   shown to staff across the app. When the business turns it on, clients see a member's photo,
-  first name, title or bio and a phone number on visit messages, and nothing more (owner
-  request, 2026-11-22).
+  first name, title and a phone number on visit messages, and nothing more (owner request,
+  2026-11-22).
 
 ## Decisions
 
