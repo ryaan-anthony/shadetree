@@ -43,19 +43,17 @@ module OnTheWay
     else
       raise Refused, "Choose how long you'll be." unless MINUTES.include?(minutes.to_i)
 
-      arrival = self.class.round_to_five(now + minutes.to_i.minutes)
+      arrival = OnTheWay.round_to_five(now + minutes.to_i.minutes)
     end
     raise Refused, "That's tomorrow. Send it then, or call the client." unless arrival.to_date == now.to_date
 
     arrival
   end
 
-  class_methods do
-    def round_to_five(time)
-      time = time.change(sec: 0)
-      off = time.min % 5
-      off < 3 ? time - off.minutes : time + (5 - off).minutes
-    end
+  def self.round_to_five(time)
+    time = time.change(sec: 0)
+    off = time.min % 5
+    off < 3 ? time - off.minutes : time + (5 - off).minutes
   end
 
   # Outside the arrival window, or 15+ minutes from an exact start. Anytime visits don't warn.
@@ -125,7 +123,7 @@ module OnTheWay
                      on_the_way_emailed_arrives_at: why_not ? emailed_for : arrives_at)
       VisitEvent.record!(self, :on_the_way, by:, arrives_at: arrives_at.utc.iso8601, emailed: why_not.nil?, why_not:)
       ClientEvent.record!(job.client, :visit_on_the_way, subject: self, by:, arrives_at: arrives_at.utc.iso8601) if first # CLI-05
-      email_on_the_way(first:) unless why_not
+      email_on_the_way(emailed_before: emailed_for.present?) unless why_not
       Sent.new(arrives_at, why_not.nil?, why_not, first)
     end
   end
@@ -139,8 +137,12 @@ module OnTheWay
 
   private
 
-  # The email itself (JOB-12 part 3).
-  def email_on_the_way(first:) = nil
+  # The first email, or "Updated arrival time" once one has gone. It's about the job, so it's
+  # listed there (NTF-01) and replies go to the job's location (CAT-07).
+  def email_on_the_way(emailed_before:)
+    VisitMailer.send_later(:on_the_way, business:, to: on_the_way_email.value, kind: emailed_before ? "visit_on_the_way_update" : "visit_on_the_way",
+                                        related: job, job_id: job.id, visit_id: id, arrives_at: on_the_way_arrives_at.utc.iso8601)
+  end
 
   def minutes_between(one, other)
     minutes = ((one - other).abs / 60).round

@@ -1,0 +1,30 @@
+<%# JOB-12: someone's on the way. Fixed wording below the opening; photos are inline parts. %>
+<%= render "client_mailer/intro", text: @intro %>
+<p style="margin:0 0 16px;font-size:18px;font-weight:700;color:#0f172a;"><%= @headline %>.</p>
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px;border:1px solid #e2e8f0;border-radius:8px;">
+  <tr><td style="padding:14px 16px;">
+    <p style="margin:0;font-size:14px;color:#334155;">Your visit: <%= @visit.when_label %></p>
+    <p style="margin:4px 0 0;font-size:14px;color:#334155;"><%= @job.title %><%= " · #{@job.property.one_line}" if @job.property %></p>
+  </td></tr>
+</table>
+<% shared_phone = @team.empty? || @team.any? { _1.work_phone.blank? } ? @contact.contact_phone.presence : nil %>
+<% @team.each do |member| %>
+  <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 12px;"><tr>
+    <td style="width:56px;vertical-align:middle;">
+      <% if (src = @photos[member.id]) %>
+        <img src="<%= src %>" alt="" width="48" height="48" style="display:block;width:48px;height:48px;border-radius:24px;border:0;">
+      <% else %>
+        <div style="width:48px;height:48px;border-radius:24px;background:#e2e8f0;color:#334155;font-weight:700;font-size:18px;line-height:48px;text-align:center;"><%= member.client_initial %></div>
+      <% end %>
+    </td>
+    <td style="vertical-align:middle;font-size:14px;color:#334155;">
+      <strong style="color:#0f172a;font-size:15px;"><%= member.client_first_name %></strong>
+      <% if member.title %><br><%= member.title %><% end %>
+      <% if member.work_phone.present? %><br><%= member.work_phone %><% end %>
+    </td>
+  </tr></table>
+<% end %>
+<% if shared_phone %><p style="margin:0 0 16px;font-size:14px;color:#334155;">Need to reach us? Call <%= shared_phone %>.</p><% end %>
+<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="border-radius:8px;background:<%= @branding.button_color %>;">
+  <a href="<%= client_link_url(@link.token) %>" style="display:inline-block;padding:12px 20px;font-weight:600;font-size:15px;color:<%= @branding.button_ink %>;text-decoration:none;">See your visit</a>
+</td></tr></table>

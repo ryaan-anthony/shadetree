@@ -31,6 +31,8 @@ class MessageTemplate < ApplicationRecord
     "valid_until" => "The quote's valid-until date",
     "due_date" => "The invoice's due date",
     "visit_window" => "The visit's day and time, like Tue, Nov 17 · 8–10 AM",
+    "on_the_way" => "Who's on the way, like “Marcus and Dee are on the way” (or your business name)",
+    "arrival_time" => "When they'll arrive, like “about 11:15 am”",
     "document_number" => "The quote or invoice number",
     "document_title" => "The quote or invoice title",
     "signer_name" => "The name the client signed with",
@@ -65,6 +67,12 @@ class MessageTemplate < ApplicationRecord
     Definition.new("visit_reminder", "Reminder: your visit tomorrow, {{visit_window}}",
                    "Hi {{client_name}},\n\nA reminder that {{business_name}} is coming tomorrow.",
                    %w[client_first_name client_name business_name visit_window], "The day before a visit."),
+    Definition.new("visit_on_the_way", "{{on_the_way}}, arriving {{arrival_time}}",
+                   "Hi {{client_name}},\n\nWe're on our way to you.",
+                   %w[client_first_name client_name business_name visit_window on_the_way arrival_time], "When someone going taps On my way (Settings → Messages turns it on)."),
+    Definition.new("visit_on_the_way_update", "Updated arrival time: {{arrival_time}}",
+                   "Hi {{client_name}},\n\nOur arrival time has changed.",
+                   %w[client_first_name client_name business_name visit_window on_the_way arrival_time], "When the arrival time changes by 10 minutes or more."),
     Definition.new("invoice_sent", "Invoice {{invoice_number}} from {{business_name}}: {{invoice_title}}",
                    "Hi {{client_first_name}},\n\nThanks for your business. Your invoice is ready: you can see the details with the button below, " \
                    "and the PDF is attached.\n\nAny questions, just reply to this email.\n\n{{your_name}}",
@@ -85,7 +93,7 @@ class MessageTemplate < ApplicationRecord
     "client_first_name" => "Maria", "client_name" => "Maria Lopez", "your_name" => "Dana",
     "quote_number" => "Q-1041", "quote_title" => "Service call", "invoice_number" => "INV-2210", "invoice_title" => "Service call",
     "total" => "$1,250.00", "document_number" => "Q-1041", "document_title" => "Service call", "balance" => "$450.00", "valid_until" => "Dec 19, 2026", "due_date" => "Dec 3, 2026",
-    "visit_window" => "Tue, Nov 17 · 8–10 AM", "signer_name" => "Maria Lopez", "link" => "https://getshadetree.com/c/…"
+    "visit_window" => "Tue, Nov 17 · 8–10 AM", "on_the_way" => "Marcus is on the way", "arrival_time" => "about 11:15 am", "signer_name" => "Maria Lopez", "link" => "https://getshadetree.com/c/…"
   }.freeze
 
   PLACEHOLDER = /\{\{\s*([a-z_]+)\s*\}\}/

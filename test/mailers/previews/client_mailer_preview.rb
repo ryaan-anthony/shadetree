@@ -64,12 +64,22 @@ class VisitMailerPreview < ActionMailer::Preview
   def cancelled = update([ "cancelled" ])
   def mixed = update([ "changed", "cancelled" ], before: "Mon, Nov 23, 2026 · 1 pm")
 
+  # JOB-12: the seeded visit someone's on the way to.
+  def on_the_way = on_the_way_email("visit_on_the_way")
+  def on_the_way_update = on_the_way_email("visit_on_the_way_update")
+
   def reminder
     visit = Tenancy.across_businesses(reason: "mailer preview") { Visit.order(:id).first }
     VisitMailer.with(business_id: visit.business_id, to: "maria@example.com", job_id: visit.job_id, visit_id: visit.id).reminder
   end
 
   private
+
+  def on_the_way_email(kind)
+    visit = Tenancy.across_businesses(reason: "mailer preview") { Visit.where.not(on_the_way_arrives_at: nil).order(:id).first || Visit.order(:id).first }
+    VisitMailer.with(business_id: visit.business_id, to: "maria@example.com", job_id: visit.job_id, visit_id: visit.id, kind:,
+                     arrives_at: (visit.on_the_way_arrives_at || 30.minutes.from_now).utc.iso8601).on_the_way
+  end
 
   def update(kinds, before: nil)
     visits = Tenancy.across_businesses(reason: "mailer preview") { Visit.order(:id).limit(kinds.size).to_a }
