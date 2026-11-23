@@ -4,6 +4,7 @@
 class UserSession < ApplicationRecord
   SESSION_KEY = "user_session" # in the signed-in user's Warden session data
   BROWSER_COOKIE = :browser_id # permanent, so a browser signing in again replaces its old session
+  REMEMBER_COOKIE = :remembered_session # beside Devise's remember-me cookie: the session it may resume (#403)
   ACTIVITY_EVERY = 5.minutes # how often last_active_at is written
   LISTED_FOR = 30.days       # sessions idle longer aren't listed (remember-me lasts 4 weeks)
   KEPT_FOR = 90.days         # then they're deleted, when that person next signs in

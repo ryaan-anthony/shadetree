@@ -102,6 +102,14 @@ class User < ApplicationRecord
     "#{super}#{session_token}"
   end
 
+  # Set while one browser is signed out because it was ended from another (#403): Devise's
+  # sign-out then deletes just its remember-me cookie, instead of ending remember-me everywhere.
+  attr_accessor :forget_this_browser_only
+
+  def forget_me!
+    super unless forget_this_browser_only
+  end
+
   # Ends every other browser's session (ACC-06 lists them); `except` is the one to keep.
   def sign_out_everywhere!(except: nil)
     user_sessions.active.where.not(id: except&.id).update_all(revoked_at: Time.current)

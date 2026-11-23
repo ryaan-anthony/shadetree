@@ -64,7 +64,7 @@
           </div>
           <% unless this %>
             <%= button_to "Sign out", user_browser_session_path(browser_session), method: :delete, class: button_classes(:tertiary, :sm),
-                          form: { class: "contents", data: { turbo_confirm: "Sign out #{browser_session.device_label}? “Keep me signed in” will also stop working on your other browsers, including this one.", turbo_confirm_button: "Sign out" } } %>
+                          form: { class: "contents", data: { turbo_confirm: "Sign out #{browser_session.device_label}? It will need to sign in again.", turbo_confirm_button: "Sign out" } } %>
           <% end %>
         </li>
       <% end %>
