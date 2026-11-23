@@ -125,7 +125,7 @@
     <%= render "timeline", client: @client, events: @timeline, more: @timeline_more %>
   </div>
 
-  <div class="space-y-4">
+  <div class="rail space-y-4">
     <% if @client.contact_methods.any? %>
     <%= card title: "Contact" do %>
       <ul class="space-y-2.5">
@@ -133,9 +133,9 @@
           <li class="flex items-center gap-2.5">
             <%= icon(method.email? ? "mail" : "phone", class: "size-4 shrink-0 text-faint") %>
             <% if method.email? %>
-              <%= link_to method.value, method.href, class: "min-w-0 truncate font-medium text-ink hover:underline" %>
+              <%= link_to method.value, method.href, class: "min-w-0 break-words font-medium text-ink hover:underline" %>
             <% else %>
-              <%= phone_link method.value, class: "min-w-0 truncate font-medium text-ink hover:underline" %>
+              <%= phone_link method.value, class: "min-w-0 break-words font-medium text-ink hover:underline" %>
             <% end %>
             <% if method.label %><span class="text-sm2 text-muted"><%= method.label %></span><% end %>
           </li>
@@ -160,7 +160,7 @@
             <li class="items-start" id="email-<%= email.uid %>">
               <%= icon(email.problem? ? "alert-triangle" : "mail", class: "mt-0.5 size-4 shrink-0 #{email.problem? ? "text-warning" : "text-faint"}") %>
               <div class="min-w-0 flex-1">
-                <p class="truncate text-sm font-medium text-ink"><%= email.subject.presence || EmailCatalog.find(email.kind).name %></p>
+                <p class="text-sm font-medium text-ink"><%= email.subject.presence || EmailCatalog.find(email.kind).name %></p>
                 <p class="text-sm2 text-muted"><%= email.status_label %> · <%= local_time_ago(email.created_at) %></p>
               </div>
             </li>

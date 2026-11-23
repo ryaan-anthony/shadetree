@@ -28,8 +28,8 @@
       <% end %>
     </ul>
   <% end %>
-  <dl class="quote-totals border-t border-line px-5 py-3 text-sm">
-    <div><dt>Paid</dt><dd class="money"><%= money(invoice.amount_paid) %></dd></div>
-    <div class="font-semibold text-ink"><dt>Balance</dt><dd class="money"><%= money(invoice.balance) %></dd></div>
+  <%# PLT-20: the payments' total; the balance is the summary's, at the top of the page. %>
+  <dl class="quote-totals border-t border-line px-5 py-3 text-sm" id="payments-total">
+    <div class="font-semibold text-ink"><dt>Paid</dt><dd class="money"><%= money(invoice.amount_paid) %></dd></div>
   </dl>
 <% end %>

@@ -160,6 +160,72 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # PLT-20: each fact once. A detail page's summary strip is the single home for its status, key
+  # dates and headline amount.
+  def summary(html, id) = html.css("##{id} > div").to_h { [ _1.at_css("dt").text.squish, _1.at_css("dd") ] }
+  def card_titled(html, title) = html.css("section.card").find { _1.at_css(".card-title")&.text&.squish == title }
+  def repeats(text, facts) = facts.compact_blank.select { text.match?(/(?<!\w)#{Regexp.escape(_1)}(?!\w)/) }
+
+  # The staff quote's document card: lines, totals, message, terms and files. Its lines and totals
+  # are the document's own, so only the rest is held against the strip.
+  check :quote_document_without_the_summary, if: ->(page) { page.detail? && page.key.start_with?("quote_") } do |_page, html|
+    doc = html.at_css("#quote-document")&.dup
+    next [ "no quote document (#quote-document)" ] unless doc
+
+    strip = summary(html, "quote-summary")
+    problems = doc.css(".quote-doc-title").map { "the document repeats the title #{_1.text.squish.inspect}" }
+    doc.css(".quote-doc-lines, .quote-doc-totals").each(&:remove)
+    labels = [ "Prepared for", "Property", "Sent on", "Prepared on", "Valid until", "Status" ]
+    facts = [ strip["Status"]&.css(".badge")&.map { _1.text.squish }, strip["Valid until"]&.at_css("time")&.text, strip["Total"]&.text ].flatten
+    responses = html.css("[id^='response-'] .font-semibold").map { _1.text.squish }
+    problems + repeats(doc.text.squish, labels + facts + responses).map { "the document card repeats #{_1.inspect}" }
+  end
+
+  check :invoice_balance_once, if: ->(page) { page.detail? && page.key.start_with?("invoice_") } do |_page, html|
+    payments = card_titled(html, "Payments")
+    next [] unless payments # a void invoice with no payments has none
+
+    labels = payments.css("#payments-total dt").map { _1.text.squish }
+    problems = payments.text.include?("Balance") ? [ "the Payments card shows the balance" ] : []
+    labels == [ "Paid" ] ? problems : problems << "the Payments card's total is #{labels.inspect}, not just Paid"
+  end
+
+  # A client's invoice totals are Work's; Balance sums what's owed and paid, and the Timeline's
+  # invoice events don't carry the invoice's total.
+  check :client_invoice_totals_in_work, if: ->(page) { page.detail? && page.key.start_with?("client") } do |_page, html|
+    problems = []
+    balance = card_titled(html, "Balance")
+    problems << "the Balance card lists invoices" if balance&.at_css("a[href*='/invoices/'], .badge")
+    html.css("#client-timeline li").each do |line|
+      text = line.at_css("p")&.text&.squish.to_s
+      problems << "the Timeline's #{text.inspect} has an amount" if text.start_with?("Invoice") && text.match?(/\$\d/)
+    end
+    problems
+  end
+
+  # PLT-20: a detail page's side column (.rail) wraps text at spaces, never cuts it, and its
+  # metadata (who and when) is muted, a step below the ink of what it describes. Its dates don't
+  # wrap (.rail time is nowrap; the system test measures it).
+  TONE = /\Atext-(ink|ink-2|body|subtle|muted|faint|danger|warning)\z/
+
+  check :detail_side_column_is_a_rail, if: :detail?.to_proc do |_page, html|
+    html.css("main aside").reject { classes(_1).include?("rail") }.map { "an aside isn't a .rail: #{_1["class"].inspect}" }
+  end
+
+  check :rail_text_isnt_cut do |_page, html|
+    html.css(".rail .truncate, .rail .break-all").map { "the rail cuts #{_1.text.squish.truncate(40).inspect} (#{_1["class"]})" }.uniq
+  end
+
+  check :rail_metadata_is_muted do |_page, html|
+    html.css(".rail time").filter_map do |time|
+      holder = [ time, *time.ancestors ].find { |node| node.element? && classes(node).grep(TONE).any? }
+      tone = holder && classes(holder).grep(TONE).first
+      next if tone.in?(%w[text-muted text-danger text-warning])
+
+      "the rail's #{holder&.text&.squish&.truncate(50).inspect} gives its date #{tone || "no tone"}, not text-muted"
+    end.uniq
+  end
+
   setup do
     @business = businesses(:one)
     @owner = users(:one)

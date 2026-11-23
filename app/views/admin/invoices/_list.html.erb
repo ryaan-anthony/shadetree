@@ -6,7 +6,7 @@
       <li class="p-0" id="invoice-<%= invoice.uid %>">
         <%= link_to staff_invoice_path(invoice), class: "flex min-w-0 flex-1 items-center gap-3 px-5 py-3 text-sm hover:bg-sunken" do %>
           <span class="min-w-0 flex-1"><span class="font-semibold text-ink"><%= invoice.number %></span>
-            <span class="block truncate text-sm2 text-muted">Due <%= local_date(invoice.due_on) %><%= " · balance #{money(invoice.balance)}" if invoice.outstanding? %></span></span>
+            <span class="block text-sm2 text-muted">Due <%= local_date(invoice.due_on) %><%= " · balance #{money(invoice.balance)}" if invoice.outstanding? %></span></span>
           <%= invoice_status_badge(invoice) %>
           <span class="money font-semibold text-ink"><%= money(invoice.total) %></span>
         <% end %>

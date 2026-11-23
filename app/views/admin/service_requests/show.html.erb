@@ -78,13 +78,13 @@
     <% end %>
   </div>
 
-  <aside class="space-y-4">
+  <aside class="rail space-y-4">
     <%= render "admin/service_requests/follow_up", request_record: %>
     <%= card title: "Quotes" do %>
       <% if request_record.quotes.any? %>
         <ul class="space-y-2 text-sm2">
           <% request_record.quotes.each do |quote| %>
-            <li class="flex items-baseline justify-between gap-2"><%= link_to "#{quote.number}#{" · #{quote.title}" if quote.title}", staff_quote_path(quote), class: "min-w-0 truncate font-medium text-ink hover:underline" %>
+            <li class="flex items-baseline justify-between gap-2"><%= link_to "#{quote.number}#{" · #{quote.title}" if quote.title}", staff_quote_path(quote), class: "min-w-0 font-medium text-ink hover:underline" %>
               <span class="money text-subtle"><%= money(quote.total) %></span></li>
           <% end %>
         </ul>

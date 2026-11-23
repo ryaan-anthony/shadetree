@@ -76,7 +76,7 @@
 <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
   <div class="min-w-0 space-y-4">
     <%= card do %>
-      <dl class="grid gap-4 text-sm sm:grid-cols-4">
+      <dl class="grid gap-4 text-sm sm:grid-cols-4" id="quote-summary">
         <div><dt class="text-sm2 text-muted">Status</dt><dd class="mt-1"><%= quote_status_badge(quote) %></dd></div>
         <div><dt class="text-sm2 text-muted">Sent</dt><dd class="mt-1 text-ink"><%= quote.sent_at ? local_date(quote.sent_at.in_time_zone(current_business.time_zone).to_date) : "Not sent" %></dd></div>
         <div>
@@ -109,7 +109,17 @@
     <%= render "admin/quotes/responses", quote:, sends_by_revision: @sends_by_revision %>
 
     <%= card do %>
-      <div class="quote-doc"><%= render "client/quotes/document", quote:, totals:, heading: 2, title: false %></div>
+      <%# PLT-20: the document without its header; the page header and the summary above say the rest. %>
+      <div class="quote-doc" id="quote-document"><%= render "client/quotes/document", quote:, totals:, heading: 2, header: false %></div>
+      <% if (files = quote.saved_attachments).any? %>
+        <section class="mt-5" aria-labelledby="quote-files-h">
+          <h2 id="quote-files-h" class="card-title">Photos and files</h2>
+          <ul class="mt-2 space-y-1.5 text-sm"><% files.each do |file| %>
+            <li class="flex items-center gap-2"><%= icon(file.image? ? "image" : "file-text", class: "size-4 shrink-0 text-faint") %>
+              <%= attachment_link file, class: "min-w-0 font-medium text-ink hover:underline" %></li>
+          <% end %></ul>
+        </section>
+      <% end %>
       <% if quote.internal_notes %>
         <div class="mt-5 rounded-control bg-sunken p-3 text-sm2">
           <p class="font-semibold text-ink">Internal notes</p>
@@ -119,7 +129,7 @@
     <% end %>
   </div>
 
-  <aside class="space-y-4">
+  <aside class="rail space-y-4">
     <% if quote.sends.any? %><%= render "admin/quotes/sent_panel", quote: %><% end %>
     <% if quote.revisions.any? %>
       <%# Each revision's sends, and whether each email arrived (QA #274). %>

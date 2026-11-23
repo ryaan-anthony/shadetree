@@ -612,6 +612,11 @@
   .quote-doc-unit { color: var(--color-muted); }
   .quote-doc-totals { margin: 1rem 0 0 auto; max-width: 20rem; break-inside: avoid; }
   .quote-doc-terms { margin-top: 1.5rem; break-inside: avoid-page; }
+  /* PLT-20: a detail page's side column. A date never breaks over two lines; text wraps at spaces
+     rather than being cut (no truncate or break-all inside). */
+  .rail time { white-space: nowrap; }
+  /* PLT-20: the staff quote page shows it without its header, so it starts at the card's edge. */
+  .quote-doc > :first-child { margin-top: 0; }
   .quote-doc-terms :is(h2, h3) { font-size: 0.875rem; font-weight: 600; color: var(--color-ink); }
   .quote-doc-terms p { margin-top: 0.25rem; white-space: pre-line; font-size: 0.8125rem; color: var(--color-muted); }
   @media (max-width: 30rem) {
