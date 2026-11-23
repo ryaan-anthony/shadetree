@@ -60,6 +60,9 @@ optimization before basic scheduling existed.
   with a client link showing date/window, address and business contact; and a reminder the day
   before (email).
 - **R14** Business can turn each of these messages off.
+- **R20** An assignee can tell the client they're on the way, with an arrival time, from My day:
+  an email and a card on the client's visit page, showing who's coming when team profiles are
+  shown (02-accounts R16). Off unless the business turns it on (owner request, 2026-11-22).
 
 ## Decisions
 
@@ -86,13 +89,13 @@ optimization before basic scheduling existed.
 | [JOB-09](../specs/jobs/JOB-09-jobs-as-parts-of-a-quote.md) | Jobs as parts of a quote | M6 | JOB-01, PLT-11, PLT-14 |
 | [JOB-10](../specs/jobs/JOB-10-recurring-jobs.md) | Recurring jobs | M6 | JOB-09, PAY-06, JOB-02, QTE-09, QTE-01 |
 | [JOB-11](../specs/jobs/JOB-11-time-tracking.md) | Time tracking | M6 | JOB-09, JOB-04, PAY-06, QTE-10 |
+| [JOB-12](../specs/jobs/JOB-12-on-my-way.md) | "On my way" with arrival time | M6 | ACC-09, JOB-04, JOB-05, NTF-03, CLI-05 |
 
 ## Backlog (M6)
 
 - Client self-scheduling after approval (needs member availability and time off).
 - Recurring jobs (weekly mowing, monthly pest control): specified as JOB-10, the first M6 item.
 - Read-only calendar feed (ICS) per member.
-- "On my way" message to client.
 - Materials used per visit (time tracking is JOB-11).
 - Route ordering for a day's visits.
 - Checklists per service.
