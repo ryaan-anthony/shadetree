@@ -3,21 +3,23 @@
   <%= link_to new_admin_catalog_item_path, class: button_classes do %><%= icon "plus" %> Add service<% end %>
 <% end %>
 
-<div class="mb-4 flex flex-wrap items-center gap-2">
-  <%= form_with url: admin_catalog_items_path, method: :get, class: "flex min-w-0 flex-1 items-center gap-2", data: { turbo_frame: "_top" } do |f| %>
-    <% if @showing_archived %><%= hidden_field_tag :archived, "1" %><% end %>
+<%# PLT-19: searches as you type, refreshing only the frame below; without JavaScript, Enter
+    submits the GET form. The tabs sit in the frame, so they keep the current search. %>
+<%= form_with url: admin_catalog_items_path, method: :get, id: "service-filters", class: "mb-4",
+              data: { controller: "search-form", turbo_frame: "service_results", turbo_action: "replace" } do %>
+  <% if @showing_archived %><%= hidden_field_tag :archived, "1" %><% end %>
+  <div class="relative max-w-md">
     <label class="sr-only" for="q">Search your services</label>
-    <div class="relative min-w-0 flex-1 sm:max-w-sm">
-      <%= icon "search", class: "pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-faint" %>
-      <%= search_field_tag :q, @query, class: "input pl-9", placeholder: "Search by name or description" %>
-    </div>
-    <%= f.submit "Search", class: button_classes(:secondary), name: nil %>
-  <% end %>
-  <nav class="tabs border-0" aria-label="Services view">
-    <%= link_to "Active", admin_catalog_items_path(q: @query.presence), class: "tab", "aria-current": ("page" unless @showing_archived) %>
-    <%= link_to "Archived (#{@archived_count})", admin_catalog_items_path(archived: 1, q: @query.presence), class: "tab", "aria-current": ("page" if @showing_archived) %>
-  </nav>
-</div>
+    <%= icon "search", class: "pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-faint" %>
+    <%= search_field_tag :q, @query, class: "input pl-9", placeholder: "Search by name or description", autocomplete: "off",
+                         data: { action: "input->search-form#queue keydown.enter->search-form#submit:prevent" } %>
+  </div>
+<% end %>
+
+<%= turbo_frame_tag "service_results", target: "_top" do %>
+<%= tabs({ "active" => "Active", "archived" => "Archived" }, current: @showing_archived ? "archived" : "active", label: "Services view",
+         counts: { "archived" => @archived_count }, keep: %w[active], class: "mb-4",
+         href: ->(key) { admin_catalog_items_path(archived: (1 if key == "archived"), q: @query.presence) }) %>
 
 <% if @without_review_count.positive? || current_business.without_review_cap %><%# QTE-08: beside the services technicians send without review %>
   <%= form_with url: review_cap_admin_catalog_items_path, method: :patch, id: "review-cap", class: "card card-body mb-4 flex flex-wrap items-end gap-3" do %>
@@ -102,4 +104,5 @@
       <% end %>
     <% end %>
   </div>
+<% end %>
 <% end %>

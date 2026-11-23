@@ -1,15 +1,11 @@
 <%# The client list results (CLI-02): rendered on the page and as #search's frame response. %>
 <%= turbo_frame_tag "client_results" do %>
-  <%# Active/Archived is a radio pair belonging to the filter form, re-rendered with each result. %>
-  <fieldset class="tabs mb-4" data-controller="submit-form">
-    <legend class="sr-only">Show</legend>
-    <% [ [ "Active", "0", !@showing_archived ], [ "Archived", "1", @showing_archived ] ].each do |label, value, current| %>
-      <label class="tab tab-radio">
-        <input type="radio" name="archived" value="<%= value %>" form="client-filters" class="sr-only" <%= "checked" if current %>
-               data-action="submit-form#submit"><%= label %>
-      </label>
-    <% end %>
-  </fieldset>
+  <%# Active/Archived is a radio pair belonging to the filter form, re-rendered with each result.
+      PLT-19: Archived shows once a client is archived. %>
+  <%= tabs({ "0" => [ "Active", { data: { action: "submit-form#submit" } } ], "1" => [ "Archived", { data: { action: "submit-form#submit" } } ] }
+             .then { @any_archived ? _1 : _1.except("1") },
+           current: @showing_archived ? "1" : "0", label: "Show", radio: { name: "archived", form: "client-filters" }, class: "mb-4",
+           data: { controller: "submit-form" }) %>
 
   <% if @clients.empty? %>
     <div class="card">

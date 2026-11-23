@@ -18,13 +18,8 @@
   <%= link_to new_admin_service_request_path, class: button_classes do %><%= icon "plus" %> Log a request<% end %>
 <% end %>
 
-<nav class="tabs mb-4" aria-label="Requests by status" data-controller="tabs">
-  <% ServiceRequest::STATUSES.each do |status| %>
-    <%= link_to admin_service_requests_path(status:, assignee: @assignee), class: "tab", "aria-current": ("page" if status == @status) do %>
-      <%= ServiceRequest::LABELS.fetch(status) %> <span class="tabular text-sm2 font-normal text-muted"><%= @counts[status].to_i %></span>
-    <% end %>
-  <% end %>
-</nav>
+<%= tabs ServiceRequest::LABELS, current: @status, label: "Requests by status", counts: ServiceRequest::STATUSES.index_with { @counts[_1].to_i },
+         href: ->(status) { admin_service_requests_path(status:, assignee: @assignee) }, class: "mb-4" %>
 
 <% if @requests.empty? %>
   <div class="card">

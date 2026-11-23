@@ -16,12 +16,7 @@
                          data: { action: "input->search-form#queue keydown.enter->search-form#submit:prevent" } %>
   </div>
   <noscript><%= submit_tag "Search", class: button_classes(:secondary), name: nil %></noscript>
-  <nav class="tabs mt-4" aria-label="Show invoices" data-tabs-target="row">
-    <% Invoice::FILTERS.each do |key, label| %>
-      <button type="submit" name="filter" value="<%= key %>" class="tab" aria-pressed="<%= key == @filter %>" data-action="tabs#press"><%= label %>
-        <span class="tabular text-sm2 font-normal text-muted"><%= @counts[key] %></span></button>
-    <% end %>
-  </nav>
+  <%= tabs Invoice::FILTERS, current: @filter, label: "Show invoices", counts: @counts, name: "filter", class: "mt-4", data: { tabs_target: "row" } %>
 <% end %>
 
 <%# _results is its own frame (#invoice_results), on the page and as the search response. %>
