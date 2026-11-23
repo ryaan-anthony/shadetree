@@ -21,12 +21,19 @@ module Observability
   # A run of digits shaped like a phone number: 7 to 15 digits, optionally grouped by spaces, dots,
   # dashes or brackets, not glued to other characters (so ids after "id=", times, UUID tails and
   # file names stay); dates and IP addresses are let through below.
-  PHONE = %r{(?<![\w.:/%=#-])\+?\(?\d[\d ().-]{5,}\d(?![\w.:/%-])}
+  PHONE = %r{(?<![\w.:/%=#-])\+?\(?\d[\d ().-]{5,}\d(?![\w:/%-]|\.\w)}
+  # A labelled number, whatever its shape: phone=5550100100, tel:+15550100100.
+  PHONE_FIELD = /\b(phone|tel|mobile)([=:])[^\s,;&]+/i
+  # A file's name, which can name a client ("Maria's kitchen.jpg"): uploads and exports.
+  FILENAME = /[^\s\/"'<>|]+\.(?:jpe?g|png|gif|webp|heic|heif|tiff?|bmp|pdf|csv|tsv|xlsx?|docx?|txt|zip)\b/i
   NOT_PHONE = /\A(?:\d{4}-\d{2}-\d{2}|\d{1,3}(?:\.\d{1,3}){3}\z)/
   # Postgres appends the row or key values that broke a constraint ("DETAIL:  Failing row
   # contains (…)", "Key (email)=(…)"); everything from DETAIL or HINT on is dropped.
   DETAIL = /\s*\b(?:DETAIL|HINT):.*/m
   SQL_STRING = /'(?:[^']|'')*'/
+  # Libraries whose messages quote what they were given (a "Name <address>", a URL, a value).
+  QUOTING_LIBRARIES = /\A(?:Mail::|Net::SMTP|Stripe::)/
+  QUOTED = /"[^"]*"|'[^']*'|\|[^|]*\||<[^>]*>/
 
   class << self
     def config = Rails.configuration.x.observability
@@ -38,6 +45,10 @@ module Observability
 
     # The deployed version: the deploy sets APP_REVISION to the commit (PLT-09, ops/deploy).
     def release = ENV["APP_REVISION"].presence || "development"
+
+    # staging or production (the deploy's APP_ENVIRONMENT); SENTRY_ENVIRONMENT overrides it, so the
+    # log and Sentry name the same one.
+    def environment = ENV["SENTRY_ENVIRONMENT"].presence || ENV["APP_ENVIRONMENT"].presence || Rails.env
 
     # STRUCTURED_LOGS: one JSON line per request and job replaces Rails' text lines, whose
     # messages can carry values (an exception message, a mail server's reply quoting an address)
@@ -56,12 +67,31 @@ module Observability
       Rails.error.report(Alert.new(message), handled: true, severity: :warning, context: details, source: "shadetree.alert")
     end
 
-    # Free text (exception messages) without database row details, email addresses or
-    # phone-like numbers.
+    # Free text (exception messages) without database row details, link tokens and file
+    # addresses (a Stripe error quoting a /c/:token URL), email addresses, phone-like numbers or
+    # file names.
     def scrub(text, limit: 500)
-      text.to_s.sub(DETAIL, "").gsub(EMAIL, "[EMAIL]")
+      SecretPathLogger.redact(text.to_s.sub(DETAIL, "")).gsub(EMAIL, "[EMAIL]")
+        .gsub(PHONE_FIELD) { "#{$1}#{$2}[NUMBER]" }
         .gsub(PHONE) { |match| phone?(match) ? "[NUMBER]" : match }
+        .gsub(FILENAME, "[FILE]")
         .truncate(limit)
+    end
+
+    # An exception's message for the log and the tracker, scrubbed. Validation errors become the
+    # model and the attributes that failed (their messages can quote what was typed, or a file's
+    # name); Mail, SMTP and Stripe errors lose the values they quote ("|Maria <maria@…>|").
+    def error_message(error, limit: 500)
+      invalid = error.try(:record) || error.try(:model) if error.is_a?(ActiveRecord::RecordInvalid) || error.is_a?(ActiveModel::ValidationError)
+      message =
+        if invalid
+          "Validation failed: #{invalid.class.name} #{invalid.errors.attribute_names.join(", ")}"
+        elsif error.class.name.to_s.match?(QUOTING_LIBRARIES)
+          error.message.to_s.gsub(QUOTED, "[…]")
+        else
+          error.message.to_s
+        end
+      scrub(message, limit:)
     end
 
     # SQL with its literal strings removed (values normally travel as binds; this catches the rest).

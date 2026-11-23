@@ -41,7 +41,7 @@
 /app/assets/builds/*
 !/app/assets/builds/.keep
 
-# Terraform in infra/ (ADR 0026): local state, plugins and values are never committed.
+# Terraform in infra/ (ADR 0027): local state, plugins and values are never committed.
 /infra/.terraform/
 /infra/terraform.tfvars
 /infra/*.tfstate

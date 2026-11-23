@@ -214,6 +214,8 @@ Settings → Environments: **`staging`** (deployment branches: `main` only) and 
 | `STRUCTURED_LOGS` | var, optional | `true` (default) | `true` | JSON log lines (PLT-10) |
 | `SLOW_REQUEST_MS`, `SLOW_QUERY_MS` | vars, optional | `1000`, `250` | same | PLT-10 thresholds |
 | `JOB_BACKLOG_THRESHOLD`, `JOB_WAIT_THRESHOLD` | vars, optional | `100`, `600` | same | PLT-10 job alerts and `/up/jobs` |
+| `SENTRY_DSN` | secret, optional | the Sentry project's DSN | same DSN | Error tracking (PLT-10, ADR 0027). Unset: errors and alerts reach the log only |
+| `SENTRY_ENVIRONMENT` | var, optional | (`staging`) | (`production`) | Overrides the environment name Sentry shows; default the deploy's environment |
 | `JOB_CONCURRENCY` | var, optional | `1` | `1` | Solid Queue worker processes |
 | `APP_MEMORY` | var, optional | `1g` | `1g` (`1536m` on a 4 GB VM) | The container's memory limit |
 | `MIN_FREE_MB` | var, optional | `3072` | `3072` | Free disk a deploy needs |
@@ -226,7 +228,7 @@ Settings → Environments: **`staging`** (deployment branches: `main` only) and 
 | `BACKUP_MIN_FREE_MB` | var, optional | `1024` | `1024` | Free disk a backup or drill needs |
 | `BACKUP_PG_IMAGE` | var, optional | `postgres:17` | `postgres:17` | Must be the server's major version or newer; may be pinned by digest |
 | `BACKUP_MAX_AGE_HOURS` | var, optional | `26` | `26` | When `/up/backup` turns 503 |
-| `EXTRA_SETTINGS` | var, optional | | | Any other non-secret setting, `NAME=value` per line (e.g. `FORMS_LOCKDOWN=true`). It can't set anything above, nor `STRIPE_*`, `PG*`, `DATABASE_*`, `TLS_*`, `SMTP_*`, `MAIL_*`, `INBOUND_EMAIL_*` or `SECRET_KEY_BASE` |
+| `EXTRA_SETTINGS` | var, optional | | | Any other non-secret setting, `NAME=value` per line (e.g. `FORMS_LOCKDOWN=true`). It can't set anything above, nor `STRIPE_*`, `PG*`, `DATABASE_*`, `TLS_*`, `SMTP_*`, `MAIL_*`, `SENTRY_*`, `INBOUND_EMAIL_*` or `SECRET_KEY_BASE` |
 
 The deploy stops with a message when a required value is missing or malformed, when a value that
 must be secret is set as a variable, when staging has a live Stripe key (production with test keys
@@ -448,16 +450,10 @@ PDF (100–200 MB). On the 2 GB VMs keep it at 1; raise `APP_MEMORY` with it.
 | Backups stale or untested | External uptime check on `/up/backup` (503) | No backup in `BACKUP_MAX_AGE_HOURS`, or its nightly restore drill failed | `journalctl --user -u shadetree-backup@production` on the VM ("Backups" above) |
 | Site down | External uptime check | `/up` or a client-link page isn't answering | Check the VM, the container (`docker ps`) and the tunnel; roll back the last deploy if it's the cause |
 
-**Where they go today:** the log only, plus the "Background jobs" card on the operator
-console's home. Nobody is notified yet.
-
-**Once an error tracker is chosen** (PLT-10 open question: hosted or self-hosted, recorded in
-an ADR): set `Observability.tracker` in `config/initializers/observability.rb` (or let the
-tracker's SDK subscribe to `Rails.error`, with its own request and user capture turned off, and
-messages passed through `Observability.scrub`). Errors and alerts then arrive with release,
-environment and business id. Route `error` (unhandled) and `alert` to the maintainer by email;
-leave handled warnings as dashboard-only. Add its keys to the GitHub environments (and the
-deploy's env file list) and the cost table.
+**Where they go:** the log, the "Background jobs" card on the operator console's home, and,
+with `SENTRY_DSN` set, Sentry (ADR 0027): errors at `error`, handled ones and alerts at `warning`,
+tagged with `business_id` (never a name), with release (`APP_REVISION`) and environment. What
+Sentry never gets, its setup and its free-tier limits: PLT-10 part 2 adds them here.
 
 **Once an uptime service is chosen:** monitor `https://<APP_HOST>/up` (no redirect, no log
 noise), `/up/jobs` (200 "ok", 503 "stalled") and `/up/backup` (200 "ok", 503 "stale" or
@@ -491,5 +487,6 @@ changes.
 | Stripe | $0 fixed; per-transaction fees |
 | Analytics: self-hosted Plausible (MKT-04) | $0 if on the homelab |
 | GitHub (public repository, Actions) | $0 |
-| Monitoring (error tracker, uptime check; PLT-10) | *tbd* |
+| Error tracking: Sentry Developer (free; 5k errors/month, 1 Cron monitor; PLT-10, ADR 0027) | $0 |
+| Uptime check (PLT-10) | *tbd* |
 | **Total** | **target < $50** |

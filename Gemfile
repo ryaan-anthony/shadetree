@@ -81,3 +81,7 @@ group :test do
 end
 
 gem "tailwindcss-rails", "~> 4.7"
+
+# Error tracking (PLT-10, ADR 0027): Sentry, only when SENTRY_DSN is set. See lib/observability/sentry_tracker.rb.
+gem "sentry-ruby", "~> 7.3"
+gem "sentry-rails", "~> 7.3"

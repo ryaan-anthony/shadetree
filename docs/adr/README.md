@@ -49,3 +49,4 @@ approach, a hosting change. Small, local choices belong in the PR description.
 | [0024](0024-stripe-connect-standard-direct-charges.md) | Client payments through Stripe Connect Standard, with direct charges on Checkout | Accepted |
 | [0025](0025-staging-sends-real-email.md) | Staging sends real email; the mail sandbox is optional | Accepted |
 | [0026](0026-cloud-config-in-this-repository.md) | Shadetree's own cloud config (SES, Email Routing, the support Worker) lives in `infra/`, run by hand | Accepted |
+| [0027](0027-sentry-error-tracking.md) | Errors and job alerts go to Sentry's free plan, scrubbed in the app | Accepted |

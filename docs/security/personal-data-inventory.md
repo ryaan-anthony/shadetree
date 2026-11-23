@@ -66,7 +66,8 @@ blanked in logs.
   never addresses, subjects or bodies (`test/integration/inbound/support_emails_test.rb`).
 - **Third parties:** hosting provider (everything above), Cloudflare (incoming support email), email provider, Stripe (billing
   contacts and payment details, once BIL-04/PAY online payments ship). See
-  `/legal/subprocessors`. No other service receives client data.
+  `/legal/subprocessors`. No other service receives client data; Sentry (error tracking)
+  receives ids, class names and scrubbed messages only.
 
 ## Logs and monitoring
 
@@ -88,17 +89,18 @@ blanked in logs.
   global ids and class names only (controller and job objects are dropped); keys on the filter
   list are masked; exception messages lose Postgres' DETAIL/HINT (the failing row or key values)
   and have email addresses and phone-like numbers replaced.
-  The same sanitized payload is what the error tracker will receive once one is chosen (PLT-10
-  open question). Slow-query lines have literal strings removed from the SQL.
+  The same sanitized payload is all Sentry receives (ADR 0027, only with `SENTRY_DSN`): no
+  request, cookies, headers, IP, breadcrumbs, SQL, job arguments or source lines, and a
+  `before_send` scrubber masks keys and message text again (`Observability::SentryTracker`).
+  Slow-query lines have literal strings removed from the SQL.
 - **Tests:** `StructuredLogsTest` signs in and creates a client with distinctive details and
   fails if any of them, or a link token, reaches the log; `ObservabilityTest` checks error
-  reports and slow queries the same way.
+  reports and slow queries the same way, and `SentryTrackerTest` the events Sentry would get.
 - **Known gaps:** development logs are verbose by design (local data only). There is no proxy
   log on the VMs (ADR 0023: Puma serves the tunnel directly). Cloudflare sees request paths,
   client-link tokens included, at its edge; keep Cloudflare logging features that store full
-  URLs off. A tracker
-  SDK that subscribes to `Rails.error` itself sees the raw exception; configure it to send
-  `Observability.scrub(message)` instead.
+  URLs off. An exception message the app builds from a client's free text (a name) can't be
+  recognised by the scrubber: don't build one.
 
 ## Analytics (MKT-04)
 
