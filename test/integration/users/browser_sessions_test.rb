@@ -26,34 +26,126 @@ class Users::BrowserSessionsTest < ActionDispatch::IntegrationTest
     assert phone
   end
 
-  test "signing out another browser ends it on its next request, and remember-me everywhere" do
-    phone = browser(IPHONE_SAFARI)
-    laptop = browser(MAC_CHROME)
-    @user.update_columns(remember_created_at: Time.current)
+  def remembered_browser(user_agent)
+    open_session.tap do |s|
+      s.post user_session_path, params: { user: { email: @user.email, password: "password123", remember_me: "1" } }, headers: { "User-Agent" => user_agent }
+      assert s.cookies["remember_user_token"].present?
+    end
+  end
+
+  # The browser was closed and opened again: only its remember-me cookies are left.
+  def reopen(browser) = browser.cookies.delete("_shadetree_session")
+
+  test "signing out another browser ends it on its next request; the others stay remembered" do
+    phone = remembered_browser(IPHONE_SAFARI)
+    laptop = remembered_browser(MAC_CHROME)
     phone_session = @user.user_sessions.find_by!(user_agent: IPHONE_SAFARI)
     laptop.delete user_browser_session_path(phone_session)
     assert_equal "Signed out of Safari on iPhone.", laptop.flash[:notice]
     assert_not phone_session.reload.active?
-    assert_nil @user.reload.remember_created_at
+    assert_not_nil @user.reload.remember_created_at
 
     phone.get admin_root_path
     phone.assert_redirected_to new_user_session_path
     assert_match "signed out from another device", phone.flash[:alert]
-    laptop.get edit_user_registration_path
-    assert_equal 200, laptop.response.status, "this browser stays signed in"
+    assert_not_nil @user.reload.remember_created_at, "signing the ended browser out doesn't cancel remember-me elsewhere (#403)"
+    assert phone.cookies["remember_user_token"].blank?
+
+    reopen(laptop)
+    laptop.get edit_user_registration_path, headers: { "User-Agent" => MAC_CHROME }
+    assert_equal 200, laptop.response.status, "the laptop is still remembered"
+    assert_equal [ MAC_CHROME ], @user.user_sessions.active.pluck(:user_agent)
   end
 
   test "a signed-out browser holding a remember-me cookie can't sign itself back in" do
-    phone = open_session
-    phone.post user_session_path, params: { user: { email: @user.email, password: "password123", remember_me: "1" } }, headers: { "User-Agent" => IPHONE_SAFARI }
-    assert phone.cookies["remember_user_token"].present?
-    laptop = browser(MAC_CHROME)
+    phone = remembered_browser(IPHONE_SAFARI)
+    stolen = phone.cookies.to_hash.slice("remember_user_token", "remembered_session")
+    laptop = remembered_browser(MAC_CHROME)
     laptop.delete user_browser_session_path(@user.user_sessions.find_by!(user_agent: IPHONE_SAFARI))
 
-    phone.cookies.delete("_shadetree_session") # the browser was closed and opened again
+    reopen(phone)
     phone.get admin_root_path, headers: { "User-Agent" => IPHONE_SAFARI }
     phone.assert_redirected_to new_user_session_path
+    assert_match "signed out from another device", phone.flash[:alert]
+    assert phone.cookies["remember_user_token"].blank?
+
+    copy = open_session # its cookies copied before it was signed out, without its browser id
+    stolen.each { |name, value| copy.cookies[name] = value }
+    copy.get admin_root_path
+    copy.assert_redirected_to new_user_session_path
+    copy.get "/"
+    assert_equal 200, copy.response.status, "public pages still show"
+    assert_equal [ MAC_CHROME ], @user.user_sessions.active.pluck(:user_agent)
+    assert_not_nil @user.reload.remember_created_at
+  end
+
+  test "a remembered browser comes back to the session it remembered, and keeps being remembered" do
+    laptop = remembered_browser(MAC_CHROME)
+    remembered = @user.user_sessions.sole
+    2.times do
+      reopen(laptop)
+      travel 10.minutes
+      laptop.get edit_user_registration_path, headers: { "User-Agent" => MAC_CHROME }
+      assert_equal 200, laptop.response.status
+      laptop.assert_select "#browser-sessions li", /Chrome on Mac.*This browser/m
+    end
+    assert_equal [ remembered ], @user.user_sessions.active.to_a
+    assert_in_delta Time.current, remembered.reload.last_active_at, 5
+  end
+
+  test "tabs reopening at once all come back through remember-me" do
+    laptop = remembered_browser(MAC_CHROME)
+    reopen(laptop)
+    other_tab = open_session # sends the same cookies, before the first tab's answer arrives
+    laptop.cookies.to_hash.each { |name, value| other_tab.cookies[name] = value }
+    [ laptop, other_tab ].each do |tab|
+      tab.get admin_root_path, headers: { "User-Agent" => MAC_CHROME }
+      assert_not_equal new_user_session_url, tab.response.location
+      assert_nil tab.flash[:alert]
+    end
     assert_equal 1, @user.user_sessions.active.count
+  end
+
+  test "an ended browser reopened on the sign-in page sees it after at most one redirect" do
+    phone = remembered_browser(IPHONE_SAFARI)
+    laptop = remembered_browser(MAC_CHROME)
+    laptop.delete user_browser_session_path(@user.user_sessions.find_by!(user_agent: IPHONE_SAFARI))
+    reopen(phone)
+    phone.get new_user_session_path
+    phone.follow_redirect! if phone.response.redirect?
+    assert_equal 200, phone.response.status
+    assert_match "Sign in", phone.response.body
+  end
+
+  test "remember-me from before sessions were remembered per browser needs one sign-in" do
+    laptop = remembered_browser(MAC_CHROME)
+    laptop.cookies.delete("remembered_session")
+    reopen(laptop)
+    assert_no_difference -> { @user.user_sessions.count } do
+      laptop.get admin_root_path
+    end
+    laptop.assert_redirected_to new_user_session_path
+  end
+
+  test "signing out, or out everywhere, ends remember-me on every browser" do
+    phone = remembered_browser(IPHONE_SAFARI)
+    laptop = remembered_browser(MAC_CHROME)
+    tablet = remembered_browser("Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) Safari/604.1")
+    laptop.post sign_out_everywhere_path
+    [ phone, tablet ].each do |browser|
+      reopen(browser)
+      browser.get admin_root_path
+      browser.assert_redirected_to new_user_session_path
+    end
+
+    phone = remembered_browser(IPHONE_SAFARI)
+    tablet = remembered_browser("Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) Safari/604.1")
+    tablet.delete destroy_user_session_path
+    assert_nil @user.reload.remember_created_at, "Sign out still cancels remember-me everywhere"
+    assert tablet.cookies["remember_user_token"].blank?
+    reopen(phone)
+    phone.get admin_root_path
+    phone.assert_redirected_to new_user_session_path
   end
 
   test "signing in again in the same browser replaces its old session" do

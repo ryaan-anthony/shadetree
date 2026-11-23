@@ -44,11 +44,10 @@ business that others depend on.
 
 - **Business deletion stays operator-assisted at launch** (owner accepted the recommendation, M5
   planning); account deletion is self-serve (owner's request).
-- **Signing out one browser also ends remember-me on every browser.** Devise's remember-me is
-  per account, not per browser, so it's the only way the signed-out browser can't sign itself
-  back in. Other browsers stay signed in until they're closed; the confirm says so. (When the
-  signed-out browser next calls, its sign-out clears remember-me once more, as every sign-out
-  does with `expire_all_remember_me_on_sign_out`.)
+- **Signing out one browser ends remember-me for that browser only** (#403). A
+  `remembered_session` cookie beside Devise's names the session it may resume; it resumes only
+  while that session is active. Sign out, "sign out everywhere" and a new password still end
+  remember-me everywhere. Remember-me cookies from before this need one sign-in.
 - **A signed-in browser with no session record is signed out**, including everyone signed in
   before this shipped (one sign-in each): otherwise a copied pre-launch cookie could never be
   signed out from the list.
