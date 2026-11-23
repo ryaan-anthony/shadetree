@@ -40,8 +40,8 @@ module ControlsHelper
   # align: :right (the default; opens leftwards from the button's right edge) or :left.
   # button: more attributes for the button (an id, data-tour, data-modal-target).
   def menu(label:, text: nil, icon_name: "more-horizontal", icon_class: "size-4", size: nil, align: :right, button: {}, **attributes, &items)
-    @kit_menus = @kit_menus.to_i + 1
-    id = "menu-#{label.parameterize.presence || "actions"}-#{@kit_menus}"
+    # Random, so a menu re-rendered by a Turbo Stream never shares an id with one already on the page.
+    id = "menu-#{SecureRandom.hex(6)}"
     button = button.dup
     button_data = { menu_target: "button", action: "menu#toggle" }.merge(button.delete(:data).to_h)
     trigger = tag.button(type: "button", class: [ text ? button_classes(:secondary, *size) : button_classes(:tertiary, *size, :icon), button.delete(:class) ].compact.join(" "),

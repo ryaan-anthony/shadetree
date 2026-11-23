@@ -348,8 +348,8 @@
   .modal-foot { display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0.875rem 1.25rem; border-top: 1px solid var(--color-line); background: var(--color-slate-50); }
 
   /* ---------- Menus ---------- */
-  /* PLT-19: as wide as its longest item, so items never wrap (a picker's listbox adds w-auto to
-     span its field). */
+  /* PLT-19: as wide as its longest item (max-content), so items never wrap; only at the width cap
+     on a phone does a long item wrap. A picker's listbox adds w-auto to span its field. */
   .menu {
     position: absolute;
     z-index: 50;
@@ -373,7 +373,6 @@
     font-size: 0.875rem;
     text-align: left;
     text-decoration: none;
-    white-space: nowrap;
   }
   .menu-item:hover,
   .menu-item:focus-visible,
