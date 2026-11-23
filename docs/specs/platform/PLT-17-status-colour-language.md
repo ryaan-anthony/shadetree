@@ -56,7 +56,7 @@ existing tones. Triage: [#314 triage](../../audits/314-triage.md).
   - Branding preview's client background.
 - [x] Contrast stays AA for every pill on white and on its tint, and the accessibility check
       passes.
-- [x] Desktop (1280) and phone (390) screenshots of Quotes, Jobs, Invoices, a client page,
+- [ ] Desktop (1280) and phone (390) screenshots of Quotes, Jobs, Invoices, a client page,
       Schedule (by status) and Notifications.
 
 ## Out of scope
@@ -66,14 +66,12 @@ existing tones. Triage: [#314 triage](../../audits/314-triage.md).
 
 ## Implementation notes
 
-- `StatusHelper::MAP` (type → status → tone and words) and `status_badge`; the style guide shows
-  it. `status_helper_test.rb` walks every status; the `status_pills_follow_the_map` check sweeps
-  `StaffPages` (now with Schedule by status). A dotted pill is a status; plain pills are labels.
-- `danger_flag` draws the inline danger treatment; `event_severity_test.rb` covers each place.
-- New tokens in `theme.css` (`wash`, `neutral-tint`, `line-strong`, `cal-*`, `side-*`, …);
-  translucent shades are `color-mix()` of tokens. `colour_tokens_test.rb` scans the source;
-  `status_contrast_test.rb` checks pills and calendar blocks for AA. Dev seeds: a visit in
-  progress this week and a failed automation step on a completed job.
+- `StatusHelper::MAP` and `status_badge` (style guide shows the map); `status_helper_test.rb`
+  and the `status_pills_follow_the_map` check. `danger_flag` is the inline danger treatment.
+- Tokens: `wash`, `neutral-tint`, `line-strong`, `info-300`, `cal-*`, `side-*`; translucent
+  shades are `color-mix()`. Tests: `colour_tokens_test.rb`, `status_contrast_test.rb`.
+- Calls: a failed payment is a failed plan renewal; unread icons stay blue (unread, not
+  severity); the operator console keeps its own pills. Seeds: a visit in progress, a failed step.
 
 ## Decisions
 
@@ -95,5 +93,6 @@ existing tones. Triage: [#314 triage](../../audits/314-triage.md).
   tones, so nothing changes (review of #332).
 - The calendar's In progress follows the map and turns from amber to info. Scheduled keeps its
   lighter sky tint (owner, 2026-11-22).
-- Pills the map doesn't name (emails, payments, import rows) keep today's tones; Completed is
-  "Completed" on the calendar legend too. A failed payment is a failed plan renewal (#381).
+- In progress is a clearly deeper blue fill and edge than Scheduled (owner, 2026-11-23).
+- Other pills follow the map: email Sent info; import row New and Inquiry closed neutral;
+  Dispute won and prevented success (owner, 2026-11-23).
