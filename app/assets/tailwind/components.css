@@ -431,6 +431,7 @@
 
   /* ---------- Segmented control (PLT-19): one of a few options on the same view; Plan's white pill ---------- */
   .segmented {
+    position: relative; /* the offset parent, for the tabs controller keeping the current one in view */
     display: inline-flex;
     max-width: 100%;
     gap: 2px;

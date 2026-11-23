@@ -13,10 +13,9 @@
   </div>
   <%# QA #274: a keyboard's (and a phone's) way to book a visit without a slot on the grid. %>
   <%= link_to admin_schedule_new_visit_path({ on: s.date.iso8601, view: s.view, member: s.member }.compact_blank), class: button_classes(:primary), data: { turbo_frame: "schedule_visit" } do %><%= icon "plus" %> New visit<% end %>
-  <nav class="tabs hidden md:flex" aria-label="View">
-    <%= link_to "Day", admin_schedule_path(schedule_link_params(s, view: "day")), class: "tab", "aria-current": ("page" if s.view == "day") %>
-    <%= link_to "Week", admin_schedule_path(schedule_link_params(s, view: "week")), class: "tab", "aria-current": ("page" if s.view == "week") %>
-  </nav>
+  <%# PLT-19: the kit's segmented control (phones show the agenda, so no Day/Week there). %>
+  <%= segmented_control({ "day" => "Day", "week" => "Week" }, selected: s.view, label: "View", class: "hidden self-center md:inline-flex",
+                        href: ->(view) { admin_schedule_path(schedule_link_params(s, view:)) }) %>
 <% end %>
 <% if s.items.empty? && s.next_item_after %>
   <p class="-mt-2 mb-4 text-sm2 text-muted" id="next-visit"><span class="hidden md:inline">Nothing booked <%= s.view == "day" ? "this day" : "this week" %>. </span><%= render "next_visit", s: %></p>
@@ -45,12 +44,8 @@
         <% schedule_link_params(s, color: nil).each do |name, value| %><%= hidden_field_tag name, value, id: nil %><% end %>
         <%= hidden_field_tag :focus, "color", id: nil %>
         <span id="schedule-color-label" class="text-muted">Color by</span>
-        <span class="inline-flex rounded-control border border-line p-0.5" role="group" aria-labelledby="schedule-color-label">
-          <% { "member" => "Person", "status" => "Status" }.each do |value, label| %>
-            <button type="submit" name="color" value="<%= value %>" aria-pressed="<%= s.color_by == value %>" <%= 'data-schedule-focus="color"'.html_safe if s.color_by == value %>
-                    class="min-h-6 rounded px-2.5 font-medium text-muted hover:text-ink aria-pressed:bg-ink aria-pressed:text-white"><%= label %></button>
-          <% end %>
-        </span>
+        <%= segmented_control({ "member" => "Person", "status" => "Status" }.to_h { |value, label| [ value, [ label, { data: ({ schedule_focus: "color" } if s.color_by == value) } ] ] },
+                              selected: s.color_by, label: "Color by", label_id: "schedule-color-label", name: "color") %>
       <% end %>
       <% if s.color_by == "status" %>
         <ul class="flex flex-wrap gap-x-3 gap-y-1 px-4 pb-2.5 text-sm2 text-muted" aria-label="Status colors">

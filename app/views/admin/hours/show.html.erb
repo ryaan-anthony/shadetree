@@ -7,12 +7,10 @@
 
 <div class="form-split space-y-4">
   <% if @business.multiple_locations? %><%# CAT-07: each location has its own hours and closures %>
-    <nav class="flex flex-wrap gap-2" aria-label="Location">
-      <% @business.active_locations.then { @location && !_1.include?(@location) ? _1 + [ @location ] : _1 }.each do |location| %>
-        <% current = location.primary? ? @location.nil? : location == @location %>
-        <%= link_to location.name, admin_hours_path(location: (location unless location.primary?)), class: button_classes(current ? :secondary : :tertiary, :sm), "aria-current": ("page" if current) %>
-      <% end %>
-    </nav>
+    <% places = @business.active_locations.then { @location && !_1.include?(@location) ? _1 + [ @location ] : _1 } %>
+    <%# PLT-19: which location's hours, as the kit's segmented control %>
+    <%= segmented_control(places.to_h { [ _1, _1.name ] }, selected: places.find { _1.primary? ? @location.nil? : _1 == @location }, label: "Location",
+                          href: ->(location) { admin_hours_path(location: (location unless location.primary?)) }) %>
   <% end %>
   <% unless @place.weekly_hours_was || problems.any? %>
     <div class="banner banner-info"><%= icon "clock" %>

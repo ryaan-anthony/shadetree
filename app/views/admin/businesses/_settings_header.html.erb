@@ -13,12 +13,8 @@
       <%= link_to name, list.first.path, class: "tab", "aria-current": (name == group ? (list.size == 1 ? "page" : "true") : nil) %>
     <% end %>
   </div>
-  <% if pages.size > 1 %>
-    <ul class="mt-3 flex flex-wrap gap-2" aria-label="<%= group %>">
-      <% pages.each do |page| %>
-        <li><%= link_to page.label, page.path, class: "inline-flex items-center rounded-full border px-3 py-1 text-sm2 #{page.key == current ? "border-canopy bg-canopy/10 font-semibold text-ink" : "border-line text-subtle hover:text-ink"}",
-                        "aria-current": ("page" if page.key == current) %></li>
-      <% end %>
-    </ul>
+  <% if pages.size > 1 %><%# PLT-19: the pages in the group, as the kit's segmented control %>
+    <%= segmented_control(pages.to_h { [ _1.key, _1.label ] }, selected: current, label: group, class: "mt-3",
+                          href: ->(key) { pages.find { _1.key == key }.path }) %>
   <% end %>
 </nav>

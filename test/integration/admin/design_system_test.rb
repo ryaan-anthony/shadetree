@@ -273,6 +273,38 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # PLT-19: lists search as you type, with no Search button. A <noscript> button is the no-script
+  # fallback where Enter would otherwise press a tab; the tabs a filter form submits aren't one.
+  LIST = %i[list empty].freeze
+  check :search_as_you_type, if: ->(page) { LIST.include?(page.kind) } do |_page, html|
+    html.css("form:has(input[type=search])").flat_map do |form|
+      buttons = form.css("button:not([type=button]), input[type=submit]").reject { _1.ancestors("noscript").any? || _1.matches?(".tab, .segment") }
+      [ ("#{form["id"] || form["action"]}: a Search button (#{buttons.map { label(_1) }.join(", ")})" if buttons.any?),
+        ("#{form["id"] || form["action"]}: doesn't search as you type (search-form controller)" unless form["data-controller"].to_s.split.include?("search-form")) ].compact
+    end
+  end
+
+  # PLT-19: a switch (a pressed button, a current-page link or a hidden radio) is the kit's tabs
+  # or segmented control. Not checked: the sidebar, pagination, the brand colour presets (a
+  # colour picker) and the top bar's Notifications link.
+  SWITCH = 'main [aria-pressed], main a[aria-current="page"], main input[type=radio].sr-only'.freeze
+  check :one_switch_style do |_page, html|
+    html.css(SWITCH).reject { _1.ancestors(".tabs, .segmented, .pagination").any? || _1["data-brand-preview-target"] == "swatch" }
+        .map { "#{label(_1).presence || _1["value"]} is a switch outside the kit's tabs and segmented control" } +
+      html.css(".tab").reject { _1.ancestors(".tabs").any? }.map { "#{label(_1)} is a tab outside .tabs" } +
+      html.css(".segment").reject { _1.ancestors(".segmented").any? }.map { "#{label(_1)} is a segment outside .segmented" }
+  end
+
+  # PLT-19 (owner, 2026-11-22): zero-count status tabs are hidden, except "All" and the current one.
+  check :no_empty_tabs do |_page, html|
+    html.css(".tabs .tab:has(.tab-count)").filter_map do |tab|
+      next unless tab.at_css(".tab-count").text.strip == "0"
+      next if tab["value"] == "all" || tab.matches?('[aria-current="page"], [aria-pressed="true"]') || tab.text.squish.start_with?("All ")
+
+      "#{label(tab)} is shown at 0"
+    end
+  end
+
   setup do
     @business = businesses(:one)
     @owner = users(:one)
