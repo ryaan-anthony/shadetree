@@ -35,7 +35,9 @@
 <% end %>
 
 <div id="builder_banner"></div>
-<% if @quote.counts_toward_usage? %>
+<% if without_review_check(@quote) %><%# QTE-08: whether it can go without review, and if not why %>
+  <%= render "admin/quotes/without_review", quote: @quote %>
+<% elsif @quote.counts_toward_usage? %>
   <% if !own_quotes_only? || can?(:send_own_quotes) %>
     <%= render "admin/usage/limit_notice" %>
   <% else %><%# QTE-07: they never send, so the plan's limit isn't theirs to act on %>
@@ -165,7 +167,10 @@
         failure isn't missed on a long draft. The button only shows if autosave isn't running. %>
     <%= f.submit_button "Save draft", class: "w-full", data: { quote_builder_target: "fallback" } %>
     <p class="text-center text-sm2 text-muted" id="autosave-note">Changes save as you go: <span class="save-status" data-quote-builder-target="status" aria-hidden="true">Saved</span>.
-      <%= own_quotes_only? && !can?(:send_own_quotes) ? "Mark it ready for review from the top of the page when it’s done." : "Send it from the top of the page when it’s ready." %></p><%# QTE-07 %>
+      <%= if without_review_check(@quote) then "When it’s done, send it from the top of the page if you can, or mark it ready for review." # QTE-08
+        elsif own_quotes_only? && !can?(:send_own_quotes) then "Mark it ready for review from the top of the page when it’s done."
+        else "Send it from the top of the page when it’s ready."
+        end %></p><%# QTE-07 %>
   </aside>
 <% end %>
 </div>

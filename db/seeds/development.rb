@@ -340,6 +340,19 @@ Tenancy.with_business(business) do
                                        timing: "exact", start_time: "15:00", done_at: 1.day.ago, done_by: riley)
     ServiceRequestEvent.record!(lawn, :assigned, by: owner, to: follow_up.state)
   end
+  # QTE-08: Lawn mowing and Leaf cleanup are services technicians send without review, up to
+  # $500 a quote. Marcus has a done site visit for mowing: his quote for it can go straight out.
+  CatalogItem.active.where(name: [ "Lawn mowing", "Leaf cleanup" ]).update_all(send_without_review: true)
+  business.update!(without_review_cap: "500") if business.without_review_cap.nil?
+  mowing = CatalogItem.active.find_by(name: "Lawn mowing")
+  if tech && mowing && !ServiceRequest.exists?(description: "Weekly mowing from April, front and back.")
+    client = Client.order(:id).offset(2).first || Client.order(:id).first
+    mow = ServiceRequest.create!(client:, property: client.properties.first, source: "phone", created_by: owner, status: "in_progress",
+                                 description: "Weekly mowing from April, front and back.", services: [ { "catalog_item_id" => mowing.id, "name" => mowing.name } ])
+    follow_up = mow.create_follow_up!(business:, user: tech, assigned_by: owner, kind: "visit", scheduled_on: business.today - 1,
+                                      timing: "exact", start_time: "13:00", done_at: 1.day.ago, done_by: tech)
+    ServiceRequestEvent.record!(mow, :assigned, by: owner, to: follow_up.state)
+  end
   puts "Request form: http://localhost:3000/request/#{business.handle}"
 end
 

@@ -17,7 +17,9 @@ class Admin::QuoteSendsController < Admin::BaseController
   EMAILS_PER_QUOTE_PER_DAY = 5
 
   before_action :set_quote
+  before_action :refuse_sent_again, if: -> { without_review? && !@quote.draft? }, only: :create
   before_action :require_sendable
+  before_action :require_without_review, if: -> { without_review? && @quote.draft? }
   before_action :require_confirmed_sender, only: :create
   before_action :require_quote_allowance, only: :create
   zero_total_guard :@quote, path: :new_admin_quote_send_path
@@ -33,7 +35,14 @@ class Admin::QuoteSendsController < Admin::BaseController
   def create
     params[:channel] == "link" ? send_link : send_email
   rescue QuoteLimitReached
+    return redirect_to(edit_admin_quote_path(@quote), alert: quote_limit_message) if without_review?
+
     redirect_to new_admin_quote_send_path(@quote, from: ("setup" if from_setup?)), alert: quote_limit_message
+  rescue NeedsReview => error
+    redirect_to edit_admin_quote_path(@quote), alert: needs_review_message(error.message)
+  rescue AlreadySent # a double submit: the first one sent it
+    sent_by_them = @quote.reload.sent_by_id == current_user.id
+    redirect_to (sent_by_them ? new_admin_quote_send_path(@quote) : admin_root_path), notice: "Quote #{@quote.number} was already sent."
   end
 
   private
@@ -42,6 +51,7 @@ class Admin::QuoteSendsController < Admin::BaseController
   # Resends and revisions of quotes already sent never count.
   def require_quote_allowance
     return if !@quote.counts_toward_usage? || current_business.entitlements.can_send_new_quote?
+    return redirect_to(edit_admin_quote_path(@quote), alert: quote_limit_message) if without_review?
 
     redirect_to new_admin_quote_send_path(@quote, from: ("setup" if from_setup?)), alert: quote_limit_message
   end
@@ -57,7 +67,45 @@ class Admin::QuoteSendsController < Admin::BaseController
     raise QuoteLimitReached unless Entitlements.for(current_business).can_send_new_quote?
   end
 
-  def quote_limit_message = "You've used this period's quotes. New quotes can be sent again on #{l(current_business.entitlements.period.resets_on)}."
+  def quote_limit_message
+    message = "You've used this period's quotes. New quotes can be sent again on #{l(current_business.entitlements.period.resets_on)}."
+    return message unless without_review? # QTE-08: no grace send; theirs can still go to the office
+
+    "#{message} Ask #{current_business.owner.first_name.presence || "the owner"} about a bigger plan, or mark it ready for review."
+  end
+
+  # QTE-08: a technician who doesn't send their own quotes sends a draft of theirs that's only
+  # services they may send without review, at their prices. Checked here, and again inside the
+  # send's transaction with the quote row locked, so a late autosave can't slip a change through.
+  class NeedsReview < StandardError; end
+  class AlreadySent < StandardError; end
+
+  # Set by set_quote for these members, so their checks run whenever they're the one sending.
+  def without_review? = @without_review_member == true
+
+  def require_without_review
+    check = SendWithoutReview.new(@quote)
+    redirect_to edit_admin_quote_path(@quote), alert: needs_review_message(check.reason) unless check.qualifies?
+  end
+
+  def needs_review_message(reason) = "This quote needs the office's review (#{reason}). Mark it ready for review instead."
+
+  # Inside the transaction: the quote as committed now, locked; returns what qualified it.
+  def recheck_without_review!
+    return unless without_review?
+
+    fresh = Quote.lock.includes(:business, :client, :service_request, line_items: :catalog_item).find(@quote.id)
+    raise AlreadySent unless fresh.draft?
+
+    check = SendWithoutReview.new(fresh)
+    raise NeedsReview, check.reason unless check.qualifies?
+
+    @without_review_grounds = check.grounds
+  end
+
+  def record_without_review
+    QuoteEvent.record!(@quote, :sent_without_review, by: current_user, **@without_review_grounds) if @without_review_grounds
+  end
 
   # QTE-07: office staff send any quote; members with "Send their own quotes" only the ones they
   # drafted from requests (resends of them too); anyone else is refused.
@@ -65,10 +113,23 @@ class Admin::QuoteSendsController < Admin::BaseController
     scope = if !own_quotes_only? then Quote.all
     elsif can?(:send_own_quotes) && can?(:quote_requests) # never a revision the office started, nor a copy of an approved one
       Quote.where(created_by_id: current_user.id, revision: 1, status: %w[draft sent]).where.not(service_request_id: nil)
+    elsif can?(:quote_requests) then without_review_scope # QTE-08
     else return deny!(:office, "can't send quotes")
     end
     @quote = scope.includes(:client, :line_items).find_by_param!(params[:quote_id])
   end
+
+  # QTE-08: a member who quotes their requests but doesn't send their own sends only their drafts
+  # that can go without review (checked before and inside the send). After a send by link, the
+  # send page also opens for the quote they sent, to copy the link; sending it again is refused.
+  def without_review_scope
+    @without_review_member = true
+    Quote.own_drafts_for(current_user).or(Quote.where(created_by_id: current_user.id, sent_by_id: current_user.id, revision: 1, status: "sent").where.not(service_request_id: nil))
+  end
+
+  def refuse_sent_again = redirect_to(new_admin_quote_send_path(@quote), notice: "Quote #{@quote.number} was already sent.")
+
+  helper_method def link_only? = without_review? && !@quote.draft?
 
   # Where to go after (or instead of) sending: the quote's page for office staff; for members
   # sending their own, the draft while it's one, else their start page.
@@ -88,7 +149,9 @@ class Admin::QuoteSendsController < Admin::BaseController
   def send_link
     Quote.transaction do
       claim_quote_allowance!
+      recheck_without_review!
       @quote.mark_sent!(by: current_user, channel: "link")
+      record_without_review
       @quote.client_link!
     end
     track_first_quote
@@ -107,7 +170,9 @@ class Admin::QuoteSendsController < Admin::BaseController
     # email job is enqueued only after commit, so a quote is never "sent" without its email.
     Quote.transaction do
       claim_quote_allowance!
+      recheck_without_review!
       quote_send = @quote.mark_sent!(by: current_user, channel: "email", recipient: @form.to, cc: @form.cc_header)
+      record_without_review
       link = @quote.client_link!
       email = QuoteMailer.send_later(:sent, business: current_business, to: @form.to, kind: "quote_sent", related: @quote,
                                             quote_id: @quote.id, revision: @quote.revision, link_id: link.id, subject: @form.subject, message: @form.message, cc: @form.cc_header)

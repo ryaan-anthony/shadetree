@@ -91,7 +91,8 @@ class Admin::QuoteDeliveryTest < ActionDispatch::IntegrationTest
   test "Resend goes to the send page, which only people who may send can open" do
     emailed("bounced")
     sign_out :user
-    assert_permission_matrix(owner: true, admin: true, technician: false) { get new_admin_quote_send_path(@quote) }
+    assert_permission_matrix(owner: true, admin: true) { get new_admin_quote_send_path(@quote) }
+    as_technician { get(new_admin_quote_send_path(@quote)) && assert_response(:not_found) } # QTE-08: they reach only their own drafts
   end
 
   test "each revision's sends say whether they were delivered; an approval on a revision whose email bounced gets a quiet note" do

@@ -1,0 +1,30 @@
+<%# locals: (quote:, saved: true) -%>
+<%# QTE-08: for a technician who doesn't send their own quotes. A draft that qualifies can be sent
+    unless the plan's quotes are used (no grace send; the notice says to ask the owner) or their
+    email isn't confirmed (ACC-01's notice); one that doesn't names the first thing the office
+    needs to see. Replaced on each autosave. %>
+<% check = without_review_check(quote) %>
+<div id="without-review">
+  <% if check.qualifies? %>
+    <% entitlements = current_business.entitlements %>
+    <%= render "admin/usage/limit_notice", entitlements: %>
+    <% unless current_user.can_send_to_clients? %>
+      <div class="banner banner-warning mb-4" role="status" id="confirm-to-send"><%= icon "alert-triangle" %>
+        <p class="flex-1">Confirm your email address before sending anything to clients. Check your inbox for the link.</p>
+      </div>
+    <% end %>
+    <% if !saved %>
+      <p class="-mt-2 mb-4 text-sm2 text-muted" id="review-reason">It can be sent once your changes save.</p>
+    <% elsif quote.ready_for_review? %><%# the header says the office has it %>
+    <% elsif send_without_review_now?(quote) %>
+      <p class="-mt-2 mb-4 text-sm2 text-muted" id="review-reason">Only services you can send without review, at their prices: send it, or mark it ready for the office.</p>
+    <% else %>
+      <p class="-mt-2 mb-4 text-sm2 text-muted" id="review-reason">You can still mark it ready for review.</p>
+    <% end %>
+  <% else %>
+    <p class="-mt-2 mb-4 text-sm2 text-muted" id="review-reason">
+      <%= icon "info", class: "inline size-4 align-text-bottom text-faint" %> Needs the office's review: <span class="font-medium text-ink"><%= check.reason %></span>
+    </p>
+    <%= render "admin/quotes/office_sends_later" if quote.counts_toward_usage? %>
+  <% end %>
+</div>

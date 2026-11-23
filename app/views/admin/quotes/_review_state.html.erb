@@ -1,10 +1,17 @@
-<%# locals: (quote:) -%>
+<%# locals: (quote:, saved: true) -%>
 <%# QTE-07: a draft's hand-over, for someone who doesn't send it: waiting for the office, or the button.
-    The button saves anything pending first (quote_builder#saveAndSubmit), then hands it over. %>
+    The button saves anything pending first (quote_builder#saveAndSubmit), then hands it over.
+    QTE-08: a draft that can go without review can also be sent (saving first, as the office's
+    Send does); "Ready for review" stays. Not once it's marked ready (the office has it), nor after
+    an autosave that failed (what's on screen isn't what was checked) until one succeeds. %>
 <span class="contents" id="review-state">
+  <% if (direct = saved && !quote.ready_for_review? && send_without_review_now?(quote)) %>
+    <%= link_to new_admin_quote_send_path(quote), class: button_classes(:primary), id: "send-without-review",
+                data: { action: "quote-builder#saveAndGo" } do %><%= icon "send" %> Send quote<% end %>
+  <% end %>
   <% if quote.ready_for_review? %>
     <span class="text-sm2 text-muted" id="ready-for-review">Ready for review: the office sends it</span>
   <% else %>
-    <button type="submit" form="ready-for-review-form" class="<%= button_classes(:primary) %>" data-action="quote-builder#saveAndSubmit"><%= icon "check-square" %> Ready for review</button>
+    <button type="submit" form="ready-for-review-form" class="<%= button_classes(direct ? :secondary : :primary) %>" data-action="quote-builder#saveAndSubmit"><%= icon "check-square" %> Ready for review</button>
   <% end %>
 </span>

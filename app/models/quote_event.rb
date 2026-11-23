@@ -5,7 +5,8 @@ class QuoteEvent < ApplicationRecord
   include BusinessOwned
   include SupportAttribution # OPS-03
 
-  KINDS = %w[archived unarchived expiry_extended duplicated revised repriced ready_for_review].freeze # ready_for_review: QTE-07
+  KINDS = %w[archived unarchived expiry_extended duplicated revised repriced ready_for_review sent_without_review].freeze # ready_for_review: QTE-07
+  # sent_without_review (QTE-08): { "services", "total", "cap" }, why it needed no review.
 
   belongs_to_business_record :quote
   belongs_to :user, optional: true

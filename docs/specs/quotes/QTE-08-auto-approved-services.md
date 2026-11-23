@@ -25,15 +25,15 @@ be sent by the technician straight away; anything else still goes to "Ready for 
 
 ## Acceptance criteria
 
-- [ ] Each service in Services & prices has a "Technicians can send without review" switch, off by
+- [x] Each service in Services & prices has a "Technicians can send without review" switch, off by
       default, set by people who manage services; the list marks the services that have it on.
       Beside them, an optional "up to" amount for the business caps such quotes' total (blank:
       no cap). Every plan has this.
-- [ ] It applies to members with "Quote assigned requests" and without "Send their own quotes"
+- [x] It applies to members with "Quote assigned requests" and without "Send their own quotes"
       (QTE-07), and only to a draft's first version (revision 1), as QTE-07's own sends. This
       reaches the built-in Technician once it has "Quote assigned requests" by default (owner,
       2026-11-22; a separate change). The office and members who send their own are unaffected.
-- [ ] A draft qualifies only when all of these hold:
+- [x] A draft qualifies only when all of these hold:
       - every line is a service with the switch on, keeping that service's unit, current price
         and taxable setting, with no line discount; quantity, name and description may change;
       - no quote discount, and the total, tax included, is within the cap if there is one;
@@ -41,28 +41,32 @@ be sent by the technician straight away; anything else still goes to "Ready for 
       - its tax rates and "prices include tax" are the defaults for that location or business.
       Only these are locked: terms, valid-until, attachments and the email's subject and message
       may be edited. A $0.00 total qualifies like any other, after the usual $0 confirmation.
-- [ ] It's checked when the button shows, and again inside the send's transaction (as the plan
+- [x] It's checked when the button shows, and again inside the send's transaction (as the plan
       allowance is claimed, BIL-03), so a late autosave can't slip a change through.
-- [ ] On a qualifying draft the technician sees "Send quote" (sending as QTE-07 allows: to the
+- [x] On a qualifying draft the technician sees "Send quote" (sending as QTE-07 allows: to the
       client's emails on file, or the copy link) and can still choose "Ready for review".
-- [ ] On a draft that doesn't qualify, they see only "Ready for review", with a short reason
-      naming the first thing that needs the office ("Gutter clean: price changed", "Over $500",
+- [x] On a draft that doesn't qualify, they see only "Ready for review", with a short reason
+      naming the first thing that needs the office ("Gutter clean: price changed", "Over $500.00",
       "Tax changed"). A line whose service price changed after it was added reads "Gutter clean:
       the price list changed"; removing and adding it again picks up the new price and clears it.
-- [ ] A send counts toward the plan like any send (BIL-02) and follows BIL-03, with no grace
+- [x] A send counts toward the plan like any send (BIL-02) and follows BIL-03, with no grace
       send: once the period's quotes are used, it's blocked, the technician is told to ask the
       owner, and can still mark it ready for review. Without a confirmed email they see the
       office's notice (ACC-01) and can still mark it ready for review.
-- [ ] The quote's history records that it was sent without review, by whom, and why it qualified;
+- [x] The quote's history records that it was sent without review, by whom, and why it qualified;
       the office sees "Sent by" on the quote as for any send.
-- [ ] Turning a service's switch off, archiving it, or changing its price stops new sends of
+- [x] Turning a service's switch off, archiving it, or changing its price stops new sends of
       drafts using it; quotes already sent are unaffected.
-- [ ] The switch, the cap and the reasons work at 360 px.
-- [ ] Tests cover qualifying and non-qualifying drafts (custom line, price edit, changed price
+- [x] The switch, the cap and the reasons work at 360 px.
+- [x] Tests cover qualifying and non-qualifying drafts (custom line, price edit, changed price
       list, discount, mixed services, archived service, taxable change, changed unit, changed tax
       rates or "prices include tax", another location, the cap with tax, $0.00, edited terms and
       email, a revision), no grace send, an unconfirmed email, the recheck inside
       the send, roles, the plan limit, and tenancy.
+
+## Implementation notes
+
+- Seeds: Lawn mowing and Leaf cleanup, a $500 cap; Marcus (tech@example.com) has a visit to quote.
 
 ## Out of scope
 
@@ -91,3 +95,6 @@ be sent by the technician straight away; anything else still goes to "Ready for 
 - The cap is measured after tax (owner, 2026-11-22).
 - Without a confirmed email, the office's notice, with "Ready for review" still available
   (coordinator, follows existing behaviour).
+- A "price on quote" service never qualifies: "priced on each quote" (owner, 2026-11-22).
+- Other reasons: "custom line", "not one you can send without review", "service archived", "unit
+  changed", "discount", "Quote discount", "Priced for another location" (coordinator).
