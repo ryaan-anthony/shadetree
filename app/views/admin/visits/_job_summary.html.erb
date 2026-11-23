@@ -11,8 +11,9 @@
       <% lines = job.line_items.first(7) %>
       <% if lines.any? %>
         <ul class="space-y-1 border-t border-line pt-3">
+          <% prices = current_business.technicians_see_prices || can?(:office) %>
           <% lines.first(6).each do |line| %>
-            <li class="flex justify-between gap-2"><span class="min-w-0 truncate text-ink"><%= line.name %></span><span class="shrink-0 text-subtle tabular">× <%= line.quantity.to_d.to_s("F").sub(/\.0\z/, "") %></span></li>
+            <li><span class="block truncate text-ink"><%= line.name %></span> <span class="block text-sm2 text-muted"><%= prices ? line_quantity(line) : line.quantity_label %></span></li>
           <% end %>
           <% if lines.size > 6 %><li class="text-sm2 text-muted">and <%= job.line_items.count - 6 %> more</li><% end %>
         </ul>

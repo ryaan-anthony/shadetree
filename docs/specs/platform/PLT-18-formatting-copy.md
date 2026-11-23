@@ -68,7 +68,8 @@ Use one formatter per data type, everywhere. Triage: [#314 triage](../../audits/
 ## Implementation notes
 
 - Part 1: `money` everywhere a zero showed "—" (a void invoice's Balance keeps it); `line_quantity`
-  writes "1 visit × $120.00" under a line on the job and invoice pages; Stripe's reference is
+  writes "1 visit × $120.00" under a line on the job, invoice and visit pages (the quantity
+  alone where prices are hidden from technicians); Stripe's reference is
   "Stripe reference: pi_…" in the invoice's Payments card only (the job's payment list and the
   history text keep a recorded payment's own reference, like a check number). Checks
   `zero_is_money` and `stripe_ids_only_in_payments` run on every staff page; copy guards are in
@@ -82,3 +83,4 @@ Use one formatter per data type, everywhere. Triage: [#314 triage](../../audits/
   2026-11-22).
 - A job with no items shows "$0.00", like any zero (owner, 2026-11-22).
 - A void invoice's balance stays "—", as there's nothing to pay (review of #332).
+- A draft invoice's Balance shows its amount, not "—" (owner, 2026-11-23).
