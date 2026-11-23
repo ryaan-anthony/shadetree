@@ -42,7 +42,7 @@ class Admin::MessageTemplatesTest < ActionDispatch::IntegrationTest
     post preview_admin_message_template_path("quote_sent"), params: { message_template: { subject: "Your quote {{quote_number}}", body: "Hey {{client_first_name}} {{oops}}" } }
     assert_response :success
     assert_select "p", text: "Your quote Q-1041"
-    assert_select "[role=alert]", /\{\{oops\}\} isn't a placeholder/
+    assert_select ".banner-warning[data-controller=announce]:not([role])", /\{\{oops\}\} isn't a placeholder/ # PLT-21: polite while typing
 
     assert_no_difference -> { as_business(@business) { MessageTemplate.count } } do
       save("quote_sent", subject: "Quote", body: "Hi <img src=x onerror=alert(1)>")

@@ -56,25 +56,26 @@ Triage: [#314 triage](../../audits/314-triage.md).
 
 - Kit: `empty_state` (level 3 in a titled card). As on Taxes, Automations and Messages show their
   add button in the empty state, then in the card header once there's one. `.unread-dot`;
-  `.toast.is-leaving` fades a success toast (`dismiss_controller.js`). Style guide `#feedback-rules`.
+  `dismiss_controller.js` fades a success toast. Style guide `#feedback-rules`.
 - Checks in `design_system_test.rb`: `empty_states_use_the_kit`, `empty_state_shape` and
-  `banners_follow_the_pattern`. `StaffPages.empty` adds Home, My day, Schedule (week and day),
-  Notifications, Automations, Messages and Your data before any records exist.
-  `feedback_patterns_test.rb` scans staff views for banner roles; `empty_states_test.rb`.
-- A detail page's cards (a request's Quotes, a job's Visits) and the schedule's side cards are
-  parts of a record or page, so their one-line notes stay (the sub-list rule).
+  `banners_follow_the_pattern` (its `DECISION_BANNERS`, with sweep states for each).
+  `StaffPages.empty` adds Home, My day, Schedule (week and day), Notifications, Automations,
+  Messages and Your data. `feedback_patterns_test.rb` scans staff views for banner roles.
+- Implementation decisions: "Unread" is screen-reader text beside the dot (as in the requests
+  mockup), and a detail page's cards (a request's Quotes, a job's Visits) and the schedule's
+  side cards keep one-line notes under the sub-list rule.
 - Seeds: unread and read notifications for the demo owner; Rivera Pest Control
   (new@example.com) shows the empty states.
 
 ## Decisions
 
-- "Unread" is screen-reader text beside the dot, as in the requests mockup; the pill is gone.
+- Success toasts stay 10 seconds and wait while hovered, focused or the tab is hidden. Errors
+  and Undo toasts stay until dismissed (owner, 2026-11-23).
 - Live regions: a form's errors and an action that didn't happen (a stale save, an archived
   client picked) are danger banners with `role="alert"`. Warnings that come back from an
-  action (visit conflicts) use the polite region (`announce`). Other banners are page content.
-- The quote limit notice takes the meter's tones: Nearly used warning, Limit reached danger.
-
-## Open questions
-
-- Services ("Add starter services", "Add service") and Invoices ("Completed jobs", "New
-  invoice") empty states keep two actions from PLT-14; the check lists them. Which one stays?
+  action (booking clashes) use the polite region. Other banners are page content (owner,
+  2026-11-23).
+- Decision banners (location reprice, the $0.00 send, client matches) may carry more than one
+  action. The Services and Invoices empty states keep their two (owner, 2026-11-23).
+- The quote limit notice follows the owner's map (PLT-17): Nearly used warning, Limit reached
+  danger.

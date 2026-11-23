@@ -108,6 +108,7 @@ module StaffPages
       page :new_quote, "New quote", new_admin_quote_path, :form
       page :quote_builder, "Quote builder (draft)", edit_admin_quote_path(@draft), :form
       page :send_quote, "Send quote", new_admin_quote_send_path(@sent), :form
+      page :repriced_quote_builder, "Quote builder: moved location", edit_admin_quote_path(@repriced), :form # PLT-21: the reprice banner
       page :new_job, "New job", new_admin_job_path, :form
       page :edit_job, "Edit job", edit_admin_job_path(@job), :form
       page :new_visit, "Schedule a visit", new_admin_job_visit_path(@job), :form
@@ -115,6 +116,7 @@ module StaffPages
       page :new_invoice, "New invoice", new_admin_invoice_path, :form
       page :invoice_builder, "Invoice builder (draft)", edit_admin_invoice_path(@draft_invoice), :form
       page :send_invoice, "Send invoice", new_admin_invoice_send_path(@sent_invoice), :form
+      page :send_invoice_zero, "Send invoice: $0.00", new_admin_invoice_send_path(@zero_invoice), :form # PLT-21: the $0 decision banner
       page :new_payment, "Record a payment", new_admin_invoice_payment_path(@sent_invoice), :form
       page :new_service, "New service", new_admin_catalog_item_path, :form
       page :edit_service, "Edit service", edit_admin_catalog_item_path(@service), :form
@@ -254,6 +256,9 @@ module StaffPages
 
     def quotes
       @draft = quote("Draft hedges", send: false)
+      # Priced for the main location, then moved to North yard, which charges more for mowing.
+      LocationPrice.create!(location: @location, catalog_item: @service, unit_price: "55")
+      @repriced = quote("Mowing", send: false, price: "45", item: @service, location: business.primary_location).tap { _1.update!(location: @location) }
       @sent = quote("Spring cleanup")
       @changes = quote("Fall cleanup").tap { respond(_1, :request_changes, message: "Leave out the side yard.") }
       @declined = quote("Pond liner").tap { respond(_1, :decline, message: "Too much") }
@@ -288,6 +293,7 @@ module StaffPages
 
     def invoices
       @draft_invoice = Invoice.from_job!(job("Leaf removal"), by: user)
+      @zero_invoice = Invoice.from_job!(job("Free check", price: "0"), by: user)
       @sent_invoice = sent_invoice("Window cleaning")
       @part_paid_invoice = sent_invoice("Fence painting").tap { pay(_1, _1.total_cents / 2) }
       @payment = @part_paid_invoice.payments.first
@@ -308,10 +314,10 @@ module StaffPages
       ServiceRequest.create!(client:, source: "phone", created_by: user, description:)
     end
 
-    def quote(title, send: true)
-      Quote.start(client: @client, created_by: user).tap do |quote|
+    def quote(title, send: true, price: "240", item: nil, location: nil)
+      Quote.start(client: @client, created_by: user, location:).tap do |quote|
         quote.title = title
-        quote.sync_line_items([ { "key" => "a", "name" => title, "quantity" => "1", "unit_price" => "240", "taxable" => "0" } ])
+        quote.sync_line_items([ { "key" => "a", "name" => title, "quantity" => "1", "unit_price" => price, "taxable" => "0", "catalog_item" => item&.uid }.compact ])
         quote.save!
         quote.mark_sent!(by: user, channel: "link") if send
       end
@@ -322,9 +328,9 @@ module StaffPages
       quote.record_response!(action, link: quote.client_link!, version: quote.lock_version, **attributes)
     end
 
-    def job(title)
+    def job(title, price: "120")
       job = Job.new(client: @client, property: @client.primary_property, created_by: user, title:)
-      job.line_items.build(name: title, quantity: 1, unit: "visit", unit_price: "120")
+      job.line_items.build(name: title, quantity: 1, unit: "visit", unit_price: price)
       job.tap(&:save!)
     end
 

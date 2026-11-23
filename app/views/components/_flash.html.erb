@@ -11,7 +11,7 @@
     <% tone = flash_tone(key) %>
     <% with_undo = undo.is_a?(Hash) && tone == :success %>
     <div class="toast <%= "toast-danger" if tone == :danger %>" <%= tag.attributes(role: ("alert" if tone == :danger)) %> data-turbo-temporary
-         data-controller="dismiss<%= " announce" unless tone == :danger %>" data-dismiss-after-value="<%= tone == :danger || with_undo ? 0 : 6000 %>">
+         data-controller="dismiss<%= " announce" unless tone == :danger %>" data-dismiss-after-value="<%= tone == :danger || with_undo ? 0 : 10_000 %>">
       <%= icon tone %>
       <span data-announce-target="text"><%= message %></span>
       <% if with_undo %>

@@ -339,7 +339,7 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
     end
   end
 
-  # Built with two actions before PLT-21; which one stays is the owner's call (open question).
+  # Built with two actions before PLT-21, and kept as known exceptions (owner, 2026-11-23).
   TWO_ACTIONS = [ "No services yet", "No invoices yet" ].freeze
 
   check :empty_state_shape do |_page, html|
@@ -357,6 +357,9 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
   # result of an action is read through the page's polite region (data-controller="announce"),
   # so no banner is a live region of its own.
   BANNER_TONES = %w[banner-info banner-success banner-warning banner-danger].freeze
+  # Decision banners: each asks the reader to choose, so it may carry more than one action
+  # (owner, 2026-11-23). The sweep renders each one (StaffPages, and a test below for matches).
+  DECISION_BANNERS = %w[zero-total-warning location-reprice-offer client-matches-banner].freeze
 
   check :banners_follow_the_pattern, if: ->(page) { !page.ops? } do |_page, html|
     html.css(".banner").flat_map do |banner|
@@ -365,7 +368,7 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
       actions = banner.css("a, button, input[type=submit]").size
       [ ("#{text} has #{tones.size} tones" unless tones.one?),
         ("#{text} has #{banner.css("> svg").size} icons; a banner has one" unless banner.css("> svg").one?),
-        ("#{text} has #{actions} links or buttons; a banner has at most one" if actions > 1),
+        ("#{text} has #{actions} links or buttons; a banner has at most one" if actions > 1 && !DECISION_BANNERS.include?(banner["id"])),
         ("#{text} is role=alert but not an error (banner-danger)" if banner["role"] == "alert" && tones != [ "banner-danger" ]),
         ("#{text} is role=#{banner["role"]}; announce it through the polite region instead" if banner["role"].in?(%w[status log])) ].compact
     end
@@ -410,6 +413,23 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
     assert_equal 1, run.("<form class='grid lg:grid-cols-[1fr_24rem]'><div class='card'></div><aside></aside></form>").size
     assert_empty run.("<form class='form-split'><div class='card'><div class='grid sm:grid-cols-[8rem_1fr]'></div></div></form>")
     assert_not applies.call(StaffPages::Page.new(key: :demo, name: "Demo", path: "/", kind: :detail))
+  end
+
+  # PLT-21: the client-matches banner arrives by POST (emails and phones stay out of URLs), so
+  # it's rendered here, with each decision banner checked to appear in the sweep's states.
+  test "the decision banners render and pass the banner check" do
+    pages = StaffPages.build(@business, @owner)
+    { send_invoice_zero: "#zero-total-warning", repriced_quote_builder: "#location-reprice-offer" }.each do |key, selector|
+      get StaffPages.find(pages, key).path
+      assert_select selector, 1, "#{key} renders #{selector}"
+    end
+    post matches_admin_clients_path, params: { email: "maria-lopez@example.com" }, as: :turbo_stream
+    html = Nokogiri::HTML5(response.body.gsub(%r{</?(turbo-stream|template)[^>]*>}, ""))
+    assert html.at_css("#client-matches-banner"), "the matches banner renders"
+    applies, block = CHECKS.fetch(:banners_follow_the_pattern)
+    page = StaffPages::Page.new(key: :client_matches, name: "New client: matches", path: matches_admin_clients_path, kind: :form)
+    assert applies.call(page)
+    assert_empty instance_exec(page, html, &block)
   end
 
   test "every staff page passes the design-system checks" do

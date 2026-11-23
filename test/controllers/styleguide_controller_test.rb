@@ -47,7 +47,7 @@ class StyleguideControllerTest < ActionDispatch::IntegrationTest
   test "toasts: success through the polite region, errors as alerts that stay" do
     get styleguide_path(toast: 1)
     assert_select "#announcer[role=status][aria-live=polite]"
-    assert_select "#flash .toast:not([role])[data-controller='dismiss announce'][data-dismiss-after-value='6000']", /Quote sent/ do
+    assert_select "#flash .toast:not([role])[data-controller='dismiss announce'][data-dismiss-after-value='10000']", /Quote sent/ do
       assert_select "svg", 2
       assert_select "button[aria-label=Dismiss]"
     end

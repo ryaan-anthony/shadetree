@@ -5,7 +5,7 @@
   <% prices = document.location_price_changes %>
   <% taxes = document.location_tax_change %>
   <% what = [ ("prices" if prices.any?), ("taxes" if taxes) ].compact.join(" and ") %>
-  <div class="banner banner-info mt-3"><%= icon "tag" %>
+  <div class="banner banner-info mt-3" id="location-reprice-offer"><%= icon "tag" %>
     <div class="min-w-0 flex-1">
       <p>This <%= document.model_name.human.downcase %> was priced for <%= document.pricing_location.name %>. <%= document.location.name %> has different <%= what %>:</p>
       <ul class="mt-1 list-disc pl-5">

@@ -265,7 +265,7 @@
           <ul class="list-disc space-y-1 pl-5 text-sm2 text-body">
             <li>"Quote sent", "Couldn't save": something you just did. Flash messages render as toasts.</li>
             <li>Bottom centre, with an icon, the message and Dismiss.</li>
-            <li>Success fades after a few seconds (longer while pointed at or focused); errors stay until dismissed.</li>
+            <li>Success fades after 10 seconds, waiting while it is pointed at or focused or the tab is hidden; errors and Undo stay until dismissed.</li>
             <li>Errors are <code>role="alert"</code>; the others are read through the page's polite region.</li>
           </ul>
         <% end %>
