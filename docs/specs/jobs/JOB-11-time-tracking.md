@@ -73,8 +73,8 @@ work only: timesheets and payroll are out of scope.
 - Over the estimate, a business setting: cap at estimate (extra as a QTE-10 change order) or bill
   actual hours (owner, 2026-11-22). Capped work already done is offered to the client by a
   change order drafted automatically, and added to the job once approved (owner, 2026-11-22).
-- What the estimate is, and "bill actual" as a line of its own (coordinator; follows the
-  owner's model).
+- The estimate is the booked quantity plus the line's free quantity (owner, 2026-11-22).
+  "Bill actual" as a line of its own (coordinator; follows the owner's model).
 - Several hourly lines: the timer asks once per visit (default the first with hours left),
   changeable on the entry. One running timer per person; starting one stops the other;
   overlapping typed entries are allowed with a warning (owner, 2026-11-22).

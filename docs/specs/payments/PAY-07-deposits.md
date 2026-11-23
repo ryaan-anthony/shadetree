@@ -24,7 +24,7 @@ used up, so the client never pays twice and always sees how much of the deposit 
 
 - [ ] **Take a deposit** on an approved quote makes a deposit invoice for a fixed amount or a
       percent of the quote's total, at most still expected (QTE-09) less deposits not yet
-      applied; for a series, still expected is the occurrences left, or the next 12 with no end
+      applied; for a series, still expected is the occurrences left, or the first one with no end
       (JOB-10). It has one untaxed
       line ("Deposit for Q-0004"), is sent and paid like any invoice (PAY-02, PAY-04, PAY-05),
       and is marked as a deposit on staff and client pages. A quote can have several.
@@ -65,7 +65,8 @@ used up, so the client never pays twice and always sees how much of the deposit 
   (owner, 2026-11-22).
 - Only what's been paid of a deposit is credited; an unpaid deposit stays owed on its own
   (owner, 2026-11-22).
-- The cap (coordinator; follows the owner's model).
+- The cap is still expected less deposits not yet applied; for a recurring quote with no end
+  date it counts the first occurrence only (owner, 2026-11-22).
 - With several, the oldest deposit is applied first. Asking for a deposit at approval is a later
   spec, with online payment required (owner, 2026-11-22).
 - A refund after a deposit was applied is taken back on the next work invoice, shown as

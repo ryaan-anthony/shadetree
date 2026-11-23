@@ -36,7 +36,7 @@ replaces "an approved quote can't be revised" for work in progress (QTE-06).
 - [ ] **Overrun work already done** (more done than quoted, JOB-09; capped hours, JOB-11): when
       it's logged, a change order for the extra is drafted for the office to send. Once the
       client approves, the extra is added as done work to the job that did it if that job is
-      still unbilled; otherwise the quote's next Create invoice bills it directly (PAY-06).
+      still unbilled; otherwise it's billed on its own invoice, linked to that job (PAY-06).
       Declined, nothing is billed for it.
 - [ ] Applying a change takes the quote's lock, then its open jobs' by id, then the lines. Lines
       keep their identity, so claims, jobs and bills stay with them; an added line becomes to do.
@@ -67,8 +67,8 @@ replaces "an approved quote can't be revised" for work in progress (QTE-06).
   reductions apply straight away. This replaces "judged by total" (owner, 2026-11-22).
 - Overrun work already done: the office's change order is drafted automatically when it's
   logged; once approved, the extra is added to the job that did it, as done work, if that job is
-  still unbilled (owner, 2026-11-22). Billing it directly when that job was billed meanwhile
-  (coordinator; follows the owner's model).
+  still unbilled. If that job has already been invoiced, the extra is billed on its own
+  invoice, linked to that job (owner, 2026-11-22).
 - This replaces QTE-06's "approved quotes can't be revised" for work in progress; the tech can
   instead draft a new quote for the rest (owner, 2026-11-22).
 - A change order doesn't count toward plan usage (BIL-02), and is valid for the quote's usual
