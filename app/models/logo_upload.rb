@@ -2,7 +2,8 @@
 # JPEG or WebP image (checked by decoding, not by name or claimed type), no larger than
 # MAX_BYTES or MAX_SIDE pixels a side (read from the header before anything is decoded),
 # and it's re-encoded with all metadata (EXIF, GPS) stripped, so the stored original is
-# clean too. Only real file uploads are accepted, never a signed blob id.
+# clean too. The EXIF orientation is applied to the pixels first (phones store portrait photos
+# sideways and tag them), so dropping the tag doesn't leave the photo sideways. Only real file uploads are accepted, never a signed blob id.
 class LogoUpload
   MAX_BYTES = 5.megabytes
   MAX_SIDE = 4_000
@@ -37,7 +38,7 @@ class LogoUpload
     return failure("must be at most #{max_side} × #{max_side} pixels") if image.width > max_side || image.height > max_side
     return failure("must be at least #{min_side} pixels on each side") if image.width < min_side || image.height < min_side
 
-    clean = without_metadata(image).write_to_buffer(extension, strip: true, **options)
+    clean = without_metadata(image.autorot).write_to_buffer(extension, strip: true, **options)
     name = "#{File.basename(filename.to_s, ".*").presence || "logo"}#{extension}"
     Result.new(attachable: { io: StringIO.new(clean), filename: name, content_type: }, error: nil)
   rescue Vips::Error
