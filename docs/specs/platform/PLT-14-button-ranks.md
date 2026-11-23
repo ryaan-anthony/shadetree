@@ -88,8 +88,7 @@ design-system checks run over. Triage: [#314 triage](../../audits/314-triage.md)
   - an approved quote with no job → **Create job** (today's button);
   - a job but no invoice → **Create invoice**;
   - otherwise no Primary. "Revise" on a quote with changes requested stays Secondary.
-  - The earlier Draft case is dropped, because drafts open in the builder. #292's "Invoice
-    INV-0001" link stays, as Secondary.
+  - The Draft case is dropped (drafts open in the builder); #292's invoice link stays Secondary.
   - an approved quote whose job was cancelled → **Reopen job**, which reopens it and opens
     its page: interim until the multi-job spec (owner, 2026-11-22).
 - An open job with nothing booked has **Schedule visit** as its Primary; once a visit is
