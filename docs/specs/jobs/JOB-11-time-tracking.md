@@ -23,8 +23,8 @@ work only: timesheets and payroll are out of scope.
 
 ## Acceptance criteria
 
-- [ ] On a scheduled visit, each assigned member can start and stop their own timer (question 9
-      for visit Start/Complete), and several can run on one visit or job. Time is only ever on a
+- [ ] On a scheduled visit, each assigned member can start and stop their own timer (visit Start
+      and Complete: Decisions), and several can run on one visit or job. Time is only ever on a
       visit or the job it belongs to.
 - [ ] Each entry keeps who, when it started and stopped, the visit and job, and its rounded
       length. Rounding is a business setting (1, 5, 6, 10, 15 or 30 minutes,
@@ -34,8 +34,8 @@ work only: timesheets and payroll are out of scope.
 - [ ] On an hourly quote line (unit "hour"), each technician's rounded hours on a visit are their
       done quantity in JOB-09's log for that visit, fractions allowed (estimated 5, tracked 3.75,
       billed 3.75 × the rate). Editing an entry before invoicing updates it, with history: this
-      is the one exception to JOB-09's "entries can't change once completed". The line with the
-      time is question 1.
+      is the one exception to JOB-09's "entries can't change once completed". The line it goes to:
+      Decisions.
 - [ ] Over the estimate, a business setting decides: **Cap at estimate** (the done quantity stops
       at the estimate and the extra hours become a QTE-10 change order for the client) or **Bill
       actual hours** (the extra hours bill at the line's rate as a line of their own on the job,
@@ -43,7 +43,8 @@ work only: timesheets and payroll are out of scope.
 - [ ] Entries on invoiced work are locked: once a final bill (PAY-06) covers the hourly line, its
       entries can't change, for anyone; voiding the invoice unlocks them.
 - [ ] My day shows the running timer and the visit's tracked time; technicians see hours, not
-      money (JOB-04). The office's view of a job's time is question 7.
+      money (JOB-04). The job page shows the office hours per visit
+      and person, with each entry's history.
 - [ ] Office access sees and edits everyone's time; a member sees only their own. Another
       business's entries are not found (tested). Timers and the entry form work at 360 px.
 - [ ] Tests: start and stop, several timers on a visit, manual entries, each rounding interval
@@ -69,6 +70,18 @@ work only: timesheets and payroll are out of scope.
   fractions are allowed (owner, 2026-11-22).
 - Over the estimate, a business setting: cap at estimate (extra as a QTE-10 change order) or bill
   actual hours (owner, 2026-11-22).
+- Several hourly lines: the timer asks once per visit (default the first with hours left),
+  changeable on the entry. One running timer per person; starting one stops the other;
+  overlapping typed entries are allowed with a warning (owner, 2026-11-22).
+- A timer left running gets a reminder at the end of business hours and stops at 12 hours,
+  marked "Check this time". Started offline, it keeps the phone's start time (up to 24 hours
+  back), marked "recorded offline". Stored in UTC, shown in the visit's location zone (owner, 2026-11-22).
+- Clients see hours only as the hourly line's quantity on the invoice, with no per-person
+  times. The office sees a job's time on the job page (owner, 2026-11-22).
+- The settings are in Settings → Jobs, changed by Owners, Admins and ACC-07 roles that manage
+  settings, for entries saved afterwards. Starting a visit offers to start your timer (ticked);
+  completing it stops it; teammates start their own
+  (owner, 2026-11-22).
 
 ## Implementation notes
 
@@ -76,23 +89,3 @@ work only: timesheets and payroll are out of scope.
   timer or typed) and `time_entry_changes` (who, when, previous values). A visit's hourly entries
   feed JOB-09's `work_entries` (source: time), so billing reads one ledger; quantities are already
   decimal(12,4). Entries change under the job's row lock, and the invoice lock is PAY-06's.
-
-## Open questions
-
-1. A job with several hourly lines: where does time go? Recommend the timer asks once per visit
-   (default: the first hourly line with hours left), changeable on the entry.
-2. A timer never stopped? Recommend a reminder at the end of business hours, and an auto-stop at
-   12 hours marked "Check this time" for the member and the office.
-3. Overlapping entries? Recommend one running timer per person (starting one stops the other);
-   overlapping typed entries are allowed with a warning, as visit conflicts are (06-jobs D3).
-4. Started offline on a phone? Recommend keeping the phone's start time when it reconnects (up to
-   24 hours back), marked "recorded offline".
-5. Time zones? Recommend UTC stored, shown in the visit's location zone (CAT-07, PLT-08).
-6. Does the client see hours worked? Recommend yes as the hourly line's quantity on the invoice,
-   with no per-person times.
-7. A simple per-job time view for the office? Recommend yes, on the job page: hours per visit
-   and person, with each entry's history.
-8. Where are the settings, and who changes them? Recommend Settings → Jobs, Owners and Admins (and
-   ACC-07 roles that manage settings); changes apply to entries saved afterwards.
-9. Does starting a visit (JOB-04) start the timer? Recommend Start offers to start yours (ticked),
-   Complete stops it; teammates start their own.

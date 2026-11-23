@@ -32,7 +32,7 @@ work back. Billing: PAY-06, PAY-08; the client's view: QTE-09; changes: QTE-10; 
       over cent. Jobs carry no fixed quote discount (PAY-08 shares it); a percent one is copied.
 - [ ] Anyone assigned to one of the job's visits logs the work from that visit (My day, JOB-04):
       quantities done per line (hourly lines from tracked time, JOB-11), lines added on site
-      (question 2), notes and photos. Each entry
+      (priced as Decisions say), notes and photos. Each entry
       keeps who, which visit and when; the job page shows them per line ("Marcus 4, Riley 2").
       Two people logging at once never overwrite each other (Implementation notes).
 - [ ] Completing the job stays with office access and a visit with its assignees, as now. It
@@ -69,6 +69,10 @@ work back. Billing: PAY-06, PAY-08; the client's view: QTE-09; changes: QTE-10; 
 - More done than the quote's quantity: the job completes with the quoted quantity, and a change
   order (QTE-10) for the extra bills once approved (owner, 2026-11-22).
 - Several technicians can be assigned to a job, and each can log the work (owner, 2026-11-22).
+- Each technician corrects only their own entries (quantities while the job is open, as a new
+  entry); the office corrects anyone's (owner, 2026-11-22).
+- A line added on site is a catalog service at its price, or an unpriced custom line the office
+  prices before invoicing; price visibility stays as JOB-04 (owner, 2026-11-22).
 
 ## Implementation notes
 
@@ -90,10 +94,3 @@ work back. Billing: PAY-06, PAY-08; the client's view: QTE-09; changes: QTE-10; 
 - Claims are kept with the PLT-11 flag on or off; it can't be turned on before PAY-06 ships.
 - Export (new columns at the end): job lines get their quote line and claim, quote lines what's
   claimed, done and not going ahead; a work log table has one row per entry.
-
-## Open questions
-
-1. Can one technician correct another's entry? Recommend no, matching JOB-11's time rule: each
-   corrects their own (quantities while the job is open, as a new entry); the office, anyone's.
-2. Lines a technician adds on site: priced how? Recommend a catalog service at its price, or an
-   unpriced custom line the office prices before invoicing; price visibility stays as JOB-04.
