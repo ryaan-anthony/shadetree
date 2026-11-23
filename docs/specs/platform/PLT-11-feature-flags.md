@@ -24,15 +24,26 @@ in parallel without long-lived branches.
 
 ## Acceptance criteria
 
-- [ ] Flags can be checked anywhere (views, controllers, jobs, emails) for the current business.
-- [ ] A flag can be: off for all, on for all, on for a list of businesses, or on for a
+- [x] Flags can be checked anywhere (views, controllers, jobs, emails) for the current business.
+- [x] A flag can be: off for all, on for all, on for a list of businesses, or on for a
       percentage of businesses (deterministic per business).
-- [ ] Flags can be changed at runtime without a deploy by the maintainer (console/command or a
+- [x] Flags can be changed at runtime without a deploy by the maintainer (console/command or a
       minimal admin screen; the operator console UI arrives later in OPS-04).
-- [ ] Undefined flags default to off and are reported in development.
-- [ ] Tests can set flag state explicitly and reset between tests.
-- [ ] The contributor guide explains when to use a flag and how to remove it once a feature is
+- [x] Undefined flags default to off and are reported in development.
+- [x] Tests can set flag state explicitly and reset between tests.
+- [x] The contributor guide explains when to use a flag and how to remove it once a feature is
       fully launched (flags have an owner and an expected removal milestone).
+
+## Implementation notes
+
+- In-house `Feature` module on a `feature_flags` table with a 30-second cache (ADR 0015).
+  `Feature.enabled?(name, business:)` works in jobs and mailers, and `feature?` in views and
+  controllers.
+- Flags are declared in `config/feature_flags.yml` with an owner and a removal milestone; an
+  undeclared flag is off and reported in development.
+- Runtime changes: `bin/rails flags:*` and the operator console's Flags page (OPS-04).
+- Tests use `with_feature` / `enable_feature` (test/support/feature_flag_helpers.rb).
+- CONTRIBUTING.md "Feature flags" covers when to add one and how to remove it.
 
 ## Out of scope
 
