@@ -45,6 +45,19 @@ class Users::EndedSessionPublicPagesTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "the request form shows, and a message can be sent from the contact page" do
+    @business.update!(handle: "oakline")
+    phone = ended_browser
+    phone.get public_request_path("oakline"), headers: { "User-Agent" => PHONE }
+    assert_equal 200, phone.response.status
+    assert_not @phone_session.reload.active?
+
+    phone = ended_browser
+    phone.get contact_path, headers: { "User-Agent" => PHONE }
+    assert_equal 200, phone.response.status
+    assert_nil phone.flash[:alert]
+  end
+
   test "staff and account pages still send the browser to sign in with the note" do
     [ admin_root_path, edit_user_registration_path ].each do |path|
       phone = ended_browser

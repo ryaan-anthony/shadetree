@@ -29,7 +29,10 @@ Rails.application.config.after_initialize do
       session.seen!(request_for.(auth))
     else
       auth.logout(:user)
-      throw :warden, scope: :user, message: :session_ended unless auth.env["action_controller.instance"].try(:public_page?)
+      # Public pages (client links, the request form, marketing) still show, signed out (#317).
+      next if request_for.(auth).controller_instance.try(:public_page?)
+
+      throw :warden, scope: :user, message: :session_ended
     end
   end
 
