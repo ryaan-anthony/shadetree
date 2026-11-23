@@ -19,7 +19,7 @@
             <%= link_to "Home", ops_root_path, class: "hover:underline", "aria-current": ("page" if controller_name == "dashboard") %>
             <%= link_to "Businesses", ops_businesses_path, class: "hover:underline", "aria-current": ("page" if controller_name == "businesses") %>
             <% waiting_on_us = Tenancy.across_businesses(reason: "operator support inbox count (OPS-05)") { SupportTicket.where(status: "open").count } %>
-            <%= link_to ops_tickets_path, class: "hover:underline", "aria-current": ("page" if controller_name == "tickets"), id: "nav-support" do %>Support<% if waiting_on_us.positive? %> <span class="rounded-full bg-white/20 px-1.5 text-xs" aria-label="<%= waiting_on_us %> open"><%= waiting_on_us %></span><% end %><% end %>
+            <%= link_to ops_tickets_path, class: "hover:underline", "aria-current": ("page" if controller_name == "tickets"), id: "nav-support" do %>Support<% if waiting_on_us.positive? %> <span class="rounded-full bg-white/20 px-1.5 text-sm2" aria-label="<%= waiting_on_us %> open"><%= waiting_on_us %></span><% end %><% end %>
             <%= link_to "People", ops_users_path, class: "hover:underline", "aria-current": ("page" if controller_name == "users") %>
             <%= link_to "Plans", ops_plans_path, class: "hover:underline", "aria-current": ("page" if controller_name == "plans") %>
             <%= link_to "Presets", ops_presets_path, class: "hover:underline", "aria-current": ("page" if controller_name == "presets") %>
@@ -41,7 +41,7 @@
       <% end %>
       <%= yield %>
     </main>
-    <footer class="mx-auto max-w-6xl border-t border-line px-4 py-4 text-xs text-muted">
+    <footer class="mx-auto max-w-6xl border-t border-line px-4 py-4 text-sm2 text-muted">
       <p>Shadetree operator console · <%= link_to "Terms", terms_path, class: "underline-offset-2 hover:underline" %> · <%= link_to "Privacy", privacy_path, class: "underline-offset-2 hover:underline" %> · <%= link_to "Legal", legal_path, class: "underline-offset-2 hover:underline" %></p>
     </footer>
   </body>

@@ -39,7 +39,7 @@
         <% end %>
       </div>
     <% else %>
-      <%= button_to done_admin_my_request_path(request_record), method: :patch, class: "#{button_classes(:primary)} h-auto min-h-14 w-full justify-center text-base",
+      <%= button_to done_admin_my_request_path(request_record), method: :patch, class: "#{button_classes(:primary, :lg)} h-auto min-h-14 w-full justify-center",
                     form: { data: { turbo_confirm: "Mark this #{follow_up.kind_label.downcase} done?", turbo_confirm_button: "Mark done" } } do %><%= icon "check" %> Mark <%= follow_up.kind_label.downcase %> done<% end %>
     <% end %>
     <% if can?(:office) %>

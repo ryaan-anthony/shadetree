@@ -173,7 +173,7 @@
       <%# PAY-01: what's owed on invoices that are out (sent or partly paid), per currency. %>
       <% owed = @client.invoices.where(status: Invoice::OUTSTANDING).group(:currency).sum(Arel.sql("total_cents - amount_paid_cents")).transform_values(&:to_i).reject { |_, cents| cents <= 0 } %>
       <% if owed.any? %>
-        <p class="money text-lg font-semibold text-ink"><%= safe_join(owed.map { |currency, cents| money(Money.new(cents, currency)) }, " + ") %></p>
+        <p class="money figure text-ink"><%= safe_join(owed.map { |currency, cents| money(Money.new(cents, currency)) }, " + ") %></p>
         <p class="text-sm2 text-muted">Owed on invoices that are out.</p>
       <% else %>
         <p class="text-sm text-muted">Nothing owed.</p>

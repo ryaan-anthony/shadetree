@@ -13,10 +13,10 @@
   <div id="visit-action">
     <% case visit.status %>
     <% when "scheduled" %>
-      <%= button_to start_admin_my_visit_path(visit), method: :patch, class: "#{button_classes(:primary)} h-auto min-h-14 w-full justify-center text-base",
+      <%= button_to start_admin_my_visit_path(visit), method: :patch, class: "#{button_classes(:primary, :lg)} h-auto min-h-14 w-full justify-center",
                     form: { data: ({ turbo_confirm: "This visit is on #{visit.scheduled_on.strftime("%A, %b %-d")}, not today. Start it anyway?", turbo_confirm_button: "Start visit" } unless visit.scheduled_on == current_business.today) } do %><%= icon "play" %> Start visit<% end %>
     <% when "in_progress" %>
-      <%= button_to complete_admin_my_visit_path(visit), method: :patch, class: "#{button_classes(:primary)} h-auto min-h-14 w-full justify-center text-base",
+      <%= button_to complete_admin_my_visit_path(visit), method: :patch, class: "#{button_classes(:primary, :lg)} h-auto min-h-14 w-full justify-center",
                     form: { data: { turbo_confirm: "Mark this visit completed?", turbo_confirm_button: "Complete visit" } } do %><%= icon "check" %> Complete visit<% end %>
       <p class="mt-2 text-center text-sm2 text-muted">Started at <%= visit.started_at.in_time_zone(current_business.time_zone).strftime("%-l:%M %p").downcase %></p>
     <% when "completed" %>

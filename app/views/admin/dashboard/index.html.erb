@@ -20,13 +20,13 @@
   <section class="mb-4" aria-labelledby="month-summary-h">
     <h2 id="month-summary-h" class="sr-only">How this <%= dashboard.entitlements.period.billing_cycle? ? "billing period" : "month" %> is going</h2>
     <dl class="grid grid-cols-1 gap-3 sm:grid-cols-3" id="month-summary">
-      <div class="card card-body py-3"><dt class="text-sm2 text-muted">Quotes sent<%= " this #{dashboard.entitlements.period.billing_cycle? ? "billing period" : "month"}" unless dashboard.quote_limit %></dt><dd class="mt-1 text-lg font-semibold text-ink" id="quotes-sent-usage"><%= dashboard.quotes_sent_this_period %></dd>
+      <div class="card card-body py-3"><dt class="text-sm2 text-muted">Quotes sent<%= " this #{dashboard.entitlements.period.billing_cycle? ? "billing period" : "month"}" unless dashboard.quote_limit %></dt><dd class="figure mt-1 text-ink" id="quotes-sent-usage"><%= dashboard.quotes_sent_this_period %></dd>
         <% if (allowance = quote_allowance(dashboard.entitlements, used: dashboard.quotes_sent_this_period, count: false)) %><%# #289: what the limit is, in words %>
           <dd class="text-sm2 text-muted" id="quotes-sent-allowance"><%= allowance %> · resets <%= local_date(dashboard.entitlements.period.resets_on) %></dd>
         <% end %></div>
-      <div class="card card-body py-3"><dt class="text-sm2 text-muted">Approval rate</dt><dd class="mt-1 text-lg font-semibold text-ink"><%= dashboard.approval_rate ? "#{dashboard.approval_rate}%" : "–" %></dd></div>
+      <div class="card card-body py-3"><dt class="text-sm2 text-muted">Approval rate</dt><dd class="figure mt-1 text-ink"><%= dashboard.approval_rate ? "#{dashboard.approval_rate}%" : "–" %></dd></div>
       <div class="card card-body min-w-0 py-3"><dt class="text-sm2 text-muted">Payments received</dt>
-        <dd class="money mt-1 break-words text-lg font-semibold text-ink"><%= dashboard.payments_this_month.any? ? safe_join(dashboard.payments_this_month.map { money(_1) }, tag.br) : money(Money.zero(current_business.currency_code)) %></dd></div>
+        <dd class="money figure mt-1 break-words text-ink"><%= dashboard.payments_this_month.any? ? safe_join(dashboard.payments_this_month.map { money(_1) }, tag.br) : money(Money.zero(current_business.currency_code)) %></dd></div>
     </dl>
   </section>
 <% end %>

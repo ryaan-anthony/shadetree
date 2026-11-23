@@ -26,23 +26,23 @@
   </div>
   <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-[5.5rem_6rem_8rem_minmax(0,1fr)_7rem] sm:items-end">
     <div>
-      <label class="label text-xs" for="line-qty-<%= line.key %>">Qty</label>
+      <label class="label" for="line-qty-<%= line.key %>">Qty</label>
       <input type="text" inputmode="decimal" id="line-qty-<%= line.key %>" name="<%= base %>[quantity]" data-field="quantity"
              value="<%= line.quantity_for_form %>" class="input text-right tabular" aria-invalid="<%= line.errors[:quantity].any? %>">
     </div>
     <div>
-      <label class="label text-xs" for="line-unit-<%= line.key %>">Unit</label>
+      <label class="label" for="line-unit-<%= line.key %>">Unit</label>
       <input type="text" id="line-unit-<%= line.key %>" name="<%= base %>[unit]" data-field="unit" value="<%= line.unit %>" maxlength="20" class="input" placeholder="each">
     </div>
     <div>
-      <label class="label text-xs" for="line-price-<%= line.key %>">Price</label>
+      <label class="label" for="line-price-<%= line.key %>">Price</label>
       <input type="text" inputmode="decimal" id="line-price-<%= line.key %>" name="<%= base %>[unit_price]" data-field="unit_price"
              value="<%= line.unit_price_before_type_cast unless line.new_record? && line.unit_price_cents&.zero? %>" class="input text-right tabular" placeholder="0.00"
              aria-invalid="<%= line.errors[:unit_price].any? %>">
     </div>
     <div class="col-span-2 flex items-end gap-2 sm:col-span-1">
       <div class="w-24 shrink-0">
-        <label class="label text-xs" for="line-discount-kind-<%= line.key %>">Discount</label>
+        <label class="label" for="line-discount-kind-<%= line.key %>">Discount</label>
         <select id="line-discount-kind-<%= line.key %>" name="<%= base %>[discount_kind]" data-field="discount_kind" class="select">
           <%= options_for_select([ [ "None", "" ], [ "%", "percent" ], [ "Amount", "amount" ] ], line.discount_kind.to_s) %>
         </select>

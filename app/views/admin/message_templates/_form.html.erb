@@ -22,7 +22,7 @@
         <ul class="space-y-1.5">
           <% template.placeholders.each do |name| %>
             <li class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm2">
-              <button type="button" class="rounded-control border border-line bg-sunken px-2 py-1 font-mono text-xs text-ink hover:border-control disabled:opacity-50"
+              <button type="button" class="rounded-control border border-line bg-sunken px-2 py-1 font-mono text-sm2 text-ink hover:border-control disabled:opacity-50"
                       data-action="template-editor#insert" data-placeholder="<%= name %>" aria-label="Add {{<%= name %>}}: <%= MessageTemplate::PLACEHOLDERS.fetch(name) %>"
                       <%= "disabled" unless editable %>>{{<%= name %>}}</button>
               <span class="text-muted"><%= MessageTemplate::PLACEHOLDERS.fetch(name) %></span>

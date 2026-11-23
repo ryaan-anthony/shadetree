@@ -161,14 +161,14 @@
                 <span class="cal-dot cal-<%= s.color_for(column.member) %>" aria-hidden="true"></span><span class="truncate"><%= column.member.full_name %></span>
               <% end %>
             <% else %>
-              <%= link_to admin_schedule_path(schedule_link_params(s, view: "day", date: date.iso8601)), class: "hover:underline" do %><%= date.strftime("%a") %> <span class="text-base font-semibold text-ink"><%= date.day %></span><% end %>
-              <% s.closures_on(date).each do |closure| %><span class="block truncate text-xs text-muted" title="<%= closure.reason %>">Closed: <%= closure.reason %></span><% end %>
+              <%= link_to admin_schedule_path(schedule_link_params(s, view: "day", date: date.iso8601)), class: "hover:underline" do %><%= date.strftime("%a") %> <span class="figure text-ink"><%= date.day %></span><% end %>
+              <% s.closures_on(date).each do |closure| %><span class="block truncate text-sm2 text-muted" title="<%= closure.reason %>">Closed: <%= closure.reason %></span><% end %>
             <% end %>
           </div>
         <% end %>
       </div>
       <div class="cal-grid border-b border-line bg-sunken/40 <%= "cal-wide" if s.columns.size > 7 %>">
-        <div class="py-1.5 pr-2 text-right text-xs text-muted">Anytime</div><%# QA #274: muted, 4.58:1 on this row (faint was 2.47:1) %>
+        <div class="py-1.5 pr-2 text-right text-sm2 text-muted">Anytime</div><%# QA #274: muted, 4.58:1 on this row (faint was 2.47:1) %>
         <% s.columns.each do |column| %>
           <% date = column.date %>
           <div class="min-h-9 min-w-0 space-y-1 border-l border-line-2 p-1" role="group" aria-label="Anytime, <%= schedule_column_label(column) %>"

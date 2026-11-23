@@ -19,6 +19,6 @@
     <% label = live ? (option == plan ? "Switch to #{interval}" : "Switch to #{option.name}") : "Choose #{option.name}" %>
     <%= button_to label, admin_billing_checkout_path, params: { plan: option.key, interval: }, form: { data: { turbo: false } },
                   class: button_classes(live || option.position < plan.position ? :secondary : :primary, :sm) %>
-    <span class="mt-1 block text-xs text-muted"><%= money(Money.new(option.price_cents(interval), option.currency)) %> <%= interval == "yearly" ? "a year" : "a month" %></span>
+    <span class="mt-1 block text-sm2 text-muted"><%= money(Money.new(option.price_cents(interval), option.currency)) %> <%= interval == "yearly" ? "a year" : "a month" %></span>
   <% end %>
 </div>

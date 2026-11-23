@@ -90,6 +90,7 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
   DATE = /\b#{MONTH} \d{1,2}, \d{4}\b|\b\d{1,2}\/\d{1,2}\/\d{2,4}\b|\b\d{1,2}:\d{2}\s?(?:AM|PM)\b/i
   # The steps a heading may use (the style guide's Type section): each kit title class is one.
   STEPS = %w[page-title section-title card-title empty-title modal-title tour-title table-head text-sm2].freeze
+  OFF_SIZE = /\A(?:[a-z-]+:)*text-(?:xs|base|lg|[2-9]?xl|\[[\d.]+(?:rem|px|em)\])\z/
   OFF_SCALE = /\A(?:text-(?:xs|sm|base|lg|[2-9]?xl|\[.+\])|font-(?:medium|semibold|bold|extrabold|black))\z/
   # The client's own document, embedded as clients see it, keeps the client pages' type (out of scope).
   def headings(html, levels = "h1, h2, h3, h4, h5, h6") = html.css(levels).reject { _1.ancestors(".quote-doc").any? }
@@ -139,6 +140,15 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
 
       "#{h.name} #{h.text.squish.truncate(40).inspect} is #{h["class"].inspect}, not one step of the type scale"
     end
+  end
+
+  # Owner, 2026-11-23: text off the headings too uses only the scale's steps (body text-sm, small
+  # text-sm2, .figure for a stat's number, and the kit's classes), so any other size utility fails.
+  check :text_on_the_type_scale do |_page, html|
+    html.css("[class]").reject { _1.ancestors(".quote-doc").any? }.filter_map do |node|
+      off = classes(node).grep(OFF_SIZE)
+      "#{node.name} #{node.text.squish.truncate(40).inspect} has #{off.join(" ")}, off the type scale" if off.any?
+    end.uniq
   end
 
   check :heading_levels_in_order do |_page, html|

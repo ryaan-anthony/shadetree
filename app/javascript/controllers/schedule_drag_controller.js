@@ -53,7 +53,7 @@ export default class extends Controller {
       if (Math.hypot(dx, dy) < THRESHOLD_PX) return
       drag.moving = true
       drag.element.classList.add("cal-dragging")
-      drag.badge = Object.assign(document.createElement("span"), { className: "absolute right-1 top-0.5 rounded bg-ink px-1 text-xs text-white" })
+      drag.badge = Object.assign(document.createElement("span"), { className: "absolute right-1 top-0.5 rounded bg-ink px-1 text-sm2 text-white" })
       drag.element.append(drag.badge)
     }
     event.preventDefault()

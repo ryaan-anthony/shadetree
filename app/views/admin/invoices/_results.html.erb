@@ -36,7 +36,7 @@
             <%= link_to staff_invoice_path(invoice), class: "block min-w-0 flex-1 px-4 py-3", data: { turbo_frame: "_top" } do %>
               <span class="flex items-baseline justify-between gap-3">
                 <span class="min-w-0 truncate font-semibold text-ink"><%= invoice.client.display_name %></span>
-                <span class="text-right text-sm"><span class="money font-semibold text-ink"><%= money(invoice.outstanding? ? invoice.balance : invoice.total) %></span><span class="block text-xs text-muted"><%= invoice.outstanding? ? "due" : "total" %></span></span>
+                <span class="text-right text-sm"><span class="money font-semibold text-ink"><%= money(invoice.outstanding? ? invoice.balance : invoice.total) %></span><span class="block text-sm2 text-muted"><%= invoice.outstanding? ? "due" : "total" %></span></span>
               </span>
               <span class="mt-0.5 block truncate text-sm2 text-muted"><%= invoice.number %><%= " · #{invoice.title}" if invoice.title %><%= location_badge(invoice) %></span>
               <span class="mt-1.5 flex flex-wrap items-center gap-1.5 text-sm2 text-muted"><%= invoice_status_badge(invoice) %><%= badge "Email not delivered", tone: :danger if invoice.undelivered_email %>

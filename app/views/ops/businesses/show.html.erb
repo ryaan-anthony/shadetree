@@ -108,7 +108,7 @@
   <%= card title: "Activity", id: "counts" do %>
     <dl class="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
       <% Ops::BusinessSummary::COUNTS.each do |key, label| %>
-        <div id="count-<%= key %>"><dt class="text-subtle"><%= label %></dt><dd class="tabular text-lg font-semibold text-ink"><%= @summary.counts.fetch(key) %></dd></div>
+        <div id="count-<%= key %>"><dt class="text-subtle"><%= label %></dt><dd class="tabular figure text-ink"><%= @summary.counts.fetch(key) %></dd></div>
       <% end %>
     </dl>
   <% end %>
