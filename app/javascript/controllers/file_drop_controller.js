@@ -31,8 +31,9 @@ export default class extends Controller {
   }
 
   // On the window: a file dropped beside the zone would open in the tab and lose the form.
+  // Leaves alone any drop area's own events (another one on the page sets its own dropEffect).
   guard(event) {
-    if (!this.carriesFiles(event) || this.zoneTarget.contains(event.target)) return
+    if (event.defaultPrevented || event.target.closest?.(".file-drop-zone") || !this.carriesFiles(event)) return
     event.preventDefault()
     event.dataTransfer.dropEffect = "none"
   }

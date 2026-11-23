@@ -85,4 +85,26 @@ class StaffShellTest < ApplicationSystemTestCase
     find(".biz-switch").click
     assert_text "Switch business"
   end
+
+  # PLT-22: two drop areas on one page; a drop on either is that one's, and each one's
+  # page-level guard (against a near miss opening the file) leaves the other alone.
+  test "with two drop areas, each takes the files dropped on it" do
+    visit styleguide_path(anchor: "forms")
+    dropped = evaluate_script(<<~JS)
+      (() => {
+        const transfer = new DataTransfer()
+        transfer.items.add(new File([new Uint8Array(10)], "site.png", { type: "image/png" }))
+        let effect = "none" // a script's DataTransfer ignores dropEffect, so record what's set
+        Object.defineProperty(transfer, "dropEffect", { get: () => effect, set: (value) => { effect = value } })
+        const zone = document.querySelectorAll(".file-drop-zone")[1]
+        const events = ["dragenter", "dragover", "drop"].map((kind) => new DragEvent(kind, { bubbles: true, cancelable: true, dataTransfer: transfer }))
+        events.forEach((event) => zone.dispatchEvent(event))
+        return events[1].dataTransfer.dropEffect
+      })()
+    JS
+    assert_equal "copy", dropped
+    drop_areas = all(".file-drop", count: 2)
+    within(drop_areas[1]) { assert_selector ".file-drop-chosen", text: "site.png" }
+    within(drop_areas[0]) { assert_no_selector ".file-drop-chosen" }
+  end
 end

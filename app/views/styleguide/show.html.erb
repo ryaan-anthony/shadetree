@@ -124,6 +124,9 @@
             <%= f.field :name, label: "Client name" %>
             <%= f.field :email, as: :email %>
             <%= f.field :notes, as: :text, label: "Disabled", optional: true, disabled: true, value: "Not editable" %>
+            <%# A second drop area on the page: each takes only its own drops (PLT-22). %>
+            <%= f.file_drop :photo, label: "Site photo", prompt: "Drop a photo here", types: Business::LOGO_TYPES,
+                            types_label: "PNG, JPEG or WebP", max_bytes: 20.megabytes, type_error: LogoUpload::TYPE_ERROR %>
             <div class="mt-4 flex justify-end gap-2">
               <button type="button" class="<%= button_classes(:tertiary) %>">Cancel</button>
               <%= f.submit_button "Save client" %>

@@ -69,10 +69,12 @@ class ShadetreeFormBuilder < ActionView::Helpers::FormBuilder
     errors = error_messages(method)
     size = @template.number_to_human_size(max_bytes)
     options[:"aria-invalid"] = "true" if errors.any?
-    options[:"aria-labelledby"] = token_list([ "#{id}_label", options[:"aria-labelledby"] ]) # not the drop area's text as well
-    options[:"aria-describedby"] = token_list([ "#{id}_limits", ("#{id}_help" if help), ("#{id}_error" if errors.any?), "#{id}_check", options[:"aria-describedby"] ])
+    aria = take_prefixed(options, :aria)
+    data = take_prefixed(options, :data)
+    options[:"aria-labelledby"] = token_list([ "#{id}_label", aria.delete(:labelledby) ]) # not the drop area's text as well
+    options[:"aria-describedby"] = token_list([ "#{id}_limits", ("#{id}_help" if help), ("#{id}_error" if errors.any?), "#{id}_check", aria.delete(:describedby) ])
+    options[:aria] = aria if aria.any?
     options[:accept] = types.join(",")
-    data = (options[:data] || {}).symbolize_keys
     options[:data] = data.merge(file_drop_target: "input", action: token_list([ data[:action], "change->file-drop#chosen" ]))
     input = file_field(method, merge_class(options, "input file-drop-input py-1.5"))
     @template.render "components/file_drop",
@@ -111,6 +113,15 @@ class ShadetreeFormBuilder < ActionView::Helpers::FormBuilder
     options = merge_class(options.reverse_merge(inputmode: "decimal", autocomplete: "off"), "input tabular")
     @template.tag.div(class: "input-group") do
       @template.tag.span(currency, class: "input-addon", "aria-hidden": "true") + text_field(method, options)
+    end
+  end
+
+  # A caller's aria or data attributes in any form (aria: { describedby: }, "aria-describedby",
+  # :"aria-describedby"), taken out of options as one hash: { describedby: "…" }.
+  def take_prefixed(options, prefix)
+    nested = (options.delete(prefix) || options.delete(prefix.to_s) || {}).to_h.transform_keys { _1.to_s.underscore.to_sym }
+    options.keys.select { _1.to_s.start_with?("#{prefix}-") }.each_with_object(nested) do |key, merged|
+      merged[key.to_s.delete_prefix("#{prefix}-").underscore.to_sym] = options.delete(key)
     end
   end
 

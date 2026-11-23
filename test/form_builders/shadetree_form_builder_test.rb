@@ -64,6 +64,17 @@ class ShadetreeFormBuilderTest < ActionView::TestCase
     assert_select ".file-drop-chosen button.btn-tertiary.btn-sm", "Clear"
   end
 
+  test "file_drop also merges a caller's aria: {} and \"data-action\" forms" do
+    render inline: <<~ERB, locals: { record: Record.new }
+      <%= form_with model: record, url: "/x" do |f| %>
+        <%= f.file_drop :name, prompt: "Drop it", types: %w[image/png], types_label: "PNG", max_bytes: 1.megabyte,
+                        aria: { describedby: "note", required: "true" }, "data-action": "change->other#go", "data-x": "1" %>
+      <% end %>
+    ERB
+    assert_select "input#sample_name[aria-describedby='sample_name_limits sample_name_check note'][aria-labelledby=sample_name_label][aria-required=true]" \
+                  "[data-action='change->other#go change->file-drop#chosen'][data-x='1'][data-file-drop-target=input]"
+  end
+
   test "select, date, time and money inputs" do
     render inline: <<~ERB, locals: { record: Record.new(price: "12.50") }
       <%= form_with model: record, url: "/x" do |f| %>
