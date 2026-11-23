@@ -38,7 +38,7 @@
   </div>
 <% end %>
 
-<div class="grid gap-4 lg:grid-cols-[1fr_20rem]">
+<div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
   <div class="space-y-4">
     <%= card title: "Properties", subtitle: (pluralize(@client.properties.size, "property", plural: "properties") if @client.properties.any?), flush: true do %>
       <% if @client.properties.empty? %>
@@ -50,7 +50,7 @@
           <% @client.properties.each do |property| %>
             <li id="property-<%= property.uid %>" class="items-start">
               <%= icon "home", class: "mt-0.5 size-4 shrink-0 text-faint" %>
-              <div class="min-w-0 flex-1">
+              <div class="min-w-0 flex-1 break-words">
                 <p class="font-semibold text-ink"><%= property.label || property.address_line1 %>
                   <% if property.billing %><%= badge "Billing", tone: :info, dot: false %><% end %></p>
                 <address class="text-sm2 not-italic text-muted"><%= safe_join(property.label ? property.address_lines : property.address_lines.drop(1), tag.br) %></address>
