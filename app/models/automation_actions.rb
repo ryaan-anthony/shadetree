@@ -76,10 +76,13 @@ module AutomationActions
 
   def create_job(_action, quote, _run)
     return [ "skipped", "The quote isn't approved." ] unless quote.status == "approved"
-    return [ "skipped", "#{quote.first_job.number} already exists." ] if quote.first_job
+    # JOB-09: with split jobs it takes everything still to do, or is skipped saying why.
+    return [ "skipped", "#{quote.first_job.number} already exists." ] if quote.first_job && !QuoteWork.split?(quote.business)
 
     job = Job.from_quote!(quote)
     [ "done", "Created #{job.number}." ]
+  rescue Job::NotOpen, QuoteWork::Refused => e
+    [ "skipped", e.message ]
   end
 
   def invoice_job(_action, job, run)

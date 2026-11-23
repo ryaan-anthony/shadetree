@@ -6,9 +6,9 @@
 # jobs by id, then the quote's lines by id. Work entries take only the job's lock (they don't
 # claim), and visits the job's then their own, so nothing waits on a lock earlier in the order.
 #
-# Behind the split_jobs flag (on only once PAY-06 and PAY-08 ship) asking for more than is free
-# is refused. With it off a quote has one job, as before, and a job line raised past the quote
-# claims only what's free; claims are kept either way.
+# Behind the split_jobs flag (on only once PAY-06 and PAY-08 ship) a job takes what staff pick,
+# and asking for more than is free is refused. With it off a quote has one job, as before, and a
+# job line raised past the quote claims only what's free; claims are kept either way.
 module QuoteWork
   FLAG = :split_jobs
 
@@ -56,6 +56,8 @@ module QuoteWork
   # A job line's quantity changed on an open job (the job form): its claim follows, taking free
   # quantity or freeing the difference. Past what's free is refused with the flag on (that needs
   # a change order, QTE-10), and claims only what's free with it off.
+  # Lowering a line that's still past what it can claim (an old line above the quote) is allowed:
+  # only an increase is refused.
   def follow!(job_line, lines)
     claim = job_line.claim
     return unless claim && (line = lines[claim.quote_line_item_id])
@@ -63,7 +65,7 @@ module QuoteWork
     wanted = job_line.quantity.to_d
     held = claim.quantity.to_d
     if wanted > held + line.to_do_quantity
-      raise Refused, refusal(line, wanted - held) if split?(job_line.business)
+      raise Refused, refusal(line, wanted - held) if split?(job_line.business) && wanted > job_line.quantity_before_last_save.to_d
 
       wanted = held + line.to_do_quantity
     end
@@ -125,6 +127,42 @@ module QuoteWork
     end
 
     claims.each { bump!(lines.fetch(_1.quote_line_item_id), _1.quantity.to_d) }
+  end
+
+  # Completing: each line's quantity becomes what was done, and what it booked is kept for a
+  # reopen. A claim never shrinks (a shortfall isn't freed); more done than booked claims free
+  # quantity (kept apart as the claim's extra), and more than the quote has is refused: interim
+  # until QTE-10's change orders. A legacy line already past the quote keeps what it booked.
+  def confirm!(job, done, lines)
+    job.line_items.each do |job_line|
+      quantity = done.fetch(job_line.id, job_line.quantity).to_d
+      raise Refused, "#{job_line.name}: what was done can't be less than zero." if quantity.negative?
+
+      if (claim = job_line.claim) && (line = lines[claim.quote_line_item_id]) && quantity > claim.quantity.to_d
+        extra = quantity - claim.quantity.to_d
+        if extra > line.to_do_quantity && quantity > job_line.quantity.to_d
+          raise Refused, "#{job_line.name}: #{number(quantity)} is more than the quote has to do (#{number(claim.quantity.to_d + line.to_do_quantity)}). " \
+                         "Lower it, or change the quote first."
+        end
+        taken = [ extra, line.to_do_quantity ].min
+        claim.update!(quantity: claim.quantity.to_d + taken, extra_quantity: claim.extra_quantity.to_d + taken)
+        bump!(line, taken)
+      end
+      job_line.update_columns(quantity:, booked_quantity: job_line.quantity, updated_at: Time.current)
+    end
+  end
+
+  # Reopening a completed job: its lines go back to what they booked, and what completion took for
+  # more done than booked is free again.
+  def restore_booked!(job, lines)
+    job.line_items.each do |job_line|
+      job_line.update_columns(quantity: job_line.booked_quantity, booked_quantity: nil, updated_at: Time.current) if job_line.booked_quantity
+      claim = job_line.claim
+      next unless claim&.extra_quantity.to_d.positive? && (line = lines[claim.quote_line_item_id])
+
+      bump!(line, -claim.extra_quantity.to_d)
+      claim.update!(quantity: claim.quantity.to_d - claim.extra_quantity.to_d, extra_quantity: 0)
+    end
   end
 
   # "Tree removal: 4 of 10 to do (J-0002 has 6), not 5."
