@@ -57,8 +57,12 @@ class VisitOnTheWayTest < ActiveSupport::TestCase
       assert_equal at("2026-12-10 11:00"), visit.on_the_way_arrival(minutes: 15), "11:02 rounds down"
       assert_equal at("2026-12-10 11:30"), visit.on_the_way_arrival(minutes: 45), "11:32 rounds down"
       assert_equal at("2026-12-10 11:35"), visit.on_the_way_arrival(at: "11:33"), "11:33 rounds up"
-      assert_equal at("2026-12-10 11:20"), visit.on_the_way_arrival(at: "11:18")
+      assert_equal at("2026-12-10 11:20"), visit.on_the_way_arrival(at: "11:18"), "a picked time rounds up"
+      assert_equal at("2026-12-10 10:55"), visit.on_the_way_arrival(at: "10:52"), "8 minutes ahead once rounded up"
       assert_raises(OnTheWay::Refused) { visit.on_the_way_arrival(at: "10:50") }
+      assert_equal at("2026-12-10 10:55"), visit.on_the_way_arrival(arrives_at: at("2026-12-10 10:55").utc.iso8601), "a time already chosen"
+      assert_raises(OnTheWay::Refused, "past") { visit.on_the_way_arrival(arrives_at: at("2026-12-10 10:45").utc.iso8601) }
+      assert_raises(OnTheWay::Refused, "not on a 5-minute mark") { visit.on_the_way_arrival(arrives_at: at("2026-12-10 11:02").utc.iso8601) }
       assert_raises(OnTheWay::Refused) { visit.on_the_way_arrival(at: "nonsense") }
       assert_raises(OnTheWay::Refused) { visit.on_the_way_arrival(minutes: 20) }
     end
@@ -108,7 +112,7 @@ class VisitOnTheWayTest < ActiveSupport::TestCase
   test "an update emails only 10+ minutes from the time last emailed; any assignee can update and is named first" do
     visit = book
     travel_to(at("2026-12-10 10:45")) { send!(visit, minutes: 30) } # 11:15, emailed
-    travel_to(at("2026-12-10 10:50")) { assert_equal "small_change", send!(visit, at: "11:22").why_not } # 11:20
+    travel_to(at("2026-12-10 10:50")) { assert_equal "small_change", send!(visit, at: "11:19").why_not } # 11:20
     Tenancy.with_business(@business) do
       assert_equal at("2026-12-10 11:20"), visit.reload.on_the_way_arrives_at, "the card has the latest time"
       assert_equal at("2026-12-10 11:15"), visit.on_the_way_emailed_arrives_at
@@ -191,6 +195,16 @@ class VisitOnTheWayTest < ActiveSupport::TestCase
     visit = book
     travel_to(ActiveSupport::TimeZone["America/Los_Angeles"].parse("2026-12-10 10:47")) do
       assert_equal "11:15 am", visit.reload.on_the_way_time_label(visit.on_the_way_arrival(minutes: 30))
+    end
+  end
+
+  test "the repeated hour on a DST day: a time already chosen stays the one picked" do
+    exact = book(on: Date.new(2026, 11, 1), timing: "exact", start: "08:00")
+    travel_to(Time.utc(2026, 11, 1, 5, 10)) do # 1:10 EDT
+      arrival = exact.reload.on_the_way_arrival(minutes: 60) # 1:10 EST, the second 1:10
+      assert_equal Time.utc(2026, 11, 1, 6, 10), arrival
+      assert exact.on_the_way_warning(arrival), "far before an 8 am start"
+      assert_equal arrival, exact.on_the_way_arrival(arrives_at: arrival.utc.iso8601)
     end
   end
 

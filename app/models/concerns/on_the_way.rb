@@ -26,16 +26,20 @@ module OnTheWay
   end
 
   # Times are on the clock where the work is (CAT-07), rounded to the nearest 5 minutes
-  # (10:47 + 30 is 11:15). A picked time ("HH:MM") must be later today and 5+ minutes ahead.
-  def on_the_way_arrival(minutes: nil, at: nil, now: Time.current)
+  # (10:47 + 30 is 11:15). A picked time ("HH:MM") is rounded up to the next 5 minutes and must
+  # then be later today and 5+ minutes ahead. `arrives_at` is a time already chosen (ISO 8601,
+  # UTC: "Send anyway" after a warning), so a repeated hour on a DST change stays the one picked.
+  def on_the_way_arrival(minutes: nil, at: nil, arrives_at: nil, now: Time.current)
     now = now.in_time_zone(time_zone)
-    if at.present?
+    if arrives_at.present?
+      arrival = (Time.iso8601(arrives_at.to_s) rescue nil)&.in_time_zone(time_zone)
+      raise Refused, "Choose the time again." unless arrival && arrival.min % 5 == 0 && arrival.sec.zero? && arrival > now
+    elsif at.present?
       raise Refused, "Choose a time like 11:30." unless ArrivalTiming::CLOCK.match?(at.to_s.strip)
 
       picked = time_zone.local(now.year, now.month, now.day, *at.to_s.strip.first(5).split(":").map(&:to_i))
-      raise Refused, "Choose a time at least #{MIN_AHEAD.in_minutes.to_i} minutes from now." if picked < now + MIN_AHEAD
-
-      arrival = self.class.round_to_five(picked)
+      arrival = picked + ((5 - (picked.min % 5)) % 5).minutes
+      raise Refused, "Choose a time at least #{MIN_AHEAD.in_minutes.to_i} minutes from now." if arrival < now + MIN_AHEAD
     else
       raise Refused, "Choose how long you'll be." unless MINUTES.include?(minutes.to_i)
 
