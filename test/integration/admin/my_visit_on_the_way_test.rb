@@ -27,7 +27,11 @@ class Admin::MyVisitOnTheWayTest < ActionDispatch::IntegrationTest
     get admin_my_day_path
     assert_select "#my-visit-#{@visit.uid} a[href=?]", new_admin_my_visit_on_the_way_path(@visit, from: "day"), /On my way/
     assert_select "#my-visit-#{@visit.uid} dialog[aria-labelledby] h2", "On my way to Maria Lopez"
-    assert_select "#my-visit-#{@visit.uid} dialog form[action=?] button", on_the_way, /30 min\s*about 11:15 am/
+    frame = "on-the-way-sheet-#{@visit.uid}-day"
+    assert_select "#my-visit-#{@visit.uid} dialog turbo-frame##{frame}[loading=lazy][target=_top][src=?]", new_admin_my_visit_on_the_way_path(@visit, from: "day")
+    get new_admin_my_visit_on_the_way_path(@visit, from: "day"), headers: { "Turbo-Frame" => frame }
+    assert_select "turbo-frame##{frame} form[action=?] button", on_the_way, /30 min\s*about 11:15 am/
+    assert_select "input[type=time][name=at][min='10:50'][step='300']", 1, "the earliest pick, on a 5-minute mark"
     get admin_my_visit_path(@visit)
     assert_select "#visit-action a[href=?]", new_admin_my_visit_on_the_way_path(@visit, from: "visit"), /On my way/
     assert_select "#visit-action form[action=?]", start_admin_my_visit_path(@visit), 1, "Start stays separate"
@@ -43,8 +47,8 @@ class Admin::MyVisitOnTheWayTest < ActionDispatch::IntegrationTest
 
   test "a time with a warning shows it and the choice, and is sent once it's been seen" do
     travel_to ActiveSupport::TimeZone["America/New_York"].parse("2026-12-10 11:45")
-    get admin_my_day_path
-    assert_select "#my-visit-#{@visit.uid} dialog p[id$='-30-warning']", "That's after the 9 am–12 pm window."
+    get new_admin_my_visit_on_the_way_path(@visit, from: "day")
+    assert_select "p[id$='-30-warning']", "That's after the 9 am–12 pm window."
     post on_the_way, params: { minutes: 30 }
     assert_response :unprocessable_content
     assert_select "[role=alert]", /About 12:15 pm\. That's after the 9 am–12 pm window\. You can still send it\./
@@ -54,8 +58,38 @@ class Admin::MyVisitOnTheWayTest < ActionDispatch::IntegrationTest
     assert @visit.reload.on_the_way?
   end
 
+  test "a picked time that warns rounds up and is sent with Send anyway" do
+    post on_the_way, params: { at: "12:07" } # 12:10, after the window
+    assert_response :unprocessable_content
+    assert_select "[role=alert]", /About 12:10 pm\. That's after the 9 am–12 pm window\./
+    anyway = css_select("form").find { _1.text.include?("Send anyway") }
+    assert_equal "2026-12-10T17:10:00Z", anyway.at_css("input[name=arrives_at]")["value"], "an unambiguous UTC time"
+    travel 30.seconds
+    post on_the_way, params: anyway.css("input[type=hidden]").to_h { [ _1["name"], _1["value"] ] }.except("authenticity_token")
+    assert_redirected_to admin_my_visit_path(@visit)
+    assert_equal "12:10 pm", @visit.reload.on_the_way_time_label
+  end
+
+  test "My day's queries don't grow with the visits on it" do
+    count = lambda do
+      queries = 0
+      callback = ->(*, payload) { queries += 1 unless payload[:name].in?(%w[SCHEMA TRANSACTION]) || payload[:sql].match?(/\A\s*(BEGIN|COMMIT|SAVEPOINT|RELEASE)/) }
+      ActiveSupport::Notifications.subscribed(callback, "sql.active_record") { get admin_my_day_path }
+      queries
+    end
+    one = count.()
+    as_business(@business) do
+      3.times { book(Date.new(2026, 12, 10)) }
+      Client.create!(display_name: "Ben", contact_methods_attributes: [ { kind: "email", value: "ben@example.com" } ]).then do |ben|
+        Job.create!(client: ben, title: "Hedges").visits.new(scheduled_on: Date.new(2026, 12, 10), assignee_ids: [ @tech.id ]).tap { _1.schedule!(by: @owner, notify_client: false) }
+      end
+    end
+    many = count.()
+    assert_operator many, :<=, one + 2, "4 more visits for today, with their sheets, cost no queries each"
+  end
+
   test "a picked time, a refused one, and the limits say why" do
-    post on_the_way, params: { at: "10:46" }
+    post on_the_way, params: { at: "10:45" }
     assert_response :unprocessable_content
     assert_select "[role=alert]", /at least 5 minutes from now/
     post on_the_way, params: { at: "11:30" }
@@ -69,8 +103,8 @@ class Admin::MyVisitOnTheWayTest < ActionDispatch::IntegrationTest
 
   test "no usable email: the sheet says so, the time is kept, and the row offers call and text with the message filled in" do
     as_business(@business) { EmailSuppression.suppress!("maria@example.com", reason: "hard_bounce") }
-    get admin_my_visit_path(@visit)
-    assert_select "dialog [role=status]", /no email address we can use, so nothing is emailed/
+    get new_admin_my_visit_on_the_way_path(@visit)
+    assert_select "[role=status]", /no email address we can use, so nothing is emailed/
     post on_the_way, params: { minutes: 30 }
     assert_match "no email address we can use", flash[:notice]
     follow_redirect!

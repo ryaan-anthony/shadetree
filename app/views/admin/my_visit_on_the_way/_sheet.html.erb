@@ -6,6 +6,8 @@
 <% client = visit.job.client %>
 <% limit = visit.on_the_way_limit %>
 <% now = Time.current.in_time_zone(visit.time_zone) %>
+<% earliest = (now + OnTheWay::MIN_AHEAD).change(sec: 0) %>
+<% earliest += ((5 - (earliest.min % 5)) % 5).minutes %><%# the step counts from min: keep it on 5-minute marks %>
 <div class="space-y-4">
   <% if refused %>
     <div class="banner banner-danger" role="alert"><%= icon "alert-circle" %><p><%= refused %></p></div>
@@ -14,7 +16,7 @@
     <div class="banner banner-warning" role="alert"><%= icon "alert-triangle" %>
       <p><span class="font-semibold">About <%= visit.on_the_way_time_label(arrives_at) %>.</span> <%= warning %> You can still send it.</p>
     </div>
-    <%= button_to path, params: { at: arrives_at.strftime("%H:%M"), seen_warning: arrives_at.iso8601, from: }, class: "#{button_classes(:primary)} h-auto min-h-12 w-full justify-center",
+    <%= button_to path, params: { arrives_at: arrives_at.utc.iso8601, seen_warning: arrives_at.iso8601, from: }, class: "#{button_classes(:primary)} h-auto min-h-12 w-full justify-center",
                         form: { class: "contents" } do %><%= icon "send" %> Send anyway<% end %>
   <% end %>
   <% if limit %>
@@ -49,7 +51,7 @@
       <div class="field">
         <label class="label" for="on-the-way-<%= visit.uid %>-at">Pick a time</label>
         <%= time_field_tag :at, nil, id: "on-the-way-#{visit.uid}-at", class: "input w-36", step: 300, required: true,
-                                     min: (now + OnTheWay::MIN_AHEAD).strftime("%H:%M"), "aria-describedby": "on-the-way-#{visit.uid}-at-hint" %>
+                                     min: earliest.strftime("%H:%M"), "aria-describedby": "on-the-way-#{visit.uid}-at-hint" %>
         <p class="help" id="on-the-way-<%= visit.uid %>-at-hint">Later today, at least <%= OnTheWay::MIN_AHEAD.in_minutes.to_i %> minutes from now.</p>
       </div>
       <%= submit_tag "Send", class: "#{button_classes(:secondary)} min-h-11", name: nil %>

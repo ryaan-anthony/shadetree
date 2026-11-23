@@ -19,7 +19,7 @@
     <% end %>
     <%= icon "chevron-right", class: "mt-1 size-4 shrink-0 text-faint" %>
   <% end %>
-  <% if visit.on_the_way_offered_to?(current_user) %><%# JOB-12 %>
+  <% if visit.on_the_way_offered_to?(current_user) %><%# JOB-12: worked out once per row %>
     <div class="basis-full px-4 pb-3.5 pl-27"><%= render "admin/my_visit_on_the_way/status", visit:, from: "day" %></div>
   <% end %>
 </li>

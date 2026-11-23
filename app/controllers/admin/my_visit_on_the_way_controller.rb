@@ -13,7 +13,7 @@ class Admin::MyVisitOnTheWayController < Admin::BaseController
   def new; end
 
   def create
-    arrives_at = @visit.on_the_way_arrival(minutes: params[:minutes], at: params[:at])
+    arrives_at = @visit.on_the_way_arrival(minutes: params[:minutes], at: params[:at], arrives_at: params[:arrives_at])
     @warning = @visit.on_the_way_warning(arrives_at)
     # A warning is sent anyway once it's been seen: the sheet shows it beside each choice.
     if @warning && params[:seen_warning] != arrives_at.iso8601

@@ -1,9 +1,9 @@
 <%# locals: (visit:, from:) -%>
 <%# JOB-12: on My day and the visit's page, for someone going on a visit booked for today:
     "On my way", or once sent "On the way · about 11:15 am" with "Change time". The button opens
-    the sheet as a dialog (the link works without JavaScript). With no email for the client, the
-    sent time comes with tap-to-call and tap-to-text from the technician's own phone. %>
-<% return unless visit.on_the_way_offered_to?(current_user) %>
+    the sheet as a dialog, loaded when it opens so its times are current (the link works without
+    JavaScript). With no email for the client, the sent time comes with tap-to-call and
+    tap-to-text from the technician's own phone. Callers check Visit#on_the_way_offered_to?. %>
 <% sheet_id = "on-the-way-#{visit.uid}-#{from}" %>
 <div class="flex flex-wrap items-center gap-2" data-controller="modal" id="on-the-way-<%= visit.uid %>">
   <% if visit.on_the_way? %>
@@ -23,6 +23,8 @@
     </div>
   <% end %>
   <%= modal id: sheet_id, title: "On my way to #{visit.job.client.display_name}", description: visit.when_label, sheet: true do %>
-    <%= render "admin/my_visit_on_the_way/sheet", visit:, from: %>
+    <%= turbo_frame_tag "on-the-way-sheet-#{visit.uid}-#{from}", src: new_admin_my_visit_on_the_way_path(visit, from:), loading: :lazy, target: "_top" do %>
+      <p class="text-sm2 text-muted">Loading the times…</p>
+    <% end %>
   <% end %>
 </div>

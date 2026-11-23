@@ -31,7 +31,7 @@ class MyDay
     @items ||= begin
       last = business.today + upcoming_days + 1
       recent = (business.today - 1)..last
-      mine = Visit.joins(:assignments).where(visit_assignments: { user_id: user.id }).includes(:business, :assignees, job: %i[client property location])
+      mine = Visit.joins(:assignments).where(visit_assignments: { user_id: user.id }).includes(:business, :assignees, job: [ { client: :contact_methods }, :property, :location ]) # JOB-12: the client's email
       visits = mine.open.where(scheduled_on: ..last).or(mine.where(scheduled_on: recent).where.not(status: "cancelled")).to_a
       follow_ups = RequestFollowUp.where(user_id: user.id, scheduled_on: ..last).includes(service_request: %i[client property location]).to_a
       (visits + follow_ups).each { _1.association(:business).target = business }
