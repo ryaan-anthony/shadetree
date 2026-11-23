@@ -1,7 +1,6 @@
 <%# OPS-05: every business's support tickets in one queue. %>
 <% content_for :title, "Support" %>
-<h1 class="page-title">Support</h1>
-<p class="page-lede">Questions from businesses, newest activity first.</p>
+<%= page_header "Support", lede: "Questions from businesses, newest activity first." %>
 <%= form_with url: ops_tickets_path, method: :get, class: "mt-4 grid gap-3 sm:grid-cols-5 sm:items-end", id: "ticket-filters" do %>
   <div class="field"><label class="label" for="status">Status</label><%= select_tag :status, options_for_select([ [ "Not resolved", "unresolved" ], *SupportTicket::STATUSES.invert.to_a, [ "Any", "any" ] ], @filters[:status]), class: "select", id: "status" %></div>
   <div class="field"><label class="label" for="category">Category</label><%= select_tag :category, options_for_select(SupportTicket::CATEGORIES.invert, @filters[:category]), include_blank: "Any", class: "select", id: "category" %></div>

@@ -41,6 +41,9 @@ Tenancy.with_business(business) do
   # Hours and closures (CAT-06): weekdays 8–5 and Saturday mornings, Christmas every year,
   # and a half day on the next Christmas Eve.
   business.update!(weekly_hours: WeeklyHours::WEEKDAYS_8_TO_5.merge("6" => { "opens" => "08:00", "closes" => "12:00" })) if business.weekly_hours.nil?
+  # PLT-15: default quote terms, so a quote's document on the staff page shows its Terms heading
+  # (the second heading after its title was dropped there).
+  business.update!(quote_terms: "Prices are valid for 30 days. We'll confirm the visit date once you approve.") if business.quote_terms.blank?
   Closure.find_or_create_by!(reason: "Christmas Day") { _1.assign_attributes(starts_on: Date.new(2026, 12, 25), repeats_yearly: true) }
   eve = Date.new(business.today.year, 12, 24)
   Closure.find_or_create_by!(reason: "Christmas Eve, closing at noon") { _1.assign_attributes(starts_on: eve, part_of_day: true, start_time: "12:00", end_time: "") }

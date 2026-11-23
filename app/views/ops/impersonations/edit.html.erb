@@ -1,7 +1,5 @@
 <% content_for :title, "Allow changes" %>
-<h1 class="page-title">Allow changes as <%= impersonation.user.full_name %>?</h1>
-<p class="page-lede">You'll be able to change <%= impersonation.business.name %>'s records as this member. Every change is recorded in the audit log.
-  Passwords and emails, billing and plans, payment accounts, Owners' roles and deleting the business stay blocked.</p>
+<%= page_header "Allow changes as #{impersonation.user.full_name}?", lede: "You'll be able to change #{impersonation.business.name}'s records as this member. Every change is recorded in the audit log. Passwords and emails, billing and plans, payment accounts, Owners' roles and deleting the business stay blocked." %>
 <%= card class: "mt-4 max-w-2xl" do %>
   <%= form_with url: ops_impersonation_path, method: :patch do %>
     <%= hidden_field_tag :mode, "write" %>

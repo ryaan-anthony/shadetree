@@ -1,8 +1,8 @@
 <% content_for :title, "Edit #{@preset.name}" %>
 <% rows = @preset.item_list + Array.new(Ops::PresetsController::BLANK_ROWS) { IndustryPreset::Item.from({}) } %>
-<p class="text-sm2"><%= link_to "← Industry presets", ops_presets_path, class: "text-muted hover:underline" %></p>
-<h1 class="page-title mt-1"><%= @preset.name %></h1>
-<p class="page-lede">Clear a service's name to remove it. Businesses that already added a service keep their own copy.</p>
+<%= page_header @preset.name, lede: "Clear a service's name to remove it. Businesses that already added a service keep their own copy." do %>
+  <%= link_to ops_presets_path, class: button_classes(:tertiary) do %><%= icon "arrow-left" %> Industry presets<% end %>
+<% end %>
 <%= form_with url: ops_preset_path(@preset), method: :patch, class: "mt-4", data: { turbo_confirm: "Save the #{@preset.name} preset?" } do %>
   <% if @preset.errors.any? %><div class="banner banner-warning mb-4" role="alert"><p><%= @preset.errors.full_messages.to_sentence %></p></div><% end %>
   <div class="field max-w-xs"><label class="label" for="default_visit_minutes">Default visit length (minutes)</label><%= number_field_tag :default_visit_minutes, @preset.default_visit_minutes, min: 5, max: 1440, class: "input", id: "default_visit_minutes" %></div>

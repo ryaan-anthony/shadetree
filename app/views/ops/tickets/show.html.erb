@@ -1,9 +1,9 @@
 <%# OPS-05: one ticket, the whole thread with internal notes, and the business beside it. %>
 <% content_for :title, @ticket.subject %>
 <% business = @ticket.business %>
-<p class="text-sm2"><%= link_to "← Support", ops_tickets_path, class: "text-muted hover:underline" %></p>
-<div class="mt-1 flex flex-wrap items-center gap-2"><h1 class="page-title break-words"><%= @ticket.subject %></h1><%= render "admin/support_tickets/status", ticket: @ticket %></div>
-<p class="page-lede"><%= @ticket.category_label %> · <%= @ticket.reference %> · opened <%= local_time(@ticket.created_at) %> by <%= @ticket.opened_by&.full_name || "a former member" %></p>
+<%= page_header @ticket.subject, lede: safe_join([ render("admin/support_tickets/status", ticket: @ticket), " #{@ticket.category_label} · #{@ticket.reference} · opened ", local_time(@ticket.created_at), " by #{@ticket.opened_by&.full_name || "a former member"}" ]) do %>
+  <%= link_to ops_tickets_path, class: button_classes(:tertiary) do %><%= icon "arrow-left" %> Support<% end %>
+<% end %>
 <div class="mt-4 grid gap-4 lg:grid-cols-3">
   <div class="space-y-4 lg:col-span-2">
     <%= card flush: true do %>

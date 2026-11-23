@@ -1,7 +1,6 @@
 <%# OPS-02: every business, searchable by name or a member's email. %>
 <% content_for :title, "Businesses" %>
-<h1 class="page-title">Businesses</h1>
-<p class="page-lede">Find a business by its name or anyone's email. Business details only: no client data is shown here.</p>
+<%= page_header "Businesses", lede: "Find a business by its name or anyone's email. Business details only: no client data is shown here." %>
 <%= form_with url: ops_businesses_path, method: :get, class: "mt-4 grid gap-3 sm:grid-cols-6 sm:items-end", id: "directory-filters" do %>
   <div class="field sm:col-span-2"><label class="label" for="q">Name or email</label><%= search_field_tag :q, @directory.query, class: "input", id: "q", autocomplete: "off" %></div>
   <div class="field"><label class="label" for="plan">Plan</label><%= select_tag :plan, options_from_collection_for_select(@plans, :id, :name, @directory.plan_id), include_blank: "Any", class: "select", id: "plan" %></div>

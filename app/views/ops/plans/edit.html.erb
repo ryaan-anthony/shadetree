@@ -1,7 +1,7 @@
 <% content_for :title, "Edit #{@plan.name}" %>
-<p class="text-sm2"><%= link_to "← Plans", ops_plans_path, class: "text-muted hover:underline" %></p>
-<h1 class="page-title mt-1">Edit <%= @plan.name %></h1>
-<p class="page-lede">Key <code><%= @plan.key %></code>. Limits and features apply to every business on it at once.</p>
+<%= page_header "Edit #{@plan.name}", lede: safe_join([ "Key ", tag.code(@plan.key), ". Limits and features apply to every business on it at once." ]) do %>
+  <%= link_to ops_plans_path, class: button_classes(:tertiary) do %><%= icon "arrow-left" %> Plans<% end %>
+<% end %>
 <%= card class: "mt-4 max-w-2xl" do %>
   <%= form_with model: @plan, url: ops_plan_path(@plan), method: :patch, data: { turbo_confirm: "Save #{@plan.name}? Every business on it changes now." } do |f| %>
     <% if @plan.errors.any? %><div class="banner banner-warning mb-4" role="alert"><p><%= @plan.errors.full_messages.to_sentence %></p></div><% end %>
