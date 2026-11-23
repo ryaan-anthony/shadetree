@@ -1,5 +1,6 @@
-# ACC-06: every sign-in starts a UserSession for that browser; each request checks it's still
-# active (and notes the activity); signing out ends it. A browser whose session was signed out
+# ACC-06: every sign-in starts a UserSession for that browser, and coming back through "Keep me
+# signed in" resumes the one it remembered while that's still active (#403); each request checks
+# it's still active (and notes the activity); signing out ends it. A browser whose session was signed out
 # from another device is signed out on its next request, and so is one with no session at all
 # (there's no other way to sign it out later). Staff pages then send it to sign in with a note;
 # public pages (ApplicationController.public_page) just show, signed out (#317).
@@ -28,19 +29,25 @@ Rails.application.config.after_initialize do
     next unless tracked.(user, opts) && opts[:store] != false
 
     request = request_for.(auth)
-    # Back through "Keep me signed in": only while the session it remembered is still active, so
-    # a browser signed out from another device can't sign itself back in (#403).
+    # Back through "Keep me signed in": resume the session it remembered, only while that's still
+    # active, so a browser signed out from another device can't sign itself back in (#403). Not a
+    # new session: tabs reopening at once all carry the same cookies.
     if (remembered = opts[:event] == :authentication && auth.winning_strategy.is_a?(Devise::Strategies::Rememberable))
-      previous = UserSession.find_by_credential(user, request.cookie_jar.encrypted[UserSession::REMEMBER_COOKIE])
+      credential = request.cookie_jar.encrypted[UserSession::REMEMBER_COOKIE]
+      previous = UserSession.find_by_credential(user, credential)
       unless previous&.active?
         sign_out_here.(user, auth)
-        next if request.controller_instance.try(:public_page?)
+        if request.controller_instance.try(:public_page?)
+          auth.clear_strategies_cache!(scope: :user) # so later current_user calls don't try again
+          next
+        end
 
         throw :warden, scope: :user, message: (:session_ended if previous)
       end
-      previous.revoke!
+      previous.seen!(request)
+    else
+      credential = UserSession.start!(user, request, browser_id: browser_id_for.(request)).last
     end
-    credential = UserSession.start!(user, request, browser_id: browser_id_for.(request)).last
     auth.session(:user)[UserSession::SESSION_KEY] = credential
     if remembered || user.remember_me
       request.cookie_jar.encrypted[UserSession::REMEMBER_COOKIE] =

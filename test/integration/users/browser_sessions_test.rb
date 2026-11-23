@@ -79,16 +79,42 @@ class Users::BrowserSessionsTest < ActionDispatch::IntegrationTest
     assert_not_nil @user.reload.remember_created_at
   end
 
-  test "a remembered browser comes back with a fresh session, and keeps being remembered" do
+  test "a remembered browser comes back to the session it remembered, and keeps being remembered" do
     laptop = remembered_browser(MAC_CHROME)
-    first = @user.user_sessions.sole
+    remembered = @user.user_sessions.sole
     2.times do
       reopen(laptop)
+      travel 10.minutes
       laptop.get edit_user_registration_path, headers: { "User-Agent" => MAC_CHROME }
       assert_equal 200, laptop.response.status
+      laptop.assert_select "#browser-sessions li", /Chrome on Mac.*This browser/m
     end
-    assert_not first.reload.active?
+    assert_equal [ remembered ], @user.user_sessions.active.to_a
+    assert_in_delta Time.current, remembered.reload.last_active_at, 5
+  end
+
+  test "tabs reopening at once all come back through remember-me" do
+    laptop = remembered_browser(MAC_CHROME)
+    reopen(laptop)
+    other_tab = open_session # sends the same cookies, before the first tab's answer arrives
+    laptop.cookies.to_hash.each { |name, value| other_tab.cookies[name] = value }
+    [ laptop, other_tab ].each do |tab|
+      tab.get admin_root_path, headers: { "User-Agent" => MAC_CHROME }
+      assert_not_equal new_user_session_url, tab.response.location
+      assert_nil tab.flash[:alert]
+    end
     assert_equal 1, @user.user_sessions.active.count
+  end
+
+  test "an ended browser reopened on the sign-in page sees it after at most one redirect" do
+    phone = remembered_browser(IPHONE_SAFARI)
+    laptop = remembered_browser(MAC_CHROME)
+    laptop.delete user_browser_session_path(@user.user_sessions.find_by!(user_agent: IPHONE_SAFARI))
+    reopen(phone)
+    phone.get new_user_session_path
+    phone.follow_redirect! if phone.response.redirect?
+    assert_equal 200, phone.response.status
+    assert_match "Sign in", phone.response.body
   end
 
   test "remember-me from before sessions were remembered per browser needs one sign-in" do
