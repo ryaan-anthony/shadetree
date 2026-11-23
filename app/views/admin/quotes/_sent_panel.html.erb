@@ -3,9 +3,13 @@
     again. An undelivered latest email is warned about above the page (admin/sends/_delivery_warning). %>
 <section class="card card-body" aria-labelledby="sent-panel-h">
   <div class="flex flex-wrap items-center justify-between gap-3">
-    <h2 id="sent-panel-h" class="text-sm font-semibold text-ink">
-      Sent <%= local_time(quote.sent_at) if quote.sent_at %><%= " by #{quote.sent_by.full_name}" if quote.sent_by %>
-    </h2>
+    <div class="min-w-0">
+      <%# PLT-15: a fixed title; when and who is body text under it, never part of the heading. %>
+      <h2 id="sent-panel-h" class="card-title">Sent</h2>
+      <% if quote.sent_at || quote.sent_by %>
+        <p class="mt-0.5 text-sm text-body" id="sent-panel-when"><%= local_time(quote.sent_at) if quote.sent_at %><%= " by #{quote.sent_by.full_name}" if quote.sent_by %></p>
+      <% end %>
+    </div>
     <% if quote.sendable? %>
       <%= link_to new_admin_quote_send_path(quote), class: button_classes(:secondary, :sm) do %><%= icon "send" %> Send again<% end %>
     <% end %>

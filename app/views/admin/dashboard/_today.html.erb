@@ -38,7 +38,7 @@
       <div class="grid sm:grid-cols-2 lg:grid-cols-3">
         <% dashboard.todays_visits.each do |person, visits| %>
           <section class="border-b border-line px-5 py-3 sm:border-r">
-            <h3 class="text-sm2 font-semibold text-ink"><%= person&.full_name || "Not assigned" %></h3>
+            <h3 class="table-head"><%= person&.full_name || "Not assigned" %></h3>
             <ul class="mt-1 space-y-1">
               <% visits.each do |visit| %>
                 <li class="flex items-baseline justify-between gap-2 text-sm">

@@ -11,6 +11,19 @@ class StyleguideControllerTest < ActionDispatch::IntegrationTest
     assert_select "dialog#sample-modal"
   end
 
+  test "PLT-15: the type scale's six steps are on the style guide, and the kit's titles take them from the theme" do
+    get styleguide_path
+    assert_equal [ "Page title", "Section title", "Card title", "Body", "Small", "Table header" ], css_select("section#type dt").map { _1.text.squish }
+    theme = Rails.root.join("app/assets/tailwind/theme.css").read
+    { "page-title" => "1.375rem", "page-title-phone" => "1.1875rem", "title" => "0.9375rem", "title-weight" => "650", "body" => "0.875rem", "small" => "0.8125rem" }.each do |step, value|
+      assert_match(/--type-#{step}: #{Regexp.escape(value)};/, theme)
+    end
+    kit = Rails.root.join("app/assets/tailwind/components.css").read
+    assert_match(/\.card-title, \.section-title, \.empty-title, \.modal-title, \.tour-title \{ font-size: var\(--type-title\); font-weight: var\(--type-title-weight\);/, kit)
+    assert_match(/\.page-title \{ font-size: var\(--type-page-title-phone\);/, kit)
+    assert_match(/\.table-head \{ font-size: var\(--type-small\); font-weight: 600; color: var\(--color-muted\);/, kit)
+  end
+
   test "renders flash as a toast" do
     get styleguide_path(toast: 1)
     assert_select "#flash .toast", /Quote sent/

@@ -1,7 +1,8 @@
 <% content_for :title, @ticket.subject %>
-<p class="text-sm2"><%= link_to "← Help", admin_support_tickets_path, class: "text-muted hover:underline" %></p>
-<div class="mt-1 flex flex-wrap items-center gap-2"><h1 class="page-title break-words"><%= @ticket.subject %></h1><%= render "status", ticket: @ticket %></div>
-<p class="page-lede"><%= @ticket.category_label %> · <%= @ticket.reference %> · opened <%= local_time(@ticket.created_at) %></p>
+<%# PLT-15: the kit's header; its status leads the lede, and the way back is a Tertiary action. %>
+<%= page_header @ticket.subject, lede: safe_join([ render("status", ticket: @ticket), " #{@ticket.category_label} · #{@ticket.reference} · opened ", local_time(@ticket.created_at) ]) do %>
+  <%= link_to admin_support_tickets_path, class: button_classes(:tertiary) do %><%= icon "arrow-left" %> Help<% end %>
+<% end %>
 <% if @ticket.status == "waiting" %><div class="banner banner-info mt-3" role="status"><p>We've replied and are waiting to hear from you.</p></div><% end %>
 <%= card flush: true, class: "mt-4 max-w-3xl" do %>
   <ul class="list" id="messages"><%= render partial: "message", collection: @ticket.visible_messages, as: :message %></ul>

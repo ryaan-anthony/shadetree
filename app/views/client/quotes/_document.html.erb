@@ -1,13 +1,13 @@
-<%# locals: (quote:, totals: quote.totals, pdf: false, heading: 1) -%>
+<%# locals: (quote:, totals: quote.totals, pdf: false, heading: 1, title: true) -%>
 <%# The quote as a document: header, lines, totals, terms. Shared by the client page (QTE-03)
     and the PDF (QTE-02, ADR 0010), so the two never drift. Never shows internal notes.
     heading: the title's level; the client page and PDF own the page (1), the staff quote page
-    shows it under its own H1 (2). %>
+    shows it under its own H1 (2), without the title: the H1 already says it (PLT-15). %>
 <% business = quote.business %>
 <header class="quote-doc-head">
   <div class="min-w-0">
     <p class="quote-doc-kicker">Quote <%= quote.number %></p>
-    <%= content_tag "h#{heading}", quote.title || "Quote for #{quote.client.display_name}", class: "quote-doc-title" %>
+    <% if title %><%= content_tag "h#{heading}", quote.title || "Quote for #{quote.client.display_name}", class: "quote-doc-title" %><% end %>
   </div>
   <dl class="quote-doc-meta">
     <div><dt>Prepared for</dt><dd><%= quote.client.display_name %><% if quote.client.company_name %><br><%= quote.client.company_name %><% end %></dd></div>
@@ -32,7 +32,7 @@
 
 <% if quote.terms %>
   <section class="quote-doc-terms">
-    <%= content_tag "h#{heading + 1}", "Terms" %>
+    <%= content_tag "h#{title ? heading + 1 : heading}", "Terms" %>
     <p><%= quote.terms %></p>
   </section>
 <% end %>

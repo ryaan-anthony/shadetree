@@ -47,12 +47,25 @@
 
     <section id="type" aria-labelledby="type-h">
       <h2 id="type-h" class="mb-3 text-base font-bold text-ink">Type</h2>
-      <%= card do %>
-        <p class="text-2xl font-bold tracking-tight text-ink">Page title, 22px bold</p>
-        <p class="mt-2 text-[0.9375rem] font-semibold text-ink">Card title, 15px semibold</p>
-        <p class="mt-2 text-sm">Body, 14px. Public Sans, self-hosted. Numbers use <span class="tabular font-semibold">tabular figures: $1,250.00</span>.</p>
-        <p class="mt-2 text-sm2 text-muted">Secondary, 13px muted.</p>
+      <%# PLT-15: the locked scale (owner, 2026-11-22). Tokens: --type-* in theme.css. %>
+      <%= card flush: true do %>
+        <dl class="divide-y divide-line-2">
+          <% [ [ "Page title", "page_header, .page-title", "22px bold; 19px below 960px. The page's one H1.", "page-title" ],
+               [ "Section title", ".section-title", "15px at 650. A heading inside a card or form.", "section-title" ],
+               [ "Card title", "card(title:), .card-title", "15px at 650. Also the empty state's, a dialog's and the tour's title.", "card-title" ],
+               [ "Body", "text-sm", "14px. Public Sans, self-hosted; numbers use tabular figures: $1,250.00.", "text-sm" ],
+               [ "Small", "text-sm2", "13px, often muted: help, metadata, a stat's label.", "text-sm2 text-muted" ],
+               [ "Table header", ".table-head, .data-table th", "13px semibold, muted. Column heads and list groups.", "table-head" ] ].each do |name, use, rule, klass| %>
+            <div class="grid gap-1 px-5 py-3 sm:grid-cols-[12rem_minmax(0,1fr)] sm:gap-4">
+              <dt class="<%= klass %>"><%= name %></dt>
+              <dd class="text-sm2 text-muted"><code><%= use %></code>: <%= rule %></dd>
+            </div>
+          <% end %>
+        </dl>
       <% end %>
+      <p class="mt-2 max-w-prose text-sm2 text-muted">Headings and titles use only these steps; a test checks every staff page.
+        A sentence is never a heading: a panel is titled with a fixed label ("Sent"), and the date and who did it are body text under it.
+        The top bar holds only global controls, never the page's title.</p>
     </section>
 
     <section id="buttons" aria-labelledby="buttons-h">

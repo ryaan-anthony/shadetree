@@ -6,7 +6,7 @@
 <% if responses.any? || quote.staff_can_approve? %>
   <section class="card card-body" aria-labelledby="responses-h">
     <div class="flex flex-wrap items-center justify-between gap-3">
-      <h2 id="responses-h" class="text-sm font-semibold text-ink">Client response</h2>
+      <h2 id="responses-h" class="card-title">Client response</h2>
       <% if quote.staff_can_approve? %>
         <div data-controller="modal" data-modal-open-value="<%= @approval_form.present? %>">
           <button type="button" class="<%= button_classes(:secondary, :sm) %>" data-action="modal#open" aria-haspopup="dialog"><%= icon "check" %> Mark approved</button>

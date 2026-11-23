@@ -41,11 +41,11 @@ class Admin::QuotePageTest < ActionDispatch::IntegrationTest
                  row.values_at("Quote number", "Response", "Signed by", "IP address", "Reference")
   end
 
-  test "the quote page has one H1; the document is an H2 with a real table of items, and the client page keeps its H1" do
+  test "the quote page has one H1 and doesn't repeat it over the document, a real table of items; the client page keeps its H1" do
     get admin_quote_path(@quote)
-    assert_select "h1", count: 1
-    assert_select ".quote-doc h2.quote-doc-title", "Cricket in the basement"
-    assert_select ".quote-doc h3", "Terms"
+    assert_select "h1", "Cricket in the basement"
+    assert_select ".quote-doc .quote-doc-title", 0, "PLT-15: the H1 already says it"
+    assert_select ".quote-doc h2", "Terms"
     assert_select ".quote-doc table.quote-doc-lines thead th[scope=col]", 4
     assert_select ".quote-doc table.quote-doc-lines tbody tr", 1
 

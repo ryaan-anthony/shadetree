@@ -10,8 +10,7 @@
 #
 # kind: :list, :form, :detail, :settings, :empty, or :ops (the operator console: sign in with
 # sign_in_operator). head: false for a page with no page header (.page-head): the schedule's
-# visit panel by design; the support ticket and the operator console until
-# PLT-15 gives them page_header.
+# visit panel by design; the operator console until PLT-15 part 2 gives it page_header.
 # Add a page here when you add one to the app; a state worth checking gets its own entry.
 module StaffPages
   Page = Data.define(:key, :name, :path, :kind, :head) do
@@ -143,7 +142,7 @@ module StaffPages
       page :invoice_overdue, "Invoice: overdue", admin_invoice_path(@overdue_invoice), :detail
       page :invoice_paid, "Invoice: paid", admin_invoice_path(@paid_invoice), :detail
       page :invoice_void, "Invoice: void", admin_invoice_path(@void_invoice), :detail
-      page :support_ticket, "Support ticket", admin_support_ticket_path(@ticket), :detail, head: false
+      page :support_ticket, "Support ticket", admin_support_ticket_path(@ticket), :detail
       page :client_import, "Client import: finished", admin_client_import_path(@finished_import), :detail
     end
 
