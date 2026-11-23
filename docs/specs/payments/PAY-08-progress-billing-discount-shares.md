@@ -68,16 +68,16 @@ invoices in proportion to the work each bills, so a part-done quote never carrie
 - Progress billing stays: a job or quote can be billed in part before it's done (owner, 2026-11-22).
 - Each invoice takes its proportional share of a fixed quote discount ($50 off a $1,000 quote: a
   $400 invoice gets $20); a percent discount just applies (owner, 2026-11-22).
-- Dropped work doesn't keep its part of a fixed discount (owner, 2026-11-22).
-- Over-billing shows on the quote and is credited on the next invoice (owner, 2026-11-22).
+- Dropped work keeps no part of a fixed discount; over-billing shows on the quote and is
+  credited on the next invoice (owner, 2026-11-22).
 - The target, the cap and carry, "lines added on site aren't quote work" and "progress invoices
   get no share" (coordinator; follows the owner's model).
-- Progress is capped at, and defaults to, what's left after the line's expected share of a fixed
-  discount. Clients see "Credit from INV-0004" with tax; staff's figures include tax. The button
-  is "Create progress invoice" (owner, 2026-11-23).
-- No backwards compatibility: pre-JOB-09 jobs' fixed discounts get no special rule (owner,
-  2026-11-23). Progress credited on a sent invoice can't be voided until that one is (follows
-  the owner's 2026-11-23 rule that invoiced work changes only by voiding).
+- A progress invoice's discounts apply to the cash it collected: the final deducts only the net
+  it charged (an unpaid one still does, and stays owed). Progress is capped at, and defaults to,
+  what's left after the line's expected share of a fixed discount. Clients see "Credit from
+  INV-0004" with tax; staff figures include tax; "Create progress invoice" (owner, 2026-11-23).
+- No legacy rule for pre-JOB-09 fixed discounts (owner, 2026-11-23). Credited progress is voided
+  only after the invoice crediting it (follows the owner's void-first rule, 2026-11-23).
 - Credits and shares count only from invoices that went out; a draft's are worked out again at
   send; a sent invoice's stay (a revision can't go below them). A credit is capped by the bill's
   line after its share; a staff percent applies to the subtotal before the share (implementation).
@@ -89,8 +89,8 @@ invoices in proportion to the work each bills, so a part-done quote never carrie
   sign, tax rates, position). `BillingLedger` reads a quote's (or a lone job's) bills under
   PAY-06's lock; `BillingCredits` works shares and credits out on each draft save, and
   `WorkBilling.bill_progress!` makes progress invoices. Behind `split_jobs`.
-- Amounts are line subtotals: a credit is a negative line (a document discount isn't spread
-  onto it), so the invoice's discount and tax apply as they did to the progress.
+- A credit is what the progress invoice charged for the line, net of its discounts, before tax;
+  it comes off after the final's discount, at the same rates (a final taxed otherwise is refused).
 - Over-billed counts a final bill once it went out. Fit: PAY-07 adds deposit and take_back to
   both kind checks, keeps deposit credits in `work_out_credits`, and `nothing_due?` uses
   `total_due`; JOB-10 skips `percent_only!` on recurring quotes; QTE-09 adds Not going ahead to
