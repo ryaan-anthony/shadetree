@@ -5,6 +5,10 @@
 #
 # JOB-07: request follow-ups (RequestFollowUp) sit on the grid with the visits, for people who
 # can see requests (follow_ups: true): "items" are both, placed and colored the same way.
+#
+# JOB-08: people who schedule but can't see requests (follow_ups: :busy) get each follow-up as
+# a Busy: when it is and whose, nothing of the request. Their own (`viewer`, given for people
+# with My day) stay follow-ups, as My day shows them.
 class ScheduleView
   HOUR_PX = 56
   MIN_PX = 22 # the shortest a visit is drawn, so its first line can be read
@@ -19,11 +23,48 @@ class ScheduleView
   end
   Shade = Data.define(:top, :height)
 
+  # JOB-08: someone's follow-up, for people who can't see requests: its time and person only.
+  # Made from the follow-up here, so the page has nothing else of it to show (or leak).
+  Busy = Data.define(:user, :scheduled_on, :timing, :starts_at, :window_ends_at, :duration_minutes, :time_zone, :time_label) do
+    def self.of(follow_up)
+      new(user: follow_up.user, scheduled_on: follow_up.scheduled_on, timing: follow_up.timing, starts_at: follow_up.starts_at,
+          window_ends_at: follow_up.window_ends_at, duration_minutes: follow_up.duration_minutes, time_zone: follow_up.time_zone,
+          time_label: follow_up.time_label)
+    end
+
+    def anytime? = timing == "anytime"
+    def window? = timing == "window"
+    def ends_at = starts_at && ((window_ends_at || starts_at) + duration_minutes.minutes)
+    def assignees = [ user ]
+    def assignee_ids = [ user.id ]
+
+    # For screen readers: "2 to 3 pm", "arriving 2 to 4 pm", "anytime" (on its own clock).
+    def spoken_time
+      return "anytime" if anytime?
+
+      window? ? "arriving #{span(starts_at, window_ends_at)}" : span(starts_at, ends_at)
+    end
+
+    private
+
+    def span(from, to)
+      from, to = from.in_time_zone(time_zone), to.in_time_zone(time_zone)
+      both = (from.hour < 12) == (to.hour < 12) && to.to_date == from.to_date
+      "#{clock(from, ampm: !both)} to #{clock(to)}"
+    end
+
+    def clock(time, ampm: true)
+      label = "#{(time.hour % 12).nonzero? || 12}#{":%02d" % time.min if time.min.positive?}"
+      ampm ? "#{label} #{time.hour < 12 ? "am" : "pm"}" : label
+    end
+  end
+
   attr_reader :business, :view, :date, :member, :color_by
 
-  def initialize(business, view: "week", date: nil, member: nil, color_by: "member", location: nil, follow_ups: false)
+  def initialize(business, view: "week", date: nil, member: nil, color_by: "member", location: nil, follow_ups: false, viewer: nil)
     @location = location # CAT-07: shades that location's hours (else the main location's)
-    @show_follow_ups = follow_ups
+    @show_follow_ups = follow_ups # true, :busy (JOB-08) or false
+    @viewer = viewer
     @business = business
     @view = view == "day" ? "day" : "week"
     @date = date || place.today # the filtered location's today (CAT-07)
@@ -70,10 +111,16 @@ class ScheduleView
   # always has someone), at the filtered location when there is one.
   def follow_ups
     @follow_ups ||= if @show_follow_ups && @member != "unassigned"
-      scope = RequestFollowUp.where(scheduled_on: dates.first..dates.last).includes(:user, service_request: %i[client property location])
+      # JOB-08: shown as Busy, a follow-up needs only its person and its location's clock; the
+      # viewer's own are shown in full, so their client and property are loaded too.
+      shown = @show_follow_ups == :busy ? [ :user, { service_request: :location } ] : [ :user, { service_request: %i[client property location] } ]
+      scope = RequestFollowUp.where(scheduled_on: dates.first..dates.last).includes(*shown)
       scope = scope.where(user_id: @member) if @member
       scope = scope.where(service_request_id: ServiceRequest.where(location_id: @location.id).select(:id)) if @location
-      scope.to_a.each { _1.association(:business).target = business }
+      found = scope.to_a.each { _1.association(:business).target = business }
+      own = found.select { _1.user_id == @viewer&.id }.map(&:service_request)
+      ActiveRecord::Associations::Preloader.new(records: own, associations: %i[client property]).call if @show_follow_ups == :busy && own.any?
+      found.map { visible(_1) }
     else
       []
     end
@@ -89,11 +136,15 @@ class ScheduleView
     scope = RequestFollowUp.where(scheduled_on: [ dates.last + 1, place.today ].max.., done_at: nil)
     scope = scope.where(user_id: @member) if @member
     scope = scope.where(service_request_id: ServiceRequest.where(location_id: @location.id).select(:id)) if @location
-    @next_follow_up_after = scope.order(:scheduled_on, Arel.sql("starts_at NULLS LAST"), :id).first
+    @next_follow_up_after = scope.order(:scheduled_on, Arel.sql("starts_at NULLS LAST"), :id).first&.then { visible(_1) }
   end
 
+  # JOB-08: a follow-up as this calendar shows it: in full for people who can see requests, and
+  # their own; else Busy.
+  def visible(follow_up) = @show_follow_ups == :busy && follow_up.user_id != @viewer&.id ? Busy.of(follow_up) : follow_up
+
   # Visits and follow-ups together, in time order.
-  def items = @items ||= (visits + follow_ups).sort_by { [ _1.scheduled_on, _1.starts_at ? 0 : 1, _1.starts_at || Time.at(0), _1.is_a?(Visit) ? 0 : 1, _1.id ] }
+  def items = @items ||= (visits + follow_ups).sort_by { [ _1.scheduled_on, *sort_key(_1) ] }
 
   # What's on a day: visits and follow-ups.
   def visits_on(date) = by_date.fetch(date, [])
@@ -202,14 +253,17 @@ class ScheduleView
   end
 
   # JOB-07: a follow-up is colored like a visit (its person's, or scheduled / done by status).
+  # JOB-08: Busy, its person's, or neutral by status (it doesn't say whether it's done).
   def visit_color(visit)
+    return @color_by == "status" ? "neutral" : color_for(visit.user) if visit.is_a?(Busy)
     return "status-#{visit.status.dasherize}" if @color_by == "status"
 
     first = visit.assignees.first
     first ? color_for(first) : "none"
   end
 
-  # Hours booked per person this period: visits, and follow-ups when they're shown (JOB-07).
+  # Hours booked per person this period: visits, and follow-ups when they're shown (JOB-07),
+  # in full or as Busy (JOB-08), so everyone who sees them sees the same totals.
   def booked_hours
     @booked_hours ||= all_visits_in_period.each_with_object(Hash.new(0)) do |visit, hours|
       visit.assignments.each { hours[_1.user_id] += visit.duration_minutes / 60.0 }
@@ -243,7 +297,7 @@ class ScheduleView
   def next_item_after
     return if items.any?
 
-    [ next_visit_after, next_follow_up_after ].compact.min_by { [ _1.scheduled_on, _1.starts_at ? 0 : 1, _1.starts_at || Time.at(0), _1.is_a?(Visit) ? 0 : 1 ] }
+    [ next_visit_after, next_follow_up_after ].compact.min_by { [ _1.scheduled_on, *sort_key(_1).first(3) ] }
   end
 
   # The grid's clock: the filtered location's time zone (CAT-07), else the business's.
@@ -252,6 +306,12 @@ class ScheduleView
   private
 
   def by_date = @by_date ||= items.group_by(&:scheduled_on)
+
+  # Timed before anytime, then by start; visits, then follow-ups, then Busy at the same time.
+  def sort_key(item)
+    kind = { Visit => 0, RequestFollowUp => 1 }.fetch(item.class, 2)
+    [ item.starts_at ? 0 : 1, item.starts_at || Time.at(0), kind, item.is_a?(Busy) ? item.user.id : item.id ]
+  end
 
   # The people filter: one member's visits, or the unassigned ones.
   def for_member(scope)
