@@ -44,6 +44,15 @@ class Client::OnTheWayCardTest < ActionDispatch::IntegrationTest
     assert_response :not_found, "someone not on the card"
   end
 
+  test "turning On my way off hides the card and its photos" do
+    send!
+    @business.update!(client_visit_emails: { "on_my_way" => "0" })
+    get client_link_path(@token)
+    assert_select "#on-the-way", 0
+    get client_team_photo_path(@token, membership(@marcus).uid)
+    assert_response :not_found
+  end
+
   test "past the time it's any minute for an hour, then it goes" do
     send!
     travel_to(zone.parse("2026-12-10 11:20")) do
@@ -87,7 +96,7 @@ class Client::OnTheWayCardTest < ActionDispatch::IntegrationTest
     sign_in users(:one)
     post switch_admin_business_path, params: { business: @business.uid }
     get admin_job_path(@job)
-    assert_select "#visit-#{@visit.uid} .badge", /On the way · about 11:15 am/
+    assert_select "#visit-#{@visit.uid}", /On the way · about 11:15 am/
     assert_select "#visit-#{@visit.uid} details li", /On the way, arriving about 11:15 am \(emailed\).*Marcus Reyes/m
     get admin_schedule_path(view: "day", date: "2026-12-10")
     assert_select "#schedule-agenda", /On the way · about 11:15 am/

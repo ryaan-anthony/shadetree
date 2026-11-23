@@ -432,16 +432,20 @@ ProfileEvent.record!(marcus, %w[title], by: User.find_by(email: "admin@example.c
 Tenancy.with_business(business) do
   business.update!(client_visit_emails: { "on_my_way" => "1" }) unless business.client_visit_emails.key?("on_my_way")
   tech = User.find_by(email: "tech@example.com")
-  # A client without an email address, so the history's "not emailed" is true.
+  # A client without an email address, so the history's "not emailed" is true. Each seed run puts
+  # the card back on, today and 30 minutes from now.
   client = Client.where.not(id: ClientContactMethod.where(kind: "email").select(:client_id)).where(erased_at: nil).order(:id).first
-  if tech && client && !Job.exists?(title: "Hedge touch-up")
-    job = Job.create!(client:, property: client.primary_property, created_by: owner, title: "Hedge touch-up")
-    visit = job.visits.new(scheduled_on: business.today, timing: "anytime", duration_minutes: 60, assignee_ids: [ tech.id ], created_by: owner)
-    visit.schedule!(by: owner, notify_client: false)
+  job = Job.find_by(title: "Hedge touch-up") || (Job.create!(client:, property: client.primary_property, created_by: owner, title: "Hedge touch-up") if tech && client)
+  if job
+    visit = job.visits.first || job.visits.new(scheduled_on: business.today, timing: "anytime", duration_minutes: 60, assignee_ids: [ tech.id ], created_by: owner)
+                                    .tap { _1.schedule!(by: owner, notify_client: false) }
     arrives_at = OnTheWay.round_to_five(30.minutes.from_now.in_time_zone(business.time_zone))
-    visit.update_columns(on_the_way_arrives_at: arrives_at, on_the_way_by_id: tech.id)
-    VisitEvent.record!(visit, :on_the_way, by: tech, arrives_at: arrives_at.utc.iso8601, emailed: false, why_not: "no_email")
-    ClientEvent.record!(client, :visit_on_the_way, subject: visit, by: tech, arrives_at: arrives_at.utc.iso8601)
+    visit.update_columns(scheduled_on: business.today, status: "scheduled", started_at: nil, completed_at: nil, cancelled_at: nil,
+                         on_the_way_arrives_at: arrives_at, on_the_way_by_id: visit.assignments.first&.user_id)
+    unless visit.events.exists?(kind: "on_the_way")
+      VisitEvent.record!(visit, :on_the_way, by: visit.on_the_way_by, arrives_at: arrives_at.utc.iso8601, emailed: false, why_not: "no_email")
+      ClientEvent.record!(job.client, :visit_on_the_way, subject: visit, by: visit.on_the_way_by, arrives_at: arrives_at.utc.iso8601)
+    end
   end
 end
 

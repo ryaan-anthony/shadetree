@@ -77,8 +77,7 @@ until the business turns it on.
   time last emailed, cleared on start, end or move. History (`on_the_way`) and timeline
   (`visit_on_the_way`) rows store no names (the row's user), so account deletion needs no scrub.
 - `VisitMailer#on_the_way` (and its `_update` kind) attaches photos inline; `ClientEmailBudget`
-  shares the `client-emails` counter. Clock format as elsewhere ("about 11:15 am"). A sender taken
-  off the visit leaves the business's name, as a deactivated one does. Seeds: Marcus to Sam Okafor.
+  shares the `client-emails` counter. The sheet loads in a lazy frame. Seeds: Marcus is on the way.
 
 ## Decisions
 
@@ -91,9 +90,10 @@ until the business turns it on.
   page (clients have no job page); exact visits warn at 15 minutes (owner, 2026-11-22).
 - Updates email at 10+ minutes; no email offers tap-to-text from the tech's phone; at the email
   limit it isn't sent; one send a minute, 5 a day (owner, 2026-11-22).
-- Techs who call or text clients from a personal phone do so by their own choice; Shadetree
-  shows no warning (owner, 2026-11-22).
+- Techs who call or text from a personal phone choose to; no warning shown (owner, 2026-11-22).
 - 5-minute rounding; off for existing businesses; fixed wording; no follow-ups (review, 2026-11-22).
+- "About 11:15 am"; the default subjects and openings; the business's name when the sender is off
+  the visit; the rest as #409 lists them (owner, 2026-11-23).
 
 ## Open questions
 

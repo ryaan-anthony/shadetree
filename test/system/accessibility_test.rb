@@ -110,6 +110,31 @@ class AccessibilityTest < ApplicationSystemTestCase
     assert_empty problems, "axe found problems:\n#{problems.join("\n")}"
   end
 
+  # JOB-12: the On my way sheet on My day (a dialog, loaded when it opens) closes with focus back
+  # on its button; the sheet and the client's On the way card pass axe.
+  test "On my way: the sheet on My day and the client's card pass axe, and the sheet gives focus back" do
+    @business.update!(client_visit_emails: { "on_my_way" => "1" }, show_team_profiles: true)
+    @business.business_users.find_by!(user: users(:one)).update!(photo: Rack::Test::UploadedFile.new(file_fixture("face.jpg"), "image/jpeg"), title: "Owner")
+    visit_record = as_business(@business) do
+      client = Client.create!(display_name: "Maria Lopez", contact_methods_attributes: [ { kind: "email", value: "maria@example.com" } ])
+      Job.create!(client:, title: "Spring cleanup").visits.new(scheduled_on: @business.today, timing: "anytime", assignee_ids: [ users(:one).id ])
+         .tap { _1.schedule!(by: users(:one), notify_client: false) }
+    end
+    visit admin_my_day_path
+    within("#my-visit-#{visit_record.uid}") { click_on "On my way" }
+    assert_selector "dialog[open]", text: "Pick a time" # the sheet's frame has loaded
+    problems = axe_problems("On my way sheet")
+    find("dialog[open] button[aria-label=Close]").click
+    assert_no_selector "dialog[open]"
+    assert_equal "On my way", evaluate_script("document.activeElement.textContent").squish, "focus is back on the button"
+
+    as_business(@business) { visit_record.update_columns(on_the_way_arrives_at: 30.minutes.from_now, on_the_way_by_id: users(:one).id) }
+    visit client_link_path(as_business(@business) { visit_record.client_link! }.token)
+    assert_selector "#on-the-way h2", text: "on the way"
+    problems += axe_problems("client's On the way card")
+    assert_empty problems, "axe found problems:\n#{problems.join("\n")}"
+  end
+
   # ACC-08: the guided tour, open at the checklist and at a menu stop, wide and on a phone
   # (where the menu drawer is open beside the sheet).
   test "the guided tour passes axe while it's open" do

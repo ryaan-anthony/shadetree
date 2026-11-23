@@ -92,7 +92,10 @@ module OnTheWay
 
   # The card's on the client's visit page from the first send until an hour past the time, while
   # the visit is still booked.
-  def on_the_way?(now: Time.current) = status == "scheduled" && on_the_way_arrives_at.present? && now < on_the_way_arrives_at + SHOWN_AFTER
+  # Turning "On my way" off hides it too.
+  def on_the_way?(now: Time.current)
+    status == "scheduled" && on_the_way_arrives_at.present? && now < on_the_way_arrives_at + SHOWN_AFTER && business.client_visit_email?("on_my_way")
+  end
   def on_the_way_late?(now: Time.current) = on_the_way?(now:) && now >= on_the_way_arrives_at
 
   # "11:15 am", on the clock where the work is.
