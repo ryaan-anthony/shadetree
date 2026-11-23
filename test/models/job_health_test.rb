@@ -49,8 +49,12 @@ class JobHealthTest < ActiveSupport::TestCase
       assert_empty @alerts # already alerted on
 
       fail_solid_queue_job("DataExportJob", at: 3.hours.ago) # a check that ran late still sees it
+      fail_solid_queue_job("QuotePdfJob", at: 1.minute.ago)
       JobHealth.check!
-      assert_equal [ 1, %w[DataExportJob] ], @alerts.sole.values_at(:new_failures, :failed_classes)
+      assert_empty @alerts # within JOB_ALERT_REPEAT_MINUTES of the last failure alert: still counting
+
+      JobHealth.check!(now: 61.minutes.from_now)
+      assert_equal [ 2, %w[DataExportJob QuotePdfJob] ], @alerts.sole.values_at(:new_failures, :failed_classes).then { [ _1, _2.sort ] }
     end
   end
 
@@ -65,10 +69,29 @@ class JobHealthTest < ActiveSupport::TestCase
       config.job_backlog_threshold = 100
       @alerts.clear
       JobHealth.check!(now: 11.minutes.from_now)
+      assert_empty @alerts # still backlogged, but alerted on within JOB_ALERT_REPEAT_MINUTES
+
+      JobHealth.check!(now: 61.minutes.from_now)
       assert_operator @alerts.sole[:oldest_wait_seconds], :>, 600
     end
   ensure
     config.job_backlog_threshold = 100
+  end
+
+  test "failures alert once JOB_FAILED_THRESHOLD of them are new, and keep counting until then" do
+    config = Rails.configuration.x.observability
+    with_solid_queue_tables do
+      config.job_failed_threshold = 2
+      fail_solid_queue_job("QuotePdfJob", at: 20.minutes.ago)
+      JobHealth.check!
+      assert_empty @alerts
+
+      fail_solid_queue_job("VisitRemindersJob", at: 5.minutes.ago)
+      JobHealth.check!
+      assert_equal 2, @alerts.sole[:new_failures]
+    end
+  ensure
+    config.job_failed_threshold = 1
   end
 
   test "a scheduled job nobody dispatched counts as waiting" do
@@ -77,5 +100,37 @@ class JobHealthTest < ActiveSupport::TestCase
       assert_equal 0, JobHealth.oldest_wait
       assert_operator JobHealth.oldest_wait(21.minutes.from_now), :>=, 20.minutes
     end
+  end
+
+  test "stale or untested backups raise a repeated alert, by /up/backup's rule (owner, 2026-11-22)" do
+    config = Rails.configuration.x.observability
+    dir = Dir.mktmpdir
+    previous = ENV["BACKUP_STATUS_DIR"]
+    ENV["BACKUP_STATUS_DIR"] = dir
+    with_solid_queue_tables do
+      JobHealth.check!
+      assert_empty @alerts # off where backups don't run (BACKUP_ALERTS)
+
+      config.backup_alerts = true
+      JobHealth.check!
+      assert_equal [ "Backups stale or untested", "stale" ], @alerts.sole.values_at(:message, :state)
+
+      @alerts.clear
+      FileUtils.touch(File.join(dir, "last_success"))
+      JobHealth.check!(now: 30.minutes.from_now)
+      assert_empty @alerts # now untested, but alerted on within JOB_ALERT_REPEAT_MINUTES
+
+      JobHealth.check!(now: 61.minutes.from_now)
+      assert_equal "untested", @alerts.sole[:state]
+
+      @alerts.clear
+      FileUtils.touch(File.join(dir, "last_drill"), mtime: 2.hours.from_now.to_time)
+      JobHealth.check!(now: 2.hours.from_now)
+      assert_empty @alerts
+    end
+  ensure
+    config.backup_alerts = false
+    ENV["BACKUP_STATUS_DIR"] = previous
+    FileUtils.rm_rf(dir)
   end
 end

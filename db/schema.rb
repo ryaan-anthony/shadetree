@@ -448,7 +448,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_150100) do
     t.index ["created_at"], name: "index_connect_events_on_created_at"
     t.index ["event_id"], name: "index_connect_events_on_event_id", unique: true
     t.index ["status", "updated_at"], name: "index_connect_events_to_retry", where: "((status)::text = ANY (ARRAY[('received'::character varying)::text, ('failed'::character varying)::text]))"
-    t.check_constraint "status::text = ANY (ARRAY['received'::character varying, 'processed'::character varying, 'ignored'::character varying, 'failed'::character varying]::text[])", name: "connect_events_status"
+    t.check_constraint "status::text = ANY (ARRAY['received'::character varying::text, 'processed'::character varying::text, 'ignored'::character varying::text, 'failed'::character varying::text])", name: "connect_events_status"
   end
 
   create_table "contact_messages", force: :cascade do |t|
@@ -926,7 +926,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_150100) do
     t.index ["business_id"], name: "index_payment_accounts_one_connected", unique: true, where: "(disconnected_at IS NULL)"
     t.index ["connected_by_id"], name: "index_payment_accounts_on_connected_by_id"
     t.index ["disconnected_by_id"], name: "index_payment_accounts_on_disconnected_by_id"
-    t.check_constraint "disconnected_reason IS NULL OR (disconnected_reason::text = ANY (ARRAY['owner'::character varying, 'provider'::character varying, 'business_deleted'::character varying]::text[]))", name: "payment_accounts_disconnected_reason"
+    t.check_constraint "disconnected_reason IS NULL OR (disconnected_reason::text = ANY (ARRAY['owner'::character varying::text, 'provider'::character varying::text, 'business_deleted'::character varying::text]))", name: "payment_accounts_disconnected_reason"
   end
 
   create_table "payments", force: :cascade do |t|
@@ -1018,7 +1018,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_150100) do
     t.index ["business_id", "quote_id", "occurred_at"], name: "index_quote_events_on_business_id_and_quote_id_and_occurred_at"
     t.index ["quote_id"], name: "index_quote_events_on_quote_id"
     t.index ["user_id"], name: "index_quote_events_on_user_id"
-    t.check_constraint "kind::text = ANY (ARRAY['archived'::character varying::text, 'unarchived'::character varying::text, 'expiry_extended'::character varying::text, 'duplicated'::character varying::text, 'revised'::character varying::text, 'repriced'::character varying::text, 'ready_for_review'::character varying::text, 'sent_without_review'::character varying::text])", name: "quote_events_kind"
+    t.check_constraint "kind::text = ANY (ARRAY['archived'::character varying, 'unarchived'::character varying, 'expiry_extended'::character varying, 'duplicated'::character varying, 'revised'::character varying, 'repriced'::character varying, 'ready_for_review'::character varying, 'sent_without_review'::character varying]::text[])", name: "quote_events_kind"
   end
 
   create_table "quote_line_items", force: :cascade do |t|
@@ -1189,8 +1189,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_150100) do
     t.index ["user_id"], name: "index_request_follow_ups_on_user_id"
     t.check_constraint "(timing::text = 'anytime'::text) = (starts_at IS NULL) AND (timing::text = 'window'::text) = (window_ends_at IS NOT NULL)", name: "request_follow_ups_times"
     t.check_constraint "duration_minutes >= 5 AND duration_minutes <= 1440", name: "request_follow_ups_duration"
-    t.check_constraint "kind::text = ANY (ARRAY['visit'::character varying, 'call'::character varying]::text[])", name: "request_follow_ups_kind"
-    t.check_constraint "timing::text = ANY (ARRAY['exact'::character varying, 'window'::character varying, 'anytime'::character varying]::text[])", name: "request_follow_ups_timing"
+    t.check_constraint "kind::text = ANY (ARRAY['visit'::character varying::text, 'call'::character varying::text])", name: "request_follow_ups_kind"
+    t.check_constraint "timing::text = ANY (ARRAY['exact'::character varying::text, 'window'::character varying::text, 'anytime'::character varying::text])", name: "request_follow_ups_timing"
   end
 
   create_table "role_events", force: :cascade do |t|
@@ -1227,7 +1227,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_150100) do
     t.index ["business_id"], name: "index_service_request_events_on_business_id"
     t.index ["service_request_id"], name: "index_service_request_events_on_service_request_id"
     t.index ["user_id"], name: "index_service_request_events_on_user_id"
-    t.check_constraint "kind::text = ANY (ARRAY['assigned'::character varying, 'reassigned'::character varying, 'rescheduled'::character varying, 'updated'::character varying, 'unassigned'::character varying, 'ended'::character varying, 'done'::character varying, 'passed_back'::character varying]::text[])", name: "service_request_events_kind"
+    t.check_constraint "kind::text = ANY (ARRAY['assigned'::character varying::text, 'reassigned'::character varying::text, 'rescheduled'::character varying::text, 'updated'::character varying::text, 'unassigned'::character varying::text, 'ended'::character varying::text, 'done'::character varying::text, 'passed_back'::character varying::text])", name: "service_request_events_kind"
   end
 
   create_table "service_request_notes", force: :cascade do |t|

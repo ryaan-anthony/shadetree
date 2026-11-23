@@ -65,6 +65,18 @@ module Observability
         config.before_send = ->(event, hint) { hint.to_h[HINT] ? scrub(event, hint) : nil }
       end
 
+      # bin/rails sentry:test: one error and one alert, on the same road as real ones, then a flush
+      # so they leave before the process exits.
+      def send_test!
+        begin
+          1 / 0
+        rescue ZeroDivisionError => error
+          Rails.error.report(error, handled: true, severity: :error, source: "shadetree.sentry_test")
+        end
+        Observability.alert("Sentry test message")
+        Sentry.get_current_client&.flush
+      end
+
       # Every Active Job adapter, so sentry-rails' job extension never captures or tags a job itself.
       def job_adapters
         names = ActiveJob::QueueAdapters.constants.grep(/Adapter\z/).map { "ActiveJob::QueueAdapters::#{_1}" }

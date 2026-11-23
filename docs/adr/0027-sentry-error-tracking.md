@@ -42,11 +42,11 @@ literals; for Mail, SMTP and Stripe errors also the values they quote). Tags car
 name. Release is `APP_REVISION` (the deployed commit), environment `SENTRY_ENVIRONMENT` or the
 deploy's environment. Tracing, profiling, logs and sessions are off.
 
-Job health uses the one Cron monitor: `JobHealthCheckJob` checks in as `job-health` every run,
-`error` while jobs fail or the queue is backlogged, so Sentry also notices when the check stops
-(workers down). Backlog messages repeat at most hourly to protect the quota. Backups too (owner,
-2026-11-22): stale or untested ones (`/up/backup`'s rule) raise a message with the same throttle
-and fail the check-in.
+Job health uses the one Cron monitor, in production only: `JobHealthCheckJob` checks in as
+`job-health` every run, `error` while the queue is backlogged or backups are stale or untested
+(failed jobs already arrive as their own errors), so Sentry also notices when the check stops
+(workers down). Backups (owner, 2026-11-22) follow `/up/backup`'s rule. Each kind of alert
+(failures, backlog, backups) repeats at most hourly to protect the quota.
 
 ## Consequences
 

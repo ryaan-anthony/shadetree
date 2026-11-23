@@ -7,6 +7,7 @@ require "sentry/test_helper"
 class SentryTrackerTest < ActionDispatch::IntegrationTest
   include Sentry::TestHelper
   include ActiveJob::TestHelper
+  include SolidQueueTables
 
   PERSONAL = [ "Maria", "Lopez", "maria@example.com", "maria%40example.com", "555-010-0100", "5550100100",
                "12 Elm Street", "gate code 4471", "Zelda", "Secret Lane", "s3cr3t-cookie", "Bearer abc123" ].freeze
@@ -41,6 +42,15 @@ class SentryTrackerTest < ActionDispatch::IntegrationTest
     PERSONAL.each { assert_no_match(/#{Regexp.escape(_1)}/i, json) }
     assert_nil event.to_json_compatible["request"]
     assert_empty Array(event.to_json_compatible.dig("breadcrumbs", "values"))
+  end
+
+  test "sentry:test sends one error and one alert, each scrubbed and marked as ours" do
+    Observability::SentryTracker.send_test!
+    error, alert = sentry_events
+    assert_equal "ZeroDivisionError", error.exception.values.last.type
+    assert_equal "Sentry test message", alert.message
+    assert_equal %w[error warning], [ error.level.to_s, alert.level.to_s ]
+    sentry_events.each { assert_private(_1) }
   end
 
   test "with no SENTRY_DSN, Sentry stays off" do
@@ -165,5 +175,58 @@ class SentryTrackerTest < ActionDispatch::IntegrationTest
     12.times { Observability.alert("Job queue backlog over threshold") }
 
     assert_equal [ 10, 12 ], [ sentry_events.count { _1.exception }, sentry_events.count { _1.message.present? } ]
+  end
+
+  def in_environment(name)
+    previous, ENV["SENTRY_ENVIRONMENT"] = ENV["SENTRY_ENVIRONMENT"], name
+    yield
+  ensure
+    ENV["SENTRY_ENVIRONMENT"] = previous
+  end
+
+  test "production's job health check checks in with Sentry Cron: error while backlogged, ok after; failed jobs don't fail it" do
+    config = Rails.configuration.x.observability
+    cache, Rails.cache = Rails.cache, ActiveSupport::Cache::MemoryStore.new
+    in_environment("production") do
+      with_solid_queue_tables do
+        fail_solid_queue_job("QuotePdfJob", at: 5.minutes.ago)
+        JobHealth.check!
+        config.job_backlog_threshold = 0
+        enqueue_solid_queue_job
+        JobHealth.check!
+        config.job_backlog_threshold = 100
+        JobHealth.check!
+      end
+    end
+
+    check_ins = sentry_events.grep(Sentry::CheckInEvent)
+    assert_equal [ [ "job-health", :ok ], [ "job-health", :error ], [ "job-health", :ok ] ], check_ins.map { [ _1.monitor_slug, _1.status ] }
+    assert_equal [ "Background jobs failed", "Job queue backlog over threshold" ], sentry_events.grep(Sentry::ErrorEvent).map(&:message)
+  ensure
+    config.job_backlog_threshold = 100
+    Rails.cache = cache
+  end
+
+  test "staging doesn't check in: the free plan's one monitor is production's" do
+    in_environment("staging") { with_solid_queue_tables { JobHealth.check! } }
+    assert_empty sentry_events.grep(Sentry::CheckInEvent)
+  end
+
+  test "stale backups fail the job-health check-in and arrive as one warning message" do
+    config = Rails.configuration.x.observability
+    cache, Rails.cache = Rails.cache, ActiveSupport::Cache::MemoryStore.new
+    dir, previous = Dir.mktmpdir, ENV["BACKUP_STATUS_DIR"]
+    ENV["BACKUP_STATUS_DIR"] = dir # no backup taken yet
+    config.backup_alerts = true
+    in_environment("production") { with_solid_queue_tables { JobHealth.check! } }
+
+    assert_equal [ :error ], sentry_events.grep(Sentry::CheckInEvent).map(&:status)
+    message = sentry_events.grep(Sentry::ErrorEvent).sole
+    assert_equal [ "Backups stale or untested", "warning" ], [ message.message, message.level.to_s ]
+  ensure
+    config.backup_alerts = false
+    ENV["BACKUP_STATUS_DIR"] = previous
+    FileUtils.rm_rf(dir)
+    Rails.cache = cache
   end
 end
