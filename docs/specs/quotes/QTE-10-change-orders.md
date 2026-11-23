@@ -37,7 +37,7 @@ can't be revised" for work in progress (QTE-06).
       client page shows the latest approved version and a short list of changes ("Dec 4: 2 trees
       added, +$240.00, approved by Pat Lee").
 - [ ] Lines keep their identity across versions, so claims, jobs and bills stay with them; an
-      added line becomes to do (JOB-09). Changed prices reach jobs as question 4 settles.
+      added line becomes to do (JOB-09). Changed prices: see Decisions.
 - [ ] PAY-08's discount share uses the latest approved version's subtotal and discount.
 - [ ] The quote list shows "Change order sent" while one waits for the client.
 - [ ] As an alternative, staff or a technician (QTE-07) can draft a new quote for the rest:
@@ -58,12 +58,9 @@ can't be revised" for work in progress (QTE-06).
   reductions and new discounts apply straight away, and the client is told (owner, 2026-11-22).
 - This replaces QTE-06's "approved quotes can't be revised" for work in progress.
   Alternatively, the tech can draft a new quote for the rest (owner, 2026-11-22).
-
-## Open questions
-
-1. Does a change order count toward plan usage (BIL-02)? Recommend no: it's the same quote.
-2. Can a technician propose a change order from the field, for the office to send (as QTE-07's
-   Ready for review)? Recommend a later spec; "Quote the rest" covers the field for now.
-3. Does a change order expire? Recommend the quote's usual validity from when it's sent.
-4. Do changed prices reach jobs already made? Recommend to-do work and open jobs take the new
-   price (staff see which jobs changed); completed jobs keep theirs.
+- A change order doesn't count toward plan usage (BIL-02): it's the same quote. It's valid
+  for the quote's usual period from when it's sent (owner, 2026-11-22).
+- Technicians proposing change orders from the field is a later spec; "Quote the rest"
+  covers the field for now (owner, 2026-11-22).
+- Changed prices reach to-do work and open jobs (staff see which jobs changed); completed jobs
+  keep theirs (owner, 2026-11-22).

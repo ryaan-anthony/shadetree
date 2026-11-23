@@ -35,7 +35,7 @@ used up, so the client never pays twice and always sees how much of the deposit 
 - [ ] A credit applied to an invoice that's later voided is free to apply again.
 - [ ] If a refund or a lost dispute (PAY-04) leaves less paid on a deposit than has been applied,
       sent invoices don't change: the quote shows "Deposit over-applied $X", and the next work
-      invoice for the quote takes it back as a positive adjustment (question 1).
+      invoice for the quote takes it back as a positive adjustment, "Deposit refunded +$X".
 - [ ] When the quote closes (QTE-09) with deposit money unused, staff see "Unused deposit $X" on
       the quote. Refunds stay in the provider's dashboard (07-payments D4).
 - [ ] The client's quote page shows deposits paid, applied and left (QTE-09).
@@ -62,6 +62,9 @@ used up, so the client never pays twice and always sees how much of the deposit 
   (owner, 2026-11-22).
 - With several, the oldest deposit is applied first. Asking for a deposit at approval is a later
   spec, with online payment required (owner, 2026-11-22).
+- A refund after a deposit was applied is taken back on the next work invoice, shown as
+  "Deposit refunded +$X". Deposits credit work invoices only, not progress invoices
+  (owner, 2026-11-22).
 
 ## Implementation notes
 
@@ -69,10 +72,3 @@ used up, so the client never pays twice and always sees how much of the deposit 
   of kind deposit, pointing at the deposit invoice, recorded under PAY-06's lock (quote first).
 - The credit sits after tax: `total_due` drops by it, so balance, `sendable_total?` (PAY-01's $0
   rule for a fully credited invoice), lists and the PDF ("Deposit applied") use it.
-
-## Open questions
-
-1. A refund after a deposit was applied: take it back on the next invoice, or only flag it?
-   Recommend taking it back on the next work invoice, shown as "Deposit refunded +$X".
-2. Do deposits credit progress invoices? Recommend no: only work invoices, so a deposit pays for
-   finished work.

@@ -27,7 +27,7 @@ completed. It's the first growth item in 06-jobs and the biggest driver of reten
       The client page and PDF say so ("Monthly from Jan 5, 12 times; $85.00 each").
 - [ ] Approval covers every occurrence at the quote's prices. Each occurrence becomes a job with
       the quote's lines at full quantities, fixed discounts included, titled "Title (3 of 12)"
-      (no end: question 4). Its lines aren't claimed (JOB-09): each occurrence takes them.
+      (no end: "Title (3)"). Its lines aren't claimed (JOB-09): each occurrence takes them.
 - [ ] Jobs are made up to 60 days ahead plus the next occurrence, each with a visit on its date
       using the series' crew and arrival window (changeable per visit), and each follows JOB-02
       onwards: rescheduling, completion, cancelling one without touching the others.
@@ -60,6 +60,12 @@ completed. It's the first growth item in 06-jobs and the biggest driver of reten
   applies to each occurrence in full (owner, 2026-11-22).
 - One "Your schedule" summary email when a series starts; after that only changes and the usual
   reminders, so there's no burst of "visit booked" emails (owner, 2026-11-22).
+- No automatic job on approval (JOB-01) for a recurring quote: the series makes the jobs
+  (owner, 2026-11-22).
+- Deposits are allowed on recurring quotes, credited against occurrences in order
+  (owner, 2026-11-22).
+- Archiving the client stops new jobs (staff are told which dates are left); erasing the
+  client stops the series. A series with no end titles its jobs "Title (3)" (owner, 2026-11-22).
 
 ## Implementation notes
 
@@ -69,12 +75,3 @@ completed. It's the first growth item in 06-jobs and the biggest driver of reten
 - A `config/recurring.yml` entry runs nightly per business under `Tenancy.with_business`,
   reporting one business's error and going on, as `AutomationsDueJob` does. The horizon is
   `business.today` + 60 days, and a missed run catches up.
-
-## Open questions
-
-1. The automatic job on approval (JOB-01) for a recurring quote? Recommend no: the series makes
-   the jobs.
-2. Deposits on a recurring quote? Recommend allowed, credited against occurrences in order.
-3. A client archived or erased mid-series? Recommend archiving stops new jobs (staff are told
-   which dates are left) and erasure stops the series.
-4. The title of a series with no end? Recommend "Title (3)", the occurrence number alone.

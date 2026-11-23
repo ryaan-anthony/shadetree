@@ -36,7 +36,8 @@ back. Billing is PAY-06 and PAY-08, the client's view QTE-09, changes to the quo
       invoices. A percent discount is copied as now.
 - [ ] Completing a job asks what was done per quote line (starting at what was booked); the job's
       quantity becomes that, and a shortfall isn't freed or rebooked. More done than booked claims
-      the line's free quantity; past the quote's, question 1. A completed job's lines can't change.
+      the line's free quantity; past the quote's, see
+      Decisions. A completed job's lines can't change.
 - [ ] Raising a quote line's quantity on an open job claims free quantity; past the quote's it
       needs a change order (QTE-10). Lowering it, or removing the line, frees the difference.
       Lines added on the job are its own.
@@ -70,6 +71,8 @@ back. Billing is PAY-06 and PAY-08, the client's view QTE-09, changes to the quo
   (owner, 2026-11-22).
 - INS-01 gets a "Work not booked" group (approved quotes with to-do work, oldest first); to-do
   work never expires. Archiving keeps line states and leaves that group (owner, 2026-11-22).
+- More done than the quote's quantity: the job completes with the quoted quantity, and a
+  change order (QTE-10) for the extra bills once approved (owner, 2026-11-22).
 
 ## Implementation notes
 
@@ -87,8 +90,3 @@ back. Billing is PAY-06 and PAY-08, the client's view QTE-09, changes to the quo
 - Claims are kept whether the flag is on or off; the flag can't be turned on before PAY-06 ships.
 - Export (new columns at the end): job lines get their quote line and claim; quote lines what's
   claimed, done and not going ahead.
-
-## Open questions
-
-1. More done than the quote's quantity at completion? Recommend completing with the quoted
-   quantity and offering a change order (QTE-10) for the extra, which bills once approved.
