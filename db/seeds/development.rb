@@ -195,7 +195,7 @@ end
 # for the gutter job.
 Tenancy.with_business(business) do
   owner = User.find_by!(email: "owner@example.com")
-  approved = Quote.find_by(status: "approved")
+  approved = Quote.where(status: "approved").order(:id).first # Hedge trimming, not PLT-14's Tree removal
   if approved && approved.invoices.none?
     invoice = Invoice.from_quote!(approved, by: owner)
     invoice.mark_sent!(by: owner, channel: "link")
@@ -208,6 +208,21 @@ Tenancy.with_business(business) do
   end
   gutters = Job.find_by(title: "Gutter cleaning")
   Invoice.from_job!(gutters, by: owner) if gutters && Invoice.where(job: gutters).none?
+end
+
+# PLT-14: an approved quote whose job isn't billed yet, so its page's Primary is Create invoice.
+Tenancy.with_business(business) do
+  owner = User.find_by!(email: "owner@example.com")
+  client = Client.order(:id).second
+  if client && !Quote.exists?(title: "Tree removal")
+    quote = Quote.start(client:, created_by: owner)
+    quote.title = "Tree removal"
+    quote.sync_line_items([ { "key" => "seed-0", "name" => "Tree removal", "quantity" => "1", "unit_price" => "480", "taxable" => "1" } ])
+    quote.save!
+    quote.mark_sent!(by: owner, channel: "link")
+    quote.record_response!(:approve, link: quote.client_link!, version: quote.lock_version, signer_name: client.display_name,
+                           terms_accepted: "1", ip_address: "127.0.0.1", device: "Computer, Chrome") # the job follows (JOB-01)
+  end
 end
 
 # CLI-03: the request form, on, with a request from someone new.

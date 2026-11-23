@@ -25,7 +25,7 @@ design-system checks run over. Triage: [#314 triage](../../audits/314-triage.md)
 
 ## Acceptance criteria
 
-- [ ] The kit has four ranks, each shown on the style guide with its rule:
+- [x] The kit has four ranks, each shown on the style guide with its rule:
   - **Primary:** green, the next step in the workflow.
   - **Secondary:** white with a border, supporting actions.
   - **Tertiary:** borderless grey, for navigation, low-risk actions and Cancel.
@@ -33,32 +33,32 @@ design-system checks run over. Triage: [#314 triage](../../audits/314-triage.md)
   - Beside these, a destructive dialog's confirm button is solid red, and the client pages'
     brand button is their Primary. That makes six button variants. The green inline text link
     isn't a button: it's only for actions inside a sentence.
-- [ ] Every staff page has at most one Primary in its header. A card or dialog may have its own
+- [x] Every staff page has at most one Primary in its header. A card or dialog may have its own
       Primary only when it is that region's single action (a rail card's "Export everything").
-- [ ] Moving to another record is never Primary. The quote page's Primary follows the
+- [x] Moving to another record is never Primary. The quote page's Primary follows the
       Decisions. Approved quotes get their job and invoice links as Secondary.
-- [ ] Client page: "New quote" is the Primary, in the page header beside Edit. The Work card
+- [x] Client page: "New quote" is the Primary, in the page header beside Edit. The Work card
       keeps "New job" and "New invoice" as Secondary (today they're borderless buttons).
-- [ ] These actions use Destructive: "Cancel job", "Disconnect" (Stripe), "Deactivate"
-      (Team), "Archive" on a client or a request, and every delete. Archive in the quote,
-      service, location and tax-rate menus stays a menu item.
-- [ ] Cancel on forms and dialogs is Tertiary everywhere.
-- [ ] An empty state's call to action uses the page action's own rank and wording.
-- [ ] Disabled controls look disabled everywhere: reduced contrast, no hover change, and the
+- [x] These actions use Destructive: "Cancel job", "Disconnect" (Stripe), "Deactivate"
+      (Team), "Archive" on a request, and every delete. Menus keep their items: Archive in the
+      quote, service, location, tax-rate and client menus, and Delete (see Decisions).
+- [x] Cancel on forms and dialogs is Tertiary everywhere.
+- [x] An empty state's call to action uses the page action's own rank and wording.
+- [x] Disabled controls look disabled everywhere: reduced contrast, no hover change, and the
       state exposed to assistive technology. A not-allowed cursor needs pointer events, which
       the kit turns off today. Keep it off and rely on contrast, or let pointer events through
       and block the click another way. Covers the pager's Previous and Next (the kit's and
       the Clients list's own) and the services list's move arrows.
-- [ ] **One shared page list.** The pages the accessibility check sweeps (fixtures, not seeds)
+- [x] **One shared page list.** The pages the accessibility check sweeps (fixtures, not seeds)
       become one list, plus each detail page in its main states. The axe tests and every
       design-system check (PLT-15 to PLT-22) use that list.
-- [ ] Integration tests render each page in the list as an Owner. They fail when a page
+- [x] Integration tests render each page in the list as an Owner. They fail when a page
       header has more than one Primary, when a Cancel isn't Tertiary, or when a label above
       isn't Destructive.
-- [ ] A test fails when a view or layout writes kit button classes by hand instead of asking
+- [x] A test fails when a view or layout writes kit button classes by hand instead of asking
       the kit (today: the sidebar's sign-out, the skip links, and the operator console).
       Unknown variants already raise.
-- [ ] Desktop (1280) and phone (390) screenshots of Home and the quote, job, invoice and
+- [x] Desktop (1280) and phone (390) screenshots of Home and the quote, job, invoice and
       client pages, with no visual change other than the ranks.
 
 ## Out of scope
@@ -66,6 +66,16 @@ design-system checks run over. Triage: [#314 triage](../../audits/314-triage.md)
 - New colours or button shapes ("a new colour or font would be the wrong lever", #314).
 - The quote and invoice builders' toolbars (Send is already their Primary).
 - Client-facing pages beyond naming their brand button as Primary.
+
+## Implementation notes
+
+- Kit: `button_classes(:primary | :secondary | :tertiary | :destructive | :destructive_solid |
+  :brand)`; `:ghost`, `:danger`, `:link` raise. `.text-action` is the in-sentence link.
+  Disabled: sunken fill, `muted` text, no shadow or hover. A test bans hand-written `btn` classes.
+- `test/support/staff_pages.rb` is the shared list (keys, kinds, `head:` opt-outs, ops pages).
+  `design_system_test.rb` renders each page once and runs every registered `check`; the axe
+  tests sweep the same list in three parts. `page_actions_test.rb` covers the Decisions.
+- Confirm dialogs: `data-turbo-confirm-variant="destructive"` for red; a check matches it to the label.
 
 ## Decisions
 
@@ -78,5 +88,13 @@ design-system checks run over. Triage: [#314 triage](../../audits/314-triage.md)
   - an approved quote with no job → **Create job** (today's button);
   - a job but no invoice → **Create invoice**;
   - otherwise no Primary. "Revise" on a quote with changes requested stays Secondary.
-  - The earlier Draft case is dropped, because drafts open in the builder. #292's "Invoice
-    INV-0001" link stays, as Secondary.
+  - The Draft case is dropped (drafts open in the builder); #292's invoice link stays Secondary.
+  - an approved quote whose job was cancelled → **Reopen job**, which reopens it and opens
+    its page: interim until the multi-job spec (owner, 2026-11-22).
+- An open job with nothing booked has **Schedule visit** as its Primary; once a visit is
+  booked, **Complete** (owner, 2026-11-22).
+- Delete stays a red item in the client, draft quote and draft invoice menus, and a client's
+  Archive stays in its menu (owner, 2026-11-22).
+- Confirm dialogs use the Primary for safe actions and solid red only for Delete, Remove,
+  Revoke, Disconnect, Deactivate, Suspend, Discard, Undo import, Cancel job or visit and
+  Void; the message is the dialog's description (owner, 2026-11-22).

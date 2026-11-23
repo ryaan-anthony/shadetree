@@ -1,14 +1,16 @@
 <%# The dialog behind data-turbo-confirm (see app/javascript/confirm.js). One per page, in each layout. %>
-<dialog id="confirm-dialog" class="modal max-w-md" aria-labelledby="confirm-dialog-title">
+<dialog id="confirm-dialog" class="modal max-w-md" aria-labelledby="confirm-dialog-title" aria-describedby="confirm-dialog-message">
   <form method="dialog">
     <div class="modal-head">
       <h2 class="modal-title" id="confirm-dialog-title" data-confirm-title>Are you sure?</h2>
     </div>
-    <div class="modal-body text-subtle" data-confirm-message></div>
+    <div class="modal-body text-subtle" id="confirm-dialog-message" data-confirm-message></div>
     <div class="modal-foot">
       <button value="cancel" class="<%= button_classes(:tertiary) %>" autofocus>Cancel</button>
-      <%# data-warning-class: the look for a warning that isn't destructive (schedule_drag_controller) %>
-      <button value="confirm" class="<%= button_classes(:destructive_solid) %>" data-confirm-button data-warning-class="<%= button_classes(:primary) %>">Confirm</button>
+      <%# PLT-14 (owner, 2026-11-22): the confirm button is the Primary; data-turbo-confirm-variant="destructive"
+          makes it solid red (confirm.js). The kit's classes for each come from here. %>
+      <button value="confirm" class="<%= button_classes(:primary) %>" data-confirm-button
+              data-primary-class="<%= button_classes(:primary) %>" data-destructive-class="<%= button_classes(:destructive_solid) %>">Confirm</button>
     </div>
   </form>
 </dialog>

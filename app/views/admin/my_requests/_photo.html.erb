@@ -6,6 +6,6 @@
   <% end %>
   <% if removable %>
     <%= button_to admin_my_request_photo_path(request_record, photo), method: :delete, class: "absolute right-0 top-0 grid size-11 place-items-center text-white", "aria-label": "Remove site photo #{number}",
-                  form: { data: { turbo_confirm: "Remove this photo?", turbo_confirm_button: "Remove" } } do %><span class="grid size-7 place-items-center rounded-full bg-black/60"><%= icon "x", class: "size-4" %></span><% end %>
+                  form: { data: { turbo_confirm: "Remove this photo?", turbo_confirm_button: "Remove", turbo_confirm_variant: "destructive" } } do %><span class="grid size-7 place-items-center rounded-full bg-black/60"><%= icon "x", class: "size-4" %></span><% end %>
   <% end %>
 </li>

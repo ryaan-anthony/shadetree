@@ -207,7 +207,9 @@
             </div>
           <% end %>
           <%= link_to "Delete client", styleguide_path, class: button_classes(:destructive),
-                      data: { turbo_method: :get, turbo_confirm: "Delete Maria Lopez? Her quotes and invoices stay in your records.", turbo_confirm_button: "Delete client" } %>
+                      data: { turbo_method: :get, turbo_confirm: "Delete Maria Lopez? Her quotes and invoices stay in your records.", turbo_confirm_button: "Delete client", turbo_confirm_variant: "destructive" } %>
+          <%= link_to "Complete job", styleguide_path, class: button_classes(:secondary),
+                      data: { turbo_method: :get, turbo_confirm: "Mark J-0002 completed?", turbo_confirm_button: "Complete job" } %>
         </div>
       <% end %>
     </section>

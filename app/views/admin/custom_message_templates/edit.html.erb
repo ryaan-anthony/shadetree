@@ -6,7 +6,7 @@
            preview_url: preview_admin_custom_message_templates_path, editable: @editable, preview_records: @preview_records %>
 <% if @editable %>
   <%= button_to admin_custom_message_template_path(@template), method: :delete, class: button_classes(:destructive, :sm, extra: "mt-4"),
-                form: { data: { turbo_confirm: "Delete the template “#{@template.name}”?", turbo_confirm_button: "Delete template" } } do %>
+                form: { data: { turbo_confirm: "Delete the template “#{@template.name}”?", turbo_confirm_button: "Delete template", turbo_confirm_variant: "destructive" } } do %>
     <%= icon "trash" %> Delete template
   <% end %>
 <% end %>

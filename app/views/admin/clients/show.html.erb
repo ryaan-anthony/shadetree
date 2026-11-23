@@ -21,7 +21,7 @@
       <% if @client.deletable? %>
         <div class="menu-sep"></div>
         <%= button_to admin_client_path(@client), method: :delete, class: "menu-item text-danger",
-                      form: { class: "contents", data: { turbo_confirm: "Delete #{@client.display_name} and their properties? This can't be undone.", turbo_confirm_button: "Delete client" } } do %>
+                      form: { class: "contents", data: { turbo_confirm: "Delete #{@client.display_name} and their properties? This can't be undone.", turbo_confirm_button: "Delete client", turbo_confirm_variant: "destructive" } } do %>
           <%= icon "trash" %> Delete
         <% end %>
       <% end %>

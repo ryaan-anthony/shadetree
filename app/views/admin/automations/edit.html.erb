@@ -9,5 +9,5 @@
 <div class="mt-8 max-w-2xl border-t border-line pt-5">
   <p class="text-sm text-muted">Deleting it stops anything still waiting. What it already did stays in the activity list.</p>
   <%= button_to "Delete automation", admin_automation_path(@rule), method: :delete, class: button_classes(:destructive, :sm) + " mt-2",
-                form: { data: { turbo_confirm: "Delete “#{@rule.name}”? Anything still waiting won't run." } } %>
+                form: { data: { turbo_confirm: "Delete “#{@rule.name}”? Anything still waiting won't run.", turbo_confirm_variant: "destructive" } } %>
 </div>

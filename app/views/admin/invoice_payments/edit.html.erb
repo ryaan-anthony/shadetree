@@ -19,7 +19,7 @@
 
   <%= card title: "Delete this payment", subtitle: "If it was recorded by mistake. The invoice's balance goes back up." do %>
     <%= form_with url: admin_invoice_payment_path(@invoice, @payment), method: :delete, class: "flex flex-col gap-3 sm:flex-row sm:items-start",
-                  data: { turbo_confirm: "Delete the #{money(Money.new(@payment.amount_cents_in_database, @payment.currency))} payment? The balance goes back up.", turbo_confirm_button: "Delete payment" } do %>
+                  data: { turbo_confirm: "Delete the #{money(Money.new(@payment.amount_cents_in_database, @payment.currency))} payment? The balance goes back up.", turbo_confirm_button: "Delete payment", turbo_confirm_variant: "destructive" } do %>
       <div class="field flex-1">
         <label class="label" for="payment_delete_reason">Why</label>
         <%= text_field_tag :reason, (params[:reason] if @delete_reason_error), id: "payment_delete_reason", class: "input", maxlength: 200, required: true, placeholder: "Check bounced",

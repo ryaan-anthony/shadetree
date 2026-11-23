@@ -27,7 +27,7 @@
                 <td class="text-right">
                   <% if member != current_membership && current_membership.can_change_access?(member) %>
                     <%= button_to "Deactivate", deactivate_admin_member_path(member), method: :patch, class: button_classes(:destructive, :sm),
-                                  form: { data: { turbo_confirm: "#{member.user.full_name} will lose access to #{current_business.name} right away. Their name stays on past work.", turbo_confirm_button: "Deactivate" } } %>
+                                  form: { data: { turbo_confirm: "#{member.user.full_name} will lose access to #{current_business.name} right away. Their name stays on past work.", turbo_confirm_button: "Deactivate", turbo_confirm_variant: "destructive" } } %>
                   <% elsif member == current_membership %>
                     <span class="text-xs text-muted">You</span>
                   <% end %>
@@ -60,7 +60,7 @@
                 <% end %>
                 <%= button_to "Resend", resend_admin_invitation_path(invitation), class: button_classes(:secondary, :sm) %>
                 <%= button_to "Revoke", revoke_admin_invitation_path(invitation), method: :patch, class: button_classes(:tertiary, :sm),
-                              form: { data: { turbo_confirm: "Revoke the invitation to #{invitation.email}? The link will stop working.", turbo_confirm_button: "Revoke" } } %>
+                              form: { data: { turbo_confirm: "Revoke the invitation to #{invitation.email}? The link will stop working.", turbo_confirm_button: "Revoke", turbo_confirm_variant: "destructive" } } %>
               </div>
             </li>
           <% end %>

@@ -26,7 +26,7 @@
       <%= link_to pdf_admin_quote_path(@quote), class: "menu-item", data: { turbo: false, action: "quote-builder#download" } do %><%= icon "download" %> Download PDF<% end %>
       <% unless @quote.revising? || own_quotes_only? %>
         <%= button_to admin_quote_path(@quote), method: :delete, class: "menu-item text-danger",
-                      form: { class: "contents", data: { turbo_confirm: "Delete draft #{@quote.number}? This can't be undone.", turbo_confirm_button: "Delete draft" } } do %>
+                      form: { class: "contents", data: { turbo_confirm: "Delete draft #{@quote.number}? This can't be undone.", turbo_confirm_button: "Delete draft", turbo_confirm_variant: "destructive" } } do %>
           <%= icon "trash" %> Delete draft
         <% end %>
       <% end %>
