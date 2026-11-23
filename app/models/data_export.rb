@@ -214,7 +214,7 @@ class DataExport < ApplicationRecord
       column("Cancelled", &:cancelled_at)
       column("Cancel reason", &:cancel_reason)
     end,
-    Table.new("invoices", "Invoices", "One row per invoice, with totals, taxes and what's been paid.", scope: -> { Invoice.includes(:client, :property, :job, :line_items, :location) }) do
+    Table.new("invoices", "Invoices", "One row per invoice, with totals, taxes and what's been paid.", scope: -> { Invoice.includes(:client, :property, :job, :quote, :jobs, :line_items, :location) }) do
       column("Invoice number", &:number)
       column("Client ID") { _1.client.uid }
       column("Client") { _1.client.display_name }
@@ -240,8 +240,21 @@ class DataExport < ApplicationRecord
       column("Void reason", &:void_reason)
       column("Internal notes", &:internal_notes)
       column("Location") { _1.location.name }
+      # PAY-06: the quote it bills and every job (a quote's invoice can bill several).
+      column("From quote", flag: :split_jobs) { _1.quote&.number }
+      column("Jobs", flag: :split_jobs) { _1.jobs.map(&:number).join(", ") }
     end,
-    Table.new("invoice_lines", "Invoice line items", "Each line on each invoice.", scope: -> { InvoiceLineItem.includes(:invoice) }, cursor: %i[invoice_id position id], &lines.("invoice", "Invoice number")),
+    Table.new("invoice_lines", "Invoice line items", "Each line on each invoice.", scope: -> { InvoiceLineItem.includes(:invoice, job_line_item: :job, quote_line_item: :quote) },
+              cursor: %i[invoice_id position id]) do
+      instance_exec(&lines.("invoice", "Invoice number"))
+      # PAY-06: what it bills (a job line, by its job and position, and the quote line, by its quote and
+      # position, as job_lines and quote_lines list them) and whether it's that line's final bill.
+      column("Job number", flag: :split_jobs) { _1.job_line_item&.job&.number }
+      column("Job line position", number: true, flag: :split_jobs) { _1.job_line_item&.position }
+      column("Quote number", flag: :split_jobs) { _1.quote_line_item&.quote&.number }
+      column("Quote line position", number: true, flag: :split_jobs) { _1.quote_line_item&.position }
+      column("Final bill", flag: :split_jobs, &:final)
+    end,
     Table.new("payments", "Payments", "Each payment recorded against an invoice, by date received.", scope: -> { Payment.includes(:invoice, :recorded_by) }, cursor: %i[received_on id]) do
       column("Payment ID", &:uid)
       column("Invoice number") { _1.invoice.number }

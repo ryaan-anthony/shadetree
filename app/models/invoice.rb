@@ -232,9 +232,14 @@ class Invoice < ApplicationRecord
     }
   end
 
-  # PAY-01: completion photos from the job's visits (JOB-04), by attachment id. Only the job's
-  # own photos, and each once; the invoice shares the stored file.
-  def job_photos = job ? ActiveStorage::Attachment.where(record_type: "Visit", name: "photos", record_id: job.visits.select(:id)).includes(:blob).order(:created_at) : ActiveStorage::Attachment.none
+  # PAY-01: completion photos from its jobs' visits (JOB-04, PAY-06: every job it bills), by
+  # attachment id. Only those jobs' own photos, and each once; the invoice shares the stored file.
+  def job_photos
+    job_ids = invoice_jobs.map(&:job_id) | Array(job_id)
+    return ActiveStorage::Attachment.none if job_ids.empty?
+
+    ActiveStorage::Attachment.where(record_type: "Visit", name: "photos", record_id: Visit.where(job_id: job_ids).select(:id)).includes(:blob).order(:created_at)
+  end
 
   def attach_job_photos(ids)
     attached = attachments_attachments.map(&:blob_id)

@@ -70,7 +70,7 @@ class Admin::JobPickerTest < ActionDispatch::IntegrationTest
     assert_select "#jobs h2", "Jobs (2)"
     assert_select "#quote-line-jobs tbody tr:nth-child(1)", /Tree removal.*#{first.number} 6 \(unscheduled\), #{second.number} 4 \(unscheduled\).*0/m
     assert_select "a[href=?]", new_admin_quote_job_path(@quote), count: 0, message: "nothing left to do"
-    assert_select "form[action=?] button.btn-secondary", admin_quote_invoices_path(@quote), /Create invoice/, "no completed work yet"
+    assert_select "form[action=?]", admin_quote_invoices_path(@quote), count: 0, message: "no completed work yet: nothing to bill (PAY-06)"
     as_business(@business) { first.complete!(by: users(:one)) }
     get admin_quote_path(@quote)
     assert_select "form[action=?] button.btn-primary", admin_quote_invoices_path(@quote), /Create invoice/, "completed work to bill"
@@ -122,7 +122,7 @@ class Admin::JobPickerTest < ActionDispatch::IntegrationTest
     pick(trees: 6)
     get admin_quote_path(@quote)
     assert_select "a.btn-primary[href=?]", new_admin_quote_job_path(@quote), /Create job/
-    assert_select "form[action=?] button.btn-secondary", admin_quote_invoices_path(@quote)
+    assert_select "form[action=?]", admin_quote_invoices_path(@quote), count: 0, message: "nothing completed to bill (PAY-06)"
   end
 
   test "a resubmitted picker whose job was cancelled shows the picker again" do

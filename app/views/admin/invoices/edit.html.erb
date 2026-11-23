@@ -53,8 +53,8 @@
 
     <%= card do %>
       <div class="grid gap-4 sm:grid-cols-2 [&>*]:min-w-0">
-        <% if @invoice.job || @invoice.quote %>
-          <%# It bills that job or quote, so it stays with their client. %>
+        <% if @invoice.job || @invoice.jobs.any? || @invoice.quote %>
+          <%# It bills those jobs or that quote, so it stays with their client. %>
           <div class="field"><p class="label">Client</p><p class="text-sm font-semibold text-ink"><%= @invoice.client.display_name %></p>
             <%= render "source", invoice: @invoice %></div>
         <% else %>

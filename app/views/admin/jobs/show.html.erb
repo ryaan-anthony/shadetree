@@ -50,7 +50,8 @@
 
 <% if job.status == "completed" %>
   <div class="banner banner-success mb-4"><%= icon "check-circle" %>
-    <% uninvoiced = job.invoices.none? %>
+    <%# PAY-06 (split jobs): ready while some of its lines aren't billed; before, until it has an invoice. %>
+    <% uninvoiced = split ? WorkBilling.billable?(job) : job.invoices.none? %>
     <p class="flex-1">Completed <%= local_time(job.completed_at) %><%= " by #{job.completed_by.full_name}" if job.completed_by %>.<%= " Ready to invoice." if uninvoiced %></p>
     <% if uninvoiced %>
       <%= button_to admin_job_invoices_path(job), class: button_classes(:primary, :sm), form: { class: "contents" } do %><%= icon "invoice" %> Create invoice<% end %>
@@ -72,13 +73,19 @@
 
     <%= render "admin/jobs/visits", job: %>
 
-    <%# PAY-01: a job can be billed more than once (progress billing). %>
+    <%# PAY-01: a job can be billed more than once (progress billing). PAY-06 (split jobs): it bills
+        completed work once, so Create invoice is offered only while some of it is unbilled; its
+        invoices include a quote's invoice that billed it with other jobs. %>
     <% invoices = job.invoices.order(:created_at, :id).to_a %>
     <% billed = invoices.reject(&:void?) %><%# #289: a second invoice is possible (progress billing), but never the obvious button %>
-    <%= card title: "Invoices", id: "invoices", flush: true,
-             actions: button_to(admin_job_invoices_path(job), class: button_classes(billed.any? ? :tertiary : :secondary, :sm),
-                                form: { class: "contents", data: (billed.any? ? { turbo_confirm: "#{job.number} already has #{billed.map(&:number).to_sentence}. Create another invoice?", turbo_confirm_button: "Create another invoice" } : {}) }) { icon("plus") + (billed.any? ? " Create another invoice" : " Create invoice") } do %>
-      <%= render "admin/invoices/list", invoices:, empty: "Not invoiced yet. Create invoice copies this job's items, discount and taxes." %>
+    <% create = if split
+                  button_to(admin_job_invoices_path(job), class: button_classes(:secondary, :sm), form: { class: "contents" }) { icon("plus") + " Create invoice" } if WorkBilling.billable?(job)
+                else
+                  button_to(admin_job_invoices_path(job), class: button_classes(billed.any? ? :tertiary : :secondary, :sm),
+                            form: { class: "contents", data: (billed.any? ? { turbo_confirm: "#{job.number} already has #{billed.map(&:number).to_sentence}. Create another invoice?", turbo_confirm_button: "Create another invoice" } : {}) }) { icon("plus") + (billed.any? ? " Create another invoice" : " Create invoice") }
+                end %>
+    <%= card title: "Invoices", id: "invoices", flush: true, actions: create do %>
+      <%= render "admin/invoices/list", invoices:, empty: split ? "Not invoiced yet. Once it's completed, Create invoice bills what was done." : "Not invoiced yet. Create invoice copies this job's items, discount and taxes." %>
       <% job_payments = Payment.where(invoice_id: invoices.map(&:id)).includes(:invoice).chronological.to_a %>
       <% if job_payments.any? %><%# PAY-05: what's been paid on them; Stripe's reference is only on the invoice (PLT-18) %>
         <ul class="list border-t border-line" id="job-payments" aria-label="Payments">
