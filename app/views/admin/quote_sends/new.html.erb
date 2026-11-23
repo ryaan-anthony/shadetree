@@ -26,7 +26,7 @@
 <%= render "admin/sends/zero_total", document: @quote, noun: "quote", edit_path: edit_admin_quote_path(@quote),
            confirm_path: new_admin_quote_send_path(@quote, zero_total: ZeroTotalGuard::CONFIRMED, from: ("setup" if from_setup?)) unless blocked %>
 <% unless current_user.can_send_to_clients? %>
-  <div class="banner banner-warning mb-4" role="status"><%= icon "alert-triangle" %>
+  <div class="banner banner-warning mb-4"><%= icon "alert-triangle" %>
     <p class="flex-1">Confirm your email address before sending anything to clients. Check your inbox for the link.</p>
   </div>
 <% end %>

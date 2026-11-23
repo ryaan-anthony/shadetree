@@ -42,6 +42,23 @@ class StyleguideControllerTest < ActionDispatch::IntegrationTest
     assert_select "#flash .toast", /Quote sent/
   end
 
+  # PLT-21: one toast. A success is read through the polite region and fades; an error is
+  # role="alert" and stays. Both have an icon, the message and Dismiss.
+  test "toasts: success through the polite region, errors as alerts that stay" do
+    get styleguide_path(toast: 1)
+    assert_select "#announcer[role=status][aria-live=polite]"
+    assert_select "#flash .toast:not([role])[data-controller='dismiss announce'][data-dismiss-after-value='6000']", /Quote sent/ do
+      assert_select "svg", 2
+      assert_select "button[aria-label=Dismiss]"
+    end
+
+    get styleguide_path(toast: "error")
+    assert_select "#flash .toast.toast-danger[role=alert][data-controller=dismiss][data-dismiss-after-value='0']", /Couldn't send/ do
+      assert_select "button[aria-label=Dismiss]"
+    end
+    assert_select "#feedback-rules", /result of an action.*standing condition/m
+  end
+
   test "client layout applies the business brand without staff chrome" do
     get styleguide_client_path(brand: "#facc15")
     assert_response :success

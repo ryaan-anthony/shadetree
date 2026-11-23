@@ -352,6 +352,25 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # PLT-21: a banner is a standing condition on the page: one tone (PLT-17's meanings), one icon
+  # and at most one link or button. Only an error is role="alert"; a banner that arrives as the
+  # result of an action is read through the page's polite region (data-controller="announce"),
+  # so no banner is a live region of its own.
+  BANNER_TONES = %w[banner-info banner-success banner-warning banner-danger].freeze
+
+  check :banners_follow_the_pattern, if: ->(page) { !page.ops? } do |_page, html|
+    html.css(".banner").flat_map do |banner|
+      text = banner.text.squish.truncate(50).inspect
+      tones = classes(banner) & BANNER_TONES
+      actions = banner.css("a, button, input[type=submit]").size
+      [ ("#{text} has #{tones.size} tones" unless tones.one?),
+        ("#{text} has #{banner.css("> svg").size} icons; a banner has one" unless banner.css("> svg").one?),
+        ("#{text} has #{actions} links or buttons; a banner has at most one" if actions > 1),
+        ("#{text} is role=alert but not an error (banner-danger)" if banner["role"] == "alert" && tones != [ "banner-danger" ]),
+        ("#{text} is role=#{banner["role"]}; announce it through the polite region instead" if banner["role"].in?(%w[status log])) ].compact
+    end
+  end
+
   setup do
     @business = businesses(:one)
     @owner = users(:one)

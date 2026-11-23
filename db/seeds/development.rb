@@ -513,3 +513,18 @@ Business.find_or_create_by!(name: "Rivera Pest Control", owner: new_owner) do |b
   b.timezone = "America/Chicago"
   b.currency = "USD"
 end
+
+# PLT-21: Notifications show unread at a glance: two unread (bold, with a dot) above two read
+# (muted). Made directly, so nobody is emailed. Rivera Pest Control (new@example.com) is the
+# empty business: its Home, My day, Schedule, Automations and Messages show the empty states.
+Tenancy.with_business(business) do
+  owner = User.find_by!(email: "owner@example.com")
+  unless Notification.exists?(user: owner, kind: "new_request", path: "/admin/requests")
+    [ [ "New request from the website", "Spring cleanup, front and back beds", 20.minutes.ago, nil ],
+      [ "Quote Q-0003 approved", "Signed by the client", 3.hours.ago, nil ],
+      [ "Invoice I-0001 part paid", "$50.00 by card", 1.day.ago, 1.day.ago ],
+      [ "New request from a phone call", "Gutter guards", 2.days.ago, 2.days.ago ] ].each do |title, body, at, read_at|
+      Notification.create!(user: owner, kind: "new_request", title:, body:, path: "/admin/requests", created_at: at, read_at:)
+    end
+  end
+end

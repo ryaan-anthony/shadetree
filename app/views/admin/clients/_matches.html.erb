@@ -1,7 +1,7 @@
 <%# locals: (matches:, inline:) -%>
 <%# Existing clients sharing an email or phone (R4). %>
 <% if matches.any? %>
-  <div class="banner banner-info" role="status"><%= icon "info" %>
+  <div class="banner banner-info" data-controller="announce"><%= icon "info" %>
     <div class="min-w-0 flex-1">
       <p class="font-medium"><%= matches.size == 1 ? "A client already has this email or phone." : "Some clients already have this email or phone." %></p>
       <ul class="mt-2 space-y-1.5">

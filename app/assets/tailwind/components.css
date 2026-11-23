@@ -277,11 +277,14 @@
   .empty-icon svg { width: 1.25rem; height: 1.25rem; }
   .empty-title { margin-bottom: 0.25rem; }
   .empty-text { max-width: 22.5rem; margin: 0 auto 1rem; font-size: 0.875rem; color: var(--color-muted); }
+  .empty-text:last-child { margin-bottom: 0; } /* PLT-21: no gap below when there's no action */
 
   /* ---------- Banners (flash, callouts) ---------- */
   /* NTF-02: the unread count on the top bar's bell. */
   .notify-count { position: absolute; top: 0.125rem; right: 0.125rem; min-width: 1.125rem; height: 1.125rem; padding: 0 0.3125rem;
     border-radius: 999px; background: var(--color-danger); color: #fff; font-size: 0.6875rem; font-weight: 700; line-height: 1.125rem; text-align: center; }
+  /* PLT-21: an unread item's dot, beside its bold title (the words are for screen readers). */
+  .unread-dot { display: inline-block; width: 0.4375rem; height: 0.4375rem; margin-right: 0.4375rem; border-radius: 999px; background: var(--color-info); vertical-align: 0.0625rem; }
   .banner { display: flex; gap: 0.75rem; align-items: flex-start; padding: 0.75rem 0.875rem; border: 1px solid; border-radius: 8px; font-size: 0.875rem; }
   .banner > svg { width: 1rem; height: 1rem; margin-top: 0.125rem; flex: none; }
   .banner-info { background: var(--color-info-50); border-color: var(--color-info-100); color: var(--color-info-ink); }
@@ -320,6 +323,7 @@
   .toast button { margin-left: 0.25rem; padding: 0.25rem; border-radius: 4px; color: var(--color-line-strong); }
   .toast button:hover { background: rgb(255 255 255 / 0.1); color: #fff; }
   @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
+  .toast.is-leaving { opacity: 0; transition: opacity 0.3s ease-in; } /* PLT-21: a success toast fades out */
 
   /* ---------- Modal (native <dialog>: focus trap and Esc come free) ---------- */
   .modal {

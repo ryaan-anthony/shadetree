@@ -12,7 +12,7 @@
       <%= hidden_field_tag :view, params[:view], id: nil if params[:view].present? %>
       <%= hidden_field_tag :member, params[:member], id: nil if params[:member].present? %>
       <% if warnings.present? %>
-        <div class="banner banner-warning" role="alert"><%= icon "alert-triangle" %>
+        <div class="banner banner-warning" data-controller="announce"><%= icon "alert-triangle" %>
           <div><p class="font-semibold">Before you move this</p>
             <ul class="mt-1 list-disc pl-5"><% warnings.each do |warning| %><li><%= warning %></li><% end %></ul>
             <p class="mt-1">You can still move it, or change it below.</p></div>

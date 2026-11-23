@@ -13,7 +13,7 @@
     <%= hidden_field_tag :from, "schedule", id: nil %><% calendar_params.each do |name, value| %><%= hidden_field_tag name, value, id: nil %><% end %>
   <% end %>
   <% if @warnings.present? %>
-    <div class="banner banner-warning" role="alert"><%= icon "alert-triangle" %>
+    <div class="banner banner-warning" data-controller="announce"><%= icon "alert-triangle" %>
       <div><p class="font-semibold">Before you <%= visit.new_record? ? "book" : "save" %> this</p>
         <ul class="mt-1 list-disc pl-5"><% @warnings.each do |warning| %><li><%= warning %></li><% end %></ul>
         <p class="mt-1">You can still <%= visit.new_record? ? "schedule it" : "save it" %>, or change it below.</p></div>

@@ -1,7 +1,7 @@
 <%# locals: (action:) -%>
 <%# CLI-07: JOB-02's warnings, before assigning; confirming sends back what was shown. %>
 <% if @warnings.present? %>
-  <div class="banner banner-warning" role="alert"><%= icon "alert-triangle" %>
+  <div class="banner banner-warning" data-controller="announce"><%= icon "alert-triangle" %>
     <div><p class="font-semibold">Before you <%= action %> this</p>
       <ul class="mt-1 list-disc pl-5"><% @warnings.each do |warning| %><li><%= warning %></li><% end %></ul>
       <p class="mt-1">You can still <%= action %> it, or change it below.</p></div>

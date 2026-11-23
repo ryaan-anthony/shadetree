@@ -27,7 +27,7 @@ class Admin::AccessibilityAuditTest < ActionDispatch::IntegrationTest
       assert_select "label[for=#{id}]", /\A#{label}/
     end
     assert_select "label", { text: /\ANumber prefix/, count: 0 }
-    assert_select ".banner-info[role=status]", /starting points/
+    assert_select ".banner-info:not([role])", /starting points/ # PLT-21: a standing banner, not a live region
   end
 
   test "Hours: day boxes and times are named by their day, and the zone sentence reads right" do
@@ -101,7 +101,7 @@ class Admin::AccessibilityAuditTest < ActionDispatch::IntegrationTest
       NotificationType.deliver("new_request", business: @business, subject: client, title: "New request from Maria", path: "/admin")
     end
     get admin_notifications_path
-    assert_select "#notifications li .badge", "Unread"
+    assert_select "#notifications li .sr-only", "Unread:" # PLT-21: a dot on screen, the word for screen readers
     assert_select "#notifications button[aria-label='Mark as read: New request from Maria']", /Mark as read/
   end
 
@@ -135,7 +135,7 @@ class Admin::AccessibilityAuditTest < ActionDispatch::IntegrationTest
     assert_select "#confirm-email-banner", 0
     @owner.update_columns(confirmed_at: nil)
     get admin_root_path
-    assert_select "#confirm-email-banner[role=status]", /Confirm your email/
+    assert_select "#confirm-email-banner:not([role])", /Confirm your email/ # PLT-21: part of the page, not a live region
   end
 
   test "pages that are only an empty state make it their H1" do

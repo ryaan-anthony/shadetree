@@ -2,7 +2,7 @@
 <%= page_header "Match your columns", lede: "#{@import.filename} · #{pluralize(number_with_delimiter(@import.total_rows), "row")}" %>
 <%= form_with model: @import, url: admin_client_import_path(@import), method: :patch, class: "form-split space-y-4" do |f| %>
   <% if @import.errors.any? %>
-    <div class="banner banner-warning" role="alert"><%= icon "alert-circle" %><p><%= @import.errors.full_messages.to_sentence %></p></div>
+    <div class="banner banner-danger" role="alert"><%= icon "alert-circle" %><p><%= @import.errors.full_messages.to_sentence %></p></div>
   <% end %>
   <%= card title: "Columns", subtitle: "We guessed from the column names. Change any that are wrong, or leave a column out.", flush: true do %>
     <div class="table-wrap relative">

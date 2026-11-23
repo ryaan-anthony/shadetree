@@ -28,7 +28,7 @@ class Admin::QuoteLimitsTest < ActionDispatch::IntegrationTest
     sent(4) # 80% of Free's 5
     quote = draft
     get edit_admin_quote_path(quote)
-    assert_select "#quote-limit-notice.banner-info", /sent 4 of the 5 quotes your Free plan includes this period. You can send 1 more before your count resets on/
+    assert_select "#quote-limit-notice.banner-warning", /sent 4 of the 5 quotes your Free plan includes this period. You can send 1 more before your count resets on/
     assert_select "#quote-limit-notice a[href=?]", admin_plan_path
     get admin_root_path
     assert_select "#quote-limit-notice"
@@ -50,7 +50,7 @@ class Admin::QuoteLimitsTest < ActionDispatch::IntegrationTest
 
     blocked = draft
     get new_admin_quote_send_path(blocked)
-    assert_select "#quote-limit-notice.banner-warning", /You've used the 5 quotes your Free plan includes this period. New quotes can be sent again on/
+    assert_select "#quote-limit-notice.banner-danger", /You've used the 5 quotes your Free plan includes this period. New quotes can be sent again on/
     assert_select "#quote-limit-notice", text: /one more|extra/, count: 0
     assert_select "form[action=?]", admin_quote_send_path(blocked), 0, "the send options give way to the explanation"
     post admin_quote_send_path(blocked), params: { channel: "link" }
@@ -151,23 +151,23 @@ class Admin::QuoteLimitsTest < ActionDispatch::IntegrationTest
     assert_select "#quote-limit-notice", 0, "60% is below the warning"
     sent(1)
     get admin_root_path
-    assert_select "#quote-limit-notice.banner-info", /sent 4 of the 5 quotes/
+    assert_select "#quote-limit-notice.banner-warning", /sent 4 of the 5 quotes/
 
     @business.update!(plan_overrides: { "limits" => { "quotes_sent" => 10 } })
     sent(4)
     get admin_root_path
-    assert_select "#quote-limit-notice.banner-info", /sent 8 of the 10 quotes.*You can send 2 more before/m, "from 80%, how many are left"
+    assert_select "#quote-limit-notice.banner-warning", /sent 8 of the 10 quotes.*You can send 2 more before/m, "from 80%, how many are left"
     @business.update!(plan_overrides: { "limits" => { "quotes_sent" => 2 } })
     as_business(@business) { UsageEvent.delete_all }
     get admin_root_path
     assert_select "#quote-limit-notice", 0, "nothing sent of 2"
     sent(1)
     get admin_root_path
-    assert_select "#quote-limit-notice.banner-info", /You can send 1 more before your count resets/, "a small limit still warns with one left"
+    assert_select "#quote-limit-notice.banner-warning", /You can send 1 more before your count resets/, "a small limit still warns with one left"
     @business.update!(plan_overrides: { "limits" => { "quotes_sent" => 1 } })
     as_business(@business) { UsageEvent.delete_all }
     get admin_root_path
-    assert_select "#quote-limit-notice.banner-info", /Your Free plan includes 1 quote this period. You can send 1 before your count resets/
+    assert_select "#quote-limit-notice.banner-warning", /Your Free plan includes 1 quote this period. You can send 1 before your count resets/
 
     @business.update!(plan_overrides: { "limits" => { "quotes_sent" => nil } })
     sent(6)

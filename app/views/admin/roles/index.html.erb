@@ -5,7 +5,7 @@
 <% end %>
 
 <% unless @editable %>
-  <div class="banner banner-info mb-4" role="status"><%= icon "info" %>
+  <div class="banner banner-info mb-4"><%= icon "info" %>
     <p>Roles of your own are part of a paid plan. <%= link_to "See plans", admin_plan_path, class: "font-semibold underline" %><%= ". The ones you have keep working, but can't be changed or given to anyone new." if @roles.any? %></p>
   </div>
 <% end %>

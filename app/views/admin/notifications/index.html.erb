@@ -18,7 +18,8 @@
           <li id="notification-<%= notification.uid %>" class="<%= "bg-info-50/40" unless notification.read? %>">
             <%= icon notification.type.icon, class: "size-4 shrink-0 #{if notification.type.danger then "text-danger" else notification.read? ? "text-faint" : "text-info-ink" end}" %>
             <%= link_to open_admin_notification_path(notification), class: "min-w-0 flex-1", data: { turbo_prefetch: false } do %>
-              <span class="block <%= notification.read? ? "text-ink" : "font-semibold text-ink" %>"><%= notification.title %><% unless notification.read? %> <%= badge "Unread", tone: :info, dot: false, class: "ml-1 align-middle" %><% end %></span>
+              <%# PLT-21: unread is a bold title and a dot, read is muted; "Unread" (#280) is for screen readers. %>
+              <span class="block <%= notification.read? ? "text-muted" : "font-semibold text-ink" %>"><% unless notification.read? %><span class="unread-dot" aria-hidden="true"></span><span class="sr-only">Unread: </span><% end %><%= notification.title %></span>
               <% if notification.body %><span class="block truncate text-sm2 text-muted"><%= notification.body %></span><% end %>
               <span class="block text-sm2 text-subtle"><%= local_time_ago(notification.created_at) %></span>
             <% end %>

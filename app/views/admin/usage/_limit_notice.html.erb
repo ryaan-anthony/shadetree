@@ -6,8 +6,10 @@
 <% unless state == :ok %>
   <% used, limit, resets = entitlements.used(:quotes_sent), entitlements.limit(:quotes_sent), entitlements.period.resets_on %>
   <% plan = entitlements.plan.name %>
-  <div class="banner <%= state == :approaching ? "banner-info" : "banner-warning" %> mb-4" role="note" id="quote-limit-notice">
-    <%= icon(state == :approaching ? "info" : "alert-triangle") %>
+  <%# PLT-21: the banner takes the meter's tone (PLT-17): Nearly used is warning, Limit reached danger. %>
+  <% tone = status_tone(:quota, state == :approaching ? "approaching" : "blocked") %>
+  <div class="banner banner-<%= tone %> mb-4" role="note" id="quote-limit-notice">
+    <%= icon tone %>
     <p class="flex-1">
       <% case state %>
       <% when :approaching %>
