@@ -55,7 +55,7 @@
           <% end %>
         </ul>
       <% else %>
-        <p class="px-5 py-4 text-sm text-muted">None yet. Every download is listed here.</p>
+        <%= empty_state title: "Nothing in the log yet", text: "Every export, download and erased client is listed here.", level: 3, icon: "file-text" %>
       <% end %>
     <% end %>
   </div>

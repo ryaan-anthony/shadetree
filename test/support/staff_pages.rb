@@ -50,7 +50,12 @@ module StaffPages
     { requests: [ "Requests", helpers.admin_service_requests_path ], clients: [ "Clients", helpers.admin_clients_path ],
       quotes: [ "Quotes", helpers.admin_quotes_path ], jobs: [ "Jobs", helpers.admin_jobs_path ],
       invoices: [ "Invoices", helpers.admin_invoices_path ], services: [ "Services", helpers.admin_catalog_items_path ],
-      taxes: [ "Taxes", helpers.admin_tax_rates_path ] }.map do |key, (name, path)|
+      taxes: [ "Taxes", helpers.admin_tax_rates_path ],
+      # PLT-21: the pages and cards whose main content can be empty
+      home: [ "Home", helpers.admin_root_path ], my_day: [ "My day", helpers.admin_my_day_path ],
+      schedule: [ "Schedule", helpers.admin_schedule_path ], schedule_day: [ "Schedule: day", helpers.admin_schedule_path(view: "day") ],
+      notifications: [ "Notifications", helpers.admin_notifications_path ], automations: [ "Automations", helpers.admin_automations_path ],
+      messages: [ "Messages", helpers.admin_message_templates_path ], data: [ "Your data", helpers.admin_data_exports_path ] }.map do |key, (name, path)|
       Page.new(key: :"#{key}_empty", name: "#{name}: empty", path:, kind: :empty)
     end
   end

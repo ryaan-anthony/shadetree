@@ -32,7 +32,7 @@
 
   <%= card title: "Today", flush: true, data: { tour: "today" } do %>
     <% if @today.empty? %>
-      <p class="px-5 py-4 text-sm2 text-muted">Nothing booked for you today.</p>
+      <%= empty_state title: "Nothing booked for you today", text: "Visits and follow-ups you're on today show up here.", level: 3, icon: "sun" %>
     <% else %>
       <ul class="list"><%= render partial: "admin/my_day/item", collection: @today, as: :item %></ul>
     <% end %>
@@ -48,7 +48,7 @@
 
   <%= card title: "Coming up", subtitle: "The next #{MyDay::UPCOMING_DAYS} days.", flush: true, data: { tour: "coming_up" } do %>
     <% if @upcoming.empty? %>
-      <p class="px-5 py-4 text-sm2 text-muted">Nothing else booked for you yet.</p>
+      <%= empty_state title: "Nothing coming up", text: "Visits you're on in the next #{MyDay::UPCOMING_DAYS} days show up here.", level: 3, icon: "calendar" %>
     <% else %>
       <% @upcoming.each do |date, visits| %>
         <h3 class="table-head border-t border-line bg-sunken/60 px-4 py-1.5 first:border-t-0"><%= friendly_date(date) %></h3>
