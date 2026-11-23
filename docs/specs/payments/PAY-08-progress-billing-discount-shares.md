@@ -26,12 +26,14 @@ invoices in proportion to the work each bills, so a part-done quote never carrie
 - [x] "Create another invoice" on a job or a quote before the work is done makes a progress
       invoice (kind progress) of its unbilled lines, which staff can lower. Its lines are
       progress amounts, not final bills (PAY-06). On autosave and on send, under PAY-06's lock, a
-      line's progress can't pass what's left of it. *Labelled "Create progress invoice".*
+      line's progress can't pass what's left of it. *"Create progress invoice"; capped at what's
+      left after the line's expected share of a fixed discount (owner, 2026-11-23).*
 - [x] Progress on a job line is credited on that line's final bill; progress on a quote line, or
       on the line of a job later cancelled, is credited on its quote line's final bills. Each
       credit = min(progress on the line not yet credited, this bill's amount for that line), the
       job line's own first. It's a negative line before tax, at the credited line's tax rates
-      ("Billed earlier on INV-0003"), so tax is charged once.
+      ("Billed earlier on INV-0003"), so tax is charged once. Clients see "Credit from INV-0003"
+      with its tax (owner, 2026-11-23). *No tax rate's base goes below zero; the rest carries.*
 - [x] **Over-billed** = progress not yet credited on lines with nothing left to bill (no to-do
       quantity, and every claim billed, cancelled or Not going ahead). The quote shows
       "Over-billed $X" and the next invoice for the quote credits it the same way.
@@ -53,9 +55,9 @@ invoices in proportion to the work each bills, so a part-done quote never carrie
 - [x] The $0 rule (PAY-01) looks at the total before credits; a sent invoice with nothing due is
       Paid at once. NTF-04 "invoice the job" sends such an invoice as any other.
 - [x] The quote page shows progress billed, credited and over-billed; the job page its own.
-- [x] Tests: the five worked examples in #356, job and quote progress, a cancelled job's progress,
-      over-billing and its credit, credit order, tax charged once, both targets, the cap and
-      carry, a void, a staff discount edit, percent and legacy discounts, $0 due, roles, tenancy.
+- [x] Tests: #356's worked examples 1–4 (5 is JOB-11's), job and quote progress, a cancelled
+      job's progress, over-billing and its credit, credit order, tax charged once, both targets,
+      the cap and carry, a void, a staff discount edit, percent discounts, $0 due, roles, tenancy.
 
 ## Out of scope
 
@@ -66,18 +68,19 @@ invoices in proportion to the work each bills, so a part-done quote never carrie
 - Progress billing stays: a job or quote can be billed in part before it's done (owner, 2026-11-22).
 - Each invoice takes its proportional share of a fixed quote discount ($50 off a $1,000 quote: a
   $400 invoice gets $20); a percent discount just applies (owner, 2026-11-22).
-- Dropped work doesn't keep its part of a fixed discount: it follows the work billed
-  (owner, 2026-11-22).
-- When progress billing passes the work done, the quote shows "Over-billed $X" and it's credited
-  on the next invoice. Refunds and credit notes are a later spec (owner, 2026-11-22).
+- Dropped work doesn't keep its part of a fixed discount (owner, 2026-11-22).
+- Over-billing shows on the quote and is credited on the next invoice (owner, 2026-11-22).
 - The target, the cap and carry, "lines added on site aren't quote work" and "progress invoices
   get no share" (coordinator; follows the owner's model).
-
+- Progress is capped at, and defaults to, what's left after the line's expected share of a fixed
+  discount. Clients see "Credit from INV-0004" with tax; staff's figures include tax. The button
+  is "Create progress invoice" (owner, 2026-11-23).
 - No backwards compatibility: pre-JOB-09 jobs' fixed discounts get no special rule (owner,
   2026-11-23). Progress credited on a sent invoice can't be voided until that one is (follows
   the owner's 2026-11-23 rule that invoiced work changes only by voiding).
 - Credits and shares count only from invoices that went out; a draft's are worked out again at
-  send. A credit is capped by the bill's line after its share (coordinator; follows the model).
+  send; a sent invoice's stay (a revision can't go below them). A credit is capped by the bill's
+  line after its share; a staff percent applies to the subtotal before the share (implementation).
 
 ## Implementation notes
 
@@ -86,10 +89,12 @@ invoices in proportion to the work each bills, so a part-done quote never carrie
   sign, tax rates, position). `BillingLedger` reads a quote's (or a lone job's) bills under
   PAY-06's lock; `BillingCredits` works shares and credits out on each draft save, and
   `WorkBilling.bill_progress!` makes progress invoices. Behind `split_jobs`.
-- Amounts are line subtotals: a credit is a negative line, so the invoice's discount and tax
-  apply as they did to the progress; a document discount isn't spread onto credit lines.
-- Over-billed counts a line's final bill once it went out. Until QTE-09, a shortfall stands in
-  for Not going ahead in tests. A revision keeps its shares and credits for a discard.
-- PAY-07: add deposit and take_back to both kind checks and an after-tax `total_due`.
-- Flag: with PAY-06 and PAY-08 merged, `split_jobs` can be turned on (Operator → Flags).
-- Dev seeds: "Roof replacement" ($500 progress sent; the final draft credits it, $80 share).
+- Amounts are line subtotals: a credit is a negative line (a document discount isn't spread
+  onto it), so the invoice's discount and tax apply as they did to the progress.
+- Over-billed counts a final bill once it went out. Fit: PAY-07 adds deposit and take_back to
+  both kind checks, keeps deposit credits in `work_out_credits`, and `nothing_due?` uses
+  `total_due`; JOB-10 skips `percent_only!` on recurring quotes; QTE-09 adds Not going ahead to
+  `nothing_left?`/`done?` (shortfalls stand in until then) with taxed figures; QTE-10's base
+  reads current quote lines.
+- `split_jobs` can go on once PAY-06 and PAY-08 merge (Operator → Flags). Dev seeds: "Roof
+  replacement" ($500 progress sent; the final draft credits it, $80 share).

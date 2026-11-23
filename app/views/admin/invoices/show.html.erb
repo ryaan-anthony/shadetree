@@ -15,6 +15,10 @@
   <%= render "void", invoice: invoice if invoice.voidable? %>
 <% end %>
 
+<% if invoice.credited_later? && !invoice.payments? %><%# PAY-08: Void waits for the invoice that credits it %>
+  <div class="banner banner-info mb-4" id="invoice-credited"><%= icon "info" %>
+    <p>Its progress is credited on <%= safe_join(invoice.crediting_invoices.map { link_to(_1.number, admin_invoice_path(_1), class: "font-medium underline") }, ", ") %>, so it can be voided only after that invoice is.</p></div>
+<% end %>
 <% if invoice.void? %>
   <div class="banner banner-warning mb-4"><%= icon "x-circle" %>
     <p>Voided <%= local_time(invoice.voided_at) %><%= " by #{invoice.voided_by.full_name}" if invoice.voided_by %>: “<%= invoice.void_reason %>”</p></div>

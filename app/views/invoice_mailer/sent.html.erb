@@ -6,6 +6,9 @@
     <p style="margin:0;font-size:13px;color:#64748b;">Invoice <%= @invoice.number %><%= " · #{@invoice.title}" if @invoice.title %></p>
     <p style="margin:6px 0 0;font-size:22px;font-weight:700;color:#0f172a;"><%= money(@invoice.balance) %></p>
     <p style="margin:4px 0 0;font-size:13px;color:#64748b;"><%= @invoice.payments? ? "Balance due" : "Due" %> <%= local_date(@invoice.due_on) %></p>
+    <% @invoice.client_credits.each do |invoice, amount| %><%# PAY-08 %>
+      <p style="margin:4px 0 0;font-size:13px;color:#64748b;">After a credit of <%= money(amount) %> from <%= invoice.number %></p>
+    <% end %>
   </td></tr>
 </table>
 <table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="border-radius:8px;background:<%= @branding.button_color %>;">

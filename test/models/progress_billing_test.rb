@@ -617,6 +617,14 @@ class ProgressBillingTest < ActiveSupport::TestCase
     end
     assert_equal sent_with, [ final.reload.quote_discount_share_cents, credits(final), final.total_cents ]
   end
+
+  test "the quote's over-billed figure is what the client was charged, with tax (owner, 2026-11-23)" do
+    approved_quote([ [ "t", "Tree removal", 10, 100 ] ], tax: "10")
+    send!(lower(progress(@quote), "Tree removal" => 800))
+    send!(bill_job(complete(make(t: 10), "Tree removal" => 6)))
+    summary = as_business(@business) { BillingLedger.new(quote: @quote.reload).summary }
+    assert_equal({ billed: 880_00, credited: 660_00, over_billed: 220_00 }, summary)
+  end
 end
 
 # Two drafts that would both credit the same over-billing, sent at once: the quote's lock queues

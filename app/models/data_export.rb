@@ -214,7 +214,7 @@ class DataExport < ApplicationRecord
       column("Cancelled", &:cancelled_at)
       column("Cancel reason", &:cancel_reason)
     end,
-    Table.new("invoices", "Invoices", "One row per invoice, with totals, taxes and what's been paid.", scope: -> { Invoice.includes(:client, :property, :job, :quote, :jobs, :line_items, :location) }) do
+    Table.new("invoices", "Invoices", "One row per invoice, with totals, taxes and what's been paid.", scope: -> { Invoice.includes(:client, :property, :job, :quote, :jobs, :line_items, :location, :credits) }) do
       column("Invoice number", &:number)
       column("Client ID") { _1.client.uid }
       column("Client") { _1.client.display_name }
@@ -243,6 +243,12 @@ class DataExport < ApplicationRecord
       # PAY-06: the quote it bills and every job (a quote's invoice can bill several).
       column("From quote", flag: :split_jobs) { _1.quote&.number }
       column("Jobs", flag: :split_jobs) { _1.jobs.map(&:number).join(", ") }
+      # PAY-08: progress or work, its share of the quote's fixed discount, and what it credits
+      # before tax for progress billed earlier (and on which invoices).
+      column("Kind", flag: :split_jobs, &:kind)
+      column("Quote discount share", number: true, flag: :split_jobs) { money.(_1.quote_discount_share_cents, _1.currency) }
+      column("Credits before tax", number: true, flag: :split_jobs) { money.(_1.credits.sum(&:amount_cents), _1.currency) }
+      column("Credits from", flag: :split_jobs) { _1.credits.map { |credit| credit.source_invoice.number }.uniq.join(", ") }
     end,
     Table.new("invoice_lines", "Invoice line items", "Each line on each invoice.", scope: -> { InvoiceLineItem.includes(:invoice, job_line_item: :job, quote_line_item: :quote) },
               cursor: %i[invoice_id position id]) do
@@ -254,6 +260,7 @@ class DataExport < ApplicationRecord
       column("Quote number", flag: :split_jobs) { _1.quote_line_item&.quote&.number }
       column("Quote line position", number: true, flag: :split_jobs) { _1.quote_line_item&.position }
       column("Final bill", flag: :split_jobs, &:final)
+      column("Discount share", number: true, flag: :split_jobs) { money.(_1.discount_share_cents, _1.invoice.currency) } # PAY-08
     end,
     Table.new("payments", "Payments", "Each payment recorded against an invoice, by date received.", scope: -> { Payment.includes(:invoice, :recorded_by) }, cursor: %i[received_on id]) do
       column("Payment ID", &:uid)

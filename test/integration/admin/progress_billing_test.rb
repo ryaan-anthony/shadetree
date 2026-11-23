@@ -71,8 +71,8 @@ class Admin::ProgressBillingTest < ActionDispatch::IntegrationTest
     assert_not_found_across_businesses { post admin_quote_invoices_path(their_quote, progress: 1) }
   end
 
-  test "the pages: progress buttons before the work is done; credits and the share on the invoice; progress, credited and over-billed" do
-    as_business(@business) { @quote.update_columns(discount_kind: "amount", discount_amount_cents: 100_00) }
+  test "the pages: progress buttons before the work is done; credits and the share on the invoice; progress, with tax" do
+    as_business(@business) { @quote.update_columns(discount_kind: "amount", discount_amount_cents: 100_00, tax_rates: [ { "name" => "State", "percent" => "10" } ]) }
     get admin_quote_path(@quote)
     assert_select "form[action=?] button#quote-progress-invoice", admin_quote_invoices_path(@quote, progress: 1), /Create progress invoice/
     job = make
@@ -81,8 +81,8 @@ class Admin::ProgressBillingTest < ActionDispatch::IntegrationTest
 
     early = as_business(@business) do
       WorkBilling.bill_progress!(job, by: users(:one)).tap do |invoice|
-        invoice.line_items.sole.update!(unit_price: "1000")
-        invoice.reload.mark_sent!(by: users(:one), channel: "link")
+        assert_equal [ 900_00, 990_00 ], [ invoice.subtotal_cents, invoice.total_cents ], "at most what's left after the discount's share (owner, 2026-11-23)"
+        invoice.mark_sent!(by: users(:one), channel: "link")
       end
     end
     get admin_invoice_path(early)
@@ -90,7 +90,7 @@ class Admin::ProgressBillingTest < ActionDispatch::IntegrationTest
     as_business(@business) { job.reload.complete!(by: users(:one)) }
     get admin_job_path(job)
     assert_select "#job-progress-invoice", count: 0, text: nil
-    assert_select "#job-progress", /Progress billed\s*\$1,000\.00/
+    assert_select "#job-progress", /Progress billed\s*\$990\.00/
 
     post admin_job_invoices_path(job)
     final = as_business(@business) { Invoice.last }
@@ -101,14 +101,17 @@ class Admin::ProgressBillingTest < ActionDispatch::IntegrationTest
     as_business(@business) { final.reload.mark_sent!(by: users(:one), channel: "link") }
 
     get admin_quote_path(@quote)
-    assert_select "#quote-progress", /Credited on final invoices\s*\$900\.00/
-    assert_select "#quote-progress", /Over-billed\s*\$100\.00/
+    assert_select "#quote-progress", /Credited on final invoices\s*\$990\.00/
+    assert_select "#quote-progress", text: /Over-billed/, count: 0
     assert_select "#quote-progress-invoice", count: 0
-    link = as_business(@business) { final.client_link! }
-    get client_link_path(link.token)
-    assert_select ".quote-doc-totals", /Billed earlier on #{early.number}\s*−\$900\.00/
-    link = as_business(@business) { early.client_link! }
-    get client_link_path(link.token)
+    get admin_invoice_path(early)
+    assert_select "#invoice-credited", /credited on #{final.number}/
+    assert_select "#invoice-void", count: 0
+
+    get client_link_path(as_business(@business) { final.client_link! }.token)
+    assert_select ".quote-doc-totals", /Credit from #{early.number}\s*−\$990\.00/, "with the tax the client paid (owner, 2026-11-23)"
+    assert_select ".quote-doc-totals", text: /Billed earlier/, count: 0
+    get client_link_path(as_business(@business) { early.client_link! }.token)
     assert_select ".quote-doc-kicker", "Progress invoice #{early.number}"
   end
 end

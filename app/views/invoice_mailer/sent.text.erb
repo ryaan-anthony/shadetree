@@ -3,7 +3,8 @@
 <% end %>Invoice <%= @invoice.number %><%= " - #{@invoice.title}" if @invoice.title %>
 <%= @invoice.payments? ? "Balance due" : "Amount due" %>: <%= money(@invoice.balance) %>
 Due <%= l(@invoice.due_on) %>
-
+<% @invoice.client_credits.each do |invoice, amount| %>After a credit of <%= money(amount) %> from <%= invoice.number %>
+<% end %>
 View the invoice: <%= client_link_url(@link.token) %>
 
 The invoice is also attached as a PDF.
