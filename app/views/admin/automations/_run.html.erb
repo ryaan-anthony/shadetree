@@ -15,7 +15,7 @@
         <% end %>
       </ul>
     <% end %>
-    <p class="mt-0.5 text-xs text-muted">
+    <p class="mt-0.5 text-sm2 text-muted">
       <% if run.status == "scheduled" %>Runs <%= local_time(run.run_at) %>, if it still applies.<% else %>Started <%= local_time_ago(run.created_at) %><% end %>
     </p>
   </div>

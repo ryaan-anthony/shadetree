@@ -2,8 +2,8 @@ require "test_helper"
 
 # The admin design system (#314), checked on every page in the shared list (StaffPages):
 # each page is rendered once, as an Owner (the operator console as an operator), and every
-# registered check runs on it. PLT-14 registers the button ranks; PLT-15 to PLT-22 add theirs
-# with `check`, and they run in the same pass.
+# registered check runs on it. PLT-14 registers the button ranks, PLT-15 the page header and type
+# scale; PLT-16 to PLT-22 add theirs with `check`, and they run in the same pass.
 class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
   CHECKS = {}
 
@@ -80,6 +80,83 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
       next if label(action) == label(cta) && classes(action).sort == classes(cta).sort
 
       "empty state's #{label(cta).inspect} (#{cta["class"]}) differs from the page's #{label(action).inspect} (#{action["class"]})"
+    end
+  end
+
+  # PLT-15: one page header, a locked type scale, and no sentence as a heading.
+  MONTH = /(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?/
+  # A date with its year, a numeric date or a clock time. A day's label on a calendar or agenda
+  # ("Monday, Nov 23", "Today") names a group, so it may head one.
+  DATE = /\b#{MONTH} \d{1,2}, \d{4}\b|\b\d{1,2}\/\d{1,2}\/\d{2,4}\b|\b\d{1,2}:\d{2}\s?(?:AM|PM)\b/i
+  # The steps a heading may use (the style guide's Type section): each kit title class is one.
+  STEPS = %w[page-title section-title card-title empty-title modal-title tour-title table-head text-sm2].freeze
+  OFF_SIZE = /\A(?:[a-z-]+:)*text-(?:xs|base|lg|[2-9]?xl|\[[\d.]+(?:rem|px|em)\])\z/
+  OFF_SCALE = /\A(?:text-(?:xs|sm|base|lg|[2-9]?xl|\[.+\])|font-(?:medium|semibold|bold|extrabold|black))\z/
+  # The client's own document, embedded as clients see it, keeps the client pages' type (out of scope).
+  def headings(html, levels = "h1, h2, h3, h4, h5, h6") = html.css(levels).reject { _1.ancestors(".quote-doc").any? }
+  def visible?(node) = !classes(node).include?("sr-only")
+
+  check :top_bar_is_global_only do |_page, html|
+    bar = html.at_css(".topbar")
+    title = html.at_css("h1")&.text&.squish
+    next [] unless bar
+
+    problems = bar.css("h1, h2, p").map { "the top bar has #{_1.name} #{_1.text.squish.inspect}" }
+    problems << "the top bar repeats the H1 #{title.inspect}" if title.present? && bar.text.squish.include?(title)
+    problems
+  end
+
+  check :one_h1 do |_page, html|
+    count = html.css("h1").size
+    count == 1 ? [] : [ "#{count} H1s: #{html.css("h1").map { _1.text.squish.inspect }.join(", ")}" ]
+  end
+
+  check :h1_in_the_page_header, if: :head.to_proc do |_page, html|
+    html.at_css("main .page-head h1.page-title") ? [] : [ "the H1 isn't the page header's, inside main" ]
+  end
+
+  check :no_date_in_a_section_heading do |_page, html|
+    headings(html, "h2, h3").filter_map { |h| "#{h.name} #{h.text.squish.inspect} has a date" if h.text.squish.match?(DATE) }
+  end
+
+  # Record names (quote titles, client names) head their own pages as H1s, so only H2 and H3 are
+  # checked; a dialog's title asks its question ("Cancel the visit on …?") by design.
+  check :no_sentence_as_a_heading do |_page, html|
+    outside_dialogs(headings(html, "h2, h3")).select(&method(:visible?)).filter_map do |h|
+      text = h.text.squish
+      "#{h.name} #{text.inspect} reads as a sentence" if text.end_with?(".") || text.split.size > 8
+    end
+  end
+
+  check :sent_panel_title do |_page, html|
+    html.css("#sent-panel-h").reject { _1.text.squish == "Sent" }.map { "the sent panel is titled #{_1.text.squish.inspect}, not \"Sent\"" }
+  end
+
+  check :headings_on_the_type_scale do |_page, html|
+    headings(html).select(&method(:visible?)).filter_map do |h|
+      steps = classes(h) & STEPS
+      off = classes(h).grep(OFF_SCALE) - STEPS
+      next if steps.size == 1 && off.empty? && (steps != [ "page-title" ] || h.name == "h1")
+
+      "#{h.name} #{h.text.squish.truncate(40).inspect} is #{h["class"].inspect}, not one step of the type scale"
+    end
+  end
+
+  # Owner, 2026-11-23: text off the headings too uses only the scale's steps (body text-sm, small
+  # text-sm2, .figure for a stat's number, and the kit's classes), so any other size utility fails.
+  check :text_on_the_type_scale do |_page, html|
+    html.css("[class]").reject { _1.ancestors(".quote-doc").any? }.filter_map do |node|
+      off = classes(node).grep(OFF_SIZE)
+      "#{node.name} #{node.text.squish.truncate(40).inspect} has #{off.join(" ")}, off the type scale" if off.any?
+    end.uniq
+  end
+
+  check :heading_levels_in_order do |_page, html|
+    last = 0
+    headings(html).each_with_object([]) do |h, problems|
+      level = h.name[1].to_i
+      problems << "#{h.name} #{h.text.squish.truncate(40).inspect} skips from h#{last}" if level > last + 1 && last.positive?
+      last = level
     end
   end
 

@@ -6,7 +6,7 @@
 <% if zero_total? && !zero_total_confirmed? %>
   <section class="banner banner-warning mb-4" id="zero-total-warning" aria-labelledby="zero-total-h"><%= icon "alert-triangle" %>
     <div class="min-w-0 flex-1">
-      <h2 class="font-semibold" id="zero-total-h">This <%= noun %> comes to <%= money(document.totals.total) %></h2>
+      <h2 class="section-title text-inherit" id="zero-total-h">This <%= noun %> comes to <%= money(document.totals.total) %></h2>
       <p class="mt-1"><%= names.any? ? "No price yet on #{names.to_sentence}." : "None of its lines has a price yet." %> Your client would see <%= money(document.totals.total) %>.</p>
       <div class="mt-3 flex flex-wrap gap-2">
         <%= link_to "Add prices", edit_path, class: button_classes(:primary, :sm) %>

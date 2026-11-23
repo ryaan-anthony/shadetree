@@ -8,7 +8,7 @@
 <% requests = requests.first(shown) %>
 <div class="mt-5 border-t border-line pt-4" id="new-follow-up">
   <%# Under the card's H2 beside the calendar; under the page's H1 on its own page. %>
-  <%= content_tag(titled ? :h3 : :h2, "Or a request follow-up", class: "text-sm font-semibold text-ink") %>
+  <%= content_tag(titled ? :h3 : :h2, "Or a request follow-up", class: "section-title") %>
   <% if requests.empty? %>
     <p class="mt-1 text-sm2 text-muted">No open requests to follow up.</p>
   <% else %>

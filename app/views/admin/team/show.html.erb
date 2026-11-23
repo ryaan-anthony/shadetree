@@ -29,7 +29,7 @@
                     <%= button_to "Deactivate", deactivate_admin_member_path(member), method: :patch, class: button_classes(:destructive, :sm), "aria-label": "Deactivate #{member.user.full_name}",
                                   form: { data: { turbo_confirm: "#{member.user.full_name} will lose access to #{current_business.name} right away. Their name stays on past work.", turbo_confirm_button: "Deactivate", turbo_confirm_variant: "destructive" } } %>
                   <% elsif member == current_membership %>
-                    <span class="text-xs text-muted">You</span>
+                    <span class="text-sm2 text-muted">You</span>
                   <% end %>
                 </td>
               </tr>

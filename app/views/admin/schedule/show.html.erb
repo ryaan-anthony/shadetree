@@ -3,8 +3,8 @@
 <% show_locations = current_business.multiple_locations? && location_filter.nil? %><%# CAT-07: which location each visit is for, when showing them all %>
 <% own = !can?(:office) %><%# JOB-08: follow-ups shown in full to someone who can't see requests are their own, opened on My day %>
 <% content_for :title, "Schedule" %>
-<%# QA #274: the heading says what this is and the year; the lede, which clock the times are on. %>
-<%= page_header "Schedule: #{s.title}", lede: "#{s.view == "day" ? "Day" : "Week"} view · Times in #{s.zone_name}" do %>
+<%# PLT-15 (owner, 2026-11-22; supersedes #274's heading): the H1 is "Schedule"; the lede starts with the range, year included, then the view and the clock. %>
+<%= page_header "Schedule", lede: "#{s.title} · #{s.view == "day" ? "Day" : "Week"} view · Times in #{s.zone_name}" do %>
   <%= render "admin/shared/location_filter", path: admin_schedule_path, keep: schedule_link_params(s) %>
   <div class="flex items-center gap-1" role="group" aria-label="Period">
     <%= link_to admin_schedule_path(schedule_link_params(s, date: s.previous_date.iso8601)), class: button_classes(:secondary, :icon), "aria-label": "Previous #{s.view}" do %><%= icon "chevron-left" %><% end %>
@@ -118,7 +118,7 @@
         <% day = s.visits_on(date) %>
         <% next if day.empty? && date != s.business.today %>
         <%= card flush: true do %>
-          <h2 class="border-b border-line px-4 py-2 text-sm font-semibold text-ink"><%= date.strftime("%A, %b %-d") %>
+          <h2 class="section-title border-b border-line px-4 py-2"><%= date.strftime("%A, %b %-d") %>
             <% s.closures_on(date).each do |closure| %><span class="ml-1 text-sm2 font-normal text-muted">· Closed: <%= closure.reason %></span><% end %></h2>
           <% if day.empty? %>
             <p class="px-4 py-3 text-sm2 text-muted">Nothing booked.</p>
@@ -161,14 +161,14 @@
                 <span class="cal-dot cal-<%= s.color_for(column.member) %>" aria-hidden="true"></span><span class="truncate"><%= column.member.full_name %></span>
               <% end %>
             <% else %>
-              <%= link_to admin_schedule_path(schedule_link_params(s, view: "day", date: date.iso8601)), class: "hover:underline" do %><%= date.strftime("%a") %> <span class="text-base font-semibold text-ink"><%= date.day %></span><% end %>
-              <% s.closures_on(date).each do |closure| %><span class="block truncate text-xs text-muted" title="<%= closure.reason %>">Closed: <%= closure.reason %></span><% end %>
+              <%= link_to admin_schedule_path(schedule_link_params(s, view: "day", date: date.iso8601)), class: "hover:underline" do %><%= date.strftime("%a") %> <span class="figure text-ink"><%= date.day %></span><% end %>
+              <% s.closures_on(date).each do |closure| %><span class="block truncate text-sm2 text-muted" title="<%= closure.reason %>">Closed: <%= closure.reason %></span><% end %>
             <% end %>
           </div>
         <% end %>
       </div>
       <div class="cal-grid border-b border-line bg-sunken/40 <%= "cal-wide" if s.columns.size > 7 %>">
-        <div class="py-1.5 pr-2 text-right text-xs text-muted">Anytime</div><%# QA #274: muted, 4.58:1 on this row (faint was 2.47:1) %>
+        <div class="py-1.5 pr-2 text-right text-sm2 text-muted">Anytime</div><%# QA #274: muted, 4.58:1 on this row (faint was 2.47:1) %>
         <% s.columns.each do |column| %>
           <% date = column.date %>
           <div class="min-h-9 min-w-0 space-y-1 border-l border-line-2 p-1" role="group" aria-label="Anytime, <%= schedule_column_label(column) %>"

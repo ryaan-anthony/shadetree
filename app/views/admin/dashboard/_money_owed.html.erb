@@ -7,7 +7,7 @@
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div class="min-w-0">
         <h2 class="text-sm2 text-muted">Clients owe you</h2>
-        <p class="money text-lg font-semibold text-ink"><%= safe_join(owed.map { money(_1) }, " + ") %></p>
+        <p class="money figure text-ink"><%= safe_join(owed.map { money(_1) }, " + ") %></p>
         <% if overdue.any? %><p class="text-sm2 text-danger"><%= safe_join(overdue.map { money(_1) }, " + ") %> of it is overdue</p><% end %>
       </div>
       <%= link_to "See invoices", admin_invoices_path(filter: overdue.any? ? "overdue" : "outstanding"), class: button_classes(:secondary, :sm) %>

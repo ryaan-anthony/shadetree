@@ -1,12 +1,8 @@
 <% first = current_business.nil? %>
 <% content_for :title, first ? "Set up your business" : "Create a business" %>
 <div class="mx-auto w-full max-w-lg py-4 sm:py-10">
-  <div class="mb-6">
-    <h1 class="page-title"><%= first ? "Set up your business" : "Create another business" %></h1>
-    <p class="page-lede">
-      <%= first ? "Two quick answers and you're in. Everything else can wait." : "You'll be its owner. Switch between businesses from the menu at the top of the sidebar." %>
-    </p>
-  </div>
+  <%= page_header (first ? "Set up your business" : "Create another business"),
+                  lede: (first ? "Two quick answers and you're in. Everything else can wait." : "You'll be its owner. Switch between businesses from the menu at the top of the sidebar.") %>
 
   <%= form_with model: @business, url: admin_business_path, method: :post, data: { controller: "browser-timezone" } do |f| %>
     <%= f.hidden_field :timezone, data: { browser_timezone_target: "field" } %>

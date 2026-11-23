@@ -30,9 +30,9 @@
     <% else %>
       <% if @import.failed? %><p class="mb-3 text-sm text-danger">Something went wrong partway through. You can undo the clients added so far and try again.</p><% end %>
       <dl class="grid grid-cols-3 gap-3 text-center">
-        <div class="rounded-control bg-sunken p-3"><dt class="text-sm2 text-muted">Added</dt><dd class="text-xl font-bold text-ink tabular"><%= number_with_delimiter(@import.created_count) %></dd></div>
-        <div class="rounded-control bg-sunken p-3"><dt class="text-sm2 text-muted">Skipped</dt><dd class="text-xl font-bold text-ink tabular"><%= number_with_delimiter(@import.skipped_count) %></dd></div>
-        <div class="rounded-control bg-sunken p-3"><dt class="text-sm2 text-muted">Couldn't add</dt><dd class="text-xl font-bold text-ink tabular"><%= number_with_delimiter(@import.failed_count) %></dd></div>
+        <div class="rounded-control bg-sunken p-3"><dt class="text-sm2 text-muted">Added</dt><dd class="figure text-ink tabular"><%= number_with_delimiter(@import.created_count) %></dd></div>
+        <div class="rounded-control bg-sunken p-3"><dt class="text-sm2 text-muted">Skipped</dt><dd class="figure text-ink tabular"><%= number_with_delimiter(@import.skipped_count) %></dd></div>
+        <div class="rounded-control bg-sunken p-3"><dt class="text-sm2 text-muted">Couldn't add</dt><dd class="figure text-ink tabular"><%= number_with_delimiter(@import.failed_count) %></dd></div>
       </dl>
       <% if @import.problems.any? %>
         <p class="mt-4 text-sm text-subtle">The report lists every row not added and why<%= " (the first #{ClientImport::MAX_PROBLEMS})" if @import.skipped_count + @import.failed_count > ClientImport::MAX_PROBLEMS %>. Fix the ones that couldn't be added and upload it again; delete skipped rows first if you'll choose "Add them anyway".</p>

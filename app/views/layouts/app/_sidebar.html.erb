@@ -8,8 +8,8 @@
                 aria-haspopup="true" aria-expanded="false">
           <%= business_mark(current_business) %>
           <span class="min-w-0 flex-1">
-            <span class="block truncate text-[0.84rem] font-semibold leading-tight"><%= current_business.name %></span>
-            <span class="block text-xs text-side-text"><%= current_role_label %></span>
+            <span class="block truncate text-sm font-semibold leading-tight"><%= current_business.name %></span>
+            <span class="block text-sm2 text-side-text"><%= current_role_label %></span>
           </span>
           <%= icon "selector", class: "size-4 text-side-text" %>
         </button>
@@ -18,7 +18,7 @@
           <% current_user.businesses.order(:name).with_attached_logo.each do |business| %>
             <%= button_to switch_admin_business_path, params: { business: business.uid }, class: "menu-item",
                           "aria-current": (business == current_business).to_s, form: { class: "contents" } do %>
-              <%= business_mark(business, class: "size-6 rounded-md text-[0.65rem]") %>
+              <%= business_mark(business, class: "size-6 rounded-md text-sm2") %>
               <span class="flex-1 truncate"><%= business.name %></span>
               <% if business == current_business %><%= icon "check", class: "size-4 text-canopy" %><% end %>
             <% end %>
@@ -28,7 +28,7 @@
         </div>
       </div>
     <% else %>
-      <%= brand_logo(on: :dark, href: root_path, class: "px-2 py-1.5 text-[1.0625rem]") %>
+      <%= brand_logo(on: :dark, href: root_path, class: "px-2 py-1.5") %>
     <% end %>
   </div>
 
@@ -69,16 +69,16 @@
 
   <% if current_business && !current_business.suspended? && (can?(:office) || can?(:business_settings)) %><%= render "layouts/app/quota_meter" %><% end %><%# BIL-06: not on a suspended business's refusal page %>
   <footer class="side-foot">
-    <div class="flex items-center gap-2.5 px-1 text-[0.8125rem] text-slate-200">
+    <div class="flex items-center gap-2.5 px-1 text-sm2 text-slate-200">
       <%= avatar current_user.full_name.presence || current_user.email %>
       <%= link_to edit_user_registration_path, class: "min-w-0 flex-1 rounded-md hover:text-white", title: "Your account" do %>
         <p class="truncate font-medium"><%= current_user.full_name.presence || current_user.email %></p>
-        <p class="truncate text-xs text-side-text"><%= current_user.email %></p>
+        <p class="truncate text-sm2 text-side-text"><%= current_user.email %></p>
       <% end %>
       <%= button_to destroy_user_session_path, method: :delete, class: button_classes(:tertiary, :sm, :icon, extra: "text-side-text hover:bg-side-2 hover:text-white"), form: { class: "contents", data: { turbo: false, controller: "forget-tour", action: "submit->forget-tour#clear" } }, "aria-label": "Sign out", title: "Sign out" do %>
         <%= icon "log-out" %>
       <% end %>
     </div>
-    <p class="mt-2 px-1 text-xs text-side-text"><%= link_to "Terms", terms_path, class: "hover:text-white" %> · <%= link_to "Privacy", privacy_path, class: "hover:text-white" %> · <%= link_to "Legal", legal_path, class: "hover:text-white" %></p>
+    <p class="mt-2 px-1 text-sm2 text-side-text"><%= link_to "Terms", terms_path, class: "hover:text-white" %> · <%= link_to "Privacy", privacy_path, class: "hover:text-white" %> · <%= link_to "Legal", legal_path, class: "hover:text-white" %></p>
   </footer>
 </div>

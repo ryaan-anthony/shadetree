@@ -94,6 +94,19 @@
   --text-sm2: 0.8125rem;
   --text-sm2--line-height: 1.25rem;
 
+  /* PLT-15: the locked type scale for staff pages (owner, 2026-11-22), shown on the style guide.
+     Headings and titles use only these steps, through the kit's classes:
+     page title (.page-title), section and card titles (.section-title, .card-title), body
+     (text-sm), small (text-sm2), table header (.table-head) and figure (.figure, a stat's
+     number; owner, 2026-11-23). */
+  --type-page-title: 1.375rem; /* 22px bold */
+  --type-page-title-phone: 1.1875rem; /* 19px below 960px */
+  --type-title: 0.9375rem; /* section and card titles: 15px at 650 */
+  --type-title-weight: 650;
+  --type-body: 0.875rem; /* 14px */
+  --type-small: 0.8125rem; /* 13px; table headers are small, semibold and muted */
+  --type-figure: 1.125rem; /* 18px semibold: a stat's number */
+
   /* Spacing: Tailwind's 4px scale. Layout widths used by the shells: */
   --spacing-sidebar: 15.25rem;
   --spacing-topbar: 3.5rem;

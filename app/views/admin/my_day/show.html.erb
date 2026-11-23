@@ -51,7 +51,7 @@
       <p class="px-5 py-4 text-sm2 text-muted">Nothing else booked for you yet.</p>
     <% else %>
       <% @upcoming.each do |date, visits| %>
-        <h3 class="border-t border-line bg-sunken/60 px-4 py-1.5 text-sm2 font-semibold text-muted first:border-t-0"><%= friendly_date(date) %></h3>
+        <h3 class="table-head border-t border-line bg-sunken/60 px-4 py-1.5 first:border-t-0"><%= friendly_date(date) %></h3>
         <ul class="list"><%= render partial: "admin/my_day/item", collection: visits, as: :item %></ul>
       <% end %>
     <% end %>

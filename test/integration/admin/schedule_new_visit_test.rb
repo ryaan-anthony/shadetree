@@ -24,11 +24,11 @@ class Admin::ScheduleNewVisitTest < ActionDispatch::IntegrationTest
 
   def on_monday(&) = travel_to(@business.local_time(@monday, "07:00"), &)
 
-  test "each empty hour from today on is a named link to a new visit there; the heading has the year and the clock" do
+  test "each empty hour from today on is a named link to a new visit there; the header has the range, the year and the clock" do
     on_monday do
       get admin_schedule_path(date: @monday.iso8601)
-      assert_select "h1", "Schedule: November 23 – 29, 2026"
-      assert_select ".page-lede", "Week view · Times in Eastern Time (US & Canada)"
+      assert_select "h1", "Schedule" # PLT-15: the range is the lede's, year included
+      assert_select ".page-lede", "November 23 – 29, 2026 · Week view · Times in Eastern Time (US & Canada)"
       assert_select "nav[aria-label=View] a[aria-current=page]", "Week"
       slots = css_select("#schedule-grid a.cal-slot")
       assert_equal 7 * 9, slots.size, "8 am to 5 pm, every day of the week"
@@ -57,7 +57,7 @@ class Admin::ScheduleNewVisitTest < ActionDispatch::IntegrationTest
       assert_select "#schedule-grid a.cal-slot", 4 * 9, "past days aren't bookable"
 
       get admin_schedule_path(view: "day", date: (@monday + 4).iso8601)
-      assert_select "h1", "Schedule: Friday, November 27, 2026"
+      assert_select ".page-lede", /\AFriday, November 27, 2026 · Day view/
       assert_select "#schedule-grid a.cal-slot .sr-only", text: "New visit, Friday, November 27, 10:00 AM, with #{@tech.full_name}"
       assert_select "#schedule-grid a.cal-slot[href=?]", admin_schedule_new_visit_path(on: "2026-11-27", at: "10:00", crew: @tech.id, view: "day", slot: "slot-2026-11-27-10-#{@tech.id}")
     end

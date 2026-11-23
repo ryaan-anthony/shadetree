@@ -35,7 +35,7 @@
 <% yearly = @plans.any? { plan_yearly?(_1) } %>
 <div class="group/interval">
 <div class="mb-3 mt-8 flex flex-wrap items-center justify-between gap-3">
-  <h2 class="text-base font-semibold text-ink">Compare plans</h2>
+  <h2 class="section-title">Compare plans</h2>
   <% if choosing && yearly %>
     <% savings = @plans.filter_map { plan_annual_saving(_1) }.uniq %>
     <fieldset class="inline-flex rounded-control border border-line bg-sunken p-1 text-sm" id="interval-choice">
@@ -59,7 +59,7 @@
           <th scope="col" class="p-3 <%= "bg-sunken" if option == plan %>">
             <span class="block font-semibold text-ink"><%= option.name %><%= " (yours)" if option == plan %></span>
             <span class="block text-sm2 font-normal text-muted"><%= option.free? ? "No charge" : "#{money(option.monthly_price)}/month" %></span>
-            <% unless option.free? || option.annual_price_cents.zero? %><span class="block text-xs font-normal text-muted">or <%= money(option.annual_price) %>/year</span><% end %>
+            <% unless option.free? || option.annual_price_cents.zero? %><span class="block text-sm2 font-normal text-muted">or <%= money(option.annual_price) %>/year</span><% end %>
           </th>
         <% end %>
       </tr>

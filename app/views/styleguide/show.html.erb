@@ -3,7 +3,7 @@
   <header class="mb-8 flex flex-wrap items-end justify-between gap-4">
     <div>
       <%= brand_logo %>
-      <h1 class="mt-4 text-2xl font-bold tracking-tight text-ink">UI kit</h1>
+      <h1 class="page-title mt-4">UI kit</h1>
       <p class="mt-1 max-w-prose text-muted">Every building block and state. Tokens live in
         <code>app/assets/tailwind/theme.css</code>, classes in <code>components.css</code>, markup in
         <code>app/views/components</code> and <code>ComponentsHelper</code>.</p>
@@ -17,7 +17,7 @@
 
   <div class="space-y-10">
     <section id="brand" aria-labelledby="brand-h">
-      <h2 id="brand-h" class="mb-3 text-base font-bold text-ink">Brand</h2>
+      <h2 id="brand-h" class="section-title mb-3">Brand</h2>
       <div class="grid gap-3 sm:grid-cols-2">
         <div class="card flex h-24 items-center justify-center"><%= brand_logo %></div>
         <div class="card flex h-24 items-center justify-center border-side-line bg-side"><%= brand_logo(on: :dark) %></div>
@@ -31,7 +31,7 @@
     </section>
 
     <section id="colors" aria-labelledby="colors-h">
-      <h2 id="colors-h" class="mb-3 text-base font-bold text-ink">Colors</h2>
+      <h2 id="colors-h" class="section-title mb-3">Colors</h2>
       <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
         <% [ %w[ink #0f172a], %w[body #1e293b], %w[subtle #475569], %w[muted #64748b], %w[faint #94a3b8], %w[line #e2e8f0],
              %w[canvas #f6f7f9], %w[canopy #047857], %w[canopy-50 #ecfdf5], %w[leaf #34d399], %w[side #0b1221], %w[success #047857],
@@ -46,17 +46,31 @@
     </section>
 
     <section id="type" aria-labelledby="type-h">
-      <h2 id="type-h" class="mb-3 text-base font-bold text-ink">Type</h2>
-      <%= card do %>
-        <p class="text-2xl font-bold tracking-tight text-ink">Page title, 22px bold</p>
-        <p class="mt-2 text-[0.9375rem] font-semibold text-ink">Card title, 15px semibold</p>
-        <p class="mt-2 text-sm">Body, 14px. Public Sans, self-hosted. Numbers use <span class="tabular font-semibold">tabular figures: $1,250.00</span>.</p>
-        <p class="mt-2 text-sm2 text-muted">Secondary, 13px muted.</p>
+      <h2 id="type-h" class="section-title mb-3">Type</h2>
+      <%# PLT-15: the locked scale (owner, 2026-11-22). Tokens: --type-* in theme.css. %>
+      <%= card flush: true do %>
+        <dl class="divide-y divide-line-2">
+          <% [ [ "Page title", "page_header, .page-title", "22px bold; 19px below 960px. The page's one H1.", "page-title" ],
+               [ "Section title", ".section-title", "15px at 650. A heading inside a card or form.", "section-title" ],
+               [ "Card title", "card(title:), .card-title", "15px at 650. Also the empty state's, a dialog's and the tour's title.", "card-title" ],
+               [ "Body", "text-sm", "14px. Public Sans, self-hosted; numbers use tabular figures: $1,250.00.", "text-sm" ],
+               [ "Small", "text-sm2", "13px, often muted: help, metadata, a stat's label.", "text-sm2 text-muted" ],
+               [ "Table header", ".table-head, .data-table th", "13px semibold, muted. Column heads and list groups.", "table-head" ],
+               [ "Figure", ".figure", "18px semibold. A stat's number: $1,250.00, 4 of 30.", "figure" ] ].each do |name, use, rule, klass| %>
+            <div class="grid gap-1 px-5 py-3 sm:grid-cols-[12rem_minmax(0,1fr)] sm:gap-4">
+              <dt class="<%= klass %>"><%= name %></dt>
+              <dd class="text-sm2 text-muted"><code><%= use %></code>: <%= rule %></dd>
+            </div>
+          <% end %>
+        </dl>
       <% end %>
+      <p class="mt-2 max-w-prose text-sm2 text-muted">Headings, titles and text use only these steps; a test checks every staff page for any other size.
+        A sentence is never a heading: a panel is titled with a fixed label ("Sent"), and the date and who did it are body text under it.
+        The top bar holds only global controls, never the page's title.</p>
     </section>
 
     <section id="buttons" aria-labelledby="buttons-h">
-      <h2 id="buttons-h" class="mb-3 text-base font-bold text-ink">Buttons</h2>
+      <h2 id="buttons-h" class="section-title mb-3">Buttons</h2>
       <%# PLT-14: four ranks, each with its rule, then the two variants beside them. %>
       <%= card flush: true do %>
         <ul class="list" id="button-ranks">
@@ -98,7 +112,7 @@
     </section>
 
     <section id="forms" aria-labelledby="forms-h">
-      <h2 id="forms-h" class="mb-3 text-base font-bold text-ink">Forms</h2>
+      <h2 id="forms-h" class="section-title mb-3">Forms</h2>
       <div class="grid gap-4 lg:grid-cols-2">
         <%= card title: "Fields", subtitle: "f.field with label, help and every input type" do %>
           <%= form_with model: @valid, url: "#", method: :post do |f| %>
@@ -138,7 +152,7 @@
     </section>
 
     <section id="badges" aria-labelledby="badges-h">
-      <h2 id="badges-h" class="mb-3 text-base font-bold text-ink">Badges and status pills</h2>
+      <h2 id="badges-h" class="section-title mb-3">Badges and status pills</h2>
       <%= card do %>
         <div class="flex flex-wrap gap-2">
           <%= badge "Draft" %>
@@ -154,7 +168,7 @@
     </section>
 
     <section id="cards" aria-labelledby="cards-h">
-      <h2 id="cards-h" class="mb-3 text-base font-bold text-ink">Cards</h2>
+      <h2 id="cards-h" class="section-title mb-3">Cards</h2>
       <div class="grid gap-4 md:grid-cols-2">
         <%= card title: "Card with actions", subtitle: "Optional subtitle",
                  actions: link_to("Edit", "#", class: button_classes(:secondary, :sm)),
@@ -171,7 +185,7 @@
     </section>
 
     <section id="tables" aria-labelledby="tables-h">
-      <h2 id="tables-h" class="mb-3 text-base font-bold text-ink">Tables, lists and empty states</h2>
+      <h2 id="tables-h" class="section-title mb-3">Tables, lists and empty states</h2>
       <%= card title: "Recent quotes", flush: true,
                footer: pagination(page: 2, per_page: 3, total_count: 8) do %>
         <div class="table-wrap">
@@ -201,7 +215,7 @@
     </section>
 
     <section id="dialogs" aria-labelledby="dialogs-h">
-      <h2 id="dialogs-h" class="mb-3 text-base font-bold text-ink">Modal and confirm</h2>
+      <h2 id="dialogs-h" class="section-title mb-3">Modal and confirm</h2>
       <%= card do %>
         <div class="flex flex-wrap gap-2" data-controller="modal">
           <button type="button" class="<%= button_classes(:secondary) %>" data-action="modal#open">Open modal</button>
@@ -222,7 +236,7 @@
     </section>
 
     <section id="feedback" aria-labelledby="feedback-h">
-      <h2 id="feedback-h" class="mb-3 text-base font-bold text-ink">Banners and toasts</h2>
+      <h2 id="feedback-h" class="section-title mb-3">Banners and toasts</h2>
       <div class="space-y-2">
         <div class="banner banner-info"><%= icon "info" %><p>Online payments turn on once Stripe is connected.</p></div>
         <div class="banner banner-success"><%= icon "success" %><p>Maria approved the quote.</p></div>
@@ -234,7 +248,7 @@
     </section>
 
     <section id="navigation" aria-labelledby="navigation-h">
-      <h2 id="navigation-h" class="mb-3 text-base font-bold text-ink">Tabs, menus and the flow rail</h2>
+      <h2 id="navigation-h" class="section-title mb-3">Tabs, menus and the flow rail</h2>
       <%= card do %>
         <nav class="tabs" aria-label="Example tabs">
           <a class="tab" href="#navigation" aria-current="page">Details</a>
@@ -266,7 +280,7 @@
     </section>
 
     <section id="icons" aria-labelledby="icons-h">
-      <h2 id="icons-h" class="mb-3 text-base font-bold text-ink">Icons</h2>
+      <h2 id="icons-h" class="section-title mb-3">Icons</h2>
       <%= card do %>
         <p class="mb-3 text-sm2 text-muted">Feather icons rendered inline by <code>icon("name")</code>; decorative unless given <code>label:</code>.</p>
         <div class="grid grid-cols-3 gap-2 sm:grid-cols-6">
@@ -278,7 +292,7 @@
     </section>
 
     <section id="pickers" aria-labelledby="pickers-h">
-      <h2 id="pickers-h" class="mb-3 text-base font-bold text-ink">Client picker</h2>
+      <h2 id="pickers-h" class="section-title mb-3">Client picker</h2>
       <p class="mb-3 text-sm text-muted">Searches the signed-in business's clients (CLI-02). "New client" opens the page's quick-create modal, rendered once outside any form.</p>
       <form id="picker-demo" class="card card-body max-w-md space-y-3" data-controller="styleguide-demo" data-action="styleguide-demo#submit">
         <%= render "admin/clients/picker", name: "demo[client]" %>
@@ -288,7 +302,7 @@
     </section>
 
     <section id="layouts" aria-labelledby="layouts-h">
-      <h2 id="layouts-h" class="mb-3 text-base font-bold text-ink">Layouts</h2>
+      <h2 id="layouts-h" class="section-title mb-3">Layouts</h2>
       <%= card do %>
         <ul class="list -mx-[1.125rem] -my-3">
           <li><div class="flex-1"><p class="font-semibold text-ink">Marketing</p><p class="text-sm2 text-muted">Public pages and sign-in.</p></div><%= link_to "Open", root_path, class: button_classes(:secondary, :sm) %></li>

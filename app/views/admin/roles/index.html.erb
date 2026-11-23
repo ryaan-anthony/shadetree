@@ -16,7 +16,7 @@
     <%= card title: key.humanize, subtitle: lede, id: "role-#{key}",
              actions: (link_to("Duplicate", new_admin_role_path(from: key), class: button_classes(:tertiary, :sm), "aria-label": "Duplicate: #{key.humanize}") if @editable && key != "owner") do %>
       <%= render "permissions", granted: Permissions::ROLES.fetch(key), owner: key == "owner" %>
-      <p class="mt-4 text-xs text-muted">Built in. Can't be changed.</p>
+      <p class="mt-4 text-sm2 text-muted">Built in. Can't be changed.</p>
     <% end %>
   <% end %>
   <% @roles.each do |role| %>
