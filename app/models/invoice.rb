@@ -73,7 +73,13 @@ class Invoice < ApplicationRecord
   before_validation :apply_payment_terms
   # PAY-06: a draft's lines billing quote work change claims, so its save takes the quote's lock
   # before writing its own row (JOB-09's order: the quote first).
-  before_save(if: -> { quote_id && persisted? && association(:line_items).loaded? && line_items.any?(&:changed_for_autosave?) }) { QuoteWork.lock!(quote_id) }
+  before_validation(if: :changes_quote_work?) { QuoteWork.lock!(quote_id) } # the checks below read locked lines
+  before_save(if: :changes_quote_work?) { QuoteWork.lock!(quote_id) }
+  # Invoiced work can't be changed without first cancelling the invoice (owner, 2026-11-23): a sent
+  # invoice's revision can't take off a line that bills work (lowering it frees nothing either), and
+  # a line billed directly can't bill more than its claim can cover.
+  validate :keeps_invoiced_work, if: -> { sent_at && association(:line_items).loaded? }
+  validate :direct_lines_within_claims, if: -> { association(:line_items).loaded? }
 
   # A new draft for a client, with the business's defaults (terms, due date, taxes).
   class NotApproved < StandardError; end
@@ -143,7 +149,7 @@ class Invoice < ApplicationRecord
   # sent (who and when; the revision is now what the client has). Returns the InvoiceSend.
   def mark_sent!(by:, channel:, recipient: nil, cc: nil)
     transaction do
-      lock!
+      lock_with_quote!
       raise ArgumentError, "Invoice #{number} can't be sent." unless sendable? && !client.erased? # INS-02
 
       if draft?
@@ -160,7 +166,7 @@ class Invoice < ApplicationRecord
   # revision N+1. Its link keeps working; PAY-02's client page says it's being updated.
   def revise!(by:)
     transaction do
-      lock!
+      lock_with_quote!
       raise ArgumentError, "Invoice #{number} can't be revised: #{payments? ? "it has payments" : "only a sent invoice can"}." unless revisable?
 
       revisions.create!(business:, number: revision, snapshot:, status:, sent_at:, pdf_blob_id:, revised_by: by, created_at: Time.current)
@@ -176,17 +182,14 @@ class Invoice < ApplicationRecord
   # revising invoice does this first, so the client never sees the unfinished edits.
   def discard_revision!(by:)
     transaction do
-      QuoteWork.lock!(quote_id) if quote_id # PAY-06: restored lines may claim quote work
-      lock!
+      lock_with_quote!
       raise ArgumentError, "Invoice #{number} isn't being revised." unless revising?
 
       previous = revisions.last
       restore_snapshot(previous.snapshot)
-      begin
-        save!(validate: false) # the lines first, while it's a draft: lines are only inserted on drafts (PAY-06)
-      rescue ActiveRecord::RecordNotUnique
-        raise ArgumentError, "Some of its work has been billed on another invoice since. Keep this revision, or void that invoice first."
-      end
+      # The lines first, while it's a draft: lines are only inserted on drafts (PAY-06). It can't
+      # clash with another bill: a revision never frees invoiced work (owner, 2026-11-23).
+      save!(validate: false)
       assign_attributes(status: previous.status, revision: previous.number, pdf_blob_id: previous.pdf_blob_id, pdf_digest: nil)
       save!(validate: false)
       previous.destroy!
@@ -204,8 +207,7 @@ class Invoice < ApplicationRecord
     raise ArgumentError, "Say why it's being voided." if reason.empty?
 
     transaction do
-      QuoteWork.lock!(quote_id) if quote_id # PAY-06: the quote first, as billing takes it
-      lock!
+      lock_with_quote!
       discard_revision!(by:) if revising?
       raise ArgumentError, "Invoice #{number} can't be voided#{" while it has payments" if payments?}." unless voidable?
 
@@ -267,7 +269,7 @@ class Invoice < ApplicationRecord
   # (or is more than the balance) nothing changes and the errors are on it.
   def record_payment!(by:, **attributes)
     transaction do
-      lock!
+      lock_with_quote!
       payment = payments.new(business:, currency:, source: "recorded", recorded_by: by)
       payment.assign_attributes(attributes)
       raise ArgumentError, "Invoice #{number} can't take a payment now." unless payable?
@@ -303,7 +305,7 @@ class Invoice < ApplicationRecord
   def record_online_payment!(intent_id:, amount_cents:, currency:, received_on: business.today, checkout_id: nil, method_detail: nil,
                              platform_fee_cents: 0, refunded_cents: 0, dispute: nil)
     transaction do
-      lock!
+      lock_with_quote!
       existing = Payment.find_by(provider_payment_id: intent_id)
       next [ existing, false, 0 ] if existing
 
@@ -397,6 +399,13 @@ class Invoice < ApplicationRecord
   end
 
   def record!(kind, by: nil, **data) = InvoiceEvent.record!(self, kind, by:, **data)
+
+  # PAY-06: every change of an invoice takes its quote's lock first (JOB-09's order: the quote,
+  # then its lines), then the invoice's row, as billing does, so they can't deadlock.
+  def lock_with_quote!
+    QuoteWork.lock!(quote_id) if quote_id
+    lock!
+  end
 
   # The list's tabs. Overdue and awaiting payment depend on the business's today.
   FILTERS = { "all" => "All", "outstanding" => "Awaiting payment", "overdue" => "Overdue", "draft" => "Drafts", "paid" => "Paid",
@@ -502,7 +511,7 @@ class Invoice < ApplicationRecord
     raise ArgumentError, "Say why." if reason.to_s.squish.empty?
 
     transaction do
-      lock!
+      lock_with_quote!
       payment.lock!
       raise ArgumentError, "Online payments can't be changed here." if payment.online?
       raise ArgumentError, "Invoice #{number} is void." if void?
@@ -515,7 +524,7 @@ class Invoice < ApplicationRecord
 
   def adjust_online_payment(payment, kind)
     transaction do
-      lock!
+      lock_with_quote!
       payment.lock!
       yield
       next [ payment, false ] unless payment.changed?
@@ -587,4 +596,28 @@ class Invoice < ApplicationRecord
   end
 
   def location_source = job || quote
+
+  def changes_quote_work? = quote_id && persisted? && association(:line_items).loaded? && line_items.any?(&:changed_for_autosave?)
+
+  def keeps_invoiced_work
+    removed = line_items.select { _1.marked_for_destruction? && _1.final && (_1.job_line_item_id || _1.quote_line_item_id) }
+    errors.add(:base, "#{removed.map(&:name).to_sentence} #{removed.one? ? "is" : "are"} invoiced work. Void the invoice to take #{removed.one? ? "it" : "them"} off.") if removed.any?
+  end
+
+  # "Tree removal: only 7 are free to bill; the rest are on J-0002."
+  def direct_lines_within_claims
+    line_items.each do |item|
+      claim = item.direct_claim
+      next unless claim && !item.marked_for_destruction? && item.quantity.to_d > claim.quantity.to_d
+
+      line = QuoteLineItem.find(item.quote_line_item_id)
+      free = claim.quantity.to_d + line.to_do_quantity
+      next if item.quantity.to_d <= free
+
+      holders = line.claims.live.where.not(id: claim.id).includes(:job, invoice_line_item: :invoice).order(:id)
+                    .map { _1.job&.number || _1.invoice_line_item&.invoice&.number }.compact.uniq
+      errors.add(:base, "#{item.name}: only #{QuoteWork.number(free)} #{free == 1 ? "is" : "are"} free to bill" \
+                        "#{"; the rest #{holders.one? ? "is" : "are"} on #{holders.to_sentence}" if holders.any?}.")
+    end
+  end
 end

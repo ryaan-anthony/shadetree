@@ -82,8 +82,8 @@ module QuoteWork
 
   # PAY-06's direct billing: an invoice line that's the final bill of a quote line with no job
   # claims what's free of it, up to its quantity, so no job can take that work; a draft's autosave
-  # moves the claim with the line's quantity (more only from what's free). The caller holds the
-  # quote's lock (WorkBilling, or the invoice's save).
+  # moves the claim with the line's quantity. The caller holds the quote's lock (WorkBilling, or
+  # the invoice's save).
   def claim_direct!(invoice_line)
     line = lock!(invoice_line.quote_line_item.quote_id).fetch(invoice_line.quote_line_item_id)
     quantity = [ invoice_line.quantity.to_d, line.to_do_quantity ].min
@@ -93,9 +93,13 @@ module QuoteWork
     bump!(line, quantity)
   end
 
+  # Raising takes what's free (the invoice refuses more, so the line never bills more than its
+  # claim); lowering frees the rest only on a draft never sent: a sent invoice's work stays held
+  # until it's voided (owner, 2026-11-23).
   def follow_direct!(claim, wanted)
     line = lock!(claim.quote_line_item.quote_id).fetch(claim.quote_line_item_id)
     wanted = [ wanted.to_d, claim.quantity.to_d + line.to_do_quantity ].min
+    wanted = [ wanted, claim.quantity.to_d ].max if claim.invoice_line_item.invoice.sent_at
     bump!(line, wanted - claim.quantity.to_d)
     claim.update!(quantity: wanted)
   end

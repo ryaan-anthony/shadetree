@@ -51,6 +51,7 @@ class Job < ApplicationRecord
   validates :instructions, :internal_notes, length: { maximum: 5_000 }
   validates :cancel_reason, length: { maximum: 200 }
   validate(if: -> { @lines_assigned }) { errors.add(:base, "A job can have at most #{MAX_LINES} items.") if line_items.reject(&:marked_for_destruction?).size > MAX_LINES }
+  validate :keeps_billed_lines, if: -> { @lines_assigned }
   # A change to the lines alone still changes the job's row, so its lock_version is checked
   # (and the lines saved) only if nobody else saved the job since the form was opened.
   before_save { self.updated_at = Time.current if !new_record? && line_items.any? { _1.changed_for_autosave? } && !changed? }
@@ -472,6 +473,18 @@ class Job < ApplicationRecord
     move = ->(time) { time && to.local(*time.in_time_zone(from).then { [ _1.year, _1.month, _1.day, _1.hour, _1.min ] }) }
     visits.where.not(starts_at: nil).find_each do |visit|
       visit.update_columns(starts_at: move.(visit.starts_at), window_ends_at: move.(visit.window_ends_at))
+    end
+  end
+
+  # PAY-06: invoiced work can't be changed without first cancelling the invoice (owner, 2026-11-23),
+  # so a line with a final bill on an invoice that isn't void stays.
+  def keeps_billed_lines
+    removed = line_items.select(&:marked_for_destruction?).map(&:id).compact
+    return if removed.empty?
+
+    billed = InvoiceLineItem.final_bills.where(job_line_item_id: removed).includes(:invoice, :job_line_item).to_a
+    billed.group_by(&:job_line_item).each do |line, bills|
+      errors.add(:base, "#{line.name} is billed on #{bills.map { _1.invoice.number }.uniq.to_sentence}. Void the invoice first to remove it.")
     end
   end
 

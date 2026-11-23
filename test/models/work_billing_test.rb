@@ -131,7 +131,8 @@ class WorkBillingTest < ActiveSupport::TestCase
     as_business(@business) do
       invoice.mark_sent!(by: @owner, channel: "link")
       invoice.reload.revise!(by: @owner)
-      invoice.sync_line_items([ { "key" => "typed", "name" => "Typed", "quantity" => "1", "unit_price" => "5" } ])
+      invoice.sync_line_items(invoice.line_items.map { { "key" => _1.key, "name" => _1.name, "quantity" => "4", "unit_price" => _1.unit_price.to_s } } +
+                              [ { "key" => "typed", "name" => "Typed", "quantity" => "1", "unit_price" => "5" } ])
       invoice.save!
       invoice.reload.discard_revision!(by: @owner)
     end
@@ -141,6 +142,82 @@ class WorkBillingTest < ActiveSupport::TestCase
 
     as_business(@business) { invoice.reload.void!(reason: "Redo", by: @owner) }
     assert_equal [ [ "Tree removal", 10, true ] ], billed(bill_job(job))
+  end
+
+  def edit_lines(invoice, quantities = {}, drop: [])
+    as_business(@business) do
+      invoice.reload
+      rows = invoice.line_items.reject { drop.include?(_1.name) }.map { { "key" => _1.key, "name" => _1.name, "quantity" => (quantities[_1.name] || _1.quantity).to_s, "unit_price" => _1.unit_price.to_s } }
+      invoice.sync_line_items(rows)
+      invoice.save
+    end
+  end
+
+  test "B1: a direct line on a draft can't bill more than its claim covers: lowered, a job takes the rest, raising it back is refused" do
+    enable_feature(:split_jobs)
+    invoice = bill_quote
+    assert edit_lines(invoice, { "Tree removal" => 7 })
+    job = make(t: 3)
+    assert_not edit_lines(invoice, { "Tree removal" => 10 })
+    assert_equal [ "Tree removal: only 7 are free to bill; the rest is on #{job.number}." ], invoice.errors[:base]
+    as_business(@business) do
+      assert_equal [ 7, 7 ], [ invoice.reload.line_items.first.quantity.to_i, invoice.line_items.first.direct_claim.quantity.to_i ]
+    end
+    assert edit_lines(invoice, { "Tree removal" => 6 }), "lowering still frees"
+    assert_equal 1, line("t").to_do_quantity.to_i
+  end
+
+  test "R1: a sent invoice's revision frees nothing: lowering holds the work, taking off a billed line is refused, discarding restores it" do
+    enable_feature(:split_jobs)
+    invoice = bill_quote
+    as_business(@business) { invoice.reload.mark_sent!(by: @owner, channel: "link") && invoice.reload.revise!(by: @owner) }
+    assert edit_lines(invoice, { "Tree removal" => 7 })
+    assert_equal 0, line("t").to_do_quantity.to_i, "the 3 trees stay invoiced until it's voided"
+    assert_raises(QuoteWork::Refused) { make(t: 3) }
+    assert_not edit_lines(invoice, drop: [ "Gutters" ])
+    assert_equal [ "Gutters is invoiced work. Void the invoice to take it off." ], invoice.errors[:base]
+
+    as_business(@business) { invoice.reload.discard_revision!(by: @owner) }
+    assert_equal [ [ "Tree removal", 10, true ], [ "Gutters", 1, true ] ], billed(invoice)
+    assert_equal [ 10, 1 ], as_business(@business) { invoice.line_items.map { _1.direct_claim.quantity.to_i } }
+  end
+
+  test "a card payment during a revision that took a line off records, back on the version the client was sent" do
+    enable_feature(:split_jobs)
+    invoice = bill_quote
+    as_business(@business) do
+      invoice.reload.sync_line_items(invoice.line_items.map { { "key" => _1.key, "name" => _1.name, "quantity" => _1.quantity.to_s, "unit_price" => _1.unit_price.to_s } } +
+                                     [ { "key" => "typed", "name" => "Call-out", "quantity" => "1", "unit_price" => "40" } ])
+      invoice.save!
+      invoice.reload.mark_sent!(by: @owner, channel: "link")
+      invoice.reload.revise!(by: @owner)
+    end
+    assert edit_lines(invoice, { "Tree removal" => 8 }, drop: [ "Call-out" ])
+    payment, created, = as_business(@business) { invoice.reload.record_online_payment!(intent_id: "pi_rev", amount_cents: 5_000, currency: "usd") }
+    assert created
+    assert_equal [ "partially_paid", 1 ], [ invoice.reload.status, invoice.revision ]
+    assert_equal [ [ "Tree removal", 10, true ], [ "Gutters", 1, true ], [ "Call-out", 1, false ] ], billed(invoice)
+    assert_equal 5_000, payment.amount_cents
+  end
+
+  test "a job line billed on an invoice that isn't void can't be removed from the job" do
+    job = as_business(@business) { Job.from_quote!(@quote, by: @owner) }
+    invoice = bill_job(job)
+    as_business(@business) do
+      gutters = job.reload.line_items.find_by!(name: "Gutters")
+      assert_not job.update(line_items_attributes: [ { id: gutters.id, _destroy: "1" } ])
+      assert_equal [ "Gutters is billed on #{invoice.number}. Void the invoice first to remove it." ], job.errors[:base]
+    end
+  end
+
+  test "a quote invoice over jobs that differ on whether prices include tax is refused" do
+    enable_feature(:split_jobs)
+    trees, gutters = make(t: 10), make(g: 1)
+    as_business(@business) { gutters.update_columns(prices_include_tax: true) }
+    [ trees, gutters ].each { complete(_1) }
+    error = assert_raises(WorkBilling::Refused) { bill_quote }
+    assert_equal "#{trees.number} and #{gutters.number} differ on whether prices include tax. Bill each from its own page.", error.message
+    assert_equal [ trees.id, gutters.id ].to_set, as_business(@business) { WorkBilling.billable_job_ids([ trees.reload, gutters.reload ]) }
   end
 
   test "the database refuses a second final bill that got past the lock" do
@@ -218,6 +295,65 @@ class WorkBillingRaceTest < ActiveSupport::TestCase
         Job.where(id: job.id).delete_all
         QuoteLineItem.where(quote_id: Quote.where(client_id:).select(:id)).delete_all
         Quote.where(client_id:).delete_all
+        Client.find(client_id).destroy!
+      end
+      ActiveRecord::Base.connection.execute("DELETE FROM document_sequences WHERE business_id = #{business.id.to_i}")
+    end
+  end
+end
+
+# B2: a payment takes the quote's lock before the invoice's, as void, draft saves and billing do,
+# so a payment and a void (or a bill) can't wait on each other.
+class InvoiceLockOrderTest < ActiveSupport::TestCase
+  self.use_transactional_tests = false
+
+  test "a card payment waits on the quote's lock without holding the invoice's" do
+    business = businesses(:one)
+    invoice = as_business(business) do
+      client = Client.create!(display_name: "Lock order", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ])
+      quote = Quote.start(client:).tap do
+        _1.sync_line_items([ { "key" => "t", "name" => "Trees", "quantity" => "10", "unit_price" => "100" } ])
+        _1.save!
+        _1.update_columns(status: "approved")
+      end
+      Invoice.from_quote!(quote).tap { _1.mark_sent!(by: nil, channel: "link") }
+    end
+    holding = Queue.new
+    release = Queue.new
+    holder = Thread.new do
+      ActiveRecord::Base.connection_pool.with_connection do
+        as_business(business) do
+          Invoice.transaction do
+            QuoteWork.lock!(invoice.quote_id)
+            holding << true
+            release.pop
+            Invoice.lock("FOR UPDATE NOWAIT").find(invoice.id) && :invoice_free
+          end
+        end
+      end
+    end
+    holding.pop
+    payer = Thread.new do
+      ActiveRecord::Base.connection_pool.with_connection do
+        as_business(business) { Invoice.find(invoice.id).record_online_payment!(intent_id: "pi_order", amount_cents: 1_000, currency: "usd").second }
+      end
+    end
+    sleep 0.5 # the payment is now waiting on the quote
+    release << true
+    assert_equal :invoice_free, holder.value, "the payment hadn't taken the invoice's lock while waiting"
+    assert payer.value
+  ensure
+    if invoice
+      as_business(business) do
+        client_id = invoice.client_id
+        Payment.where(invoice_id: invoice.id).delete_all
+        JobClaim.where(invoice_line_item_id: InvoiceLineItem.where(invoice_id: invoice.id).select(:id)).delete_all
+        Invoice.where(client_id:).find_each { _1.events.delete_all && _1.sends.delete_all && _1.line_items.delete_all && _1.delete }
+        QuoteLineItem.where(quote_id: Quote.where(client_id:).select(:id)).delete_all
+        Quote.where(client_id:).each { _1.events.delete_all if _1.respond_to?(:events) }
+        Quote.where(client_id:).delete_all
+        ClientEvent.where(client_id:).delete_all
+        ClientLink.where(linkable_type: "Invoice", linkable_id: invoice.id).delete_all
         Client.find(client_id).destroy!
       end
       ActiveRecord::Base.connection.execute("DELETE FROM document_sequences WHERE business_id = #{business.id.to_i}")

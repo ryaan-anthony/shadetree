@@ -34,7 +34,25 @@ module WorkBilling
     lines.reject { billed.include?(_1.id) }
   end
 
-  def billable?(job) = job.status == "completed" && unbilled_lines(job).any?
+  # Which of these jobs are completed with something unbilled, in two queries however many there are
+  # (the quote page lists them all).
+  def billable_job_ids(jobs)
+    completed = jobs.select { _1.status == "completed" }.map(&:id)
+    return Set.new if completed.empty?
+
+    lines = JobLineItem.where(job_id: completed).pluck(:id, :job_id)
+    billed = billed_job_line_ids(lines.map(&:first))
+    lines.reject { billed.include?(_1.first) }.to_set(&:last)
+  end
+
+  def billable?(job) = billable_job_ids([ job ]).include?(job.id)
+
+  # A quote with no live job has work to bill directly: some line still to do with no direct bill.
+  def directly_billable_lines(quote)
+    lines = quote.line_items.to_a
+    billed = billed_quote_line_ids(lines.map(&:id))
+    lines.select { _1.to_do_quantity.positive? && !billed.include?(_1.id) }
+  end
 
   # The job's Create invoice.
   def bill_job!(job, by: nil)
@@ -84,11 +102,14 @@ module WorkBilling
       raise Refused, unfinished.any? ? "Nothing on #{quote.number} is ready to bill: #{unfinished.to_sentence} #{unfinished.one? ? "isn't" : "aren't"} completed yet." : "Everything done on #{quote.number} is billed."
     end
     check_priced!(billing.flat_map(&:last))
+    if billing.map { _1.first.prices_include_tax }.uniq.many?
+      raise Refused, "#{billing.map { _1.first.number }.to_sentence} differ on whether prices include tax. Bill each from its own page."
+    end
 
     first = billing.first.first
     discount = billing.one? ? first : (quote if quote.discount_kind == "percent")
     invoice = Invoice.new(client: quote.client, property: quote.property, quote:, job: first, created_by: by, title: quote.title, currency: quote.currency,
-                          tax_rates: first.tax_rates, prices_include_tax: quote.prices_include_tax)
+                          tax_rates: first.tax_rates, prices_include_tax: first.prices_include_tax)
     invoice.assign_attributes(discount_kind: discount&.discount_kind, discount_percent: discount&.discount_percent, discount_amount_cents: discount&.discount_amount_cents)
     invoice.jobs = billing.map(&:first)
     add_job_lines(invoice, billing.flat_map { |job, lines| lines.map { [ _1, (job.tax_rates if job.tax_rates != first.tax_rates) ] } })
@@ -102,13 +123,12 @@ module WorkBilling
     raise Refused, "#{quote.number} is recurring: each occurrence is billed from its own job." if quote.recurring?
 
     split = QuoteWork.split?(quote.business)
-    lines = quote.line_items.to_a
-    billed = billed_quote_line_ids(lines.map(&:id))
-    rows = lines.filter_map do |line|
-      final = !billed.include?(line.id) && line.to_do_quantity.positive?
-      next [ line, line.quantity.to_d, final ] unless split
-
-      [ line, line.to_do_quantity, true ] if final
+    rows = if split
+      directly_billable_lines(quote).map { [ _1, _1.to_do_quantity, true ] }
+    else # as before: every line in full, the final bill where there's none yet and work is free
+      lines = quote.line_items.to_a
+      billed = billed_quote_line_ids(lines.map(&:id))
+      lines.map { [ _1, _1.quantity.to_d, !billed.include?(_1.id) && _1.to_do_quantity.positive? ] }
     end
     raise Refused, "Everything on #{quote.number} is billed." if split && rows.empty?
 
