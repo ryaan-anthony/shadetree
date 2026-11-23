@@ -20,6 +20,9 @@ class JobLineItem < ApplicationRecord
   after_update(if: -> { saved_change_to_quantity? && claim && job.open? }) { QuoteWork.follow!(self, job.quote_lines) }
   before_destroy(if: -> { claim && job.open? }) { QuoteWork.unclaim!(claim, job.quote_lines) }
 
+  # JOB-09: a line added on site is priced when a price is typed for it (not by saving the form as is).
+  before_update { self.price_pending = false if price_pending && will_save_change_to_unit_price_cents? }
+
   # Done so far: the sum of its log.
   def logged_quantity = WorkEntry.where(job_line_item_id: id).sum(:quantity)
 

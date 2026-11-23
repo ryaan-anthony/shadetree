@@ -95,6 +95,7 @@
              actions: (safe_join([ (link_to(new_admin_job_work_path(job), class: button_classes(:secondary, :sm)) { icon("plus") + " Add to-do work" } if split && job.quote&.line_items&.any? { _1.to_do_quantity.positive? }),
                                    link_to("Edit items", edit_admin_job_path(job, items: 1, anchor: "job-items"), class: button_classes(:secondary, :sm)) ].compact, " ") if job.open?) do %>
       <% lines = job.line_items.to_a %>
+      <% work = split ? job.work_by_person : {} %><%# JOB-09: "Marcus 4, Riley 2" %>
       <% if lines.empty? %>
         <p class="px-5 py-4 text-sm2 text-muted">No items yet. Add them to invoice from this job, or let the instructions say what it is.</p>
       <% else %>
@@ -104,8 +105,10 @@
             <tbody>
               <% lines.zip(totals.lines).each do |line, priced| %>
                 <tr>
-                  <td><span class="font-medium text-ink"><%= line.name.presence || "Item" %></span><% if line.description %><span class="sub whitespace-pre-line"><%= line.description %></span><% end %>
-                    <span class="sub"><%= line_quantity(line) %></span></td>
+                  <td><span class="font-medium text-ink"><%= line.name.presence || "Item" %></span><%= badge("Needs a price", tone: :warning, class: "ml-1") if line.price_pending %>
+                    <% if line.description %><span class="sub whitespace-pre-line"><%= line.description %></span><% end %>
+                    <span class="sub"><%= line_quantity(line) %></span>
+                    <% if (people = work[line.id]).present? %><span class="sub">Logged: <%= people.map { |user, quantity| "#{user&.first_name.presence || user&.full_name || "Someone"} #{QuoteWork.number(quantity)}" }.join(", ") %></span><% end %></td>
                   <td class="money num"><%= money(priced.subtotal) %></td>
                 </tr>
               <% end %>
@@ -115,6 +118,8 @@
         <div class="border-t border-line px-5 py-3"><%= render "admin/quotes/totals", quote: job, totals: %></div>
       <% end %>
     <% end %>
+
+    <% if split %><%= render "admin/jobs/work_log", job: %><% end %>
 
     <%= card title: "Instructions for the crew" do %>
       <% if job.instructions %>

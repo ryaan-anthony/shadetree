@@ -250,6 +250,8 @@ Rails.application.routes.draw do
         patch :start
         patch :complete
         patch :reopen
+        patch :work # JOB-09: what I did on each line
+        post :work_line # JOB-09: something done on site the job didn't have
       end
       resources :notes, only: :create, controller: "my_visit_notes"
       resources :photos, only: %i[create destroy], controller: "my_visit_photos"
@@ -271,6 +273,7 @@ Rails.application.routes.draw do
       post :search, on: :collection # POST keeps client names out of URLs
       resources :invoices, only: :create, controller: "job_invoices" # PAY-01: the job's work, billed
       resource :work, only: %i[new create], controller: "job_work" # JOB-09: more to-do work from its quote
+      patch :work_log, on: :member, to: "job_work#correct" # JOB-09: the office corrects anyone's logged work
       member do
         patch :complete
         patch :cancel

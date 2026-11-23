@@ -1,0 +1,35 @@
+<%# locals: (job:) -%>
+<%# JOB-09: every entry of the work log, who did it, on which visit, who typed it and when. The
+    office corrects anyone's total while the job is open; each correction is another entry. %>
+<% entries = job.work_entries.includes(:job_line_item, :user, :recorded_by, :visit).to_a %>
+<% if entries.any? %>
+  <%= card title: "Work log", id: "work-log", flush: true, data: { controller: "modal" },
+           actions: (if job.open?
+                       tag.button("Correct", type: "button", class: button_classes(:secondary, :sm), data: { action: "modal#open", modal_target: "return" }, "aria-haspopup": "dialog")
+                     end) do %>
+    <ul class="list" id="work-log-entries">
+      <% entries.reverse_each do |entry| %>
+        <li class="text-sm2"><span class="min-w-0 flex-1"><span class="text-ink"><%= entry.user.full_name %>: <%= entry.quantity.positive? ? "+" : "" %><%= QuoteWork.number(entry.quantity) %> <%= entry.item_name %><%= " (removed from the job)" unless entry.job_line_item_id %></span>
+          <span class="block text-muted"><% if entry.visit %>Visit <%= local_date(entry.visit.scheduled_on) %><% else %>No visit<% end %> · <%= local_time(entry.created_at) %><%= " · by #{entry.recorded_by.full_name}" if entry.recorded_by && entry.recorded_by != entry.user %></span></span></li>
+      <% end %>
+    </ul>
+    <% if job.open? %>
+      <%= modal id: "work-log-correct", title: "Correct the work log", description: "What each person did on each visit. A change is added to the log as a correction." do %>
+        <%= form_with url: work_log_admin_job_path(job), method: :patch, class: "space-y-3" do %>
+          <% entries.select(&:job_line_item_id).group_by { [ _1.job_line_item_id, _1.user_id, _1.visit_id ] }.each do |(line_id, user_id, visit_id), group| %>
+            <% key = "#{line_id}-#{user_id}-#{visit_id || 0}" %>
+            <div class="flex items-center gap-3">
+              <label class="min-w-0 flex-1 text-sm text-ink" for="log_<%= key %>"><%= group.first.job_line_item.name %>
+                <span class="block text-sm2 text-muted"><%= group.first.user.full_name %><% if group.first.visit %> · visit <%= local_date(group.first.visit.scheduled_on) %><% end %></span></label>
+              <%= number_field_tag "log[#{key}]", QuoteWork.number(group.sum(&:quantity)), min: 0, step: "any", inputmode: "decimal", class: "input w-24 text-right", id: "log_#{key}" %>
+            </div>
+          <% end %>
+          <div class="flex justify-end gap-2">
+            <button type="button" class="<%= button_classes(:tertiary) %>" data-action="modal#close">Cancel</button>
+            <%= submit_tag "Save corrections", class: button_classes(:primary), name: nil %>
+          </div>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+<% end %>

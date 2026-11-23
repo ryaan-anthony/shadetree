@@ -88,6 +88,7 @@ module AutomationActions
   def invoice_job(_action, job, run)
     return [ "skipped", "The job isn't completed." ] unless job.status == "completed"
     return [ "skipped", "The job already has an invoice." ] if job.invoices.exists?
+    return [ "skipped", "A line added on site needs a price first." ] if job.line_items.any?(&:price_pending) # JOB-09
 
     invoice = Invoice.from_job!(job)
     email = job.client.primary_email&.value

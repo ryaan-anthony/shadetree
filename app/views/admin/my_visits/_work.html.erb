@@ -1,0 +1,51 @@
+<%# locals: (visit:, job:) -%>
+<%# JOB-09: what I did on each line from this visit, my own entries only (a change is logged as a
+    correction), with what everyone has logged; and something done on site the job didn't have.
+    Technicians see quantities, not prices, unless the business shows them (JOB-04). %>
+<% lines = job.line_items.to_a %>
+<% mine = WorkEntry.where(job_id: job.id, user_id: current_user.id, visit_id: visit.id).group(:job_line_item_id).sum(:quantity) %>
+<% everyone = job.work_by_person %>
+<% prices = current_business.technicians_see_prices || can?(:office) %>
+<%= card title: "The work", subtitle: "Log what you did on this visit. Teammates log their own.", flush: true, id: "visit-work" do %>
+  <% if lines.any? %>
+    <%= form_with url: work_admin_my_visit_path(visit), method: :patch do %>
+      <ul class="list" id="visit-work-lines">
+        <% lines.each do |line| %>
+          <% logged = Array(everyone[line.id]) %>
+          <li class="items-center gap-3">
+            <div class="min-w-0 flex-1">
+              <label class="font-medium text-ink" for="done_<%= line.id %>"><%= line.name %></label>
+              <% if line.description %><p class="whitespace-pre-line text-sm2 text-muted"><%= line.description %></p><% end %>
+              <p class="text-sm2 text-muted">Booked <%= line.quantity_label %><%= " at #{money(line.unit_price)} each" if prices && !line.price_pending %><%= " · logged #{logged.map { |user, quantity| "#{user&.first_name.presence || user&.full_name || "Someone"} #{QuoteWork.number(quantity)}" }.join(", ")}" if logged.any? %></p>
+            </div>
+            <%= number_field_tag "done[#{line.id}]", (QuoteWork.number(mine[line.id]) if mine[line.id]), min: 0, step: "any", inputmode: "decimal",
+                                 placeholder: "0", class: "input h-11 w-24 text-right", id: "done_#{line.id}", "aria-describedby": "done-help" %>
+          </li>
+        <% end %>
+      </ul>
+      <div class="flex items-center justify-between gap-3 border-t border-line p-4">
+        <p class="text-sm2 text-muted" id="done-help">How many you did, this visit.</p>
+        <%= submit_tag "Save what I did", class: "#{button_classes(:secondary)} h-auto min-h-11", name: nil %>
+      </div>
+    <% end %>
+  <% end %>
+  <details class="border-t border-line p-4 first:border-t-0">
+    <summary class="cursor-pointer text-sm font-medium text-ink">Add something done on site</summary>
+    <%= form_with url: work_line_admin_my_visit_path(visit), class: "mt-3 space-y-3" do %>
+      <div class="field">
+        <label class="label" for="site_catalog_item">Service</label>
+        <%= select_tag :catalog_item, options_from_collection_for_select(CatalogItem.active.ordered, :uid, :name), include_blank: "Something else (type it below)", class: "input", id: "site_catalog_item" %>
+      </div>
+      <div class="field">
+        <label class="label" for="site_name">What was done <span class="label-optional">(if it's not a service)</span></label>
+        <%= text_field_tag :name, nil, class: "input", maxlength: 200, id: "site_name", placeholder: "Removed a wasp nest" %>
+        <p class="help">The office prices it before invoicing.</p>
+      </div>
+      <div class="field">
+        <label class="label" for="site_quantity">How many</label>
+        <%= number_field_tag :quantity, 1, min: 0, step: "any", inputmode: "decimal", class: "input w-24", id: "site_quantity", required: true %>
+      </div>
+      <div class="flex justify-end"><%= submit_tag "Add it", class: "#{button_classes(:secondary)} h-auto min-h-11", name: nil %></div>
+    <% end %>
+  </details>
+<% end %>

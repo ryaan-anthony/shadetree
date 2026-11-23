@@ -12,5 +12,7 @@ class Admin::JobInvoicesController < Admin::BaseController
     redirect_to edit_admin_invoice_path(invoice), notice: "Invoice #{invoice.number} started from job #{job.number}."
   rescue ActiveRecord::RecordInvalid => error
     redirect_to admin_job_path(job), alert: "Couldn't start an invoice: #{error.record.errors.full_messages.to_sentence}"
+  rescue Invoice::Unpriced => error # JOB-09
+    redirect_to admin_job_path(job), alert: "Couldn't start an invoice: #{error.message}"
   end
 end

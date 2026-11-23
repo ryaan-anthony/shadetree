@@ -14,6 +14,29 @@ class Admin::MyVisitsController < Admin::BaseController
   def complete = transition("Completed. Nice work.") { @visit.complete!(by: current_user) }
   def reopen = transition("Reopened.") { @visit.reopen!(by: current_user) }
 
+  # JOB-09: anyone going logs what they did from this visit, on each line (their own entries only).
+  def work
+    return head(:not_found) unless QuoteWork.split?(current_business)
+
+    totals = @job.line_items.each_with_object({}) { |line, done| (value = params.dig(:done, line.id.to_s).to_s.strip).match?(NUMBER) && done[line.id] = value }
+    changed = @job.log_work!(user: current_user, by: current_user, visit: @visit, totals:)
+    redirect_to admin_my_visit_path(@visit, anchor: "visit-work"), notice: (changed.any? ? "Saved what you did." : "Nothing changed.")
+  rescue Job::NotOpen, QuoteWork::Refused => error
+    redirect_to admin_my_visit_path(@visit, anchor: "visit-work"), alert: error.message
+  end
+
+  def work_line
+    return head(:not_found) unless QuoteWork.split?(current_business)
+
+    item = CatalogItem.active.find_by(uid: params[:catalog_item].to_s) if params[:catalog_item].present?
+    line = @job.add_site_line!(user: current_user, by: current_user, visit: @visit, catalog_item: item, name: params[:name], quantity: params[:quantity])
+    redirect_to admin_my_visit_path(@visit, anchor: "visit-work"), notice: "Added #{line.name}."
+  rescue Job::NotOpen, QuoteWork::Refused, ActiveRecord::RecordInvalid => error
+    redirect_to admin_my_visit_path(@visit, anchor: "visit-work"), alert: error.message.delete_prefix("Validation failed: ")
+  end
+
+  NUMBER = /\A\d*\.?\d+\z/
+
   private
 
   def set_visit

@@ -72,7 +72,14 @@ class Invoice < ApplicationRecord
 
   # PAY-01: the job's work, billed: its client, property, items, discount and taxes. The job's
   # quote (if any) is linked too. A job can be invoiced more than once (progress billing).
+  #
+  # JOB-09: lines added on site without a price are priced by the office first.
+  class Unpriced < StandardError; end
+
   def self.from_job!(job, by: nil)
+    unpriced = job.line_items.select(&:price_pending)
+    raise Unpriced, "Price #{unpriced.map(&:name).to_sentence} first: added on site without a price." if unpriced.any?
+
     transaction do
       invoice = new(client: job.client, property: job.property, job:, quote: job.quote, created_by: by, title: job.title, currency: job.currency)
       invoice.copy_pricing_from(job)
