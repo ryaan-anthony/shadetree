@@ -144,7 +144,7 @@
               <p><span class="font-semibold text-ink"><%= method.value %></span> was refused by the mail server, so emails to it are
                 paused. Fix the address, or if it's right, send to it again.</p>
               <%= button_to "Send to it again", mark_deliverable_admin_client_path(@client, contact_method_id: method.id), method: :patch,
-                            class: "#{button_classes(:secondary, :sm)} mt-2" %>
+                            class: "#{button_classes(:secondary, :sm)} mt-2", "aria-label": "Send to it again: #{method.value}" %>
             </li>
           <% end %>
         <% end %>

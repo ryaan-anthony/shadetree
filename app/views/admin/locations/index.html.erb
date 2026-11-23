@@ -23,10 +23,10 @@
             <button type="button" class="<%= button_classes(:tertiary, :sm, :icon) %>" data-menu-target="button" data-action="menu#toggle"
                     aria-haspopup="true" aria-expanded="false" aria-label="More actions for <%= location.name %>"><%= icon "more-horizontal" %></button>
             <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
-              <%= link_to edit_admin_location_path(location), class: "menu-item" do %><%= icon "edit-2" %> Edit<% end %>
-              <%= link_to admin_hours_path(location: (location unless location.primary?)), class: "menu-item" do %><%= icon "clock" %> Hours and closures<% end %>
+              <%= link_to edit_admin_location_path(location), class: "menu-item", "aria-label": "Edit #{location.name}" do %><%= icon "edit-2" %> Edit<% end %>
+              <%= link_to admin_hours_path(location: (location unless location.primary?)), class: "menu-item", "aria-label": "Hours and closures for #{location.name}" do %><%= icon "clock" %> Hours and closures<% end %>
               <% unless location.primary? %>
-                <%= button_to archive_admin_location_path(location), method: :patch, class: "menu-item",
+                <%= button_to archive_admin_location_path(location), method: :patch, class: "menu-item", "aria-label": "Archive #{location.name}",
                               form: { class: "contents", data: { turbo_confirm: "Archive #{location.name}? New work can't go there, but its quotes, jobs and invoices stay as they are.", turbo_confirm_button: "Archive" } } do %><%= icon "archive" %> Archive<% end %>
               <% end %>
             </div>

@@ -165,4 +165,35 @@ class Admin::AccessibilityAuditTest < ActionDispatch::IntegrationTest
     get admin_my_day_path
     assert_select ".page-lede", "#{@business.today.strftime("%A, %B %-d")} · Times in Eastern Time (US & Canada)"
   end
+
+  test "row links on Jobs and Locations name their row" do
+    job = as_business(@business) { Job.create!(client: Client.create!(display_name: "Maria Lopez", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ]), title: "Ants") }
+    get admin_jobs_path
+    assert_select "#job-#{job.uid} a[aria-label=?]", "Schedule #{job.number}", "Schedule"
+    assert_select "#job-#{job.uid}-row a[aria-label=?]", "Schedule #{job.number}"
+
+    @business.update!(plan_overrides: { "features" => { "locations" => true } })
+    branch = as_business(@business) { Location.create!(name: "North yard") }
+    get admin_locations_path
+    assert_select "#location-#{branch.uid} a.menu-item[aria-label=?]", "Edit North yard", /Edit/
+    assert_select "#location-#{branch.uid} a.menu-item[aria-label=?]", "Hours and closures for North yard", /Hours and closures/
+    assert_select "#location-#{branch.uid} button.menu-item[aria-label=?]", "Archive North yard"
+  end
+
+  test "row actions elsewhere name their row too" do
+    item = as_business(@business) { CatalogItem.create!(name: "Mowing", unit: "visit", unit_price: "45") }
+    get admin_catalog_items_path
+    assert_select "#item-#{item.uid} a.menu-item[aria-label=?]", "Edit Mowing", /Edit/
+    assert_select "#item-#{item.uid} a.menu-item[aria-label=?]", "Duplicate Mowing", /Duplicate/
+
+    invitation = as_business(@business) { Invitation.create!(email: "crew@example.com", role: "technician", invited_by: @owner) }
+    get admin_team_path
+    assert_select "#invitation-#{invitation.uid} button[aria-label=?]", "Resend the invitation to crew@example.com", "Resend"
+    assert_select "#invitation-#{invitation.uid} button[aria-label=?]", "Revoke the invitation to crew@example.com", "Revoke"
+  end
+
+  test "the sample quote has its own page title" do
+    get admin_sample_quote_path
+    assert_select "title", "Sample quote · #{@business.name} · Shadetree"
+  end
 end
