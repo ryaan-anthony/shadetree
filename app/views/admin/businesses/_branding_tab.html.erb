@@ -2,9 +2,9 @@
 <% branding = @business.branding %>
 <%= form_with model: @business, url: admin_business_path(tab: "branding"), method: :patch,
               class: "grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]",
-              data: { controller: "brand-preview", brand_preview_max_bytes_value: Business::LOGO_MAX_BYTES,
+              data: { controller: "brand-preview",
                       brand_preview_saved_logo_value: (url_for(branding.logo(:web)) if branding.logo?),
-                      brand_preview_types_value: Business::LOGO_TYPES.join(","),
+                      action: "file-drop:chosen->brand-preview#logoChosen",
                       brand_preview_min_text_value: Branding::MIN_TEXT_CONTRAST, brand_preview_min_page_value: Branding::MIN_PAGE_CONTRAST } do |f| %>
   <%= hidden_field_tag :from, "setup", id: nil if from_setup? %>
   <div class="min-w-0 space-y-4">
@@ -16,26 +16,18 @@
 
     <%= card title: "Logo", subtitle: "Shown on your quotes, invoices, emails and client pages." do %>
       <div class="flex flex-wrap items-center gap-4">
-        <div class="flex h-20 w-48 items-center justify-center rounded-lg border border-dashed border-line bg-sunken p-2">
+        <div class="flex h-20 w-48 items-center justify-center rounded-lg border border-line bg-sunken p-2"><%# solid: the drop area is the dashed one (PLT-22) %>
           <% if branding.logo? %>
             <%= image_tag branding.logo(:web), alt: "Your current logo", class: "max-h-full max-w-full object-contain", data: { brand_preview_target: "currentLogo" } %>
           <% else %>
             <span class="text-sm2 text-muted" data-brand-preview-target="currentLogo">No logo yet</span>
           <% end %>
         </div>
-        <div class="min-w-0 flex-1 space-y-2">
-          <div class="field">
-            <%= f.label :logo, branding.logo? ? "Replace logo" : "Upload a logo", class: "label" %>
-            <%= f.file_field :logo, accept: Business::LOGO_TYPES.join(","), class: "input py-1.5",
-                             "aria-invalid": (@business.errors[:logo].any? || nil),
-                             "aria-describedby": [ "logo-help", ("logo-error" if @business.errors[:logo].any?), "logo-check" ].compact.join(" "),
-                             data: { brand_preview_target: "logoInput", action: "brand-preview#logoChosen" } %>
-            <p class="help" id="logo-help">PNG, JPEG or WebP, up to <%= Business::LOGO_MAX_BYTES / 1.megabyte %> MB. A wide logo on a transparent background works best.</p>
-            <% if @business.errors[:logo].any? %>
-              <p class="error-text" id="logo-error"><%= icon "alert-circle" %>Logo <%= @business.errors[:logo].to_sentence %></p>
-            <% end %>
-            <p class="error-text empty:hidden" id="logo-check" role="status" data-brand-preview-target="logoError"></p>
-          </div>
+        <div class="min-w-0 flex-1 basis-64 space-y-2">
+          <%= f.file_drop :logo, label: branding.logo? ? "Replace logo" : "Upload a logo", prompt: "Drop your logo here",
+                          types: Business::LOGO_TYPES, types_label: "PNG, JPEG or WebP", max_bytes: Business::LOGO_MAX_BYTES,
+                          type_error: LogoUpload::TYPE_ERROR, size_error: LogoUpload.size_error(Business::LOGO_MAX_BYTES),
+                          help: "A wide logo on a transparent background works best." %>
           <% if branding.logo? %>
             <%= f.check :remove_logo, label: "Remove logo", hint: "Your name and initials are used instead.",
                         data: { action: "brand-preview#render", brand_preview_target: "removeLogo" } %>
@@ -44,8 +36,11 @@
       </div>
     <% end %>
 
-    <%= card title: "Brand color", subtitle: "Used for buttons, links and accents on everything clients see." do %>
-      <fieldset>
+    <%# PLT-22: the admin is always Shadetree's green and navy; the business's color is client-facing only
+        (owner, 2026-11-22). The sentence describes the presets, the picker and the hex field. %>
+    <%= card title: "Brand color" do %>
+      <p class="help mt-0 mb-4" id="brand-color-where">Your brand color shows on quotes, invoices, emails and client pages. Your admin stays Shadetree green.</p>
+      <fieldset aria-describedby="brand-color-where">
         <legend class="label">Presets</legend>
         <div class="flex flex-wrap gap-2">
           <% Branding::PRESETS.each do |name, hex| %>
@@ -59,11 +54,11 @@
         <div class="field">
           <label class="label" for="brand_picker">Custom</label>
           <input type="color" id="brand_picker" value="<%= branding.color %>" class="h-10 w-14 cursor-pointer rounded-md border border-line bg-white p-1"
-                 data-brand-preview-target="picker" data-action="input->brand-preview#picked">
+                 aria-describedby="brand-color-where" data-brand-preview-target="picker" data-action="input->brand-preview#picked">
         </div>
         <div class="w-36">
           <%= f.field :brand_color, label: "Hex", maxlength: 7, spellcheck: false, autocomplete: "off", class: "font-mono",
-                      value: @business.brand_color.presence || branding.color, "aria-describedby": "brand-color-warnings",
+                      value: @business.brand_color.presence || branding.color, "aria-describedby": "brand-color-where brand-color-warnings",
                       data: { brand_preview_target: "hex", action: "input->brand-preview#typed" } %>
         </div>
       </div>

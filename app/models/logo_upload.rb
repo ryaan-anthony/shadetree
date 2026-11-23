@@ -10,6 +10,9 @@ class LogoUpload
   MAX_BYTES = 5.megabytes
   MAX_SIDE = 4_000
   MIN_SIDE = 16
+  # The refusals the upload field (f.file_drop) also shows before saving, word for word (PLT-22).
+  TYPE_ERROR = "must be a PNG, JPEG or WebP image".freeze
+  def self.size_error(max_bytes = MAX_BYTES) = "must be smaller than #{ActiveSupport::NumberHelper.number_to_human_size(max_bytes)}"
 
   # Photos attached to quotes (QTE-01) go through the same cleaning with roomier limits.
   def self.clean_photo(input, max_bytes:, max_side: 8_000) = prepare(input, max_bytes:, max_side:, min_side: 1)
@@ -32,12 +35,12 @@ class LogoUpload
 
     io, filename = source(input)
     return failure("must be an uploaded image file") unless io
-    return failure("must be smaller than #{max_bytes / 1.megabyte} MB") if io.size > max_bytes
+    return failure(size_error(max_bytes)) if io.size > max_bytes
 
     data = io.read.tap { io.rewind if io.respond_to?(:rewind) }
     image = Vips::Image.new_from_buffer(data, "", access: :sequential)
     content_type, extension, options = FORMATS[image.get("vips-loader")]
-    return failure("must be a PNG, JPEG or WebP image") unless content_type
+    return failure(TYPE_ERROR) unless content_type
     return failure("must be at most #{max_side} × #{max_side} pixels") if image.width > max_side || image.height > max_side
     return failure("must be at least #{min_side} pixels on each side") if image.width < min_side || image.height < min_side
 
@@ -45,7 +48,7 @@ class LogoUpload
     name = "#{File.basename(filename.to_s, ".*").presence || "logo"}#{extension}"
     Result.new(attachable: { io: StringIO.new(clean), filename: name, content_type: }, error: nil)
   rescue Vips::Error
-    failure("must be a PNG, JPEG or WebP image")
+    failure(TYPE_ERROR)
   end
 
   def self.source(input)

@@ -1,0 +1,33 @@
+<%# Rendered by ShadetreeFormBuilder#file_drop (PLT-22). locals: (id:, label:, input:, prompt:, limits:, help:, errors:, values:) %>
+<%# Without JavaScript this is a label, a plain file field and its limits. file_drop_controller.js
+    marks it data-enhanced: the zone becomes the drop area and the real input is only visually hidden,
+    so Tab, the keyboard and screen readers still reach the browser's own control. While it's on the
+    page, a file dropped beside the zone is ignored rather than opened (which would lose the form). %>
+<div class="field file-drop" data-controller="file-drop" data-action="dragover@window->file-drop#guard drop@window->file-drop#guard"
+     <%= tag.attributes(data: values.transform_keys { "file-drop-#{_1.to_s.dasherize}-value" }) %>>
+  <label class="label" id="<%= id %>_label" for="<%= id %>"><%= label %></label>
+  <label class="file-drop-zone" for="<%= id %>" data-file-drop-target="zone"
+         data-action="dragenter->file-drop#over dragover->file-drop#over dragleave->file-drop#leave drop->file-drop#drop">
+    <span class="file-drop-prompt" data-file-drop-target="prompt" hidden>
+      <%= icon "upload-cloud", class: "size-6 text-muted" %>
+      <span><%= prompt %>, or <span class="text-action">browse</span></span>
+    </span>
+    <%= input %>
+    <span class="file-drop-limits" id="<%= id %>_limits"><%= limits %></span>
+  </label>
+  <div class="file-drop-chosen" data-file-drop-target="chosen" hidden>
+    <img alt="" class="file-drop-thumb" data-file-drop-target="thumb" hidden>
+    <span class="min-w-0 flex-1">
+      <span class="block truncate font-medium text-ink" data-file-drop-target="name"></span>
+      <span class="block text-muted" data-file-drop-target="size"></span>
+    </span>
+    <button type="button" class="<%= button_classes(:tertiary, :sm) %>" data-file-drop-target="clear" data-action="file-drop#clear">Clear</button>
+  </div>
+  <% if help %><p class="help" id="<%= id %>_help"><%= help %></p><% end %>
+  <% if errors.any? %>
+    <p class="error-text" id="<%= id %>_error" data-file-drop-target="serverError"><%= icon "alert-circle" %><%= errors.to_sentence %></p>
+  <% end %>
+  <%# A refusal before saving: read out through the announce line, described here. %>
+  <p class="error-text" id="<%= id %>_check" data-file-drop-target="checkLine" hidden><%= icon "alert-circle" %><span data-file-drop-target="check"></span></p>
+  <p class="sr-only" role="status" data-file-drop-target="announce"></p>
+</div>

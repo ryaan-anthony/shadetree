@@ -10,6 +10,8 @@
 #     <%= f.field :visit_on, as: :date %>
 #     <%= f.field :price, as: :money, currency: "$" %>
 #     <%= f.check :reminders, label: "Send reminders", hint: "A day before each visit." %>
+#     <%= f.file_drop :logo, prompt: "Drop your logo here", types: Business::LOGO_TYPES,
+#                     types_label: "PNG, JPEG or WebP", max_bytes: 5.megabytes %>
 #     <%= f.submit_button "Save client" %>
 #   <% end %>
 #
@@ -28,8 +30,8 @@ class ShadetreeFormBuilder < ActionView::Helpers::FormBuilder
     errors = error_messages(method)
     options[:id] ||= id
     options[:"aria-invalid"] = "true" if errors.any?
-    described_by = [ ("#{id}_help" if help), ("#{id}_error" if errors.any?) ].compact
-    options[:"aria-describedby"] = described_by.join(" ") if described_by.any?
+    described_by = [ ("#{id}_help" if help), ("#{id}_error" if errors.any?), options[:"aria-describedby"] ] # the caller's ids kept (PLT-22)
+    options[:"aria-describedby"] = token_list(described_by) if described_by.any?(&:present?)
     options[:required] = true if !optional && !options.key?(:required) && required?(method)
 
     input = build_input(method, as, choices, currency, options)
@@ -55,6 +57,32 @@ class ShadetreeFormBuilder < ActionView::Helpers::FormBuilder
             (hint ? @template.tag.span(hint, class: "check-hint") : "".html_safe)
         end
     end
+  end
+
+  # A file field shown as a drop area: the kit's file upload (PLT-22, R28). The page has a
+  # plain file field, which uploads without JavaScript; file_drop_controller.js turns it into
+  # the drop area, shows the chosen file's name and preview, and refuses a wrong type or size
+  # before saving with the server's own words (type_error, size_error: as errors.add's). It
+  # dispatches file-drop:chosen ({ file, url, problem }) for a live preview.
+  def file_drop(method, prompt:, types:, types_label:, max_bytes:, label: nil, help: nil, type_error: nil, size_error: nil, **options)
+    id = options[:id] ||= field_id(method)
+    errors = error_messages(method)
+    size = @template.number_to_human_size(max_bytes)
+    options[:"aria-invalid"] = "true" if errors.any?
+    aria = take_prefixed(options, :aria)
+    data = take_prefixed(options, :data)
+    options[:"aria-labelledby"] = token_list([ "#{id}_label", aria.delete(:labelledby) ]) # not the drop area's text as well
+    options[:"aria-describedby"] = token_list([ "#{id}_limits", ("#{id}_help" if help), ("#{id}_error" if errors.any?), "#{id}_check", aria.delete(:describedby) ])
+    options[:aria] = aria if aria.any?
+    options[:accept] = types.join(",")
+    options[:data] = data.merge(file_drop_target: "input", action: token_list([ data[:action], "change->file-drop#chosen" ]))
+    input = file_field(method, merge_class(options, "input file-drop-input py-1.5"))
+    @template.render "components/file_drop",
+                     id:, input:, prompt:, help:, errors:, label: label || label_text(method),
+                     limits: "#{types_label}, up to #{size}.",
+                     values: { types: types.join(","), max_bytes:,
+                               type_error: full_message(method, type_error || "must be a #{types_label} file"),
+                               size_error: full_message(method, size_error || "must be smaller than #{size}") }
   end
 
   # variant and size: as button_classes (PLT-14), e.g. f.submit_button "Sign in", size: :lg
@@ -86,6 +114,21 @@ class ShadetreeFormBuilder < ActionView::Helpers::FormBuilder
     @template.tag.div(class: "input-group") do
       @template.tag.span(currency, class: "input-addon", "aria-hidden": "true") + text_field(method, options)
     end
+  end
+
+  # A caller's aria or data attributes in any form (aria: { describedby: }, "aria-describedby",
+  # :"aria-describedby"), taken out of options as one hash: { describedby: "…" }.
+  def take_prefixed(options, prefix)
+    nested = (options.delete(prefix) || options.delete(prefix.to_s) || {}).to_h.transform_keys { _1.to_s.underscore.to_sym }
+    options.keys.select { _1.to_s.start_with?("#{prefix}-") }.each_with_object(nested) do |key, merged|
+      merged[key.to_s.delete_prefix("#{prefix}-").underscore.to_sym] = options.delete(key)
+    end
+  end
+
+  def token_list(values) = values.flat_map { _1.to_s.split }.uniq.join(" ")
+
+  def full_message(method, message)
+    object.respond_to?(:errors) ? object.errors.full_message(method, message) : "#{label_text(method)} #{message}"
   end
 
   def merge_class(options, klass)

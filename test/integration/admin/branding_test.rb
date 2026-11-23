@@ -55,7 +55,54 @@ class Admin::BrandingTest < ActionDispatch::IntegrationTest
     assert_select "img[alt='Your current logo']"
     assert_select "input[name='business[remove_logo]']"
     assert_select ".biz-switch .biz-logo img"
-    assert_select "input#business_logo[aria-describedby~=logo-check]"
+    assert_select "input#business_logo[aria-describedby~=business_logo_check]"
+  end
+
+  # PLT-22: the kit's file upload. Its drop area is added by JavaScript around a real file field.
+  test "the logo field is a drop area around a real file field" do
+    get edit_admin_business_path(tab: "branding")
+    assert_select ".file-drop[data-controller=file-drop][data-file-drop-max-bytes-value='#{LogoUpload::MAX_BYTES}']" do
+      assert_select "label#business_logo_label[for=business_logo]", "Upload a logo"
+      assert_select "label.file-drop-zone[for=business_logo]" do
+        assert_select ".file-drop-prompt[hidden]", "Drop your logo here, or browse"
+        assert_select "input#business_logo[type=file][name='business[logo]'][accept='image/png,image/jpeg,image/webp']" \
+                      "[aria-labelledby=business_logo_label][aria-describedby='business_logo_limits business_logo_help business_logo_check']"
+        assert_select "#business_logo_limits", "PNG, JPEG or WebP, up to 5 MB."
+      end
+      assert_select "#business_logo_check[hidden]"
+      assert_select "[data-file-drop-target=announce][role=status]"
+    end
+    # Before saving, the field refuses a file in the server's own words (LogoUpload).
+    assert_select "[data-file-drop-type-error-value='Logo must be a PNG, JPEG or WebP image'][data-file-drop-size-error-value='Logo must be smaller than 5 MB']"
+  end
+
+  test "a logo over 5 MB is refused beside the field" do
+    big = Tempfile.new([ "big", ".png" ], binmode: true).tap { _1.write("\0" * (LogoUpload::MAX_BYTES + 1)) && _1.rewind }
+    patch admin_business_path(tab: "branding"), params: { business: { logo: Rack::Test::UploadedFile.new(big.path, "image/png") } }
+    assert_response :unprocessable_content
+    assert_select "input#business_logo[aria-invalid=true][aria-describedby~=business_logo_error]"
+    assert_select "#business_logo_error.error-text", /Logo must be smaller than 5 MB/
+    assert_not @business.reload.logo.attached?
+  ensure
+    big&.close!
+  end
+
+  # PLT-22: the admin is always Shadetree's colors; the business's is client-facing only (owner, 2026-11-22).
+  test "Branding says where the brand color applies, and the admin keeps its own colors" do
+    @business.update!(brand_color: "#9a3412")
+    get edit_admin_business_path(tab: "branding")
+    sentence = "Your brand color shows on quotes, invoices, emails and client pages. Your admin stays Shadetree green."
+    assert_select "p#brand-color-where", sentence
+    assert_select "fieldset[aria-describedby=brand-color-where] legend", "Presets"
+    assert_select "input#brand_picker[aria-describedby=brand-color-where]"
+    assert_select "input#business_brand_color[aria-describedby='brand-color-where brand-color-warnings']"
+    patch admin_business_path(tab: "branding"), params: { business: { brand_color: "orange" } }
+    assert_select "input#business_brand_color[aria-describedby='business_brand_color_error brand-color-where brand-color-warnings']" # review: kept with an error
+
+    get admin_root_path
+    assert_select ".biz-switch .biz-logo", "TB" # the initials tile keeps the brand color...
+    assert_includes response.body, "background: #9a3412; color: #ffffff"
+    assert_not_includes response.body, "--color-brand: #9a3412" # ...but nothing else in the admin takes it
   end
 
   test "direct uploads are switched off" do
