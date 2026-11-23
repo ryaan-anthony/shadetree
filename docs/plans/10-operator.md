@@ -50,6 +50,15 @@ management.
   status. The business's context sits beside each ticket.
 - **R16** Email replies and emails to the support address thread into tickets.
 
+### Help centre
+- **R17** Help offers a knowledge base of how-to articles beside support tickets, written and
+  published by operators in the console, with every version kept and audited.
+- **R18** Members browse articles by category and search them; matching articles are offered
+  before a ticket is sent.
+- **R19** In-app pages link to the article that explains them (contextual help).
+- **R20** Articles keep in step with the app: contextual links are checked automatically, and
+  missing or out-of-date articles are listed for operators.
+
 ### Audit
 - **R13** Every operator action (impersonation start/stop and reason, account actions, plan
   changes, flag changes) is recorded with who, when, what and target, and is viewable and
@@ -60,7 +69,7 @@ management.
 | # | Decision | Rationale |
 | --- | --- | --- |
 | D1 | One operator role at launch; no permission matrix. | Team is 1–3 people. |
-| D5 | Support tickets are between businesses and Shadetree; no knowledge base or live chat at launch. | One accountable support channel with context. |
+| D5 | Support tickets are between businesses and Shadetree. Help also offers a knowledge base that grows with the application (OPS-06); no live chat. Reverses "no knowledge base at launch" (owner, 2026-11-22). | One accountable support channel with context; common answers written once, where people look. |
 | D2 | Financial reporting (MRR, churn) comes from the billing provider's dashboard at launch. | Duplicating it is wasted effort pre-scale. |
 | D3 | Impersonation is read-only by default. | Limits blast radius of mistakes and abuse. |
 | D4 | Console built in-app with the same UI foundation; no third-party admin framework unless an ADR argues for it. | Keeps one stack; operator needs are narrow. |
@@ -75,6 +84,7 @@ management.
 | [OPS-03](../specs/operator/OPS-03-impersonation.md) | Impersonation | M5 | OPS-02, ACC-04 |
 | [OPS-04](../specs/operator/OPS-04-account-actions.md) | Account actions | M5 | OPS-02, BIL-05, PLT-11 |
 | [OPS-05](../specs/operator/OPS-05-support-tickets.md) | Support tickets | M5 | OPS-02, NTF-02 |
+| [OPS-06](../specs/operator/OPS-06-help-centre.md) | Help centre and knowledge base | M6 | OPS-05, ACC-08, OPS-01 |
 
 ## Backlog (M6)
 

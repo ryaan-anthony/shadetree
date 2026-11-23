@@ -38,7 +38,7 @@ product screenshots, and pricing that can never drift from what the app enforces
 
 ## Out of scope
 
-- SEO metadata and analytics (MKT-04). Industry pages, blog, help center (backlog).
+- SEO metadata and analytics (MKT-04). Industry pages, blog (backlog); help center (OPS-06).
 
 ## Decisions
 

@@ -57,7 +57,7 @@ testimonials, blog, newsletter, demo booking, industry pages, and a knowledge ba
 
 - Industry landing pages ("Quoting software for lawn care") driven by industry data.
 - Blog / changelog.
-- Help center with how-to articles.
+- Help center with how-to articles: specified as OPS-06 (whether it's public is its open question).
 - Comparison pages vs incumbents.
 - Referral and affiliate landing pages.
 

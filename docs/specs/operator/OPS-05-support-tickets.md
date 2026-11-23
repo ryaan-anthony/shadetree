@@ -45,7 +45,7 @@ email, and nothing gets lost in a personal inbox.
 
 ## Out of scope
 
-- Live chat, a knowledge base, SLAs and response-time reporting (backlog). Helpdesk for a
+- A knowledge base (OPS-06). Live chat, SLAs and response-time reporting (backlog). Helpdesk for a
   business's own clients.
 
 ## Decisions

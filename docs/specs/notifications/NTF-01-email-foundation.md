@@ -34,7 +34,7 @@ business branding, reply-to the business, delivery tracking and bounce handling.
       shows without "load images" and opening an email sends nothing to Shadetree.*
 - [x] Every outbound email is recorded per business with type, recipient, related record, time
       and delivery outcome. *Outcome as the SMTP server reports it (sent, refused, failed); later
-      bounces and complaints stay in the provider's dashboard (ADR 0017). An email the server
+      bounces and complaints stay in the provider's dashboard (ADR 0017) until NTF-05. An email the server
       refused or that couldn't be sent goes on the client's timeline and tells the team
       (QA #274).*
 - [x] Addresses the mail server refuses suppress further sends to that address for that business

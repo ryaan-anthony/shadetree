@@ -87,6 +87,7 @@ engine with conditions, channels and timing offsets), and client notification pr
 | [NTF-02](../specs/notifications/NTF-02-team-notifications.md) | Team notifications | M3 | NTF-01, ACC-04 |
 | [NTF-03](../specs/notifications/NTF-03-message-templates.md) | Editable message templates | M5 | NTF-01, BIL-01 |
 | [NTF-04](../specs/notifications/NTF-04-workflow-automations.md) | Workflow automations | M5 | NTF-02, NTF-03, QTE-06, JOB-02, PAY-02 |
+| [NTF-05](../specs/notifications/NTF-05-late-bounces.md) | Late bounces | M6 | NTF-01, NTF-02, QTE-04, PAY-02, OPS-05 |
 
 ## Backlog (M6)
 

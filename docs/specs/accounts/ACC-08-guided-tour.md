@@ -54,7 +54,7 @@ from Help.
 
 ## Out of scope
 
-- Videos, an in-app help centre or articles (backlog).
+- Videos (backlog). The help centre and its articles are OPS-06.
 - Tours for operators (OPS).
 - A third-party tour service that sends user data elsewhere.
 

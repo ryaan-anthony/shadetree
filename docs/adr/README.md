@@ -39,7 +39,7 @@ approach, a hosting change. Small, local choices belong in the PR description.
 | [0014](0014-tenant-scoping-enforcement.md) | Tenant scoping enforced by default, opaque ids in URLs | Accepted |
 | [0015](0015-release-flags.md) | In-house release flags on PostgreSQL | Accepted |
 | [0016](0016-client-links.md) | One client-link mechanism, with derived tokens and per-link state | Accepted |
-| [0017](0017-transactional-email-smtp.md) | Transactional email over SMTP | Accepted |
+| [0017](0017-transactional-email-smtp.md) | Transactional email over SMTP | Accepted; bounces after acceptance superseded by 0028 |
 | [0018](0018-client-page-referrer-policy.md) | Client pages send Referrer-Policy: same-origin | Accepted |
 | [0019](0019-hand-built-operator-console.md) | Hand-built operator console, with in-app two-factor and an append-only audit log | Accepted |
 | [0020](0020-in-app-support-tickets.md) | Support tickets built into the app | Accepted |
@@ -50,3 +50,4 @@ approach, a hosting change. Small, local choices belong in the PR description.
 | [0025](0025-staging-sends-real-email.md) | Staging sends real email; the mail sandbox is optional | Accepted |
 | [0026](0026-cloud-config-in-this-repository.md) | Shadetree's own cloud config (SES, Email Routing, the support Worker) lives in `infra/`, run by hand | Accepted |
 | [0027](0027-sentry-error-tracking.md) | Errors and job alerts go to Sentry's free plan, scrubbed in the app | Accepted |
+| [0028](0028-generic-bounce-event-endpoint.md) | Late bounces arrive at one generic, signed bounce-event endpoint | Accepted |

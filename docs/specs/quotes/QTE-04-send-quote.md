@@ -59,9 +59,8 @@ their own phone. This is the moment that counts toward plan usage.
   tied to a send, like an automation's) is announced, once; a failure on Shadetree's side (no
   receiving server's reply, rejected credentials) is reported to operators, not to the team.
 - **What's known:** only what the SMTP conversation says while the delivery job sends (ADR
-  0017). Bounces after the relay accepts an email stay in the provider's dashboard; capturing
-  them needs the provider's event notifications (a configuration-set event destination posting
-  to an endpoint here) and a new ADR.
+  0017). Bounces after the relay accepts an email stay in the provider's dashboard; NTF-05
+  captures them through a generic, signed bounce-event endpoint ([ADR 0028](../../adr/0028-generic-bounce-event-endpoint.md)).
 
 ## Decisions
 
