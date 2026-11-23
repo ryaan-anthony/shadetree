@@ -37,8 +37,8 @@
               <% if (follow_up = request.follow_up) %><%# CLI-07 %>
                 <span class="mt-1 flex flex-wrap items-center gap-x-2 text-sm2 text-ink">
                   <span class="inline-flex min-w-0 items-center gap-1.5"><%= icon(follow_up.visit? ? "map-pin" : "phone", class: "size-3.5 shrink-0 text-muted") %><span><%= follow_up.user.full_name %> · <%= follow_up.kind_label %>, <%= follow_up.when_label %></span></span>
-                  <% if follow_up.overdue? %><%= badge "Overdue", tone: :danger %><% end %>
-                  <% if follow_up.done? %><%= badge "Done", tone: :success %><% end %><%# JOB-06 %>
+                  <% if follow_up.overdue? %><%= status_badge(:follow_up, "overdue") %><% end %>
+                  <% if follow_up.done? %><%= status_badge(:follow_up, "done") %><% end %><%# JOB-06 %>
                 </span>
               <% elsif request.status == "in_progress" %><%# a New one is plainly nobody's yet %>
                 <span class="mt-1 block text-sm2 text-muted">Not assigned</span>

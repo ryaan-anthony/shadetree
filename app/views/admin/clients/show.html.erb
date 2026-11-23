@@ -77,7 +77,7 @@
             <li><%= icon "inbox", class: "size-4 text-faint" %>
               <%= link_to request.title, admin_service_request_path(request),
                           class: "min-w-0 flex-1 truncate font-medium text-ink hover:underline" %>
-              <%= badge request.status_label %><span class="text-sm2 text-subtle"><%= local_time_ago(request.created_at) %></span></li>
+              <%= status_badge(:request, request.status) %><span class="text-sm2 text-subtle"><%= local_time_ago(request.created_at) %></span></li>
           <% end %>
         <% else %>
           <li><%= icon "inbox", class: "size-4 text-faint" %><span class="flex-1 font-medium text-ink">Requests</span><span class="text-sm2 text-muted">None yet</span></li>

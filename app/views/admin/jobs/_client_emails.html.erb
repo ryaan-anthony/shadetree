@@ -11,7 +11,7 @@
         <li class="items-start text-sm2" id="client-notice-pending"><div class="min-w-0 flex-1">
           <p class="text-ink">We'll email <%= job.client.display_name %>
             <% if due <= Time.current %>shortly.<% else %>at <span class="whitespace-nowrap"><%= local_time(due, format: :time, zone:) %><%= " #{time_zone_label(zone)}" unless zone.tzinfo == ActiveSupport::TimeZone[current_business.time_zone].tzinfo %></span>.<% end %></p>
-          <p class="text-muted">We wait a few minutes after your last change, so several changes arrive as one email.</p></div><%= badge "Waiting", tone: :info %></li>
+          <p class="text-muted">We wait a few minutes after your last change, so several changes arrive as one email.</p></div><%= status_badge(:email, "pending") %></li>
       <% end %>
       <% messages.each do |message| %>
         <li class="items-start text-sm2">
@@ -19,7 +19,7 @@
             <p class="font-medium text-ink"><%= message.subject.presence || EmailCatalog.find(message.kind).name %></p>
             <p class="truncate text-muted">To <%= message.to %> · <%= local_time(message.sent_at || message.created_at) %></p>
           </div>
-          <%= badge message.status_label, tone: (message.problem? ? :danger : (message.status == "sent" ? :success : :neutral)) %>
+          <%= status_badge(:email, message.status) %>
         </li>
       <% end %>
     </ul>

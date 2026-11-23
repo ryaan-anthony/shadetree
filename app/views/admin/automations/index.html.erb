@@ -22,7 +22,7 @@
             <div class="min-w-0 flex-1">
               <p class="font-semibold text-ink">
                 <%= @editable ? link_to(rule.name, edit_admin_automation_path(rule), class: "hover:underline") : rule.name %>
-                <%= badge(rule.enabled? ? "On" : "Off", tone: rule.enabled? ? :success : :neutral) %>
+                <%= status_badge(:automation, rule.enabled? ? "on" : "off") %>
               </p>
               <p class="text-sm2 text-muted"><%= automation_summary(rule, templates) %></p>
             </div>

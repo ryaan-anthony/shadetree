@@ -66,11 +66,18 @@ class Payment < ApplicationRecord
   # "Refunded", "Partly refunded", "Disputed", …, or nil. A dispute that's still open or was
   # lost says so first; otherwise a refund does.
   def adjustment_label
-    return DISPUTE_STATUSES.fetch(dispute_status) if dispute_status.in?(%w[open lost])
-    return "Refunded" if refunded_cents.positive? && refunded_cents >= amount_cents
-    return "Partly refunded" if refunded_cents.positive?
+    key = adjustment
+    { "refunded" => "Refunded", "partly_refunded" => "Partly refunded" }.fetch(key) { DISPUTE_STATUSES[key] } if key
+  end
 
-    DISPUTE_STATUSES[dispute_status]
+  # The same as a key (PLT-17's map gives its tone): a dispute status, "refunded",
+  # "partly_refunded", or nil.
+  def adjustment
+    return dispute_status if dispute_status.in?(%w[open lost])
+    return "refunded" if refunded_cents.positive? && refunded_cents >= amount_cents
+    return "partly_refunded" if refunded_cents.positive?
+
+    dispute_status.presence
   end
 
   # What the history records about it.

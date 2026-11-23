@@ -20,7 +20,7 @@
 <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
   <div class="min-w-0 space-y-4">
     <%= card do %>
-      <div class="mb-3"><%= badge request_record.status_label, tone: { "new" => :info, "in_progress" => :warning, "quoted" => :success, "archived" => :neutral }.fetch(request_record.status) %></div>
+      <div class="mb-3"><%= status_badge(:request, request_record.status) %></div>
       <dl class="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-[8rem_minmax(0,1fr)]">
         <% [ [ "Email", request_record.contact_email && mail_to(request_record.contact_email, class: "hover:underline") ],
              [ "Phone", phone_link(request_record.contact_phone, class: "hover:underline") ],

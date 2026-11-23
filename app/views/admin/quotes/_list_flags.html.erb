@@ -1,5 +1,5 @@
 <%# locals: (quote:) -%>
 <%# Things to act on, shown beside a quote's status in the list (table and phone list). %>
-<% if quote.update_requested_at && quote.expired? %><%= badge "Update requested", tone: :warning %><% end %>
+<% if quote.update_requested_at && quote.expired? %><%= status_badge(:quote, "update_requested") %><% end %>
 <%# QA #274: the latest email didn't arrive and the client hasn't answered (as the quote page warns). %>
-<% if quote.undelivered_email %><%= badge "Email not delivered", tone: :danger %><% end %>
+<% if quote.undelivered_email %><%= status_badge(:email, "not_delivered") %><% end %>

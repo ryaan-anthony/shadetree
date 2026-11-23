@@ -1,14 +1,13 @@
 # PAY-01: how invoices read for staff.
 module InvoicesHelper
-  STATUS_TONES = { "draft" => :neutral, "sent" => :info, "partially_paid" => :warning, "paid" => :success, "void" => :neutral }.freeze
-
   # The where-to for an invoice: the builder while it's a draft, else its page.
   def staff_invoice_path(invoice) = invoice.editable? ? edit_admin_invoice_path(invoice) : admin_invoice_path(invoice)
 
-  # Its status, and Overdue beside it once the due date has passed (overdue isn't a status).
+  # Its status (PLT-17's map), and Overdue beside it once the due date has passed (overdue isn't
+  # a status). A sent invoice being revised says Revising, in its status's tone.
   def invoice_status_badge(invoice)
-    safe_join([ badge(invoice.status_label, tone: STATUS_TONES.fetch(invoice.status)),
-                (badge("Overdue", tone: :danger) if invoice.overdue?(current_business.today)) ].compact, " ")
+    safe_join([ status_badge(:invoice, invoice.status, invoice.status_label),
+                (status_badge(:invoice, "overdue") if invoice.overdue?(current_business.today)) ].compact, " ")
   end
 
   EVENT_LABELS = { "created" => "Created", "sent" => "Sent", "revised" => "Revised", "revision_discarded" => "Changes discarded", "partially_paid" => "Partly paid",
