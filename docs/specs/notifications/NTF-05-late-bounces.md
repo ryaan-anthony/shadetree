@@ -28,14 +28,16 @@ notification and Resend as a refusal at send time (QTE-04, PAY-02).
 - [ ] An inbound endpoint accepts bounce events signed with a shared secret from the
       environment (HMAC over a timestamp and the body). Unsigned, mis-signed, stale (over 5
       minutes) or oversized posts are refused, and the endpoint is "not found" with no secret.
-- [ ] It understands a standard delivery status notification (the per-recipient action, status
-      code such as 5.1.1, and diagnostic code) and a small, documented, provider-neutral event
-      JSON (event id, type, Message-ID, recipient, status code, time). Nothing names a provider.
+- [ ] It understands a standard delivery status notification (per-recipient action, status code
+      such as 5.1.1, diagnostic code) and our own strict, versioned event JSON (event id, type,
+      Message-ID, reference, recipient, status code, time). Nothing names a provider; where a
+      provider can't post this, a small forwarder kept in `infra/` (ADR 0026) translates it.
 - [ ] Each event is processed once: a repeated post (same event id, or the same body when there's
       no id) does nothing, and an event for an email already marked undelivered changes nothing.
-- [ ] An event is matched to the client email by its Message-ID, and only if the recipient it
-      names is one the email went to. Unmatched events (platform email, unknown ids) are dropped
-      and counted, never stored.
+- [ ] Every client email carries an opaque per-email reference header. An event is matched by
+      its Message-ID or that reference, and only if its recipient is one the email went to.
+      Unmatched events (platform email, unknown ids) and events more than 14 days after the
+      email was sent are dropped and counted, never stored.
 - [ ] A matched permanent failure marks the email undelivered with the reason in plain words
       and the status code, using send time's rules: a mailbox status (5.1.x, 5.2.1) is "Address
       refused" and suppresses that address for the business and flags the client; any other
@@ -44,17 +46,22 @@ notification and Resend as a refusal at send time (QTE-04, PAY-02).
 - [ ] The existing undelivered path follows, unchanged: the "Email not delivered" warning with
       when, reason, code and Resend on the quote or invoice, the list badge, the client
       timeline entry, the team's "Client email not delivered" notification, and the send
-      history's "Not delivered". The same once-only and superseded-send rules apply.
+      history's "Not delivered". The same once-only and superseded-send rules apply. If the
+      client has already answered the quote or paid the invoice, the bounce is recorded in the
+      send history and timeline only, with no warning or notification.
+- [ ] A complaint (the client marked it as spam) blocks the address for that business and notes
+      it on the client ("marked an email as spam"), with no team notification or Resend prompt.
 - [ ] Privacy: only the event id, type, status code, a reason category, the time and the matched
       email are kept; the diagnostic text, addresses and raw payload are neither stored nor
       logged. Stored events are deleted after 90 days.
-- [ ] Optional fallback: bounce emails sent to a bounce address reach the app through the
-      existing inbound-email path (signed post, stored, routed to their own mailbox), are parsed
-      as delivery status notifications and processed as above. Off unless configured.
+- [ ] Optional fallback, built only if the relay keeps our envelope sender: bounce emails to a
+      signed per-email return address reach the app through the existing inbound-email path
+      (signed post, stored, routed to their own mailbox), never copied to the human support
+      inbox, and are parsed and processed as above. Off unless configured.
 - [ ] Operators can see, without addresses, how many events arrived, matched or were dropped.
 - [ ] Tests cover signatures and replay, both formats, idempotency, matching and recipient
-      checks, mailbox versus other statuses, CC'd emails, the warning and notification, tenancy,
-      privacy (no address in logs or rows) and the fallback mailbox.
+      checks, the 14-day cut-off, statuses, complaints, CC'd emails, answered or paid documents,
+      the warning and notification, tenancy, privacy (no address stored) and the fallback.
 
 ## Out of scope
 
@@ -64,6 +71,11 @@ notification and Resend as a refusal at send time (QTE-04, PAY-02).
 
 - Spec late bounces, with an ADR for a generic bounce-event endpoint; plain SMTP stays for
   sending and no provider is named in code (owner, 2026-11-22). [ADR 0028](../../adr/0028-generic-bounce-event-endpoint.md).
+- Our own signed, versioned event format, with a forwarder in `infra/` for providers that can't
+  sign it; an opaque per-email reference header beside the Message-ID (owner, 2026-11-22).
+- Complaints block the address for the business and are noted on the client; a bounce after the
+  client answered or paid is recorded without a warning; events over 14 days old are ignored;
+  the fallback mailbox only if the relay keeps our envelope sender (owner, 2026-11-22).
 
 ## Implementation notes
 
@@ -84,16 +96,4 @@ notification and Resend as a refusal at send time (QTE-04, PAY-02).
 
 ## Open questions
 
-- **(blocking)** How events reach the endpoint. Recommend our own signing contract and one
-  strict, versioned JSON shape (not guessing each provider's keys), with a small forwarder in
-  `infra/` (ADR 0026) translating where a provider can't sign that way, so the app stays neutral.
-- Complaints (marked as spam). Recommend accepting them: suppress the address for the business,
-  note it on the client ("marked an email as spam"), no team notification or Resend prompt.
-- A bounce after the client has already answered or paid. Recommend recording it in the send
-  history and timeline, without the warning or the notification: the client got there anyway.
-- Late events. Recommend ignoring events more than 14 days after the email was sent.
-- Matching if a relay rewrites the Message-ID. Recommend also sending an opaque per-email
-  reference header and matching on either.
-- Fallback. Recommend building it only if the relay keeps our envelope sender, using a signed
-  per-email return address (as support's reply addresses), and never copying it to the human
-  support inbox.
+- None. The owner answered them on 2026-11-22.

@@ -36,9 +36,9 @@ The app exposes one inbound bounce-event endpoint. A post is accepted only with 
 32 characters; without it the endpoint is not found), within 5 minutes, under a size cap, with
 failed attempts rate limited per IP as on the support ingress. The body is either a delivery
 status notification or our versioned JSON event; both become the same normalised event (id,
-type, Message-ID, recipient, status code, time). Events are stored once (by event id, else a
+type, Message-ID, reference, recipient, status code, time). Events are stored once (by event id, else a
 digest of the body) and processed in the background. An event matches an `EmailMessage` by our
-Message-ID and only if its recipient is one the email went to; permanent failures go through
+Message-ID or reference header, and only if its recipient is one the email went to; permanent failures go through
 `EmailMessage#mark!` with send time's rules (mailbox statuses bounce and suppress, other
 permanent statuses fail without blaming the address), so the existing warning, timeline,
 notification and Resend follow. Only ids, type, status code, a reason category and times are
@@ -50,7 +50,8 @@ mailbox on the existing inbound-email path feeds parsed DSN emails into the same
 - Late bounces show like send-time refusals; switching providers is configuration only.
 - A provider that can't sign our way needs a small forwarder, kept as configuration in `infra/`
   (ADR 0026), not in the app.
-- Matching relies on the relay keeping our Message-ID; NTF-05 asks whether to add a reference header.
+- A relay may rewrite the Message-ID, so each client email also carries an opaque reference
+  header, and an event matches on either (owner, 2026-11-22).
 - The lookup by Message-ID spans businesses (`Tenancy.across_businesses`), reviewed like any bypass.
 - New settings for PLT-09's list and the operations runbook: the endpoint secret, and the
   bounce address when the fallback is on. Each environment has its own secret.
