@@ -30,13 +30,15 @@ the quote closes once everything is done or not going ahead.
       cancel reasons or internal notes.
 - [ ] Lines added during the work are listed under "Added during the work", each with what was
       billed for it.
-- [ ] The totals, from sent invoices only:
-      - **Approved**: the latest approved total (QTE-10's changes included);
-      - **Not going ahead**: the dropped amount, shown when there is some;
-      - **Billed**: sent work and progress invoices, after progress credits and before deposit
-        credits, so nothing billed early counts twice;
+- [ ] The totals, each at its value after discounts (PAY-08's shares) with tax, from sent
+      invoices only:
+      - **Approved**: the latest approved quote, valued on PAY-08's base (completed or billed
+        quantity at the price kept, the rest at the current price; QTE-10);
+      - **Not going ahead** and **Shortfall**: what's dropped and what was done short, if any;
+      - **Billed**: final bills after shares, plus progress not yet credited (before deposits);
+      - **Over-billed**: PAY-08's, on its own line when there is some;
       - **Deposits**: paid, applied and left (PAY-07, once it exists);
-      - **Still expected**: approved − not going ahead − billed.
+      - **Still expected**: max(0, approved − not going ahead − shortfall − billed).
       A note says tax is worked out on each invoice, so totals can differ by a few cents.
 - [ ] Staff can mark a line, or the part of it still to do, "Not going ahead", with an optional
       note the client sees, and undo it while that part isn't in a job. JOB-09's check counts it,
@@ -45,10 +47,15 @@ the quote closes once everything is done or not going ahead.
       default) or **Not going ahead** (with the optional note).
 - [ ] The quote stays Approved, showing "2 of 3 done" on the staff list and page, with a
       "Partly done" filter; it becomes **Closed** once every line is done or not going ahead.
+      A closed quote still allows Create invoice and deposit take-backs; reopening a completed
+      job (JOB-09) takes it back to Approved. Marking, undoing and cancel's choice take the quote
+      lock, then the jobs by id, then the lines (JOB-09's order).
 - [ ] The staff client timeline (CLI-05) records a job made from a quote (which services), a job
       cancelled (what was freed or dropped), work marked not going ahead or undone, and the quote
       closing.
-- [ ] Recurring quotes show JOB-10's series view instead, and close when the series ends.
+- [ ] Recurring quotes show JOB-10's series view instead: Approved is the per-occurrence total
+      times the occurrences (per occurrence with no end), skipped ones are Not going ahead, and
+      the quote closes when the series ends.
 - [ ] Erasing a client (INS-02) scrubs the "Not going ahead" notes with the documents' text.
 - [ ] The quote PDF (QTE-02) stays as approved; progress is on the page only.
 - [ ] Owners, Admins and ACC-07 roles with office access mark work not going ahead; technicians
@@ -73,8 +80,10 @@ the quote closes once everything is done or not going ahead.
   once every line is done or not going ahead (owner, 2026-11-22).
 - Done lines show their date. No email when work is marked not going ahead: staff tell the
   client, and the page shows the note (owner, 2026-11-22).
+- The total formulas and "Billed only once sent" (coordinator; follows the owner's model).
 
 ## Implementation notes
 
-- `quote_line_items.not_going_ahead_quantity` and `.not_going_ahead_note`; the quantity is part
-  of JOB-09's check. A closed quote is a status after approved, set when the last part finishes.
+- `quote_line_items.not_going_ahead_quantity` and `.not_going_ahead_note`; this spec's migration
+  extends JOB-09's check to include it. Closed is a status after approved, set when the last
+  part finishes and cleared when a job reopens.

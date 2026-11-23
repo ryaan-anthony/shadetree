@@ -23,19 +23,24 @@ used up, so the client never pays twice and always sees how much of the deposit 
 ## Acceptance criteria
 
 - [ ] **Take a deposit** on an approved quote makes a deposit invoice for a fixed amount or a
-      percent of the quote's total, at most what's still expected (QTE-09). It has one untaxed
+      percent of the quote's total, at most still expected (QTE-09) less deposits not yet
+      applied; for a series, still expected is the occurrences left, or the next 12 with no end
+      (JOB-10). It has one untaxed
       line ("Deposit for Q-0004"), is sent and paid like any invoice (PAY-02, PAY-04, PAY-05),
       and is marked as a deposit on staff and client pages. A quote can have several.
 - [ ] Billing before any work is done becomes "Take a deposit"; progress billing (PAY-08) stays
       for work under way.
 - [ ] Work invoices for the quote (PAY-06, job and quote alike, not progress invoices) apply what's
       been paid of its deposits and not yet applied, as a PAY-08 credit after tax ("Deposit
-      applied −$300.00"), up to the invoice's total due, oldest deposit first, until used up. A
-      draft works its credit out again when it's sent.
-- [ ] A credit applied to an invoice that's later voided is free to apply again.
+      applied −$300.00"), after the pre-tax progress and over-billed credits, up to the invoice's
+      total due, oldest deposit first, until used up. A draft works it out again when sent.
+- [ ] A credit applied to an invoice that's later voided is free to apply again. The $0 rule
+      looks at the total before credits; a sent invoice the deposit fully covers is Paid (PAY-08).
 - [ ] If a refund or a lost dispute (PAY-04) leaves less paid on a deposit than has been applied,
       sent invoices don't change: the quote shows "Deposit over-applied $X", and the next work
-      invoice for the quote takes it back as a positive adjustment, "Deposit refunded +$X".
+      invoice for the quote takes it back as a positive adjustment, "Deposit refunded +$X" (a
+      take-back credit). With no work invoice left to come, **Take back** on the quote makes a
+      take-back invoice for it.
 - [ ] When the quote closes (QTE-09) with deposit money unused, staff see "Unused deposit $X" on
       the quote. Refunds stay in the provider's dashboard (07-payments D4).
 - [ ] The client's quote page shows deposits paid, applied and left (QTE-09).
@@ -60,6 +65,7 @@ used up, so the client never pays twice and always sees how much of the deposit 
   (owner, 2026-11-22).
 - Only what's been paid of a deposit is credited; an unpaid deposit stays owed on its own
   (owner, 2026-11-22).
+- The cap (coordinator; follows the owner's model).
 - With several, the oldest deposit is applied first. Asking for a deposit at approval is a later
   spec, with online payment required (owner, 2026-11-22).
 - A refund after a deposit was applied is taken back on the next work invoice, shown as
@@ -68,7 +74,8 @@ used up, so the client never pays twice and always sees how much of the deposit 
 
 ## Implementation notes
 
-- `invoices.kind` (work, progress or deposit). Applications are PAY-08's `invoice_credits` rows
-  of kind deposit, pointing at the deposit invoice, recorded under PAY-06's lock (quote first).
-- The credit sits after tax: `total_due` drops by it, so balance, `sendable_total?` (PAY-01's $0
-  rule for a fully credited invoice), lists and the PDF ("Deposit applied") use it.
+- Adds `deposit` and `take_back` to PAY-08's `invoices.kind`. Applications are PAY-08's
+  `invoice_credits` of kind deposit (sign −) or take-back (sign +), pointing at the deposit
+  invoice, recorded under PAY-06's lock. Order on one invoice: progress, over-billed, deposit,
+  take-back. They sit after tax: `total_due` drops (or rises) by them, used by balance, lists
+  and the PDF; `ZeroTotalGuard` keeps looking at the total before credits.

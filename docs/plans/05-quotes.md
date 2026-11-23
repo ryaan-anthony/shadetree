@@ -59,9 +59,9 @@ client's side and treated signatures as a separate legal-compliance epic.
 - **R22** Once approved, the client's quote page shows each line's progress (to do, booked,
   done, billed, not going ahead with a note) and the money: approved, billed, deposits and still
   expected. Work that won't be done is marked "Not going ahead"; the quote then closes.
-- **R23** An approved quote can be changed during the work (change orders): a change that raises
-  the total needs the client's approval again; reductions and new discounts apply at once, and
-  the client is told.
+- **R23** An approved quote can be changed during the work (change orders): any added line or
+  raised quantity or price needs the client's approval; pure reductions apply at once, and the
+  client is told. Overrun work already done is offered the same way.
 
 ### PDF
 - **R19** Every quote renders as a branded PDF that matches the web view and is suitable for
@@ -90,7 +90,7 @@ client's side and treated signatures as a separate legal-compliance epic.
 | [QTE-07](../specs/quotes/QTE-07-technician-quotes.md) | Quotes from assigned requests | M6 | JOB-06, QTE-01, ACC-07 |
 | [QTE-08](../specs/quotes/QTE-08-auto-approved-services.md) | Services technicians send without review | M6 | QTE-07, CAT-03, BIL-03 |
 | [QTE-09](../specs/quotes/QTE-09-quote-progress-for-clients.md) | Quote progress for clients | M6 | JOB-09, PAY-06, PAY-08, CLI-05 |
-| [QTE-10](../specs/quotes/QTE-10-change-orders.md) | Change orders | M6 | QTE-06, JOB-09 |
+| [QTE-10](../specs/quotes/QTE-10-change-orders.md) | Change orders | M6 | QTE-06, JOB-09, QTE-09, PAY-06 |
 
 ## Backlog (M6)
 

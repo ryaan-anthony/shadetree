@@ -37,7 +37,8 @@ completed. It's the first growth item in 06-jobs and the biggest driver of reten
       changes and the usual reminders go as now. The series history records what was held back.
 - [ ] Each occurrence is billed on its own, per job line (PAY-06); NTF-04 "invoice the job" works
       for each. PAY-08's progress billing and discount shares don't apply to recurring quotes.
-- [ ] Staff can stop the series (no more jobs are made) and skip an occurrence.
+- [ ] Staff can stop the series (no more jobs are made) and skip an occurrence; skipping one that
+      already has a job cancels that job (JOB-01).
 - [ ] The quote page shows the series: done, upcoming, skipped. The client page (QTE-09) shows the
       next date, how many are done and what's been billed; the quote closes when the series ends.
 - [ ] Office access makes and manages series; technicians see each job's visits as now (tested).
@@ -67,6 +68,7 @@ completed. It's the first growth item in 06-jobs and the biggest driver of reten
   (owner, 2026-11-22).
 - Archiving the client stops new jobs (staff are told which dates are left); erasing the
   client stops the series. A series with no end titles its jobs "Title (3)" (owner, 2026-11-22).
+- Occurrences don't claim the quote's lines (coordinator; follows the owner's model).
 
 ## Implementation notes
 
@@ -75,4 +77,5 @@ completed. It's the first growth item in 06-jobs and the biggest driver of reten
   skipped occurrences are stored on the series.
 - A `config/recurring.yml` entry runs nightly per business under `Tenancy.with_business`,
   reporting one business's error and going on, as `AutomationsDueJob` does. The horizon is
-  `business.today` + 60 days, and a missed run catches up.
+  `business.today` + 60 days, and a missed run catches up, but never makes an occurrence dated
+  before today: those are recorded as missed for the office.
