@@ -27,6 +27,8 @@ optimization before basic scheduling existed.
   quantities. Billing is 07-payments R17; changing an approved quote is 05-quotes R23.
 - **R18** A recurring quote, approved once, produces a job per occurrence from the same lines,
   each billed when completed.
+- **R19** Team members track time on visits and general work, rounded as the business sets; on
+  hourly lines, tracked hours are what's done and billed. General time never bills a client.
 
 ### Visits
 - **R5** A job has one or more visits. A visit has a date, either a start time or an arrival
@@ -82,6 +84,7 @@ optimization before basic scheduling existed.
 | [JOB-08](../specs/jobs/JOB-08-busy-blocks.md) | Busy blocks for schedulers without requests | M6 | JOB-07, ACC-07 |
 | [JOB-09](../specs/jobs/JOB-09-jobs-as-parts-of-a-quote.md) | Jobs as parts of a quote | M6 | JOB-01, PLT-11, PLT-14 |
 | [JOB-10](../specs/jobs/JOB-10-recurring-jobs.md) | Recurring jobs | M6 | JOB-09, PAY-06, JOB-02, QTE-09, QTE-01 |
+| [JOB-11](../specs/jobs/JOB-11-time-tracking.md) | Time tracking | M6 | JOB-09, JOB-04, PAY-06, QTE-10 |
 
 ## Backlog (M6)
 
@@ -89,7 +92,7 @@ optimization before basic scheduling existed.
 - Recurring jobs (weekly mowing, monthly pest control): specified as JOB-10, the first M6 item.
 - Read-only calendar feed (ICS) per member.
 - "On my way" message to client.
-- Time tracking / materials used per visit.
+- Materials used per visit (time tracking is JOB-11).
 - Route ordering for a day's visits.
 - Checklists per service.
 

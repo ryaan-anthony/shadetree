@@ -11,10 +11,9 @@ depends_on: [JOB-01, PLT-11, PLT-14]
 
 ## Summary
 
-Today an approved quote becomes one job with all its lines. Real work splits: gutters this week,
-6 of 10 trees next month. Approval makes every line "to do"; staff make jobs from whatever is
-ready, and the crew log what they did. Completing a job is final; cancelling gives its work back.
-Billing is PAY-06 and PAY-08, the client's view QTE-09, changing the quote QTE-10.
+An approved quote's work splits: gutters this week, 6 of 10 trees next month. Staff make jobs
+from whatever is "to do", the crew log what they did, completing is final and cancelling gives the
+work back. Billing: PAY-06, PAY-08; the client's view: QTE-09; changes: QTE-10; time: JOB-11.
 
 ## User stories
 
@@ -32,13 +31,15 @@ Billing is PAY-06 and PAY-08, the client's view QTE-09, changing the quote QTE-1
 - [ ] A line's fixed discount is shared by quantity across its jobs, the last claim taking the left
       over cent. Jobs carry no fixed quote discount (PAY-08 shares it); a percent one is copied.
 - [ ] Anyone assigned to one of the job's visits logs the work from that visit (My day, JOB-04):
-      quantities done per line, lines added on site (question 2), notes and photos. Each entry
+      quantities done per line (hourly lines from tracked time, JOB-11), lines added on site
+      (question 2), notes and photos. Each entry
       keeps who, which visit and when; the job page shows them per line ("Marcus 4, Riley 2").
       Two people logging at once never overwrite each other (Implementation notes).
 - [ ] Completing the job stays with office access and a visit with its assignees, as now. It
       starts at the logged totals (else what was booked); the job's quantity becomes what's
       confirmed, and a shortfall isn't freed. More done than booked claims free quantity; past
-      the quote's, see Decisions. Once completed, its lines and entries can't change.
+      the quote's, see Decisions. Once completed, its lines and entries can't change (tracked time
+      until invoiced: JOB-11).
 - [ ] Raising a quote line on an open job claims free quantity; past the quote's it needs a change
       order (QTE-10). Lowering or removing it frees the difference. Lines added on site are its own.
 - [ ] Cancelling an open job frees its quantities. Reopening a cancelled job is refused while what
@@ -48,9 +49,8 @@ Billing is PAY-06 and PAY-08, the client's view QTE-09, changing the quote QTE-1
       can't both take the same trees.
 - [ ] Job pages say "From Q-0004: 2 of 3 services"; the quote page lists each line's jobs and
       statuses ("Jobs (2)"). Every use of a quote's single job changes (list in #356).
-- [ ] Making, completing, cancelling and reopening jobs stay with office access (Owner, Admin,
-      ACC-07 roles); QTE-07/08 quote-only members see no job (tested). Another business's lines
-      are not found. The picker, logging and completion work at 360 px.
+- [ ] Making, completing, cancelling and reopening jobs stay with office access; QTE-07/08 members
+      see no job; another business's lines aren't found (tested). Works at 360 px.
 - [ ] Tests: splits, the race, a resubmitted picker, two people logging, shortfalls, overruns,
       raise, lower, cancel, reopens, discounts, automatic jobs, migration, export, roles, tenancy.
 
@@ -93,7 +93,7 @@ Billing is PAY-06 and PAY-08, the client's view QTE-09, changing the quote QTE-1
 
 ## Open questions
 
-1. Can one technician correct another's entry? Recommend no: each corrects their own while the
-   job is open (as a new entry); the office corrects anyone's.
+1. Can one technician correct another's entry? Recommend no, matching JOB-11's time rule: each
+   corrects their own (quantities while the job is open, as a new entry); the office, anyone's.
 2. Lines a technician adds on site: priced how? Recommend a catalog service at its price, or an
    unpriced custom line the office prices before invoicing; price visibility stays as JOB-04.

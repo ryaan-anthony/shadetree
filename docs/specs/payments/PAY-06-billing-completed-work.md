@@ -24,7 +24,8 @@ moment. Progress billing and the quote discount's share are PAY-08.
 ## Acceptance criteria
 
 - [ ] A completed job's **Create invoice** bills its unbilled lines as done on the job: the done
-      quantity (the sum of every technician's logged work, as confirmed at completion, JOB-09),
+      quantity (every technician's logged work as confirmed at completion, JOB-09; hourly lines
+      from rounded tracked time, JOB-11; general work time never),
       the job's prices, and lines added on site. The quote's **Create invoice** bills
       every completed job's unbilled lines in one invoice, linked to the quote and each job; it
       can be used again. Unfinished jobs and to-do work aren't billed. With nothing to bill
