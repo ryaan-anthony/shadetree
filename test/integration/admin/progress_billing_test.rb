@@ -114,4 +114,28 @@ class Admin::ProgressBillingTest < ActionDispatch::IntegrationTest
     get client_link_path(as_business(@business) { early.client_link! }.token)
     assert_select ".quote-doc-kicker", "Progress invoice #{early.number}"
   end
+
+  test "the client's Credit from rows are what each progress invoice charged, with taxed and untaxed work mixed" do
+    quote = as_business(@business) do
+      @quote.update_columns(tax_rates: [ { "name" => "State", "percent" => "10" } ])
+      @quote.line_items.build(key: "g", name: "Gutters", quantity: 1, taxable: false, position: 1).tap { _1.unit_price = "500" }.save!
+      @quote.reload
+    end
+    job = as_business(@business) { Job.from_quote!(quote, picks: quote.line_items.to_h { [ _1.id, "1" ] }) }
+    numbers = %w[Roof Gutters].map do |name|
+      as_business(@business) do
+        invoice = WorkBilling.bill_progress!(job.reload, by: users(:one))
+        invoice.line_items.each { _1.name == name ? _1.assign_attributes(quantity: 1, unit_price: "500") : _1.mark_for_destruction }
+        invoice.save!
+        invoice.mark_sent!(by: users(:one), channel: "link")
+        invoice.number
+      end
+    end
+    as_business(@business) { job.reload.complete!(by: users(:one)) }
+    post admin_job_invoices_path(job)
+    final = as_business(@business) { Invoice.last.tap { _1.mark_sent!(by: users(:one), channel: "link") } }
+    get client_link_path(as_business(@business) { final.client_link! }.token)
+    assert_select ".quote-doc-totals", /Credit from #{numbers.first}\s*−\$550\.00/, "the roof's $500 with its 10%"
+    assert_select ".quote-doc-totals", /Credit from #{numbers.last}\s*−\$500\.00/, "the gutters, untaxed"
+  end
 end
