@@ -9,7 +9,7 @@
   <div class="field"><label class="label" for="from">Signed up from</label><%= date_field_tag :from, @directory.from, class: "input", id: "from" %></div>
   <div class="field"><label class="label" for="to">to (UTC)</label><%= date_field_tag :to, @directory.to, class: "input", id: "to" %></div>
   <div class="field sm:col-span-2"><label class="label" for="sort">Sort</label><%= select_tag :sort, options_for_select(Ops::Directory::SORTS.invert, @directory.sort), class: "select", id: "sort" %></div>
-  <div class="flex gap-2 sm:col-span-4"><%= submit_tag "Search", class: button_classes(:secondary), name: nil %><%= link_to "Clear", ops_businesses_path, class: button_classes(:ghost) %></div>
+  <div class="flex gap-2 sm:col-span-4"><%= submit_tag "Search", class: button_classes(:secondary), name: nil %><%= link_to "Clear", ops_businesses_path, class: button_classes(:tertiary) %></div>
 <% end %>
 <p class="mt-4 text-sm2 text-muted" id="directory-count" role="status"><%= pluralize(@total, "business") %><%= " match" if @directory.filtered? %></p>
 <%= card flush: true, class: "mt-2" do %>

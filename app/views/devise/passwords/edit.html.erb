@@ -9,6 +9,6 @@
     <% end %>
     <%= render "devise/shared/password_field", form: f, label: "New password" %>
     <%= f.field :password_confirmation, as: :password, label: "Confirm new password", autocomplete: "new-password" %>
-    <%= f.submit_button "Save password and sign in", class: "mt-5 w-full btn-lg" %>
+    <%= f.submit_button "Save password and sign in", size: :lg, class: "mt-5 w-full" %>
   <% end %>
 <% end %>

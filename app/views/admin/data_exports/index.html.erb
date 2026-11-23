@@ -34,7 +34,7 @@
         <p class="mt-3 text-sm text-danger" role="alert" id="full-export-failed">The last one couldn't be made: <%= @full.failure_reason || "something went wrong." %></p>
       <% end %>
       <% unless @full&.building? %>
-        <%= button_to (@full&.downloadable? ? "Make a new one" : "Export everything"), admin_data_exports_path, class: "#{button_classes(@full&.downloadable? ? :ghost : :primary)} mt-3 w-full",
+        <%= button_to (@full&.downloadable? ? "Make a new one" : "Export everything"), admin_data_exports_path, class: "#{button_classes(@full&.downloadable? ? :tertiary : :primary)} mt-3 w-full",
                       form: (@full&.downloadable? ? { data: { turbo_confirm: "Make a new export? We'll let you know when it's ready.", turbo_confirm_button: "Make a new one" } } : {}) %>
       <% end %>
     <% end %>

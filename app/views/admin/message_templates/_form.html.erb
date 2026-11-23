@@ -34,7 +34,7 @@
     <% if editable %>
       <div class="flex flex-wrap items-center gap-2">
         <%= f.submit_button save_label %>
-        <%= link_to "Cancel", admin_message_templates_path, class: button_classes(:ghost) %>
+        <%= link_to "Cancel", admin_message_templates_path, class: button_classes(:tertiary) %>
       </div>
     <% else %>
       <p class="text-sm text-muted">Editing messages is part of a paid plan. <%= link_to "See plans", admin_plan_path, class: "font-semibold text-canopy hover:underline" %></p>

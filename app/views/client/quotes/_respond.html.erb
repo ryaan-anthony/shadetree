@@ -5,9 +5,10 @@
 <% open = response && @response_action %>
 <% business = quote.business %>
 <% if client_link.nil? %>
-  <div class="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-center">
+  <%# PLT-14: the staff preview shows the buttons in their own colours, inert rather than disabled %>
+  <div class="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-center" inert>
     <% [ [ "Ask for changes", :secondary ], [ "Decline quote", :secondary ], [ "Approve quote", :primary ] ].each do |label, variant| %>
-      <button type="button" class="<%= button_classes(variant) %>" disabled><%= label %></button>
+      <button type="button" class="<%= button_classes(variant) %>" tabindex="-1"><%= label %></button>
     <% end %>
   </div>
   <p class="mt-2 text-sm2 text-muted">Your client answers here. The buttons don't work in the preview.</p>
@@ -54,7 +55,7 @@
               <%= f.field :message, as: :textarea, label: "Reason", optional: true, rows: 3, maxlength: QuoteResponse::MESSAGE_MAX %>
               <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <button type="button" class="<%= button_classes(:secondary) %>" data-action="modal#close">Keep quote</button>
-                <%= f.submit_button "Decline", variant: :danger, data: { turbo_submits_with: "Declining…" } %>
+                <%= f.submit_button "Decline", variant: :destructive, data: { turbo_submits_with: "Declining…" } %>
               </div>
             <% end %>
           <% end %>

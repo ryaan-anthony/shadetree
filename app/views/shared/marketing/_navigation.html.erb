@@ -12,7 +12,7 @@
       <%= link_to "Sign in", new_user_session_path, class: "hidden text-sm font-medium text-subtle hover:text-ink sm:inline" %>
       <%= link_to "Start free", new_user_registration_path, class: button_classes(:primary) %>
       <details class="relative md:hidden">
-        <summary class="<%= button_classes(:ghost, :icon) %> list-none" aria-label="Menu"><%= icon "menu" %></summary>
+        <summary class="<%= button_classes(:tertiary, :icon) %> list-none" aria-label="Menu"><%= icon "menu" %></summary>
         <ul class="absolute right-0 top-full mt-2 w-56 rounded-card border border-line bg-surface p-2 shadow-pop">
           <% (links + [ [ "Sign in", new_user_session_path ] ]).each do |label, path| %>
             <li><%= link_to label, path, class: "block rounded-control px-3 py-2.5 text-[0.9375rem] font-medium text-ink hover:bg-sunken" %></li>

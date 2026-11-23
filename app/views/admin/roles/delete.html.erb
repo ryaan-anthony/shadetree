@@ -1,6 +1,6 @@
 <% content_for :title, "Delete #{@role.name}" %>
 <%= page_header "Delete #{@role.name}" do %>
-  <%= link_to admin_roles_path, class: button_classes(:ghost) do %><%= icon "arrow-left" %> Roles<% end %>
+  <%= link_to admin_roles_path, class: button_classes(:tertiary) do %><%= icon "arrow-left" %> Roles<% end %>
 <% end %>
 <div class="max-w-xl">
   <%= card do %>
@@ -16,8 +16,8 @@
         <%= hidden_field_tag :replacement, "technician", id: nil %>
       <% end %>
       <div class="flex gap-2">
-        <%= submit_tag "Delete role", class: button_classes(:danger), name: nil %>
-        <%= link_to "Cancel", admin_roles_path, class: button_classes(:ghost) %>
+        <%= submit_tag "Delete role", class: button_classes(:destructive), name: nil %>
+        <%= link_to "Cancel", admin_roles_path, class: button_classes(:tertiary) %>
       </div>
     <% end %>
   <% end %>

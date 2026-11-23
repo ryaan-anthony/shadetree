@@ -13,7 +13,7 @@
         <% else %>
           <%= button_to "Back to read-only", ops_impersonation_path, method: :patch, params: { mode: "read_only" }, class: button_classes(:secondary, :sm) %>
         <% end %>
-        <%= button_to "Stop", ops_impersonation_path, method: :delete, class: button_classes(:danger_solid, :sm), form: { data: { turbo: false } } %>
+        <%= button_to "Stop", ops_impersonation_path, method: :delete, class: button_classes(:destructive_solid, :sm), form: { data: { turbo: false } } %>
       </div>
     </div>
   </div>

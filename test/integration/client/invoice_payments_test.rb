@@ -182,7 +182,7 @@ class Client::InvoicePaymentsTest < ActionDispatch::IntegrationTest
     sign_in users(:one)
     post switch_admin_business_path, params: { business: @business.uid }
     get preview_admin_invoice_path(@invoice)
-    assert_select "#pay [aria-disabled=true]", /Pay \$200\.00/
+    assert_select "#pay span.btn-brand[inert]", /Pay \$200\.00/ # a picture of the button, in the brand colour (PLT-14)
     assert_select "#pay form", false
   end
 

@@ -2,7 +2,7 @@
 <% content_for :title, "Record a payment" %>
 <% lede = @invoice.draft? ? "Paid on the spot? Recording it also marks invoice #{@invoice.number} as sent." : "#{money(@invoice.balance)} left to pay on invoice #{@invoice.number}, due #{l(@invoice.due_on)}." %>
 <%= page_header "Record a payment", lede: do %>
-  <%= link_to "Cancel", staff_invoice_path(@invoice), class: button_classes(:ghost) %>
+  <%= link_to "Cancel", staff_invoice_path(@invoice), class: button_classes(:tertiary) %>
 <% end %>
 <div class="form-split">
 <%# #289: what's owed, first (phones and screen readers get it before the form); beside it on wide screens. %>

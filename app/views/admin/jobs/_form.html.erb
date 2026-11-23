@@ -56,7 +56,7 @@
     <% end %>
   <% end %>
   <div class="flex items-center justify-end gap-2">
-    <%= link_to "Cancel", (new_job ? admin_jobs_path : admin_job_path(@job)), class: button_classes(:ghost) %>
+    <%= link_to "Cancel", (new_job ? admin_jobs_path : admin_job_path(@job)), class: button_classes(:tertiary) %>
     <%= f.submit_button new_job ? "Create job" : "Save job" %>
   </div>
 <% end %>

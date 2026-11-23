@@ -46,7 +46,7 @@
           <% if can_schedule %>
             <div class="contents" data-controller="modal">
             <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
-              <button type="button" class="<%= button_classes(:ghost, :sm, :icon) %>" data-menu-target="button" data-action="menu#toggle"
+              <button type="button" class="<%= button_classes(:tertiary, :sm, :icon) %>" data-menu-target="button" data-action="menu#toggle"
                       aria-haspopup="true" aria-expanded="false" aria-label="Actions for the visit on <%= visit.when_label %>"><%= icon "more-horizontal" %></button>
               <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
                 <% if visit.open? %>
@@ -69,7 +69,7 @@
                   <%= render "admin/visits/notify_client", job:, kind: "cancelled", id: "notify-client-#{visit.uid}" %>
                   <div class="flex justify-end gap-2">
                     <button type="button" class="<%= button_classes(:secondary) %>" data-action="modal#close">Keep visit</button>
-                    <%= submit_tag "Cancel visit", class: button_classes(:danger), name: nil %>
+                    <%= submit_tag "Cancel visit", class: button_classes(:destructive), name: nil %>
                   </div>
                 <% end %>
               <% end %>

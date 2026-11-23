@@ -15,7 +15,7 @@
               data: { action: "quote-builder#saveAndGo" } do %><%= icon "send" %> <%= @invoice.revising? ? "Send revision" : "Send invoice" %><% end %>
   <span class="save-status" id="save_status" role="status" data-quote-builder-target="status">Saved</span>
   <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
-    <button type="button" class="<%= button_classes(:ghost, :icon) %>" data-menu-target="button" data-action="menu#toggle"
+    <button type="button" class="<%= button_classes(:tertiary, :icon) %>" data-menu-target="button" data-action="menu#toggle"
             aria-haspopup="true" aria-expanded="false" aria-label="More actions"><%= icon "more-horizontal" %></button>
     <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
       <%= link_to pdf_admin_invoice_path(@invoice), class: "menu-item", data: { turbo: false, action: "quote-builder#download" } do %><%= icon "download" %> Download PDF<% end %>

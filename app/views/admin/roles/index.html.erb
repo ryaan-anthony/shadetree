@@ -1,6 +1,6 @@
 <% content_for :title, "Roles" %>
 <%= page_header "Roles", lede: "What each person on your team can do." do %>
-  <%= link_to admin_team_path, class: button_classes(:ghost) do %><%= icon "arrow-left" %> Team<% end %>
+  <%= link_to admin_team_path, class: button_classes(:tertiary) do %><%= icon "arrow-left" %> Team<% end %>
   <% if @editable %><%= link_to new_admin_role_path, class: button_classes do %><%= icon "plus" %> New role<% end %><% end %>
 <% end %>
 
@@ -14,7 +14,7 @@
   <% { "owner" => "Runs the business. There's always at least one.", "admin" => "Runs the office: clients, quotes, the schedule, invoices and the team.",
        "technician" => "Works their own visits from their phone, and drafts quotes for the requests given to them for the office to check and send." }.each do |key, lede| %>
     <%= card title: key.humanize, subtitle: lede, id: "role-#{key}",
-             actions: (link_to("Duplicate", new_admin_role_path(from: key), class: button_classes(:ghost, :sm), "aria-label": "Duplicate: #{key.humanize}") if @editable && key != "owner") do %>
+             actions: (link_to("Duplicate", new_admin_role_path(from: key), class: button_classes(:tertiary, :sm), "aria-label": "Duplicate: #{key.humanize}") if @editable && key != "owner") do %>
       <%= render "permissions", granted: Permissions::ROLES.fetch(key), owner: key == "owner" %>
       <p class="mt-4 text-xs text-muted">Built in. Can't be changed.</p>
     <% end %>
@@ -27,8 +27,8 @@
         <p class="mt-3 text-sm2 text-muted" id="role-<%= role.uid %>-technician-hint">Can't give the Technician role: Technicians quote the requests given to them, and this role can't. Add “Quote the requests given to them” to let it.</p>
       <% end %>
       <div class="mt-4 flex gap-2">
-        <% if @editable %><%= link_to "Duplicate", new_admin_role_path(from: role.uid), class: button_classes(:ghost, :sm), "aria-label": "Duplicate: #{role.name}" %><% end %>
-        <%= link_to "Delete", delete_admin_role_path(role), class: button_classes(:ghost, :sm) + " text-danger", "aria-label": "Delete: #{role.name}" %>
+        <% if @editable %><%= link_to "Duplicate", new_admin_role_path(from: role.uid), class: button_classes(:tertiary, :sm), "aria-label": "Duplicate: #{role.name}" %><% end %>
+        <%= link_to "Delete", delete_admin_role_path(role), class: button_classes(:tertiary, :sm) + " text-danger", "aria-label": "Delete: #{role.name}" %>
       </div>
     <% end %>
   <% end %>

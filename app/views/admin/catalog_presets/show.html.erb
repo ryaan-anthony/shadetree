@@ -52,7 +52,7 @@
         </ul>
       <% end %>
       <div class="mt-4 flex items-center justify-end gap-2">
-        <%= link_to "Cancel", admin_catalog_items_path, class: button_classes(:ghost) %>
+        <%= link_to "Cancel", admin_catalog_items_path, class: button_classes(:tertiary) %>
         <% if rows.any? { _2.nil? } %>
           <%= submit_tag "Add selected services", class: button_classes, name: nil, data: { check_all_target: "submit" } %>
         <% end %>

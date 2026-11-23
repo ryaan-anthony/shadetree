@@ -5,7 +5,7 @@
    end %>
 <%= page_header (@quote.approved? ? "Send a copy of quote #{@quote.number}" : "Send quote #{@quote.number}"), lede: do %>
   <%= render "admin/usage/quotes" if @quote.counts_toward_usage? %>
-  <%= link_to "Back", (own_quotes_only? ? after_send_path(@quote) : staff_quote_path(@quote)), class: button_classes(:ghost) %>
+  <%= link_to "Back", (own_quotes_only? ? after_send_path(@quote) : staff_quote_path(@quote)), class: button_classes(:tertiary) %>
 <% end %>
 
 <% if link_only? %><%# QTE-08: a technician who just sent it by link copies the link; nothing more to send from here %>

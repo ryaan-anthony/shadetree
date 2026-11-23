@@ -10,7 +10,7 @@
   <%# My day for people who have it; an office-only role (follow-ups, no My day) opens each one. %>
   <% field = can?(:field_work) %>
   <%= card title: "Your visits today", subtitle: "#{day_items_count(mine)} · times in #{zone}", id: "todays-visits", flush: true,
-           actions: (link_to(admin_my_day_path, class: button_classes(:ghost, :sm), id: "your-day-link") { safe_join([ "Your day", icon("arrow-right") ], " ") } if field) do %>
+           actions: (link_to(admin_my_day_path, class: button_classes(:tertiary, :sm), id: "your-day-link") { safe_join([ "Your day", icon("arrow-right") ], " ") } if field) do %>
     <% if mine.empty? %>
       <p class="px-5 py-4 text-sm text-muted">Nothing booked for you today.</p>
     <% else %>
@@ -30,8 +30,8 @@
   <% end %>
 <% else %>
   <%= card title: "Today's visits", subtitle: "#{pluralize(dashboard.visits_today_count, "visit")} · times in #{zone}", id: "todays-visits", flush: true,
-           actions: safe_join([ (link_to("Schedule", admin_schedule_path, class: button_classes(:ghost, :sm)) if can?(:schedule)),
-                                (link_to(admin_my_day_path, class: button_classes(:ghost, :sm), id: "your-day-link") { safe_join([ "Your day", icon("arrow-right") ], " ") } if can?(:field_work)) ].compact) do %>
+           actions: safe_join([ (link_to("Schedule", admin_schedule_path, class: button_classes(:tertiary, :sm)) if can?(:schedule)),
+                                (link_to(admin_my_day_path, class: button_classes(:tertiary, :sm), id: "your-day-link") { safe_join([ "Your day", icon("arrow-right") ], " ") } if can?(:field_work)) ].compact) do %>
     <% if dashboard.todays_visits.empty? %>
       <p class="px-5 py-4 text-sm text-muted">Nothing booked today.</p>
     <% else %>

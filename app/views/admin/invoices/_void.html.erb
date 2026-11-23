@@ -1,7 +1,7 @@
 <%# locals: (invoice:) -%>
 <%# Voiding a sent invoice (PAY-01), from its page or from the builder while it's being revised. %>
 <div class="contents" data-controller="modal">
-  <button type="button" class="<%= button_classes(:ghost) %>" data-action="modal#open" data-modal-target="return" aria-haspopup="dialog">Void</button>
+  <button type="button" class="<%= button_classes(:tertiary) %>" data-action="modal#open" data-modal-target="return" aria-haspopup="dialog">Void</button>
   <%= modal id: "invoice-void", title: "Void #{invoice.number}?", description: "It stays on record as Void and can't be paid. To bill again, create a new invoice.#{" Your unsent changes are discarded first." if invoice.revising?}" do %>
     <%= form_with url: void_admin_invoice_path(invoice), method: :patch, class: "space-y-4" do %>
       <div class="field">
@@ -10,7 +10,7 @@
       </div>
       <div class="flex justify-end gap-2">
         <button type="button" class="<%= button_classes(:secondary) %>" data-action="modal#close">Keep invoice</button>
-        <%= submit_tag "Void invoice", class: button_classes(:danger), name: nil %>
+        <%= submit_tag "Void invoice", class: button_classes(:destructive), name: nil %>
       </div>
     <% end %>
   <% end %>

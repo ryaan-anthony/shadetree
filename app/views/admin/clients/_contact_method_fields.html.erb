@@ -16,7 +16,7 @@
     <div class="w-32 shrink-0">
       <%= f.field :label, optional: true, label: "Label", placeholder: method.email? ? "Work" : "Mobile", maxlength: 30 %>
     </div>
-    <button type="button" class="<%= button_classes(:ghost, :sm, :icon) %> mt-7" data-action="nested-fields#remove"
+    <button type="button" class="<%= button_classes(:tertiary, :sm, :icon) %> mt-7" data-action="nested-fields#remove"
             aria-label="Remove this <%= method.email? ? "email" : "phone number" %>"><%= icon "x" %></button>
   <% end %>
 </div>

@@ -26,7 +26,7 @@
         <p class="error-text sm:col-span-2" role="alert"><%= icon "alert-circle" %><%= error %>. Raise the price, or remove this item and add it again without the discount.</p>
       <% end %>
     </div>
-    <button type="button" class="<%= button_classes(:ghost, :sm, :icon) %> shrink-0" data-action="nested-fields#remove"
+    <button type="button" class="<%= button_classes(:tertiary, :sm, :icon) %> shrink-0" data-action="nested-fields#remove"
             aria-label="Remove <%= line.name.presence || "this item" %>"><%= icon "x" %></button>
   </div>
 </fieldset>

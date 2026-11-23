@@ -11,7 +11,7 @@
           <%= icon(file.image? ? "image" : "file-text", class: "size-4 text-faint") %>
           <%= attachment_link file, class: "min-w-0 flex-1 truncate hover:underline" %>
           <span class="text-sm2 text-muted"><%= number_to_human_size(file.byte_size) %></span>
-          <button type="submit" form="remove-attachment-<%= file.id %>" class="<%= button_classes(:ghost, :sm) %>" aria-label="Remove <%= file.filename %>"><%= icon "x" %></button>
+          <button type="submit" form="remove-attachment-<%= file.id %>" class="<%= button_classes(:tertiary, :sm) %>" aria-label="Remove <%= file.filename %>"><%= icon "x" %></button>
         </li>
       <% end %>
     </ul>

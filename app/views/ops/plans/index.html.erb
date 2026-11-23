@@ -10,7 +10,7 @@
           <p class="font-semibold text-ink"><%= plan.name %> <span class="font-normal text-muted">· <%= plan.key %><%= " · default" if plan.default %><%= " · not listed" unless plan.public %></span></p>
           <p class="text-sm2 text-muted"><%= plan.free? ? "No charge" : "#{money(plan.monthly_price)}/month, #{money(plan.annual_price)}/year" %> · <%= pluralize(@counts.fetch(plan.id, 0), "business") %></p>
         </div>
-        <%= link_to "Edit", edit_ops_plan_path(plan), class: button_classes(:ghost, :sm) %>
+        <%= link_to "Edit", edit_ops_plan_path(plan), class: button_classes(:tertiary, :sm) %>
       </li>
     <% end %>
   </ul>

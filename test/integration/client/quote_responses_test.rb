@@ -209,7 +209,7 @@ class Client::QuoteResponsesTest < ActionDispatch::IntegrationTest
     sign_in users(:one)
     post switch_admin_business_path, params: { business: @business.uid }
     get preview_admin_quote_path(@quote)
-    assert_select "#quote-actions button[disabled]", 3
+    assert_select "#quote-actions [inert] button[tabindex=\"-1\"]:not([disabled])", 3 # inert, in their own colours (PLT-14)
     assert_select "#quote-actions form", false
   end
 

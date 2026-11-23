@@ -22,8 +22,8 @@
         <%= text_field_tag :confirmation, nil, id: "confirmation", class: "input", autocomplete: "off", required: true, spellcheck: false %>
       </div>
       <div class="flex flex-wrap justify-end gap-2">
-        <%= link_to "Cancel", admin_client_path(@client), class: button_classes(:ghost) %>
-        <%= submit_tag "Erase their details", class: button_classes(:danger), name: nil %>
+        <%= link_to "Cancel", admin_client_path(@client), class: button_classes(:tertiary) %>
+        <%= submit_tag "Erase their details", class: button_classes(:destructive), name: nil %>
       </div>
     <% end %>
   <% end %>

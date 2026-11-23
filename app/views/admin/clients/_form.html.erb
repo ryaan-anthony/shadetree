@@ -30,8 +30,8 @@
             </template>
           <% end %>
           <div class="flex gap-2" data-nested-fields-target="anchor">
-            <button type="button" class="<%= button_classes(:ghost, :sm) %>" data-action="nested-fields#add" data-nested-fields-kind-param="email"><%= icon "plus" %> Add email</button>
-            <button type="button" class="<%= button_classes(:ghost, :sm) %>" data-action="nested-fields#add" data-nested-fields-kind-param="phone"><%= icon "plus" %> Add phone</button>
+            <button type="button" class="<%= button_classes(:tertiary, :sm) %>" data-action="nested-fields#add" data-nested-fields-kind-param="email"><%= icon "plus" %> Add email</button>
+            <button type="button" class="<%= button_classes(:tertiary, :sm) %>" data-action="nested-fields#add" data-nested-fields-kind-param="phone"><%= icon "plus" %> Add phone</button>
           </div>
         <% end %>
         <div id="client_matches" data-client-matches-target="results"></div>
@@ -51,7 +51,7 @@
           <%= f.fields_for :properties, Property.new(country: @client.properties.first&.country || "US"), child_index: "NEW_RECORD" do |pf| %><%= render "property_fields", f: pf, inline: %><% end %>
         </template>
         <div data-nested-fields-target="anchor">
-          <button type="button" class="<%= button_classes(:ghost, :sm) %>" data-action="nested-fields#add" data-nested-fields-kind-param="property"><%= icon "plus" %> Add property</button>
+          <button type="button" class="<%= button_classes(:tertiary, :sm) %>" data-action="nested-fields#add" data-nested-fields-kind-param="property"><%= icon "plus" %> Add property</button>
         </div>
       <% end %>
     <% end %>
@@ -69,9 +69,9 @@
 
   <div class="flex items-center justify-end gap-2">
     <% if inline %>
-      <button type="button" class="<%= button_classes(:ghost) %>" data-action="modal#close">Cancel</button>
+      <button type="button" class="<%= button_classes(:tertiary) %>" data-action="modal#close">Cancel</button>
     <% else %>
-      <%= link_to "Cancel", (@client.persisted? ? admin_client_path(@client) : admin_clients_path), class: button_classes(:ghost) %>
+      <%= link_to "Cancel", (@client.persisted? ? admin_client_path(@client) : admin_clients_path), class: button_classes(:tertiary) %>
     <% end %>
     <%= f.submit_button @client.persisted? ? "Save client" : "Add client" %>
   </div>

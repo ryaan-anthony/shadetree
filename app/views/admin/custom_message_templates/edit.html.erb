@@ -1,11 +1,11 @@
 <% content_for :title, @template.name %>
 <%= page_header @template.name, lede: "Your own wording to start a quote or invoice email from." do %>
-  <%= link_to admin_message_templates_path, class: button_classes(:ghost) do %><%= icon "arrow-left" %> Messages<% end %>
+  <%= link_to admin_message_templates_path, class: button_classes(:tertiary) do %><%= icon "arrow-left" %> Messages<% end %>
 <% end %>
 <%= render "admin/message_templates/form", template: @template, url: admin_custom_message_template_path(@template), method: :patch,
            preview_url: preview_admin_custom_message_templates_path, editable: @editable, preview_records: @preview_records %>
 <% if @editable %>
-  <%= button_to admin_custom_message_template_path(@template), method: :delete, class: "#{button_classes(:ghost, :sm)} mt-4 text-danger",
+  <%= button_to admin_custom_message_template_path(@template), method: :delete, class: "#{button_classes(:tertiary, :sm)} mt-4 text-danger",
                 form: { data: { turbo_confirm: "Delete the template “#{@template.name}”?", turbo_confirm_button: "Delete template" } } do %>
     <%= icon "trash" %> Delete template
   <% end %>

@@ -25,7 +25,7 @@
     <p class="text-sm2 text-muted">Changing the rate affects new documents only. Quotes and invoices already created keep the rate they had.</p>
   <% end %>
   <div class="flex items-center justify-end gap-2">
-    <%= link_to "Cancel", admin_tax_rates_path, class: button_classes(:ghost) %>
+    <%= link_to "Cancel", admin_tax_rates_path, class: button_classes(:tertiary) %>
     <%= f.submit_button @rate.persisted? ? "Save rate" : "Add rate" %>
   </div>
 <% end %>

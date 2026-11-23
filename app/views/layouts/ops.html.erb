@@ -9,7 +9,7 @@
   </head>
   <body class="bg-canvas text-sm text-body">
     <%# The skip link is the first tab stop, before the support banner; z-[200] keeps it above that sticky banner. %>
-    <a href="#main" class="btn btn-secondary sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[200]">Skip to content</a>
+    <a href="#main" class="<%= button_classes(:secondary, extra: "sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[200]") %>">Skip to content</a>
     <%= render "layouts/impersonation_banner" %>
     <header class="border-b border-slate-800 bg-slate-900 text-white">
       <div class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">

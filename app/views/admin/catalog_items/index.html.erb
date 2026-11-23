@@ -54,7 +54,7 @@
   <div class="space-y-4">
     <% @groups.each do |category, items| %>
       <%= card title: category&.name || "Uncategorized", subtitle: pluralize(items.size, "item"), flush: true,
-               actions: (link_to("Add here", new_admin_catalog_item_path(category: category&.uid), class: button_classes(:ghost, :sm), "aria-label": "Add here: #{category&.name || "Uncategorized"}") unless @showing_archived) do %>
+               actions: (link_to("Add here", new_admin_catalog_item_path(category: category&.uid), class: button_classes(:tertiary, :sm), "aria-label": "Add here: #{category&.name || "Uncategorized"}") unless @showing_archived) do %>
         <ul class="list">
           <% items.each_with_index do |item, index| %>
             <li id="item-<%= item.uid %>" class="flex-wrap">
@@ -81,11 +81,11 @@
                   <%= button_to "Restore", restore_admin_catalog_item_path(item), method: :patch, class: button_classes(:secondary, :sm) %>
                 <% else %>
                   <% unless @query.present? %>
-                    <%= button_to move_admin_catalog_item_path(item, direction: -1), method: :patch, class: button_classes(:ghost, :sm, :icon), disabled: index.zero?, "aria-label": "Move #{item.name} up" do %><%= icon "arrow-up" %><% end %>
-                    <%= button_to move_admin_catalog_item_path(item, direction: 1), method: :patch, class: button_classes(:ghost, :sm, :icon), disabled: index == items.size - 1, "aria-label": "Move #{item.name} down" do %><%= icon "arrow-down" %><% end %>
+                    <%= button_to move_admin_catalog_item_path(item, direction: -1), method: :patch, class: button_classes(:tertiary, :sm, :icon), disabled: index.zero?, "aria-label": "Move #{item.name} up" do %><%= icon "arrow-up" %><% end %>
+                    <%= button_to move_admin_catalog_item_path(item, direction: 1), method: :patch, class: button_classes(:tertiary, :sm, :icon), disabled: index == items.size - 1, "aria-label": "Move #{item.name} down" do %><%= icon "arrow-down" %><% end %>
                   <% end %>
                   <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
-                    <button type="button" class="<%= button_classes(:ghost, :sm, :icon) %>" data-menu-target="button" data-action="menu#toggle" aria-haspopup="true" aria-expanded="false" aria-label="More actions for <%= item.name %>"><%= icon "more-horizontal" %></button>
+                    <button type="button" class="<%= button_classes(:tertiary, :sm, :icon) %>" data-menu-target="button" data-action="menu#toggle" aria-haspopup="true" aria-expanded="false" aria-label="More actions for <%= item.name %>"><%= icon "more-horizontal" %></button>
                     <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
                       <%= link_to edit_admin_catalog_item_path(item), class: "menu-item" do %><%= icon "edit-2" %> Edit<% end %>
                       <%= link_to new_admin_catalog_item_path(duplicate_of: item.uid), class: "menu-item" do %><%= icon "copy" %> Duplicate<% end %>

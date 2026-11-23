@@ -13,7 +13,7 @@
     <% if devise_mapping.rememberable? %>
       <div class="field"><%= f.check :remember_me, label: "Keep me signed in", hint: "On this device for 4 weeks." %></div>
     <% end %>
-    <%= f.submit_button "Sign in", class: "mt-5 w-full btn-lg" %>
+    <%= f.submit_button "Sign in", size: :lg, class: "mt-5 w-full" %>
   <% end %>
   <p class="mt-4 text-center text-sm2 text-muted">
     Locked out? <%= link_to "Get an unlock link", new_unlock_path(resource_name), class: "font-medium text-subtle underline" %>

@@ -18,8 +18,8 @@
                   include_blank: "Choose one", choices: Industry.options,
                   help: "Used to suggest services and wording. You can change it later." %>
       <div class="mt-6 flex flex-wrap items-center justify-end gap-2">
-        <% unless first %><%= link_to "Cancel", admin_root_path, class: button_classes(:ghost) %><% end %>
-        <%= f.submit_button(first ? "Create business" : "Create business and switch to it", class: "btn-lg") %>
+        <% unless first %><%= link_to "Cancel", admin_root_path, class: button_classes(:tertiary) %><% end %>
+        <%= f.submit_button(first ? "Create business" : "Create business and switch to it", size: :lg) %>
       </div>
     <% end %>
   <% end %>

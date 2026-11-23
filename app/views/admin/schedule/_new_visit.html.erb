@@ -24,7 +24,7 @@
               <% if can?(:office) %>For another, find it in <%= link_to "Jobs", admin_jobs_path(filter: "open"), class: "underline", data: { turbo_frame: "_top" } %> and choose Schedule visit.<% else %>For another, ask someone who can open jobs.<% end %><% end %></p>
         </div>
         <div class="flex flex-wrap justify-end gap-2">
-          <button type="button" class="<%= button_classes(:ghost) %>" data-action="schedule-panel#close" data-schedule-panel-target="close" hidden>Cancel</button>
+          <button type="button" class="<%= button_classes(:tertiary) %>" data-action="schedule-panel#close" data-schedule-panel-target="close" hidden>Cancel</button>
           <%= submit_tag "Continue", class: button_classes(:primary), name: nil %>
         </div>
       <% end %>

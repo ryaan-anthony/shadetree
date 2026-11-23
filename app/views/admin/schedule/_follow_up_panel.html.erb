@@ -17,10 +17,10 @@
       <% if follow_up.open? %><%# a done one isn't moved here (it would be to do again): from the request %>
         <%= render "admin/schedule/follow_up_move", follow_up:, warnings: (@warnings if follow_up == @follow_up), proposed: (@proposed if follow_up == @follow_up) %>
       <% end %>
-      <%= link_to "Reassign", edit_admin_service_request_follow_up_path(request_record), class: button_classes(:ghost, :sm), data: { turbo_frame: "_top" } %>
+      <%= link_to "Reassign", edit_admin_service_request_follow_up_path(request_record), class: button_classes(:tertiary, :sm), data: { turbo_frame: "_top" } %>
       <%= button_to "Unassign", admin_service_request_follow_up_path(request_record), method: :delete, params: { lock_version: follow_up.lock_version, from: "schedule", date: follow_up.scheduled_on.iso8601, view: params[:view], member: params[:member] }.compact_blank,
-                    class: button_classes(:ghost, :sm), form: { class: "contents", data: { turbo_frame: "_top", turbo_confirm: "Take this off #{follow_up.user.full_name}? Nobody will be following it up.", turbo_confirm_button: "Unassign" } } %>
-      <button type="button" class="<%= button_classes(:ghost, :sm) %>" data-action="schedule-panel#close" data-schedule-panel-target="close" hidden>Close</button>
+                    class: button_classes(:tertiary, :sm), form: { class: "contents", data: { turbo_frame: "_top", turbo_confirm: "Take this off #{follow_up.user.full_name}? Nobody will be following it up.", turbo_confirm_button: "Unassign" } } %>
+      <button type="button" class="<%= button_classes(:tertiary, :sm) %>" data-action="schedule-panel#close" data-schedule-panel-target="close" hidden>Close</button>
     </div>
   <% end %>
 <% end %>

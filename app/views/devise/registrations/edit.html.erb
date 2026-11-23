@@ -63,7 +63,7 @@
             </p>
           </div>
           <% unless this %>
-            <%= button_to "Sign out", user_browser_session_path(browser_session), method: :delete, class: button_classes(:ghost, :sm),
+            <%= button_to "Sign out", user_browser_session_path(browser_session), method: :delete, class: button_classes(:tertiary, :sm),
                           form: { class: "contents", data: { turbo_confirm: "Sign out #{browser_session.device_label}? “Keep me signed in” will also stop working on your other browsers, including this one.", turbo_confirm_button: "Sign out" } } %>
           <% end %>
         </li>
@@ -97,7 +97,7 @@
           <label class="label" for="delete_current_password">Your password</label>
           <%= password_field_tag :current_password, nil, id: "delete_current_password", class: "input", autocomplete: "current-password", required: true %>
         </div>
-        <%= submit_tag "Delete my account", class: button_classes(:danger), name: nil %>
+        <%= submit_tag "Delete my account", class: button_classes(:destructive), name: nil %>
       <% end %>
     <% end %>
   <% end %>

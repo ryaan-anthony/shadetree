@@ -23,7 +23,7 @@
               <span class="block text-sm2 text-subtle"><%= local_time_ago(notification.created_at) %></span>
             <% end %>
             <% unless notification.read? %>
-              <%= button_to read_admin_notification_path(notification), method: :patch, class: "#{button_classes(:ghost, :sm)} shrink-0", form: { class: "contents" },
+              <%= button_to read_admin_notification_path(notification), method: :patch, class: "#{button_classes(:tertiary, :sm)} shrink-0", form: { class: "contents" },
                             "aria-label": "Mark as read: #{notification.title}" do %><%= icon "check" %> Mark as read<% end %>
             <% end %>
           </li>

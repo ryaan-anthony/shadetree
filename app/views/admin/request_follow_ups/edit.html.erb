@@ -15,7 +15,7 @@
     <%= render "admin/request_follow_ups/fields", f:, follow_up: @follow_up %>
   <% end %>
   <div class="flex items-center justify-end gap-2">
-    <%= link_to "Cancel", (from_schedule? ? back_to_schedule(date: @follow_up.scheduled_on) : admin_service_request_path(@request)), class: button_classes(:ghost) %>
+    <%= link_to "Cancel", (from_schedule? ? back_to_schedule(date: @follow_up.scheduled_on) : admin_service_request_path(@request)), class: button_classes(:tertiary) %>
     <%= f.submit_button "#{new_follow_up ? "Assign" : "Save"}#{@warnings.present? ? " anyway" : ""}" %>
   </div>
 <% end %>

@@ -11,7 +11,7 @@
 <% if can?(:business_settings) && @checklist.visible? %>
   <div class="mb-4"><%= render "setup_checklist", checklist: @checklist %></div>
 <% elsif can?(:business_settings) && @checklist.hidden_by_member? %>
-  <div class="mb-4"><%= button_to "Show setup checklist", admin_show_setup_path, method: :patch, class: "btn-link text-sm2" %></div>
+  <div class="mb-4"><%= button_to "Show setup checklist", admin_show_setup_path, method: :patch, class: button_classes(:tertiary, :sm) %></div>
 <% end %>
 
 <% if can?(:office) %>
@@ -53,7 +53,7 @@
       <% dashboard.groups.reject(&:empty?).each do |group| %>
         <% path_name, options = group.path %>
         <%= card title: "#{group.title} (#{group.count})", id: "group-#{group.key}", flush: true,
-                 actions: link_to(public_send(path_name, **options), class: button_classes(:ghost, :sm)) { safe_join([ (group.count > group.items.size ? "See all #{group.count}" : "See all"), tag.span(" #{group.title.downcase}", class: "sr-only") ]) } do %>
+                 actions: link_to(public_send(path_name, **options), class: button_classes(:tertiary, :sm)) { safe_join([ (group.count > group.items.size ? "See all #{group.count}" : "See all"), tag.span(" #{group.title.downcase}", class: "sr-only") ]) } do %>
           <ul class="list">
             <% group.items.each do |item| %><%= render "group_item", key: group.key, item:, today: dashboard.today %><% end %>
           </ul>

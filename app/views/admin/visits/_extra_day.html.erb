@@ -2,5 +2,5 @@
 <%# One extra day for a visit booked over several days, removable. %>
 <span class="inline-flex items-center gap-1" data-nested-fields-target="row">
   <%= date_field_tag "extra_dates[]", date, class: "input w-44", id: nil, "aria-label": "Another day" %>
-  <button type="button" class="<%= button_classes(:ghost, :sm, :icon) %>" data-action="nested-fields#remove" aria-label="Remove this day"><%= icon "x" %></button>
+  <button type="button" class="<%= button_classes(:tertiary, :sm, :icon) %>" data-action="nested-fields#remove" aria-label="Remove this day"><%= icon "x" %></button>
 </span>
