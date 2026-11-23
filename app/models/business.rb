@@ -243,10 +243,12 @@ class Business < ApplicationRecord
   # Weekly opening hours (CAT-06); OpeningHours combines them with closures.
   def hours = WeeklyHours.new(weekly_hours)
 
-  # JOB-05: which visit emails clients get (each on unless turned off in settings).
+  # JOB-05: which visit emails clients get (each on unless turned off in settings). JOB-12's
+  # "On my way" is off until the business turns it on, existing businesses included.
   CLIENT_VISIT_EMAILS = { "scheduled" => "Visit booked", "changed" => "Visit moved", "cancelled" => "Visit cancelled",
-                          "reminder" => "Reminder the day before" }.freeze
-  def client_visit_email?(kind) = client_visit_emails.fetch(kind.to_s, true) != false
+                          "reminder" => "Reminder the day before", "on_my_way" => "On my way" }.freeze
+  CLIENT_VISIT_EMAILS_OFF_BY_DEFAULT = %w[on_my_way].freeze
+  def client_visit_email?(kind) = client_visit_emails.fetch(kind.to_s, !CLIENT_VISIT_EMAILS_OFF_BY_DEFAULT.include?(kind.to_s)) != false
 
   # From the settings form ("1"/"0" per kind); a kind not given keeps its current setting.
   def client_visit_emails=(values)

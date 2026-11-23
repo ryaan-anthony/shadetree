@@ -9,6 +9,7 @@ class Visit < ApplicationRecord
   include BusinessOwned
   include ArrivalTiming # JOB-02's times, shared with request follow-ups (CLI-07)
   include SitePhotos # JOB-04's photos, shared with request follow-ups (JOB-06)
+  include OnTheWay # JOB-12
 
   STATUSES = %w[scheduled in_progress completed cancelled].freeze
   OPEN_STATUSES = %w[scheduled in_progress].freeze
@@ -156,6 +157,7 @@ class Visit < ApplicationRecord
       after_crew = assignees.reload.to_a
       moved = snapshot.except("when") != before.except("when")
       VisitEvent.record!(self, :rescheduled, by:, from: before, to: snapshot) if moved
+      clear_on_the_way if moved # JOB-12: the client's told the new time instead (JOB-05)
       tell_client(notify_client, by:) if moved
       update_columns(reminder_sent_at: nil) if reminder_sent_at && before["on"] != scheduled_on.iso8601 # a new day gets its own reminder
       added, removed = after_crew - before_crew, before_crew - after_crew
@@ -212,6 +214,7 @@ class Visit < ApplicationRecord
       raise NotOpen, "This visit is #{status_label.downcase}." unless status == "scheduled"
 
       update!(status: "in_progress", started_at: Time.current)
+      clear_on_the_way
       VisitEvent.record!(self, :started, by:)
     end
   end
@@ -247,6 +250,7 @@ class Visit < ApplicationRecord
   def finish!(status, by:, reason: nil, notify: true)
     raise NotOpen, "This visit is already #{status_label.downcase}." unless open?
 
+    clear_on_the_way
     if status == "completed"
       update!(status:, completed_at: Time.current)
       VisitEvent.record!(self, :completed, by:)
@@ -343,10 +347,20 @@ class Visit < ApplicationRecord
     end
   end
 
-  # The user ids that client cards and messages about this visit show now. None do yet: JOB-12's
-  # "On the way" card is the first, and adds the people it shows here. A client can only load
-  # the photo of someone listed (Client::TeamPhotosController).
-  def client_team_card_user_ids = []
+  # The user ids that client cards and messages about this visit show now: JOB-12's "On the way"
+  # card (the latest sender and who's going with them). A client can only load the photo of
+  # someone listed (Client::TeamPhotosController).
+  def client_team_card_user_ids = on_the_way? ? on_the_way_team.map(&:user_id) : []
+
+  # JOB-12: who the "On the way" card and email name: the client team (ACC-09), the latest
+  # sender first. None (so the business's name) with team profiles off, or when the sender is
+  # deactivated or has no first name.
+  def on_the_way_team
+    team = client_team
+    sender = team.find { _1.user_id == on_the_way_by_id } or return []
+
+    [ sender, *(team - [ sender ]) ]
+  end
 
   def client_team_shown
     ids = client_team_card_user_ids

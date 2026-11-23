@@ -20,6 +20,9 @@ module ClientEventsHelper
     when "visit_scheduled" then [ "calendar", "Visit booked for #{data["when"]}#{visit_note(subject, data)}", subject && admin_job_path(subject.job) ]
     when "follow_up_booked" # CLI-07: a site visit for a request (calls aren't on the timeline)
       [ "map-pin", "Site visit booked for #{data["when"]}#{" (#{subject.title.downcase_first})" if subject}", subject && admin_service_request_path(subject) ]
+    when "visit_on_the_way" # JOB-12: the sender's name is read from the account, never stored
+      arrives = subject && subject.on_the_way_time_label(Time.iso8601(data["arrives_at"]))
+      [ "truck", "#{event.user&.first_name.presence || event.actor_label} was on the way#{", arriving about #{arrives}" if arrives}", subject && admin_job_path(subject.job) ]
     when "visit_completed" then [ "check-square", "Visit done#{" for #{subject.job.number}" if subject}", subject && admin_job_path(subject.job) ]
     when "visit_reopened" then [ "rotate-ccw", "Visit reopened#{" for #{subject.job.number}" if subject}", subject && admin_job_path(subject.job) ]
     when "visit_cancelled" then [ "x-circle", "Visit on #{data["when"]} cancelled#{" (#{subject.job.number})" if subject}", subject && admin_job_path(subject.job) ]

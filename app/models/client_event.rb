@@ -10,7 +10,7 @@ class ClientEvent < ApplicationRecord
   include SupportAttribution # OPS-03
 
   KINDS = %w[request_received quote_sent quote_viewed quote_approved quote_declined quote_changes_requested
-             visit_scheduled visit_completed visit_reopened visit_cancelled follow_up_booked
+             visit_scheduled visit_on_the_way visit_completed visit_reopened visit_cancelled follow_up_booked
              invoice_sent invoice_viewed invoice_paid invoice_unpaid payment_recorded payment_changed payment_deleted
              email_bounced note_added].freeze
   PAGE_SIZE = 25

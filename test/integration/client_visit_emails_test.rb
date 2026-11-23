@@ -98,14 +98,16 @@ class ClientVisitEmailsTest < ActionDispatch::IntegrationTest
     assert_select "form#visit-emails-form[action=?]", admin_business_path(tab: "messages")
     assert_select "input[type=checkbox][name='business[client_visit_emails][reminder]'][checked]"
     assert_select "label[for=client-visit-email-scheduled]", /Visit booked/
+    assert_select "label[for=client-visit-email-on_my_way]", /On my way.*Off until you turn it on/m # JOB-12
+    assert_select "input[type=checkbox][name='business[client_visit_emails][on_my_way]']:not([checked])", 1, "off by default"
     patch admin_business_path(tab: "messages"), params: { business: { client_visit_emails: { scheduled: "0", changed: "1", cancelled: "1", reminder: "0" } } }
     assert_redirected_to admin_message_templates_path
     assert_equal "Visit emails saved.", flash[:notice]
     follow_redirect!
     assert_select "input[type=checkbox][name='business[client_visit_emails][scheduled]']:not([checked])"
-    assert_equal({ "scheduled" => false, "changed" => true, "cancelled" => true, "reminder" => false }, @business.reload.client_visit_emails)
+    assert_equal({ "scheduled" => false, "changed" => true, "cancelled" => true, "reminder" => false, "on_my_way" => false }, @business.reload.client_visit_emails)
     @business.update!(client_visit_emails: { cancelled: "0" })
-    assert_equal({ "scheduled" => false, "changed" => true, "cancelled" => false, "reminder" => false }, @business.reload.client_visit_emails, "kinds not given keep their setting")
+    assert_equal({ "scheduled" => false, "changed" => true, "cancelled" => false, "reminder" => false, "on_my_way" => false }, @business.reload.client_visit_emails, "kinds not given keep their setting")
 
     get new_admin_job_visit_path(@job)
     assert_select "input[name=notify_client]", 0, "booking emails are off: nothing to skip"

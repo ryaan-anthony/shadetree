@@ -21,6 +21,10 @@ module JobsHelper
     parts.compact.to_sentence
   end
 
+  # JOB-12: whether an "On my way" send emailed the client, for the visit's history.
+  ON_THE_WAY_EMAIL = { nil => "emailed", "small_change" => "not emailed: less than #{OnTheWay::UPDATE_EMAIL_MINUTES} minutes from the last email",
+                       "no_email" => "not emailed: no usable email address", "email_limit" => "not emailed: the hourly email limit" }.freeze
+
   # JOB-02: one line of a visit's history.
   def visit_event_text(event)
     data = event.data
@@ -31,6 +35,7 @@ module JobsHelper
       [ ("Added #{data["added"].to_sentence}" if data["added"].present?), ("removed #{data["removed"].to_sentence}" if data["removed"].present?) ].compact.join(", ").upcase_first
     when "updated" then "Changed the #{data["changed"].map { { "duration_minutes" => "duration", "instructions" => "instructions" }.fetch(_1, _1) }.to_sentence}"
     when "cancelled" then data["reason"] ? "Cancelled: “#{data["reason"]}”" : "Cancelled"
+    when "on_the_way" then "On the way, arriving about #{event.visit.on_the_way_time_label(Time.iso8601(data["arrives_at"]))} (#{ON_THE_WAY_EMAIL.fetch(data["why_not"])})"
     else event.kind.humanize
     end
   end
