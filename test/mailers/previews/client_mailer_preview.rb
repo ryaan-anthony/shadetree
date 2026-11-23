@@ -75,10 +75,18 @@ class VisitMailerPreview < ActionMailer::Preview
 
   private
 
+  # A booked visit put on the way for the preview only: the email is built inside a transaction
+  # that's rolled back, so the demo data doesn't change.
   def on_the_way_email(kind)
-    visit = Tenancy.across_businesses(reason: "mailer preview") { Visit.where.not(on_the_way_arrives_at: nil).order(:id).first || Visit.order(:id).first }
-    VisitMailer.with(business_id: visit.business_id, to: "maria@example.com", job_id: visit.job_id, visit_id: visit.id, kind:,
-                     arrives_at: (visit.on_the_way_arrives_at || 30.minutes.from_now).utc.iso8601).on_the_way
+    visit = Tenancy.across_businesses(reason: "mailer preview") { Visit.joins(:assignments).where(status: "scheduled").order(:id).first }
+    arrives_at = OnTheWay.round_to_five(30.minutes.from_now)
+    mail = VisitMailer.with(business_id: visit.business_id, to: "maria@example.com", job_id: visit.job_id, visit_id: visit.id, kind:, arrives_at: arrives_at.utc.iso8601).on_the_way
+    ActiveRecord::Base.transaction do
+      Tenancy.with_business(visit.business) { visit.update_columns(on_the_way_arrives_at: arrives_at, on_the_way_by_id: visit.assignments.first.user_id) }
+      mail.message # built now, while the visit is on the way
+      raise ActiveRecord::Rollback
+    end
+    mail
   end
 
   def update(kinds, before: nil)
