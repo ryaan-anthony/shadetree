@@ -2,6 +2,12 @@
   <% if can?(:manage_owners) %><%= link_to admin_roles_path, class: button_classes(:secondary) do %><%= icon "shield" %> Roles<% end %><% end %>
 <% end %>
 
+<%# ACC-09: whether clients see team profiles; the switch is in Settings → Messages. %>
+<p class="mb-4 text-sm2 text-muted" id="team-profiles-setting">
+  <%= icon "user", class: "mr-1 inline size-4 align-[-0.15em]" %>Clients <%= current_business.show_team_profiles? ? "see" : "don't see" %> team profiles (photo, first name and title).
+  <% if can?(:business_settings) %><%= link_to "Change in Settings → Messages", admin_message_templates_path(anchor: "team-profiles"), class: "text-action" %><% end %>
+</p>
+
 <div class="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
   <div class="space-y-4">
     <%= card title: "Members", subtitle: pluralize(@active.size, "person"), flush: true do %>

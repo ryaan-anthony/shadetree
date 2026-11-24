@@ -87,6 +87,7 @@
     <% else %>
       <ul class="list-disc space-y-1 pl-5 text-sm text-subtle">
         <li>Your name, email and password are removed, and you're signed out everywhere.</li>
+        <li>Your profile photo, title, bio and work phone are removed from every business. Emails already sent to clients can't be recalled.</li>
         <li>You leave every business you're in. What you did there (quotes, visits, notes) stays with the business, shown as "Former member".</li>
         <% if current_user.business_users.active.owners.any? %><li>A business only you own, with nothing in it yet, is closed, along with its contact details and any invitations not yet accepted.</li><% end %>
         <li>This can't be undone. We'll email <%= current_user.email %> to confirm.</li>

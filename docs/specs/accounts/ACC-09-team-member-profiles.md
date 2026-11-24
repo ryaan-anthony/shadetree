@@ -25,45 +25,45 @@ a visit (JOB-12 "On my way" first), so they know who is coming to their door.
 
 ## Acceptance criteria
 
-- [ ] Each member has a profile in each business they belong to: photo, title (up to 40
+- [x] Each member has a profile in each business they belong to: photo, title (up to 40
       characters, e.g. "Lead technician"), short bio (up to 200, plain text) and work phone, all
       optional. The first name is the account's (ACC-06). With no first name, clients see no name
       (never the full name or email, which staff pages fall back to), tested.
-- [ ] A member edits their own profile from the user menu ("Your profile in <business>"), in any
+- [x] A member edits their own profile from the user menu ("Your profile in <business>"), in any
       role. People with `manage_team` edit others' from the Team page (Technicians can't open it);
       only `manage_owners` edits an Owner's (ACC-07's rule). Others are refused; role and
       cross-tenant tests.
-- [ ] Photos use the shared photo cleaning, which turns them upright (#358, a prerequisite) and
+- [x] Photos use the shared photo cleaning, which turns them upright (#358, a prerequisite) and
       removes all metadata (EXIF, GPS): PNG, JPEG or WebP, up to 10 MB (visit photos allow 20)
       and 8,000 px a side, at least 128 px (the cleaning's minimum is 1 px today, so it gains an
       option). Shown as a centred square (round on screen), no crop tool; Replace and Remove
       work, and so does a phone camera at 360 px.
-- [ ] Without a photo, initials show (the kit's avatar); clients see the first initial only.
-- [ ] Staff see photos and titles on the Team page, on visit assignees in the schedule and on
+- [x] Without a photo, initials show (the kit's avatar); clients see the first initial only.
+- [x] Staff see photos and titles on the Team page, on visit assignees in the schedule and on
       job pages, and on My day (the person and their crew-mates on each visit). Lists stay fast.
-- [ ] "Show team profiles to clients" in Settings → Messages (`business_settings`), linked from
+- [x] "Show team profiles to clients" in Settings → Messages (`business_settings`), linked from
       the Team page, is off by default. Off, clients see no team names, photos or phones (as
       today). On, client visit messages and pages may show a member's photo, first name, title
       and phone, and nothing else (no last name, email or account details).
-- [ ] The phone clients see is the member's work phone if set, otherwise the business's (the
+- [x] The phone clients see is the member's work phone if set, otherwise the business's (the
       job's location's, CAT-07); if neither, none. The field says "Clients see this number".
-- [ ] Clients load a photo only under the visit's client link (/c/:token/…), checked on every
+- [x] Clients load a photo only under the visit's client link (/c/:token/…), checked on every
       request as quote and invoice files are, then redirected to a storage URL that expires in 5
       minutes. Only a member assigned to that visit, while the setting is on, the member is active
       and a card or message shows them. A test shows another member's photo can't be fetched.
-- [ ] Deactivated members are hidden from clients and keep their profile for staff and history.
+- [x] Deactivated members are hidden from clients and keep their profile for staff and history.
       Deleting an account (ACC-06) explicitly removes the photo (file and sizes) and clears
       title, bio and work phone in every business, as deletion skips callbacks; deleting a
       business (OPS-04) removes its profile photos too. Emails already sent can't be recalled;
       the account deletion page says so.
-- [ ] Changes by someone else are recorded (who, what, when) in a history on the member's Team
+- [x] Changes by someone else are recorded (who, what, when) in a history on the member's Team
       row, and the member gets an in-app notice. Support viewing as a member (OPS-03) sees
       profiles but can't change them in either mode.
-- [ ] The full data export (INS-02) stays without team data; its README says profiles aren't in it.
-- [ ] Where the name sits next to the photo, the image is decorative; elsewhere its alt text is
+- [x] The full data export (INS-02) stays without team data; its README says profiles aren't in it.
+- [x] Where the name sits next to the photo, the image is decorative; elsewhere its alt text is
       the name that viewer may see ("Marcus" for clients, "Marcus Reed" for staff). The upload is
       labelled, errors are announced, and axe passes on the profile page, Team and My day.
-- [ ] Tests cover editing rights, metadata removal, size limits, the client setting, photo
+- [x] Tests cover editing rights, metadata removal, size limits, the client setting, photo
       access, deactivation, deletion, impersonation and tenancy. Dev seeds give Marcus a photo
       and title; one crew member has none.
 
@@ -71,6 +71,11 @@ a visit (JOB-12 "On my way" first), so they know who is coming to their door.
 
 - Naming the crew in booking confirmations, reminders or the visit page (backlog; Decisions).
 - A public "Meet the team" page, ratings or reviews, per-member opt-out (owner).
+
+## Implementation notes
+
+- Clients get `Visit#client_team_shown` (nobody without a first name), empty until JOB-12 fills
+  `Visit#client_team_card_user_ids`. History keeps field names only. Seeds: Marcus, Priya, Dana.
 
 ## Decisions
 

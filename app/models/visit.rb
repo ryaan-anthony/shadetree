@@ -331,6 +331,28 @@ class Visit < ApplicationRecord
   def client_page_visible? = true
   def client_link_partial = "client/visits/visit"
 
+  # ACC-09: who clients may be shown, on cards and in messages about this visit: its assignees
+  # who are active in the business and have a first name, and only while the business shows team
+  # profiles. (Deactivated members keep their profile for staff, and are never shown to clients.)
+  def client_team
+    return [] unless business.show_team_profiles?
+
+    Tenancy.with_business(business) do
+      business.business_users.active.with_attached_photo.includes(:user).where(user_id: assignments.select(:user_id))
+              .select(&:client_first_name).sort_by { [ _1.client_first_name.downcase, _1.id ] }
+    end
+  end
+
+  # The user ids that client cards and messages about this visit show now. None do yet: JOB-12's
+  # "On the way" card is the first, and adds the people it shows here. A client can only load
+  # the photo of someone listed (Client::TeamPhotosController).
+  def client_team_card_user_ids = []
+
+  def client_team_shown
+    ids = client_team_card_user_ids
+    ids.empty? ? [] : client_team.select { ids.include?(_1.user_id) }
+  end
+
   def crew_names = assignees.map(&:full_name)
 
   # Called by schedule_all! for each visit it saves.

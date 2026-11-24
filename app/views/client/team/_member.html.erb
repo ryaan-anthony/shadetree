@@ -1,0 +1,14 @@
+<%# locals: (member:, client_link:) -%>
+<%# ACC-09: a team member on a client's visit page or card (JOB-12's "On the way" is the first):
+    photo or first initial, first name and title, and nothing else (no last name, email or bio).
+    Only for members in Visit#client_team_shown; the name is beside the photo, so it's decorative. %>
+<% name = member.client_first_name %>
+<div class="flex items-center gap-3">
+  <% if member.photo.attached? %>
+    <%= image_tag client_team_photo_path(client_link.token, member.uid), alt: "", class: "avatar avatar-md object-cover", loading: "lazy" %>
+  <% else %>
+    <span class="avatar avatar-md" aria-hidden="true"><%= member.client_initial %></span>
+  <% end %>
+  <span class="min-w-0"><span class="block truncate font-semibold text-ink"><%= name %></span>
+    <% if member.title %><span class="block truncate text-sm2 text-muted"><%= member.title %></span><% end %></span>
+</div>
