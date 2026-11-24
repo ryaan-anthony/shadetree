@@ -49,8 +49,8 @@
       <% end %>
       <% if s.color_by == "status" %>
         <ul class="flex flex-wrap gap-x-3 gap-y-1 px-4 pb-2.5 text-sm2 text-muted" aria-label="Status colors">
-          <% { "scheduled" => "Scheduled", "in-progress" => "In progress", "completed" => "Done" }.each do |key, label| %>
-            <li class="flex items-center gap-1.5"><span class="cal-dot cal-status-<%= key %>" aria-hidden="true"></span><%= label %></li>
+          <% StatusHelper::MAP[:visit].except("cancelled").each do |key, (_tone, label)| %><%# PLT-17: the map's words %>
+            <li class="flex items-center gap-1.5"><span class="cal-dot cal-status-<%= key.dasherize %>" aria-hidden="true"></span><%= label %></li>
           <% end %>
           <% if own %><li class="flex items-center gap-1.5"><span class="cal-dot cal-neutral" aria-hidden="true"></span>Busy</li><% end %><%# JOB-08 %>
         </ul>
@@ -125,7 +125,7 @@
                 <li class="p-0"><%= link_to admin_schedule_visit_path(visit, s.member ? { member: s.member } : {}), class: "flex min-w-0 flex-1 items-start gap-3 px-4 py-3", data: { schedule_focus: visit.uid } do %>
                   <span class="w-16 shrink-0 text-sm font-semibold text-ink"><%= visit.time_label.delete_prefix("Arrive ") %></span>
                   <span class="min-w-0 flex-1"><span class="block truncate font-medium text-ink"><%= visit.job.client.display_name %></span>
-                    <span class="block truncate text-sm2 text-muted"><%= visit.job.title %> · <%= crew_first_names(visit) %><%= " · #{visit.job.location.name}" if show_locations %></span></span>
+                    <span class="block truncate text-sm2 text-muted"><%= visit.job.title %> · <%= crew_first_names(visit) %><%= " · #{visit.job.location.name}" if show_locations %><%= schedule_status_words(visit) %></span></span>
                   <span class="cal-dot cal-<%= s.visit_color(visit) %> mt-1.5" aria-hidden="true"></span>
                 <% end %></li>
               <% end %>
@@ -174,7 +174,7 @@
               <%= link_to admin_schedule_visit_path(visit, params_now), class: "cal-chip cal-#{s.visit_color(visit)}", id: schedule_visit_id(visit, column, s),
                           data: { turbo_frame: "schedule_visit", schedule_focus: visit.uid, **schedule_drag_data(visit, column) } do %>
                 <span class="block truncate font-semibold"><%= visit.job.client.display_name %> <span class="sr-only">, anytime <%= date.strftime("%A, %B %-d") %></span></span>
-                <span class="block truncate"><%= visit.job.title %><%= ", #{visit.job.property.city}" if visit.job.property&.city.present? %> · <%= crew_first_names(visit) %><%= " · #{visit.job.location.name}" if show_locations %></span>
+                <span class="block truncate"><%= visit.job.title %><%= ", #{visit.job.property.city}" if visit.job.property&.city.present? %> · <%= crew_first_names(visit) %><%= " · #{visit.job.location.name}" if show_locations %><%= schedule_status_words(visit) %></span>
               <% end %>
             <% end %>
           </div>
@@ -206,7 +206,7 @@
                             data: { turbo_frame: "schedule_visit", schedule_focus: visit.uid, **schedule_drag_data(visit, column) } do %>
                   <span class="block font-semibold"><%= schedule_time_label(visit, s) %> <%= visit.job.client.display_name %><span class="sr-only">, <%= date.strftime("%A, %B %-d") %></span></span>
                   <span class="block truncate"><%= visit.job.title %><%= ", #{visit.job.property.city}" if visit.job.property&.city.present? %></span>
-                  <span class="block truncate opacity-80"><%= crew_first_names(visit) %><%= " · #{visit.job.location.name}" if show_locations %></span>
+                  <span class="block truncate opacity-80"><%= crew_first_names(visit) %><%= " · #{visit.job.location.name}" if show_locations %><%= schedule_status_words(visit) %></span>
                 <% end %>
               <% end %>
             </div>

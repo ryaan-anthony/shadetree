@@ -17,7 +17,7 @@ export default class extends Controller {
     const colors = ["", "bg-danger", "bg-warning", "bg-canopy-600", "bg-canopy"]
 
     this.barTargets.forEach((bar, index) => {
-      bar.className = `flex-1 rounded-full ${index < score ? colors[score] : "bg-slate-200"}`
+      bar.className = `flex-1 rounded-full ${index < score ? colors[score] : "bg-line"}`
     })
     this.labelTarget.textContent = labels[score]
   }

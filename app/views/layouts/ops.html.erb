@@ -11,7 +11,7 @@
     <%# The skip link is the first tab stop, before the support banner; z-[200] keeps it above that sticky banner. %>
     <a href="#main" class="<%= button_classes(:secondary, extra: "sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[200]") %>">Skip to content</a>
     <%= render "layouts/impersonation_banner" %>
-    <header class="border-b border-slate-800 bg-slate-900 text-white">
+    <header class="border-b border-ink-2 bg-ink text-white">
       <div class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
         <p class="font-semibold">Shadetree operator console</p>
         <% if current_operator&.two_factor? && ops_session["ops_verified_at"] && ops_session["ops_verified_for"] == [ current_operator.id, current_operator.otp_enabled_at.to_i ] %>
@@ -29,7 +29,7 @@
             <%= link_to "Audit log", ops_audit_entries_path, class: "hover:underline", "aria-current": ("page" if controller_name == "audit_entries") %>
           </nav>
         <% end %>
-        <p class="ml-auto text-sm2 text-slate-300"><%= current_user&.email %> · <%= link_to "Back to the app", admin_root_path, class: "underline-offset-2 hover:underline" %></p>
+        <p class="ml-auto text-sm2 text-side-bright"><%= current_user&.email %> · <%= link_to "Back to the app", admin_root_path, class: "underline-offset-2 hover:underline" %></p>
       </div>
     </header>
     <main id="main" class="mx-auto max-w-6xl px-4 py-6">

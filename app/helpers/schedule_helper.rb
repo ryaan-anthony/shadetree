@@ -77,4 +77,8 @@ module ScheduleHelper
 
   # A slot's focus key: "slot-2026-11-24-09-all" (its day, hour and column's person).
   def schedule_slot_key(column, hour) = "slot-#{column.date.iso8601}-#{format("%02d", hour)}-#{column.member_key.presence || "all"}"
+
+  # PLT-17: a visit that's started or done says so in words, so its status colour isn't the
+  # only sign of it (" · In progress").
+  def schedule_status_words(visit) = visit.status == "scheduled" ? "" : " · #{StatusHelper::MAP[:visit].fetch(visit.status).last}"
 end

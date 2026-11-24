@@ -26,11 +26,6 @@ module IconsHelper
     "info" => "info"
   }.freeze
 
-  LOGO_MARK = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' \
-              '<path d="M12 3.5c-4.7 0-8.5 3.6-8.5 8.1 0 .5.4.9.9.9h15.2c.5 0 .9-.4.9-.9 0-4.5-3.8-8.1-8.5-8.1z" fill="#34d399"/>' \
-              '<path d="M12 12.5v7" stroke="#cbd5e1" stroke-width="2.2" stroke-linecap="round"/>' \
-              '<path d="M7.5 20.2h9" stroke="#cbd5e1" stroke-width="2.2" stroke-linecap="round"/></svg>'
-
   class UnknownIcon < ArgumentError; end
 
   def self.paths
@@ -54,9 +49,5 @@ module IconsHelper
     }.merge(a11y).merge(attributes)
 
     content_tag(:svg, (label ? content_tag(:title, label) : "".html_safe) + body.html_safe, svg_attributes)
-  end
-
-  def logo_mark
-    LOGO_MARK.html_safe
   end
 end

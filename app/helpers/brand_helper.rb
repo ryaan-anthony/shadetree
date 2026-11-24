@@ -13,6 +13,14 @@ module BrandHelper
   GREEN = "#059669"
   INK = "#0f172a"
 
+  # The mark: the leaf (#34d399) on its stem. Brand colours stay here (PLT-17).
+  LOGO_MARK = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' \
+              '<path d="M12 3.5c-4.7 0-8.5 3.6-8.5 8.1 0 .5.4.9.9.9h15.2c.5 0 .9-.4.9-.9 0-4.5-3.8-8.1-8.5-8.1z" fill="#34d399"/>' \
+              '<path d="M12 12.5v7" stroke="#cbd5e1" stroke-width="2.2" stroke-linecap="round"/>' \
+              '<path d="M7.5 20.2h9" stroke="#cbd5e1" stroke-width="2.2" stroke-linecap="round"/></svg>'
+
+  def logo_mark = LOGO_MARK.html_safe
+
   # The word. The halves are inline with no space between, so the text (and what screen readers
   # and search engines read) is "Shadetree". Under 14px (size: :small) it's one colour, ink on
   # light or white on dark (owner, 2026-11-21): the green half is too thin to read that small.
