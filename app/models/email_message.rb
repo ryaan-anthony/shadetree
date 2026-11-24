@@ -42,6 +42,12 @@ class EmailMessage < ApplicationRecord
 
   def problem? = status.in?(PROBLEMS)
 
+  # NTF-05: the CCs the quote or invoice send copied this email to, lowercased, in order.
+  def cc_addresses
+    send = QuoteSend.find_by(email_message_id: id) || InvoiceSend.find_by(email_message_id: id)
+    send&.cc.to_s.split(/[,;\s]+/).compact_blank.map(&:downcase)
+  end
+
   # announce: the mail server refused it or it couldn't be sent (ClientMailDeliveryJob), so it's
   # announced (see #announce_undelivered), once, when its status changes. Emails skipped before
   # sending (the document changed, a blocked address) are only marked.

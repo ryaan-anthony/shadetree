@@ -376,6 +376,7 @@ Rails.application.routes.draw do
   get "up/backup" => "health#backup", as: :backup_health_check # PLT-09: a backup within the last day
   post "csp-reports" => "csp_reports#create", as: :csp_reports # PLT-13
   post "inbound/support_email", to: "inbound/support_emails#create", as: :inbound_support_email # OPS-05: the Email Worker
+  post "inbound/email_events", to: "inbound/email_events#create", as: :inbound_email_events # NTF-05: late bounces (ADR 0028)
   post "webhooks/stripe", to: ->(env) { Billing::WebhookEndpoint.call(env) }, as: :stripe_webhook # BIL-04 (not a controller: no params logged)
   post "webhooks/stripe/connect" => "webhooks/stripe_connect#create", as: :stripe_connect_webhook # PAY-03, PAY-04
 
