@@ -137,8 +137,13 @@
           </li>
           <% if method.undeliverable? %>
             <li class="block rounded-md bg-danger-50 px-3 py-2 text-sm2 text-danger-ink" id="undeliverable-<%= method.id %>">
-              <p><%= danger_flag("Email not delivered.") %> <span class="font-semibold"><%= method.value %></span> was refused by the mail
-                server, so emails to it are paused. Fix the address, or if it's right, send to it again.</p>
+              <% if method.undeliverable_reason == "complaint" %><%# NTF-05 %>
+                <p><%= danger_flag("Marked as spam.") %> An email to <span class="font-semibold"><%= method.value %></span> was marked as
+                  spam, so emails to it are paused. Send to it again only if the client wants your emails.</p>
+              <% else %>
+                <p><%= danger_flag("Email not delivered.") %> <span class="font-semibold"><%= method.value %></span> was refused by the mail
+                  server, so emails to it are paused. Fix the address, or if it's right, send to it again.</p>
+              <% end %>
               <%= button_to "Send to it again", mark_deliverable_admin_client_path(@client, contact_method_id: method.id), method: :patch,
                             class: "#{button_classes(:secondary, :sm)} mt-2", "aria-label": "Send to it again: #{method.value}" %>
             </li>

@@ -44,10 +44,11 @@ class EmailMessage < ApplicationRecord
 
   def problem? = status.in?(PROBLEMS)
 
-  # NTF-05: the CCs the quote or invoice send copied this email to, lowercased, in order.
-  def cc_addresses
-    send = QuoteSend.find_by(email_message_id: id) || InvoiceSend.find_by(email_message_id: id)
-    send&.cc.to_s.split(/[,;\s]+/).compact_blank.map(&:downcase)
+  # NTF-05: the CCs the quote or invoice send copied this email to, lowercased, in order. Pass the
+  # send's cc when it's at hand (the send history), to skip looking the send up.
+  def cc_addresses(cc = nil)
+    cc ||= (QuoteSend.find_by(email_message_id: id) || InvoiceSend.find_by(email_message_id: id))&.cc
+    cc.to_s.split(/[,;\s]+/).compact_blank.map(&:downcase)
   end
 
   # announce: the mail server refused it or it couldn't be sent (ClientMailDeliveryJob, or a late
@@ -77,6 +78,19 @@ class EmailMessage < ApplicationRecord
   # kept for anyone checking with the provider. Only the code is stored, never the server's text
   # (ADR 0017).
   def reply_code = error.to_s[/\b[45]\d\d(?: \d\.\d{1,3}\.\d{1,3})?\b|\b[45]\.\d{1,3}\.\d{1,3}\b/]
+
+  CC_PROBLEM_LABELS = { "mailbox" => "Address refused", "refused" => "Couldn't send", "complaint" => "Marked as spam" }.freeze
+
+  # NTF-05: the CCs a late report was about, for the send history: [address, label, code].
+  def cc_problem_summaries(cc)
+    return [] if cc_problems.empty?
+
+    addresses = cc_addresses(cc)
+    cc_problems.filter_map do |problem|
+      address = addresses[problem["position"].to_i] or next
+      [ address, CC_PROBLEM_LABELS.fetch(problem["reason"], "Couldn't send"), problem["code"] ]
+    end
+  end
 
   # Whose email it was: the client of its quote, invoice, job or request (a receipt: its invoice's).
   def client = related.is_a?(Payment) ? related.invoice.client : related.try(:client)

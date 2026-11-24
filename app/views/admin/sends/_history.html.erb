@@ -1,5 +1,5 @@
 <%# locals: (sends:) -%>
-<%# Each send of a quote (QTE-04) or invoice (PAY-02) and what became of its email. %>
+<%# Each send of a quote (QTE-04) or invoice (PAY-02) and what became of its email, and of its CCs (NTF-05). %>
 <ul class="space-y-2 text-sm2">
   <% sends.includes(:user, :email_message).each do |send| %>
     <li class="flex flex-wrap items-baseline justify-between gap-x-3">
@@ -7,7 +7,11 @@
       <span class="text-muted">
         <%= local_time(send.created_at) %><%= " by #{send.user.full_name}" if send.user %>
         <% if (email = send.email_message) %>
-          · <% if email.problem? %><%= danger_flag(email.status_label) %><% else %><span><%= email.status_label %></span><% end %><% if email.problem? && email.error %> (<%= email.error %>)<% end %>
+          · <% if email.problem? || email.status == "complained" %><%= danger_flag(email.status_label) %><% else %><span><%= email.status_label %></span><% end %><% if email.problem? && email.error %> (<%= email.error %>)<% end %>
+          <%# NTF-05: a CC that bounced or complained later; the email itself was delivered. %>
+          <% email.cc_problem_summaries(send.cc).each do |address, label, code| %>
+            · <span class="break-all">cc <%= address %></span>: <%= danger_flag(label) %><%= " (#{code})" if code %>
+          <% end %>
         <% end %>
       </span>
     </li>

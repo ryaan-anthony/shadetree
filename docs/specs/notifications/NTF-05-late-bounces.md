@@ -22,43 +22,45 @@ one generic, signed endpoint (ADR 0028), so a late bounce is handled like a send
 
 ## Acceptance criteria
 
-- [ ] `POST /inbound/email_events` takes `X-Shadetree-Timestamp` and `X-Shadetree-Signature`
+- [x] `POST /inbound/email_events` takes `X-Shadetree-Timestamp` and `X-Shadetree-Signature`
       (`v1=` HMAC-SHA256 over `<timestamp>.<body>`), keyed by a per-environment secret from ENV.
       Bad signatures, timestamps over 5 minutes off and bodies over 256 KB are refused; failed
       attempts are rate limited per IP; no secret means "not found" (as the support ingress).
-- [ ] It reads a standard delivery status notification and our own strict, versioned JSON
+- [x] It reads a standard delivery status notification and our own strict, versioned JSON
       (event id, type, Message-ID, reference, recipient, status and reply codes, time), documented
-      in a runbook. No provider is named in app code; where a provider can't post this, a
-      forwarder in `infra/` verifies the provider's own signature and freshness, re-signs with
-      the environment's secret, and never logs addresses.
-- [ ] Matching and the recipient check happen in the request. An event matches a client email by
+      in a runbook. No provider is named in app code. The forwarder in `infra/` for a provider
+      that can't post this is deferred (owner, 2026-11-24): late bounces stay unhandled until
+      a relay can post our format.
+- [x] Matching and the recipient check happen in the request. An event matches a client email by
       Message-ID or by the reference header it already carries, and only if its recipient is the
       email's To or a CC of its send. Unmatched events, events for a matched email more than 14
       days after it was sent, delays and temporary statuses are counted and nothing is stored.
-- [ ] Only then is the event stored, once (event id, else a body digest; a repeat does nothing):
+- [x] Only then is the event stored, once (event id, else a body digest; a repeat does nothing):
       type, status code, reason category, time, the email and the recipient's role (To or CC).
       Never the address, diagnostic text or payload, in rows or logs. It's processed in the
       background; rows go after 90 days.
-- [ ] To bounces: a mailbox status (5.1.x, 5.2.1) marks the email "Address refused" and blocks
+- [x] To bounces: a mailbox status (5.1.1, 5.1.2, 5.1.3, 5.1.6, 5.1.10, 5.2.1, as at send time;
+      5.1.7 and 5.1.8 are about our sender's address) marks the email "Address refused" and blocks
       the address for the business; any other permanent status marks it "Couldn't send" without
       blaming it. The error is send time's words with the codes ("The mail server refused this
       address (550 5.1.1)", "… refused the email (5.7.1)"); a late event is never our side.
-- [ ] Then the existing path: warning (when, reason, code, Resend), list badge, timeline, the
+- [x] Then the existing path: warning (when, reason, code, Resend), list badge, timeline, the
       "Client email not delivered" notification, send history; once-only and superseded rules.
-- [ ] No warning or notification, only the send history and timeline, when the quote has been
-      approved, declined or had changes requested, or the invoice is paid in full, or the email is
-      a receipt, visit or other non-document email.
-- [ ] A CC bounce blocks only that CC address for the business and is recorded in the send
+- [x] No warning or notification, only the send history and timeline, when the quote has been
+      approved, declined or had changes requested, or the invoice is paid in full or void, or the
+      email is a receipt, visit or other non-document email.
+- [x] A CC bounce blocks only that CC address for the business and is recorded in the send
       history; the email stays delivered, with no warning.
-- [ ] A complaint (marked as spam) blocks the address for the business, marks the email "Marked
+- [x] A complaint (marked as spam) blocks the address for the business, marks the email "Marked
       as spam" and adds "Marked an email as spam" to the client's timeline; no notification or
       Resend prompt. A complaint without a recipient matches on the reference and uses the To.
-- [ ] The ops console home has an "Email events" card: received, matched, dropped, last 7 days.
+- [x] The ops console home has an "Email events" card: received, matched, dropped, last 7 days.
 - [ ] Optional fallback, only if the relay keeps our envelope sender: bounce emails to a signed
       per-email return address arrive through the inbound-email path, parsed and processed as
-      above, never copied to the human support inbox. Off unless configured.
-- [ ] Tests cover signatures, replay, limits, both formats, matching, the 14 days, each status,
-      CCs, complaints, answered or paid, tenancy, no stored or logged address, the fallback.
+      above, never copied to the human support inbox. Off unless configured. Not built: the
+      relay in `infra/` doesn't keep our envelope sender.
+- [x] Tests cover signatures, replay, limits, both formats, matching, the 14 days, each status,
+      CCs, complaints, answered or paid, tenancy, no stored or logged address (no fallback built).
 
 ## Out of scope
 
@@ -77,22 +79,20 @@ one generic, signed endpoint (ADR 0028), so a late bounce is handled like a send
   are ignored (owner, 2026-11-23).
 - Matching in the request, stored fields, 256 KB, rate limits, 90 days (follows the support
   ingress and `ConnectEvent`); the card (follows Background jobs; 7 days for the owner to confirm).
+- The forwarder is deferred (the endpoint and runbook only). Only mailbox statuses and complaints
+  block a CC; other permanent bounces are only recorded in the send history. A void invoice is
+  treated as paid: send history and timeline only (owner, 2026-11-24).
 
 ## Implementation notes
 
-- Send time: `ClientMailDeliveryJob` (`classify`, `RECIPIENT_STATUSES`; its header comment
-  changes) and `EmailMessage#mark!`. `reply_code` reads only 3-digit codes and `our_side?` is true
-  without one, so `reply_code` must also read a lone status ("5.7.1"). `EmailMessage` gains
-  `complained` in `STATUSES` and `status_label` (the DB constraint already allows it);
-  `EmailSuppression::REASONS` gains `complaint`; `ClientEvent::KINDS` gains `email_complained`.
-- Matching: our Message-ID is in `provider_message_id`; `ClientMailer#client_mail` sets
-  `X-Shadetree-Email` to `EmailMessage#uid` (the reference); CCs: `quote_sends`/`invoice_sends.cc`.
-- Views: `admin/sends/_delivery_warning`, `_history`, `admin/quotes/_list_flags`,
-  `admin/invoices/_results`, `admin/clients/_timeline_events`; `quote_delivery_test.rb`.
-- Fallback: `Inbound::SupportEmailsController` refuses non-support recipients (422) and
-  `ApplicationMailbox` routes all mail to support, so both change, plus the Worker and routing in
-  `infra/` and SPF/DMARC alignment for bounce mail. The relay's config in `infra/` sets a custom
-  MAIL FROM domain, so it may not keep our envelope sender: check before building.
+- Built: `EmailEventIngress`, `Inbound::EmailEventsController`, `EmailEvent` (`process!` via
+  `ProcessEmailEventJob`), `EmailEventTally`, `EMAIL_EVENTS_SECRET`, [runbook](../../runbooks/email-events.md).
+- Until a relay or forwarder posts our format, late bounces stay unhandled in production. A Worker
+  like `infra/support-email-worker` could serve the relay in `infra/`: deferred, not impossible.
+- No fallback: the relay's config in `infra/` sets a MAIL FROM domain whose MX is the relay's own.
+- The warning and notification follow `awaiting_client?`, as the page does, so an expired quote
+  gets neither. A CC is stored by its position on the send.
+- Dev seeds: an invoice whose email and CC bounced late, a paid one marked as spam, ops counts.
 
 ## Open questions
 
