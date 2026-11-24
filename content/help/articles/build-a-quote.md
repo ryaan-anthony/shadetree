@@ -30,7 +30,8 @@ until then, so take your time.
 3. Under **Items**, use **Add a service** to pick from your
    [services and prices](add-services-and-prices). The name, description and price come across,
    and you can change any of them on this quote.
-4. For something you don't keep as a service, type it in **Item or service** on an empty line.
+4. For something you don't keep as a service, press **Custom line** and type it in
+   **Item or service**.
 5. Set **Qty**, **Unit** and **Price** for each line. Use **Discount** on a line for money off
    that line, as a percent or an amount.
 6. Untick **Taxed** on any line that shouldn't have tax.
