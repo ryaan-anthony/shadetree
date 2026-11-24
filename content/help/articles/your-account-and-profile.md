@@ -44,10 +44,17 @@ that too.
 
 ![Your profile: add a photo, a title and a short bio, then press Save profile](your-profile)
 
-Owners and Admins can change anyone's profile from **Team** (that person is told). Clients see
-profiles only if the business ticks **Show team profiles to clients**, under **Settings**,
-**Messages**, **Team profiles**. They then see the photo, first name, title and work phone of the
-people going, never a last name, email or personal number.
+People who manage the team (Owners and Admins) can change others' profiles from **Team**, under
+**Profile**; only Owners can change an Owner's. The person is told.
+
+Clients see profiles only if the business turns that on:
+
+1. Open **Settings**, then **Messages**.
+2. Under **Team profiles**, tick **Show team profiles to clients**.
+3. Press **Save team profiles**.
+
+Clients then see the photo, first name, title and work phone of the people going, never a last
+name, email or personal number.
 
 ## Leaving Shadetree
 
