@@ -119,11 +119,15 @@ class ScheduleView
       scope = scope.where(service_request_id: ServiceRequest.where(location_id: @location.id).select(:id)) if @location
       found = scope.to_a.each { _1.association(:business).target = business }
       # Their people are the team's members, already loaded for the colors: reuse them, and load
-      # only anyone who has left. (Preloaded separately, the two loads' id lists came in whatever
-      # order the tables held the rows, so whether the second was answered from the query cache
-      # varied by chance.)
+      # only anyone not in `members` (left, or outside the filtered location's team). (Preloaded
+      # separately, the two loads' id lists came in whatever order the tables held the rows, so
+      # whether the second was answered from the query cache varied by chance.)
       people = members.index_by(&:id)
-      found.each { |follow_up| (person = people[follow_up.user_id]) && follow_up.association(:user).target = person }
+      found.each do |follow_up|
+        if (person = people[follow_up.user_id])
+          follow_up.association(:user).target = person
+        end
+      end
       ActiveRecord::Associations::Preloader.new(records: found, associations: :user).call
       own = found.select { _1.user_id == @viewer&.id }.map(&:service_request)
       ActiveRecord::Associations::Preloader.new(records: own, associations: %i[client property]).call if @show_follow_ups == :busy && own.any?

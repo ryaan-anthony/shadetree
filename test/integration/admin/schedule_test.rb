@@ -163,6 +163,7 @@ class Admin::ScheduleTest < ActionDispatch::IntegrationTest
       ids = Visit.insert_all!(rows, returning: :id).map { _1["id"] }
       VisitAssignment.insert_all!(ids.each_with_index.map { |id, n| { visit_id: id, user_id: crew[n % 10].id, business_id: @business.id, created_at: Time.current, updated_at: Time.current } })
     end
+    week # warms up (templates, the first queries), so the timing below is the page's own
     queries = 0
     counter = ->(*, payload) { queries += 1 unless payload[:name].in?(%w[SCHEMA TRANSACTION]) } # cached ones count too
     started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
