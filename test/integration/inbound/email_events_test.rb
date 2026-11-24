@@ -130,6 +130,38 @@ class Inbound::EmailEventsTest < ActionDispatch::IntegrationTest
     assert_equal [ other.id ], as_business(businesses(:two)) { EmailEvent.pluck(:email_message_id) }
   end
 
+  test "hostile MIME is refused as unreadable, not a server error: an unknown encoding, deep nesting" do
+    with_email_events do
+      bogus = dsn_report(@email).sub("Content-Type: message/delivery-status\r\n", "Content-Type: message/delivery-status\r\nContent-Transfer-Encoding: x-bogus\r\n")
+      nested = (1..3_000).map { "Content-Type: multipart/mixed; boundary=\"b#{_1}\"\r\n\r\n--b#{_1}\r\n" }.join
+      [ bogus, "MIME-Version: 1.0\r\n#{nested}" ].each do |body|
+        post_event(body, event_headers(body, type: "message/rfc822"))
+        assert_response :unprocessable_content
+      end
+      assert_empty stored
+    end
+  end
+
+  test "a report's time is kept between the send and now" do
+    with_email_events do
+      post_event(event_json(@email, id: "future", occurred_at: 2.days.from_now.iso8601))
+      post_event(event_json(@email, id: "past", recipient: "ana@example.com", occurred_at: 3.days.ago.iso8601))
+    end
+    future, past = stored
+    assert_in_delta Time.current, future.occurred_at, 5
+    assert_in_delta @email.sent_at, past.occurred_at, 1
+  end
+
+  test "an event id already stored for another business is a repeat, not an error" do
+    other = sent_email(businesses(:two))
+    with_email_events do
+      post_event(event_json(other, id: "shared-id"))
+      assert_no_difference(-> { stored.size }) { post_event(event_json(@email, id: "shared-id")) }
+      assert_response :no_content
+    end
+    assert_equal({ received: 2, matched: 2, dropped: 0 }, tally)
+  end
+
   test "the log says what happened, never who" do
     with_email_events do
       log = capture_json_log { post_event(event_json(@email)) }

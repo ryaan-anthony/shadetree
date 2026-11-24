@@ -17,6 +17,9 @@ module EmailEventIngress
   TYPES = %w[bounce complaint delay].freeze
   JSON_KEYS = %w[version id type message_id reference recipient status reply_code occurred_at].freeze
   MAX_RECIPIENTS = 50
+  # A DSN is one multipart/report, and the email it returns may hold two or three more. Deeper
+  # nesting isn't a report: it's refused before it's parsed (each level costs a stack frame).
+  MAX_MULTIPARTS = 6
   STATUS = /\A[245]\.\d{1,3}\.\d{1,3}\z/
   REPLY_CODE = /\A[245]\d\d\z/
 
@@ -75,8 +78,11 @@ module EmailEventIngress
 
   # A multipart/report with a message/delivery-status part (per-message fields, then one block per
   # recipient) and our email's headers (text/rfc822-headers or message/rfc822). Each recipient is
-  # an event, keyed by the body's digest and its place in the report.
+  # an event, keyed by the body's digest and its place in the report. Anything the parser can't
+  # take (an unknown transfer encoding, deep nesting) isn't a report: nil, so a 422.
   def parse_report(body)
+    return if body.scan(/^content-type:[ \t]*multipart\//i).size > MAX_MULTIPARTS
+
     mail = Mail.new(body)
     parts = mail.all_parts
     report = parts.find { _1.mime_type == "message/delivery-status" } or return
@@ -97,7 +103,7 @@ module EmailEventIngress
                 message_id: id, reference:, recipient: address(fields["original-recipient"] || fields["final-recipient"]), status:,
                 reply_code: fields["diagnostic-code"].to_s[/\A\s*smtp\s*;\s*([245]\d\d)\b/i, 1], occurred_at: report_time(at))
     end
-  rescue ArgumentError, Mail::Field::ParseError
+  rescue StandardError, SystemStackError
     nil
   end
 

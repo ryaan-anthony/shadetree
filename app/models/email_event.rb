@@ -46,13 +46,22 @@ class EmailEvent < ApplicationRecord
       role, position = recipient_of(message, event)
       return :recipient unless role
 
-      occurred_at = event.occurred_at || now
-      return :late if message.sent_at.nil? || occurred_at > message.sent_at + LATE_AFTER
+      return :late if message.sent_at.nil?
+
+      # Never before the send or in the future, whatever the report says.
+      occurred_at = (event.occurred_at || now).clamp(message.sent_at, [ message.sent_at, now ].max)
+      return :late if occurred_at > message.sent_at + LATE_AFTER
+
+      key = event.key.first(255)
+      # Event keys are unique across businesses: a key seen for another business is a repeat too.
+      return :repeat if Tenancy.across_businesses(reason: "NTF-05: an event key is unique across businesses") { exists?(event_key: key) }
 
       row = create_with(email_message: message, event_type: event.type, status_code: event.status, reply_code: event.reply_code,
                         reason: reason_for(event), recipient_role: role, cc_position: position, occurred_at:)
-              .create_or_find_by!(event_key: event.key.first(255))
+              .create_or_find_by!(event_key: key)
       row.previously_new_record? ? :stored : :repeat
+    rescue ActiveRecord::RecordNotFound # stored meanwhile for another business
+      :repeat
     end
   end
   private_class_method :match_and_store
