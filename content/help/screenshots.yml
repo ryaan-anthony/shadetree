@@ -2,14 +2,26 @@
 add-a-service:
   digest: '049096c1a53a16869f6a761d54d7c72d251c9f60f962bca3b9c92236d57a071c'
   captured_on: '2026-11-24'
+add-client-form:
+  digest: 4ffdf887955bf6f89968b9d1abb20c252fa259b1b75c76a5dbacfbe5e65125ad
+  captured_on: '2026-11-24'
 ask-for-help-form:
   digest: e5cfe1fdb56ee5a76a207c8b0d55f8cb6ecca85f8ddab027e901dd071ea2eb45
+  captured_on: '2026-11-24'
+assign-follow-up:
+  digest: dff48bc84b31162aeb577c789eedcd9ecb7d400288150e7eae8129c3a93637fc
   captured_on: '2026-11-24'
 business-details:
   digest: 2f55dbebab904f74747f345919236ad6bcb4a0548eb823b2490232d0821a0624
   captured_on: '2026-11-24'
+client-page:
+  digest: 0adb84f704aa0f0d07f5b8b4e221c60160417842d3287dcc3116ccff3fc275d2
+  captured_on: '2026-11-24'
 client-quote-page:
   digest: c51f43811d9f3419bc067a732fb95405a519c67153abfad58bf11dc8b697f1f3
+  captured_on: '2026-11-24'
+import-clients:
+  digest: '06175547913c4119e13f88e7e265bc7c88e10eb5558573256a6de01006a1945f'
   captured_on: '2026-11-24'
 invoice-draft:
   digest: 82be05678d9f55f4e2117e655abb57371e539844bcef22fecb3506f2f1314fcb
@@ -17,8 +29,23 @@ invoice-draft:
 invoice-sent:
   digest: 26c257aab9a61eaf0d405730f68a94fcff0c42a09193bfded91e67a3ebdda99d
   captured_on: '2026-11-24'
+job-page:
+  digest: 62d0592fc74cb9a5d9531c76698e2760db9a7a6b9a8c9ad370dc3a3f47f03263
+  captured_on: '2026-11-24'
+my-day:
+  digest: '08085a06e96ca032ba9774d188453c1be0d1af0592b1ba2b97473f5acc7ba275'
+  captured_on: '2026-11-24'
+my-day-request:
+  digest: c7def4f2ff882786332cc314fcced614d0b20a76ba3e651e8c3b1092055231a5
+  captured_on: '2026-11-24'
+my-visit:
+  digest: 5e07847e11dbb8e48add2b1c980fa01d9aa415726938f59998506efa8d94c18f
+  captured_on: '2026-11-24'
 quote-builder:
   digest: e7e650e228773e97b05892e8416e3ce561ce482568beaf470aa174b6a0ef7a30
+  captured_on: '2026-11-24'
+quote-ready-for-review:
+  digest: 01450e9463dc4243e04f8781cf2ef6d31083698bdb66033eb6034de14bdf7ccc
   captured_on: '2026-11-24'
 record-a-payment:
   digest: 6cd173e2009f1b62f6023519579895bc96b04435f757fd56ce6cfab8088e4c9d
