@@ -1,11 +1,24 @@
 <%# locals: (invoice:, range:) -%>
 <% amount = ->(cents) { money(Money.new(cents, invoice.currency)) } %>
-<% if range[:short] %><%# the work left charges less than the discount left: say so, don't hide it %>
-  <span class="text-warning"><%= icon "alert-triangle", class: "mr-1 inline size-4 align-text-bottom" %>Only <%= amount.(range[:max]) %> of the <%= amount.(range[:left]) %> left can come off: the work left to bill charges less.</span>
+<% held = invoice.quote_discount_held(range) %>
+<% if range[:short] %><%# R4 (owner, 2026-11-23): it can't be sent like this %>
+  <span class="text-warning"><%= icon "alert-triangle", class: "mr-1 inline size-4 align-text-bottom" %>Only <%= amount.(range[:max]) %> of the <%= amount.(range[:left]) %> left fits: this invoice charges too little to take the rest. <%= invoice.discount_kind.present? ? "Lower its own discount" : "Add to what it bills" %> to send it.</span>
 <% elsif range[:max].zero? %>
-  <%= range[:charge].to_i.zero? ? "This invoice charges nothing, so none of it can come off here." : "None of it can come off here: it has no lines taxed as the discount left is. A later invoice takes it." %>
+  <% free = range[:plan]&.slots.to_a.sum(&:free) %>
+  <%= if range[:charge].to_i.zero? then "This invoice charges nothing, so none of it can come off here."
+      elsif free.zero? then "None of it can come off here: what this invoice charges is all credited for progress. A later invoice takes it."
+      else "None of it can come off here: what's left is the #{range[:plan].outstanding.keys.first&.any? ? "taxed" : "untaxed"} work's part, and this invoice has none. A later invoice takes it."
+      end %>
+<% elsif range[:min] == range[:left] %>
+  All of it now: no work is left after this invoice to take any.
 <% elsif range[:min].positive? %>
-  At least <%= amount.(range[:min]) %> now; there's only <%= amount.(range[:work_left]) %> of work left.
+  At least <%= amount.(range[:min]) %> now: the work left after this invoice can take only <%= amount.(range[:left] - range[:min]) %>.
 <% else %>
   Up to <%= amount.(range[:max]) %> on this invoice. What isn't used carries forward; the last invoice takes the rest.
+<% end %>
+<% if held && !range[:short] %>
+  <span class="block"><%= amount.(invoice.quote_discount_chosen_cents) %> was held to the <%= held == :min ? "least" : "most" %> this invoice can take, <%= amount.(range[:applied]) %>.</span>
+<% end %>
+<% if range[:unused].to_i.positive? %>
+  <span class="block"><%= amount.(range[:unused]) %> of the quote's discount isn't used: less work was done than quoted.</span>
 <% end %>

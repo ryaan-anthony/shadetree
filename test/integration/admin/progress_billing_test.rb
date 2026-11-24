@@ -185,9 +185,14 @@ class Admin::ProgressBillingTest < ActionDispatch::IntegrationTest
 
     patch admin_invoice_path(invoice), params: { invoice: { quote_discount_applied: "0" } }, as: :turbo_stream
     assert_equal 200_00, invoice.reload.quote_discount_share_cents, "held to the minimum"
-    assert_match "At least $200.00 now; there's only $100.00 of work left.", response.body
+    assert_match "At least $200.00 now: the work left after this invoice can take only $100.00.", response.body
     patch admin_invoice_path(invoice), params: { invoice: { quote_discount_applied: "all" } }
     assert_equal 300_00, invoice.reload.quote_discount_share_cents
+    patch admin_invoice_path(invoice), params: { invoice: { quote_discount_applied: "4,000" } }, as: :turbo_stream
+    assert_match "$4,000.00 was held to the most this invoice can take, $300.00.", response.body
+    patch admin_invoice_path(invoice), params: { invoice: { quote_discount_applied: "40,00" } }, as: :turbo_stream
+    assert_match "Quote discount: “40,00” isn&#39;t an amount. Type dollars and cents, like 1,250.00.", response.body
+    assert_equal 300_00, invoice.reload.quote_discount_share_cents, "refused, not guessed at"
     assert gutters
   end
 end

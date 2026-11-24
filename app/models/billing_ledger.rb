@@ -119,7 +119,8 @@ class BillingLedger
   # can't take stays over-billed for the next invoice. Returns attributes for InvoiceCredit.
   # A line's progress is credited only at the tax rates it was charged at (BillingCredits refuses
   # a bill whose line is taxed otherwise), so a credit always equals what was charged.
-  def credits_for(lines_with_caps, others_cap: 0, bases: {})
+  # `taken` ({ line => cents }) gathers what each final bill's own progress credits take.
+  def credits_for(lines_with_caps, others_cap: 0, bases: {}, taken: Hash.new(0))
     left = Hash.new { |hash, line| hash[line] = remaining_cents(line) }
     bases = Hash.new(0).merge(bases)
     credits = []
@@ -134,7 +135,13 @@ class BillingLedger
       amount
     end
     lines_with_caps.each do |line, cap, rates|
-      pools_of(line).each { cap -= take.(:progress, _1, cap) if rates.nil? || rates_of(_1).to_set == rates.to_set }
+      pools_of(line).each do |progress|
+        next unless rates.nil? || rates_of(progress).to_set == rates.to_set
+
+        amount = take.(:progress, progress, cap)
+        cap -= amount
+        taken[line] += amount
+      end
       others_cap += cap
     end
     over_billed(billed: lines_with_caps.map(&:first)).each { others_cap -= take.(:over_billed, _1, others_cap) }
@@ -173,22 +180,31 @@ class BillingLedger
     total = quote_discount_cents
     return 0 unless total.positive?
 
-    @line_parts ||= quote.line_items.to_a.zip(quote.totals.lines).to_h { |item, result| [ item.id, (result.subtotal - result.taxable).cents ] }
-    round(@line_parts.fetch(line.id, 0) * fraction * (@outstanding ||= outstanding_cents) / total.to_d)
+    round(line_parts.fetch(line.id, 0) * fraction * (@outstanding ||= outstanding_cents) / total.to_d)
   end
 
   # Tax rates as a key: the same rates in any order are one group.
   def self.group(rates) = rates.sort_by { [ _1.name, _1.percent ] }
 
-  # The quote's discount by the tax its lines carry: { rates => cents }, in the same proportions
-  # as the quote spreads it, so invoices' tax adds up to the quote's (owner, 2026-11-23).
+  # The quote's discount by what its lines carry, taxed or not: { group => cents }, in the same
+  # proportions as the quote spreads it (scaled for a shortfall), so invoices' tax adds up to the
+  # quote's where the work is taxed as quoted (owner, 2026-11-23).
   def discount_mix
     return {} unless quote_discount_cents.positive?
 
-    @discount_mix ||= quote.line_items.to_a.zip(quote.totals.lines).each_with_object(Hash.new(0)) do |(item, result), mix|
-      mix[self.class.group(item.taxable ? quote.tax_rate_list : [])] += (result.subtotal - result.taxable).cents
+    @discount_mix ||= begin
+      weights = line_parts.each_with_object(Hash.new(0)) { |(id, cents), mix| mix[group_of(@quote_lines[id])] += cents * done_fraction(@quote_lines[id]) }
+      Money.new(quote_discount_cents, quote.currency).allocate(weights.values.map { _1.positive? ? _1 : 0 }).zip(weights.keys).to_h { |part, group| [ group, part.cents ] }
     end
   end
+
+  # What a line carries of the quote's discount, taxed or not: the quote's tax rates or none. A job
+  # taxed otherwise still counts as the quote's: its discount comes off those lines, at their
+  # rates (owner, 2026-11-23).
+  def group_of(line) = line&.taxable ? self.class.group(quote.tax_rate_list) : []
+
+  # A progress line's group, by its id (for a credit).
+  def progress_group(id) = group_of(@progress.find { _1.id == id })
 
   # A job line's expected part of its quote line's fixed discount d: d × its quantity ÷ the line's.
   def expected_line_share(job_line, quote_line)
@@ -222,11 +238,41 @@ class BillingLedger
   # --- The quote's discount, chosen per invoice (owner, 2026-11-23) ------------------------
 
   # D: the quote's discount in dollars, after line discounts, as the quote shows it (a percent
-  # becomes its amount). None for a recurring quote (JOB-10) or a job without a quote.
+  # becomes its amount). None for a recurring quote (JOB-10) or a job without a quote. Once its work
+  # is all done with less than quoted (a shortfall), it scales to the quoted value done: D × that
+  # ÷ the quote's value, rounded once (owner, 2026-11-23); the rest is `unused_discount_cents`.
   def quote_discount_cents
+    @quote_discount_cents ||= if all_done? && full_quote_discount_cents.positive?
+      round(line_parts.sum { |id, cents| cents * done_fraction(@quote_lines[id]) })
+    else
+      full_quote_discount_cents
+    end
+  end
+
+  def full_quote_discount_cents
     return 0 unless shares? && quote.discount_kind.in?(%w[amount percent])
 
-    @quote_discount_cents ||= quote.totals.discount.cents
+    @full_quote_discount_cents ||= quote.totals.discount.cents
+  end
+
+  # The quote's discount a shortfall leaves unused: shown as "not used", never outstanding.
+  def unused_discount_cents = full_quote_discount_cents - quote_discount_cents
+
+  # A shortfall is final once the quote's work is all done: nothing to do, and every job on it
+  # completed or cancelled (what's left is billed, or nothing is).
+  def all_done?
+    return @all_done if defined?(@all_done)
+
+    @all_done = quote.present? && @quote_lines.values.none? { _1.to_do_quantity.positive? } && @jobs.all? { _1.status.in?(%w[completed cancelled]) }
+  end
+
+  # How much of a quote line was done (billed, or completed to bill), at most all of it: 1 till the
+  # work is all done.
+  def done_fraction(line)
+    return 1 unless all_done? && line && line.quantity.to_d.positive?
+
+    done = live_job_lines(line).sum { _1.quantity.to_d } + @finals.select { _1.quote_line_item_id == line.id && _1.job_line_item_id.nil? }.sum { _1.quantity.to_d }
+    (done / line.quantity.to_d).clamp(0, 1)
   end
 
   # What's left of it: D less what work invoices that aren't void apply (drafts hold theirs). What
@@ -244,7 +290,13 @@ class BillingLedger
     Invoice.where(quote_id: quote&.id, kind: "work").where.not(status: "void").where.not(id: @except_id).pluck(:quote_discount_parts).flatten.each do |part|
       left[self.class.group(self.class.rates_from(part["from"] || part["rates"]))] -= part["cents"].to_i
     end
-    left.transform_values { [ _1, 0 ].max }
+    left = left.transform_values { [ _1, 0 ].max }
+    total = outstanding_cents
+    return left if left.values.sum <= total
+    return {} if total.zero?
+
+    # A group took more than its part (a shortfall scaled it after): the rest shares what's left.
+    Money.new(total, quote.currency).allocate(left.values).zip(left.keys).to_h { |part, group| [ group, part.cents ] }
   end
 
   def self.rates_from(list) = Array(list).map { Pricing::TaxRate.new(name: _1["name"], percent: _1["percent"]) }
@@ -266,13 +318,12 @@ class BillingLedger
     billed_ids = billed_job_line_ids + billed.filter_map(&:job_line_item_id)
     left = Hash.new(0)
     @job_lines.values.select { @jobs_by_id[_1.job_id].status != "cancelled" && !billed_ids.include?(_1.id) }.each do |line|
-      job = @jobs_by_id[line.job_id]
-      left[self.class.group(line.taxable ? job.tax_rate_list : [])] += subtotal(line) - expected_line_share(line, @quote_lines[line.claim&.quote_line_item_id])
+      left[group_of(line)] += subtotal(line) - expected_line_share(line, @quote_lines[line.claim&.quote_line_item_id])
     end
     # A line billed directly on this invoice claims its work when it's saved: it isn't to do.
     direct = billed.select { _1.new_record? && _1.job_line_item_id.nil? && _1.quote_line_item_id }.group_by(&:quote_line_item_id)
     @quote_lines.each_value do |line|
-      left[self.class.group(line.taxable ? quote.tax_rate_list : [])] += to_do_value(line, less: direct.fetch(line.id, []).sum { |item| item.quantity.to_d })
+      left[group_of(line)] += to_do_value(line, less: direct.fetch(line.id, []).sum { |item| item.quantity.to_d })
     end
     left
   end
@@ -282,8 +333,8 @@ class BillingLedger
   # it's sent.)
   def uncredited_cents = @progress.sum { remaining_cents(_1) }
 
-  # The same, by the tax it was charged at.
-  def uncredited_by_group = @progress.each_with_object(Hash.new(0)) { |line, sums| sums[self.class.group(rates_of(line))] += remaining_cents(line) }
+  # The same, by group (taxed or not).
+  def uncredited_by_group = @progress.each_with_object(Hash.new(0)) { |line, sums| sums[group_of(line)] += remaining_cents(line) }
 
   def to_do_value(line, less: 0)
     quantity = line.to_do_quantity - less
@@ -379,4 +430,7 @@ class BillingLedger
   def live_job_lines(line) = @job_lines.values.select { _1.claim&.quote_line_item_id == line.id && @jobs_by_id[_1.job_id].status != "cancelled" }
 
   def round(value) = value.to_d.round(0, Money::ROUNDING).to_i
+
+  # Each quote line's part of the quote's discount, as the quote spreads it.
+  def line_parts = @line_parts ||= quote.line_items.to_a.zip(quote.totals.lines).to_h { |item, result| [ item.id, (result.subtotal - result.taxable).cents ] }
 end

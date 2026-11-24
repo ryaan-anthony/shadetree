@@ -1,33 +1,39 @@
-# PAY-08 (owner, 2026-11-23): how an invoice applies an amount of its quote's discount, by tax.
-# The quote's discount has a tax mix (what its taxed and untaxed lines, at each set of rates,
-# carry of it); the work invoices together give exactly the discount, and in that mix, so total
-# tax matches the quote's. An invoice applies its amount:
+# PAY-08 (owner, 2026-11-23): how an invoice applies an amount of its quote's discount, line by
+# line. The quote's discount has a mix (what its taxed and its untaxed lines carry of it); the work
+# invoices together give exactly the discount, in that mix where the work allows, so tax matches
+# the quote's. Each amount comes off the lines actually charged and lowers tax at their own rates:
+# a job taxed otherwise than its quote pays tax on less, and the tax total then differs. An invoice
+# applies its amount:
 #
-# 1. first what each group needs now: what the work left after it, at those rates, can't absorb;
-# 2. then the rest in proportion to what each group can still take at its own rates;
-# 3. more than that only off other lines (the most it offers stops at `fits`, unless needed).
+# 1. first what each group needs now: what the work left after it, in that group, can't absorb;
+# 2. then the rest in proportion to what each group's lines can take (`fits`);
+# 3. more than that only when it must (the minimum), off other lines.
 #
-# Each group's amount comes off this invoice's lines at its own rates while they can take it, and
-# what they can't (no such lines here, or too little) off its other lines, at theirs. Lines first
-# take only what leaves this invoice's credits whole (`free`: a final's progress is capped by what
-# it charges), and more only when it must go now. A part's
-# `rates` are the lines it comes off (so tax and the credit of a progress invoice use one base),
-# its `from` the group it counts against. Nothing is dropped: the amount is never more than the
-# invoice charges.
+# A group's amount comes off its own lines while they have room, then off the invoice's other
+# lines. Lines first take only what leaves this invoice's credits whole (`free`: progress is capped
+# by what the final charges); more only when it must go now. A part's `from` is the group it counts
+# against, `key` the line it comes off and `rates` that line's (so tax and a progress invoice's
+# credit use one base). Nothing is dropped: the amount is never more than the invoice charges.
 #
-#   plan = QuoteDiscountPlan.new(outstanding: { [] => 50_00, [state] => 50_00 }, capacity: { [state] => 800_00 }, needs: {})
-#   plan.parts(100_00) # => [Part(from: [], rates: [state], cents: 5000), Part(from: [state], rates: [state], cents: 5000)]
+#   slots = [ Slot.new(key: "a", group: [ state ], rates: [ state ], capacity: 800_00, free: 800_00) ]
+#   QuoteDiscountPlan.new(outstanding: { [ state ] => 50_00, [] => 50_00 }, slots:).parts(100_00)
+#   # => [Part(from: [state], key: "a", cents: 5000), Part(from: [], key: "a", cents: 5000)]
 class QuoteDiscountPlan
-  Part = Data.define(:from, :rates, :cents)
+  Slot = Data.define(:key, :group, :rates, :capacity, :free)
+  Part = Data.define(:from, :key, :rates, :cents)
 
-  attr_reader :outstanding, :capacity, :free, :needs
+  attr_reader :outstanding, :slots, :needs
 
-  def initialize(outstanding:, capacity:, free: capacity, needs: {})
+  def initialize(outstanding:, slots:, needs: {})
     @outstanding = outstanding.select { _2.positive? }
-    @capacity = capacity.select { _2.positive? }
-    @free = @capacity.to_h { |group, can| [ group, free.fetch(group, can).clamp(0, can) ] }
+    @slots = slots.select { _1.capacity.positive? }.map { _1.with(free: _1.free.clamp(0, _1.capacity)) }
     @needs = needs
   end
+
+  # The most it applies off each group's own lines, keeping its credits whole.
+  def fits = outstanding.sum { |group, owed| [ owed, own(group).sum(&:free) ].min }
+
+  def capacity(group) = own(group).sum(&:capacity)
 
   def parts(cents)
     @placed = Hash.new(0)
@@ -42,54 +48,50 @@ class QuoteDiscountPlan
       taken[group] += amount
       left -= amount
     end
-    # The rest off lines at their own group's rates, in proportion to what each can take...
-    weights = outstanding.map { |group, owed| [ group, [ owed - taken[group], free.fetch(group, 0) - @placed[group] ].min ] }.select { _2.positive? }
+    # The rest off each group's own lines, in proportion to the room they have...
+    weights = outstanding.map { |group, owed| [ group, [ owed - taken[group], room(own(group), :free) ].min ] }.select { _2.positive? }
     if left.positive? && weights.any?
       amount = [ left, weights.sum(&:last) ].min
-      Money.new(amount, "USD").allocate(weights.map(&:last)).zip(weights) do |part, (group, _)|
-        place(group, part.cents)
-        taken[group] += part.cents
+      split(amount, weights).each do |group, part|
+        place(group, part)
+        taken[group] += part
       end
       left -= amount
     end
-    # ...and only then, if more is asked than fits, off other lines (the tax then differs).
+    # ...and only then, if more must go, off other lines.
     weights = outstanding.map { |group, owed| [ group, owed - taken[group] ] }.select { _2.positive? }
-    if left.positive? && weights.any?
-      Money.new(left, "USD").allocate(weights.map(&:last)).zip(weights) { |part, (group, _)| place(group, part.cents) if part.positive? }
-    end
-    @parts.map { |(from, rates), cents| Part.new(from:, rates:, cents:) }
+    split(left, weights).each { |group, part| place(group, part) } if left.positive? && weights.any?
+    @parts.map { |(from, slot), part| Part.new(from:, key: slot.key, rates: slot.rates, cents: part) }
   end
-
-  # The most it applies keeping each group at its own rates.
-  def fits = outstanding.sum { |group, owed| [ owed, free.fetch(group, 0) ].min }
 
   private
 
-  # Off lines at its own rates first (what's free, then the rest they charge: the tax follows the
-  # quote's), then off the invoice's other lines, by what they can still take (free first).
+  def own(group) = slots.select { _1.group == group }
+
+  def room(list, kind) = list.sum { [ _1.public_send(kind) - @placed[_1.key], 0 ].max }
+
+  def split(cents, weights) = Money.new(cents, "USD").allocate(weights.map(&:last)).zip(weights).filter_map { |part, (key, _)| [ key, part.cents ] if part.positive? }
+
+  # Off its own lines' free room, then other lines' (the money stays right: no credit is cut), then
+  # what's left of its own lines, then of the others.
   def place(group, cents)
-    [ free, capacity ].each do |room|
-      inside = [ cents, room.fetch(group, 0) - @placed[group] ].min.clamp(0..)
-      record(group, group, inside)
-      cents -= inside
-    end
-    [ free, capacity ].each do |room|
+    mine = own(group)
+    others = slots - mine
+    [ [ mine, :free ], [ others, :free ], [ mine, :capacity ], [ others, :capacity ] ].each do |list, kind|
       break unless cents.positive?
 
-      spare = room.map { |rates, can| [ rates, can - @placed[rates] ] }.select { _2.positive? }
-      next if spare.empty?
+      rooms = list.map { [ _1, [ _1.public_send(kind) - @placed[_1.key], 0 ].max ] }.select { _2.positive? }
+      next if rooms.empty?
 
-      amount = [ cents, spare.sum(&:last) ].min
-      Money.new(amount, "USD").allocate(spare.map(&:last)).zip(spare) { |part, (rates, _)| record(group, rates, part.cents) }
+      amount = [ cents, rooms.sum(&:last) ].min
+      split(amount, rooms).each { |slot, part| record(group, slot, part) }
       cents -= amount
     end
-    record(group, group, cents) # can't happen: the amount is at most what it charges
+    record(group, mine.first || slots.first, cents) if cents.positive? && slots.any? # can't happen: never more than it charges
   end
 
-  def record(from, rates, cents)
-    return unless cents.positive?
-
-    @parts[[ from, rates ]] += cents
-    @placed[rates] += cents
+  def record(from, slot, cents)
+    @parts[[ from, slot ]] += cents
+    @placed[slot.key] += cents
   end
 end
