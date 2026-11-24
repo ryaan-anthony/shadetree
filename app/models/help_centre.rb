@@ -101,6 +101,7 @@ module HelpCentre
       text = File.read(file, encoding: "UTF-8")
       match = text.match(/\A---\n(.*?)\n---\n(.*)\z/m) || fail_with(file, "it has no front matter")
       meta = YAML.safe_load(match[1], permitted_classes: [ Date ]) || {}
+      fail_with(file, "its front matter must be keys and values (title:, summary: …)") unless meta.is_a?(Hash)
       check(file, meta)
       Article.new(slug:, title: meta["title"].strip, summary: meta["summary"].strip, category: meta["category"],
                   topics: Array(meta["topics"]).map(&:to_s).freeze, reviewed_on: meta["reviewed"],

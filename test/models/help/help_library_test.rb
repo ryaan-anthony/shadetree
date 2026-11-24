@@ -56,11 +56,26 @@ class HelpLibraryTest < ActiveSupport::TestCase
     [ "../send-a-quote", "send-a-quote.md", "SEND-A-QUOTE", nil, [ "send-a-quote" ], "" ].each { assert_nil lib.find(_1) }
   end
 
-  test "raw HTML and style never reach the page" do
-    html, = render(%(Hi <script>alert(1)</script> <b style="color:red">bold</b>\n\n<div onclick="x()">block</div>\n\n<style>p{}</style>))
+  test "raw HTML and style never reach the page, and raw HTML is reported" do
+    html, problems = render(%(Hi <script>alert(1)</script> <b style="color:red">bold</b>\n\n<div onclick="x()">block</div>\n\n<style>p{}</style>))
     assert_empty html.css("script, style, div[onclick], b, [style]")
     assert_not_includes html.to_html, "raw HTML omitted"
     assert_includes html.text, "bold"
+    assert_equal [ "this: has raw HTML, which isn't shown: use Markdown instead" ], problems
+  end
+
+  test "code blocks aren't highlighted (no inline styles)" do
+    html, = render("```ruby\nx = 1\n```")
+    assert_equal "x = 1\n", html.at_css("pre code").text
+    assert_empty html.css("[style], span")
+  end
+
+  test "front matter that isn't keys and values fails, naming the file" do
+    [ "- a list\n- of things", "just a sentence" ].each do |front|
+      @dir.join("articles/odd.md").write("---\n#{front}\n---\nText.\n")
+      error = assert_raises(HelpCentre::InvalidArticle) { library }
+      assert_includes error.message, "odd.md"
+    end
   end
 
   test "links: http(s), site paths, anchors and articles; anything else becomes text" do
@@ -108,7 +123,7 @@ class HelpLibraryTest < ActiveSupport::TestCase
     assert html.at_css(".help-table > table")
   end
 
-  test "sync copies the files into the table, rewriting changed ones and deleting removed ones" do
+  test "sync copies the files into the table; only a full sync (at boot) deletes removed ones" do
     write("one")
     write("two")
     HelpArticle.sync!(library)
@@ -119,6 +134,9 @@ class HelpLibraryTest < ActiveSupport::TestCase
     FileUtils.rm(@dir.join("articles/two.md"))
     assert_not HelpArticle.current?(library)
     HelpArticle.ensure_current!(library)
+    assert_equal %w[one two], HelpArticle.order(:slug).pluck(:slug), "a page never deletes: an older server may still serve it"
+    assert HelpArticle.current?(library)
+    HelpArticle.sync!(library)
     assert_equal [ "one" ], HelpArticle.pluck(:slug)
     assert_includes HelpArticle.find_by!(slug: "one").body, "invoices"
     assert_no_changes(-> { HelpArticle.maximum(:updated_at) }) { HelpArticle.ensure_current!(library) }

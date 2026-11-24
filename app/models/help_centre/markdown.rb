@@ -12,7 +12,7 @@
 #   HelpCentre::Markdown.new(article, library, article_path: ->(slug) { help_article_path(slug) },
 #                            image_path: ->(file) { image_path("help/#{file}") }).to_html
 class HelpCentre::Markdown
-  OPTIONS = { render: { unsafe: false, hardbreaks: false }, parse: { smart: true },
+  OPTIONS = { render: { unsafe: false, hardbreaks: false }, parse: { smart: true }, plugins: { syntax_highlighter: nil },
               extension: { table: true, strikethrough: true, autolink: true, tagfilter: true, tasklist: false, header_ids: nil, footnotes: false } }.freeze
   ARTICLE_LINK = %r{\A(?:/help/)?([a-z0-9-]+)(#[a-z0-9-]+)?\z}
   SITE_PATH = %r{\A/(?!/)[^\s\\]*\z}
@@ -33,8 +33,9 @@ class HelpCentre::Markdown
   end
 
   def to_html
-    doc = Nokogiri::HTML5.fragment(Commonmarker.to_html(@article.body, options: OPTIONS))
-    doc.xpath(".//comment()").each(&:remove) # "raw HTML omitted"
+    doc = Nokogiri::HTML5.fragment(Commonmarker.to_html(@article.body, options: OPTIONS.except(:plugins), plugins: OPTIONS[:plugins]))
+    omitted = doc.xpath(".//comment()").each(&:remove) # "raw HTML omitted"
+    problem("has raw HTML, which isn't shown: use Markdown instead") if omitted.any?
     doc.css("*").each { |node| %w[style class id].each { node.remove_attribute(_1) } }
     doc.css("a").each { link(_1) }
     doc.css("img").each { image(_1) }
