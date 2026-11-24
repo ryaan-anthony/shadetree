@@ -16,9 +16,9 @@ class Admin::HomeTest < ActionDispatch::IntegrationTest
     post switch_admin_business_path, params: { business: @business.uid }
   end
 
-  def book(user = nil)
+  def book(user = nil, **timing)
     as_business(@business) do
-      @job.visits.create!(scheduled_on: @business.today, timing: "anytime", duration_minutes: 60).tap do |visit|
+      @job.visits.create!(scheduled_on: @business.today, timing: "anytime", duration_minutes: 60, **timing).tap do |visit|
         visit.assignments.create!(business: @business, user:) if user
       end
     end
@@ -237,8 +237,9 @@ class Admin::HomeTest < ActionDispatch::IntegrationTest
 
   test "your own day on Home doesn't query per visit or follow-up" do
     count = lambda do
-      queries = 0
-      callback = ->(*, payload) { queries += 1 unless payload[:name] == "SCHEMA" || payload[:cached] }
+      queries = []
+      # Cached ones count too, so a repeated query hitting or missing the cache can't change the count.
+      callback = ->(*, payload) { queries << payload unless payload[:name].in?(%w[SCHEMA TRANSACTION]) }
       ActiveSupport::Notifications.subscribed(callback, "sql.active_record") { get admin_root_path }
       queries
     end
@@ -246,9 +247,16 @@ class Admin::HomeTest < ActionDispatch::IntegrationTest
     follow_up("Sam Ortiz")
     follow_up("Lee Park", scheduled_on: @business.today - 3)
     one = count.call
-    2.times { book(@owner) }
+    # Booked so their ids run against the day's order (timed first, the later one booked first).
+    book(@owner, timing: "exact", start_time: "15:00")
+    book(@owner, timing: "exact", start_time: "11:00")
     follow_up("Ana Diaz", kind: "call")
     follow_up("Kim Chu", scheduled_on: @business.today - 1)
-    assert_equal one, count.call, "more visits and follow-ups, the same queries"
+    two = count.call
+    assert_equal one.size, two.size, "more visits and follow-ups, the same queries"
+    # Your day and the team's day load today's visits and their assignments, in the same order,
+    # so the database is asked once (CI saw 41 for 40 when My day's unordered rows came back in
+    # another order and the second ask missed the query cache).
+    assert_equal 1, two.count { _1[:sql].include?('FROM "visit_assignments"') && !_1[:cached] }
   end
 end
