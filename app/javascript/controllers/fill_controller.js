@@ -8,11 +8,12 @@ import { Controller } from "@hotwired/stimulus"
 //   </div>
 export default class extends Controller {
   static targets = ["field"]
-  static values = { value: String }
+  static values = { value: String, submit: Boolean } // submit: send the form too (the create dialog)
 
   fill() {
     this.fieldTarget.value = this.valueValue
     this.fieldTarget.dispatchEvent(new Event("input", { bubbles: true }))
     this.fieldTarget.dispatchEvent(new Event("change", { bubbles: true }))
+    if (this.submitValue) this.fieldTarget.form.requestSubmit()
   }
 }

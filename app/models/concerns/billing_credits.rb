@@ -143,8 +143,9 @@ module BillingCredits
   def current_charges = current_line_items.map(&:key).zip(net_by_line.values_at(*current_line_items)).to_h
 
   # What each line charges, net of this invoice's discounts, the applied quote discount included:
-  # each part of it comes off the lines taxed as it is, in proportion, and what they can't take off
-  # the other lines (only an untaxed part can be left: a taxed one never passes its lines).
+  # each part comes off the lines taxed at its rates, in proportion: the same base its tax is
+  # worked out on, so a progress invoice's credit is exactly what it charged. (A part whose lines
+  # can't take it all, from an older plan, comes off the rest.)
   def net_by_line(priced = totals(credits: false))
     lines = current_line_items
     net = lines.zip(priced.lines).to_h { |line, result| [ line, result.taxable.cents ] }
@@ -161,19 +162,12 @@ module BillingCredits
     net
   end
 
-  # Splits an applied amount over the quote's discount mix.
-  def parts_for(cents, mix)
-    return [] if cents.zero? || mix.empty?
-
-    Money.new(cents, currency).allocate(mix.values).zip(mix.keys).filter_map do |amount, rates|
-      { "rates" => rates.map { { "name" => _1.name, "percent" => _1.percent.to_d.to_s("F") } }, "cents" => amount.cents } if amount.positive?
-    end
+  def apply_quote_discount!(range)
+    self.quote_discount_share_cents = range[:applied]
+    self.quote_discount_parts = range[:plan] ? range[:plan].parts(range[:applied]).map { { "from" => rates_json(_1.from), "rates" => rates_json(_1.rates), "cents" => _1.cents } } : []
   end
 
-  def apply_quote_discount!(cents, ledger)
-    self.quote_discount_share_cents = cents
-    self.quote_discount_parts = parts_for(cents, ledger.discount_mix)
-  end
+  def rates_json(rates) = rates.map { { "name" => _1.name, "percent" => _1.percent.to_d.to_s("F") } }
 
   # A revision snapshot priced again, in memory.
   def charges_from(data)
@@ -197,8 +191,7 @@ module BillingCredits
     lines = current_line_items
     finals = lines.select { _1.final && (_1.job_line_item_id || _1.quote_line_item_id) }
     share_lines(ledger, lines, finals)
-    range = discount_range(ledger, finals:)
-    apply_quote_discount!(range[:applied], ledger)
+    apply_quote_discount!(discount_range(ledger, finals:))
     wanted = credits_wanted(ledger, finals)
     return if wanted == pre_tax_credits.map { _1.snapshot.symbolize_keys }
 
@@ -217,19 +210,20 @@ module BillingCredits
     ledger.credits_for(caps, others_cap: others, bases: tax_bases(priced))
   end
 
-  # The quote's discount this invoice may apply (owner, 2026-11-23), in cents. It's spread over
-  # the quote's tax mix (each taxed part off lines taxed the same), so:
-  # - left: what's still to apply, less other work invoices that aren't void (progress only
-  #   moves cash: its final credits the net it charged);
-  # - max: left, and no more than this invoice charges, nor more than any taxed part can take off
-  #   its lines (credits are capped afterwards, and what they can't take is over-billed);
-  # - min: what the work left after it can't absorb, overall and for each taxed part: left less
-  #   (work still to bill − progress not yet credited, after this bill's credits; on progress,
-  #   less its own charge too);
-  # - applied: staff's choice (nil: $0, "Apply later") held to [min, max].
+  # The quote's discount this invoice may apply (owner, 2026-11-23), in cents:
+  # - left: what's still to apply, less other work invoices that aren't void (progress only moves
+  #   cash: its final credits the net it charged);
+  # - max: left, and no more than this invoice charges (by choice, less its credits: progress is
+  #   capped by what the final charges);
+  # - min: what the work left after it can't absorb, overall (left − (work still to bill −
+  #   progress not yet credited, after this bill's credits; on progress, its own charge too)) and
+  #   for each tax group (its `needs`, so the tax matches the quote's where the work allows);
+  # - applied: staff's choice (nil: $0, "Apply later") held to [min, max]; short: min > max, the
+  #   work left charging less than the discount left;
+  # - plan: how the applied amount is split by tax (QuoteDiscountPlan).
   def discount_range(ledger, finals: nil)
     left = ledger.outstanding_cents
-    return { left: 0, min: 0, max: 0, applied: 0, work_left: 0, short: false } unless left.positive?
+    return { left: 0, min: 0, max: 0, applied: 0, work_left: 0, short: false, charge: 0 } unless left.positive?
 
     saved = [ quote_discount_share_cents, quote_discount_parts ]
     self.quote_discount_share_cents = 0
@@ -238,35 +232,40 @@ module BillingCredits
     lines = current_line_items
     charge_by = lines.zip(priced.lines).each_with_object(Hash.new(0)) { |(line, result), sums| sums[BillingLedger.group(rates_for(line))] += [ result.taxable.cents, 0 ].max }
     charge = charge_by.values.sum
-    mix = ledger.discount_mix
-    total = [ mix.values.sum, 1 ].max
     work = ledger.work_left_by_group(billed: progress? ? [] : (finals ||= lines.select { _1.final && (_1.job_line_item_id || _1.quote_line_item_id) }))
     owed = ledger.uncredited_by_group
+    credited = Hash.new(0)
     if progress?
       charge_by.each { |rates, cents| owed[rates] += cents } # its own charge waits to be credited too
     else
-      credits_wanted(ledger, finals).each { |credit| owed[BillingLedger.group(credit[:tax_rates].map { Pricing::TaxRate.new(name: _1["name"], percent: _1["percent"]) })] -= credit[:amount_cents] }
-    end
-    room = work.values.sum - owed.values.sum
-    min = left - room
-    max = [ left, charge ].min
-    mix.each do |rates, weight|
-      next if rates.empty? || weight.zero?
-
-      max = [ max, (charge_by[rates] * total / weight.to_d).floor ].min
-      min = [ min, ((left * weight / total.to_d) - (work[rates] - owed[rates])) * total / weight.to_d ].max
+      credits_wanted(ledger, finals).each do |credit|
+        group = BillingLedger.group(BillingLedger.rates_from(credit[:tax_rates]))
+        owed[group] -= credit[:amount_cents]
+        credited[group] += credit[:amount_cents]
+      end
     end
     self.quote_discount_share_cents, self.quote_discount_parts = saved
-    min = min.ceil.clamp(0..)
-    max = max.clamp(0..)
+    room = work.values.sum - owed.values.sum
+    outstanding = ledger.outstanding_by_group
+    # Each tax group takes now what its own work left can't, as far as this invoice's lines at its
+    # rates allow (beyond that, a later invoice's other lines take it: the money still adds up).
+    needs = outstanding.to_h { |rates, cents| [ rates, (cents - (work[rates] - owed[rates])).clamp(0, [ cents, charge_by[rates] ].min) ] }
+    plan = QuoteDiscountPlan.new(outstanding:, capacity: charge_by, free: charge_by.to_h { |rates, cents| [ rates, cents - credited[rates] ] }, needs:)
+    must = [ left - room, 0 ].max # what no later invoice can take
+    min = [ must, needs.values.sum ].max
+    # What isn't needed now isn't routed onto other rates: it waits for lines at its own.
+    most = [ left, charge ].min.clamp(0..)
+    # By choice, no more than leaves this invoice's credits whole (what must go now still goes).
+    max = [ most, [ plan.fits, min ].max ].min
     applied = (quote_discount_chosen_cents || 0).clamp(0, max)
-    { left:, min: [ min, max ].min, max:, applied: [ applied, min ].max.clamp(0, max), work_left: [ room, 0 ].max, short: min > max }
+    applied = [ applied, min ].max.clamp(0, max)
+    { left:, min: [ min, max ].min, max:, applied:, work_left: [ room, 0 ].max, short: must > most, charge:,
+      plan: }
   end
 
   def choose_progress_discount
     lock_billing!
-    ledger = BillingLedger.for(self)
-    apply_quote_discount!(discount_range(ledger)[:applied], ledger)
+    apply_quote_discount!(discount_range(BillingLedger.for(self)))
   end
 
   # A progress invoice can't charge so much that the work left can't take the rest of the

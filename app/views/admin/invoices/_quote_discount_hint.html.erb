@@ -1,6 +1,11 @@
 <%# locals: (invoice:, range:) -%>
-<% if range[:min].positive? %>
-  At least <%= money(Money.new(range[:min], invoice.currency)) %> now; there's only <%= money(Money.new(range[:work_left], invoice.currency)) %> of work left.
+<% amount = ->(cents) { money(Money.new(cents, invoice.currency)) } %>
+<% if range[:short] %><%# the work left charges less than the discount left: say so, don't hide it %>
+  <span class="text-warning"><%= icon "alert-triangle", class: "mr-1 inline size-4 align-text-bottom" %>Only <%= amount.(range[:max]) %> of the <%= amount.(range[:left]) %> left can come off: the work left to bill charges less.</span>
+<% elsif range[:max].zero? %>
+  <%= range[:charge].to_i.zero? ? "This invoice charges nothing, so none of it can come off here." : "None of it can come off here: it has no lines taxed as the discount left is. A later invoice takes it." %>
+<% elsif range[:min].positive? %>
+  At least <%= amount.(range[:min]) %> now; there's only <%= amount.(range[:work_left]) %> of work left.
 <% else %>
-  Up to <%= money(Money.new(range[:max], invoice.currency)) %> on this invoice. What isn't used carries forward; the last invoice takes the rest.
+  Up to <%= amount.(range[:max]) %> on this invoice. What isn't used carries forward; the last invoice takes the rest.
 <% end %>

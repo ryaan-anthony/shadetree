@@ -237,6 +237,18 @@ class BillingLedger
     [ quote_discount_cents - applied, 0 ].max
   end
 
+  # What's left of the discount by tax group: the quote's mix less what other work invoices that
+  # aren't void counted against each group (a part's `from`).
+  def outstanding_by_group
+    left = discount_mix.dup
+    Invoice.where(quote_id: quote&.id, kind: "work").where.not(status: "void").where.not(id: @except_id).pluck(:quote_discount_parts).flatten.each do |part|
+      left[self.class.group(self.class.rates_from(part["from"] || part["rates"]))] -= part["cents"].to_i
+    end
+    left.transform_values { [ _1, 0 ].max }
+  end
+
+  def self.rates_from(list) = Array(list).map { Pricing::TaxRate.new(name: _1["name"], percent: _1["percent"]) }
+
   # The quote's work still to bill after these final bills, after line discounts: lines on live
   # jobs without a final bill (added on site too) and what's still to do.
   def work_left_cents(billed: []) = work_left_by_group(billed:).values.sum
@@ -265,12 +277,13 @@ class BillingLedger
     left
   end
 
-  # Progress charged and not yet credited, on invoices that aren't void: what later final bills
-  # must still take off.
-  def uncredited_cents = held(@progress)
+  # Progress charged and not yet credited, on invoices that went out: what later final bills must
+  # still take off. (A progress draft isn't charged yet: it's checked against what's left when
+  # it's sent.)
+  def uncredited_cents = @progress.sum { remaining_cents(_1) }
 
   # The same, by the tax it was charged at.
-  def uncredited_by_group = @progress.each_with_object(Hash.new(0)) { |line, sums| sums[self.class.group(rates_of(line))] += held([ line ]) }
+  def uncredited_by_group = @progress.each_with_object(Hash.new(0)) { |line, sums| sums[self.class.group(rates_of(line))] += remaining_cents(line) }
 
   def to_do_value(line, less: 0)
     quantity = line.to_do_quantity - less

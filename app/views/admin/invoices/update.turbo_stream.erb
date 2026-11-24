@@ -8,7 +8,8 @@
 <% end %>
 <% if (range = @invoice.quote_discount_range) %><%# PAY-08: the range moves with the lines %>
   <% if (@invoice.quote_discount_chosen_cents || 0) != range[:applied] %><%# held to the range ("all" too): show what applies %>
-    <%= turbo_stream.replace "quote_discount_field" do %><%= render "admin/invoices/quote_discount", invoice: @invoice, range: %><% end %>
+    <%# morphed, so the field keeps focus while it shows the amount that applies %>
+    <%= turbo_stream.replace "quote_discount_field", method: :morph do %><%= render "admin/invoices/quote_discount", invoice: @invoice, range: %><% end %>
   <% else %>
     <%= turbo_stream.update "quote_discount_label" do %>Quote discount: <%= money(Money.new(range[:left], @invoice.currency)) %> left. Apply now<% end %>
     <%= turbo_stream.update "quote_discount_hint" do %><%= render "admin/invoices/quote_discount_hint", invoice: @invoice, range: %><% end %>

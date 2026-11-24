@@ -53,4 +53,21 @@ class QuoteDiscountSystemTest < ApplicationSystemTestCase
     assert_field "invoice_quote_discount_applied", with: "300.00"
     assert_equal 300_00, applied
   end
+
+  test "the dialog's buttons read and tab in the order shown; a clamped amount keeps the builder field focused" do
+    visit admin_job_path(@deck)
+    find("#job-banner-invoice").click
+    within("#job-banner-invoice-dialog") do
+      assert_equal [ "Cancel", "Apply all", "Create invoice" ], all("form button").map(&:text)
+      find_field("job-banner-invoice-discount").send_keys(:tab)
+    end
+    assert_equal "Cancel", page.evaluate_script("document.activeElement.textContent.trim()")
+
+    invoice = Tenancy.with_business(@business) { Invoice.from_job!(@deck.reload, by: @owner) }
+    visit edit_admin_invoice_path(invoice)
+    field = find_field("invoice_quote_discount_applied")
+    field.fill_in(with: "50")
+    assert_field "invoice_quote_discount_applied", with: "200.00" # held to the minimum once saved
+    assert_equal "invoice_quote_discount_applied", page.evaluate_script("document.activeElement.id"), "still focused"
+  end
 end
