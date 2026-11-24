@@ -61,10 +61,10 @@ class Admin::MyDayTest < ActionDispatch::IntegrationTest
     assert_select "a[href='sms:5550100100']", /Text/
     assert_select "main", /Bag the leaves.*This visit:.*Front beds first/m
     assert_select "#visit-work", /Leaf cleanup.*2 hours/m
-    assert_select "#visit-work .money", 0
+    assert_no_match(/\$/, css_select("#visit-work").text) # PLT-18: the quantity alone
     @business.update!(technicians_see_prices: true)
     get admin_my_visit_path(@morning)
-    assert_select "#visit-work .money", /\$90.00/
+    assert_select "#visit-work", /Leaf cleanup\s*2 hours × \$90\.00/
   end
 
   test "start, complete, reopen the same day, and the office hears when the job's work is done" do
@@ -140,6 +140,6 @@ class Admin::MyDayTest < ActionDispatch::IntegrationTest
     get admin_my_day_path
     assert_select "li[id^=my-visit-]", 1
     get admin_my_visit_path(@not_mine)
-    assert_select "#visit-work .money", /\$90.00/, "the office sees prices anyway"
+    assert_select "#visit-work", /Leaf cleanup\s*2 hours × \$90\.00/, "the office sees prices anyway"
   end
 end

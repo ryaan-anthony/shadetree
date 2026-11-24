@@ -68,11 +68,11 @@
                                 form: { class: "contents", data: (billed.any? ? { turbo_confirm: "#{job.number} already has #{billed.map(&:number).to_sentence}. Create another invoice?", turbo_confirm_button: "Create another invoice" } : {}) }) { icon("plus") + (billed.any? ? " Create another invoice" : " Create invoice") } do %>
       <%= render "admin/invoices/list", invoices:, empty: "Not invoiced yet. Create invoice copies this job's items, discount and taxes." %>
       <% job_payments = Payment.where(invoice_id: invoices.map(&:id)).includes(:invoice).chronological.to_a %>
-      <% if job_payments.any? %><%# PAY-04/PAY-05: what's been paid on them, online ones with Stripe's reference %>
+      <% if job_payments.any? %><%# PAY-05: what's been paid on them; Stripe's reference is only on the invoice (PLT-18) %>
         <ul class="list border-t border-line" id="job-payments" aria-label="Payments">
           <% job_payments.each do |payment| %>
             <li class="text-sm2"><%= icon "dollar-sign", class: "size-4 text-faint" %>
-              <span class="min-w-0 flex-1 break-words text-subtle"><%= payment.online? ? "Paid online, #{payment.method_detail || "card"}" : payment.method_label %> · <%= payment.invoice.number %> · <%= local_date(payment.received_on) %><%= " · #{payment.reference}" if payment.reference %><%= " · #{payment.adjustment_label}" if payment.adjustment_label %></span>
+              <span class="min-w-0 flex-1 break-words text-subtle"><%= payment.online? ? "Paid online, #{payment.method_detail || "card"}" : payment.method_label %> · <%= payment.invoice.number %> · <%= local_date(payment.received_on) %><%= " · #{payment.reference}" if payment.reference && payment.recorded? %><%= " · #{payment.adjustment_label}" if payment.adjustment_label %></span>
               <span class="money font-semibold text-ink"><%= money(payment.amount) %></span></li>
           <% end %>
         </ul>
@@ -87,12 +87,12 @@
       <% else %>
         <div class="table-wrap">
           <table class="data-table" id="job-lines">
-            <thead><tr><th scope="col">Item</th><th scope="col" class="text-right">Qty</th><th scope="col" class="text-right">Amount</th></tr></thead>
+            <thead><tr><th scope="col">Item</th><th scope="col" class="text-right">Amount</th></tr></thead>
             <tbody>
               <% lines.zip(totals.lines).each do |line, priced| %>
                 <tr>
-                  <td><span class="font-medium text-ink"><%= line.name.presence || "Item" %></span><% if line.description %><span class="sub whitespace-pre-line"><%= line.description %></span><% end %></td>
-                  <td class="num whitespace-nowrap"><%= line.quantity_label %></td>
+                  <td><span class="font-medium text-ink"><%= line.name.presence || "Item" %></span><% if line.description %><span class="sub whitespace-pre-line"><%= line.description %></span><% end %>
+                    <span class="sub"><%= line_quantity(line) %></span></td>
                   <td class="money num"><%= money(priced.subtotal) %></td>
                 </tr>
               <% end %>

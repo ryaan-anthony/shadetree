@@ -13,6 +13,13 @@ module FormattingHelper
     amount&.format(display_zero_as: zero)
   end
 
+  # PLT-18: a line's quantity and unit price, as staff pages show it under the line's name:
+  # "2 visits × $45.00", or just "2 visits" when it has no price yet. (The client document keeps
+  # its Qty and Price columns.)
+  def line_quantity(line)
+    safe_join([ line.quantity_label, (money(line.unit_price) if line.unit_price) ].compact, " × ")
+  end
+
   # local_time(visit.starts_at)               => "Mar 8, 2026, 9:00 AM"
   # local_time(visit.starts_at, format: :time) => "9:00 AM"
   # Wrapped in <time datetime="…UTC…"> so the exact instant is machine-readable.

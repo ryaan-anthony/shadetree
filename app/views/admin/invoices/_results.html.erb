@@ -61,7 +61,7 @@
               <td><span class="flex flex-wrap items-center gap-1"><%= invoice_status_badge(invoice) %><%= status_badge(:email, "not_delivered") if invoice.undelivered_email %></span></td>
               <td class="whitespace-nowrap text-sm2 text-subtle"><%= local_date(invoice.due_on) %></td>
               <td class="money num"><%= money(invoice.total) %></td>
-              <td class="money num"><%= invoice.outstanding? ? money(invoice.balance) : "—" %></td>
+              <td class="money num"><%= invoice.void? ? "—" : money(invoice.balance) %></td><%# PLT-18: a dash only where there's nothing to pay %>
             </tr>
           <% end %>
         </tbody>
@@ -69,7 +69,7 @@
     </div>
 
     <nav class="pagination mt-4" aria-label="Pagination">
-      <p>Showing <span class="tabular font-semibold text-ink"><%= ((@page - 1) * Admin::InvoicesController::PER_PAGE) + 1 %>–<%= [ @page * Admin::InvoicesController::PER_PAGE, @total_count ].min %></span> of <span class="tabular"><%= @total_count %></span></p>
+      <p>Showing <span class="tabular"><%= ((@page - 1) * Admin::InvoicesController::PER_PAGE) + 1 %>–<%= [ @page * Admin::InvoicesController::PER_PAGE, @total_count ].min %></span> of <span class="tabular"><%= @total_count %></span></p>
       <div class="pagination-links">
         <button type="submit" form="invoice-filters" name="page" value="<%= @page - 1 %>" class="<%= button_classes(:secondary, :sm) %>" <%= "disabled" if @page <= 1 %>><%= icon "chevron-left" %> Previous</button>
         <button type="submit" form="invoice-filters" name="page" value="<%= @page + 1 %>" class="<%= button_classes(:secondary, :sm) %>" <%= "disabled" if @page >= @total_pages %>>Next <%= icon "chevron-right" %></button>

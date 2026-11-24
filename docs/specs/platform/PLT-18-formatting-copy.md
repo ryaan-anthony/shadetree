@@ -28,7 +28,7 @@ Use one formatter per data type, everywhere. Triage: [#314 triage](../../audits/
 
 ## Acceptance criteria
 
-- [ ] **Money:** every amount on staff pages goes through the money formatter (PLT-08).
+- [x] **Money:** every amount on staff pages goes through the money formatter (PLT-08).
   - A real zero is "$0.00", including the Jobs list's Value and a paid invoice's Balance in the
     Invoices list.
   - A dash means only "no amount": a void invoice's Balance, or an unpriced line in a builder.
@@ -41,12 +41,12 @@ Use one formatter per data type, everywhere. Triage: [#314 triage](../../audits/
   - A relative time keeps its exact date on hover and for assistive technology.
 - [ ] **Phones:** every phone number on staff pages uses the phone formatter, including the
       Clients list, the pickers and the request list. Non-North-American numbers show as typed.
-- [ ] **Quantities:** a line shows "1 × $240.00" under its name, as invoices do. The client
+- [x] **Quantities:** a line shows "1 × $240.00" under its name, as invoices do. The client
       document's Qty column is unchanged. Units are in the same text tone as the number
       ("$45.00 / visit").
-- [ ] **Internal identifiers:** Stripe payment IDs show only in the invoice's Payments card, as
+- [x] **Internal identifiers:** Stripe payment IDs show only in the invoice's Payments card, as
       a labelled reference. They don't appear on the job page or in the client timeline.
-- [ ] **Copy:**
+- [x] **Copy:**
   - The visit form's arrival note reads "Times in Eastern Time (US & Canada)".
   - Pagination's "Showing 1–6 of 6" is one weight.
   - Joined strings ("Paid in all: $178.70", "Couldn't send (…)", "Emailed to … by …") keep
@@ -65,6 +65,16 @@ Use one formatter per data type, everywhere. Triage: [#314 triage](../../audits/
 - Client-facing pages, PDFs and emails, which already use the same formatters.
 - Menus whose items wrap (PLT-19).
 
+## Implementation notes
+
+- Part 1: `money` everywhere a zero showed "—" (a void invoice's Balance keeps it); `line_quantity`
+  writes "1 visit × $120.00" under a line on the job, invoice and visit pages (the quantity
+  alone where prices are hidden from technicians); Stripe's reference is
+  "Stripe reference: pi_…" in the invoice's Payments card only (the job's payment list and the
+  history text keep a recorded payment's own reference, like a check number). Checks
+  `zero_is_money` and `stripe_ids_only_in_payments` run on every staff page; copy guards are in
+  `test/integration/admin/formatting_test.rb`.
+
 ## Decisions
 
 - Quantities: "1 × $240.00" under the line name; the client document's Qty column stays; units
@@ -73,3 +83,4 @@ Use one formatter per data type, everywhere. Triage: [#314 triage](../../audits/
   2026-11-22).
 - A job with no items shows "$0.00", like any zero (owner, 2026-11-22).
 - A void invoice's balance stays "—", as there's nothing to pay (review of #332).
+- A draft invoice's Balance shows its amount, not "—" (owner, 2026-11-23).

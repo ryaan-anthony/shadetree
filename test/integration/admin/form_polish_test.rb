@@ -22,7 +22,7 @@ class Admin::FormPolishTest < ActionDispatch::IntegrationTest
   test "booking or changing a visit shows the job first, then the form" do
     get new_admin_job_visit_path(@job)
     assert_equal %w[aside form], order
-    assert_select "aside[aria-labelledby=visit-job-summary-h] #visit-job-summary", /Maria Lopez.*\(215\) 555-1212.*Item 0\s*× 2.*and 2 more.*Side gate.*No visits booked yet/m
+    assert_select "aside[aria-labelledby=visit-job-summary-h] #visit-job-summary", /Maria Lopez.*\(215\) 555-1212.*Item 0\s*2 × \$[\d.,]+.*and 2 more.*Side gate.*No visits booked yet/m
     assert_select "#visit-job-summary li", 7 # six items, then "and 2 more"
 
     visit = as_business(@business) { @job.visits.create!(scheduled_on: @business.today + 1, timing: "anytime", duration_minutes: 60) }

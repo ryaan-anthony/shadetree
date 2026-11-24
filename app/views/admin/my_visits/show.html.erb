@@ -66,9 +66,8 @@
             <div class="min-w-0 flex-1">
               <p class="font-medium text-ink"><%= line.name %></p>
               <% if line.description %><p class="whitespace-pre-line text-sm2 text-muted"><%= line.description %></p><% end %>
+              <p class="text-sm2 text-muted"><%= prices ? line_quantity(line) : line.quantity_label %></p><%# PLT-18: under the name, as on invoices %>
             </div>
-            <span class="whitespace-nowrap text-sm text-ink"><%= line.quantity_label %></span>
-            <% if prices %><span class="money whitespace-nowrap text-sm text-subtle"><%= money(line.unit_price) %></span><% end %>
           </li>
         <% end %>
       </ul>
