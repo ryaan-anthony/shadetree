@@ -111,6 +111,7 @@ class GuidedTourBrowserTest < ApplicationSystemTestCase
     refresh
     assert_stop "Stop 2 of 6", "Requests"
     wait_for_status "started", stop: "requests"
+    assert @membership.tour_resumed_from.present?, "resumed from the page load that unloaded"
 
     click_on "Next"
     click_on "See what a client sees"

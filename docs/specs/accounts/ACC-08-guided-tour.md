@@ -80,21 +80,21 @@ from Help.
   checklist isn't complete (even hidden), unless they've had it in any business; never on
   support's visit or hover prefetch. Technicians start from My day's welcome, anyone from Help.
 - Per membership: `tour_status` (offered, started, finished, skipped), `tour_stop` (reached, or
-  where it ended; "offer" when skipped there), offered and ended times. `bin/rails
-  onboarding:tour` reports outcomes, where people stopped and the median time to first quote
-  for each (counts only); Owners offered it over an hour after creating the business are
-  reported apart, timed from the offer.
-- A replay from Help only stamps `tour_replayed_at`: it can't overwrite the first run's outcome.
-  Support viewing as a member sees it but never records it (read-only endpoint, no reports).
+  where it ended; "offer" if skipped there), offered and ended times. `onboarding:tour` reports
+  outcomes, stops and median time to first quote (counts only); Owners offered it over an hour
+  after creating the business apart, timed from the offer.
+- A replay only stamps `tour_replayed_at`, never the first run's outcome. Support viewing as a
+  member sees it but never records it. Dev seeds: `new@example.com` has a brand-new business.
 - One non-modal dialog moves between stops, saying what it points at; it takes focus at each,
   F6 toggles to the target, Escape ends it, focus goes back (or to the step it leads to). No
   backdrop or trap. Below 960px a bottom sheet the page scrolls clear of; menu stops open the menu.
 - Leaving the page ends the tour there (recorded), except via its sample-quote link: it resumes
-  on return (this tab, 30 minutes; forgotten on sign-out). An unloading page can't tell a reload
-  from leaving, so it records the end and notes its place; if the tab's next load is that page
-  again within a minute (not Back/Forward or a Turbo visit), the tour carries on and reports
-  `resume`, reopening a first run ended there under two minutes ago. Other pages drop the note.
+  on return (this tab, 30 min; forgotten on sign-out). Unloading can't tell a reload from leaving,
+  so the page records the end and notes its stop; if the tab's next load is that page within a
+  minute (not Back/Forward or Turbo), the tour carries on, reporting `resume` from the old page
+  load's id (sent with each move). That reopens a run ended there under 2 minutes ago, or keeps
+  `tour_resumed_from` so the late end is ignored; never the offer. Other pages drop the note.
+  Reopening a just-closed tab within the minute could bring it back (unlikely; accepted).
 - Tips (`FirstTimeTips`): once per page and member when first seen, never mid-tour; `tips`
   keeps seen and hidden times. Help shows them again; Your account turns them off everywhere.
   Support can't mark, reset or turn them off.
-- Dev seeds: `new@example.com` owns a brand-new business with the offer and checklist showing.

@@ -30,6 +30,9 @@ const dropLeft = (keep = () => false) => {
   } catch { /* nothing kept */ }
 }
 const here = () => window.location.href.split("#")[0]
+// This page load, sent with each move: a resumed page names the one it resumed from, so that
+// page's own "end", if it arrives late, is ignored.
+const PAGE = window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`
 dropLeft((kept) => kept.url === here())
 document.addEventListener("turbo:visit", () => dropLeft())
 
@@ -76,11 +79,12 @@ export default class extends Controller {
       url.searchParams.delete("tour")
       history.replaceState(history.state, "", url)
       later(() => this.start())
-    } else if (kept && this.stops[kept.index]) {
-      later(() => {
-        if (kept.reloaded) this.record("resume", this.stops[kept.index].key)
-        this.show(kept.index, { quietly: true })
-      })
+    } else if (kept) {
+      const index = this.stops.findIndex((stop) => stop.key === kept.key)
+      if (index < 0) return
+      // Straight away: a background tab's animation frames can wait well past the server's window.
+      if (kept.from) this.record("resume", kept.key, { from: kept.from })
+      later(() => this.show(index, { quietly: true }))
     }
   }
 
@@ -100,15 +104,15 @@ export default class extends Controller {
   get running() { return this.index !== undefined && this.index !== null }
   get storageKey() { return `shadetree:tour:${this.scopeValue}` }
 
-  // The place kept by the sample-quote link, if it's recent, or by unloading this page, if this
-  // is that page loaded again ({ index, reloaded }); read once.
+  // The stop kept by the sample-quote link, if it's recent, or by unloading this page, if this
+  // is that page loaded again ({ key, from: that page load }); read once.
   takeKept() {
     try {
       const kept = JSON.parse(sessionStorage.getItem(this.storageKey) || "null")
       sessionStorage.removeItem(this.storageKey)
       if (!kept) return null
-      if (kept.left) return this.loadedAgain(kept) ? { index: kept.index, reloaded: true } : null
-      return Date.now() - kept.at < KEEP_FOR ? { index: kept.index } : null
+      if (kept.left) return this.loadedAgain(kept) ? { key: kept.key, from: kept.page } : null
+      return Date.now() - kept.at < KEEP_FOR ? { key: kept.key } : null
     } catch { return null }
   }
 
@@ -122,7 +126,7 @@ export default class extends Controller {
   // The tour's own link: keep its place so it resumes on return.
   keep() {
     this.keeping = true
-    this.save({ index: this.index, at: Date.now() })
+    this.save({ key: this.stops[this.index].key, at: Date.now() })
   }
 
   save(place) {
@@ -135,7 +139,7 @@ export default class extends Controller {
   leave({ unloading = false } = {}) {
     if (!this.running || this.keeping) return
     this.record("end", this.stops[this.index].key)
-    if (unloading) this.save({ index: this.index, at: Date.now(), url: here(), left: true })
+    if (unloading) this.save({ key: this.stops[this.index].key, at: Date.now(), url: here(), page: PAGE, left: true })
     this.index = null
   }
 
@@ -314,9 +318,9 @@ export default class extends Controller {
   get motion() { return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }
 
   // One at a time, in order: a quick click after the start mustn't land before it.
-  record(event, stop) {
+  record(event, stop, extra = {}) {
     if (!this.recordValue) return
-    const body = JSON.stringify({ event, stop })
+    const body = JSON.stringify({ event, stop, page: PAGE, ...extra })
     this.queue = this.queue.then(() => fetch(this.urlValue, {
       method: "PATCH",
       headers: { Accept: "application/json", "Content-Type": "application/json", "X-CSRF-Token": document.querySelector("meta[name=csrf-token]")?.content },

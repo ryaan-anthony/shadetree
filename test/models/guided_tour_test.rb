@@ -91,6 +91,54 @@ class GuidedTourTest < ActiveSupport::TestCase
     assert_equal %w[finished settings], [ finished.reload.tour_status, finished.tour_stop ]
   end
 
+  # (owner, 2026-11-24) A reload isn't leaving. The unloading page A reports its end; the reloaded
+  # page B reports resume from A. Either can reach the server first.
+  test "a reload resumes the run whichever report comes first, and it can still finish" do
+    late_end = member(:admin)
+    late_end.record_tour!("start", "home", page: "A")
+    late_end.record_tour!("step", "quotes", page: "A")
+    late_end.record_tour!("resume", "quotes", page: "B", from: "A")
+    late_end.record_tour!("end", "quotes", page: "A") # A's own end, late: ignored
+    assert_equal [ "started", "quotes", nil ], [ late_end.reload.tour_status, late_end.tour_stop, late_end.tour_ended_at ]
+    late_end.record_tour!("step", "schedule", page: "B")
+    late_end.record_tour!("finish", "settings", page: "B")
+    assert_equal %w[finished settings], [ late_end.reload.tour_status, late_end.tour_stop ]
+
+    end_first = member(:admin)
+    end_first.record_tour!("start", "home", page: "A")
+    end_first.record_tour!("step", "quotes", page: "A")
+    end_first.record_tour!("end", "quotes", page: "A")
+    end_first.record_tour!("resume", "quotes", page: "B", from: "A")
+    assert_equal [ "started", "quotes", nil, "A" ], [ end_first.reload.tour_status, end_first.tour_stop, end_first.tour_ended_at, end_first.tour_resumed_from ]
+    end_first.record_tour!("finish", "settings", page: "B")
+    assert_equal %w[finished settings], [ end_first.reload.tour_status, end_first.tour_stop ]
+
+    left = member(:admin) # B, resumed, is then left for good: its end counts
+    left.record_tour!("start", "home", page: "A")
+    left.record_tour!("resume", "home", page: "B", from: "A")
+    left.record_tour!("end", "home", page: "B")
+    assert_equal %w[skipped home], [ left.reload.tour_status, left.tour_stop ]
+  end
+
+  test "a resume never reopens a skipped offer, another stop, an old end or the first run under a replay" do
+    membership = member(:admin)
+    membership.offer_tour!
+    membership.record_tour!("end", "offer", page: "A")
+    membership.record_tour!("resume", "offer", page: "B", from: "A")
+    assert_equal %w[skipped offer], [ membership.reload.tour_status, membership.tour_stop ]
+
+    membership.update!(tour_status: "skipped", tour_stop: "quotes", tour_ended_at: Time.current)
+    membership.record_tour!("resume", "requests", page: "B", from: "A")
+    membership.record_tour!("resume", "quotes", page: "B") # from no page
+    assert_equal "skipped", membership.reload.tour_status
+    membership.update!(tour_ended_at: 3.minutes.ago)
+    membership.record_tour!("resume", "quotes", page: "B", from: "A")
+    assert_equal "skipped", membership.reload.tour_status, "not long after"
+    membership.update!(tour_ended_at: 1.minute.ago, tour_replayed_at: Time.current)
+    membership.record_tour!("resume", "quotes", page: "B", from: "A")
+    assert_equal "skipped", membership.reload.tour_status, "a replay's reload keeps the first run's outcome"
+  end
+
   private
 
   def admin_sample_quote_path = Rails.application.routes.url_helpers.admin_sample_quote_path
