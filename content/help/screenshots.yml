@@ -32,6 +32,9 @@ email-settings:
 emails-to-clients:
   digest: 9e4eee82da3ec1754186974b55ea8d4643c2d17d62aedcb12ae676f394a064de
   captured_on: '2026-11-24'
+erase-client:
+  digest: 3c71650897c537bd8f1a0788ed94c2c9ba243dc2024c95af5ff27137b580a5e5
+  captured_on: '2026-11-24'
 home-get-set-up:
   digest: 1feac51cd9cbd7e5e693a9758f42d5d64568a1978b05d9db4912693eb97a376d
   captured_on: '2026-11-24'
@@ -43,6 +46,9 @@ import-clients:
   captured_on: '2026-11-24'
 invoice-draft:
   digest: 82be05678d9f55f4e2117e655abb57371e539844bcef22fecb3506f2f1314fcb
+  captured_on: '2026-11-24'
+invoice-payments:
+  digest: 6392bcf83191f66053ecf1f40796b54fb4f554d6bb12c1edcf6e3ae3b0207341
   captured_on: '2026-11-24'
 invoice-sent:
   digest: 26c257aab9a61eaf0d405730f68a94fcff0c42a09193bfded91e67a3ebdda99d
@@ -106,6 +112,12 @@ services-list:
   captured_on: '2026-11-24'
 team-page:
   digest: b05e9e940d00a7078d1f61086ce58d9432f01670809525e0a9e173a5ca08767a
+  captured_on: '2026-11-24'
+your-data:
+  digest: 4e9ec84ee86b55f2fd012175bba28d23b7094651a9f28bf239117fec3176e5e0
+  captured_on: '2026-11-24'
+your-profile:
+  digest: a053626b6af15e4ae0f203ff54f7e6d073cea137408511710320390b686971d8
   captured_on: '2026-11-24'
 your-questions:
   digest: b20912d4b17c1e9b98056ca27cd7ad71178386c7f5eeca0703e49ab17fa78747
