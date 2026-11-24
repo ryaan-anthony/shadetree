@@ -22,7 +22,7 @@ class Admin::LocationsTest < ActionDispatch::IntegrationTest
     assert_select "nav.tabs a", { text: "Locations", count: 0 }
     assert_select "a[href='#{new_admin_location_path}']", "Add a location"
     get admin_hours_path
-    assert_select "nav[aria-label=Location]", 0
+    assert_select "[aria-label=Location]", 0
     get admin_locations_path
     assert_redirected_to edit_admin_business_path
 
@@ -63,7 +63,7 @@ class Admin::LocationsTest < ActionDispatch::IntegrationTest
   test "each location's hours and closures are edited on the Hours tab" do
     location = branch
     get admin_hours_path(location:)
-    assert_select "nav[aria-label=Location] a[aria-current=page]", "North yard"
+    assert_select "ul.segmented[aria-label=Location] a[aria-current=page]", "North yard"
     patch admin_hours_path(location:), params: { preset: "weekdays" }
     assert_redirected_to admin_hours_path(location:)
     assert_equal WeeklyHours::WEEKDAYS_8_TO_5, location.reload.weekly_hours

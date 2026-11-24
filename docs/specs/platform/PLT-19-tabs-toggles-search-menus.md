@@ -27,24 +27,43 @@ Make one of each and use it everywhere. Triage: [#314 triage](../../audits/314-t
 
 ## Acceptance criteria
 
-- [ ] **Tabs** switch what a list shows. One style, left-aligned under the page header, with
+- [x] **Tabs** switch what a list shows. One style, left-aligned under the page header, with
       counts where the list has them. The services list's Active/Archived tabs move left.
-- [ ] Status tabs with a count of 0 are hidden, except "All" and the current tab. "Archived"
+- [x] Status tabs with a count of 0 are hidden, except "All" and the current tab. "Archived"
       shows once something is archived.
-- [ ] **Segmented control** picks one of a few options on the same view. It's one kit
+- [x] **Segmented control** picks one of a few options on the same view. It's one kit
       component, with Plan's white-pill look, used for Schedule's Day/Week and Color by and
       Plan's Monthly/Yearly. It works by keyboard and announces the chosen option.
-- [ ] Settings' page pills (#302) become the segmented control or tabs, not a separate style.
-- [ ] **Search:** every list searches as you type, with no Search button. Enter still submits,
+- [x] Settings' page pills (#302) become the segmented control or tabs, not a separate style.
+- [x] **Search:** every list searches as you type, with no Search button. Enter still submits,
       and it works without JavaScript.
-- [ ] **Menus:** one kit menu (white card, shadow, card radius). It is as wide as its longest
+- [x] **Menus:** one kit menu (white card, shadow, card radius). It is as wide as its longest
       item, so items never wrap ("Duplicate for another client" fits).
-- [ ] The guided tour's targets keep working, including the sidebar's Settings link that opens
+- [x] The guided tour's targets keep working, including the sidebar's Settings link that opens
       the settings pills, and the tour's tests pass unchanged.
-- [ ] Integration tests over the shared page list (PLT-14) fail when a list page has a search
+- [x] Integration tests over the shared page list (PLT-14) fail when a list page has a search
       form with a submit button, or a switch that isn't the tabs or segmented component.
 - [ ] Desktop (1280) and phone (390) screenshots of Quotes, Services & prices, Schedule, Plan
       and a settings page.
+
+## Implementation notes
+
+- Kit: `ControlsHelper#tabs`, `#segmented_control` and `#menu`, each on the style guide. Tabs and
+  the segmented control come as links (`href:`), a filter form's buttons (`name:`) or radios
+  (`radio:`). Tabs take `counts:` and hide zeros except `keep:` and the current tab.
+- The menu is a disclosure (`aria-expanded`, `aria-controls`, no ARIA menu roles): arrow keys,
+  Home/End, Escape back to the button, Tab moves on and closes it. It's `max-content` wide and
+  shifts back on screen on phones. The business switcher keeps its own trigger with the same ARIA.
+- Lists put search first, then tabs. Services search into a frame (GET, so Enter works without
+  JavaScript); its tabs sit in the frame to keep the search. Requests post to `#search` like
+  Quotes, by client or description, within the tab and assignee.
+- Each list has one status region outside its results frame (`results_status`), announcing
+  every render. A pressed filter tab hides a leftover zero-count one.
+- Settings keep their group tabs; a group's pages and Hours' locations are segmented controls,
+  which wrap rather than scroll. The ops console's message tabs use the kit (all shown).
+- `design_system_test.rb` adds `kit_menus`, `search_as_you_type`, `one_switch_style` and
+  `no_empty_tabs`; `kit_controls_test.rb` drives them by keyboard with axe.
+- Dev seeds: an archived "Snow plowing" service, so Services shows its Archived tab.
 
 ## Out of scope
 
@@ -54,5 +73,6 @@ Make one of each and use it everywhere. Triage: [#314 triage](../../audits/314-t
 ## Decisions
 
 - Zero-count status tabs are hidden, except "All" and the current one (owner, 2026-11-22).
+- Requests get the same search-as-you-type box as the other lists (owner, 2026-11-23).
 - No initials avatars in client rows for now. They take width on phones for little
   information. Revisit after these specs ship (owner, 2026-11-22).

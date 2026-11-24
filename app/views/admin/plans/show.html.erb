@@ -38,15 +38,9 @@
   <h2 class="section-title">Compare plans</h2>
   <% if choosing && yearly %>
     <% savings = @plans.filter_map { plan_annual_saving(_1) }.uniq %>
-    <fieldset class="inline-flex rounded-control border border-line bg-sunken p-1 text-sm" id="interval-choice">
-      <legend class="sr-only">Pay</legend>
-      <label class="cursor-pointer rounded-[4px] px-3 py-1 font-medium text-subtle has-[:checked]:bg-surface has-[:checked]:text-ink has-[:checked]:shadow-card has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-canopy">
-        <input type="radio" name="interval" value="monthly" class="sr-only" <%= "checked" unless @subscription&.live? && @subscription.yearly? %>> Monthly
-      </label>
-      <label class="cursor-pointer rounded-[4px] px-3 py-1 font-medium text-subtle has-[:checked]:bg-surface has-[:checked]:text-ink has-[:checked]:shadow-card has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-canopy">
-        <input type="radio" name="interval" value="yearly" class="sr-only" id="interval-yearly" <%= "checked" if @subscription&.live? && @subscription.yearly? %>> Yearly<%= ", #{savings.first}" if savings.one? %>
-      </label>
-    </fieldset>
+    <% yearly_now = @subscription&.live? && @subscription.yearly? %>
+    <%= segmented_control({ "monthly" => "Monthly", "yearly" => [ "Yearly#{", #{savings.first}" if savings.one?}", { id: "interval-yearly" } ] },
+                          selected: yearly_now ? "yearly" : "monthly", label: "Pay", radio: { name: "interval" }, id: "interval-choice") %>
   <% end %>
 </div>
 <div class="overflow-x-auto rounded-card border border-line bg-surface" tabindex="0" role="region" aria-label="Compare plans">

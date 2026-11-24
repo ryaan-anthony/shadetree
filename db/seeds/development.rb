@@ -68,6 +68,8 @@ Tenancy.with_business(business) do
   mowing = CatalogItem.find_by(name: "Lawn mowing")
   LocationPrice.find_or_create_by!(location: north, catalog_item: mowing) { _1.unit_price = "55" } if mowing
   north.update!(tax_rate_ids: TaxRate.where(name: "State sales tax").pluck(:id)) if north.tax_rate_ids.nil?
+  # PLT-19: a retired service, so the services list shows its Archived tab.
+  CatalogItem.find_or_create_by!(name: "Snow plowing") { _1.assign_attributes(unit: "visit", unit_price: "95") }.then { _1.archive! unless _1.archived? }
 
   # Clients (CLI-01, CLI-02).
   [

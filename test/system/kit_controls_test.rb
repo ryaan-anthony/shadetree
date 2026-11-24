@@ -69,4 +69,83 @@ class KitControlsTest < ApplicationSystemTestCase
   ensure
     page.driver.browser.manage.window.resize_to(1400, 1400)
   end
+
+  test "the schedule's segmented controls: Color by by keyboard, Day/Week as links, and axe" do
+    visit admin_schedule_path
+    within("#schedule-color") do
+      assert_selector ".segmented[role=group][aria-labelledby=schedule-color-label] button.segment[aria-pressed=true]", text: "Person"
+      find("button.segment", text: "Status").send_keys(:enter)
+    end
+    assert_selector "#schedule-color button.segment[aria-pressed=true]", text: "Status"
+    assert_equal "Status", focused_text, "focus comes back to the chosen option"
+    within("ul.segmented[aria-label=View]") { click_link "Day" }
+    assert_selector "ul.segmented a.segment[aria-current=page]", text: "Day"
+    assert_axe_clean "the schedule"
+  end
+
+  test "list tabs by keyboard: the pressed tab is announced and keeps focus" do
+    sent_quote
+    visit admin_quotes_path
+    assert_no_selector "nav.tabs button.tab[value=declined]" # PLT-19: none declined, so hidden
+    find("nav.tabs button.tab[value=awaiting]").send_keys(:enter)
+    assert_selector "nav.tabs button.tab[value=awaiting][aria-pressed=true]"
+    assert_selector "nav.tabs button.tab[value=all][aria-pressed=false]"
+    assert_selector "nav.tabs button.tab[value=awaiting]:focus" # back on it once the results arrive
+    assert_axe_clean "the quotes list"
+  end
+
+  test "services search as you type, and Enter still searches" do
+    Tenancy.with_business(@business) do
+      CatalogItem.create!(name: "Mowing", unit: "visit", unit_price: "45")
+      CatalogItem.create!(name: "Hedge trimming", unit: "hour", unit_price: "60")
+    end
+    visit admin_catalog_items_path
+    assert_no_button "Search"
+    find_field("Search your services").fill_in(with: "mow")
+    assert_no_text "Hedge trimming"
+    assert_text "Mowing"
+    assert_equal "mow", find_field("Search your services").value, "the box is kept: only the results refresh"
+    find_field("Search your services").fill_in(with: "hedge\n")
+    assert_text "Hedge trimming"
+    assert_no_text "Mowing"
+    assert_axe_clean "the services list"
+  end
+
+  test "settings pages are a segmented control under the group tabs" do
+    visit edit_admin_business_path(tab: "branding")
+    within("#settings-nav") do
+      assert_selector ".tabs a.tab[aria-current=true]", text: "Business"
+      assert_selector "ul.segmented a.segment[aria-current=page]", text: "Branding"
+      click_link "Hours"
+    end
+    assert_selector "#settings-nav ul.segmented a.segment[aria-current=page]", text: "Hours"
+    assert_axe_clean "Hours"
+  end
+
+  # Owner, 2026-11-23: Requests search as you type too; the status region outside the frame says what's shown.
+  test "requests search as you type and the result is announced" do
+    Tenancy.with_business(@business) do
+      client = Client.create!(display_name: "Maria Lopez", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ])
+      ServiceRequest.create!(client:, source: "phone", description: "Fence repair")
+      ServiceRequest.create!(client:, source: "phone", description: "Gutter guards")
+    end
+    visit admin_service_requests_path
+    assert_no_button "Search"
+    find_field("Search requests").fill_in(with: "gutter")
+    assert_no_text "Fence repair"
+    assert_text "Gutter guards"
+    assert_selector "#request_results_status[role=status]", text: "1 request matching gutter", visible: :all
+    assert_current_path admin_service_requests_path # client names stay out of the URL
+    assert_axe_clean "the requests list"
+  end
+
+  test "a settings group's pages wrap on a phone instead of scrolling" do
+    page.driver.browser.manage.window.resize_to(390, 844)
+    visit edit_admin_business_path(tab: "branding")
+    widths = evaluate_script("(() => { const s = document.querySelector('#settings-nav ul.segmented'); return [s.scrollWidth, s.clientWidth, document.documentElement.scrollWidth] })()")
+    assert_equal widths[1], widths[0], "nothing hidden sideways"
+    assert_operator widths[2], :<=, 390
+  ensure
+    page.driver.browser.manage.window.resize_to(1400, 1400)
+  end
 end
