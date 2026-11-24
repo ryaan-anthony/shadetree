@@ -503,6 +503,36 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_000001) do
     t.index ["business_id", "kind"], name: "index_document_sequences_on_business_id_and_kind", unique: true
   end
 
+  create_table "email_event_tallies", force: :cascade do |t|
+    t.date "day", null: false
+    t.integer "received", default: 0, null: false
+    t.integer "matched", default: 0, null: false
+    t.integer "dropped", default: 0, null: false
+    t.index ["day"], name: "index_email_event_tallies_on_day", unique: true
+  end
+
+  create_table "email_events", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "email_message_id", null: false
+    t.string "event_key", null: false
+    t.string "event_type", null: false
+    t.string "status_code"
+    t.string "reply_code"
+    t.string "reason", null: false
+    t.string "recipient_role", null: false
+    t.integer "cc_position"
+    t.datetime "occurred_at", null: false
+    t.datetime "processed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id"], name: "index_email_events_on_business_id"
+    t.index ["created_at"], name: "index_email_events_on_created_at"
+    t.index ["email_message_id"], name: "index_email_events_on_email_message_id"
+    t.index ["event_key"], name: "index_email_events_on_event_key", unique: true
+    t.check_constraint "event_type::text = ANY (ARRAY['bounce'::character varying, 'complaint'::character varying]::text[])", name: "email_events_type"
+    t.check_constraint "recipient_role::text = ANY (ARRAY['to'::character varying, 'cc'::character varying]::text[])", name: "email_events_role"
+  end
+
   create_table "email_messages", force: :cascade do |t|
     t.bigint "business_id", null: false
     t.string "uid", null: false
@@ -522,6 +552,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_000001) do
     t.datetime "failed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "cc_problems", default: [], null: false
     t.index ["business_id", "created_at"], name: "index_email_messages_on_business_id_and_created_at"
     t.index ["business_id"], name: "index_email_messages_on_business_id"
     t.index ["provider_message_id"], name: "index_email_messages_on_provider_message_id", unique: true
@@ -1647,6 +1678,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_000001) do
   add_foreign_key "data_exports", "businesses"
   add_foreign_key "data_exports", "users", column: "requested_by_id", on_delete: :nullify
   add_foreign_key "document_sequences", "businesses"
+  add_foreign_key "email_events", "businesses", on_delete: :cascade
+  add_foreign_key "email_events", "email_messages", on_delete: :cascade
   add_foreign_key "email_messages", "businesses", on_delete: :cascade
   add_foreign_key "email_suppressions", "businesses", on_delete: :cascade
   add_foreign_key "email_suppressions", "email_messages", on_delete: :nullify
