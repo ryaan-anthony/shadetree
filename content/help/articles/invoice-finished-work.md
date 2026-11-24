@@ -23,7 +23,9 @@ what you're paid.
 
 1. Open the finished job and press **Create invoice**. (Or press **New invoice** on **Invoices**,
    or on the client's page, to start one from scratch.)
-2. The invoice opens as a draft with the job's items. Change anything you need: it saves as you
+   Work you didn't make a job for? On an approved quote, press **Create invoice** (beside
+   **Create job**) to bill the quote's items straight away.
+2. The invoice opens as a draft with the job's (or the quote's) items. Change anything you need: it saves as you
    go, just like a quote.
 3. Press **Preview as client** to see it as your client will.
 

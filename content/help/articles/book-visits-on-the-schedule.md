@@ -29,10 +29,10 @@ the visits they're on in **My day** on their phone.
 ## Book a visit
 
 1. Press **New visit**, or choose an open time on the calendar.
-2. Under **Job**, choose the job. Jobs that **Need scheduling** are listed first. Press
+2. Under **Job**, choose the job. Jobs under **Needs scheduling** are listed first. Press
    **Continue**.
-3. Pick the **Date (or first day)**. For work over several days, open **More than one day**: each day becomes its
-   own visit.
+3. Pick the **Date (or first day)**. For work over several days, open **More than one day**: each
+   day becomes its own visit.
 4. Under **Arrival**, choose **A start time**, **A window** (for example 1 to 3 pm) or
    **Anytime that day**.
 5. Set the **Estimated hours**.
