@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_23_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_24_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -599,6 +599,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_100000) do
     t.index ["user_id"], name: "index_invoice_events_on_user_id"
   end
 
+  create_table "invoice_jobs", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "invoice_id", null: false
+    t.bigint "job_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["invoice_id", "job_id"], name: "index_invoice_jobs_on_invoice_id_and_job_id", unique: true
+    t.index ["job_id"], name: "index_invoice_jobs_on_job_id"
+  end
+
   create_table "invoice_line_items", force: :cascade do |t|
     t.bigint "business_id", null: false
     t.bigint "invoice_id", null: false
@@ -616,10 +626,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_100000) do
     t.bigint "discount_amount_cents"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "job_line_item_id"
+    t.bigint "quote_line_item_id"
+    t.boolean "final", default: false, null: false
+    t.jsonb "tax_rates"
+    t.string "invoice_status", default: "draft", null: false
     t.index ["business_id"], name: "index_invoice_line_items_on_business_id"
     t.index ["catalog_item_id"], name: "index_invoice_line_items_on_catalog_item_id"
     t.index ["invoice_id", "key"], name: "index_invoice_line_items_on_invoice_id_and_key", unique: true
     t.index ["invoice_id", "position"], name: "index_invoice_line_items_on_invoice_id_and_position"
+    t.index ["job_line_item_id"], name: "index_invoice_line_items_on_job_line_item_id"
+    t.index ["job_line_item_id"], name: "index_invoice_lines_one_final_bill_per_job_line", unique: true, where: "(final AND ((invoice_status)::text <> 'void'::text))"
+    t.index ["quote_line_item_id"], name: "index_invoice_line_items_on_quote_line_item_id"
+    t.index ["quote_line_item_id"], name: "index_invoice_lines_one_final_bill_per_quote_line", unique: true, where: "(final AND ((invoice_status)::text <> 'void'::text) AND (job_line_item_id IS NULL))"
     t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying::text, 'amount'::character varying::text]))", name: "invoice_lines_discount_kind"
     t.check_constraint "quantity >= 0::numeric", name: "invoice_lines_quantity_nonnegative"
   end
@@ -710,6 +729,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_100000) do
     t.index ["business_id"], name: "index_invoices_on_business_id"
     t.index ["client_id"], name: "index_invoices_on_client_id"
     t.index ["created_by_id"], name: "index_invoices_on_created_by_id"
+    t.index ["id", "status"], name: "index_invoices_on_id_and_status", unique: true
     t.index ["job_id"], name: "index_invoices_on_job_id"
     t.index ["property_id"], name: "index_invoices_on_property_id"
     t.index ["quote_id"], name: "index_invoices_on_quote_id"
@@ -1609,9 +1629,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_100000) do
   add_foreign_key "invoice_events", "businesses"
   add_foreign_key "invoice_events", "invoices"
   add_foreign_key "invoice_events", "users"
+  add_foreign_key "invoice_jobs", "businesses"
+  add_foreign_key "invoice_jobs", "invoices", on_delete: :cascade
+  add_foreign_key "invoice_jobs", "jobs"
   add_foreign_key "invoice_line_items", "businesses"
   add_foreign_key "invoice_line_items", "catalog_items"
   add_foreign_key "invoice_line_items", "invoices"
+  add_foreign_key "invoice_line_items", "invoices", column: ["invoice_id", "invoice_status"], primary_key: ["id", "status"], name: "fk_invoice_line_items_invoice_status", on_update: :cascade, on_delete: :cascade
+  add_foreign_key "invoice_line_items", "job_line_items", on_delete: :nullify
+  add_foreign_key "invoice_line_items", "quote_line_items", on_delete: :nullify
   add_foreign_key "invoice_revisions", "active_storage_blobs", column: "pdf_blob_id", on_delete: :nullify
   add_foreign_key "invoice_revisions", "businesses"
   add_foreign_key "invoice_revisions", "invoices"

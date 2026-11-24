@@ -126,8 +126,8 @@ class Admin::InvoiceSendsTest < ActionDispatch::IntegrationTest
     assert_redirected_to edit_admin_invoice_path(@invoice)
     assert_equal "Add at least one line before sending.", flash[:alert]
 
-    as_business(@business) { @invoice.update_columns(status: "paid", sent_at: Time.current) }
     as_business(@business) { @invoice.sync_line_items([ { "key" => "a", "name" => "Work", "quantity" => "1", "unit_price" => "5" } ]) && @invoice.save! }
+    as_business(@business) { @invoice.update_columns(status: "paid", sent_at: Time.current) } # lines go on drafts only (PAY-06)
     post admin_invoice_send_path(@invoice), params: { channel: "link" }
     assert_redirected_to admin_invoice_path(@invoice)
     assert_match "is paid", flash[:alert]
