@@ -69,6 +69,15 @@ module TeamProfile
     changed
   end
 
+  # Who may change `target`'s profile: themselves, people who manage the team, and for an Owner's
+  # only people who manage Owners (ACC-07's rule). Never across businesses, or a deleted account.
+  def can_edit_profile?(target)
+    return false unless active? && target.business_id == business_id && !target.user.deleted?
+    return true if target == self
+
+    can?(:manage_team) && (!target.owner? || can?(:manage_owners))
+  end
+
   # Changes someone else made, newest first (the rows go with the membership, by foreign key).
   def profile_history(limit: 20)
     Tenancy.with_business(business) { ProfileEvent.where(business_user_id: id).includes(:user).order(occurred_at: :desc, id: :desc).limit(limit).to_a }

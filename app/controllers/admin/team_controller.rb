@@ -11,6 +11,8 @@ class Admin::TeamController < Admin::BaseController
     @invitations = Invitation.where(accepted_at: nil, revoked_at: nil).includes(:invited_by).order(created_at: :desc)
     @invitation = Invitation.new(role: "technician")
     @custom_roles = Role.ordered.to_a # ACC-07
+    # ACC-09: changes teammates made to each profile, newest first, in one query
+    @profile_history = ProfileEvent.where(business_user_id: memberships.map(&:id)).includes(:user).order(occurred_at: :desc, id: :desc).group_by(&:business_user_id)
     @support_visits = AuditEntry.support_visits(current_business) if current_membership.owner? # OPS-03
   end
 end

@@ -11,7 +11,8 @@
           <tbody>
             <% @active.each do |member| %>
               <tr id="member-<%= member.uid %>">
-                <td class="primary"><%= member.user.full_name %><span class="sub"><%= member.user.email %></span></td>
+                <td class="primary"><%= member.user.full_name %><span class="sub"><%= member.user.email %></span>
+                  <%= render "admin/team/profile_links", member:, history: @profile_history.fetch(member.id, []) %></td>
                 <td>
                   <% options = role_options(member, @custom_roles) %>
                   <% if member != current_membership && options.size > 1 && current_membership.can_assign_role?(member, member.role_choice) %>

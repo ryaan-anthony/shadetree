@@ -1,0 +1,51 @@
+<%# ACC-09: a member's profile in this business (their own from the user menu, others' from Team). %>
+<% own = @member == current_membership %>
+<% user = @member.user %>
+<%= page_header (own ? "Your profile in #{current_business.name}" : "#{user.full_name}'s profile"),
+                lede: (own ? "How your team sees you here, and clients too if #{current_business.name} shows team profiles." : "#{user.full_name} is told when you change it.") do %>
+  <% unless own %><%= link_to "Back to Team", admin_team_path, class: button_classes(:secondary) %><% end %>
+<% end %>
+
+<%= form_with model: @member, scope: :business_user, url: (own ? admin_profile_path : admin_member_profile_path(@member)), method: :patch, multipart: true, class: "form-split space-y-4" do |f| %>
+  <%= card title: "Photo", subtitle: "A clear photo of your face helps clients know who's at the door. It's shown as a circle, cut from the middle." do %>
+    <div class="flex flex-wrap items-center gap-4">
+      <%= member_avatar @member, size: :lg, decorative: false %>
+      <div class="min-w-0 flex-1 space-y-2">
+        <% photo_errors = @member.errors[:photo] %>
+        <div class="field">
+          <%= f.label :photo, @member.photo_saved? ? "Replace photo" : "Add a photo", class: "label" %>
+          <%= f.file_field :photo, accept: TeamProfile::PHOTO_TYPES.join(","), class: "input py-1.5",
+                           "aria-invalid": (photo_errors.any? || nil), "aria-describedby": [ "photo-help", ("photo-error" if photo_errors.any?) ].compact.join(" ") %>
+          <p class="help" id="photo-help">PNG, JPEG or WebP, up to <%= TeamProfile::PHOTO_MAX_BYTES / 1.megabyte %> MB and at least <%= TeamProfile::PHOTO_MIN_SIDE %> pixels a side. On a phone you can take one now.</p>
+          <% if photo_errors.any? %>
+            <p class="error-text" id="photo-error" role="alert"><%= icon "alert-circle" %>Photo <%= photo_errors.to_sentence %></p>
+          <% end %>
+        </div>
+        <% if @member.photo_saved? %>
+          <%= f.check :remove_photo, label: "Remove photo", hint: "Initials are shown instead." %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <%= card title: "About" do %>
+    <div class="space-y-4">
+      <div>
+        <p class="label">First name</p>
+        <p class="text-sm text-ink"><%= user.first_name.presence || "None yet" %>
+          <span class="block text-sm2 text-muted"><%= own ? safe_join([ "From your account. ", link_to("Change it in your account", edit_user_registration_path, class: "underline") ]) : "From their account; only they can change it." %>
+            Clients see the first name only, never the last name or email.</span></p>
+      </div>
+      <%= f.field :title, optional: true, maxlength: TeamProfile::TITLE_MAX, placeholder: "Lead technician", help: "Up to #{TeamProfile::TITLE_MAX} characters." %>
+      <%= f.field :bio, as: :textarea, optional: true, rows: 3, maxlength: TeamProfile::BIO_MAX, label: "Short bio",
+                        help: "Up to #{TeamProfile::BIO_MAX} characters, plain text. Your team sees it on your profile." %>
+      <%= f.field :work_phone, as: :phone, optional: true, autocomplete: "off",
+                               help: "Clients see this number. Leave it blank and they see #{current_business.name}'s number instead, never a personal one." %>
+    </div>
+  <% end %>
+
+  <div class="flex flex-wrap gap-2">
+    <%= f.submit_button "Save profile" %>
+    <%= link_to "Cancel", (own ? admin_root_path : admin_team_path), class: button_classes(:tertiary) %>
+  </div>
+<% end %>
