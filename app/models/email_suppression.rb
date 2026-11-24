@@ -1,9 +1,10 @@
-# An address a business must not email again (NTF-01): the mail server refused it. Clearing it
-# (after the address is fixed or confirmed) allows sending again.
+# An address a business must not email again (NTF-01): the mail server refused it, or (NTF-05)
+# the client marked an email as spam. Clearing it (after the address is fixed or confirmed)
+# allows sending again.
 class EmailSuppression < ApplicationRecord
   include BusinessOwned
 
-  REASONS = %w[hard_bounce].freeze
+  REASONS = %w[hard_bounce complaint].freeze # complaint: marked as spam (NTF-05)
 
   belongs_to :email_message, optional: true
 

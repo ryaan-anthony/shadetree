@@ -31,6 +31,9 @@ production:
   prune_connect_events: # PAY-03: old Stripe notifications
     class: PruneConnectEventsJob
     schedule: every day at 5:35am
+  prune_email_events: # NTF-05: old late bounce and complaint events
+    class: PruneEmailEventsJob
+    schedule: every day at 5:40am
   delete_scheduled_businesses: # OPS-04: businesses whose deletion waiting period is over
     class: DeleteScheduledBusinessesJob
     schedule: every day at 3:40am

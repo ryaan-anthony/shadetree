@@ -3,8 +3,10 @@
 class EmailMessage < ApplicationRecord
   include BusinessOwned
 
-  # bounced: the mail server refused the address; suppressed: not sent, the address is blocked.
-  STATUSES = %w[queued sent bounced failed suppressed].freeze
+  # bounced: the mail server refused the address; suppressed: not sent, the address is blocked;
+  # complained: the client marked it as spam (NTF-05), which blocks the address but isn't a
+  # delivery problem to warn about or resend.
+  STATUSES = %w[queued sent bounced failed suppressed complained].freeze
   PROBLEMS = %w[bounced failed suppressed].freeze
 
   belongs_to :related, polymorphic: true, optional: true
@@ -48,15 +50,17 @@ class EmailMessage < ApplicationRecord
     send&.cc.to_s.split(/[,;\s]+/).compact_blank.map(&:downcase)
   end
 
-  # announce: the mail server refused it or it couldn't be sent (ClientMailDeliveryJob), so it's
-  # announced (see #announce_undelivered), once, when its status changes. Emails skipped before
-  # sending (the document changed, a blocked address) are only marked.
-  def mark!(status, at: Time.current, announce: status == "bounced", **attributes)
-    stamp = { "sent" => :sent_at, "bounced" => :bounced_at, "failed" => :failed_at }[status]
+  # announce: the mail server refused it or it couldn't be sent (ClientMailDeliveryJob, or a late
+  # report, NTF-05), so it's announced (see #announce_undelivered), once, when its status changes.
+  # notify: false keeps it to the client's timeline (a late bounce once the client answered or
+  # paid, or of an email that isn't the document). Emails skipped before sending (the document
+  # changed, a blocked address) are only marked.
+  def mark!(status, at: Time.current, announce: status == "bounced", notify: true, **attributes)
+    stamp = { "sent" => :sent_at, "bounced" => :bounced_at, "failed" => :failed_at, "complained" => :complained_at }[status]
     Tenancy.with_business(business) do
       transaction do
         update!(status:, **(stamp ? { stamp => at } : {}), **attributes)
-        announce_undelivered(at) if announce && problem? && saved_change_to_status?
+        announce_undelivered(at, notify:) if announce && problem? && saved_change_to_status?
       end
     end
   end
@@ -69,9 +73,13 @@ class EmailMessage < ApplicationRecord
   # When it went wrong, for the "not delivered" warnings.
   def problem_at = bounced_at || failed_at || updated_at
 
-  # The mail server's reply code ("554 5.7.1"), kept for anyone checking with the provider.
-  # Only the code is stored, never the server's text (ADR 0017).
-  def reply_code = error.to_s[/\b[45]\d\d(?: \d\.\d{1,3}\.\d{1,3})?\b/]
+  # The mail server's reply code ("554 5.7.1"), or a late report's lone status ("5.7.1", NTF-05),
+  # kept for anyone checking with the provider. Only the code is stored, never the server's text
+  # (ADR 0017).
+  def reply_code = error.to_s[/\b[45]\d\d(?: \d\.\d{1,3}\.\d{1,3})?\b|\b[45]\.\d{1,3}\.\d{1,3}\b/]
+
+  # Whose email it was: the client of its quote, invoice, job or request (a receipt: its invoice's).
+  def client = related.is_a?(Payment) ? related.invoice.client : related.try(:client)
 
   # Why it wasn't delivered, in plain words for staff (the error keeps the reply code).
   def problem_reason
@@ -95,7 +103,7 @@ class EmailMessage < ApplicationRecord
   # Plain words for staff.
   def status_label
     { "queued" => "Sending", "sent" => "Sent", "bounced" => "Address refused", "failed" => "Couldn't send",
-      "suppressed" => "Not sent: address blocked" }.fetch(status)
+      "suppressed" => "Not sent: address blocked", "complained" => "Marked as spam" }.fetch(status)
   end
 
   private
@@ -104,12 +112,12 @@ class EmailMessage < ApplicationRecord
   # so someone fixes the address and resends. Not for a test email (staff's own address), nor
   # for an old send that a later one has replaced (the document's page has nothing to warn
   # about). A failure on Shadetree's side goes to operators, once, instead of every team.
-  def announce_undelivered(at)
+  def announce_undelivered(at, notify: true)
     return if kind == "test_message" || superseded?
 
-    client = related.is_a?(Payment) ? related.invoice.client : related.try(:client)
     ClientEvent.record!(client, :email_bounced, subject: self, at:) if client
-    if our_side?
+    if !notify then nil
+    elsif our_side?
       Rails.error.report(UndeliveredOnOurSide.new("client email failed on our side: #{error}"), handled: true,
                          context: { record_type: "EmailMessage", record_id: id, business_id:, kind: }) # "email" keys are filtered
     else

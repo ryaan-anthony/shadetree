@@ -7,8 +7,9 @@
 #   four hours, then marked failed.
 # Any other error is a bug: the email is marked failed and the error re-raised for reporting.
 # Each of these puts the email on the client's timeline and tells the team (QA #274, NTF-02).
-# Most relays accept any well-formed recipient and bounce later; those bounces stay in the
-# provider's dashboard. The server's reply text, which can name the address, isn't stored or logged.
+# Most relays accept any well-formed recipient and bounce later; those late reports arrive at
+# /inbound/email_events and go through the same rules (EmailEvent, NTF-05, ADR 0028). The
+# server's reply text, which can name the address, isn't stored or logged.
 class ClientMailDeliveryJob < ActionMailer::MailDeliveryJob
   include ReportsUnhandledErrors # PLT-10
   ATTEMPTS = 10 # polynomial backoff: about four hours in all
