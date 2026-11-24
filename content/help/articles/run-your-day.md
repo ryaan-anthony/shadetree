@@ -27,23 +27,24 @@ Open a visit to see the client, the address, **Getting in** (gate codes and acce
 
 - **Directions** opens the address in your maps app.
 - **Call** and **Text** reach the client.
-- **On my way** tells the client you're coming. Choose **How long you'll be** and press **Send**.
-  The client is emailed your arrival time, and again if it changes.
+- **On my way** tells the client you're coming, if your business has turned that email on. Tap
+  how long you'll be (15, 30, 45 or 60 min) and it's sent straight away. For another time, choose
+  **Pick a time**, then press **Send**. The client is emailed your arrival time, and again if it
+  changes by 10 minutes or more. **Change time** updates it.
 
-![A visit on My day: the client, On the way, Start visit, Directions, Call and Text, photos and notes](my-visit)
+![A visit you're on the way to: Change time if you're running late, Start visit when you arrive, then add photos and notes](my-visit)
 
 ## Do the work
 
 1. Press **Start visit** when you arrive.
-2. Under **The work**, enter **How many** of each item you did on this visit. Did something that
-   wasn't on the job? **Add something done on site**: the office prices it before invoicing.
-3. Add **Photos**: before and after, damage, anything the office should see.
-4. Add a note under **Notes**, like "Side gate was locked; came back at 2."
-5. Press **Complete visit**.
+2. Add **Photos**: before and after, damage, anything the office should see.
+3. Add a note under **Notes**, like "Side gate was locked; came back at 2.", and press
+   **Add note**.
+4. Press **Complete visit**.
 
-Made a mistake? **Reopen** puts the visit back so you can change it.
+Made a mistake? **Reopen it** puts the visit back so you can change it.
 
 ## Who sees what
 
-You see only the visits and follow-ups you're on. The office sees your photos, notes and what you
-did on the job straight away.
+You see only the visits and follow-ups you're on. The office sees your photos and notes
+straight away.

@@ -20,10 +20,10 @@ their quotes and invoices.
 
 1. Open **Clients** and press **Add client**.
 2. Type their **Name**: a person, like "Maria Lopez", or a business. Add a
-   **Company name** if there is one.
+   **Company** if there is one.
 3. Under **How to reach them**, add an email or a phone number. **Add email** and **Add phone**
    add more.
-4. Under **Properties**, add the **Service address** where the work happens. **Add property**
+4. Under **Properties**, add the **Street address** where the work happens. **Add property**
    adds another.
 5. Add **Tags** if you group your clients, like "commercial, weekly", and any **Notes** for your
    team.
@@ -50,7 +50,7 @@ what's happened.
 
 - **New quote** starts a quote for them.
 - **Edit** changes their details.
-- **More actions**, **Archive** hides a client you no longer work with. Their history stays, and
+- The **···** menu's **Archive** hides a client you no longer work with. Their history stays, and
   **Restore** brings them back.
-- **More actions**, **Erase their details** removes their personal details for good, when they ask
+- The **···** menu's **Erase their details…** removes their personal details for good, when they ask
   you to.

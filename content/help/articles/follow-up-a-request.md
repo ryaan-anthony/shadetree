@@ -38,13 +38,14 @@ and press **Move or reassign**, or **Unassign**.
 On their phone, the follow-up is on **My day**. They open it to see what the client asked for,
 the address with **Directions**, and **Call** and **Text** buttons.
 
-![A follow-up on My day: what they asked for, getting there, site photos and notes, with Mark done](my-day-request)
+![A follow-up on My day: what they asked for, getting there, site photos and notes, with Mark site visit done](my-day-request)
 
 When they've looked, they:
 
 1. Add **Site photos** and a note about what they saw, for whoever quotes it.
-2. Press **Mark done**.
+2. Press **Mark site visit done** (or **Mark call done**), and confirm with **Mark done**.
 
 Then the office quotes it. If their role lets them, they can press **Create quote** and draft the
-quote themselves: see [Quotes from your crew](quotes-from-your-crew). Or **Pass it back** with what
-they found, so someone else can take it on.
+quote themselves: see [Quotes from your crew](quotes-from-your-crew). Or they press
+**Pass back to** (followed by the name of whoever gave it to them) and, in **Pass it back**, say
+what they found, so someone else can take it on.
