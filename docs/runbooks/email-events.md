@@ -86,6 +86,6 @@ the next email is dropped by the relay and may never be reported.
 ## Feeding the endpoint
 
 A relay that can post this contract is pointed at the endpoint with the environment's secret.
-One that can't needs a forwarder in `infra/` that verifies the relay's own signature and
-freshness, re-signs with the environment's secret, and never logs addresses (ADR 0028). None is
-built yet: see NTF-05's implementation notes.
+A forwarder in `infra/` for a relay that can't is deferred (owner, 2026-11-24): until a relay
+posts this format, late bounces and complaints stay unhandled, and only refusals at send time
+are seen.

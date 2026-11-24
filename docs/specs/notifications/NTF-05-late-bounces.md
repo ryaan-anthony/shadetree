@@ -26,11 +26,11 @@ one generic, signed endpoint (ADR 0028), so a late bounce is handled like a send
       (`v1=` HMAC-SHA256 over `<timestamp>.<body>`), keyed by a per-environment secret from ENV.
       Bad signatures, timestamps over 5 minutes off and bodies over 256 KB are refused; failed
       attempts are rate limited per IP; no secret means "not found" (as the support ingress).
-- [ ] It reads a standard delivery status notification and our own strict, versioned JSON
+- [x] It reads a standard delivery status notification and our own strict, versioned JSON
       (event id, type, Message-ID, reference, recipient, status and reply codes, time), documented
-      in a runbook. No provider is named in app code; where a provider can't post this, a
-      forwarder in `infra/` verifies the provider's own signature and freshness, re-signs with
-      the environment's secret, and never logs addresses.
+      in a runbook. No provider is named in app code. The forwarder in `infra/` for a provider
+      that can't post this is deferred (owner, 2026-11-24): late bounces stay unhandled until
+      a relay can post our format.
 - [x] Matching and the recipient check happen in the request. An event matches a client email by
       Message-ID or by the reference header it already carries, and only if its recipient is the
       email's To or a CC of its send. Unmatched events, events for a matched email more than 14
@@ -46,8 +46,8 @@ one generic, signed endpoint (ADR 0028), so a late bounce is handled like a send
 - [x] Then the existing path: warning (when, reason, code, Resend), list badge, timeline, the
       "Client email not delivered" notification, send history; once-only and superseded rules.
 - [x] No warning or notification, only the send history and timeline, when the quote has been
-      approved, declined or had changes requested, or the invoice is paid in full, or the email is
-      a receipt, visit or other non-document email.
+      approved, declined or had changes requested, or the invoice is paid in full or void, or the
+      email is a receipt, visit or other non-document email.
 - [x] A CC bounce blocks only that CC address for the business and is recorded in the send
       history; the email stays delivered, with no warning.
 - [x] A complaint (marked as spam) blocks the address for the business, marks the email "Marked
@@ -56,9 +56,10 @@ one generic, signed endpoint (ADR 0028), so a late bounce is handled like a send
 - [x] The ops console home has an "Email events" card: received, matched, dropped, last 7 days.
 - [ ] Optional fallback, only if the relay keeps our envelope sender: bounce emails to a signed
       per-email return address arrive through the inbound-email path, parsed and processed as
-      above, never copied to the human support inbox. Off unless configured.
-- [ ] Tests cover signatures, replay, limits, both formats, matching, the 14 days, each status,
-      CCs, complaints, answered or paid, tenancy, no stored or logged address, the fallback.
+      above, never copied to the human support inbox. Off unless configured. Not built: the
+      relay in `infra/` doesn't keep our envelope sender.
+- [x] Tests cover signatures, replay, limits, both formats, matching, the 14 days, each status,
+      CCs, complaints, answered or paid, tenancy, no stored or logged address (no fallback built).
 
 ## Out of scope
 
@@ -77,17 +78,19 @@ one generic, signed endpoint (ADR 0028), so a late bounce is handled like a send
   are ignored (owner, 2026-11-23).
 - Matching in the request, stored fields, 256 KB, rate limits, 90 days (follows the support
   ingress and `ConnectEvent`); the card (follows Background jobs; 7 days for the owner to confirm).
+- The forwarder is deferred: ship the generic endpoint and runbook only; late bounces stay
+  unhandled until a relay can post our format (owner, 2026-11-24).
+- Only mailbox statuses and complaints block a CC; other permanent bounces are recorded in the
+  send history only. A void invoice is treated as paid: send history and timeline only, no
+  warning or notification (owner, 2026-11-24).
 
 ## Implementation notes
 
 - Built: `EmailEventIngress` (verify, both formats), `Inbound::EmailEventsController`, `EmailEvent`
   (match, store, `process!` via `ProcessEmailEventJob`; `PruneEmailEventsJob`), `EmailEventTally`;
-  `EMAIL_EVENTS_SECRET`; [runbook](../../runbooks/email-events.md). Not built: the forwarder (no
-  generic one can verify the relay `infra/` configures; question to the owner) and the fallback:
-  the relay's config in `infra/` sets a custom MAIL FROM domain whose MX is the relay's own, so
-  bounces go to the relay: it doesn't keep our envelope sender.
-- A CC is stored by its position on the send; its problem shows in the send history. Only a
-  mailbox status or a complaint blocks it; another permanent status is only recorded (as for To).
+  `EMAIL_EVENTS_SECRET`; [runbook](../../runbooks/email-events.md). No fallback: the relay's
+  config in `infra/` sets a custom MAIL FROM domain whose MX is the relay's own.
+- A CC is stored by its position on the send; its problem shows in the send history.
 - Dev seeds: a sent invoice whose email and CC bounced late, a paid one marked as spam, and the
   ops card's counts.
 
