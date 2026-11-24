@@ -1,0 +1,13 @@
+<% content_for :title, @article.title %>
+<% content_for :analytics, "on" %>
+<% page_meta description: @article.summary %>
+<div class="mx-auto max-w-3xl px-5 py-12 sm:px-8">
+  <nav aria-label="Breadcrumb" class="text-sm">
+    <%= link_to "Help", help_path, class: "text-subtle hover:underline" %> <span aria-hidden="true" class="text-muted">/</span>
+    <span class="text-subtle"><%= @article.category_name %></span>
+  </nav>
+  <h1 class="mt-2 text-3xl font-bold tracking-tight text-ink"><%= @article.title %></h1>
+  <p class="mt-2 text-subtle"><%= @article.summary %></p>
+  <div class="mt-8"><%= render "shared/help/article", article: @article %></div>
+  <p class="mt-12 border-t border-line pt-6 text-sm text-subtle">Still stuck? <%= link_to "Contact us", contact_path, class: "font-medium text-ink underline" %>, or <%= link_to "see all help", help_path, class: "font-medium text-ink underline" %>.</p>
+</div>

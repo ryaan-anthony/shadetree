@@ -23,10 +23,10 @@ deploy; checks keep them complete and in step with the screens.
 
 ## Acceptance criteria
 
-- [ ] Each article is a Markdown file in the repo with front matter: title, summary, category,
+- [x] Each article is a Markdown file in the repo with front matter: title, summary, category,
       help topics, last reviewed date and screenshots. It goes live with the next deploy; there
       is no editing in the console.
-- [ ] Public at `/help` and `/help/<slug>` (marketing layout, indexed, in the sitemap). Members
+- [x] Public at `/help` and `/help/<slug>` (marketing layout, indexed, in the sitemap). Members
       read them in the app at `/admin/help/articles/<slug>` (app layout, `noindex`, canonical
       link to the public copy); `/admin/help` stays the ticket list. `/help` no longer redirects
       to `/admin/help`; a signed-in member at `/help…` lands on the in-app copy.
@@ -42,7 +42,7 @@ deploy; checks keep them complete and in step with the screens.
       "Ask Shadetree" and visitors "Contact us" (the marketing contact page). No-result searches
       are counted by words only: at most 100 characters, anything like an email or phone number
       dropped, kept 90 days, escaped in the operators' list. Votes and counts are rate limited.
-- [ ] Markdown is rendered safely: raw HTML off, http(s) and relative links only, no style
+- [x] Markdown is rendered safely: raw HTML off, http(s) and relative links only, no style
       attributes (the CSP allows only our stylesheets), images only from the help image folder.
       Slugs match `[a-z0-9-]+` and are looked up in the loaded index, never used as file paths.
 - [ ] Screenshots are generated: one command captures each declared screenshot from the demo
@@ -91,8 +91,8 @@ deploy; checks keep them complete and in step with the screens.
   searched with PostgreSQL full-text search, title weighted above text. No search service.
 - Screen digest, without Chrome: the rendered HTML of the captured region (Nokogiri), with
   volatile parts removed (uids, CSRF tokens, nonces, asset digests, times and dates).
-- Today: Help menu (`layouts/app.html.erb`), ticket form (`admin/support_tickets/new`), `/help`
-  redirect (`config/routes.rb`), `GuidedTour`, `FirstTimeTips`; repo-kept pages: `LegalDocument`.
+- As built: articles in `content/help/articles/<slug>.md`, images in `app/assets/images/help`;
+  `HelpCentre` loads and checks them, `HelpCentre::Markdown` renders, `HelpArticle.sync!` stores.
 
 ## Open questions
 

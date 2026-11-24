@@ -1,0 +1,9 @@
+<%# OPS-06: an article in the app: noindex (the layout), with the public copy as its canonical address. %>
+<% content_for :head do %><link rel="canonical" href="<%= help_public_url(@article) %>"><% end %>
+<%= page_header @article.title, lede: @article.summary do %>
+  <%= link_to admin_help_articles_path, class: button_classes(:tertiary) do %><%= icon "arrow-left" %> Help articles<% end %>
+<% end %>
+<%= card do %>
+  <div class="max-w-prose"><%= render "shared/help/article", article: @article %></div>
+<% end %>
+<p class="mt-4 text-sm text-muted">Didn't find your answer? <%= link_to "Ask Shadetree", new_admin_support_ticket_path(from: request.path), class: "font-medium text-ink underline" %>.</p>
