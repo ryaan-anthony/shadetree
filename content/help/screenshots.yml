@@ -20,6 +20,9 @@ branding:
 business-details:
   digest: 2f55dbebab904f74747f345919236ad6bcb4a0548eb823b2490232d0821a0624
   captured_on: '2026-11-24'
+client-invoice-page:
+  digest: 355e5314fbd05a855966c10f3b4f87f8ca92ea7a04d50693b617fbbdda69b825
+  captured_on: '2026-11-24'
 client-page:
   digest: 0adb84f704aa0f0d07f5b8b4e221c60160417842d3287dcc3116ccff3fc275d2
   captured_on: '2026-11-24'
@@ -71,6 +74,9 @@ my-day-request:
 my-visit:
   digest: 5e07847e11dbb8e48add2b1c980fa01d9aa415726938f59998506efa8d94c18f
   captured_on: '2026-11-24'
+new-job:
+  digest: 228ee8ad120a91ada65446bed6057840e76bec2d4d4d06178d596799215ba99e
+  captured_on: '2026-11-24'
 notifications:
   digest: 3f4a7327c8540217c39f2e2f44cfc1759960ec8800a83d9445ad0c6dd062d615
   captured_on: '2026-11-24'
@@ -80,8 +86,14 @@ plan-page:
 quote-builder:
   digest: e7e650e228773e97b05892e8416e3ce561ce482568beaf470aa174b6a0ef7a30
   captured_on: '2026-11-24'
+quote-changes-requested:
+  digest: 69bf6d68d2754f382c81babed9b83151d074517f62dbeae34249fd8542b7e2b5
+  captured_on: '2026-11-24'
 quote-ready-for-review:
   digest: ddf177e6ed1de049b695f6c2038dbecc844d0a8b55c8c6cfb464bc321b7d7300
+  captured_on: '2026-11-24'
+quotes-list:
+  digest: 8386b1c96215ff9242455092aa6283362613197f1336c93f6ae773882bdf83cc
   captured_on: '2026-11-24'
 record-a-payment:
   digest: 6cd173e2009f1b62f6023519579895bc96b04435f757fd56ce6cfab8088e4c9d
