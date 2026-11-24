@@ -12,7 +12,8 @@ screenshots:
 ---
 
 The bell at the top of every page shows what needs you: a new request, a quote approved, a
-payment, a visit you're on that's moved. The number on it is how many you haven't read.
+payment, an email that didn't reach a client, a visit you're on that's moved. The number on it is
+how many you haven't read.
 
 ![Notifications: open one to go to what it's about, or press Mark all as read](notifications)
 
