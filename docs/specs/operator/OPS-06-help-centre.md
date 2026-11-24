@@ -30,11 +30,11 @@ deploy; checks keep them complete and in step with the screens.
       read them in the app at `/admin/help/articles/<slug>` (app layout, `noindex`, canonical
       link to the public copy); `/admin/help` stays the ticket list. `/help` no longer redirects
       to `/admin/help`; a signed-in member at `/help…` lands on the in-app copy.
-- [ ] Categories: Getting started; Clients & requests; Quotes; Schedule & jobs (with My day);
+- [x] Categories: Getting started; Clients & requests; Quotes; Schedule & jobs (with My day);
       Invoices & payments; Services & prices; Settings & team; Plan & billing. Browse by
       category; search by title and text, best first. No results suggests asking Shadetree
       (members) or contacting us (visitors).
-- [ ] Before a ticket is sent, the form shows up to three articles matching its subject or its
+- [x] Before a ticket is sent, the form shows up to three articles matching its subject or its
       `page` (the hidden field holding `from:`). Opening one keeps the draft; it can still be sent.
 - [ ] The Help menu gains "Help articles" and a labelled search box (`role="search"`). Pages
       show "Learn more" to their topic's article (send page, Settings, schedule, first-time tips).

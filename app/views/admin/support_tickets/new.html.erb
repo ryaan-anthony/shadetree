@@ -1,11 +1,14 @@
 <% content_for :title, "Ask for help" %>
 <%= page_header "Ask for help", lede: "Tell us what's going on. We'll see which page you came from, and your browser, so you don't need to." %>
 <%= card class: "form-split" do %>
-  <%= form_with model: @ticket, url: admin_support_tickets_path, multipart: true do |f| %>
+  <%= form_with model: @ticket, url: admin_support_tickets_path, multipart: true,
+                data: { controller: "help-suggestions", help_suggestions_url_value: suggestions_admin_help_articles_path } do |f| %>
     <% if @ticket.errors.any? %><div class="banner banner-danger mb-4" role="alert"><%= icon "alert-circle" %><p><%= @ticket.errors.full_messages.to_sentence %></p></div><% end %>
-    <%= f.hidden_field :page %>
+    <%= f.hidden_field :page, data: { help_suggestions_target: "page" } %>
     <div class="space-y-4">
-      <%= f.field :subject, maxlength: 150, placeholder: "e.g. How do I take tax off one invoice?" %>
+      <%= f.field :subject, maxlength: 150, placeholder: "e.g. How do I take tax off one invoice?",
+                  data: { help_suggestions_target: "subject", action: "input->help-suggestions#check" } %>
+      <%= render "suggestions", suggestions: HelpCentre.suggestions(subject: @ticket.subject, page: @ticket.page) %>
       <%= f.field :category, as: :select, choices: SupportTicket::CATEGORIES.invert %>
       <div class="field">
         <label class="label" for="support_ticket_body">Message</label>

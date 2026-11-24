@@ -75,7 +75,38 @@ module HelpCentre
     @library ||= Library.load(root)
   end
 
-  def self.reset! = @library = nil
+  def self.reset! = @library = @topics = nil
+
+  # The declared help topics: { "send" => ["admin/quote_sends#new"], … } (content/help/topics.yml).
+  def self.topics
+    @topics = nil if Rails.env.development?
+    @topics ||= YAML.safe_load_file(root.join("topics.yml")).to_h { |key, value| [ key, Array(value&.dig("pages")).freeze ] }.freeze
+  end
+
+  def self.topic!(key)
+    key = key.to_s
+    topics.key?(key) ? key : raise(ArgumentError, "Undeclared help topic #{key.inspect}: add it to content/help/topics.yml")
+  end
+
+  # Up to three articles for a question about to be sent: those about the page it was sent
+  # from (the ticket's page, a path in the app), then the best matches for its subject.
+  def self.suggestions(subject:, page:, limit: 3)
+    HelpArticle.ensure_current!(library)
+    by_page = topics_for_page(page).flat_map { library.for_topic(_1) }
+    by_subject = HelpArticle.search(subject).limit(limit).pluck(:slug).filter_map { library.find(_1) }
+    (by_page + by_subject).uniq(&:slug).first(limit)
+  end
+
+  def self.topics_for_page(page)
+    path = page.to_s
+    return [] unless path.start_with?("/admin")
+
+    route = Rails.application.routes.recognize_path(path)
+    screen = "#{route[:controller]}##{route[:action]}"
+    topics.select { |_, pages| pages.include?(screen) }.keys
+  rescue ActionController::RoutingError
+    []
+  end
 
   class Library
     attr_reader :root, :articles

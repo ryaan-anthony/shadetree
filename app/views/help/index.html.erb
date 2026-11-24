@@ -1,21 +1,31 @@
-<% content_for :title, "Help" %>
+<% content_for :title, @query.present? ? "Search help" : "Help" %>
 <% content_for :analytics, "on" %>
-<% page_meta description: "How-to guides for Shadetree: quotes, scheduling, invoices and payments, explained step by step with pictures." %>
+<% page_meta description: "How-to guides for Shadetree: quotes, scheduling, invoices and payments, explained step by step with pictures.", index: @query.blank? %>
 <div class="mx-auto max-w-5xl px-5 py-12 sm:px-8">
   <h1 class="text-3xl font-bold tracking-tight text-ink">How can we help?</h1>
   <p class="mt-2 max-w-2xl text-subtle">Step-by-step guides to running your business in Shadetree, with pictures of each screen.</p>
-  <div class="mt-10 grid gap-8 sm:grid-cols-2" id="help-categories">
-    <% HelpCentre::CATEGORIES.each do |key, name| %>
-      <% articles = help_library.in_category(key) %>
-      <% next if articles.empty? %>
-      <section aria-labelledby="category-<%= key %>" id="help-category-<%= key %>">
-        <h2 id="category-<%= key %>" class="text-lg font-semibold text-ink"><%= name %></h2>
-        <p class="mt-1 text-sm text-subtle"><%= HelpCentre::CATEGORY_SUMMARIES.fetch(key) %></p>
-        <ul class="mt-3 space-y-2 text-sm">
-          <% articles.each do |article| %><li><%= link_to article.title, help_article_path(article.slug), class: "font-medium text-canopy underline-offset-2 hover:underline" %></li><% end %>
-        </ul>
-      </section>
-    <% end %>
-  </div>
+  <%= form_with url: help_path, method: :get, html: { role: "search" }, class: "mt-6 flex max-w-xl gap-2", id: "help-search" do %>
+    <label class="sr-only" for="help-q">Search help articles</label>
+    <%= search_field_tag :q, @query, id: "help-q", class: "input min-w-0 flex-1", placeholder: "e.g. take tax off one invoice", autocomplete: "off" %>
+    <button type="submit" class="<%= button_classes(:primary) %>">Search</button>
+  <% end %>
+  <% if @query.present? %>
+    <section class="mt-8 max-w-3xl" aria-label="Search results"><%= render "shared/help/results", results: @results, query: @query %></section>
+    <p class="mt-6 text-sm"><%= link_to "Browse all help", help_path, class: "font-medium text-ink underline" %></p>
+  <% else %>
+    <div class="mt-10 grid gap-8 sm:grid-cols-2" id="help-categories">
+      <% HelpCentre::CATEGORIES.each do |key, name| %>
+        <% articles = help_library.in_category(key) %>
+        <% next if articles.empty? %>
+        <section aria-labelledby="category-<%= key %>" id="help-category-<%= key %>">
+          <h2 id="category-<%= key %>" class="text-lg font-semibold text-ink"><%= name %></h2>
+          <p class="mt-1 text-sm text-subtle"><%= HelpCentre::CATEGORY_SUMMARIES.fetch(key) %></p>
+          <ul class="mt-3 space-y-2 text-sm">
+            <% articles.each do |article| %><li><%= link_to article.title, help_article_path(article.slug), class: "font-medium text-canopy underline-offset-2 hover:underline" %></li><% end %>
+          </ul>
+        </section>
+      <% end %>
+    </div>
+  <% end %>
   <p class="mt-12 border-t border-line pt-6 text-sm text-subtle">Can't find what you need? <%= link_to "Contact us", contact_path, class: "font-medium text-ink underline" %>.</p>
 </div>

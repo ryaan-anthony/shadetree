@@ -17,6 +17,21 @@ module HelpHelper
     HTML.compute_if_absent([ article.digest, help_in_app?, help_library.slugs.hash ], &render)
   end
 
+  # "Learn more" to the article for a help topic (content/help/topics.yml), opening beside the
+  # page so nothing typed is lost. Nothing until the topic has an article; an undeclared topic
+  # raises (and CI's topic check fails).
+  def learn_more(topic, **attributes)
+    topic = HelpCentre.topic!(topic)
+    articles = HelpCentre.library.for_topic(topic)
+    article = articles.find { _1.topics.first == topic } || articles.first
+    return unless article
+
+    link_to admin_help_article_path(article.slug), target: "_blank", rel: "noopener", data: { help_topic: topic },
+            class: [ "help-learn-more", attributes.delete(:class) ].compact.join(" "), **attributes do
+      safe_join([ "Learn more", tag.span(": #{article.title} (opens in a new tab)", class: "sr-only") ])
+    end
+  end
+
   # The public address of an article, for the in-app copy's canonical link.
   def help_public_url(article) = "#{public_base_url}#{help_article_path(article.slug)}"
 end

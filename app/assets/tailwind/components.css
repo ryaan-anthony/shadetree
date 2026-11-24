@@ -810,6 +810,7 @@
   .help-text table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
   .help-text th, .help-text td { border-bottom: 1px solid var(--color-line); padding: 0.5rem; text-align: left; vertical-align: top; }
   .help-text th { font-weight: 600; color: var(--color-ink); }
+  .help-learn-more { font-weight: 600; color: var(--color-canopy); text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
   .help-shot { margin-top: 1rem; }
   .help-shot img { display: block; max-width: 100%; height: auto; border: 1px solid var(--color-line); border-radius: var(--radius-card); }
 

@@ -2,7 +2,7 @@
 <%# The settings page header and navigation, shared by every settings page. #289: four groups
     (SettingsHelper#settings_groups), then the pages in the current one; every page keeps its URL. %>
 <% business = current_business %>
-<%= page_header "Settings", lede: "How #{business.name_was.presence || business.name} appears to clients, and the defaults new quotes and invoices start from." %>
+<%= page_header "Settings", lede: safe_join([ "How #{business.name_was.presence || business.name} appears to clients, and the defaults new quotes and invoices start from. ", learn_more(:settings) ]) %>
 
 <% groups = settings_groups(current) %>
 <% group, pages = groups.find { |_, list| list.any? { _1.key == current } } || groups.first %>

@@ -6,5 +6,6 @@
      data-tip-scope-value="<%= "#{current_business.uid}:#{Current.membership.uid}" %>" data-tip-tour-value="<%= tour_maybe_running? %>">
   <%= icon "zap", class: "size-4 shrink-0 text-canopy" %>
   <p class="min-w-0 flex-1" id="tip-<%= tip %>-text"><%= FirstTimeTips.text(tip) %></p>
+  <%= learn_more(tip, class: "shrink-0 text-sm2") %><%# OPS-06 %>
   <button type="button" class="<%= button_classes(:tertiary, :sm) %>" data-action="tip#dismiss" aria-describedby="tip-<%= tip %>-text"><%= t("guidance.tips.dismiss") %></button>
 </div>

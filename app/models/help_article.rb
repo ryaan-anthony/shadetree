@@ -17,6 +17,21 @@ class HelpArticle < ApplicationRecord
     end
   end
 
+  # Articles matching every word (from three letters, as prefixes: "invoic" finds "invoices"), best first, the
+  # title counting most; when none match every word, those matching any.
+  def self.search(query)
+    words = query.to_s.downcase.scan(/[[:alnum:]]+/).uniq.first(12)
+    words = connection.select_values(sanitize_sql_array([ "SELECT w FROM unnest(ARRAY[?]::text[]) AS w WHERE to_tsvector('english', w) <> ''::tsvector", words ])) if words.any? # no "the", "and"
+    return none if words.empty?
+
+    [ " & ", " | " ].each do |joiner|
+      tsquery = words.map { _1.length >= 3 ? "#{_1}:*" : _1 }.join(joiner)
+      matches = where("searchable @@ to_tsquery('english', ?)", tsquery)
+      return matches.order(Arel.sql(sanitize_sql_array([ "ts_rank(searchable, to_tsquery('english', ?)) DESC, title", tsquery ]))) if matches.exists?
+    end
+    none
+  end
+
   # Whether every loaded article is in the table as it is in its file.
   def self.current?(library = HelpCentre.library) = (library.articles.map { [ _1.slug, _1.digest ] } - pluck(:slug, :digest)).empty?
   def self.ensure_current!(library = HelpCentre.library) = (sync!(library, delete: false) unless current?(library))

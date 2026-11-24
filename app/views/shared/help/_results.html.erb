@@ -1,0 +1,24 @@
+<%# locals: (results:, query:) -%>
+<%# OPS-06: search results, best first; with none, members ask Shadetree and visitors contact us. %>
+<% if results.any? %>
+  <p class="text-sm text-muted" data-results-summary><%= pluralize(results.size, "article") %> for “<%= query %>”</p>
+  <ul class="mt-3 divide-y divide-line" id="help-results">
+    <% results.each do |article| %>
+      <li class="py-3">
+        <%= link_to article.title, help_path_for(article.slug), class: "font-semibold text-ink hover:underline" %>
+        <p class="text-sm2 text-muted"><%= article.category_name %> · <%= article.summary %></p>
+      </li>
+    <% end %>
+  </ul>
+<% elsif help_in_app? %>
+  <div id="help-no-results">
+    <%= empty_state title: "No articles for “#{query}”", text: "Try fewer or different words, or ask us and we'll answer you.", icon: "search" do %>
+      <%= link_to new_admin_support_ticket_path(from: request.path), class: button_classes(:secondary) do %><%= icon "message-square" %> Ask Shadetree<% end %>
+    <% end %>
+  </div>
+<% else %>
+  <div id="help-no-results">
+    <p class="font-semibold text-ink" data-results-summary>No articles for “<%= query %>”</p>
+    <p class="mt-1 text-sm text-subtle">Try fewer or different words, or <%= link_to "contact us", contact_path, class: "font-medium text-ink underline" %> and we'll answer you.</p>
+  </div>
+<% end %>

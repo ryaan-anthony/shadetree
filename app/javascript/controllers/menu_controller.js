@@ -73,6 +73,8 @@ export default class extends Controller {
       if (event.key === "ArrowDown" && event.target === this.buttonTarget) { event.preventDefault(); this.open() }
       return
     }
+    // A search box in the menu (Help, OPS-06) keeps Home and End for its own text.
+    if (event.target.matches("input") && (event.key === "Home" || event.key === "End")) return
     const items = this.items
     const index = items.indexOf(document.activeElement)
     const move = { ArrowDown: index + 1, ArrowUp: index - 1, Home: 0, End: items.length - 1 }[event.key]

@@ -4,7 +4,7 @@
 <% own = !can?(:office) %><%# JOB-08: follow-ups shown in full to someone who can't see requests are their own, opened on My day %>
 <% content_for :title, "Schedule" %>
 <%# PLT-15 (owner, 2026-11-22; supersedes #274's heading): the H1 is "Schedule"; the lede starts with the range, year included, then the view and the clock. %>
-<%= page_header "Schedule", lede: "#{s.title} · #{s.view == "day" ? "Day" : "Week"} view · Times in #{s.zone_name}" do %>
+<%= page_header "Schedule", lede: safe_join([ "#{s.title} · #{s.view == "day" ? "Day" : "Week"} view · Times in #{s.zone_name} ", learn_more(:schedule) ]) do %>
   <%= render "admin/shared/location_filter", path: admin_schedule_path, keep: schedule_link_params(s) %>
   <div class="flex items-center gap-1" role="group" aria-label="Period">
     <%= link_to admin_schedule_path(schedule_link_params(s, date: s.previous_date.iso8601)), class: button_classes(:secondary, :icon), "aria-label": "Previous #{s.view}" do %><%= icon "chevron-left" %><% end %>

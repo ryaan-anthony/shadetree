@@ -3,6 +3,7 @@
    else
      "To #{@quote.client.display_name}: #{money(@quote.totals.total)}#{", valid until #{l(@quote.expires_on)}" if @quote.expires_on}"
    end %>
+<% lede = safe_join([ lede, " ", learn_more(:send) ]) %><%# OPS-06: what the client will see, with pictures %>
 <%= page_header (@quote.approved? ? "Send a copy of quote #{@quote.number}" : "Send quote #{@quote.number}"), lede: do %>
   <%= render "admin/usage/quotes" if @quote.counts_toward_usage? %>
   <%= link_to "Back", (own_quotes_only? ? after_send_path(@quote) : staff_quote_path(@quote)), class: button_classes(:tertiary) %>

@@ -26,6 +26,12 @@
             <% if current_business && current_user %>
               <%# OPS-05: the Help menu: ask Shadetree, from whatever page this is. %>
               <%= menu label: "Help", icon_name: "help-circle", icon_class: "size-5", button: { id: "help-menu", data: { tour: "help" } } do %>
+                <%# OPS-06: search the help articles, or browse them. %>
+                <%= form_with url: admin_help_articles_path, method: :get, html: { role: "search" }, class: "px-2 pb-2 pt-1", id: "help-menu-search" do %>
+                  <label class="sr-only" for="help-menu-q">Search help articles</label>
+                  <%= search_field_tag :q, nil, id: "help-menu-q", class: "input", placeholder: "Search help", autocomplete: "off" %>
+                <% end %>
+                <%= link_to admin_help_articles_path, class: "menu-item" do %><%= icon "book-open" %> Help articles<% end %>
                 <%= link_to new_admin_support_ticket_path(from: request.path), class: "menu-item" do %><%= icon "message-square" %> Ask Shadetree for help<% end %>
                 <%= link_to admin_support_tickets_path, class: "menu-item" do %><%= icon "life-buoy" %> Your questions<% end %>
                 <% if (help_tour = GuidedTour.for(Current.membership)) %><%# ACC-08 %>
