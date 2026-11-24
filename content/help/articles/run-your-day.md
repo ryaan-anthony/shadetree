@@ -30,7 +30,7 @@ Open a visit to see the client, the address, **Getting in** (gate codes and acce
 - **On my way** tells the client you're coming. Choose **How long you'll be** and press **Send**.
   The client is emailed your arrival time, and again if it changes.
 
-![A visit on My day: the client, getting there, Start visit, and the work, photos and notes](my-visit)
+![A visit on My day: the client, On the way, Start visit, Directions, Call and Text, photos and notes](my-visit)
 
 ## Do the work
 
