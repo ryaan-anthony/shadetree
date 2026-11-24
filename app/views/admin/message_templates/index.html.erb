@@ -8,7 +8,8 @@
         <% hints = { "scheduled" => "When you book visits. Several booked together are one email.",
                      "changed" => "When you move a visit to another day or time.",
                      "cancelled" => "When you cancel a visit, or its job.",
-                     "reminder" => "The day before, at #{Business::VISIT_REMINDER_HOUR} am your time, for visits still booked." } %>
+                     "reminder" => "The day before, at #{Business::VISIT_REMINDER_HOUR} am your time, for visits still booked.",
+                     "on_my_way" => "Off until you turn it on. Whoever's going taps On my way on their day: the client gets their arrival time by email and on their visit page." } %>
         <% Business::CLIENT_VISIT_EMAILS.each do |kind, label| %>
           <label class="flex items-start gap-2 text-sm" for="client-visit-email-<%= kind %>">
             <%= hidden_field_tag "business[client_visit_emails][#{kind}]", "0", id: nil %>

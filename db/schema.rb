@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_22_160100) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_23_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -1464,7 +1464,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_160100) do
     t.jsonb "data", default: {}, null: false
     t.datetime "occurred_at", null: false
     t.index ["visit_id"], name: "index_visit_events_on_visit_id"
-    t.check_constraint "kind::text = ANY (ARRAY['scheduled'::character varying::text, 'rescheduled'::character varying::text, 'reassigned'::character varying::text, 'updated'::character varying::text, 'cancelled'::character varying::text, 'restored'::character varying::text, 'started'::character varying::text, 'completed'::character varying::text, 'reopened'::character varying::text])", name: "visit_events_kind"
+    t.check_constraint "kind::text = ANY (ARRAY['scheduled'::character varying::text, 'rescheduled'::character varying::text, 'reassigned'::character varying::text, 'updated'::character varying::text, 'cancelled'::character varying::text, 'restored'::character varying::text, 'started'::character varying::text, 'completed'::character varying::text, 'reopened'::character varying::text, 'on_the_way'::character varying::text])", name: "visit_events_kind"
   end
 
   create_table "visit_notes", force: :cascade do |t|
@@ -1499,8 +1499,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_160100) do
     t.text "client_note"
     t.jsonb "client_told"
     t.datetime "reminder_sent_at"
+    t.datetime "on_the_way_arrives_at"
+    t.datetime "on_the_way_emailed_arrives_at"
+    t.bigint "on_the_way_by_id"
     t.index ["business_id", "scheduled_on"], name: "index_visits_on_business_id_and_scheduled_on"
     t.index ["job_id", "scheduled_on"], name: "index_visits_on_job_id_and_scheduled_on"
+    t.index ["on_the_way_by_id"], name: "index_visits_on_on_the_way_by_id", where: "(on_the_way_by_id IS NOT NULL)"
     t.index ["scheduled_on"], name: "index_visits_awaiting_reminder", where: "(((status)::text = 'scheduled'::text) AND (reminder_sent_at IS NULL))"
     t.index ["uid"], name: "index_visits_on_uid", unique: true
     t.check_constraint "(timing::text = 'anytime'::text) = (starts_at IS NULL) AND (timing::text = 'window'::text) = (window_ends_at IS NOT NULL)", name: "visits_times"
@@ -1697,4 +1701,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_160100) do
   add_foreign_key "visits", "businesses", on_delete: :cascade
   add_foreign_key "visits", "jobs", on_delete: :cascade
   add_foreign_key "visits", "users", column: "created_by_id", on_delete: :nullify
+  add_foreign_key "visits", "users", column: "on_the_way_by_id", on_delete: :nullify
 end
