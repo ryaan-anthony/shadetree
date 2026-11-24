@@ -28,13 +28,20 @@ class ClientLinkTest < ActiveSupport::TestCase
   end
 
   test "expiry follows the document's policy (nil: no expiry), or 90 days without one" do
-    assert_in_delta 30.days.from_now, @link.expires_at, 5.seconds
     never = Class.new(ClientLinkDocumentHelpers::TestDocument) { def client_link_expires_at = nil }
-    doc = as_business(@business) { never.create!(title: "x") }
-    assert_nil as_business(@business) { ClientLink.issue!(doc) }.expires_at
     plain = Class.new(ClientLinkDocumentHelpers::TestDocument) { undef_method :client_link_expires_at if method_defined?(:client_link_expires_at) }
-    doc = as_business(@business) { plain.create!(title: "y") }
-    assert_in_delta 90.days.from_now, as_business(@business) { ClientLink.issue!(doc) }.expires_at, 5.seconds
+    # Links are issued in the business's zone (New York), so the expectation is counted there
+    # too: from UTC it is an hour out whenever the days in between cross a clock change. Each
+    # date's 30 and 90 days cross one: Nov 1 back, Mar 14 forward, or neither.
+    [ "2026-10-20 12:00", "2027-02-20 12:00", "2027-06-01 12:00" ].each do |now|
+      travel_to(@business.time_zone.parse(now)) do
+        as_business(@business) do
+          assert_equal 30.days.from_now, ClientLink.issue!(@document, actions: %w[approve]).expires_at, now
+          assert_equal 90.days.from_now, ClientLink.issue!(plain.create!(title: "y")).expires_at, now
+        end
+      end
+    end
+    as_business(@business) { assert_nil ClientLink.issue!(never.create!(title: "x")).expires_at }
   end
 
   test "status covers active, expired, revoked and suspended businesses" do

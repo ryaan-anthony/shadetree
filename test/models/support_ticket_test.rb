@@ -10,8 +10,11 @@ class SupportTicketTest < ActiveSupport::TestCase
     stale, fresh = as_business(business) do
       [ "Old", "New" ].map { SupportTicket.open!(opened_by: users(:one), subject: _1, category: "question", body: "?") }
     end
+    # Counted as the job counts (UTC days), not in the business's zone: a week back across a clock
+    # change is an hour shorter there, which would leave the reply exactly at the cutoff.
+    stale_at = SupportTicket::AUTO_RESOLVE_AFTER.ago - 1.hour
     as_business(business) do
-      travel_to(SupportTicket::AUTO_RESOLVE_AFTER.ago - 1.hour) { stale.reply_from_operator!(users(:two), "Does this help?") }
+      travel_to(stale_at) { stale.reply_from_operator!(users(:two), "Does this help?") }
       fresh.reply_from_operator!(users(:two), "Does this help?")
     end
 

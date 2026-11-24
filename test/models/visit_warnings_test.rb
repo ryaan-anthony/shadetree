@@ -97,6 +97,7 @@ class VisitWarningsTest < ActiveSupport::TestCase
   end
 
   test "the people going hear about visits they're put on, moved, taken off or cancelled" do
+    travel_to Time.utc(2026, 11, 23, 15) # in 2026: from another year, the titles' dates name their year
     visit = build.tap { |v| as_business(@business) { v.schedule!(by: @owner) } }
     admin = member_with_role(:admin)
     as_business(@business) do

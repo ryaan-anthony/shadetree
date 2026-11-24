@@ -139,7 +139,7 @@ class VisitOnTheWayTest < ActiveSupport::TestCase
     visit = book
     Tenancy.with_business(@business) { EmailSuppression.suppress!("maria@example.com", reason: "hard_bounce") }
     travel_to(at("2026-12-10 10:00")) { assert_equal "no_email", send!(visit, minutes: 30).why_not }
-    assert Tenancy.with_business(@business) { visit.reload.on_the_way? }
+    travel_to(at("2026-12-10 10:01")) { assert Tenancy.with_business(@business) { visit.reload.on_the_way? } } # while the card lasts
     travel_to(at("2026-12-10 10:02")) do
       Tenancy.with_business(@business) do
         EmailSuppression.clear!("maria@example.com")

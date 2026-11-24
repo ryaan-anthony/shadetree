@@ -6,6 +6,8 @@ class VisitClientNoticeTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
 
   setup do
+    # A fixed day: a week on from late December, the labels below would carry the next year.
+    travel_to Time.utc(2026, 11, 24, 15)
     @business = businesses(:one)
     @business.update!(timezone: "America/New_York")
     @owner = users(:one)
