@@ -19,11 +19,15 @@ class ClientSearchSystemTest < ApplicationSystemTestCase
   # Types into the search box until the results show it took. On a slow headless Chrome,
   # keys can be lost (the box stays empty and the list never filters); typing again is safe,
   # since only the last search counts. A real failure still fails, after 15 seconds.
+  # The results must be this search's own (their summary names it): the list left by the last
+  # search can already show and hide the same names while this one is still on its way.
   def search_clients(text, shows:, hides: nil)
     field = find_field("Search clients")
+    summary = /matching #{Regexp.escape(text)}\z/
     page.document.synchronize(15) do
       field.fill_in(with: text) unless field.value == text
-      done = field.value == text && (hides.nil? || page.has_no_text?(hides, wait: 3)) && page.has_text?(shows, wait: 0)
+      done = field.value == text && page.has_selector?("#client_results [data-results-summary]", text: summary, visible: :all, wait: 3) &&
+             (hides.nil? || page.has_no_text?(hides, wait: 0)) && page.has_text?(shows, wait: 0)
       raise Capybara::ExpectationNotMet, "searching for #{text.inspect} didn't filter the list (the box holds #{field.value.inspect})" unless done
     end
   end
@@ -39,6 +43,25 @@ class ClientSearchSystemTest < ApplicationSystemTestCase
     assert_no_text "Sam Okafor"
 
     search_clients "old", shows: "Old Okafor"
+    assert find("input[name=archived][value='1']", visible: :all).checked?
+  end
+
+  # The tab used to be inside the results frame, so a result landing between pressing the tab
+  # and letting go replaced it, and the click was lost (seen on CI: still the active list).
+  test "a search result arriving while the archived tab is pressed doesn't lose the press" do
+    visit admin_clients_path
+    search_clients "okafor", shows: "Sam Okafor", hides: "Maria Lopez"
+    tab = find("label.tab-radio", text: "Archived")
+    page.driver.browser.action.move_to(tab.native).click_and_hold.perform
+    # A result arrives while the button is down (as a slow search answering late would).
+    execute_script(<<~JS)
+      document.querySelector("#client_results [data-results-summary]").dataset.old = ""
+      document.getElementById("client-filters").requestSubmit()
+    JS
+    assert_no_selector "#client_results [data-results-summary][data-old]", visible: :all
+    page.driver.browser.action.release.perform
+    assert_text "Old Okafor"
+    assert_no_text "Sam Okafor"
     assert find("input[name=archived][value='1']", visible: :all).checked?
   end
 

@@ -4,9 +4,8 @@
 <% end %>
 
 <%# The filters are one form, posted to #search (POST keeps search terms out of URLs); its
-    results replace only the frame below. The tabs and pagination inside the frame are
-    controls of this form (form="client-filters"), so they re-render with the results and the
-    form never holds stale state. %>
+    results replace only the frame below. The Active/Archived tabs and the pagination are
+    controls of this form too (form="client-filters"). %>
 <%= form_with url: search_admin_clients_path, method: :post, id: "client-filters", class: "mb-4 flex flex-wrap items-end gap-2",
               data: { controller: "search-form", turbo_frame: "client_results" } do %>
   <div class="relative min-w-0 flex-1 basis-full sm:basis-64">
@@ -29,6 +28,16 @@
   <noscript><%= submit_tag "Search", class: button_classes(:secondary), name: nil %></noscript>
 <% end %>
 
-<%# _results is its own frame (#client_results), on the page and as the search response. %>
+<%# Active/Archived is a radio pair of the filter form. PLT-19: shown once a client is archived
+    (one option alone is no choice). It stays outside the results frame: a search result
+    arriving while the tab is being pressed would replace it mid-click and lose the click. %>
+<% if @any_archived %>
+  <%= tabs({ "0" => [ "Active", { data: { action: "submit-form#submit" } } ], "1" => [ "Archived", { data: { action: "submit-form#submit" } } ] },
+           current: @showing_archived ? "1" : "0", label: "Show", radio: { name: "archived", form: "client-filters" }, class: "mb-4",
+           data: { controller: "submit-form" }) %>
+<% end %>
+
+<%# _results is its own frame (#client_results), on the page and as the search response; the
+    pagination inside it re-renders with each result. %>
 <%= results_status "client_results" %>
 <%= render "results" %>

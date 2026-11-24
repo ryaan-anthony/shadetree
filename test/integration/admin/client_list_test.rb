@@ -58,16 +58,21 @@ class Admin::ClientListTest < ActionDispatch::IntegrationTest
     assert_equal [ "Maria Lopez", "Sam Okafor" ], css_select("tbody tr td:first-child a").map(&:text)
   end
 
-  test "the archived tab is a control of the filter form, rendered with the results" do
+  test "the archived tab is a control of the filter form, outside the results frame" do
     old = client("Old Client")
     as_business(@business) { old.archive! }
     client("Current Client")
+    get admin_clients_path
+    assert_select "input[type=radio][name=archived][form=client-filters][value='0'][checked]"
+    # A result arriving mid-click must not replace the tab being pressed (the click is lost).
+    assert_select "turbo-frame#client_results input[name=archived]", 0
+    get admin_clients_path(archived: 1)
+    assert_select "input[type=radio][name=archived][value='1'][checked]"
     post search_admin_clients_path, params: { q: "client" }
     assert_select "tbody tr", 1
-    assert_select "input[type=radio][name=archived][form=client-filters][value='0'][checked]"
     post search_admin_clients_path, params: { q: "client", archived: "1" }
     assert_select "tbody", /Old Client/
-    assert_select "input[type=radio][name=archived][value='1'][checked]"
+    assert_select "input[name=archived]", 0
     assert_select "button[form=client-filters][name=page]", 2
   end
 
