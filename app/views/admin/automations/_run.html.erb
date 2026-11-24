@@ -11,7 +11,8 @@
     <% if run.log.is_a?(Array) && run.log.any? %>
       <ul class="mt-1 space-y-0.5 text-sm2 text-muted">
         <% run.log.each do |entry| %>
-          <li><%= entry["detail"] || entry["result"].to_s.humanize %></li>
+          <% text = entry["detail"] || entry["result"].to_s.humanize %>
+          <li><%= entry["result"] == "failed" ? danger_flag("Failed: #{text}") : text %></li>
         <% end %>
       </ul>
     <% end %>

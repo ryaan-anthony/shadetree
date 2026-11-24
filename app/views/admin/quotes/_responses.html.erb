@@ -45,7 +45,7 @@
               <p class="mt-1 text-muted">From <%= response.device || "an unknown device" %><%= ", asked for a copy at #{response.email}" if response.email %></p>
               <% emails = sends_by_revision.fetch(response.revision, []).filter_map(&:email_message) %>
               <% if emails.any? && emails.all?(&:problem?) %>
-                <p class="mt-1 text-muted" id="response-<%= response.uid %>-undelivered">The email for this revision wasn't delivered; <%= response.signer_name || "the client" %> reached it from the quote's link.</p>
+                <p class="mt-1 text-muted" id="response-<%= response.uid %>-undelivered"><%= danger_flag("Email not delivered.") %> <%= response.signer_name || "The client" %> reached this revision from the quote's link.</p>
               <% end %>
             <% end %>
             <% if response.approved? %>

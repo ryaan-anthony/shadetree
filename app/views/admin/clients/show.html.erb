@@ -136,9 +136,9 @@
             <% if method.label %><span class="text-sm2 text-muted"><%= method.label %></span><% end %>
           </li>
           <% if method.undeliverable? %>
-            <li class="rounded-md bg-warning-50 px-3 py-2 text-sm2 text-subtle" id="undeliverable-<%= method.id %>">
-              <p><span class="font-semibold text-ink"><%= method.value %></span> was refused by the mail server, so emails to it are
-                paused. Fix the address, or if it's right, send to it again.</p>
+            <li class="block rounded-md bg-danger-50 px-3 py-2 text-sm2 text-danger-ink" id="undeliverable-<%= method.id %>">
+              <p><%= danger_flag("Email not delivered.") %> <span class="font-semibold"><%= method.value %></span> was refused by the mail
+                server, so emails to it are paused. Fix the address, or if it's right, send to it again.</p>
               <%= button_to "Send to it again", mark_deliverable_admin_client_path(@client, contact_method_id: method.id), method: :patch,
                             class: "#{button_classes(:secondary, :sm)} mt-2", "aria-label": "Send to it again: #{method.value}" %>
             </li>
@@ -154,10 +154,10 @@
         <ul class="list">
           <% emails.each do |email| %>
             <li class="items-start" id="email-<%= email.uid %>">
-              <%= icon(email.problem? ? "alert-triangle" : "mail", class: "mt-0.5 size-4 shrink-0 #{email.problem? ? "text-warning" : "text-faint"}") %>
+              <%= icon(email.problem? ? "alert-triangle" : "mail", class: "mt-0.5 size-4 shrink-0 #{email.problem? ? "text-danger" : "text-faint"}") %>
               <div class="min-w-0 flex-1">
                 <p class="text-sm font-medium text-ink"><%= email.subject.presence || EmailCatalog.find(email.kind).name %></p>
-                <p class="text-sm2 text-muted"><%= email.status_label %> · <%= local_time_ago(email.created_at) %></p>
+                <p class="text-sm2 text-muted"><% if email.problem? %><span class="font-medium text-danger"><%= email.status_label %></span><% else %><%= email.status_label %><% end %> · <%= local_time_ago(email.created_at) %></p>
               </div>
             </li>
           <% end %>

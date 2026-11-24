@@ -16,7 +16,7 @@
               <p class="break-words text-sm2 text-muted">Stripe <%= payment.reference %><%= ", #{money(payment.refunded)} refunded" if payment.refunded_cents.positive? %></p>
             <% end %>
             <% if (receipt = payment.email_messages.max_by(&:created_at)) %>
-              <p class="text-sm2 <%= receipt.problem? ? "font-medium text-danger" : "text-muted" %>">Receipt to <%= receipt.to %>: <%= receipt.status_label.downcase %></p>
+              <p class="text-sm2 text-muted">Receipt to <%= receipt.to %>: <% if receipt.problem? %><%= danger_flag("not delivered (#{receipt.status_label.downcase_first})") %><% else %><%= receipt.status_label.downcase %><% end %></p>
             <% end %>
             <% if payment.note %><p class="mt-1 whitespace-pre-line text-sm2 text-subtle"><%= payment.note %></p><% end %>
           </div>

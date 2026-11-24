@@ -190,7 +190,6 @@
   .badge-warning { background: var(--color-warning-50); color: var(--color-warning); }
   .badge-danger { background: var(--color-danger-50); color: var(--color-danger); }
   .badge-violet { background: var(--color-violet-50); color: var(--color-violet); }
-  .badge-dark { background: var(--color-ink); color: #fff; }
 
   /* ---------- Cards ---------- */
   /* #289: a slim progress bar (the setup checklist), in the kit's colours. */

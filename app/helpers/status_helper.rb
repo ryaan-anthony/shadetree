@@ -53,6 +53,14 @@ module StatusHelper
 
   def status_tone(type, status) = MAP.fetch(type).fetch(status.to_s).first
 
+  # One severity per event: an undelivered email, a failed payment or a failed automation step
+  # is shown with the danger icon, colour and words wherever it appears (a pill where it's a
+  # status, this inline flag in a sentence or a list of sends).
+  def danger_flag(text = "Email not delivered", **attributes)
+    tag.span(safe_join([ icon("alert-triangle", class: "mr-1 inline size-4 align-text-bottom"), text ]),
+             class: [ "font-medium text-danger", attributes.delete(:class) ].compact.join(" "), **attributes)
+  end
+
   # A status pill from the map. label: the words, when they say more than the map's (a count,
   # a name); data-status names the entry, for the design-system check.
   def status_badge(type, status, label = nil, **attributes)

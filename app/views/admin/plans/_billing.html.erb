@@ -10,7 +10,8 @@
     <p class="text-ink" id="comp-status">Shadetree has given you <%= business.comp_plan.name %><%= business.comp_ends_at ? " until #{local_date(business.comp_ends_at)}" : "" %>.</p>
   <% end %>
   <% if grace_ends %>
-    <div class="banner banner-warning mb-3" role="status" id="past-due">
+    <div class="banner banner-danger mb-3" role="status" id="past-due">
+      <%= icon "alert-triangle" %>
       <p><% if grace_ends > Time.current %>Your last payment failed. Stripe will try again; update your card by <%= local_date(grace_ends) %> to keep <%= subscription.plan&.name %>.<% else %>Your renewal wasn't paid, so you're on Free for now. Update your card and your plan comes back as soon as a payment goes through.<% end %></p>
     </div>
     <% if can?(:billing) && !impersonation %><%= button_to "Update payment method", admin_billing_portal_path, params: { flow: "payment" }, class: button_classes(:primary, :sm), form: { data: { turbo: false }, class: "mb-3" } %><% end %>

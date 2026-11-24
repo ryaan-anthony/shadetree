@@ -20,7 +20,7 @@
                       <%= f.submit "Save", class: button_classes(:secondary, :sm) %>
                     <% end %>
                   <% else %>
-                    <%= badge member.role_name, tone: member.owner? ? :dark : :neutral, dot: false %>
+                    <%= badge member.role_name, dot: false %>
                   <% end %>
                 </td>
                 <td class="text-muted"><%= member.last_active_at ? "#{time_ago_in_words(member.last_active_at)} ago" : "Not yet" %></td>

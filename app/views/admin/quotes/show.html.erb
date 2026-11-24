@@ -65,7 +65,7 @@
 <% end %>
 <% if quote.approved? && (copy = quote.latest_email)&.problem? && quote.approval && copy.created_at > quote.approval.created_at %>
   <%# #289: a copy of an approved quote that didn't arrive: worth a line, not the full warning %>
-  <p class="-mt-2 mb-4 text-sm2 text-muted" id="quote-copy-undelivered"><%= icon "alert-triangle", class: "mr-1 inline size-4 align-text-bottom text-warning" %>The copy emailed to <%= copy.to %> wasn't delivered. <%= copy.problem_reason %>
+  <p class="-mt-2 mb-4 text-sm2 text-muted" id="quote-copy-undelivered"><%= danger_flag("Email not delivered.") %> The copy emailed to <%= copy.to %> wasn't delivered. <%= copy.problem_reason %>
     <%= link_to "Send it again", new_admin_quote_send_path(quote), class: "font-medium text-ink underline-offset-2 hover:underline" %></p>
 <% end %>
 <%= render "admin/quotes/from_request", quote: %>
