@@ -157,4 +157,18 @@ class Admin::DashboardActionsTest < ActionDispatch::IntegrationTest
     end
     assert_operator count.call, :<=, few + 6, "more records mustn't mean more queries"
   end
+
+  test "JOB-09: with split jobs, approved work no job has taken shows as Work not booked" do
+    as_business(@business) do
+      @maria = client("Maria Lopez")
+      @open = quote(@maria, status: "approved")
+      @taken = quote(@maria, status: "approved").tap { |q| Job.from_quote!(q) }
+    end
+    get admin_root_path
+    assert_select "#group-work_not_booked", 0, "behind the flag"
+    enable_feature(:split_jobs)
+    get admin_root_path
+    assert_select "#group-work_not_booked h2", "Work not booked (1)"
+    assert_select "#group-work_not_booked li", /#{@open.number}.*Maria Lopez.*1 service to book/m
+  end
 end

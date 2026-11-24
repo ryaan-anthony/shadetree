@@ -154,4 +154,17 @@ class Admin::JobPickerTest < ActionDispatch::IntegrationTest
     assert_not_found_across_businesses { get new_admin_quote_job_path(theirs) }
     assert_not_found_across_businesses { post admin_quote_job_path(theirs) }
   end
+
+  test "members who only quote their assigned requests (QTE-07/08) see no job" do
+    pick(trees: 6)
+    sign_out :user
+    as_technician do
+      get admin_quote_path(@quote)
+      assert_response :not_found
+      get admin_job_path(jobs.sole)
+      assert_response :forbidden
+      get new_admin_job_work_path(jobs.sole)
+      assert_response :forbidden
+    end
+  end
 end

@@ -28,16 +28,16 @@ class Admin::DataExportsTest < ActionDispatch::IntegrationTest
 
   test "every table downloads with its documented columns, and each download is logged" do
     get admin_data_exports_path
-    assert_select "#export-tables li", DataExport::TABLES.size
+    assert_select "#export-tables li", DataExport.tables.size
     assert_select "nav[aria-label=Settings] a[aria-current=page]", "Your data"
-    DataExport::TABLES.each_value do |table|
+    DataExport.tables.each do |table|
       rows = download(table.key)
       assert_equal table.columns.map(&:header), rows.headers, table.key
       assert_match(/attachment; filename="#{@business.handle}-#{table.key}-\d{4}-\d{2}-\d{2}\.csv"/, response.headers["Content-Disposition"])
     end
-    assert_equal DataExport::TABLES.size, as_business(@business) { DataExport.where(requested_by: @owner).count }
+    assert_equal DataExport.tables.size, as_business(@business) { DataExport.where(requested_by: @owner).count }
     get admin_data_exports_path
-    assert_select "#export-log li", DataExport::TABLES.size
+    assert_select "#export-log li", DataExport.tables.size
     assert_select "#export-log li", /Payments.*#{@owner.full_name}/m
   end
 
@@ -97,6 +97,31 @@ class Admin::DataExportsTest < ActionDispatch::IntegrationTest
       ClientNote.create!(client:, user: users(:two), body: "Zed's note")
       assert quote
     end
-    DataExport::TABLES.each_key { assert_no_match(/Zed|Theirs/, download(_1).to_s, _1) }
+    DataExport.tables.map(&:key).each { assert_no_match(/Zed|Theirs/, download(_1).to_s, _1) }
+  end
+
+  test "JOB-09: with split jobs on, the quote lines' claims, the job lines' quote lines and the work log, in new columns at the end" do
+    get download_admin_data_exports_path("work_log")
+    assert_response :not_found, "behind the flag"
+    assert_not_includes download("quote_lines").headers, "In jobs"
+    enable_feature(:split_jobs)
+    job = as_business(@business) do
+      client = Client.create!(display_name: "Pat Lee", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ])
+      quote = Quote.start(client:)
+      quote.sync_line_items([ { "key" => "t", "name" => "Tree removal", "quantity" => "10", "unit_price" => "100" } ])
+      quote.save!
+      quote.update_columns(status: "approved")
+      Job.from_quote!(quote, picks: { quote.line_items.first.id => "6" }).tap { _1.log_work!(user: @owner, by: @owner, totals: { _1.line_items.first.id => 4 }) }
+    end
+    quote_lines = download("quote_lines")
+    assert_equal "In jobs", quote_lines.headers.last
+    assert_equal "6.0", quote_lines.find { _1["Item"] == "Tree removal" }["In jobs"]
+    job_lines = download("job_lines")
+    assert_equal [ "Quote line position", "Claimed from quote", "Needs a price" ], job_lines.headers.last(3)
+    assert_equal [ "0", "6.0", "no" ], job_lines.find { _1["Job number"] == job.number }.fields.last(3)
+    claims = download("job_claims")
+    assert_equal [ [ "Tree removal", job.number, "6.0", "yes" ] ], claims.map { _1.fields.values_at(2, 3, 6, 7) }
+    log = download("work_log")
+    assert_equal [ [ job.number, "Tree removal", @owner.full_name, "4.0", "logged" ] ], log.map { _1.fields.values_at(0, 1, 3, 4, 5) }
   end
 end

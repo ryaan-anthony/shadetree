@@ -36,7 +36,7 @@ class Admin::DataExportsController < Admin::BaseController
   end
 
   def download
-    return head(:not_found) unless DataExport::TABLES.key?(params[:table])
+    return head(:not_found) unless DataExport::TABLES[params[:table].to_s]&.available?
 
     csv, filename = DataExport.download!(params[:table], by: current_user)
     response.headers["Cache-Control"] = "private, no-store" # client data shouldn't sit in a browser cache

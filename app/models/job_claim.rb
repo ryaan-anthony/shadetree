@@ -26,7 +26,7 @@ class JobClaim < ApplicationRecord
   # Quote lines whose claimed_quantity isn't the sum of their live claims: always none (the
   # reconcile test), a list to look into otherwise.
   def self.unreconciled_lines
-    sums = unscoped.live.where("job_claims.quote_line_item_id = quote_line_items.id").select("COALESCE(SUM(job_claims.quantity), 0)")
+    sums = live.where("job_claims.quote_line_item_id = quote_line_items.id").select("COALESCE(SUM(job_claims.quantity), 0)")
     QuoteLineItem.where("quote_line_items.claimed_quantity <> (#{sums.to_sql})")
   end
 end

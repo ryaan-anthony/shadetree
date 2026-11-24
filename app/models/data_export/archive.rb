@@ -32,7 +32,7 @@ class DataExport::Archive
     @on_part = on_part
     @part = 0
     start_part
-    DataExport::TABLES.each_value { |table| add("csv/#{table.filename}", table.generate.first) }
+    DataExport.tables.each { |table| add("csv/#{table.filename}", table.generate.first) }
     Quote.find_each { add_pdf("documents/quotes", _1) }
     Invoice.find_each { add_pdf("documents/invoices", _1) }
     attachments("files/quotes", Quote, :attachments, &:number)
