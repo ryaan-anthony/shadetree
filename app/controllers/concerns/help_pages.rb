@@ -33,7 +33,9 @@ module HelpPages
     return if @query.blank?
 
     @results = HelpArticle.search(@query).limit(20).pluck(:slug).filter_map { help_library.find(_1) }
-    HelpSearchMiss.record(@query) if @results.empty? && !turbo_frame_request? && under_limit?("help-misses", MISSES_PER_HOUR)
+    return if @results.any? || turbo_frame_request? || Current.impersonator # support searching as a member isn't the member's miss
+
+    HelpSearchMiss.record(@query) if under_limit?("help-misses", MISSES_PER_HOUR)
   end
 
   # Over the limit, the answer is the same thanks, without counting.

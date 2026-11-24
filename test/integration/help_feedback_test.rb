@@ -66,6 +66,14 @@ class HelpFeedbackTest < ActionDispatch::IntegrationTest
     assert_equal [ "zebra" ], HelpSearchMiss.pluck(:words)
   end
 
+  test "support viewing the app as a member doesn't add to the counts" do
+    sign_in_operator
+    post ops_business_impersonation_path(businesses(:two)), params: { member: business_users(:two).uid, reason: "Ticket: a help search" }
+    get admin_help_articles_path(q: "zebra")
+    assert_response :success
+    assert_equal 0, HelpSearchMiss.count
+  end
+
   test "no-result counts are rate limited per address" do
     over_the_limit { get help_path(q: "zebra") }
     assert_response :success
