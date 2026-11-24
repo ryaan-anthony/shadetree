@@ -113,11 +113,18 @@ class ScheduleView
     @follow_ups ||= if @show_follow_ups && @member != "unassigned"
       # JOB-08: shown as Busy, a follow-up needs only its person and its location's clock; the
       # viewer's own are shown in full, so their client and property are loaded too.
-      shown = @show_follow_ups == :busy ? [ :user, { service_request: :location } ] : [ :user, { service_request: %i[client property location] } ]
-      scope = RequestFollowUp.where(scheduled_on: dates.first..dates.last).includes(*shown)
+      shown = @show_follow_ups == :busy ? { service_request: :location } : { service_request: %i[client property location] }
+      scope = RequestFollowUp.where(scheduled_on: dates.first..dates.last).includes(shown)
       scope = scope.where(user_id: @member) if @member
       scope = scope.where(service_request_id: ServiceRequest.where(location_id: @location.id).select(:id)) if @location
       found = scope.to_a.each { _1.association(:business).target = business }
+      # Their people are the team's members, already loaded for the colors: reuse them, and load
+      # only anyone who has left. (Preloaded separately, the two loads' id lists came in whatever
+      # order the tables held the rows, so whether the second was answered from the query cache
+      # varied by chance.)
+      people = members.index_by(&:id)
+      found.each { |follow_up| (person = people[follow_up.user_id]) && follow_up.association(:user).target = person }
+      ActiveRecord::Associations::Preloader.new(records: found, associations: :user).call
       own = found.select { _1.user_id == @viewer&.id }.map(&:service_request)
       ActiveRecord::Associations::Preloader.new(records: own, associations: %i[client property]).call if @show_follow_ups == :busy && own.any?
       found.map { visible(_1) }
@@ -329,8 +336,11 @@ class ScheduleView
   end
 
   # Every visit in the period, unfiltered, for the member list's counts (ids and minutes only).
+  # In order, like #visits: its assignments preload then asks for the same ids in the same
+  # order, so it's answered from the query cache every time, not only when the table's row
+  # order happened to match.
   def all_visits_in_period
-    @all_visits_in_period ||= Visit.where(scheduled_on: dates.first..dates.last).where.not(status: "cancelled").includes(:assignments).to_a
+    @all_visits_in_period ||= Visit.where(scheduled_on: dates.first..dates.last).where.not(status: "cancelled").includes(:assignments).in_order.to_a
   end
 
   def opening = @opening ||= OpeningHours.new(place)

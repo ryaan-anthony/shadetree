@@ -93,6 +93,10 @@ class Admin::ScheduleFollowUpsTest < ActionDispatch::IntegrationTest
     as_business(@business) do
       client = Client.create!(display_name: "Busy", contact_methods_attributes: [ { kind: "phone", value: "5125550199" } ])
       10.times { |n| RequestFollowUp.assign!(ServiceRequest.create!(client:, source: "phone", description: "More #{n}"), { user: @tech, scheduled_on: @monday + (n % 5), timing: "exact", start_time: "10:00" }, by: @owner) }
+      2.times { |n| @one_pm.job.visits.new(scheduled_on: @monday + n + 1, timing: "exact", start_time: "09:00", duration_minutes: 60, assignee_ids: [ @tech.id ]).schedule!(by: @owner) }
+      # A rewritten row moves in its table, so an unordered query returns it last (CI saw 29 for
+      # 28 when the follow-ups' rows happened to come back in another order).
+      [ RequestFollowUp, Visit ].each { _1.order(:id).first.update_column(:updated_at, Time.current) }
     end
     assert_equal before, count.()
   end
