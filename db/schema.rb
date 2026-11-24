@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_25_000002) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_25_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -165,6 +165,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_000002) do
     t.string "title"
     t.text "bio"
     t.string "work_phone"
+    t.string "tour_resumed_from"
     t.index ["business_id", "active"], name: "index_business_users_on_business_id_and_active"
     t.index ["business_id"], name: "index_business_users_on_business_id"
     t.index ["default_location_id"], name: "index_business_users_on_default_location_id"

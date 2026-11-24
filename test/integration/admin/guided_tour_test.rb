@@ -156,6 +156,22 @@ class Admin::GuidedTourTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_content, "only the tour's events"
   end
 
+  # (owner, 2026-11-24) A reload isn't leaving: the unloading page reports the end, the reloaded
+  # one that it resumed from it. The page ids come with each move.
+  test "a run ended moments ago resumes from the reloaded page; the offer never does" do
+    @membership.update!(tour_status: "offered")
+    patch admin_tour_path(format: :json), params: { event: "start", stop: "home", page: "A" }
+    patch admin_tour_path(format: :json), params: { event: "end", stop: "home", page: "A" }
+    patch admin_tour_path(format: :json), params: { event: "resume", stop: "home", page: "B", from: "A" }
+    assert_response :no_content
+    assert_equal [ "started", "home", "A" ], [ @membership.reload.tour_status, @membership.tour_stop, @membership.tour_resumed_from ]
+
+    @membership.update!(tour_status: "skipped", tour_stop: "offer", tour_ended_at: Time.current)
+    patch admin_tour_path(format: :json), params: { event: "resume", stop: "offer", page: "B", from: "A" }
+    assert_response :unprocessable_content, "only a stop resumes"
+    assert_equal "skipped", @membership.reload.tour_status
+  end
+
   # The tour points at these; a rebuilt Home or menu (#289) must keep them, or the tour loses its way.
   test "every element the tour points at is on its page" do
     use_fake_payment_gateway # so the payments step is there too

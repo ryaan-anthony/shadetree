@@ -9,11 +9,32 @@ import { Controller } from "@hotwired/stimulus"
 //
 // Anything with data-tour-start starts it. Leaving the page ends it where it was, except through
 // the tour's own sample-quote link: then its place is kept for this tab (sessionStorage, keyed by
-// business and member, for 30 minutes) and it resumes on return. Moves are reported to the server
-// in order, for measurement, unless support is viewing as the member.
+// business and member, for 30 minutes) and it resumes on return. A reload isn't leaving (owner,
+// 2026-11-24): the page can't tell a reload from leaving as it unloads, so it reports the end and
+// notes its place; if this tab's next page is a fresh load of the same page within a minute, not
+// by Back or Forward, the tour carries on there and the server is told it resumed. Moves are
+// reported to the server in order, for measurement, unless support is viewing as the member.
 const NARROW = "(max-width: 959.98px)"
 const GAP = 12
 const KEEP_FOR = 30 * 60 * 1000
+const AGAIN_WITHIN = 60 * 1000
+
+// A place noted as a page unloaded is only for that page loaded again, by this tab's next page
+// load: any other page drops it, and so does a Turbo visit.
+const dropLeft = (keep = () => false) => {
+  try {
+    Object.keys(sessionStorage).filter((key) => key.startsWith("shadetree:tour:")).forEach((key) => {
+      const kept = JSON.parse(sessionStorage.getItem(key) || "null")
+      if (kept?.left && !keep(kept)) sessionStorage.removeItem(key)
+    })
+  } catch { /* nothing kept */ }
+}
+const here = () => window.location.href.split("#")[0]
+// This page load, sent with each move: a resumed page names the one it resumed from, so that
+// page's own "end", if it arrives late, is ignored.
+const PAGE = window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`
+dropLeft((kept) => kept.url === here())
+document.addEventListener("turbo:visit", () => dropLeft())
 
 export default class extends Controller {
   static targets = ["dialog", "count", "title", "text", "link", "back", "next", "pointing"]
@@ -33,13 +54,22 @@ export default class extends Controller {
     this.keys = (event) => this.keydown(event)
     this.reposition = () => { if (this.running) this.place() }
     this.beforeCache = () => this.hide()
-    this.pagehide = () => this.leave()
+    this.pagehide = () => this.leave({ unloading: true })
+    // Back to this page from the back/forward cache: from the sample quote the tour carries on;
+    // otherwise it was left, so it stays ended.
+    this.pageshow = (event) => {
+      if (!event.persisted) return
+      if (this.keeping) this.keeping = false
+      else if (!this.running) this.hide()
+      this.takeKept()
+    }
     document.addEventListener("click", this.startClick)
     document.addEventListener("keydown", this.keys, { capture: true })
     window.addEventListener("resize", this.reposition)
     document.addEventListener("scroll", this.reposition, { passive: true, capture: true })
     document.addEventListener("turbo:before-cache", this.beforeCache)
     window.addEventListener("pagehide", this.pagehide)
+    window.addEventListener("pageshow", this.pageshow)
 
     // After a Turbo visit finishes rendering (it scrolls to the top, which would undo ours).
     const kept = this.takeKept()
@@ -49,8 +79,12 @@ export default class extends Controller {
       url.searchParams.delete("tour")
       history.replaceState(history.state, "", url)
       later(() => this.start())
-    } else if (kept !== null && this.stops[kept]) {
-      later(() => this.show(kept, { quietly: true }))
+    } else if (kept) {
+      const index = this.stops.findIndex((stop) => stop.key === kept.key)
+      if (index < 0) return
+      // Straight away: a background tab's animation frames can wait well past the server's window.
+      if (kept.from) this.record("resume", kept.key, { from: kept.from })
+      later(() => this.show(index, { quietly: true }))
     }
   }
 
@@ -62,6 +96,7 @@ export default class extends Controller {
     document.removeEventListener("scroll", this.reposition, { capture: true })
     document.removeEventListener("turbo:before-cache", this.beforeCache)
     window.removeEventListener("pagehide", this.pagehide)
+    window.removeEventListener("pageshow", this.pageshow)
     this.hide()
   }
 
@@ -69,26 +104,42 @@ export default class extends Controller {
   get running() { return this.index !== undefined && this.index !== null }
   get storageKey() { return `shadetree:tour:${this.scopeValue}` }
 
-  // The place kept by the sample-quote link, if it's recent; read once.
+  // The stop kept by the sample-quote link, if it's recent, or by unloading this page, if this
+  // is that page loaded again ({ key, from: that page load }); read once.
   takeKept() {
     try {
       const kept = JSON.parse(sessionStorage.getItem(this.storageKey) || "null")
       sessionStorage.removeItem(this.storageKey)
-      return kept && Date.now() - kept.at < KEEP_FOR ? kept.index : null
+      if (!kept) return null
+      if (kept.left) return this.loadedAgain(kept) ? { key: kept.key, from: kept.page } : null
+      return Date.now() - kept.at < KEEP_FOR ? { key: kept.key } : null
     } catch { return null }
+  }
+
+  // This document is a fresh load of the page the tour was on, soon after it unloaded: a reload,
+  // or loading the same address again. Not Back or Forward, or a later return.
+  loadedAgain(kept) {
+    const how = performance.getEntriesByType?.("navigation")?.[0]?.type
+    return how !== "back_forward" && kept.url === here() && Date.now() - kept.at < AGAIN_WITHIN
   }
 
   // The tour's own link: keep its place so it resumes on return.
   keep() {
     this.keeping = true
-    try { sessionStorage.setItem(this.storageKey, JSON.stringify({ index: this.index, at: Date.now() })) } catch { /* it just won't resume */ }
+    this.save({ key: this.stops[this.index].key, at: Date.now() })
   }
 
-  // Leaving the page any other way (a highlighted menu link, the back button) ends the tour
-  // where it was: recorded as ended at that stop.
-  leave() {
+  save(place) {
+    try { sessionStorage.setItem(this.storageKey, JSON.stringify(place)) } catch { /* it just won't resume */ }
+  }
+
+  // Leaving the page any other way (a highlighted menu link, the back button, closing the tab)
+  // ends the tour where it was: recorded as ended at that stop. As the page unloads its place is
+  // noted too, in case this is a reload.
+  leave({ unloading = false } = {}) {
     if (!this.running || this.keeping) return
     this.record("end", this.stops[this.index].key)
+    if (unloading) this.save({ key: this.stops[this.index].key, at: Date.now(), url: here(), page: PAGE, left: true })
     this.index = null
   }
 
@@ -267,9 +318,9 @@ export default class extends Controller {
   get motion() { return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }
 
   // One at a time, in order: a quick click after the start mustn't land before it.
-  record(event, stop) {
+  record(event, stop, extra = {}) {
     if (!this.recordValue) return
-    const body = JSON.stringify({ event, stop })
+    const body = JSON.stringify({ event, stop, page: PAGE, ...extra })
     this.queue = this.queue.then(() => fetch(this.urlValue, {
       method: "PATCH",
       headers: { Accept: "application/json", "Content-Type": "application/json", "X-CSRF-Token": document.querySelector("meta[name=csrf-token]")?.content },
