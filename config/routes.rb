@@ -182,6 +182,7 @@ Rails.application.routes.draw do
 
     # The request inbox (CLI-04)
     resources :service_requests, path: "requests", only: %i[index show new create] do
+      post :search, on: :collection # PLT-19: POST keeps client names out of URLs
       member do
         patch :status
         post :quote

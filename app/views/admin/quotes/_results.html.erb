@@ -17,7 +17,7 @@
       <% end %>
     </div>
   <% else %>
-    <p class="mb-2 text-sm2 text-muted" role="status">
+    <p class="mb-2 text-sm2 text-muted" data-results-summary>
       <%= pluralize(@total_count, "quote") %>, <span class="money font-semibold text-ink"><%= safe_join(@totals.map { money(_1) }, " + ") %></span>
     </p>
 

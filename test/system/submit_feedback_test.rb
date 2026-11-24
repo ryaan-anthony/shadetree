@@ -40,8 +40,8 @@ class SubmitFeedbackTest < ApplicationSystemTestCase
   test "searches, menu items, icon-only buttons and buttons with their own label are left alone" do
     visit admin_jobs_path # the filters are submit buttons of a GET form
     hold_next_submit
-    click_on "Completed"
-    assert_nil label_of("Completed")
+    click_on "All" # PLT-19: tabs at 0 are hidden, but All always shows
+    assert_nil label_of("All")
 
     as_business(@business) { 2.times { |i| CatalogItem.create!(name: "Item #{i}", unit_price: "10") } }
     visit admin_catalog_items_path

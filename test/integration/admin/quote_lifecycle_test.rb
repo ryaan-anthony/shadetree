@@ -58,7 +58,7 @@ class Admin::QuoteLifecycleTest < ActionDispatch::IntegrationTest
     assert_select "button.tab[aria-pressed=true]", /All\s*5/
     assert_select "button.tab", /Awaiting response\s*1/
     assert_select "button.tab", /Expired\s*1/
-    assert_select "[role=status]", /5 quotes, \$1,500\.00/
+    assert_select "[data-results-summary]", /5 quotes, \$1,500\.00/
     assert_equal [ "Wall", "Patio", "Mulch", "Hedges", "Spring cleanup" ], row_titles
 
     { "awaiting" => [ "Hedges" ], "expired" => [ "Mulch" ], "draft" => [ "Spring cleanup" ], "approved" => [ "Patio" ], "declined" => [ "Wall" ] }.each do |filter, titles|
@@ -66,7 +66,7 @@ class Admin::QuoteLifecycleTest < ActionDispatch::IntegrationTest
       assert_equal titles, row_titles, filter
     end
     post search_admin_quotes_path, params: { filter: "awaiting" }
-    assert_select "[role=status]", /1 quote, \$200\.00/
+    assert_select "[data-results-summary]", /1 quote, \$200\.00/
     assert_select "tr", /Hedges.*Sent.*Not opened/m
     post search_admin_quotes_path, params: { filter: "declined" }
     assert_select "tr", /Wall.*Declined.*Went with a mason/m

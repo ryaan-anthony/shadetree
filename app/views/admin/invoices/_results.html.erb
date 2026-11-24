@@ -18,7 +18,7 @@
     </div>
   <% else %>
     <%# What's owed on the invoices shown (sent or partly paid), and how much of it is overdue. %>
-    <p class="mb-2 text-sm2 text-muted" role="status" id="invoice-totals">
+    <p class="mb-2 text-sm2 text-muted" id="invoice-totals" data-results-summary>
       <%= pluralize(@total_count, "invoice") %>.
       <% if @owed[:outstanding].any? %>
         Awaiting payment <span class="money font-semibold text-ink"><%= safe_join(@owed[:outstanding].map { money(_1) }, " + ") %></span><% if @owed[:overdue].any? %>,

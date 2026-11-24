@@ -56,6 +56,15 @@ class ServiceRequest < ApplicationRecord
   LABELS = { "new" => "New", "in_progress" => "In progress", "quoted" => "Quoted", "archived" => "Archived" }.freeze
   SOURCE_LABELS = { "form" => "Request form", "phone" => "Phone", "email" => "Email", "walk_in" => "In person", "other" => "Other" }.freeze
   def status_label = LABELS.fetch(status)
+
+  # PLT-19 (owner, 2026-11-23): the request list's search, by client (name, phone, email or
+  # address, as CLI-02 searches) or by what they asked for.
+  def self.search(query)
+    query = query.to_s.strip
+    return all if query.empty?
+
+    where("service_requests.description ILIKE ?", "%#{sanitize_sql_like(query)}%").or(where(client_id: Client.search(query).select(:id)))
+  end
   def source_label = SOURCE_LABELS.fetch(source)
   def open? = OPEN_STATUSES.include?(status)
 

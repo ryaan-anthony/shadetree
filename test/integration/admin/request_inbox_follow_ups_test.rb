@@ -37,7 +37,7 @@ class Admin::RequestInboxFollowUpsTest < ActionDispatch::IntegrationTest
     names = -> { css_select("ul.list li").map { _1["id"].delete_prefix("request-") } }
     get admin_service_requests_path(status: "in_progress", assignee: "mine")
     assert_equal [ @mine.uid ], names.()
-    assert_select "nav.tabs a[href=?]", admin_service_requests_path(status: "new", assignee: "mine")
+    assert_select "nav.tabs a[href=?]", admin_service_requests_path(status: "in_progress", assignee: "mine") # PLT-19: New, at 0, is hidden
     assert_select "nav.tabs a[aria-current=page]", /In progress\s*1/
     get admin_service_requests_path(status: "in_progress", assignee: "unassigned")
     assert_equal [ @nobodys.uid ], names.()

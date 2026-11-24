@@ -10,21 +10,15 @@ class Admin::ServiceRequestsController < Admin::BaseController
   requires_permission :office
   before_action :set_request, only: %i[show status quote]
 
-  filters_by_location ServiceRequest, only: :index # CAT-07
+  filters_by_location ServiceRequest, only: %i[index search] # CAT-07
 
-  def index
-    @status = params[:status].presence_in(ServiceRequest::STATUSES) || "new"
-    @assignee_choices = assignee_choices # CLI-07
-    @assignee = assignee_filter
-    filtered = by_assignee(ServiceRequest.all)
-    @counts = filtered.group(:status).count
-    scope = filtered.where(status: @status)
-    @total_count = scope.count
-    @total_pages = [ (@total_count.to_f / PER_PAGE).ceil, 1 ].max
-    @page = params[:page].to_i.clamp(1, @total_pages)
-    @requests = scope.recent.includes(:client, :property, :created_by, :location, follow_up: :user).with_attached_photos.offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
-    @requests.each { _1.follow_up&.association(:business)&.target = current_business } # one business (and location count) for every row
-    @seen_by_me = ServiceRequestView.where(user: current_user, service_request_id: @requests.map(&:id)).pluck(:service_request_id).to_set
+  def index = load_list
+
+  # PLT-19 (owner, 2026-11-23): search as you type. Results replace the list's frame; without
+  # JavaScript (no frame), the whole page.
+  def search
+    load_list
+    turbo_frame_request? ? render(partial: "results", layout: false) : render(:index)
   end
 
   def show
@@ -91,6 +85,22 @@ class Admin::ServiceRequestsController < Admin::BaseController
   end
 
   private
+
+  def load_list
+    @status = params[:status].presence_in(ServiceRequest::STATUSES) || "new"
+    @assignee_choices = assignee_choices # CLI-07
+    @assignee = assignee_filter
+    @query = params[:q].to_s.strip.first(100)
+    filtered = by_assignee(ServiceRequest.all)
+    @counts = filtered.group(:status).count # for every request, whatever the search
+    scope = filtered.where(status: @status).search(@query)
+    @total_count = scope.count
+    @total_pages = [ (@total_count.to_f / PER_PAGE).ceil, 1 ].max
+    @page = params[:page].to_i.clamp(1, @total_pages)
+    @requests = scope.recent.includes(:client, :property, :created_by, :location, follow_up: :user).with_attached_photos.offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
+    @requests.each { _1.follow_up&.association(:business)&.target = current_business } # one business (and location count) for every row
+    @seen_by_me = ServiceRequestView.where(user: current_user, service_request_id: @requests.map(&:id)).pluck(:service_request_id).to_set
+  end
 
   # CLI-07: the inbox's "Assigned to" filter: mine, nobody's, or one member's (by user id).
   def by_assignee(scope)

@@ -22,7 +22,7 @@
       <% end %>
     </div>
   <% else %>
-    <p class="mb-2 text-sm2 text-muted" role="status"><%= pluralize(@total_count, "job") %></p>
+    <p class="mb-2 text-sm2 text-muted" data-results-summary><%= pluralize(@total_count, "job") %></p>
 
     <%# Phones: a list with tap-to-open rows. %>
     <%= card flush: true, class: "md:hidden" do %>

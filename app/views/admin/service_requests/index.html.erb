@@ -18,57 +18,23 @@
   <%= link_to new_admin_service_request_path, class: button_classes do %><%= icon "plus" %> Log a request<% end %>
 <% end %>
 
-<nav class="tabs mb-4" aria-label="Requests by status" data-controller="tabs">
-  <% ServiceRequest::STATUSES.each do |status| %>
-    <%= link_to admin_service_requests_path(status:, assignee: @assignee), class: "tab", "aria-current": ("page" if status == @status) do %>
-      <%= ServiceRequest::LABELS.fetch(status) %> <span class="tabular text-sm2 font-normal text-muted"><%= @counts[status].to_i %></span>
-    <% end %>
-  <% end %>
-</nav>
-
-<% if @requests.empty? %>
-  <div class="card">
-    <% if @status == "new" && @assignee.nil? %>
-      <%= empty_state title: "You're all caught up", text: current_business.request_form_enabled? ? "New requests from your form and the ones you log show up here." : "Turn on your request form in Settings to take requests online, or log one from a call.", icon: "inbox" do %>
-        <%= link_to new_admin_service_request_path, class: button_classes do %><%= icon "plus" %> Log a request<% end %>
-      <% end %>
-    <% else %>
-      <%= empty_state title: "Nothing here", text: "No requests#{" with that filter" if @assignee} are #{ServiceRequest::LABELS.fetch(@status).downcase} right now.", icon: "inbox" %>
-    <% end %>
+<%# PLT-19 (owner, 2026-11-23): searches as you type, like the other lists. One filter form posted
+    to #search (POST keeps client names out of URLs), carrying the status tab and the assignee;
+    its results replace only the frame below. %>
+<%= form_with url: search_admin_service_requests_path, method: :post, id: "request-filters", class: "mb-4",
+              data: { controller: "search-form", turbo_frame: "request_results" } do %>
+  <%= hidden_field_tag :status, @status, id: nil %>
+  <%= hidden_field_tag :assignee, @assignee, id: nil %>
+  <div class="relative max-w-md">
+    <label class="sr-only" for="q">Search requests</label>
+    <%= icon "search", class: "pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-faint" %>
+    <%= search_field_tag :q, @query, class: "input pl-9", placeholder: "Client or what they asked for", autocomplete: "off",
+                         data: { action: "input->search-form#queue keydown.enter->search-form#submit:prevent" } %>
   </div>
-<% else %>
-  <%= card flush: true do %>
-    <ul class="list">
-      <% @requests.each do |request| %>
-        <li id="request-<%= request.uid %>" class="p-0">
-          <%# No hover prefetch: opening a request records who saw it. %>
-          <%= link_to admin_service_request_path(request), class: "block min-w-0 flex-1 px-4 py-3", data: { turbo_prefetch: false } do %>
-            <span class="flex items-baseline justify-between gap-3">
-              <span class="min-w-0 truncate font-semibold text-ink">
-                <% unless @seen_by_me.include?(request.id) %><span class="mr-1 inline-block size-2 rounded-full bg-canopy align-middle" title="Not opened by you"></span><span class="sr-only">Not opened by you. </span><% end %><%= request.client.display_name %><%= location_badge(request) %>
-              </span>
-              <span class="shrink-0 text-sm2 text-muted"><%= local_time_ago(request.created_at) %></span>
-            </span>
-            <% if request.service_names.any? %><span class="mt-0.5 block truncate text-sm2 text-ink"><%= request.service_names.join(", ") %></span><% end %>
-            <% if request.description %><span class="mt-0.5 block truncate text-sm2 text-subtle"><%= truncate(request.description, length: 160) %></span><% end %>
-            <span class="mt-1 block truncate text-sm2 text-muted">
-              <%= safe_join([ request.source == "form" ? request.source_label : "#{request.source_label}#{", logged by #{request.created_by.full_name}" if request.created_by}",
-                              (pluralize(request.photos.size, "photo") if request.photos.attached?),
-                              (request.property&.one_line || request.address_line) ].compact, " · ") %>
-            </span>
-            <% if (follow_up = request.follow_up) %><%# CLI-07 %>
-              <span class="mt-1 flex flex-wrap items-center gap-x-2 text-sm2 text-ink">
-                <span class="inline-flex min-w-0 items-center gap-1.5"><%= icon(follow_up.visit? ? "map-pin" : "phone", class: "size-3.5 shrink-0 text-muted") %><span><%= follow_up.user.full_name %> · <%= follow_up.kind_label %>, <%= follow_up.when_label %></span></span>
-                <% if follow_up.overdue? %><%= badge "Overdue", tone: :danger %><% end %>
-                <% if follow_up.done? %><%= badge "Done", tone: :success %><% end %><%# JOB-06 %>
-              </span>
-            <% elsif request.status == "in_progress" %><%# a New one is plainly nobody's yet %>
-              <span class="mt-1 block text-sm2 text-muted">Not assigned</span>
-            <% end %>
-          <% end %>
-        </li>
-      <% end %>
-    </ul>
-  <% end %>
-  <% if @total_pages > 1 %><div class="mt-4"><%= pagination page: @page, per_page: Admin::ServiceRequestsController::PER_PAGE, total_count: @total_count %></div><% end %>
 <% end %>
+
+<%= tabs ServiceRequest::LABELS, current: @status, label: "Requests by status", counts: ServiceRequest::STATUSES.index_with { @counts[_1].to_i },
+         href: ->(status) { admin_service_requests_path(status:, assignee: @assignee) }, class: "mb-4" %>
+
+<%= results_status "request_results" %>
+<%= render "results" %>

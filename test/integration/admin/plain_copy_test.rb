@@ -97,6 +97,7 @@ class Admin::PlainCopyTest < ActionDispatch::IntegrationTest
   test "plain labels: jobs filters, documents' days, hours preset, services" do
     get admin_jobs_path
     assert_select "button[name=filter][value=open]", /Not finished/
+    get admin_jobs_path(filter: "to_invoice") # PLT-19: a tab at 0 shows only when it's the current one
     assert_select "button[name=filter][value=to_invoice]", /Ready to invoice/
     get edit_admin_business_path(tab: "documents")
     assert_select "label", /Days a quote stays valid/

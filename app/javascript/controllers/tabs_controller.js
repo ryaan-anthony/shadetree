@@ -31,6 +31,10 @@ export default class extends Controller {
     const pressed = event.currentTarget
     this.pressed = pressed
     if (this.hasFieldTarget) this.fieldTarget.value = pressed.value
-    this.rowTarget.querySelectorAll("[aria-pressed]").forEach((tab) => tab.setAttribute("aria-pressed", String(tab === pressed)))
+    this.rowTarget.querySelectorAll("[aria-pressed]").forEach((tab) => {
+      tab.setAttribute("aria-pressed", String(tab === pressed))
+      // PLT-19: a tab at 0 shows only while it's the current one (or one that always shows, All).
+      if (tab.querySelector(".tab-count")?.textContent.trim() === "0" && !("tabsKeep" in tab.dataset)) tab.hidden = tab !== pressed
+    })
   }
 }
