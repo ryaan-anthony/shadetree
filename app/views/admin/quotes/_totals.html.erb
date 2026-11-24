@@ -4,12 +4,13 @@
     discounts) come off after the discount and before tax, and its share of the quote's fixed
     discount shows apart from its own discount.
     Clients (client: true) see the totals before credits, then "Credit from INV-0004" with its tax:
-    what they paid (owner, 2026-11-23). %>
+    what they paid (owner, 2026-11-23). After a shortfall the last invoice adds back what was applied
+    past the scaled discount: "Quote discount adjusted for work not done" (owner, 2026-11-24). %>
 <% credits = quote.respond_to?(:pre_tax_credits) ? quote.pre_tax_credits : [] %>
 <% client_credits = client && credits.any? ? quote.client_credits : [] %>
 <% total = totals.total %>
 <% totals = quote.totals(credits: false) if client_credits.any? %>
-<% back = quote.respond_to?(:quote_discount_charge_back) ? quote.quote_discount_charge_back : Money.zero(quote.currency) %><%# PAY-08 shortfall (owner, 2026-11-24) %>
+<% back = quote.respond_to?(:quote_discount_charge_back) ? quote.quote_discount_charge_back : Money.zero(quote.currency) %>
 <% share = [ totals.share + back, totals.discount + back ].min %>
 <dl class="quote-totals" id="quote_totals" aria-live="polite">
   <div><dt>Subtotal</dt><dd class="money"><%= money(totals.subtotal) %></dd></div>
