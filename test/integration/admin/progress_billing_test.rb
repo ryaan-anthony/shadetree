@@ -138,4 +138,30 @@ class Admin::ProgressBillingTest < ActionDispatch::IntegrationTest
     assert_select ".quote-doc-totals", /Credit from #{numbers.first}\s*−\$550\.00/, "the roof's $500 with its 10%"
     assert_select ".quote-doc-totals", /Credit from #{numbers.last}\s*−\$500\.00/, "the gutters, untaxed"
   end
+
+  test "the quote and job pages don't query once per progress invoice" do
+    job = make
+    count = lambda do |path|
+      get path # warms up
+      queries = 0
+      counter = ->(*, payload) { queries += 1 unless payload[:name].in?(%w[SCHEMA TRANSACTION]) }
+      ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { get path }
+      assert_response :success
+      queries
+    end
+    bill = lambda do
+      as_business(@business) do
+        invoice = WorkBilling.bill_progress!(job.reload, by: users(:one))
+        invoice.line_items.sole.update!(unit_price: "10")
+        invoice.reload.save!
+        invoice.mark_sent!(by: users(:one), channel: "link")
+      end
+    end
+    2.times { bill.() }
+    few = [ admin_quote_path(@quote), admin_job_path(job) ].map { count.(_1) }
+    10.times { bill.() }
+    many = [ admin_quote_path(@quote), admin_job_path(job) ].map { count.(_1) }
+    puts "queries #{few} -> #{many}" if ENV["SHOW_QUERIES"]
+    few.zip(many).each { |before, after| assert_operator after - before, :<=, 2, "#{before} queries with 2 progress invoices, #{after} with 12" }
+  end
 end

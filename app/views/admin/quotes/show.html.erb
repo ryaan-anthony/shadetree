@@ -34,7 +34,7 @@
     <% if billed.many? %>
       <%= link_to "#invoices", class: button_classes(:secondary), id: "quote-invoice-link" do %><%= icon "invoice" %> Invoices (<%= billed.size %>)<% end %>
     <% elsif billed.one? %>
-      <%= link_to admin_invoice_path(billed.first), class: button_classes(:secondary), id: "quote-invoice-link" do %><%= icon "invoice" %> Invoice <%= billed.first.number %><% end %>
+      <%= link_to admin_invoice_path(billed.first), class: button_classes(:secondary), id: "quote-invoice-link" do %><%= icon "invoice" %> <%= billed.first.kind_label %> <%= billed.first.number %><% end %>
     <% end %>
     <% if unbilled || direct %>
       <%= button_to admin_quote_invoices_path(quote), class: button_classes(unbilled ? :primary : :secondary), form: { class: "contents" } do %><%= icon "invoice" %> Create invoice<% end %>
@@ -49,7 +49,7 @@
     <% if billed.size > 1 %><%# progress billing: the Invoices card lists them all %>
       <%= link_to "#invoices", class: button_classes(:secondary), id: "quote-invoice-link" do %><%= icon "invoice" %> Invoices (<%= billed.size %>)<% end %>
     <% elsif (latest_invoice = billed.last) %>
-      <%= link_to admin_invoice_path(latest_invoice), class: button_classes(:secondary), id: "quote-invoice-link" do %><%= icon "invoice" %> Invoice <%= latest_invoice.number %><% end %>
+      <%= link_to admin_invoice_path(latest_invoice), class: button_classes(:secondary), id: "quote-invoice-link" do %><%= icon "invoice" %> <%= latest_invoice.kind_label %> <%= latest_invoice.number %><% end %>
     <% elsif quote.approved? %>
       <%= button_to admin_quote_invoices_path(quote), class: button_classes(invoice_primary ? :primary : :secondary), form: { class: "contents" } do %><%= icon "invoice" %> Create invoice<% end %>
     <% end %>

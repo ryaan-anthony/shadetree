@@ -1,6 +1,6 @@
 <% if @note.present? %><%= @note %>
 
-<% end %>Invoice <%= @invoice.number %><%= " - #{@invoice.title}" if @invoice.title %>
+<% end %><%= @invoice.kind_label %> <%= @invoice.number %><%= " - #{@invoice.title}" if @invoice.title %>
 <%= @invoice.payments? ? "Balance due" : "Amount due" %>: <%= money(@invoice.balance) %>
 Due <%= l(@invoice.due_on) %>
 <% @invoice.client_credits.each do |invoice, amount| %>After a credit of <%= money(amount) %> from <%= invoice.number %>

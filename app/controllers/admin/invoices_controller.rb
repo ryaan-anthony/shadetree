@@ -58,7 +58,7 @@ class Admin::InvoicesController < Admin::BaseController
     respond_to do |format|
       format.turbo_stream { render :update, status: (saved ? :ok : :unprocessable_content) }
       format.html do
-        next redirect_to(edit_admin_invoice_path(@invoice), notice: "Invoice #{@invoice.number} saved.") if saved
+        next redirect_to(edit_admin_invoice_path(@invoice), notice: "#{@invoice.kind_label} #{@invoice.number} saved.") if saved
 
         render :edit, status: :unprocessable_content
       end
@@ -72,7 +72,7 @@ class Admin::InvoicesController < Admin::BaseController
 
   def revise
     @invoice.revise!(by: current_user)
-    redirect_to edit_admin_invoice_path(@invoice), notice: "Invoice #{@invoice.number} reopened as revision #{@invoice.revision}."
+    redirect_to edit_admin_invoice_path(@invoice), notice: "#{@invoice.kind_label} #{@invoice.number} reopened as revision #{@invoice.revision}."
   rescue ArgumentError => error
     redirect_to admin_invoice_path(@invoice), alert: error.message
   end
@@ -87,7 +87,7 @@ class Admin::InvoicesController < Admin::BaseController
 
   def void
     @invoice.void!(reason: params[:reason], by: current_user)
-    redirect_to admin_invoice_path(@invoice), notice: "Invoice #{@invoice.number} voided."
+    redirect_to admin_invoice_path(@invoice), notice: "#{@invoice.kind_label} #{@invoice.number} voided."
   rescue ArgumentError => error
     redirect_to admin_invoice_path(@invoice), alert: error.message
   end
