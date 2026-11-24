@@ -13,7 +13,7 @@
           </span>
           <%= icon "selector", class: "size-4 text-side-text" %>
         </button>
-        <div class="menu left-0 right-0 top-full mt-1" data-menu-target="menu" hidden>
+        <div class="menu left-0 right-0 top-full mt-1 w-auto" data-menu-target="menu" hidden>
           <p class="menu-label">Switch business</p>
           <% current_user.businesses.order(:name).with_attached_logo.each do |business| %>
             <%= button_to switch_admin_business_path, params: { business: business.uid }, class: "menu-item",

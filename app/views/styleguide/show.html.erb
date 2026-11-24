@@ -248,24 +248,25 @@
     </section>
 
     <section id="navigation" aria-labelledby="navigation-h">
-      <h2 id="navigation-h" class="section-title mb-3">Tabs, menus and the flow rail</h2>
+      <h2 id="navigation-h" class="section-title mb-3">Tabs, segmented controls, search, menus and the flow rail</h2>
       <%= card do %>
-        <nav class="tabs" aria-label="Example tabs">
-          <a class="tab" href="#navigation" aria-current="page">Details</a>
-          <a class="tab" href="#navigation">Visits</a>
-          <a class="tab" href="#navigation">Invoices</a>
-        </nav>
-        <div class="relative mt-4 inline-block" data-controller="menu" data-action="keydown->menu#keydown">
-          <button type="button" class="<%= button_classes(:secondary) %>" data-menu-target="button" data-action="menu#toggle" aria-haspopup="true" aria-expanded="false">
-            Actions <%= icon "chevron-down" %>
-          </button>
-          <div class="menu left-0 top-full mt-1" data-menu-target="menu" hidden>
-            <a href="#navigation" class="menu-item"><%= icon "edit-2" %> Edit</a>
-            <a href="#navigation" class="menu-item"><%= icon "copy" %> Duplicate</a>
-            <div class="menu-sep"></div>
-            <a href="#navigation" class="menu-item text-danger"><%= icon "trash" %> Delete</a>
-          </div>
+        <p class="text-sm2 text-muted"><strong class="text-ink">Tabs</strong> switch what a list shows: left-aligned under the page header, with counts where the list has them. A tab at 0 is hidden, except All and the current one.</p>
+        <%= tabs({ "all" => "All", "awaiting" => "Awaiting response", "approved" => "Approved", "declined" => "Declined" }, current: "all", label: "Example tabs",
+                 counts: { "all" => 7, "awaiting" => 3, "approved" => 4, "declined" => 0 }, href: ->(_key) { "#navigation" }, class: "mt-2", id: "sg-tabs") %>
+        <p class="mt-5 text-sm2 text-muted"><strong class="text-ink">Segmented control</strong>: one of a few options on the same view (Day/Week, Color by, Monthly/Yearly). Links, a form's buttons or radios; arrow keys move between radios.</p>
+        <div class="mt-2 flex flex-wrap gap-3">
+          <%= segmented_control({ "day" => "Day", "week" => "Week" }, selected: "week", label: "View", href: ->(_key) { "#navigation" }, id: "sg-segmented-links") %>
+          <%= segmented_control({ "monthly" => "Monthly", "yearly" => "Yearly" }, selected: "monthly", label: "Pay", radio: { name: "sg_interval" }, id: "sg-segmented-radios") %>
         </div>
+        <p class="mt-5 text-sm2 text-muted"><strong class="text-ink">Search</strong> as you type (search-form controller), with no Search button: Enter submits, and without JavaScript the form submits as a normal GET or POST.</p>
+        <p class="mt-5 text-sm2 text-muted"><strong class="text-ink">Menus</strong>: a white card, as wide as its longest item.</p>
+        <%= menu label: "Actions", text: "Actions", align: :left, class: "mt-2 inline-block" do %>
+          <a href="#navigation" class="menu-item"><%= icon "edit-2" %> Edit</a>
+          <a href="#navigation" class="menu-item"><%= icon "copy" %> Duplicate</a>
+          <a href="#navigation" class="menu-item"><%= icon "users" %> Duplicate for another client</a>
+          <div class="menu-sep"></div>
+          <a href="#navigation" class="menu-item text-danger"><%= icon "trash" %> Delete</a>
+        <% end %>
         <div class="mt-6 overflow-x-auto pb-1">
           <ol class="flow" aria-label="Job progress">
             <li class="is-done"><span class="flow-node"><%= icon "check" %></span>Quoted</li>

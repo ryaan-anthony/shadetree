@@ -57,7 +57,7 @@ background sends check `user.can_send_to_clients?`. Unconfirmed users can do eve
 - Use the kit before writing new markup: browse `/styleguide` in development. Classes live in
   `app/assets/tailwind/components.css`, partials in `app/views/components`, helpers in
   `ComponentsHelper` (`button_classes`, `badge`, `card`, `empty_state`, `page_header`, `modal`,
-  `pagination`) and `IconsHelper` (`icon "calendar"`, Feather names).
+  `pagination`), `ControlsHelper` (`tabs`, `segmented_control`, `menu`) and `IconsHelper` (`icon "calendar"`, Feather names).
 - Forms use the default builder's `f.field`, `f.check` and `f.submit_button`: labels, help,
   errors and ARIA come for free.
 - Colours, radii and shadows come from `app/assets/tailwind/theme.css` tokens (`text-muted`,
