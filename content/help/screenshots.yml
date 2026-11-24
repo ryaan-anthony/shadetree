@@ -81,7 +81,7 @@ new-job:
   digest: 228ee8ad120a91ada65446bed6057840e76bec2d4d4d06178d596799215ba99e
   captured_on: '2026-11-24'
 notifications:
-  digest: 4b786a335ac537715c1e0768ec587e0d2ec85aa3e7ee500c9e642323afa59cf4
+  digest: 8e8cd62ed06e94731c9832a20d43b62965f1ee3c73bf967da83e0b668a03c70b
   captured_on: '2026-11-24'
 plan-page:
   digest: 4b45f6c31b864905dbac101eae2fcb1372606f4fb516c8c11c8fb07461f7435a
