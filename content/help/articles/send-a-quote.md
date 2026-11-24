@@ -8,6 +8,7 @@ screenshots:
   - name: send-quote-page
     path: /admin/quotes/:quote/send/new
     quote: Spring cleanup
+    region: "main .form-split > section.card"
   - name: client-quote-page
     path: /admin/quotes/:quote/preview
     quote: Weekly mowing, spring
@@ -16,7 +17,7 @@ screenshots:
 When your quote is ready, press **Send quote** at the top of it. You choose how it gets to your
 client: by email from Shadetree, or by a link you send yourself.
 
-![Send quote: Email it, with To, Subject and Message, and Send the link yourself beside it](send-quote-page)
+![Email it, on the send page: To, CC, Subject and Message, and Send quote](send-quote-page)
 
 ## Email it
 

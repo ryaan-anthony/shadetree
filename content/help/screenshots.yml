@@ -1,45 +1,45 @@
 # OPS-06: written by bin/help-screenshots; each screenshot's screen digest when it was captured.
 add-a-service:
-  digest: c944fb01e68e2ef6704c19d5bf39a7718242ae918f9c08ef28749920ff01b951
+  digest: '049096c1a53a16869f6a761d54d7c72d251c9f60f962bca3b9c92236d57a071c'
   captured_on: '2026-11-24'
 ask-for-help-form:
   digest: e5cfe1fdb56ee5a76a207c8b0d55f8cb6ecca85f8ddab027e901dd071ea2eb45
   captured_on: '2026-11-24'
 business-details:
-  digest: 740d4e7761159d5f111e03621e6f99bbd6cd8f9f9fcf75a2feb1ecb6eabc0eb8
+  digest: 7e55ba80361b97ac6c6833d66dcfeaafe6b19f4a05d850cfffcbc9d227af1daa
   captured_on: '2026-11-24'
 client-quote-page:
-  digest: 6b5d5b4b5ef38e17b50c19de7ffd3906e3c5559e51e57a802b20a7ceb9b0d16d
+  digest: c51f43811d9f3419bc067a732fb95405a519c67153abfad58bf11dc8b697f1f3
   captured_on: '2026-11-24'
 invoice-draft:
-  digest: 05f988d4b7153a9cbb7e12b652a6da6752b138a6a83b506bfedcb73ade372b44
+  digest: 82be05678d9f55f4e2117e655abb57371e539844bcef22fecb3506f2f1314fcb
   captured_on: '2026-11-24'
 invoice-sent:
-  digest: 204c888c7673f4d7148c081cf78bd690af14a5300dec98972d53b2ab662d772b
+  digest: 26c257aab9a61eaf0d405730f68a94fcff0c42a09193bfded91e67a3ebdda99d
   captured_on: '2026-11-24'
 quote-builder:
-  digest: 9c6a987297bfbda3958d1a03912bbfa95cd9f9af5819cc8512151a9a7e447913
+  digest: ac03b41810a36f4d93aae4d8dd44c6735d305db7e72690145eb0857e91d55111
   captured_on: '2026-11-24'
 record-a-payment:
-  digest: 6ac6205c0081ff3b8b1f4856370c1bb05933c257f27cc41825ea3165d3ae6414
+  digest: 6cd173e2009f1b62f6023519579895bc96b04435f757fd56ce6cfab8088e4c9d
   captured_on: '2026-11-24'
 request-page:
-  digest: 9f725429d5d0ba9b332c611f900608d75d8ba5c9c65903cb53fdaf7b97bc1b3d
+  digest: 6ce4fb45f3ac060085312229f7068cabfcd553a9e8bce715d3d4a610e6b498b6
   captured_on: '2026-11-24'
 requests-list:
-  digest: 3687a38d9cd93e3ccf247395ea10a37e3a07f5c733d3387af3ce0b4ed8c948ee
+  digest: 6946ca0aa8e1e58f08152d0e00dc1ec38eb4bd92c8f8a3276d6e20f7900c8a1b
   captured_on: '2026-11-24'
 schedule-a-visit:
-  digest: c6a1739030d79688f72a440b36878ac91bbe49392bdab99eb5e144311868368a
+  digest: 6cdbd51da68026caf7fe7a6bf86625c554abb1ded02dca81415fe05959cf62bd
   captured_on: '2026-11-24'
 schedule-week:
-  digest: 64d39d899e92c5d0eb11f686f4903e351a1e510a591fa7de613fa06e329498bb
+  digest: 7661c751604cc4d3064fbb5694170cb633f8aafdc93b550df513587903100b4d
   captured_on: '2026-11-24'
 send-quote-page:
-  digest: 286c2e94f315faa88648f4361d0d897cef3ff16e943ebb279bdec08a82b5f275
+  digest: 8671f62c8a2cae0f91653d38cf159376f9b84c3d79e810b93434218c949b6398
   captured_on: '2026-11-24'
 services-list:
-  digest: b650a068bf3cdf4955c2d8a562cbd103c8eb7559071c859ded24dca6bd3b4af9
+  digest: 64cd880313e5ebf380a973dcccb8f722b4afd511227ed01c649d4132d3772884
   captured_on: '2026-11-24'
 your-questions:
   digest: b20912d4b17c1e9b98056ca27cd7ad71178386c7f5eeca0703e49ab17fa78747
