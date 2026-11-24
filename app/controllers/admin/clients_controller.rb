@@ -16,6 +16,7 @@ class Admin::ClientsController < Admin::BaseController
   def index
     load_list
     @tag_options = Client.tag_options
+    @any_archived = @showing_archived || Client.archived.exists? # PLT-19: the Archived tab
   end
 
   # POST, so search terms stay out of URLs, browser history and access logs (like #matches).
@@ -143,7 +144,6 @@ class Admin::ClientsController < Admin::BaseController
     @page = params[:page].to_i.clamp(1, @total_pages)
     @clients = scope.sorted(@sort).includes(:contact_methods, :properties).offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
     @any_clients = @total_count.positive? || Client.exists?
-    @any_archived = @showing_archived || Client.archived.exists? # PLT-19: the Archived tab
   end
 
   def inline? = params[:inline].present?

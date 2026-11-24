@@ -1,13 +1,5 @@
 <%# The client list results (CLI-02): rendered on the page and as #search's frame response. %>
 <%= turbo_frame_tag "client_results" do %>
-  <%# Active/Archived is a radio pair belonging to the filter form, re-rendered with each result.
-      PLT-19: shown once a client is archived (one option alone is no choice). %>
-  <% if @any_archived %>
-    <%= tabs({ "0" => [ "Active", { data: { action: "submit-form#submit" } } ], "1" => [ "Archived", { data: { action: "submit-form#submit" } } ] },
-             current: @showing_archived ? "1" : "0", label: "Show", radio: { name: "archived", form: "client-filters" }, class: "mb-4",
-             data: { controller: "submit-form" }) %>
-  <% end %>
-
   <% if @clients.empty? %>
     <div class="card">
       <% if !@any_clients %>
