@@ -684,3 +684,19 @@ end
 unless HelpSearchMiss.exists?
   [ "snow plowing contract", "refund a deposit", "refund a deposit", "mileage" ].each { HelpSearchMiss.record(_1) }
 end
+
+# OPS-06: a quote whose client asked for changes that haven't been answered yet, for the help
+# article on answering them (Fall cleanup above has already been revised and sent again).
+Tenancy.with_business(business) do
+  owner = User.find_by!(email: "owner@example.com")
+  client = Client.find_by(display_name: "Tom Becker")
+  if client && !Quote.exists?(title: "Driveway edging")
+    quote = Quote.start(client:, created_by: owner)
+    quote.title = "Driveway edging"
+    quote.sync_line_items([ { "key" => "seed-0", "name" => "Driveway edging", "quantity" => "1", "unit_price" => "180", "taxable" => "1" } ])
+    quote.save!
+    quote.mark_sent!(by: owner, channel: "link")
+    quote.record_response!(:request_changes, link: quote.client_link!, version: quote.lock_version,
+                           message: "Could you add the path to the back gate as well?")
+  end
+end

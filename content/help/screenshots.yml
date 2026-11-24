@@ -20,6 +20,9 @@ branding:
 business-details:
   digest: 2f55dbebab904f74747f345919236ad6bcb4a0548eb823b2490232d0821a0624
   captured_on: '2026-11-24'
+client-invoice-page:
+  digest: 355e5314fbd05a855966c10f3b4f87f8ca92ea7a04d50693b617fbbdda69b825
+  captured_on: '2026-11-24'
 client-page:
   digest: 0adb84f704aa0f0d07f5b8b4e221c60160417842d3287dcc3116ccff3fc275d2
   captured_on: '2026-11-24'
@@ -56,6 +59,9 @@ invoice-sent:
 job-page:
   digest: 62d0592fc74cb9a5d9531c76698e2760db9a7a6b9a8c9ad370dc3a3f47f03263
   captured_on: '2026-11-24'
+job-visits:
+  digest: 1c7b609d23aedb48c04fcdda3913bc91dff508f2cf24fb3b01df572915c25889
+  captured_on: '2026-11-24'
 location-prices:
   digest: 1d15f80ab4cff1491271c31d3d74fbd79c3e1a5ae687764e47a52fd6ca202a2f
   captured_on: '2026-11-24'
@@ -71,17 +77,26 @@ my-day-request:
 my-visit:
   digest: 5e07847e11dbb8e48add2b1c980fa01d9aa415726938f59998506efa8d94c18f
   captured_on: '2026-11-24'
+new-job:
+  digest: 228ee8ad120a91ada65446bed6057840e76bec2d4d4d06178d596799215ba99e
+  captured_on: '2026-11-24'
 notifications:
-  digest: 3f4a7327c8540217c39f2e2f44cfc1759960ec8800a83d9445ad0c6dd062d615
+  digest: 8e8cd62ed06e94731c9832a20d43b62965f1ee3c73bf967da83e0b668a03c70b
   captured_on: '2026-11-24'
 plan-page:
-  digest: 86228dcbb70d5602084190bfc659b828e38bd25c5441abcdeea74fff20c30433
+  digest: 4b45f6c31b864905dbac101eae2fcb1372606f4fb516c8c11c8fb07461f7435a
   captured_on: '2026-11-24'
 quote-builder:
-  digest: e7e650e228773e97b05892e8416e3ce561ce482568beaf470aa174b6a0ef7a30
+  digest: 62a6e2f808ea598d726abfff6b69b5d592aed695d06bea30df51d77d833d9698
+  captured_on: '2026-11-24'
+quote-changes-requested:
+  digest: 7f93eac7764e91996095e29ec0eac347ddaa5d36cabe91805d76570a8009a089
   captured_on: '2026-11-24'
 quote-ready-for-review:
-  digest: ddf177e6ed1de049b695f6c2038dbecc844d0a8b55c8c6cfb464bc321b7d7300
+  digest: 86752bf5de83bb5a61d0a58a57182bc068dffe8b97d3fcd9417b9826d377e937
+  captured_on: '2026-11-24'
+quotes-list:
+  digest: 47a19719d8f755490a57d35c1a8f23869616b44eaa7deec26736ce54695d5d73
   captured_on: '2026-11-24'
 record-a-payment:
   digest: 6cd173e2009f1b62f6023519579895bc96b04435f757fd56ce6cfab8088e4c9d
@@ -109,6 +124,9 @@ send-quote-page:
   captured_on: '2026-11-24'
 services-list:
   digest: 64cd880313e5ebf380a973dcccb8f722b4afd511227ed01c649d4132d3772884
+  captured_on: '2026-11-24'
+support-access:
+  digest: 0c2d42f92d77840af596cc4de2abe652ad65aa4559a15509aa67171ecbdf574c
   captured_on: '2026-11-24'
 team-page:
   digest: b05e9e940d00a7078d1f61086ce58d9432f01670809525e0a9e173a5ca08767a
