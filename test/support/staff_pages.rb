@@ -73,7 +73,8 @@ module StaffPages
 
     def pages
       # Plan features, so their pages show rather than send you to Plan.
-      business.update!(plan_overrides: { "features" => %w[automations message_templates locations custom_roles].index_with(true) })
+      business.update!(plan_overrides: { "features" => %w[automations message_templates locations custom_roles].index_with(true) },
+                       client_visit_emails: { "on_my_way" => "1" }) # JOB-12: the button and its sheet on My day
       # ACC-09: a profile photo, so the photo (not only initials) is checked on Team, My day and the menu.
       face = Rails.root.join("test/fixtures/files/face.jpg")
       business.business_users.find_by!(user:).update!(photo: { io: face.open, filename: "face.jpg" }, title: "Owner")
@@ -172,6 +173,8 @@ module StaffPages
       page :job_cancelled, "Job: cancelled", admin_job_path(@cancelled_job), :detail
       page :job_paid, "Job: invoiced and paid online", admin_job_path(@paid_job), :detail
       page :my_visit, "Visit on My day", admin_my_visit_path(@visit), :detail
+      page :my_visit_on_the_way, "Visit on My day: on the way", admin_my_visit_path(@on_the_way_visit), :detail # JOB-12
+      page :on_the_way_sheet, "On my way", new_admin_my_visit_on_the_way_path(@visit), :form
       page :schedule_visit, "Visit on the schedule", admin_schedule_visit_path(@visit), :detail, head: false
       page :invoice_sent, "Invoice: sent", admin_invoice_path(@sent_invoice), :detail
       page :invoice_part_paid, "Invoice: part paid", admin_invoice_path(@part_paid_invoice), :detail
@@ -291,6 +294,9 @@ module StaffPages
       @job = job("Gutter cleaning")
       @visit = @job.visits.new(scheduled_on: business.today, timing: "exact", start_time: "09:00", duration_minutes: 60,
                                assignee_ids: [ user.id ], created_by: user).tap { _1.schedule!(by: user, notify_client: false) }
+      @on_the_way_visit = @job.visits.new(scheduled_on: business.today, timing: "anytime", assignee_ids: [ user.id ], created_by: user)
+                                      .tap { _1.schedule!(by: user, notify_client: false) }
+      @on_the_way_visit.update_columns(on_the_way_arrives_at: 30.minutes.from_now, on_the_way_by_id: user.id)
       @unbooked_job = job("Shed removal")
       @completed_job = job("Spring aeration").tap { _1.complete!(by: user) }
       @cancelled_job = job("Pressure washing").tap { _1.cancel!(by: user, notify_client: false) }

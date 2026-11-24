@@ -1,6 +1,6 @@
 <%# locals: (visit:) -%>
 <% job = visit.job %>
-<li id="my-visit-<%= visit.uid %>" class="p-0">
+<li id="my-visit-<%= visit.uid %>" class="flex-wrap gap-0 p-0">
   <%= link_to admin_my_visit_path(visit), class: "flex min-w-0 flex-1 items-start gap-3 px-4 py-3.5" do %>
     <span class="w-20 shrink-0 pt-0.5 text-sm font-semibold text-ink"><%= visit.time_label.delete_prefix("Arrive ") %><%= other_zone_label(visit) %></span>
     <span class="min-w-0 flex-1">
@@ -18,5 +18,8 @@
       <%= visit_status_badge(visit) %>
     <% end %>
     <%= icon "chevron-right", class: "mt-1 size-4 shrink-0 text-faint" %>
+  <% end %>
+  <% if visit.on_the_way_offered_to?(current_user) %><%# JOB-12: worked out once per row %>
+    <div class="basis-full px-4 pb-3.5 pl-27"><%= render "admin/my_visit_on_the_way/status", visit:, from: "day" %></div>
   <% end %>
 </li>

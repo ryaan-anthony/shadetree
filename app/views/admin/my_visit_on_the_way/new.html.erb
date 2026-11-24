@@ -1,0 +1,14 @@
+<%# JOB-12: the sheet as a page: without JavaScript, to confirm a time with a warning, or to say why it wasn't sent. %>
+<% content_for :title, "On my way" %>
+<%= page_header "On my way to #{@visit.job.client.display_name}", lede: @visit.when_label do %>
+  <%= link_to (params[:from] == "day" ? admin_my_day_path : admin_my_visit_path(@visit)), class: button_classes(:tertiary) do %><%= icon "arrow-left" %> Back<% end %>
+<% end %>
+<div class="form-split">
+  <%= card do %>
+    <% from = params[:from] == "day" ? "day" : "visit" %>
+    <%# The dialog on My day and the visit's page loads this frame when it opens. %>
+    <%= turbo_frame_tag "on-the-way-sheet-#{@visit.uid}-#{from}", target: "_top" do %>
+      <%= render "admin/my_visit_on_the_way/sheet", visit: @visit, from:, warning: @warning, arrives_at: @arrives_at, refused: @refused %>
+    <% end %>
+  <% end %>
+</div>

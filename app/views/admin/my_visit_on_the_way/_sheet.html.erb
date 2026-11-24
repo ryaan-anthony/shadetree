@@ -1,0 +1,60 @@
+<%# locals: (visit:, from:, warning: nil, arrives_at: nil, refused: nil) -%>
+<%# JOB-12: choosing the arrival time: 15, 30, 45 or 60 minutes, or a time later today. Each
+    choice shows the time it gives and, outside the arrival window, the warning (announced on
+    the confirm step). One send a minute and 5 a day; the sheet says why when it's not allowed. %>
+<% path = admin_my_visit_on_the_way_path(visit) %>
+<% client = visit.job.client %>
+<% limit = visit.on_the_way_limit %>
+<% now = Time.current.in_time_zone(visit.time_zone) %>
+<% earliest = (now + OnTheWay::MIN_AHEAD).change(sec: 0) %>
+<% earliest += ((5 - (earliest.min % 5)) % 5).minutes %><%# the step counts from min: keep it on 5-minute marks %>
+<div class="space-y-4">
+  <% if refused %>
+    <div class="banner banner-danger" role="alert"><%= icon "alert-circle" %><p><%= refused %></p></div>
+  <% end %>
+  <% if warning && arrives_at %>
+    <div class="banner banner-warning" data-controller="announce"><%= icon "alert-triangle" %>
+      <p data-announce-target="text"><span class="font-semibold">About <%= visit.on_the_way_time_label(arrives_at) %>.</span> <%= warning %> You can still send it.</p>
+    </div>
+    <%= button_to path, params: { arrives_at: arrives_at.utc.iso8601, seen_warning: arrives_at.iso8601, from: }, class: "#{button_classes(:primary)} h-auto min-h-12 w-full justify-center",
+                        form: { class: "contents" } do %><%= icon "send" %> Send anyway<% end %>
+  <% end %>
+  <% if limit %>
+    <div class="banner banner-info"><%= icon "info" %><p><%= limit %></p></div>
+  <% else %>
+    <p class="text-sm text-body">
+      <%= client.display_name %> is emailed the time, and again if it changes by <%= OnTheWay::UPDATE_EMAIL_MINUTES %>+ minutes; their visit page shows it at once. This doesn't start the visit.
+    </p>
+    <% unless visit.on_the_way_email %>
+      <div class="banner banner-warning"><%= icon "mail" %>
+        <p><%= client.display_name %> has no email address we can use, so nothing is emailed. Their visit page still shows the time; you can call or text them after.</p>
+      </div>
+    <% end %>
+    <ul class="grid grid-cols-2 gap-2" aria-label="How long you'll be">
+      <% OnTheWay::MINUTES.each do |minutes| %>
+        <% arrival = (visit.on_the_way_arrival(minutes:, now:) rescue nil) or next %>
+        <% caution = visit.on_the_way_warning(arrival) %>
+        <% caution_id = "on-the-way-#{visit.uid}-#{minutes}-warning" %>
+        <li>
+          <%= button_to path, params: { minutes:, from:, seen_warning: (arrival.iso8601 if caution) }.compact,
+                              class: "#{button_classes(:secondary)} h-auto min-h-14 w-full flex-col justify-center gap-0 py-2",
+                              form: { class: "contents" }, "aria-describedby": (caution_id if caution) do %>
+            <span class="font-semibold"><%= minutes %> min</span>
+            <span class="text-sm2 font-normal text-muted">about <%= visit.on_the_way_time_label(arrival) %></span>
+          <% end %>
+          <% if caution %><p id="<%= caution_id %>" class="mt-1 text-sm2 text-warning-ink"><%= caution %></p><% end %>
+        </li>
+      <% end %>
+    </ul>
+    <%= form_with url: path, method: :post, class: "flex flex-wrap items-end gap-2" do %>
+      <%= hidden_field_tag :from, from, id: nil %>
+      <div class="field">
+        <label class="label" for="on-the-way-<%= visit.uid %>-at">Pick a time</label>
+        <%= time_field_tag :at, nil, id: "on-the-way-#{visit.uid}-at", class: "input w-36", step: 300, required: true,
+                                     min: earliest.strftime("%H:%M"), "aria-describedby": "on-the-way-#{visit.uid}-at-hint" %>
+        <p class="help" id="on-the-way-<%= visit.uid %>-at-hint">Later today, at least <%= OnTheWay::MIN_AHEAD.in_minutes.to_i %> minutes from now.</p>
+      </div>
+      <%= submit_tag "Send", class: "#{button_classes(:secondary)} min-h-11", name: nil %>
+    <% end %>
+  <% end %>
+</div>
