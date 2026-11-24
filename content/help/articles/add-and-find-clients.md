@@ -30,7 +30,7 @@ their quotes and invoices.
 6. Tick **Tax exempt** if no tax should be added to their quotes and invoices.
 7. Press **Add client**.
 
-![Add client: type their name, how to reach them and their service address, then press Add client](add-client-form)
+![Add client: type their name, how to reach them and their street address, then press Add client](add-client-form)
 
 If the email or phone matches someone you already have, Shadetree shows them before you save,
 so you don't end up with the same client twice.

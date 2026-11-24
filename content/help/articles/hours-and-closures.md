@@ -17,7 +17,8 @@ visit is booked outside them.
 ## Your weekly hours
 
 1. Open **Settings**, then **Hours**.
-2. Under **Weekly hours**, set when you open and close each day, or mark a day **Closed**.
+2. Under **Weekly hours**, tick the days you're open and set when you open and close. Untick a
+   day you're closed.
    **Set Mon–Fri, 8 am–5 pm** fills in a typical week to start from.
 3. Press **Save hours**.
 

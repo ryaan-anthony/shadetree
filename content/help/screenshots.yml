@@ -12,7 +12,7 @@ assign-follow-up:
   digest: dff48bc84b31162aeb577c789eedcd9ecb7d400288150e7eae8129c3a93637fc
   captured_on: '2026-11-24'
 automations:
-  digest: f07fa45a6f0e251d3cfdf268d1066ff93e802a886d97d6ba54b821dbb9a2008e
+  digest: f8102a896fd10a8e19c335a261659e8bf7f7b462af190396087a2ce113b84683
   captured_on: '2026-11-24'
 business-details:
   digest: 2f55dbebab904f74747f345919236ad6bcb4a0548eb823b2490232d0821a0624
@@ -24,13 +24,13 @@ client-quote-page:
   digest: c51f43811d9f3419bc067a732fb95405a519c67153abfad58bf11dc8b697f1f3
   captured_on: '2026-11-24'
 emails-to-clients:
-  digest: 2c07e33ce1d2d1c2c07ca849fe76e19602e2507f968e7304a654f5a80dc3bd41
+  digest: 9e4eee82da3ec1754186974b55ea8d4643c2d17d62aedcb12ae676f394a064de
   captured_on: '2026-11-24'
 home-get-set-up:
   digest: 1feac51cd9cbd7e5e693a9758f42d5d64568a1978b05d9db4912693eb97a376d
   captured_on: '2026-11-24'
 hours-page:
-  digest: 7ab1531a770f8f2ef66f881154595cdf129037f095d30947b4b34d6f24a9262f
+  digest: 4a3a9ca5ca736768a8b7abc8109bd3743daa6b4af7acf4e111d83921f7975440
   captured_on: '2026-11-24'
 import-clients:
   digest: '06175547913c4119e13f88e7e265bc7c88e10eb5558573256a6de01006a1945f'
@@ -54,7 +54,7 @@ my-visit:
   digest: 5e07847e11dbb8e48add2b1c980fa01d9aa415726938f59998506efa8d94c18f
   captured_on: '2026-11-24'
 plan-page:
-  digest: b3c432ad2f30f11dedc482ad019de09d77548b634014a39e25c3b843ffd8808e
+  digest: 86228dcbb70d5602084190bfc659b828e38bd25c5441abcdeea74fff20c30433
   captured_on: '2026-11-24'
 quote-builder:
   digest: e7e650e228773e97b05892e8416e3ce561ce482568beaf470aa174b6a0ef7a30
@@ -72,7 +72,7 @@ requests-list:
   digest: 6946ca0aa8e1e58f08152d0e00dc1ec38eb4bd92c8f8a3276d6e20f7900c8a1b
   captured_on: '2026-11-24'
 roles-page:
-  digest: 14144d7ea7d1bee70b826b1fb4f3907d611c34f936e5a930ad99cda93c23a2fa
+  digest: 5f3f4ce7bfbf68955047b3b3b936f6642389f3012a39dbe246da89fa5c1271c9
   captured_on: '2026-11-24'
 schedule-a-visit:
   digest: 6cdbd51da68026caf7fe7a6bf86625c554abb1ded02dca81415fe05959cf62bd
@@ -87,7 +87,7 @@ services-list:
   digest: 64cd880313e5ebf380a973dcccb8f722b4afd511227ed01c649d4132d3772884
   captured_on: '2026-11-24'
 team-page:
-  digest: dba8295b25e7b21c8ea423905d60dcf028171fd86691d27e09cda9b83bd64baf
+  digest: b05e9e940d00a7078d1f61086ce58d9432f01670809525e0a9e173a5ca08767a
   captured_on: '2026-11-24'
 your-questions:
   digest: b20912d4b17c1e9b98056ca27cd7ad71178386c7f5eeca0703e49ab17fa78747

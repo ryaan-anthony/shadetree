@@ -20,10 +20,12 @@ being paid.
 
 ![Home for a new business: work through the Get set up steps, from adding services to sending your first quote](home-get-set-up)
 
-1. **Add your services and prices**: see [Add your services and prices](add-services-and-prices).
+1. **Add your services and prices**: press **Add 6 starter services** (the number depends on your
+   trade) for common ones ready to price. See [Add your services and prices](add-services-and-prices).
 2. **Add a client**: a name and a phone number or email is enough. See
    [Add a client and keep their details](add-and-find-clients).
-3. **Send your first quote**: see [Build a quote](build-a-quote) and
+3. **Send your first quote**: until your phone, email and address are in, this step says
+   **Add your details first**, because they go on every quote. See [Build a quote](build-a-quote) and
    [Send a quote, and what your client sees](send-a-quote).
 4. **Get paid online**, where card payments are available: see
    [Take card payments online](take-card-payments).

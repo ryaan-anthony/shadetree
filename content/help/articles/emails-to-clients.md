@@ -28,6 +28,7 @@ Under **Visit emails to clients**, choose which visit emails go out:
 - when you book visits (several booked together are one email),
 - when you move a visit to another day or time,
 - when you cancel a visit or its job,
+- **Reminder the day before**, for visits still booked,
 - and **On my way**, off until you turn it on: whoever's going taps **On my way**, and the client
   gets their arrival time.
 

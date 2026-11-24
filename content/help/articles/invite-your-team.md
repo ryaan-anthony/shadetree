@@ -9,6 +9,7 @@ screenshots:
     path: /admin/team
   - name: roles-page
     path: /admin/roles
+    region: "#role-technician"
 ---
 
 Everyone on your team signs in as themselves. Their role decides what they can see and do.
@@ -26,12 +27,14 @@ They get an email with a link to join. Until they do, the invitation is listed u
 
 ## Roles
 
-**Roles** (and **See what each role can do**) lists what each role allows.
+Owners see a **Roles** button on **Team** (and a **See what each role can do** link) that lists
+what each role allows.
 
-![Roles: read what each role can do, or press New role to make your own](roles-page)
+![The Technician role on Roles: read what it can do before you give it to someone](roles-page)
 
 - **Owner** runs the business, including billing and the plan. There's always at least one.
-- **Admin** runs the office: clients, quotes, the schedule, invoices and the team.
+- **Admin** runs the office: clients, quotes, the schedule, invoices and the team, and can also
+  change Settings and download the business's data.
 - **Technician** works their own visits from their phone, and drafts quotes for the requests given
   to them for the office to check and send.
 

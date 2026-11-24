@@ -28,7 +28,7 @@ a call: it goes on their day and on the schedule, and they report back with what
 6. Add **Instructions for them**: what to look at or ask. Only your team sees these.
 7. Press **Assign**.
 
-![Assign a follow-up: who follows it up, site visit or call, day, time, estimated hours and instructions](assign-follow-up)
+![Assign a follow-up: choose who follows it up, site visit or call, the day and instructions, then press Assign](assign-follow-up)
 
 The follow-up shows on the schedule and on their **My day**. To change it later, open the request
 and press **Move or reassign**, or **Unassign**.
@@ -38,7 +38,7 @@ and press **Move or reassign**, or **Unassign**.
 On their phone, the follow-up is on **My day**. They open it to see what the client asked for,
 the address with **Directions**, and **Call** and **Text** buttons.
 
-![A follow-up on My day: what they asked for, getting there, site photos and notes, with Mark site visit done](my-day-request)
+![A follow-up on My day: add site photos and what you found, then press Mark site visit done](my-day-request)
 
 When they've looked, they:
 

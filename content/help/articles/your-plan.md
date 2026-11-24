@@ -10,7 +10,7 @@ screenshots:
     region: "#current-plan dl.space-y-3"
 ---
 
-Your plan sets how many quotes you can send each billing period, how many people can be on your
+Your plan sets how many quotes you can send a month (each month counted from your billing date), how many people can be on your
 team, and which features you have.
 
 ![Your plan's limits, with how much of each you've used: check here before you reach a limit](plan-page)
@@ -32,8 +32,10 @@ From 80% of your quotes, Shadetree warns you. When you reach the limit:
 
 ## Change your plan
 
-On **Plan**, press **Choose a plan** under **Compare plans**. Only the business owner can change
-the plan and its billing. Moving to a smaller plan turns off features it doesn't include, but
+On **Plan**, under **Compare plans**, press the button under the plan you want: **Choose** and its
+name, or **Switch to** and its name once you're paying for a plan. When you're paying,
+**Manage billing** changes your card or cancels. Only the business owner can change the
+plan and its billing. Moving to a smaller plan turns off features it doesn't include, but
 deletes nothing.
 
 ## Your data

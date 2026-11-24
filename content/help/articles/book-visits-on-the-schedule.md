@@ -40,7 +40,7 @@ the visits they're on in **My day** on their phone.
 7. Add **Instructions for this visit** for your crew, and a **Note for the client** if you like.
 8. Press **Schedule visit**.
 
-![Schedule a visit: pick the date and arrival, tick who's going, add instructions, then press Schedule](schedule-a-visit)
+![Schedule a visit: pick the date and arrival, tick who's going, add instructions, then press Schedule visit](schedule-a-visit)
 
 ## Tell the client, or not
 
