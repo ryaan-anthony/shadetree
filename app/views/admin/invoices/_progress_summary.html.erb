@@ -2,7 +2,7 @@
 <%# PAY-08: progress billed before the work was done, what's been credited of it on final invoices,
     and what was billed past the work (credited on the next invoice). Sent invoices only, with tax:
     what the client was charged (owner, 2026-11-23). %>
-<% if summary[:billed].positive? %>
+<% if summary[:billed].positive? || summary[:over_billed].positive? %><%# a shortfall's discount owed shows without progress %>
   <dl class="flex flex-wrap gap-x-6 gap-y-2 border-t border-line px-5 py-3 text-sm2" id="<%= id %>">
     <div><dt class="text-muted">Progress billed</dt><dd class="money font-semibold text-ink"><%= money(Money.new(summary[:billed], currency)) %></dd></div>
     <div><dt class="text-muted">Credited on final invoices</dt><dd class="money font-semibold text-ink"><%= money(Money.new(summary[:credited], currency)) %></dd></div>
