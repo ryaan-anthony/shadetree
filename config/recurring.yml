@@ -37,6 +37,9 @@ production:
   resolve_stale_support_tickets: # OPS-05: "Waiting on you" tickets nobody answered
     class: ResolveStaleSupportTicketsJob
     schedule: every day at 5:20am
+  prune_help_search_misses: # OPS-06: no-result help searches, after 90 days
+    class: PruneHelpSearchMissesJob
+    schedule: every day at 5:50am
   purge_inbound_emails: # OPS-05: raw support email older than 14 days
     class: PurgeInboundEmailsJob
     schedule: every day at 5:35am

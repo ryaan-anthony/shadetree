@@ -1,0 +1,24 @@
+<%# locals: (article:, voted:) -%>
+<%# OPS-06: "Was this helpful?", counted per article with nothing about who. After a no,
+    members can ask Shadetree and visitors can contact us. %>
+<section id="help-vote" class="mt-8 scroll-mt-24 border-t border-line pt-5" aria-labelledby="help-vote-h">
+  <% if voted.nil? %>
+    <h2 class="card-title" id="help-vote-h">Was this helpful?</h2>
+    <div class="mt-2 flex gap-2">
+      <% { "yes" => "Yes", "no" => "No" }.each do |value, label| %>
+        <%= button_to label, help_vote_path_for(article.slug), params: { helpful: value }, class: button_classes(:secondary, :sm), form: { class: "contents" } %>
+      <% end %>
+    </div>
+  <% else %>
+    <h2 class="card-title" id="help-vote-h">Thanks for telling us</h2>
+    <% if voted == "no" %>
+      <% if help_in_app? %>
+        <p class="mt-1 text-sm">Sorry it didn't help. <%= link_to "Ask Shadetree", new_admin_support_ticket_path(from: admin_help_article_path(article.slug)), class: "font-medium text-ink underline" %> and we'll answer you, and improve the article.</p>
+      <% else %>
+        <p class="mt-1 text-sm">Sorry it didn't help. <%= link_to "Contact us", contact_path, class: "font-medium text-ink underline" %> and we'll answer you, and improve the article.</p>
+      <% end %>
+    <% else %>
+      <p class="mt-1 text-sm">Glad it helped.</p>
+    <% end %>
+  <% end %>
+</section>

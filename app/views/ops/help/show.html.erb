@@ -1,0 +1,37 @@
+<%# OPS-06: searches that found nothing and "Was this helpful?" answers. Words are as typed by
+    visitors and members (scrubbed), so they're escaped like any other text. %>
+<% content_for :title, "Help" %>
+<%= page_header "Help", lede: "What people looked for and didn't find in the help articles, and how helpful each article was. Nothing here says who." %>
+<%= card title: "Searches with no results", subtitle: "Last 90 days, most often first", flush: true, class: "mt-4", id: "help-misses" do %>
+  <% if @misses.any? %>
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead><tr><th scope="col">Words</th><th scope="col" class="num">Times</th><th scope="col">Last searched</th></tr></thead>
+        <tbody>
+          <% @misses.each do |words, times, last| %>
+            <tr><td class="break-words"><%= words %></td><td class="num"><%= times %></td><td><%= local_date(last) %></td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p class="px-5 py-4 text-sm text-muted">No searches without results in the last 90 days.</p>
+  <% end %>
+<% end %>
+<%= card title: "Was this helpful?", subtitle: "Articles with answers, least helpful first", flush: true, class: "mt-4", id: "help-votes" do %>
+  <% if @articles.any? %>
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead><tr><th scope="col">Article</th><th scope="col" class="num">Yes</th><th scope="col" class="num">No</th></tr></thead>
+        <tbody>
+          <% @articles.each do |article| %>
+            <tr><td><%= link_to article.title, help_article_path(article.slug), class: "font-medium text-ink hover:underline" %></td>
+                <td class="num"><%= article.helpful_count %></td><td class="num"><%= article.unhelpful_count %></td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p class="px-5 py-4 text-sm text-muted">No answers yet.</p>
+  <% end %>
+<% end %>

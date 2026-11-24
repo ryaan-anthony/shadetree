@@ -224,6 +224,7 @@ module StaffPages
       page :ops_messages, "Ops: contact messages", ops_contact_messages_path, :ops
       page :ops_message, "Ops: a contact message", ops_contact_message_path(@contact_message), :ops
       page :ops_tickets, "Ops: tickets", ops_tickets_path, :ops
+      page :ops_help, "Ops: help", ops_help_path, :ops # OPS-06
       page :ops_ticket, "Ops: a ticket", ops_ticket_path(@ticket), :ops
     end
 

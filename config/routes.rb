@@ -79,6 +79,7 @@ Rails.application.routes.draw do
     resources :contact_messages, only: %i[index show update destroy], path: "messages" do # MKT-02
       delete :erase, on: :member
     end
+    resource :help, only: :show, controller: "help" # OPS-06: searches with no results, "Was this helpful?"
     resources :tickets, only: %i[index show] do # OPS-05: the support inbox
       member do
         patch :assign
@@ -331,6 +332,7 @@ Rails.application.routes.draw do
     # OPS-06: help articles for members (before the tickets, which live at /admin/help)
     resources :help_articles, only: %i[index show], path: "help/articles", param: :slug, constraints: { slug: /[a-z0-9-]+/ } do
       post :suggestions, on: :collection # on the ticket form, as the subject is typed
+      post :vote, on: :member # "Was this helpful?"
     end
     # OPS-05: asking Shadetree for help
     resources :support_tickets, only: %i[index new create show], path: "help" do
@@ -405,6 +407,7 @@ Rails.application.routes.draw do
   # OPS-06: the help centre, public (members are sent to the copy in the app)
   get "help", to: "help#index", as: :help
   get "help/:slug", to: "help#show", as: :help_article, constraints: { slug: /[a-z0-9-]+/ }
+  post "help/:slug/vote", to: "help#vote", as: :help_article_vote, constraints: { slug: /[a-z0-9-]+/ }
   resource :legal_acceptance, only: %i[show create], path: "legal/accept", controller: "users/legal_acceptances"
   get "legal/:slug(/:version)", to: "legal#show", as: :legal_document, constraints: { slug: /[a-z-]+/, version: /\d{4}-\d{2}-\d{2}/ }
 
