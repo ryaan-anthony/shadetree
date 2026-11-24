@@ -138,12 +138,13 @@ class EmailEvent < ApplicationRecord
   end
 
   # The warning and the team's notification are for a quote or invoice email while the client
-  # still hasn't answered or paid; otherwise it's only the send history and the timeline.
+  # still hasn't answered or paid, and the invoice isn't void; otherwise it's only the send
+  # history and the timeline.
   def warn?
     document = email_message.related
     case email_message.kind
     when "quote_sent" then document.is_a?(Quote) && !document.status.in?(%w[approved declined changes_requested])
-    when "invoice_sent" then document.is_a?(Invoice) && !document.paid?
+    when "invoice_sent" then document.is_a?(Invoice) && !document.status.in?(%w[paid void]) # void as paid (owner, 2026-11-24)
     else false
     end
   end

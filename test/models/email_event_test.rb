@@ -65,18 +65,19 @@ class EmailEventTest < ActiveSupport::TestCase
     end
   end
 
-  test "a paid invoice, a receipt or a visit email: only the timeline" do
+  test "a paid or void invoice, a receipt or a visit email: only the timeline" do
     client = as_business(@business) { Client.create!(display_name: "Ana Ruiz", contact_methods_attributes: [ { kind: "email", value: "ana@example.com" } ]) }
     paid = as_business(@business) { Invoice.start(client:).tap { _1.update_column(:status, "paid") } }
+    void = as_business(@business) { Invoice.start(client:).tap { _1.update_column(:status, "void") } }
     sent = as_business(@business) { Invoice.start(client:).tap { _1.update_column(:status, "sent") } }
     emails = as_business(@business) do
-      [ [ "invoice_sent", paid ], [ "visit_scheduled", nil ], [ "invoice_sent", sent ] ].map do |kind, related|
+      [ [ "invoice_sent", paid ], [ "invoice_sent", void ], [ "visit_scheduled", nil ], [ "invoice_sent", sent ] ].map do |kind, related|
         EmailMessage.create!(kind:, to: "ana@example.com", related: related || Job.create!(client:, title: "Gutters"))
                     .tap { _1.mark!("sent", at: 1.hour.ago, provider_message_id: "#{SecureRandom.uuid}@getshadetree.com") }
       end
     end
-    emails.first(2).each { report(_1) }
-    assert_equal [ 0, 2 ], [ notifications, timeline("email_bounced") ]
+    emails.first(3).each { report(_1) }
+    assert_equal [ 0, 3 ], [ notifications, timeline("email_bounced") ], "void is treated as paid (owner, 2026-11-24)"
     report(emails.last)
     assert_equal 1, notifications, "an invoice still waiting to be paid is warned about"
   end
