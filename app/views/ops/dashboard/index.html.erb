@@ -18,6 +18,15 @@
   <%= card title: "Background jobs" do %>
     <%= render "job_health", health: @job_health %>
   <% end %>
+  <%= card title: "Email events" do %>
+    <%# NTF-05: late bounce and complaint reports at /inbound/email_events (docs/runbooks/email-events.md). %>
+    <p class="text-sm text-subtle">Late bounce and complaint reports, last 7 days.</p>
+    <dl class="mt-3 space-y-2 text-sm" id="email-events">
+      <% { received: "Received", matched: "Matched", dropped: "Dropped" }.each do |key, label| %>
+        <div class="flex justify-between gap-3"><dt class="text-subtle"><%= label %></dt><dd class="tabular text-ink" id="email-events-<%= key %>"><%= number_with_delimiter(@email_events.fetch(key)) %></dd></div>
+      <% end %>
+    </dl>
+  <% end %>
   <%= card title: "Access" do %>
     <p class="text-sm text-subtle">Operators reach every business. Grant access only to people who run Shadetree.</p>
     <%= link_to "Operators", ops_operators_path, class: "#{button_classes(:secondary)} mt-3" %>

@@ -205,6 +205,7 @@ Settings → Environments: **`staging`** (deployment branches: `main` only) and 
 | `STRIPE_WEBHOOK_SECRET`, `STRIPE_CONNECT_WEBHOOK_SECRET` | secrets | test-mode endpoints' | live endpoints' | Signing secrets of the two webhook endpoints |
 | `STRIPE_CONNECT_CLIENT_ID` | var | test-mode client id | live client id | Stripe Connect onboarding (PAY-03) |
 | `INBOUND_EMAIL_SECRET` | secret | its own value | its own value | Signs inbound support email; same value as that environment's entry in `shadetree_inbound_email_secrets` in `infra/terraform.tfvars` (OPS-05, [inbound-email.md](inbound-email.md)) |
+| `EMAIL_EVENTS_SECRET` | secret | its own value | its own value | Signs late bounce and complaint reports to `/inbound/email_events`, at least 32 characters; unset turns the endpoint off (NTF-05, [email-events.md](email-events.md)) |
 | `INBOUND_EMAIL_ENABLED` | var, optional | | | `true` turns inbound support email on once tested (OPS-05, [inbound-email.md](inbound-email.md)) |
 | `STRIPE_AUTOMATIC_TAX` | var, optional | `true` (default) | `true` | `false` turns Stripe Tax off on subscriptions (needs Stripe Tax enabled in the account) |
 | `TRIAL_DAYS` | var, optional | `14` (default) | `14` | Length of a new business's paid-plan trial; `0` turns trials off (BIL-05) |
@@ -541,6 +542,13 @@ SolidQueue::FailedExecution.includes(:job).last(20).map { [_1.id, _1.job.class_n
 SolidQueue::FailedExecution.find(id).retry     # after fixing the cause
 SolidQueue::FailedExecution.find(id).discard   # when it's no longer wanted
 ```
+
+### Blocked client addresses
+
+A bounce or a spam complaint blocks a client's address for that business (NTF-01, NTF-05). When
+staff clear it in the app ("Send to it again" on the client's page), the mail relay may still keep
+it on its own suppression list and drop the next email: remove the address there too
+([email-events.md](email-events.md#the-relays-own-suppression-list)).
 
 ## Monthly cost
 

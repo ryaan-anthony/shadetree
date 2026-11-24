@@ -78,6 +78,17 @@ class EmailMessage < ApplicationRecord
   # (ADR 0017).
   def reply_code = error.to_s[/\b[45]\d\d(?: \d\.\d{1,3}\.\d{1,3})?\b|\b[45]\.\d{1,3}\.\d{1,3}\b/]
 
+  CC_PROBLEM_LABELS = { "mailbox" => "Address refused", "refused" => "Couldn't send", "complaint" => "Marked as spam" }.freeze
+
+  # NTF-05: the CCs a late report was about, for the send history: [address, label, code].
+  def cc_problem_summaries
+    addresses = cc_addresses
+    cc_problems.filter_map do |problem|
+      address = addresses[problem["position"].to_i] or next
+      [ address, CC_PROBLEM_LABELS.fetch(problem["reason"], "Couldn't send"), problem["code"] ]
+    end
+  end
+
   # Whose email it was: the client of its quote, invoice, job or request (a receipt: its invoice's).
   def client = related.is_a?(Payment) ? related.invoice.client : related.try(:client)
 

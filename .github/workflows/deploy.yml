@@ -226,6 +226,7 @@ jobs:
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
           STRIPE_CONNECT_WEBHOOK_SECRET: ${{ secrets.STRIPE_CONNECT_WEBHOOK_SECRET }}
           INBOUND_EMAIL_SECRET: ${{ secrets.INBOUND_EMAIL_SECRET }}
+          EMAIL_EVENTS_SECRET: ${{ secrets.EMAIL_EVENTS_SECRET }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           APP_HOST: ${{ vars.APP_HOST }}
           PGHOST: ${{ vars.DB_HOST || 'postgres' }}
@@ -294,7 +295,7 @@ jobs:
             [[ "${!name}" =~ ^([0-9]+)?$ ]] || { echo "::error::$name must be a whole number, or unset"; exit 1; }
           done
           settings=(SECRET_KEY_BASE DATABASE_PASSWORD SMTP_USERNAME SMTP_PASSWORD STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET
-                    STRIPE_CONNECT_WEBHOOK_SECRET INBOUND_EMAIL_SECRET SENTRY_DSN SENTRY_ENVIRONMENT APP_HOST TRUSTED_PROXIES PGHOST DATABASE_NAME DATABASE_USER
+                    STRIPE_CONNECT_WEBHOOK_SECRET INBOUND_EMAIL_SECRET EMAIL_EVENTS_SECRET SENTRY_DSN SENTRY_ENVIRONMENT APP_HOST TRUSTED_PROXIES PGHOST DATABASE_NAME DATABASE_USER
                     MAIL_FROM SMTP_ADDRESS SMTP_PORT MAIL_SANDBOX MAIL_ALLOWLIST MAIL_SANDBOX_TO SUPPORT_EMAIL ANALYTICS_HOST ANALYTICS_DOMAIN
                     STRIPE_PUBLISHABLE_KEY STRIPE_CONNECT_CLIENT_ID INBOUND_EMAIL_ENABLED STRIPE_AUTOMATIC_TAX TRIAL_DAYS
                     TRIAL_PLAN BILLING_GRACE_DAYS STRUCTURED_LOGS SLOW_REQUEST_MS SLOW_QUERY_MS JOB_BACKLOG_THRESHOLD JOB_WAIT_THRESHOLD
@@ -311,7 +312,7 @@ jobs:
             [[ "$line" =~ ^[A-Z][A-Z0-9_]*= ]] || { echo "::error::EXTRA_SETTINGS: a line is not NAME=value"; exit 1; }
             name="${line%%=*}"
             # Nothing the deploy writes itself, and no secret or connection setting, can be set or overridden here.
-            if [[ " ${written[*]} " == *" $name "* || "$name" =~ ^(STRIPE_|PG|TLS_|DATABASE_|SMTP_|MAIL_|SENTRY_|SECRET_KEY_BASE|RAILS_MASTER_KEY|INBOUND_EMAIL_) ]]; then
+            if [[ " ${written[*]} " == *" $name "* || "$name" =~ ^(STRIPE_|PG|TLS_|DATABASE_|SMTP_|MAIL_|SENTRY_|SECRET_KEY_BASE|RAILS_MASTER_KEY|INBOUND_EMAIL_|EMAIL_EVENTS_) ]]; then
               echo "::error::EXTRA_SETTINGS may not set $name: use its own variable or secret"; exit 1
             fi
             lines+=("$line")
