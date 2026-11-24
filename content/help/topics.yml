@@ -1,6 +1,6 @@
 # OPS-06: the help topics. A page links to its topic's article with `learn_more(:topic)`, and an
-# article lists the topics it explains (front matter `topics:`). CI fails when a page uses a
-# topic missing here, or a topic here has no article.
+# article lists the topics it explains (front matter `topics:`). Every topic a page uses is
+# declared here, and every topic here gets an article that lists it.
 #
 # pages: the screens (controller#action) the topic is about. A question sent from one of them
 # is offered that topic's articles first.

@@ -76,15 +76,18 @@ class HelpSearchTest < ActionDispatch::IntegrationTest
     assert_redirected_to %r{/admin/help/\w+}
   end
 
-  test "Learn more links each page to its topic's article, in a new tab" do
+  test "Learn more links each page to its topic's article; only the send page opens a new tab" do
     pages = StaffPages.build(businesses(:one), users(:one))
     sign_in users(:one)
     post switch_admin_business_path, params: { business: businesses(:one).uid }
-    { send_quote: "send-a-quote", settings_business: "your-business-settings", schedule: "plan-your-week" }.each do |key, slug|
+    get StaffPages.find(pages, :send_quote).path # a message being written stays
+    assert_select ".page-head a.help-learn-more[href='#{admin_help_article_path("send-a-quote")}'][target=_blank]", 1 do
+      assert_select ".sr-only", /opens in a new tab/
+    end
+    { settings_business: "your-business-settings", schedule: "plan-your-week" }.each do |key, slug|
       get StaffPages.find(pages, key).path
-      assert_select ".page-head a.help-learn-more[href='#{admin_help_article_path(slug)}'][target=_blank]", 1, key.to_s do
-        assert_select ".sr-only", /opens in a new tab/
-      end
+      assert_select ".page-head a.help-learn-more[href='#{admin_help_article_path(slug)}']:not([target])", 1, key.to_s
+      assert_select ".page-head a.help-learn-more .sr-only", text: /new tab/, count: 0
     end
   end
 
