@@ -15,17 +15,18 @@ approves, visits on the schedule, an invoice, and the payment.
 
 ## Get set up
 
-A new business starts on **Home** with **Get set up**: four steps that take you from nothing to
+A new business starts on **Home** with **Get set up**: the steps that take you from nothing to
 being paid.
 
-![Home for a new business: work through the four Get set up steps, from adding services to getting paid online](home-get-set-up)
+![Home for a new business: work through the Get set up steps, from adding services to sending your first quote](home-get-set-up)
 
 1. **Add your services and prices**: see [Add your services and prices](add-services-and-prices).
 2. **Add a client**: a name and a phone number or email is enough. See
    [Add a client and keep their details](add-and-find-clients).
 3. **Send your first quote**: see [Build a quote](build-a-quote) and
    [Send a quote, and what your client sees](send-a-quote).
-4. **Get paid online**: see [Take card payments online](take-card-payments).
+4. **Get paid online**, where card payments are available: see
+   [Take card payments online](take-card-payments).
 
 Each step opens the real screen and brings you back. Want to see what clients get first? Press
 **Preview a sample quote**.
