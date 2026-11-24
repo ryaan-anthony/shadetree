@@ -113,7 +113,10 @@ module HelpCentre
 
     def self.check(file, meta)
       fail_with(file, "unknown front matter #{(meta.keys - FIELDS).join(", ")}") if (meta.keys - FIELDS).any?
-      %w[title summary].each { fail_with(file, "#{_1} is missing") if meta[_1].to_s.strip.empty? }
+      %w[title summary].each do |key|
+        fail_with(file, "#{key} must be text") unless meta[key].nil? || meta[key].is_a?(String)
+        fail_with(file, "#{key} is missing") if meta[key].to_s.strip.empty?
+      end
       fail_with(file, "category #{meta["category"].inspect} isn't one of #{CATEGORIES.keys.join(", ")}") unless CATEGORIES.key?(meta["category"])
       fail_with(file, "topics must be a list of topic keys") unless Array(meta["topics"]).all? { _1.to_s.match?(TOPIC) }
       fail_with(file, "reviewed must be a date (YYYY-MM-DD)") unless meta["reviewed"].is_a?(Date)

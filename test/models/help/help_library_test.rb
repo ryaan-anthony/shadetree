@@ -35,6 +35,7 @@ class HelpLibraryTest < ActiveSupport::TestCase
   test "bad front matter fails loudly, naming the file" do
     { "wrong-category" => { category: "widgets" }, "no-title" => { title: "" }, "bad-date" => { reviewed: "soon" },
       "bad-topic" => { topics: [ "Send Page" ] }, "extra" => { author: "me" },
+      "list-title" => { title: [ "Send", "a quote" ] }, "number-summary" => { summary: 42 },
       "bad-shot" => { screenshots: [ { "name" => "../etc", "path" => "/admin" } ] },
       "outside-shot" => { screenshots: [ { "name" => "x", "path" => "https://example.com/" } ] },
       "unused-record" => { screenshots: [ { "name" => "x", "path" => "/admin/quotes", "quote" => "Spring" } ] },
