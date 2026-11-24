@@ -165,6 +165,19 @@ module QuoteWork
     end
   end
 
+  # The picker's ticked rows ({ line key => { take:, quantity: } }) as { quote line id => quantity },
+  # by the lines' keys within this quote: another quote's (or business's) lines aren't found.
+  def picks_from(quote, rows)
+    return {} unless rows.respond_to?(:key?)
+
+    quote.line_items.each_with_object({}) do |line, picks|
+      row = rows[line.key]
+      next unless row.respond_to?(:key?) && ActiveModel::Type::Boolean.new.cast(row[:take])
+
+      picks[line.id] = row[:quantity].to_s.strip.presence || "0"
+    end
+  end
+
   # "Tree removal: 4 of 10 to do (J-0002 has 6), not 5."
   def refusal(line, wanted)
     held = line.claims.live.where.not(job_id: nil).includes(:job).order(:job_id).map { "#{_1.job.number} has #{number(_1.quantity)}" }

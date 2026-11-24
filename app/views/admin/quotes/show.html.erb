@@ -1,28 +1,45 @@
 <%# QTE-06: a sent quote's page for staff. Drafts open in the builder instead. %>
 <% quote = @quote %>
 <% totals = quote.totals %>
+<% split = QuoteWork.split?(current_business) %>
+<% jobs = split ? quote.jobs.to_a : Array(quote.first_job) %>
 <% content_for :title, "#{quote.number}#{" #{quote.title}" if quote.title}" %>
 <%= page_header (quote.title || "Quote #{quote.number}"), lede: safe_join([ "#{quote.number} for ", link_to(quote.client.display_name, admin_client_path(quote.client), class: "font-medium text-ink hover:underline"), (" (#{quote.client.company_name})" if quote.client.company_name.present? && quote.client.company_name != quote.client.display_name), (", #{quote.property.one_line}" if quote.property), location_badge(quote) ].compact) do %>
   <%# PLT-14: the Primary is the next step: Create job, or Reopen job when its job was cancelled (interim
-      until the multi-job spec; owner, 2026-11-22), then Create invoice; links to them are Secondary. %>
-  <% job = quote.first_job %>
-  <% live_job = job unless job&.status == "cancelled" %>
-  <% if job %>
+      until the multi-job spec; owner, 2026-11-22), then Create invoice; links to them are Secondary.
+      JOB-09 (split_jobs): Create job opens the picker while work is to do, and is the Primary unless
+      Create invoice is (PAY-06's order); the jobs are linked, several through the Jobs card. %>
+  <% job = jobs.first %>
+  <% live_job = jobs.find { _1.status != "cancelled" } %>
+  <% if jobs.many? %>
+    <%= link_to "#jobs", class: button_classes(:secondary), id: "quote-jobs-link" do %><%= icon "job" %> Jobs (<%= jobs.size %>)<% end %>
+  <% elsif job %>
     <%= link_to admin_job_path(job), class: button_classes(:secondary) do %><%= icon "job" %> Job <%= job.number %><% end %>
   <% end %>
-  <% if quote.approved? && job && !live_job %>
+  <%# #289: once it's billed, the invoice is the next step, not a second one (that's in the menu). %>
+  <% billed = quote.approved? ? (quote.invoices.to_a + jobs.flat_map { _1.invoices.to_a }).uniq.reject(&:void?).sort_by(&:created_at) : [] %>
+  <%# PAY-06 (owner, 2026-11-23): with split jobs, Create invoice is the Primary only while some
+      completed work is unbilled (a completed job without an invoice that isn't void). %>
+  <% invoice_primary = if split
+                         quote.approved? && billed.empty? && jobs.any? { |j| j.status == "completed" && j.invoices.none? { !_1.void? } }
+                       else
+                         quote.approved? && billed.empty? && live_job
+                       end %>
+  <% if split %>
+    <% if quote.approved? && quote.line_items.any? { _1.to_do_quantity.positive? } %>
+      <%= link_to new_admin_quote_job_path(quote), class: button_classes(invoice_primary ? :secondary : :primary) do %><%= icon "job" %> Create job<% end %>
+    <% end %>
+  <% elsif quote.approved? && job && !live_job %>
     <%= button_to reopen_admin_job_path(job), method: :patch, class: button_classes(:primary), form: { class: "contents" } do %><%= icon "rotate-ccw" %> Reopen job<% end %>
   <% elsif quote.approved? && !job %>
     <%= button_to admin_quote_job_path(quote), class: button_classes(:primary), form: { class: "contents" } do %><%= icon "job" %> Create job<% end %>
   <% end %>
-  <%# #289: once it's billed, the invoice is the next step, not a second one (that's in the menu). %>
-  <% billed = quote.approved? ? (quote.invoices.to_a + Array(quote.first_job&.invoices&.to_a)).uniq.reject(&:void?).sort_by(&:created_at) : [] %>
   <% if billed.size > 1 %><%# progress billing: the Invoices card lists them all %>
     <%= link_to "#invoices", class: button_classes(:secondary), id: "quote-invoice-link" do %><%= icon "invoice" %> Invoices (<%= billed.size %>)<% end %>
   <% elsif (latest_invoice = billed.last) %>
     <%= link_to admin_invoice_path(latest_invoice), class: button_classes(:secondary), id: "quote-invoice-link" do %><%= icon "invoice" %> Invoice <%= latest_invoice.number %><% end %>
   <% elsif quote.approved? %>
-    <%= button_to admin_quote_invoices_path(quote), class: button_classes(live_job ? :primary : :secondary), form: { class: "contents" } do %><%= icon "invoice" %> Create invoice<% end %>
+    <%= button_to admin_quote_invoices_path(quote), class: button_classes(invoice_primary ? :primary : :secondary), form: { class: "contents" } do %><%= icon "invoice" %> Create invoice<% end %>
   <% end %>
   <% if quote.revisable? %>
     <%= button_to revise_admin_quote_path(quote), class: button_classes(:secondary),
@@ -102,6 +119,7 @@
       </dl>
     <% end %>
 
+    <% if split && quote.approved? && jobs.any? %><%= render "admin/quotes/jobs", quote:, jobs: %><% end %>
     <%= render "admin/quotes/responses", quote:, sends_by_revision: @sends_by_revision %>
 
     <%= card do %>

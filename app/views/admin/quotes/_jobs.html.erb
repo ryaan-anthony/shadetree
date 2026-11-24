@@ -1,0 +1,27 @@
+<%# locals: (quote:, jobs:) -%>
+<%# JOB-09: the quote's jobs, and which of them holds each line's work ("6 in J-0002, 4 to do"). %>
+<% claims = JobClaim.where(job_id: jobs.map(&:id)).group_by(&:quote_line_item_id) %>
+<% by_id = jobs.index_by(&:id) %>
+<%= card title: "Jobs (#{jobs.size})", id: "jobs", flush: true do %>
+  <ul class="list" aria-label="Jobs from this quote">
+    <% jobs.each do |job| %>
+      <li><%= link_to job.number, admin_job_path(job), class: "font-medium text-ink hover:underline" %>
+        <span class="min-w-0 flex-1 truncate text-sm2 text-subtle"><%= job.title %></span><%= job_status_badge(job) %></li>
+    <% end %>
+  </ul>
+  <div class="table-wrap border-t border-line">
+    <table class="data-table" id="quote-line-jobs">
+      <thead><tr><th scope="col">Service</th><th scope="col">Jobs</th><th scope="col" class="text-right">To do</th></tr></thead>
+      <tbody>
+        <% quote.line_items.each do |line| %>
+          <tr>
+            <td><span class="font-medium text-ink"><%= line.name.presence || "Item" %></span><span class="sub"><%= line.quantity_label %></span></td>
+            <td class="text-sm2"><%= safe_join(Array(claims[line.id]).sort_by(&:job_id).map { |claim| job = by_id[claim.job_id]
+                                     safe_join([ link_to(job.number, admin_job_path(job), class: "text-ink hover:underline"), " #{QuoteWork.number(claim.quantity)} (#{job.status_label.downcase})" ]) }, ", ").presence || "None" %></td>
+            <td class="num"><%= QuoteWork.number(line.to_do_quantity) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>

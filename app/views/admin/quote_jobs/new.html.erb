@@ -1,0 +1,4 @@
+<%# JOB-09: Create job from an approved quote's to-do work. %>
+<% content_for :title, "Create a job from #{@quote.number}" %>
+<%= page_header "Create a job", lede: "From quote #{@quote.number} for #{@quote.client.display_name}. Untick what this job won't do, or lower a quantity: the rest stays to do." %>
+<div class="form-split"><%= render "picker", quote: @quote, lines: @lines, url: admin_quote_job_path(@quote), submit: "Create job", token: @token %></div>

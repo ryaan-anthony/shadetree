@@ -1,0 +1,4 @@
+<%# JOB-09: more to-do work from the job's quote. %>
+<% content_for :title, "Add work to #{@job.number}" %>
+<%= page_header "Add work to #{@job.number}", lede: "To-do work from quote #{@quote.number}. A line the job already has grows by what you add." %>
+<div class="form-split"><%= render "admin/quote_jobs/picker", quote: @quote, lines: @lines, url: admin_job_work_path(@job), submit: "Add to job" %></div>
