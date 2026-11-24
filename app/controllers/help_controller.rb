@@ -8,6 +8,7 @@ class HelpController < ApplicationController
   before_action :send_members_to_the_app
 
   def index
+    search_articles
   end
 
   def show
@@ -19,6 +20,6 @@ class HelpController < ApplicationController
   def send_members_to_the_app
     return unless user_signed_in? && current_user.business_users.active.exists?
 
-    redirect_to(params[:slug] ? admin_help_article_path(params[:slug]) : admin_help_articles_path, status: :found)
+    redirect_to(params[:slug] ? admin_help_article_path(params[:slug]) : admin_help_articles_path(q: params[:q].presence), status: :found)
   end
 end

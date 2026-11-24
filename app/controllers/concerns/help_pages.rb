@@ -13,6 +13,12 @@ module HelpPages
 
   def help_library = HelpCentre.library
 
+  # ?q=: the articles matching it, best first.
+  def search_articles
+    @query = params[:q].to_s.squish.first(100)
+    @results = HelpArticle.search(@query).limit(20).pluck(:slug).filter_map { help_library.find(_1) } if @query.present?
+  end
+
   # The slug is only ever a key into the loaded index, never part of a file path.
   def find_article!
     help_library.find(params[:slug].to_s) || raise(ActiveRecord::RecordNotFound, "No help article")

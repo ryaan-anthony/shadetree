@@ -1,0 +1,22 @@
+# OPS-06: the help topics. A page links to its topic's article with `learn_more(:topic)`, and an
+# article lists the topics it explains (front matter `topics:`). CI fails when a page uses a
+# topic missing here, or a topic here has no article.
+#
+# pages: the screens (controller#action) the topic is about. A question sent from one of them
+# is offered that topic's articles first.
+requests:
+  pages: [admin/service_requests#index, admin/service_requests#show, admin/service_requests#new]
+quote_builder:
+  pages: [admin/quotes#new, admin/quotes#edit]
+send:
+  pages: [admin/quote_sends#new]
+schedule:
+  pages: [admin/schedule#show]
+invoices:
+  pages: [admin/invoices#index, admin/invoices#show, admin/invoices#edit]
+services:
+  pages: [admin/catalog_items#index, admin/catalog_items#new, admin/catalog_items#edit]
+settings:
+  pages: [admin/businesses#edit, admin/hours#show, admin/tax_rates#index]
+support:
+  pages: [admin/support_tickets#index, admin/support_tickets#show]

@@ -329,7 +329,9 @@ Rails.application.routes.draw do
       get :return, action: :returned
     end
     # OPS-06: help articles for members (before the tickets, which live at /admin/help)
-    resources :help_articles, only: %i[index show], path: "help/articles", param: :slug, constraints: { slug: /[a-z0-9-]+/ }
+    resources :help_articles, only: %i[index show], path: "help/articles", param: :slug, constraints: { slug: /[a-z0-9-]+/ } do
+      post :suggestions, on: :collection # on the ticket form, as the subject is typed
+    end
     # OPS-05: asking Shadetree for help
     resources :support_tickets, only: %i[index new create show], path: "help" do
       post :reply, on: :member

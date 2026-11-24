@@ -102,7 +102,9 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
     next [] unless bar
 
     problems = bar.css("h1, h2, p").map { "the top bar has #{_1.name} #{_1.text.squish.inspect}" }
-    problems << "the top bar repeats the H1 #{title.inspect}" if title.present? && bar.text.squish.include?(title)
+    # A closed menu's items (Help's "Help articles", OPS-06) aren't the bar's text until it opens.
+    shown = bar.dup.tap { |copy| copy.css("[data-menu-target=menu]").each(&:remove) }.text.squish
+    problems << "the top bar repeats the H1 #{title.inspect}" if title.present? && shown.include?(title)
     problems
   end
 
@@ -277,7 +279,8 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
   # fallback where Enter would otherwise press a tab; the tabs a filter form submits aren't one.
   LIST = %i[list empty].freeze
   check :search_as_you_type, if: ->(page) { LIST.include?(page.kind) } do |_page, html|
-    html.css("form:has(input[type=search])").flat_map do |form|
+    # The Help menu's search (OPS-06) goes to the help articles on Enter: a way there, not a list filter.
+    html.css("form:has(input[type=search])").reject { _1.ancestors(".topbar").any? }.flat_map do |form|
       buttons = form.css("button:not([type=button]), input[type=submit]").reject { _1.ancestors("noscript").any? || _1.matches?(".tab, .segment") }
       [ ("#{form["id"] || form["action"]}: a Search button (#{buttons.map { label(_1) }.join(", ")})" if buttons.any?),
         ("#{form["id"] || form["action"]}: doesn't search as you type (search-form controller)" unless form["data-controller"].to_s.split.include?("search-form")) ].compact

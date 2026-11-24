@@ -17,6 +17,24 @@ module HelpHelper
     HTML.compute_if_absent([ article.digest, help_in_app?, help_library.slugs.hash ], &render)
   end
 
+  # "Learn more" to the article for a help topic (content/help/topics.yml). In the same tab (the
+  # installed app opens new tabs in a browser that isn't signed in); new_tab: true where the page
+  # holds something being typed, so it isn't lost. Nothing until the topic has an article; an
+  # undeclared topic raises.
+  def learn_more(topic, new_tab: false, **attributes)
+    topic = HelpCentre.topic!(topic)
+    articles = HelpCentre.library.for_topic(topic)
+    article = articles.find { _1.topics.first == topic } || articles.first
+    return unless article
+
+    # A new tab may open in a browser that isn't signed in (the installed app's do): the public copy
+    # reads anywhere, and a signed-in member there is sent on to the copy in the app.
+    link_to (new_tab ? help_article_path(article.slug) : admin_help_article_path(article.slug)), target: ("_blank" if new_tab), rel: ("noopener" if new_tab), data: { help_topic: topic },
+            class: [ "help-learn-more", attributes.delete(:class) ].compact.join(" "), **attributes do
+      safe_join([ "Learn more", tag.span(": #{article.title}#{" (opens in a new tab)" if new_tab}", class: "sr-only") ])
+    end
+  end
+
   # The public address of an article, for the in-app copy's canonical link.
   def help_public_url(article) = "#{public_base_url}#{help_article_path(article.slug)}"
 end

@@ -1,0 +1,17 @@
+<%# locals: (suggestions:) -%>
+<%# OPS-06: up to three articles about the page the question comes from, or its subject. They
+    open in a new tab, so the question stays as typed and can still be sent, at the public copy
+    (a new tab may not be signed in; a member who is goes on to the copy in the app). %>
+<div id="help-suggestions">
+  <% if suggestions.any? %>
+    <div class="rounded-control border border-line bg-sunken p-3" role="group" aria-labelledby="help-suggestions-h">
+      <p class="font-semibold text-ink" id="help-suggestions-h">These articles may answer it</p>
+      <ul class="mt-1 space-y-1">
+        <% suggestions.each do |article| %>
+          <li><%= link_to help_article_path(article.slug), target: "_blank", rel: "noopener", class: "font-medium text-canopy underline underline-offset-2" do %><%= article.title %><span class="sr-only"> (opens in a new tab)</span><% end %></li>
+        <% end %>
+      </ul>
+      <p class="mt-1 text-sm2 text-muted">They open in a new tab, so your question stays here, ready to send.</p>
+    </div>
+  <% end %>
+</div>
