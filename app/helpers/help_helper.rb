@@ -27,7 +27,9 @@ module HelpHelper
     article = articles.find { _1.topics.first == topic } || articles.first
     return unless article
 
-    link_to admin_help_article_path(article.slug), target: ("_blank" if new_tab), rel: ("noopener" if new_tab), data: { help_topic: topic },
+    # A new tab may open in a browser that isn't signed in (the installed app's do): the public copy
+    # reads anywhere, and a signed-in member there is sent on to the copy in the app.
+    link_to (new_tab ? help_article_path(article.slug) : admin_help_article_path(article.slug)), target: ("_blank" if new_tab), rel: ("noopener" if new_tab), data: { help_topic: topic },
             class: [ "help-learn-more", attributes.delete(:class) ].compact.join(" "), **attributes do
       safe_join([ "Learn more", tag.span(": #{article.title}#{" (opens in a new tab)" if new_tab}", class: "sr-only") ])
     end

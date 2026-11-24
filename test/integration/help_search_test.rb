@@ -53,14 +53,14 @@ class HelpSearchTest < ActionDispatch::IntegrationTest
   test "the ticket form suggests articles for the page it came from, and for its subject" do
     sign_in users(:one)
     get new_admin_support_ticket_path(from: "/admin/schedule")
-    assert_select "#help-suggestions a[href='#{admin_help_article_path("plan-your-week")}'][target=_blank]", /Plan your week/
+    assert_select "#help-suggestions a[href='#{help_article_path("plan-your-week")}'][target=_blank]", /Plan your week/
     assert_select "form[data-controller=help-suggestions] input[name='support_ticket[subject]'][data-help-suggestions-target=subject]"
 
     post suggestions_admin_help_articles_path, params: { subject: "take tax off an invoice", page: "/admin/schedule" }, as: :turbo_stream
     assert_response :success
     links = Nokogiri::HTML5(response.body.gsub(%r{</?(turbo-stream|template)[^>]*>}, "")).css("#help-suggestions a").map { _1["href"] }
-    assert_equal admin_help_article_path("plan-your-week"), links.first, "the page's articles first"
-    assert_includes links, admin_help_article_path("take-tax-off-an-invoice")
+    assert_equal help_article_path("plan-your-week"), links.first, "the page's articles first"
+    assert_includes links, help_article_path("take-tax-off-an-invoice")
     assert_operator links.size, :<=, 3
 
     post suggestions_admin_help_articles_path, params: { subject: "", page: "https://evil.example/admin" }, as: :turbo_stream
@@ -71,7 +71,7 @@ class HelpSearchTest < ActionDispatch::IntegrationTest
     sign_in users(:one)
     post admin_support_tickets_path, params: { support_ticket: { subject: "Send a quote", category: "question", page: "/admin/quotes", body: "" } }
     assert_response :unprocessable_content
-    assert_select "#help-suggestions a[href='#{admin_help_article_path("send-a-quote")}']"
+    assert_select "#help-suggestions a[href='#{help_article_path("send-a-quote")}']"
     post admin_support_tickets_path, params: { support_ticket: { subject: "Send a quote", category: "question", page: "/admin/quotes", body: "How?" } }
     assert_redirected_to %r{/admin/help/\w+}
   end
@@ -81,7 +81,7 @@ class HelpSearchTest < ActionDispatch::IntegrationTest
     sign_in users(:one)
     post switch_admin_business_path, params: { business: businesses(:one).uid }
     get StaffPages.find(pages, :send_quote).path # a message being written stays
-    assert_select ".page-head a.help-learn-more[href='#{admin_help_article_path("send-a-quote")}'][target=_blank]", 1 do
+    assert_select ".page-head a.help-learn-more[href='#{help_article_path("send-a-quote")}'][target=_blank]", 1 do
       assert_select ".sr-only", /opens in a new tab/
     end
     { settings_business: "your-business-settings", schedule: "plan-your-week" }.each do |key, slug|
