@@ -36,7 +36,7 @@ module StatusHelper
     quota: { "ok" => [ :neutral, "Within the limit" ], "approaching" => [ :warning, "Nearly used" ], "blocked" => [ :danger, "Limit reached" ] },
     # A client email (NTF-01's record): one that didn't arrive is danger wherever it shows.
     email: { "queued" => [ :neutral, "Sending" ], "sent" => [ :info, "Sent" ], "bounced" => [ :danger, "Address refused" ],
-             "failed" => [ :danger, "Couldn't send" ], "suppressed" => [ :danger, "Not sent: address blocked" ],
+             "failed" => [ :danger, "Couldn't send" ], "suppressed" => [ :danger, "Not sent: address blocked" ], "complained" => [ :danger, "Marked as spam" ],
              "pending" => [ :info, "Waiting" ], "not_delivered" => [ :danger, "Email not delivered" ] },
     payment: { "refunded" => [ :warning, "Refunded" ], "partly_refunded" => [ :warning, "Partly refunded" ], "open" => [ :danger, "Disputed" ],
                "won" => [ :success, "Dispute won" ], "lost" => [ :danger, "Dispute lost" ], "closed" => [ :neutral, "Inquiry closed" ],
