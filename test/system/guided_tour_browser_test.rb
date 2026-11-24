@@ -237,6 +237,16 @@ class GuidedTourBrowserTest < ApplicationSystemTestCase
     wait_for_controllers
   end
 
+  # Follows a menu link, a Turbo visit: the page the input check passed stays open, so the click
+  # can't be lost the way it can on a fresh load that skipped the check (open_page), and the
+  # check's recovery reload never loads the destination twice. Waits for the destination's
+  # heading first: Turbo keeps the old page until the response arrives, which on a busy runner
+  # can take longer than Capybara's default wait.
+  def follow_menu_link(name)
+    within("#app-sidebar") { click_on name }
+    assert_selector "#main h1", text: name, wait: 10
+  end
+
   def wait_for_tip(key, field)
     deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 5
     until @membership.reload.tips.dig(key, field)
@@ -246,19 +256,19 @@ class GuidedTourBrowserTest < ApplicationSystemTestCase
   end
 
   test "a first-time tip shows once, is hidden by keyboard, and isn't kept for Back" do
-    sign_in_as users(:one)
-    open_page admin_service_requests_path
+    sign_in_as users(:one) # Home, after the input check
+    follow_menu_link "Requests"
     assert_selector "#tip-requests[role=note]", text: "Requests from your online form", visible: true
     wait_for_tip "requests", "seen_at"
-    click_on "Invoices" # a Turbo visit, then Back to the cached page
+    follow_menu_link "Invoices" # then Back to the cached page
     assert_selector "#tip-invoices", visible: true
     page.go_back
     assert_selector "h1", text: "Requests"
     assert_no_selector "#tip-requests", visible: :all
 
-    open_page admin_invoices_path
+    visit admin_invoices_path # a fresh load; its tip is used up, so the input check's reload changes nothing
     assert_no_selector ".tip", visible: :all, wait: 0 # shown once already
-    open_page admin_schedule_path
+    follow_menu_link "Schedule"
     tab_to "Got it"
     page.send_keys(:enter)
     assert_no_selector "#tip-schedule"
