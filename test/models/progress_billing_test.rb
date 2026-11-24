@@ -269,7 +269,8 @@ class ProgressBillingTest < ActiveSupport::TestCase
     assert_equal [ [ "progress", early.number, 900_00 ] ], credits(final)
     assert_equal [ 0, [ [ early.number, 990_00 ] ] ], [ final.total_cents, client_credits(final) ]
     send!(final)
-    assert_equal 110_00, as_business(@business) { BillingLedger.new(quote: @quote.reload).summary[:over_billed] }, "$100 and its tax, charged"
+    assert_equal [ 0, 110_00 ], as_business(@business) { BillingLedger.new(quote: @quote.reload).summary.values_at(:over_billed, :owed) },
+                 "$100 and its tax, charged: owed to the client, as nothing is left to bill"
   end
 
   test "B3: a discount typed on a progress invoice applies to the cash it collected: the final credits only that" do
@@ -968,8 +969,23 @@ class ProgressBillingTest < ActiveSupport::TestCase
     range = as_business(@business) { last.reload.quote_discount_range }
     assert_equal({ left: 100_00, applied: 0, owed: 100_00, short: false }, range.slice(:left, :applied, :owed, :short), "$130 × $1,000 ÷ $1,300, none fits")
     assert_equal 0, send!(last).total_cents
-    assert_equal [ 0, 100_00, 30_00, 100_00 ],
-                 as_business(@business) { BillingLedger.new(quote: @quote.reload).then { [ _1.outstanding_cents, _1.discount_owed_cents, _1.unused_discount_cents, _1.summary[:over_billed] ] } }
+    assert_equal [ 0, 100_00, 30_00, { billed: 0, credited: 0, over_billed: 0, owed: 100_00 } ],
+                 as_business(@business) { BillingLedger.new(quote: @quote.reload).then { [ _1.outstanding_cents, _1.discount_owed_cents, _1.unused_discount_cents, _1.summary ] } }
+  end
+
+  test "over-billing is credited on the next invoice while there's work left to bill; after that it's owed to the client" do
+    approved_quote([ [ "r", "Roof", 1, 1000 ], [ "g", "Gutters", 1, 500 ] ], tax: "10")
+    roof, gutters = make(r: 1), make(g: 1)
+    send!(progress(roof))
+    final = bill_job(complete(roof))
+    as_business(@business) { final.reload.tap { _1.set_discount("percent", "20") }.save! }
+    send!(final)
+    summary = -> { as_business(@business) { BillingLedger.new(quote: @quote.reload).summary } }
+    assert_equal({ over_billed: 220_00, owed: 0 }, summary.().slice(:over_billed, :owed), "the gutters are still to bill")
+    last = bill_job(complete(gutters))
+    as_business(@business) { last.reload.tap { _1.set_discount("percent", "90") }.save! }
+    assert_equal [ [ "over_billed", 50_00 ] ], credits(send!(last)).map { [ _1[0], _1[2] ] }, "the next invoice credits what it can"
+    assert_equal({ over_billed: 0, owed: 165_00 }, summary.().slice(:over_billed, :owed), "the rest, with its tax: nothing is left to credit it on")
   end
 
   test "a shortfall's discount is rounded once, then spread by largest remainder" do
@@ -1065,7 +1081,7 @@ class ProgressBillingTest < ActiveSupport::TestCase
     send!(lower(progress(@quote), "Tree removal" => 800))
     send!(bill_job(complete(make(t: 10), "Tree removal" => 6)))
     summary = as_business(@business) { BillingLedger.new(quote: @quote.reload).summary }
-    assert_equal({ billed: 880_00, credited: 660_00, over_billed: 220_00 }, summary)
+    assert_equal({ billed: 880_00, credited: 660_00, over_billed: 0, owed: 220_00 }, summary, "nothing is left to bill: owed to the client")
   end
 end
 

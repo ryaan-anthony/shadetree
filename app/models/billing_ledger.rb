@@ -430,14 +430,22 @@ class BillingLedger
 
   # --- Summaries for the quote and job pages ----------------------------------------------
 
-  # { billed:, credited:, over_billed: } in cents with tax, as the client was charged, for the
-  # quote, or only a job's own lines.
+  # { billed:, credited:, over_billed:, owed: } in cents with tax, as the client was charged, for
+  # the quote, or only a job's own lines. Over-billing is credited on the next invoice while there's
+  # work left to bill; once there's none, it's owed to the client, as is what a last invoice
+  # couldn't take of a scaled discount (owner, 2026-11-24). Nothing credits that: staff refund it.
   def summary(job: nil)
     lines = job ? @progress.select { (jl = @job_lines[_1.job_line_item_id]) && jl.job_id == job.id } : @progress
     sent = lines.select { _1.invoice.sent_at }
-    { billed: sent.sum { with_tax_cents(amount_cents(_1), _1) }, credited: sent.sum { with_tax_cents(@used.fetch(_1.id, 0), _1) },
-      over_billed: (over_billed & lines).sum { with_tax_cents(remaining_cents(_1), _1) } + (job ? 0 : discount_owed_cents(with_tax: true, sent: true)) }
+    over = (over_billed & lines).sum { with_tax_cents(remaining_cents(_1), _1) }
+    owed = job ? 0 : discount_owed_cents(with_tax: true, sent: true)
+    over, owed = 0, owed + over if nothing_left_to_bill?
+    { billed: sent.sum { with_tax_cents(amount_cents(_1), _1) }, credited: sent.sum { with_tax_cents(@used.fetch(_1.id, 0), _1) }, over_billed: over, owed: }
   end
+
+  # No work is left to bill, so no later invoice can credit anything: every live job line billed
+  # and nothing to do.
+  def nothing_left_to_bill? = finishes?([]) && @quote_lines.values.none? { _1.to_do_quantity.positive? }
 
   private
 

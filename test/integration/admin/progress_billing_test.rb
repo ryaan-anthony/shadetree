@@ -195,4 +195,24 @@ class Admin::ProgressBillingTest < ActionDispatch::IntegrationTest
     assert_equal 300_00, invoice.reload.quote_discount_share_cents, "refused, not guessed at"
     assert gutters
   end
+
+  test "a shortfall's discount the last invoice can't take: owed to the client on the quote page and that invoice, with no progress rows" do
+    as_business(@business) do
+      @quote.line_items.build(key: "s", name: "Stumps", quantity: 3, position: 1).tap { _1.unit_price = "100" }.save!
+      @quote.update_columns(discount_kind: "amount", discount_amount_cents: 130_00)
+    end
+    roof, stumps = as_business(@business) { @quote.reload.line_items.map { |line| Job.from_quote!(@quote.reload, picks: { line.id => line.quantity.to_s }) } }
+    as_business(@business) do
+      roof.reload.complete!(by: users(:one))
+      Invoice.from_job!(roof.reload, by: users(:one)).mark_sent!(by: users(:one), channel: "link")
+      stumps.reload.complete!(by: users(:one), done: { stumps.line_items.sole.id => "0" })
+      Invoice.from_job!(stumps.reload, by: users(:one)).mark_sent!(by: users(:one), channel: "link")
+    end
+    last = as_business(@business) { Invoice.order(:id).last }
+    get admin_quote_path(@quote)
+    assert_select "#quote-progress-owed", /Owed to the client\s*\$100\.00\s*Nothing is left to bill, so it's yours to refund\./
+    assert_select "#quote-progress", text: /Progress billed|Over-billed|next invoice/, count: 0
+    get admin_invoice_path(last)
+    assert_select "#invoice-owed", "$100.00 is owed to the client on #{@quote.number}: nothing is left to bill, so it's yours to refund."
+  end
 end
