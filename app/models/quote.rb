@@ -37,6 +37,10 @@ class Quote < ApplicationRecord
   has_many :jobs, -> { order(:id) }, inverse_of: :quote, dependent: :nullify
   has_one :first_job, -> { order(:id) }, class_name: "Job", inverse_of: false
   has_many :invoices, dependent: :restrict_with_exception # PAY-01: what it was billed as
+
+  # JOB-10 makes quotes recurring (each occurrence billed from its own job, never directly, PAY-06);
+  # until it ships none is.
+  def recurring? = false
   has_many :line_items, -> { order(:position, :id) }, class_name: "QuoteLineItem", inverse_of: :quote,
            dependent: :delete_all, autosave: true
 

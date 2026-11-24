@@ -87,7 +87,13 @@ module AutomationActions
 
   def invoice_job(_action, job, run)
     return [ "skipped", "The job isn't completed." ] unless job.status == "completed"
-    return [ "skipped", "The job already has an invoice." ] if job.invoices.exists?
+    # PAY-06, with split jobs: what's left to bill (WorkBilling re-reads it under the lock, so a click
+    # at the same moment can't bill it twice). Before, any invoice for the job.
+    if QuoteWork.split?(job.business)
+      return [ "skipped", "Nothing on the job is left to bill." ] if WorkBilling.unbilled_lines(job).empty?
+    elsif job.invoices.exists?
+      return [ "skipped", "The job already has an invoice." ]
+    end
     return [ "skipped", "A line added on site needs a price first." ] if job.line_items.any?(&:price_pending) # JOB-09
 
     invoice = Invoice.from_job!(job)
@@ -105,6 +111,8 @@ module AutomationActions
       invoice_send.update!(email_message: message)
     end
     [ "done", "Created and emailed #{invoice.number}." ]
+  rescue WorkBilling::Refused => e
+    [ "skipped", e.message ]
   end
 
   def tag_client(action, subject, _run)
