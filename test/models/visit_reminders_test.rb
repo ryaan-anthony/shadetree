@@ -44,7 +44,7 @@ class VisitRemindersTest < ActiveSupport::TestCase
     travel_to(at("2026-12-11 10:07")) { run_hourly }
     assert_equal 2, reminders.size
 
-    perform_enqueued_jobs(only: ClientMailDeliveryJob)
+    travel_to(at("2026-12-11 10:08")) { perform_enqueued_jobs(only: ClientMailDeliveryJob) } # in 2026, so the date has no year
     mail = ActionMailer::Base.deliveries.last
     assert_equal "Reminder: your visit tomorrow, Sat, Dec 12 · Arrive 8–10 am", mail.subject
     assert_match %r{View visit: http://\S+/c/\w+}, mail.text_part.body.to_s

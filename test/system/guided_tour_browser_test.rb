@@ -231,17 +231,11 @@ class GuidedTourBrowserTest < ApplicationSystemTestCase
     wait_for_status "finished"
   end
 
-  # Loads a page without the input check's recovery reload: the first load already marks its tip seen.
-  def open_page(path)
-    page.visit(path)
-    wait_for_controllers
-  end
-
   # Follows a menu link, a Turbo visit: the page the input check passed stays open, so the click
-  # can't be lost the way it can on a fresh load that skipped the check (open_page), and the
-  # check's recovery reload never loads the destination twice. Waits for the destination's
-  # heading first: Turbo keeps the old page until the response arrives, which on a busy runner
-  # can take longer than Capybara's default wait.
+  # can't be lost the way it can on a fresh load that skipped the check, and the check's
+  # recovery reload never loads the destination twice (its first load marks its tip seen).
+  # Waits for the destination's heading first: Turbo keeps the old page until the response
+  # arrives, which on a busy runner can take longer than Capybara's default wait.
   def follow_menu_link(name)
     within("#app-sidebar") { click_on name }
     assert_selector "#main h1", text: name, wait: 10
@@ -256,12 +250,14 @@ class GuidedTourBrowserTest < ApplicationSystemTestCase
   end
 
   test "a first-time tip shows once, is hidden by keyboard, and isn't kept for Back" do
-    sign_in_as users(:one) # Home, after the input check
+    sign_in_as users(:one)
+    visit admin_root_path # Home, checked here: signing in's own check can pass on the sign-in page before it goes
     follow_menu_link "Requests"
     assert_selector "#tip-requests[role=note]", text: "Requests from your online form", visible: true
     wait_for_tip "requests", "seen_at"
     follow_menu_link "Invoices" # then Back to the cached page
     assert_selector "#tip-invoices", visible: true
+    wait_for_tip "invoices", "seen_at" # before the fresh visit below, which must find it used up
     page.go_back
     assert_selector "h1", text: "Requests"
     assert_no_selector "#tip-requests", visible: :all
@@ -284,19 +280,24 @@ class GuidedTourBrowserTest < ApplicationSystemTestCase
     click_on "Next"
     click_on "See what a client sees" # the tour keeps its place
     assert_text "Jordan Rivera"
-    open_page admin_invoices_path
+    visit admin_invoices_path # checked; its tip waits while the tour is away, so a recovery reload uses nothing up
     assert_selector "#tip-invoices", visible: :hidden
-    open_page admin_root_path
+    # Back to Home by a Turbo visit from the page the check passed. Not a visit of its own: a
+    # recovery reload there would end the tour it had just resumed (leaving the page ends it,
+    # and the kept place is read once).
+    within("#app-sidebar") { click_on "Home" }
     assert_stop "Stop 3 of 6", "Quotes"
     click_on "End tour"
-    open_page admin_invoices_path
+    wait_for_status "skipped", stop: "quotes" # ended, so the tips it held back can show
+    follow_menu_link "Invoices"
     assert_selector "#tip-invoices", visible: true
 
     click_on "Help"
     click_on "Show tips again"
     assert_text "Tips will show again"
+    follow_menu_link "Requests"
+    assert_selector "#tip-requests", visible: true
     page.driver.browser.manage.window.resize_to(390, 844)
-    open_page admin_service_requests_path
     within("#tip-requests") { click_on "Got it" }
     assert_no_selector "#tip-requests"
   ensure

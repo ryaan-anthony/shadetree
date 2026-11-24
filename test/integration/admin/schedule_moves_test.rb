@@ -4,6 +4,7 @@ require "test_helper"
 # with JOB-02's warnings, a toast with Undo, and the usual permissions and tenancy.
 class Admin::ScheduleMovesTest < ActionDispatch::IntegrationTest
   setup do
+    travel_to Time.utc(2026, 11, 24, 15) # in 2026: from another year, a toast's date names its year
     @business = businesses(:one)
     @business.update!(timezone: "America/New_York", weekly_hours: WeeklyHours::WEEKDAYS_8_TO_5)
     @owner = users(:one)

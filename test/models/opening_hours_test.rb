@@ -65,6 +65,7 @@ class OpeningHoursTest < ActiveSupport::TestCase
   end
 
   test "a part-day closure with no end runs to midnight" do
+    travel_to Time.utc(2026, 11, 24, 15) # in 2026: from another year, the label names its year
     early = closure(reason: "Closing early", starts_on: Date.new(2026, 12, 31), part_of_day: true, start_time: "13:00", end_time: "")
     assert_equal Closure::END_OF_DAY, early.end_minute
     assert_nil early.end_time
