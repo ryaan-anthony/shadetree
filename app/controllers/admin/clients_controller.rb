@@ -28,7 +28,7 @@ class Admin::ClientsController < Admin::BaseController
       end
       format.json do
         clients = Client.active.search(search_query).alphabetical.includes(:contact_methods, :properties).limit(PICKER_LIMIT)
-        render json: { clients: clients.map(&:as_picker_json) }
+        render json: { clients: clients.map { helpers.client_picker_json(_1) } }
       end
     end
   end

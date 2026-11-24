@@ -22,6 +22,7 @@ class QuotePdfTest < ActiveSupport::TestCase
   test "the HTML is the client page's document under the business's letterhead, and self-contained" do
     doc = html
     assert_match @business.name, doc.at_css(".pdf-letterhead").text
+    assert_match "(555) 380-0000", doc.at_css(".pdf-letterhead").text # PLT-18: the phone formatter
     assert_match "1 Depot Rd", doc.at_css(".pdf-contact").text
     assert_equal "Spring cleanup", doc.at_css(".quote-doc-title").text
     assert_match "Draft", doc.at_css(".quote-doc-meta").text

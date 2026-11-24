@@ -3,7 +3,7 @@
 <% currency = snap["currency"] %>
 <% cents = ->(value) { money(Money.new(value.to_i, currency)) } %>
 <%= page_header "#{@quote.number}, revision #{@revision.number}",
-                lede: "Superseded #{l(@revision.created_at.in_time_zone(current_business.time_zone), format: :long)}#{" by #{@revision.revised_by.full_name}" if @revision.revised_by}. It was #{{ "sent" => "waiting for an answer", "changes_requested" => "waiting on changes", "declined" => "declined", "expired" => "expired" }.fetch(@revision.status, @revision.status)}." do %>
+                lede: "Superseded #{l(@revision.created_at.in_time_zone(current_business.time_zone))}#{" by #{@revision.revised_by.full_name}" if @revision.revised_by}. It was #{{ "sent" => "waiting for an answer", "changes_requested" => "waiting on changes", "declined" => "declined", "expired" => "expired" }.fetch(@revision.status, @revision.status)}." do %>
   <%= link_to admin_quote_path(@quote), class: button_classes(:secondary) do %><%= icon "arrow-left" %> Back to the quote<% end %>
 <% end %>
 

@@ -49,7 +49,7 @@
               <tr>
                 <td class="tabular text-muted"><span class="sm:hidden">Line </span><%= number %></td>
                 <td class="primary"><%= client.display_name.to_s.truncate(80).presence || "—" %><% if client.company_name.present? %><span class="sub"><%= client.company_name.truncate(80) %></span><% end %></td>
-                <td class="text-sm2"><%= safe_join(client.contact_methods.map { _1.value.truncate(60) }, tag.br) %></td>
+                <td class="text-sm2"><%= safe_join(client.contact_methods.map { contact_value(_1).truncate(60) }, tag.br) %></td>
                 <td class="text-sm2"><% if (property = client.properties.first) %><%= [ property.address_line1, property.city, property.region, property.postal_code ].compact_blank.join(", ").truncate(120) %><% end %></td>
                 <td>
                   <% if problems.any? %><%= status_badge(:client_import_row, "invalid", title: problems.to_sentence) %><p class="mt-1 text-sm2 text-danger"><%= problems.to_sentence %></p>

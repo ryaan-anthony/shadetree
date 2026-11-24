@@ -58,6 +58,17 @@ class Admin::FormattingTest < ActionDispatch::IntegrationTest
     assert_no_match(/pi_staffPages0001/, page_text(:client))
   end
 
+  test "phones are formatted in the Clients list and the picker; Last activity is a date, with how long ago on hover" do
+    get admin_clients_path
+    assert_select "tr", text: /Maria Lopez/ do
+      assert_select "td a[href='tel:5553803141']", "(555) 380-3141"
+      assert_select "td time[title$=ago]", /\A\w{3} \d+, \d{4}\z/
+    end
+    assert_match(/\(215\) 555-1212 ext 4/, page_text(:client_archived)) # the extension as typed
+    post search_admin_clients_path(format: :json), params: { q: "Maria" }
+    assert_equal "(555) 380-3141", response.parsed_body["clients"].first["contact"]
+  end
+
   test "copy: the arrival note names the zone once, and pagination is one weight" do
     assert_match(/Times in Eastern Time \(US & Canada\)\./, page_text(:new_visit))
     get admin_jobs_path

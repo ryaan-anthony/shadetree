@@ -22,7 +22,7 @@
     <%= card title: "Everything in one download", id: "full-export" do %>
       <p class="text-sm2 text-subtle">A zip of all the spreadsheets, every quote and invoice as a PDF, and every file and photo. It's made in the background; we'll tell you when it's ready, and the link lasts <%= DataExport::LINK_LASTS.in_days.to_i %> days.</p>
       <% if @full&.building? %>
-        <p class="mt-3 text-sm font-medium text-ink" role="status">Being put together… started <%= time_ago_in_words(@full.created_at) %> ago. Reload this page later, or wait for our email.</p>
+        <p class="mt-3 text-sm font-medium text-ink" role="status">Being put together… started <%= local_date_ago(@full.created_at, time_of_day: true) %>. Reload this page later, or wait for our email.</p>
       <% elsif @full&.downloadable? %>
         <% parts = @full.parts %>
         <% parts.each_with_index do |part, index| %>

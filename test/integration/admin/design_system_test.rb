@@ -387,6 +387,26 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
     page_text.scan(STRIPE_ID).map { "Stripe's #{_1} outside the invoice's Payments card" }
   end
 
+  # A North American number as typed ("555.380.3141", "5553803141"), not "(555) 380-3141".
+  UNFORMATTED_PHONE = /(?<![\d(+])(?:\+?1[ .-]?)?\d{3}[. -]\d{3}[. -]\d{4}(?!\d)|(?<![\d\w])\d{10}(?![\d\w])/
+  check :phones_formatted, if: ->(page) { !page.ops? } do |_page, html|
+    page_text = html.dup.tap { |doc| doc.css("textarea, script, style, template").each(&:remove) }.text
+    page_text.scan(UNFORMATTED_PHONE).uniq.map { "phone #{_1.inspect} isn't in the phone format" }
+  end
+
+  RELATIVE = /\b(?:ago|just now|yesterday)\b|\bin (?:about |over |almost |less than )?(?:a|an|\d+) (?:minute|hour|day|week|month|year)s?\b/
+  check :absolute_dates_in_tables, if: ->(page) { !page.ops? } do |_page, html|
+    html.css("td").select { _1.text.match?(RELATIVE) }.map { "a relative time in a table column: #{_1.text.squish.inspect}" }
+  end
+
+  # The full weekday form ("Friday, November 20") only on Schedule, My day and visit pages.
+  # Their empty states (PLT-21's "_empty" pages) count too.
+  WEEKDAY_PAGES = %i[schedule schedule_day schedule_by_status my_day my_request my_visit schedule_visit new_visit edit_visit schedule_new_visit].freeze
+  FULL_WEEKDAY_DATE = /\b(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day,? (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/
+  check :full_weekday_only_where_planned, if: ->(page) { !page.ops? && !page.key.to_s.delete_suffix("_empty").to_sym.in?(WEEKDAY_PAGES) } do |_page, html|
+    html.text.scan(FULL_WEEKDAY_DATE).uniq.map { "the full weekday form (#{_1}…) outside Schedule, My day and visit pages" }
+  end
+
   setup do
     @business = businesses(:one)
     @owner = users(:one)

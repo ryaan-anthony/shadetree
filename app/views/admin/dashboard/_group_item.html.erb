@@ -2,10 +2,10 @@
 <%# INS-01: one record in an action group: what it is, who for, and what makes it urgent. %>
 <% case key %>
 <% when :new_requests %>
-  <% title, path, meta = item.title, admin_service_request_path(item), "#{time_ago_in_words(item.created_at)} ago" %>
+  <% title, path, meta = item.title, admin_service_request_path(item), local_time_ago(item.created_at) %>
 <% when :changes_requested, :awaiting_answer %>
   <% title, path = "#{item.number}#{" · #{item.title}" if item.title}", staff_quote_path(item) %>
-  <% meta = key == :awaiting_answer && item.sent_at ? "Sent #{time_ago_in_words(item.sent_at)} ago" : money(item.total) %>
+  <% meta = key == :awaiting_answer && item.sent_at ? safe_join([ "Sent ", local_time_ago(item.sent_at) ]) : money(item.total) %>
 <% when :to_schedule, :to_invoice %>
   <% title, path, meta = "#{item.number} · #{item.title}", admin_job_path(item), money(item.total) %>
 <% when :overdue %>

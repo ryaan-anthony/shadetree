@@ -40,7 +40,8 @@ class ClientMailerTest < ActionMailer::TestCase
     assert_includes html, "1 Main St, Asheville"
     assert_includes html, %(content="light only")
     assert_includes text, "Reply to this email to reach #{@business.name}"
-    assert_includes text, "555-380-0000"
+    assert_includes text, "(555) 380-0000" # PLT-18: the phone formatter
+    assert_includes html, "(555) 380-0000"
     assert_not_includes text, "<"
 
     @business.update!(logo: { io: file_fixture("logo.png").open, filename: "logo.png" })

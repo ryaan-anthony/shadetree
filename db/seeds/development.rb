@@ -505,6 +505,27 @@ Tenancy.with_business(business) do
   end
 end
 
+# PLT-18: a paid invoice (its Balance is "$0.00" in the Invoices list) and a void one (a dash),
+# for Grace Chen, whose phone was typed "555.380.3141" and shows as (555) 380-3141.
+Tenancy.with_business(business) do
+  owner = User.find_by!(email: "owner@example.com")
+  client = Client.find_by(display_name: "Grace Chen")
+  if client && !Job.exists?(title: "Window washing")
+    [ [ "Window washing", :paid ], [ "Holiday lights", :void ] ].each do |title, outcome|
+      job = Job.new(client:, property: client.primary_property, created_by: owner, title:)
+      job.line_items.build(name: title, quantity: 1, unit: "visit", unit_price: "140")
+      job.save!
+      job.complete!(by: owner)
+      invoice = Invoice.from_job!(job, by: owner).tap { _1.mark_sent!(by: owner, channel: "link") }
+      if outcome == :paid
+        invoice.record_payment!(by: owner, amount: invoice.total, received_on: business.today, payment_method: "check", reference: "1077")
+      else
+        invoice.void!(reason: "Billed twice", by: owner)
+      end
+    end
+  end
+end
+
 # ACC-08: a brand-new owner, offered the guided tour on Home with the setup checklist showing.
 # The demo owner is offered it too; the demo technician can take the short one from My day.
 new_owner = demo_user("new@example.com", "Sam", "Rivera", demo_password)

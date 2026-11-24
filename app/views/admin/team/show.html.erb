@@ -23,7 +23,7 @@
                     <%= badge member.role_name, dot: false %>
                   <% end %>
                 </td>
-                <td class="text-muted"><%= member.last_active_at ? "#{time_ago_in_words(member.last_active_at)} ago" : "Not yet" %></td>
+                <td class="text-muted"><%= member.last_active_at ? local_date_ago(member.last_active_at) : "Not yet" %></td>
                 <td class="text-right">
                   <% if member != current_membership && current_membership.can_change_access?(member) %>
                     <%= button_to "Deactivate", deactivate_admin_member_path(member), method: :patch, class: button_classes(:destructive, :sm), "aria-label": "Deactivate #{member.user.full_name}",
@@ -50,7 +50,7 @@
                 <p class="font-semibold text-ink"><%= invitation.email %></p>
                 <p class="text-sm2 text-muted">
                   <%= invitation.role_name %> · invited by <%= invitation.invited_by&.full_name || "a former member" %> ·
-                  <% if invitation.pending? %>expires in <%= distance_of_time_in_words_to_now(invitation.expires_at) %><% else %><span class="font-medium text-warning">expired</span><% end %>
+                  <% if invitation.pending? %>expires <%= local_time(invitation.expires_at, year: :auto) %><% else %><span class="font-medium text-warning">expired</span><% end %>
                 </p>
               </div>
               <div class="flex flex-wrap items-center gap-1.5" data-controller="clipboard">
@@ -75,7 +75,7 @@
             <li>
               <div class="min-w-0 flex-1">
                 <p class="font-semibold text-ink"><%= member.user.full_name %></p>
-                <p class="text-sm2 text-muted"><%= member.role_name %> · <%= member.user.deleted? ? "deleted their account" : "deactivated" %> <%= member.deactivated_at ? "#{time_ago_in_words(member.deactivated_at)} ago" : "" %></p>
+                <p class="text-sm2 text-muted"><%= member.role_name %> · <%= member.user.deleted? ? "deleted their account" : "deactivated" %> <%= local_date_ago(member.deactivated_at) %></p>
               </div>
               <% if !member.user.deleted? && current_membership.can_change_access?(member) %>
                 <%= button_to "Reactivate", reactivate_admin_member_path(member), method: :patch, class: button_classes(:secondary, :sm), "aria-label": "Reactivate #{member.user.full_name}" %>

@@ -19,7 +19,7 @@ module QuotesHelper
   def quote_list_date(quote)
     return local_date(quote.sent_at.in_time_zone(current_business.time_zone).to_date) if quote.sent_at
 
-    safe_join([ "Updated ", local_time_ago(quote.updated_at) ])
+    safe_join([ "Updated ", local_date_ago(quote.updated_at) ])
   end
 
   # The client's reason, for a declined quote (from preloaded responses).

@@ -1,6 +1,6 @@
 <%# The end of the inline flow (R3): tells the picker which client to use. %>
 <%= turbo_frame_tag "new_client" do %>
-  <div data-controller="client-picked" data-client-picked-client-value="<%= @client.as_picker_json.to_json %>"
+  <div data-controller="client-picked" data-client-picked-client-value="<%= client_picker_json(@client).to_json %>"
        data-client-picked-reset-url-value="<%= new_admin_client_path(inline: 1) %>" role="status">
     <p class="flex items-center gap-2 text-sm"><%= icon "check-circle", class: "size-4 text-canopy" %> <%= @client.display_name %> selected.</p>
   </div>
