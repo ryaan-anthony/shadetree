@@ -400,7 +400,7 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
   end
 
   # The full weekday form ("Friday, November 20") only on Schedule, My day and visit pages.
-  WEEKDAY_PAGES = %i[schedule my_day my_request my_visit schedule_visit new_visit edit_visit schedule_new_visit].freeze
+  WEEKDAY_PAGES = %i[schedule schedule_by_status my_day my_request my_visit schedule_visit new_visit edit_visit schedule_new_visit].freeze
   FULL_WEEKDAY_DATE = /\b(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day,? (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/
   check :full_weekday_only_where_planned, if: ->(page) { !page.ops? && !page.key.in?(WEEKDAY_PAGES) } do |_page, html|
     html.text.scan(FULL_WEEKDAY_DATE).uniq.map { "the full weekday form (#{_1}…) outside Schedule, My day and visit pages" }
