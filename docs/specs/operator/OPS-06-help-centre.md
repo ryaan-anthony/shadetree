@@ -36,7 +36,7 @@ deploy; checks keep them complete and in step with the screens.
       (members) or contacting us (visitors).
 - [x] Before a ticket is sent, the form shows up to three articles matching its subject or its
       `page` (the hidden field holding `from:`). Opening one keeps the draft; it can still be sent.
-- [ ] The Help menu gains "Help articles" and a labelled search box (`role="search"`). Pages
+- [x] The Help menu gains "Help articles" and a labelled search box (`role="search"`). Pages
       show "Learn more" to their topic's article (send page, Settings, schedule, first-time tips).
 - [x] "Was this helpful?" counts yes/no per article, nothing about who; after a no, members get
       "Ask Shadetree" and visitors "Contact us" (the marketing contact page). No-result searches
@@ -48,7 +48,7 @@ deploy; checks keep them complete and in step with the screens.
 - [x] Screenshots are generated: one command captures each declared screenshot from the demo
       seed data at 1280 and 390 wide, in CI's environment, as WebP under 200 KB, and commits them.
       Only demo businesses and clients appear.
-- [ ] CI fails when a page uses an undeclared help topic, a topic has no article (coverage), an
+- [x] CI fails when a page uses an undeclared help topic, a topic has no article (coverage), an
       article links to a missing article or image, or a screen in a screenshot has changed
       since capture; the message names the recapture command. That is the review trigger: the
       PR that changes a screen recaptures it and re-reads the article (updating last reviewed).

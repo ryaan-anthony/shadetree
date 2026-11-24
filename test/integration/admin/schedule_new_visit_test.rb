@@ -28,7 +28,7 @@ class Admin::ScheduleNewVisitTest < ActionDispatch::IntegrationTest
     on_monday do
       get admin_schedule_path(date: @monday.iso8601)
       assert_select "h1", "Schedule" # PLT-15: the range is the lede's, year included
-      assert_select ".page-lede", "November 23 – 29, 2026 · Week view · Times in Eastern Time (US & Canada)"
+      assert_select ".page-lede", /\ANovember 23 – 29, 2026 · Week view · Times in Eastern Time \(US & Canada\)( Learn more|\z)/ # OPS-06: and its help article
       assert_select "ul.segmented[aria-label=View] a[aria-current=page]", "Week"
       slots = css_select("#schedule-grid a.cal-slot")
       assert_equal 7 * 9, slots.size, "8 am to 5 pm, every day of the week"

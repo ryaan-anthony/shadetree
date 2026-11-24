@@ -3,6 +3,7 @@
 #
 # - every help topic a page uses (`learn_more(:topic)`, and each first-time tip's) is declared
 #   in content/help/topics.yml, and every topic an article lists is too;
+# - every declared topic has an article (coverage);
 # - every link in an article goes to an article that exists, and every image to a file in the
 #   help image folder; each declared screenshot is shown, captured, and none is left over;
 # - an article was re-read (its reviewed date) on or after its screenshots were last captured;
@@ -17,7 +18,7 @@ module HelpCentre::Checks
   extend self
 
   def problems(library = HelpCentre.library)
-    undeclared_topics(library) + links(library) + screenshots(library) + reviews(library) + brands(library)
+    undeclared_topics(library) + uncovered_topics(library) + links(library) + screenshots(library) + reviews(library) + brands(library)
   end
 
   # [topic, where] for each help topic the app's pages use.
