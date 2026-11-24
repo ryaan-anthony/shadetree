@@ -70,31 +70,31 @@ from Help.
 - Built as is (owner, 2026-11-22): a replay keeps the first run's result, recorded apart;
   technicians start from "Show me around"; leaving the page ends it, except via the sample
   quote; "Tips off" applies across every business the person belongs to.
+- A reload keeps the tour going, also right after it resumes: it isn't leaving (owner, 2026-11-24).
 
 ## Implementation notes
 
-- Built in-house (Stimulus, no tour library). Stops point at `data-tour="…"` attributes, never
-  at position or copy; Home's checklist and the menu links carry them. Wording:
-  `config/locales/guidance.en.yml`; which stops a role gets: `GuidedTour`.
+- Built in-house (Stimulus). Stops point at `data-tour="…"` attributes (Home's checklist, menu
+  links). Wording: `config/locales/guidance.en.yml`; which stops a role gets: `GuidedTour`.
 - Offered to whoever creates a business, and to an existing one's Owner on Home while its
-  checklist isn't complete (even hidden), unless they've had the tour in any business; never on
-  support's visit. Turbo's hover prefetch shows it without stamping it. Technicians start from
-  their My day welcome, everyone from Help.
+  checklist isn't complete (even hidden), unless they've had it in any business; never on
+  support's visit or hover prefetch. Technicians start from My day's welcome, anyone from Help.
 - Per membership: `tour_status` (offered, started, finished, skipped), `tour_stop` (reached, or
   where it ended; "offer" when skipped there), offered and ended times. `bin/rails
   onboarding:tour` reports outcomes, where people stopped and the median time to first quote
-  for each; counts only. Owners offered it later than an hour after creating the business
-  (existing businesses) are reported apart, timed from the offer.
+  for each (counts only); Owners offered it over an hour after creating the business are
+  reported apart, timed from the offer.
 - A replay from Help only stamps `tour_replayed_at`: it can't overwrite the first run's outcome.
-- Support viewing as a member sees the tour but never records it (the endpoint is read-only
-  under impersonation, and the page doesn't report moves).
-- One non-modal dialog (`role=dialog`, `aria-modal=false`) moves between stops, saying what it
-  points at; it takes focus at each, F6 moves between it and the target, Escape ends it, and
-  focus goes back (or to the checklist step it leads to). No backdrop or focus trap. Below
-  960px it's a bottom sheet the page and target scroll clear of, opening the menu for menu stops.
-- Leaving the page ends the tour at that stop (recorded as ended there), except through its own
-  sample-quote link: it resumes on return (this tab, 30 minutes; forgotten on sign-out).
-- Tips (`FirstTimeTips`): shown once per page and member when first seen in the browser, never
-  mid-tour; `tips` keeps seen and hidden times. Help shows them again; Your account turns them
-  off everywhere. Support can't mark, reset or turn them off.
+  Support viewing as a member sees it but never records it (read-only endpoint, no reports).
+- One non-modal dialog moves between stops, saying what it points at; it takes focus at each,
+  F6 toggles to the target, Escape ends it, focus goes back (or to the step it leads to). No
+  backdrop or trap. Below 960px a bottom sheet the page scrolls clear of; menu stops open the menu.
+- Leaving the page ends the tour there (recorded), except via its sample-quote link: it resumes
+  on return (this tab, 30 minutes; forgotten on sign-out). An unloading page can't tell a reload
+  from leaving, so it records the end and notes its place; if the tab's next load is that page
+  again within a minute (not Back/Forward or a Turbo visit), the tour carries on and reports
+  `resume`, reopening a first run ended there under two minutes ago. Other pages drop the note.
+- Tips (`FirstTimeTips`): once per page and member when first seen, never mid-tour; `tips`
+  keeps seen and hidden times. Help shows them again; Your account turns them off everywhere.
+  Support can't mark, reset or turn them off.
 - Dev seeds: `new@example.com` owns a brand-new business with the offer and checklist showing.

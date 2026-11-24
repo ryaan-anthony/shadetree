@@ -43,7 +43,7 @@ export default class extends Controller {
     const key = `shadetree:tour:${this.scopeValue}`
     try {
       const kept = JSON.parse(sessionStorage.getItem(key) || "null")
-      if (!kept) return false
+      if (!kept || kept.left) return false // a tour that ended as its page unloaded (kept for a reload of it)
       if (this.tourValue && Date.now() - kept.at < KEEP_FOR) return true
       sessionStorage.removeItem(key)
       return false

@@ -11,7 +11,7 @@
 class GuidedTour
   Stop = Data.define(:key, :targets, :title, :text, :link)
   STATUSES = %w[offered started finished skipped].freeze
-  EVENTS = %w[start step finish end].freeze
+  EVENTS = %w[start step finish end resume].freeze
   OFFER = "offer" # the stop recorded when someone skips from the offer
 
   def self.for(membership, checklist: nil)

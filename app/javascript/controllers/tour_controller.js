@@ -9,11 +9,29 @@ import { Controller } from "@hotwired/stimulus"
 //
 // Anything with data-tour-start starts it. Leaving the page ends it where it was, except through
 // the tour's own sample-quote link: then its place is kept for this tab (sessionStorage, keyed by
-// business and member, for 30 minutes) and it resumes on return. Moves are reported to the server
-// in order, for measurement, unless support is viewing as the member.
+// business and member, for 30 minutes) and it resumes on return. A reload isn't leaving (owner,
+// 2026-11-24): the page can't tell a reload from leaving as it unloads, so it reports the end and
+// notes its place; if this tab's next page is a fresh load of the same page within a minute, not
+// by Back or Forward, the tour carries on there and the server is told it resumed. Moves are
+// reported to the server in order, for measurement, unless support is viewing as the member.
 const NARROW = "(max-width: 959.98px)"
 const GAP = 12
 const KEEP_FOR = 30 * 60 * 1000
+const AGAIN_WITHIN = 60 * 1000
+
+// A place noted as a page unloaded is only for that page loaded again, by this tab's next page
+// load: any other page drops it, and so does a Turbo visit.
+const dropLeft = (keep = () => false) => {
+  try {
+    Object.keys(sessionStorage).filter((key) => key.startsWith("shadetree:tour:")).forEach((key) => {
+      const kept = JSON.parse(sessionStorage.getItem(key) || "null")
+      if (kept?.left && !keep(kept)) sessionStorage.removeItem(key)
+    })
+  } catch { /* nothing kept */ }
+}
+const here = () => window.location.href.split("#")[0]
+dropLeft((kept) => kept.url === here())
+document.addEventListener("turbo:visit", () => dropLeft())
 
 export default class extends Controller {
   static targets = ["dialog", "count", "title", "text", "link", "back", "next", "pointing"]
@@ -33,13 +51,22 @@ export default class extends Controller {
     this.keys = (event) => this.keydown(event)
     this.reposition = () => { if (this.running) this.place() }
     this.beforeCache = () => this.hide()
-    this.pagehide = () => this.leave()
+    this.pagehide = () => this.leave({ unloading: true })
+    // Back to this page from the back/forward cache: from the sample quote the tour carries on;
+    // otherwise it was left, so it stays ended.
+    this.pageshow = (event) => {
+      if (!event.persisted) return
+      if (this.keeping) this.keeping = false
+      else if (!this.running) this.hide()
+      this.takeKept()
+    }
     document.addEventListener("click", this.startClick)
     document.addEventListener("keydown", this.keys, { capture: true })
     window.addEventListener("resize", this.reposition)
     document.addEventListener("scroll", this.reposition, { passive: true, capture: true })
     document.addEventListener("turbo:before-cache", this.beforeCache)
     window.addEventListener("pagehide", this.pagehide)
+    window.addEventListener("pageshow", this.pageshow)
 
     // After a Turbo visit finishes rendering (it scrolls to the top, which would undo ours).
     const kept = this.takeKept()
@@ -49,8 +76,11 @@ export default class extends Controller {
       url.searchParams.delete("tour")
       history.replaceState(history.state, "", url)
       later(() => this.start())
-    } else if (kept !== null && this.stops[kept]) {
-      later(() => this.show(kept, { quietly: true }))
+    } else if (kept && this.stops[kept.index]) {
+      later(() => {
+        if (kept.reloaded) this.record("resume", this.stops[kept.index].key)
+        this.show(kept.index, { quietly: true })
+      })
     }
   }
 
@@ -62,6 +92,7 @@ export default class extends Controller {
     document.removeEventListener("scroll", this.reposition, { capture: true })
     document.removeEventListener("turbo:before-cache", this.beforeCache)
     window.removeEventListener("pagehide", this.pagehide)
+    window.removeEventListener("pageshow", this.pageshow)
     this.hide()
   }
 
@@ -69,26 +100,42 @@ export default class extends Controller {
   get running() { return this.index !== undefined && this.index !== null }
   get storageKey() { return `shadetree:tour:${this.scopeValue}` }
 
-  // The place kept by the sample-quote link, if it's recent; read once.
+  // The place kept by the sample-quote link, if it's recent, or by unloading this page, if this
+  // is that page loaded again ({ index, reloaded }); read once.
   takeKept() {
     try {
       const kept = JSON.parse(sessionStorage.getItem(this.storageKey) || "null")
       sessionStorage.removeItem(this.storageKey)
-      return kept && Date.now() - kept.at < KEEP_FOR ? kept.index : null
+      if (!kept) return null
+      if (kept.left) return this.loadedAgain(kept) ? { index: kept.index, reloaded: true } : null
+      return Date.now() - kept.at < KEEP_FOR ? { index: kept.index } : null
     } catch { return null }
+  }
+
+  // This document is a fresh load of the page the tour was on, soon after it unloaded: a reload,
+  // or loading the same address again. Not Back or Forward, or a later return.
+  loadedAgain(kept) {
+    const how = performance.getEntriesByType?.("navigation")?.[0]?.type
+    return how !== "back_forward" && kept.url === here() && Date.now() - kept.at < AGAIN_WITHIN
   }
 
   // The tour's own link: keep its place so it resumes on return.
   keep() {
     this.keeping = true
-    try { sessionStorage.setItem(this.storageKey, JSON.stringify({ index: this.index, at: Date.now() })) } catch { /* it just won't resume */ }
+    this.save({ index: this.index, at: Date.now() })
   }
 
-  // Leaving the page any other way (a highlighted menu link, the back button) ends the tour
-  // where it was: recorded as ended at that stop.
-  leave() {
+  save(place) {
+    try { sessionStorage.setItem(this.storageKey, JSON.stringify(place)) } catch { /* it just won't resume */ }
+  }
+
+  // Leaving the page any other way (a highlighted menu link, the back button, closing the tab)
+  // ends the tour where it was: recorded as ended at that stop. As the page unloads its place is
+  // noted too, in case this is a reload.
+  leave({ unloading = false } = {}) {
     if (!this.running || this.keeping) return
     this.record("end", this.stops[this.index].key)
+    if (unloading) this.save({ index: this.index, at: Date.now(), url: here(), left: true })
     this.index = null
   }
 

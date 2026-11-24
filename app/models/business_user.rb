@@ -163,6 +163,7 @@ class BusinessUser < ApplicationRecord
   # so the measurement is of the first run. Moves outside a run change nothing.
   def record_tour!(event, stop)
     now = Time.current
+    return resume_tour!(stop) if event.to_s == "resume"
     return (update!(tour_replayed_at: now) if event.to_s == "start") if tour_ended_at
 
     case event.to_s
@@ -171,6 +172,16 @@ class BusinessUser < ApplicationRecord
     when "finish" then update!(tour_status: "finished", tour_stop: stop, tour_ended_at: now) if tour_status == "started"
     when "end" then update!(tour_status: "skipped", tour_stop: stop, tour_ended_at: now) if tour_status.in?(%w[offered started])
     end
+  end
+
+  # A reload isn't leaving (owner, 2026-11-24). The page reports "end" as it unloads, as for
+  # leaving; the reloaded page then reports "resume" at the same stop, and a first run that ended
+  # there moments ago carries on. A replay's resume changes nothing (it never ended the first run).
+  def resume_tour!(stop)
+    return unless tour_status == "skipped" && tour_stop == stop && tour_ended_at&.after?(2.minutes.ago)
+    return if tour_replayed_at&.after?(tour_ended_at)
+
+    update!(tour_status: "started", tour_ended_at: nil)
   end
 
   def tour_offered? = tour_status == "offered"

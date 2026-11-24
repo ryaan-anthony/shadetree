@@ -49,8 +49,7 @@ class GuidedTourBrowserTest < ApplicationSystemTestCase
     end
   end
 
-  # Starts it the way a person does, from Help. (Visiting ?tour=start directly can be undone by
-  # the input check's reload, which loads the URL after the tour has tidied the parameter away.)
+  # Starts it the way a person does, from Help.
   def start_from_help
     click_on "Help"
     click_on "Take the tour again"
@@ -98,6 +97,55 @@ class GuidedTourBrowserTest < ApplicationSystemTestCase
     assert evaluate_script("document.activeElement.closest('#setup-services') !== null"), "focus lands on the step (#289: services first)"
     wait_for_status "finished"
     assert_equal "settings", @membership.tour_stop
+  end
+
+  # (owner, 2026-11-24) A reload isn't leaving: the tour carries on at the same stop, also right
+  # after it resumes from the sample quote, and the run stays started.
+  test "reloading keeps the tour at its stop, even right after it resumes" do
+    sign_in_as users(:one)
+    visit admin_root_path
+    click_on "Take a 2-minute tour"
+    click_on "Next"
+    assert_stop "Stop 2 of 6", "Requests"
+    wait_for_status "started", stop: "requests"
+    refresh
+    assert_stop "Stop 2 of 6", "Requests"
+    wait_for_status "started", stop: "requests"
+
+    click_on "Next"
+    click_on "See what a client sees"
+    assert_text "Jordan Rivera"
+    page.go_back
+    assert_stop "Stop 3 of 6", "Quotes"
+    refresh
+    assert_stop "Stop 3 of 6", "Quotes"
+    wait_for_status "started", stop: "quotes"
+    click_on "Next"
+    assert_stop "Stop 4 of 6", "Schedule"
+    wait_for_status "started", stop: "schedule"
+  end
+
+  test "leaving the page ends the tour where it was, by a menu link or a page loaded afresh" do
+    sign_in_as users(:one)
+    visit admin_root_path
+    start_from_help
+    click_on "Next"
+    assert_stop "Stop 2 of 6", "Requests"
+    follow_menu_link "Requests"
+    assert_no_selector "#tour", visible: true
+    wait_for_status "skipped", stop: "requests"
+    within("#app-sidebar") { click_on "Home" }
+    assert_selector "#main h1", text: "Good", wait: 10
+    assert_no_selector "#tour", visible: true
+
+    visit admin_root_path # a page loaded afresh: still ended
+    assert_no_selector "#tour", visible: true
+    start_from_help # a replay: the first run's outcome stays
+    visit admin_invoices_path
+    visit admin_root_path # within the minute, but another page came first
+    assert_selector "#main h1"
+    assert_no_selector "#tour", visible: true
+    wait_for_status "skipped", stop: "requests"
   end
 
   test "Escape ends it where you are, focus comes back, and the page stays usable while it's open" do
@@ -282,11 +330,9 @@ class GuidedTourBrowserTest < ApplicationSystemTestCase
     assert_text "Jordan Rivera"
     visit admin_invoices_path # checked; its tip waits while the tour is away, so a recovery reload uses nothing up
     assert_selector "#tip-invoices", visible: :hidden
-    # Back to Home by a Turbo visit from the page the check passed. Not a visit of its own: a
-    # recovery reload there would end the tour it had just resumed (leaving the page ends it,
-    # and the kept place is read once).
-    within("#app-sidebar") { click_on "Home" }
+    visit admin_root_path # a recovery reload here keeps the resumed tour going (owner, 2026-11-24)
     assert_stop "Stop 3 of 6", "Quotes"
+    wait_for_status "started", stop: "quotes"
     click_on "End tour"
     wait_for_status "skipped", stop: "quotes" # ended, so the tips it held back can show
     follow_menu_link "Invoices"
