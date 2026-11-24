@@ -45,7 +45,7 @@
       <% digits = phone.value.gsub(/[^\d+]/, "") %>
       <div class="mt-4 grid grid-cols-2 gap-2">
         <%= link_to "tel:#{digits}", class: "#{button_classes(:secondary)} h-auto min-h-11 justify-center" do %><%= icon "phone" %> Call<% end %>
-        <%= link_to "sms:#{digits}", class: "#{button_classes(:secondary)} h-auto min-h-11 justify-center" do %><%= icon "message-square" %> Text<% end %>
+        <%= link_to visit_sms_href(visit, digits), class: "#{button_classes(:secondary)} h-auto min-h-11 justify-center" do %><%= icon "message-square" %> Text<% end %>
       </div>
     <% end %>
   <% end %>

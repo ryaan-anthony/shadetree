@@ -25,6 +25,19 @@ module JobsHelper
   ON_THE_WAY_EMAIL = { nil => "emailed", "small_change" => "not emailed: less than #{OnTheWay::UPDATE_EMAIL_MINUTES} minutes from the last email",
                        "no_email" => "not emailed: no usable email address", "email_limit" => "not emailed: the hourly email limit" }.freeze
 
+  # JOB-12: "On the way · about 11:15 am" for staff on the schedule and job page, while the client's card shows.
+  def on_the_way_label(visit) = ("On the way · about #{visit.on_the_way_time_label}" if visit.on_the_way?)
+
+  # JOB-12: with no email for the client, a text from the technician's own phone, filled in:
+  # "sms:5550100100?&body=Hi, it's Marcus from …". Without it, a plain sms: link.
+  def visit_sms_href(visit, digits)
+    return "sms:#{digits}" unless visit.on_the_way? && visit.on_the_way_email.nil?
+
+    me = current_user.first_name.presence
+    text = "Hi, it's #{me || current_business.name}#{" from #{current_business.name}" if me}. I'm on the way, arriving about #{visit.on_the_way_time_label}."
+    "sms:#{digits}?&body=#{ERB::Util.url_encode(text)}"
+  end
+
   # JOB-02: one line of a visit's history.
   def visit_event_text(event)
     data = event.data

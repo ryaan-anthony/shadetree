@@ -14,12 +14,12 @@
     <%= link_to new_admin_my_visit_on_the_way_path(visit, from:), class: "#{button_classes(:secondary)} h-auto min-h-12 #{"w-full" if from == "visit"} justify-center",
                 data: { action: "modal#open" }, "aria-haspopup": "dialog" do %><%= icon "truck" %> On my way<% end %>
   <% end %>
-  <% if visit.on_the_way? && visit.on_the_way_email.nil? && (phone = visit.job.client.primary_phone) %>
+  <%# The visit's page has Call and Text already (its Text is filled in the same way). %>
+  <% if from == "day" && visit.on_the_way? && visit.on_the_way_email.nil? && (phone = visit.job.client.primary_phone) %>
     <% digits = phone.value.gsub(/[^\d+]/, "") %>
-    <% text = "Hi, it's #{current_user.first_name.presence || current_business.name}#{" from #{current_business.name}" if current_user.first_name.present?}. I'm on the way, arriving about #{visit.on_the_way_time_label}." %>
     <div class="grid w-full grid-cols-2 gap-2">
       <%= link_to "tel:#{digits}", class: "#{button_classes(:secondary)} h-auto min-h-11 justify-center" do %><%= icon "phone" %> Call<% end %>
-      <%= link_to "sms:#{digits}?&body=#{ERB::Util.url_encode(text)}", class: "#{button_classes(:secondary)} h-auto min-h-11 justify-center" do %><%= icon "message-square" %> Text<% end %>
+      <%= link_to visit_sms_href(visit, digits), class: "#{button_classes(:secondary)} h-auto min-h-11 justify-center" do %><%= icon "message-square" %> Text<% end %>
     </div>
   <% end %>
   <%= modal id: sheet_id, title: "On my way to #{visit.job.client.display_name}", description: visit.when_label, sheet: true do %>

@@ -77,6 +77,7 @@ class VisitOnTheWayTest < ActiveSupport::TestCase
     assert_nil exact.on_the_way_warning(at("2026-12-10 11:10"))
     assert_equal "That's 15 minutes after the 11 am start.", exact.on_the_way_warning(at("2026-12-10 11:15"))
     assert_equal "That's 1 hour before the 11 am start.", exact.on_the_way_warning(at("2026-12-10 10:00"))
+    assert_equal "That's 1 hour 45 minutes before the 11 am start.", exact.on_the_way_warning(at("2026-12-10 09:15"))
     assert_nil anytime.on_the_way_warning(at("2026-12-10 18:00"))
   end
 
