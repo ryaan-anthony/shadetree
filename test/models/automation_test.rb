@@ -135,6 +135,18 @@ class AutomationTest < ActiveSupport::TestCase
     assert_includes AutomationRun.where(subject: job).sole.log.to_s, "Created #{invoice.number} as a draft: it comes to $0.00."
   end
 
+  test "PAY-06: with split jobs, invoice the job skips a job with nothing left to bill, saying so" do
+    enable_feature(:split_jobs)
+    rule(trigger: "job_completed", delay: 0, conditions: {}, actions: [ { "type" => "invoice_job" } ], name: "Invoice it")
+    job = Job.create!(client: @maria, title: "Fence", line_items_attributes: [ { name: "Fence", quantity: 1, unit_price: 400 } ])
+    job.update_columns(status: "completed")
+    billed = Invoice.from_job!(job.reload)
+    job.update_columns(status: "in_progress")
+    now { job.reload.complete!(by: @owner) }
+    assert_equal [ billed ], job.invoices.to_a
+    assert_includes AutomationRun.where(subject: job).sole.log.to_s, "Nothing on the job is left to bill."
+  end
+
   test "overdue invoices trigger once, from the hourly sweep" do
     reminder = MessageTemplate.create!(name: "Overdue", subject: "{{document_number}} is overdue", body: "Hi {{client_first_name}}")
     rule(trigger: "invoice_overdue", delay: 0, conditions: { "still_open" => true }, actions: [ { "type" => "send_template", "template" => reminder.uid } ], name: "Overdue")

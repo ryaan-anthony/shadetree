@@ -1,6 +1,8 @@
 <%# locals: (invoice:) -%>
-<%# What the invoice bills: its job and quote, linked both ways (PAY-01). %>
-<% if invoice.job || invoice.quote %>
-  <p class="text-sm2 text-muted">For <%= safe_join([ (link_to("job #{invoice.job.number}", admin_job_path(invoice.job), class: "font-medium text-ink hover:underline", data: { turbo_frame: "_top" }) if invoice.job),
-                                            (link_to("quote #{invoice.quote.number}", admin_quote_path(invoice.quote), class: "font-medium text-ink hover:underline", data: { turbo_frame: "_top" }) if invoice.quote) ].compact, " · ") %></p>
+<%# What the invoice bills: its jobs (PAY-06: a quote's invoice can bill several) and quote, linked both ways (PAY-01). %>
+<% jobs = invoice.jobs.to_a.presence || Array(invoice.job) %>
+<% if jobs.any? || invoice.quote %>
+  <% link = ->(text, path) { link_to(text, path, class: "font-medium text-ink hover:underline", data: { turbo_frame: "_top" }) } %>
+  <p class="text-sm2 text-muted">For <%= safe_join([ (jobs.one? ? link.("job #{jobs.first.number}", admin_job_path(jobs.first)) : safe_join([ "jobs ", safe_join(jobs.map { link.(_1.number, admin_job_path(_1)) }, ", ") ]) if jobs.any?),
+                                            (link.("quote #{invoice.quote.number}", admin_quote_path(invoice.quote)) if invoice.quote) ].compact, " · ") %></p>
 <% end %>

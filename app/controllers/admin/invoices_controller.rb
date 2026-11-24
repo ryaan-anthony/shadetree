@@ -152,8 +152,8 @@ class Admin::InvoicesController < Admin::BaseController
   def apply_builder_params
     attrs = builder_params
     @invoice.lock_version = attrs[:lock_version] if attrs.key?(:lock_version)
-    # An invoice from a job or quote stays with that client; one from scratch can move.
-    change_client(attrs[:client]) if attrs[:client].present? && attrs[:client] != @invoice.client.uid && !@invoice.job && !@invoice.quote
+    # An invoice from jobs or a quote stays with that client; one from scratch can move.
+    change_client(attrs[:client]) if attrs[:client].present? && attrs[:client] != @invoice.client.uid && !@invoice.job && @invoice.jobs.none? && !@invoice.quote
     assign_property(attrs[:property]) if attrs.key?(:property)
     @invoice.location = picked_location(attrs[:location]) || @invoice.location if attrs.key?(:location)
     @location_changed = @invoice.location_id_changed? # CAT-08: offer the new location's prices

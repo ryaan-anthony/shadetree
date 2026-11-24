@@ -124,4 +124,25 @@ class Admin::DataExportsTest < ActionDispatch::IntegrationTest
     log = download("work_log")
     assert_equal [ [ job.number, "Tree removal", @owner.full_name, "4.0", "logged" ] ], log.map { _1.fields.values_at(0, 1, 3, 4, 5) }
   end
+
+  test "PAY-06: with split jobs on, invoice lines say what they bill and whether final; invoices their quote and every job" do
+    assert_not_includes download("invoice_lines").headers, "Final bill"
+    enable_feature(:split_jobs)
+    invoice = as_business(@business) do
+      @business.update!(auto_create_jobs: false)
+      client = Client.create!(display_name: "Pat Lee", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ])
+      quote = Quote.start(client:)
+      quote.sync_line_items([ { "key" => "t", "name" => "Tree removal", "quantity" => "10", "unit_price" => "100" } ])
+      quote.save!
+      quote.update_columns(status: "approved")
+      jobs = [ 6, 4 ].map { Job.from_quote!(quote, picks: { quote.line_items.first.id => _1.to_s }).tap { |job| job.complete!(by: @owner) } }
+      Invoice.from_quote!(quote.reload).tap { assert_equal 2, jobs.size }
+    end
+    lines = download("invoice_lines").select { _1["Invoice number"] == invoice.number }
+    assert_equal [ "Job number", "Job line position", "Quote number", "Quote line position", "Final bill" ], lines.first.headers.last(5)
+    numbers, quote = as_business(@business) { [ invoice.jobs.map(&:number), invoice.quote.number ] }
+    assert_equal numbers.map { [ _1, "0", quote, "0", "yes" ] }, lines.map { _1.fields.last(5) }
+    row = download("invoices").find { _1["Invoice number"] == invoice.number }
+    assert_equal [ quote, numbers.join(", ") ], row.fields.last(2)
+  end
 end

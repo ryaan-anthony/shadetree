@@ -268,6 +268,32 @@ Tenancy.with_business(business) do
   end
 end
 
+# PAY-06: billing completed work (with split_jobs on): two jobs from one quote, both completed.
+# The hedges' job is billed on its own sent invoice; the fence's is ready to invoice, so the quote's
+# Create invoice is its Primary; 3 hedges are still to do.
+Tenancy.with_business(business) do
+  owner = User.find_by!(email: "owner@example.com")
+  client = Client.order(:id).fourth || Client.order(:id).first
+  if client && !Quote.exists?(title: "Front hedges and fence")
+    quote = Quote.start(client:, created_by: owner)
+    quote.title = "Front hedges and fence"
+    quote.sync_line_items([ { "key" => "seed-0", "name" => "Hedge trimming", "quantity" => "8", "unit_price" => "45", "taxable" => "1" },
+                            { "key" => "seed-1", "name" => "Fence repair", "quantity" => "1", "unit_price" => "300", "taxable" => "1" } ])
+    quote.save!
+    quote.mark_sent!(by: owner, channel: "link")
+    auto = business.auto_create_jobs
+    business.update_columns(auto_create_jobs: false)
+    quote.record_response!(:approve, by: owner, signer_name: client.display_name, message: "Agreed by phone")
+    business.update_columns(auto_create_jobs: auto)
+    hedges, fence = quote.line_items.to_a
+    split = Feature.overrides.key?("split_jobs")
+    Feature.overrides["split_jobs"] = true unless split
+    jobs = [ { hedges.id => "5" }, { fence.id => "1" } ].map { Job.from_quote!(quote.reload, by: owner, picks: _1).tap { |job| job.complete!(by: owner) } }
+    Invoice.from_job!(jobs.first, by: owner).mark_sent!(by: owner, channel: "link")
+    Feature.overrides.delete("split_jobs") unless split
+  end
+end
+
 # CLI-03: the request form, on, with a request from someone new.
 business.update!(request_form_enabled: true)
 Tenancy.with_business(business) do

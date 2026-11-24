@@ -1,5 +1,5 @@
 <%# locals: (invoice:, f:) -%>
-<%# PAY-01: files the client sees with the invoice: completion photos from the job's visits
+<%# PAY-01: files the client sees with the invoice: completion photos from its jobs' visits
     (JOB-04), ticked and added (or added by the no-JavaScript "Save draft"), or uploaded. Either way the page reloads with them listed. %>
 <% attached = invoice.saved_attachments %>
 <% job_photos = invoice.job_photos.reject { |photo| attached.any? { _1.blob_id == photo.blob_id } } %>
@@ -18,7 +18,7 @@
   <% end %>
   <% if job_photos.any? %>
     <fieldset class="mb-4">
-      <legend class="label">Photos from job <%= invoice.job.number %></legend>
+      <legend class="label">Photos from <%= (jobs = invoice.jobs.to_a.presence || Array(invoice.job)).one? ? "job" : "jobs" %> <%= jobs.map(&:number).to_sentence %></legend>
       <ul class="grid grid-cols-3 gap-2 sm:grid-cols-5">
         <% job_photos.each.with_index(1) do |photo, number| %>
           <li><label class="relative block cursor-pointer">

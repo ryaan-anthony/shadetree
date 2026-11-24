@@ -65,6 +65,10 @@
       <span class="money font-semibold text-ink" id="line-total-<%= line.key %>"><%= subtotal ? money(subtotal) : "—" %></span>
     </p>
   </div>
+  <% if (own_rates = line.try(:own_tax_rate_list)) %><%# PAY-06: a line on an invoice over jobs with different taxes keeps its job's %>
+    <p class="mt-1.5 flex items-center gap-1.5 text-sm2 text-muted" id="line-taxes-<%= line.key %>"><%= icon "info" %>
+      Taxed at its job's rates: <%= own_rates.map { "#{_1.name} #{QuoteWork.number(_1.percent)}%" }.to_sentence.presence || "none" %></p>
+  <% end %>
   <% if line.errors.any? %>
     <p class="error-text mt-1.5"><%= icon "alert-circle" %><%= line.errors.full_messages.to_sentence %></p>
   <% end %>
