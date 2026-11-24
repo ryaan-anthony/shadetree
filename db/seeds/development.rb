@@ -489,6 +489,22 @@ Tenancy.with_business(business) do
   end
 end
 
+# PLT-17: one status colour language. A visit in progress this week, so Schedule → Color by
+# status shows Scheduled (sky), In progress (info) and Completed side by side, and a failed
+# automation step on a job's page (danger, like an undelivered email).
+Tenancy.with_business(business) do
+  owner = User.find_by!(email: "owner@example.com")
+  unless Visit.exists?(status: "in_progress")
+    visit = Visit.where(status: "scheduled", scheduled_on: business.today.all_week).order(:scheduled_on, :id).first
+    visit&.start!(by: owner)
+  end
+  job = Job.where(status: "completed").order(:id).first
+  if job && !AutomationRun.exists?(status: "failed")
+    AutomationRun.create!(rule_name: "Thank the client", trigger: "job_completed", subject: job, run_at: 2.hours.ago, finished_at: 2.hours.ago,
+                          status: "failed", log: [ { "action" => "send_template", "result" => "failed", "detail" => "The client has no email address." } ])
+  end
+end
+
 # ACC-08: a brand-new owner, offered the guided tour on Home with the setup checklist showing.
 # The demo owner is offered it too; the demo technician can take the short one from My day.
 new_owner = demo_user("new@example.com", "Sam", "Rivera", demo_password)
