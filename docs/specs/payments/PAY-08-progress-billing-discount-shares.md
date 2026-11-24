@@ -65,11 +65,10 @@ each invoice takes; what isn't used carries forward, and the last invoice takes 
 ## Decisions
 
 - Progress billing stays: a job or quote can be billed in part before it's done (owner, 2026-11-22).
-- When invoicing part of a quote with a discount, staff choose how much to apply now; the rest
-  carries forward and the last invoice takes it. Fixed and percent alike, in the quote's mix
-  (taxed and untaxed) so tax matches the quote's. A discount taken on progress only moves cash:
-  work invoices give exactly the quote's discount. Replaces the proportional share (owner,
-  2026-11-23). Over-billing is credited on the next invoice (owner, 2026-11-22).
+- Staff choose how much of a quote's discount each invoice applies; the rest carries and the
+  last takes it, fixed or percent, in the quote's taxed/untaxed mix. On progress it only moves
+  cash: work invoices give exactly the discount (owner, 2026-11-23). Over-billing is credited on
+  the next invoice (owner, 2026-11-22).
 - A re-taxed job: the discount comes off the lines charged and lowers tax at their actual rates;
   the client gets all of it, and the tax total may differ from the quote's (owner, 2026-11-23).
 - A staff discount on the last final leaving too little for the rest of the quote's: sending is
@@ -77,10 +76,9 @@ each invoice takes; what isn't used carries forward, and the last invoice takes 
 - Shortfall: the discount scales to the quoted value billed; the rest is "not used" (owner,
   2026-11-23). *Open: a scaled discount below what earlier invoices applied, or above what the
   last can take; asked of the owner.*
-- A progress invoice's discounts apply to the cash it collected: the final deducts only the net
-  it charged (an unpaid one still does, and stays owed). Progress never charges a line more than
-  the final would after the discount still to come, or a lone job's own. Clients see
-  "Credit from INV-0004" with tax; staff figures include tax (owner, 2026-11-23).
+- A final deducts only the net a progress invoice charged (unpaid too, which stays owed);
+  progress never charges a line more than the final would. Clients see "Credit from INV-0004"
+  with tax; staff figures include tax (owner, 2026-11-23).
 - Credited progress is voided only after the invoice crediting it (void-first). Credits count
   only from invoices that went out, capped by the bill's line after its discounts.
 
@@ -89,12 +87,14 @@ each invoice takes; what isn't used carries forward, and the last invoice takes 
 - `invoices.kind`, `invoice_line_items.discount_share_cents`, `invoice_credits`. `BillingLedger`
   reads a quote's (or lone job's) bills under PAY-06's lock; `BillingCredits` works shares and
   credits out on each draft save; `WorkBilling.bill_progress!`. Behind `split_jobs`.
-- A credit is what the progress invoice charged for the line (its sent version), net, before
-  tax, at its work's rates (quote progress: the live job's; a final can match on its draft).
+- A credit is what progress charged for the line (its sent version), net, at its work's rates.
 - Fit: PAY-07 adds deposit/take_back credits, `nothing_due?` uses `total_due`; JOB-10 skips
   `quote_discount_off!`; QTE-09 adds Not going ahead to `nothing_left?`/`done?`/`all_done?`.
-- `quote_discount_chosen_cents` (nil: $0) is held on each draft save to [min, max] (by choice,
-  no more than leaves its credits whole) in `quote_discount_share_cents`; `QuoteDiscountPlan`
-  places it line by line (taxed or untaxed group, needs first; credit room first) in
-  `quote_discount_parts` ({from, key, rates, cents}), so tax and credits use one base.
+- `quote_discount_chosen_cents` (nil: $0) is held to [min, max] in `quote_discount_share_cents`;
+  `QuoteDiscountPlan` places it by line (needs, then credit room first) in `quote_discount_parts`.
 - Dev seeds: "Roof replacement" ($500 progress sent; the final draft credits it, applies $100).
+- When `split_jobs` goes on (OPS-06): update the help articles run-your-day,
+  turn-a-quote-into-a-job, invoice-finished-work and job-without-a-quote: add back logging what
+  was done on each visit (The work, How many, Add something done on site), Create invoice bills
+  what was done, and recapture screenshots (`bin/help-screenshots`). Progress invoices and quote
+  discounts need an article of their own.

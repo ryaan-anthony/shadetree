@@ -20,10 +20,11 @@ class ProgressBillingTest < ActiveSupport::TestCase
         used = InvoiceCredit.counted.where(source_invoice_id: progress.id).sum(:amount_cents)
         next unless used.positive? && used == progress.totals.lines.sum { _1.taxable.cents }
 
-        shown = Invoice.where(id: InvoiceCredit.counted.where(source_invoice_id: progress.id).select(:invoice_id))
-                       .sum { |invoice| invoice.client_credits.sum { |source, amount| source == progress ? amount.cents : 0 } }
-        # Tax rounds once per rate on each invoice: within a cent per rate.
-        assert_in_delta progress.total_cents, shown, progress.totals.taxes.size, "Credit from #{progress.number} equals what it charged"
+        crediting = Invoice.where(id: InvoiceCredit.counted.where(source_invoice_id: progress.id).select(:invoice_id)).to_a
+        shown = crediting.sum { |invoice| invoice.client_credits.sum { |source, amount| source == progress ? amount.cents : 0 } }
+        # Tax rounds once per rate on each invoice: within a cent per rate per invoice crediting it
+        # (quote progress can be credited on each job's final).
+        assert_in_delta progress.total_cents, shown, progress.totals.taxes.size * crediting.size, "Credit from #{progress.number} equals what it charged"
       end
     end
   end
