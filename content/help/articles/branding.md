@@ -17,8 +17,8 @@ client pages. Your own screens stay Shadetree green.
 ## Your logo
 
 1. Open **Settings**, then **Branding**.
-2. Under **Logo**, press **Upload a logo** or drop the file on **Drop your logo here**. Use a PNG,
-   JPEG or WebP file. A wide logo on a transparent background works best.
+2. Under **Logo**, press **browse** and choose the file, or drag it onto **Drop your logo here**.
+   Use a PNG, JPEG or WebP file. A wide logo on a transparent background works best.
 3. Press **Save branding**.
 
 Without a logo, clients see your business name and initials. To change it later, use

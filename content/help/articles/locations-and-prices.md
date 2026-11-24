@@ -14,7 +14,7 @@ screenshots:
 
 If you work from more than one base, each location can have its own address, contact details,
 time zone, hours, team and prices. Clients see the details of the location their work is with.
-Locations come with the Business plan.
+Locations come with plans that include more than one location.
 
 ![Locations: each location with its address and team; press Add location for another](locations-list)
 
@@ -33,6 +33,12 @@ Locations come with the Business plan.
 7. Press **Add location**.
 
 Its hours and closures are set from the location's ··· menu, **Hours and closures**.
+
+## Where each person's work starts
+
+Under **Default locations**, on **Locations**, choose where new quotes, jobs and invoices from each
+person start. **Automatic** uses the one location they work at, or your first location if they
+work at several. They can still pick another location on any document.
 
 ## Different prices at each location
 

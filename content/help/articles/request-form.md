@@ -10,7 +10,8 @@ screenshots:
 ---
 
 Your request form is a page of your own where new clients ask for a quote: what they need, where,
-when, and photos. Their request lands in **Requests**, and you and your admins get an email.
+when, and photos. Their request lands in **Requests**, and everyone with office access who keeps
+**New requests** ticked in their email settings gets an email.
 
 ![Request form settings: tick Take requests online, write an intro, choose the services, then press Save changes](request-form-settings)
 
