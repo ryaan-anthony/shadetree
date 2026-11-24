@@ -1,0 +1,4 @@
+<%# locals: (range:, chosen: nil) -%>
+<%# PAY-08: the amount that applies, for the fill controller to show once the field is left, and
+    the choice it was worked out for (cents, or "all"), so a reply to an older save is never shown. %>
+<span hidden id="quote_discount_applied" data-fill-target="applied" data-chosen="<%= chosen == BillingCredits::APPLY_ALL ? "all" : chosen.to_i %>"><%= format("%.2f", range[:applied] / 100.0) %></span>

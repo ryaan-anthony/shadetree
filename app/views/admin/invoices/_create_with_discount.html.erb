@@ -11,7 +11,10 @@
     <%= form_with url:, class: "space-y-4", data: { controller: "fill", fill_value_value: "all", fill_submit_value: true } do %>
       <div class="field">
         <label class="label" for="<%= id %>-discount">Quote discount: <%= money(Money.new(left, currency)) %> left. Apply now</label>
-        <%= text_field_tag :discount, "0.00", id: "#{id}-discount", inputmode: "decimal", class: "input text-right tabular", aria: { describedby: "#{id}-discount-hint" }, data: { fill_target: "field" } %>
+        <%# Empty with a 0.00 placeholder ($0: Apply later), focused when the dialog opens, and what's
+            typed replaces what's there, so a click never leaves "50" typed before "0.00". %>
+        <%= text_field_tag :discount, "", id: "#{id}-discount", inputmode: "decimal", placeholder: "0.00", autofocus: true, class: "input text-right tabular",
+                           aria: { describedby: "#{id}-discount-hint" }, data: { fill_target: "field", action: "focus->fill#select" } %>
         <p class="help" id="<%= id %>-discount-hint">$0 applies it later. What isn't used carries forward, and the last invoice takes the rest; the draft shows any minimum the work left needs.</p>
       </div>
       <%# The Primary is the only submit button, so Enter sends the amount typed; Apply all fills
