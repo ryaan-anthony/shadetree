@@ -25,8 +25,13 @@ curl -X POST https://staging.getshadetree.com/inbound/email_events -H 'Content-T
 
 Answers: `204` taken (stored, a repeat, or counted and dropped); `401` bad or missing signature,
 or a timestamp more than 5 minutes off; `413` over 256 KB; `422` signed but not one of the two
-formats; `429` too many failed attempts from this IP in a minute; `404` the app has no
+formats; `429` too many failed attempts (401 or 413) from this IP in a minute; `404` the app has no
 `EMAIL_EVENTS_SECRET` (or one shorter than 32 characters). Retry only on `429` and `5xx`.
+
+The rate limit counts failures per IP, not per sender. If the relay or forwarder posts from a
+shared egress address (a cloud provider's, or behind a tunnel), someone else's bad posts from
+that address can trip the limit for the real sender for a minute; a sender that retries
+delivers its reports once the minute is over.
 
 ## Formats
 
@@ -86,6 +91,8 @@ the next email is dropped by the relay and may never be reported.
 ## Feeding the endpoint
 
 A relay that can post this contract is pointed at the endpoint with the environment's secret.
-A forwarder in `infra/` for a relay that can't is deferred (owner, 2026-11-24): until a relay
-posts this format, late bounces and complaints stay unhandled, and only refusals at send time
-are seen.
+The relay configured in `infra/` can't. A forwarder for it, a small Worker like
+`infra/support-email-worker` that verifies the relay's own signature and freshness, re-signs with
+the environment's secret and never logs addresses, can be built, but it's deferred
+(owner, 2026-11-24). **Until a relay or forwarder posts this format, late bounces and complaints
+stay unhandled in production**: only refusals at send time are seen.

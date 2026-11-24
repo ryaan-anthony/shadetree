@@ -48,9 +48,10 @@ class Admin::LateBouncesTest < ActionDispatch::IntegrationTest
     end
     get admin_quote_path(@quote)
     assert_select "#quote-delivery-problem", 0
-    assert_select ".card", /Marked as spam/
+    assert_select ".card .text-danger", /Marked as spam/
     get admin_client_path(@quote.client)
     assert_select "#client-timeline li", /Marked an email as spam \(Quote #{@quote.number}\)/
+    assert_select "#client-timeline li .badge", "Marked as spam"
     assert_select "[id^=undeliverable-]", /was marked as\s+spam, so emails to it are paused/
   end
 

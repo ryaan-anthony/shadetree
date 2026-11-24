@@ -39,7 +39,8 @@ one generic, signed endpoint (ADR 0028), so a late bounce is handled like a send
       type, status code, reason category, time, the email and the recipient's role (To or CC).
       Never the address, diagnostic text or payload, in rows or logs. It's processed in the
       background; rows go after 90 days.
-- [x] To bounces: a mailbox status (5.1.x, 5.2.1) marks the email "Address refused" and blocks
+- [x] To bounces: a mailbox status (5.1.1, 5.1.2, 5.1.3, 5.1.6, 5.1.10, 5.2.1, as at send time;
+      5.1.7 and 5.1.8 are about our sender's address) marks the email "Address refused" and blocks
       the address for the business; any other permanent status marks it "Couldn't send" without
       blaming it. The error is send time's words with the codes ("The mail server refused this
       address (550 5.1.1)", "… refused the email (5.7.1)"); a late event is never our side.
@@ -78,21 +79,20 @@ one generic, signed endpoint (ADR 0028), so a late bounce is handled like a send
   are ignored (owner, 2026-11-23).
 - Matching in the request, stored fields, 256 KB, rate limits, 90 days (follows the support
   ingress and `ConnectEvent`); the card (follows Background jobs; 7 days for the owner to confirm).
-- The forwarder is deferred: ship the generic endpoint and runbook only; late bounces stay
-  unhandled until a relay can post our format (owner, 2026-11-24).
-- Only mailbox statuses and complaints block a CC; other permanent bounces are recorded in the
-  send history only. A void invoice is treated as paid: send history and timeline only, no
-  warning or notification (owner, 2026-11-24).
+- The forwarder is deferred (the endpoint and runbook only). Only mailbox statuses and complaints
+  block a CC; other permanent bounces are only recorded in the send history. A void invoice is
+  treated as paid: send history and timeline only (owner, 2026-11-24).
 
 ## Implementation notes
 
-- Built: `EmailEventIngress` (verify, both formats), `Inbound::EmailEventsController`, `EmailEvent`
-  (match, store, `process!` via `ProcessEmailEventJob`; `PruneEmailEventsJob`), `EmailEventTally`;
-  `EMAIL_EVENTS_SECRET`; [runbook](../../runbooks/email-events.md). No fallback: the relay's
-  config in `infra/` sets a custom MAIL FROM domain whose MX is the relay's own.
-- A CC is stored by its position on the send; its problem shows in the send history.
-- Dev seeds: a sent invoice whose email and CC bounced late, a paid one marked as spam, and the
-  ops card's counts.
+- Built: `EmailEventIngress`, `Inbound::EmailEventsController`, `EmailEvent` (`process!` via
+  `ProcessEmailEventJob`), `EmailEventTally`, `EMAIL_EVENTS_SECRET`, [runbook](../../runbooks/email-events.md).
+- Until a relay or forwarder posts our format, late bounces stay unhandled in production. A Worker
+  like `infra/support-email-worker` could serve the relay in `infra/`: deferred, not impossible.
+- No fallback: the relay's config in `infra/` sets a MAIL FROM domain whose MX is the relay's own.
+- The warning and notification follow `awaiting_client?`, as the page does, so an expired quote
+  gets neither. A CC is stored by its position on the send.
+- Dev seeds: an invoice whose email and CC bounced late, a paid one marked as spam, ops counts.
 
 ## Open questions
 
