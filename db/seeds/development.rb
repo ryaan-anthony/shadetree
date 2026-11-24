@@ -627,21 +627,24 @@ Tenancy.with_business(business) do
 end
 
 # NTF-05: late reports, through the same matching and processing as /inbound/email_events (nothing
-# is sent). The hedges' invoice was emailed with a CC two days ago: the client's address bounced
-# later (the warning, list badge, timeline and notification) and so did the CC (in the send
-# history, and blocked). Grace Chen marked her window-washing invoice's email as spam (her
+# is sent). Grace Chen's part-paid hedge invoice was emailed with a CC two days ago (not INV-0003,
+# which the help articles picture): the client's mail server later refused it as policy (5.7.1:
+# "Couldn't send", without blaming the address; the warning, list badge, timeline and
+# notification), and the CC's mailbox didn't exist (in the send history, and blocked). Grace Chen marked her window-washing invoice's email as spam (her
 # timeline, and her address blocked). The operator console's home counts them, plus some noise.
 Tenancy.with_business(business) do
   owner = User.find_by!(email: "owner@example.com")
-  invoice = Invoice.joins(:job).find_by(jobs: { title: "Hedge trimming (5 of 8)" }, status: "sent")
+  invoice = Invoice.joins(:job).find_by(jobs: { title: "Hedge trimming" }, status: "partially_paid")
   paid = Invoice.joins(:job).find_by(jobs: { title: "Window washing" })
   if invoice && paid && !EmailEvent.exists?
-    reports = [ [ invoice, "bounce", "5.1.1", "550", "office@example.com" ], [ paid, "complaint", nil, nil, nil ] ].flat_map do |document, type, status, code, cc|
+    reports = [ [ invoice, "bounce", "office@example.com" ], [ paid, "complaint", nil ] ].flat_map do |document, type, cc|
       to = document.client.primary_email&.value || "client@example.com"
       email = EmailMessage.create!(kind: "invoice_sent", to:, related: document)
-      InvoiceSend.create!(invoice: document, user: owner, channel: "email", recipient: to, cc:, email_message: email, revision: document.revision)
+      InvoiceSend.create!(invoice: document, user: owner, channel: "email", recipient: to, cc:, email_message: email, revision: document.revision,
+                          created_at: 2.days.ago)
       email.mark!("sent", at: 2.days.ago, provider_message_id: "seed-#{email.uid}@getshadetree.com")
       [ to, cc ].compact.map do |recipient|
+        status, code = type == "bounce" ? (recipient == to ? %w[5.7.1 550] : %w[5.1.1 550]) : [ nil, nil ]
         EmailEventIngress::Event.new(key: "seed-#{email.uid}-#{recipient}", type:, message_id: email.provider_message_id, reference: email.uid,
                                      recipient:, status:, reply_code: code, occurred_at: 1.day.ago)
       end
