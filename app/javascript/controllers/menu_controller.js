@@ -40,16 +40,21 @@ export default class extends Controller {
   keepOnScreen() {
     const menu = this.menuTarget
     const style = menu.style
-    style.left = style.right = ""
+    style.left = style.right = style.maxWidth = ""
     const margin = 8
     const box = menu.getBoundingClientRect()
     const shift = box.left < margin ? margin - box.left : Math.min(0, document.documentElement.clientWidth - margin - box.right)
     if (!shift) return
-    // left is measured from the inside of the menu's positioned ancestor (its padding edge).
+    // left is measured from the inside of the menu's positioned ancestor (its padding edge). Every
+    // caller wraps the menu in its own non-scrolling relative box, so its scrollLeft is always 0.
     const parent = menu.offsetParent
     const origin = parent ? parent.getBoundingClientRect().left + parent.clientLeft : 0
     style.right = "auto"
     style.left = `${box.left + shift - origin}px`
+    // Shifted right off the left edge, a menu at its width cap can still pass the right margin
+    // (a desktop scrollbar narrows the page): hold it inside both margins.
+    const room = document.documentElement.clientWidth - 2 * margin
+    if (box.width > room) style.maxWidth = `${room}px`
   }
 
   close() {

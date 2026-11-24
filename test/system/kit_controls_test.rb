@@ -74,8 +74,10 @@ class KitControlsTest < ApplicationSystemTestCase
 
   def assert_menu_on_screen(label)
     box = -> { evaluate_script("(() => { const r = document.querySelector('.menu:not([hidden])').getBoundingClientRect(); return [r.left, r.right, document.documentElement.clientWidth] })()") }
-    assert_eventually(-> { "#{label}: the open menu spans #{box.call.first(2)}, the screen 0..#{box.call.last}" }) do
-      left, right, width = box.call
+    last = nil
+    assert_eventually(-> { "#{label}: the open menu spans #{last.first(2)}, the screen 0..#{last.last}" }) do
+      last = box.call
+      left, right, width = last
       left >= 0 && right <= width
     end
   end
