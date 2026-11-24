@@ -45,14 +45,14 @@ deploy; checks keep them complete and in step with the screens.
 - [x] Markdown is rendered safely: raw HTML off, http(s) and relative links only, no style
       attributes (the CSP allows only our stylesheets), images only from the help image folder.
       Slugs match `[a-z0-9-]+` and are looked up in the loaded index, never used as file paths.
-- [ ] Screenshots are generated: one command captures each declared screenshot from the demo
-      seed data at 1280 and 390 wide, in CI's container, as WebP under 200 KB, and commits them.
+- [x] Screenshots are generated: one command captures each declared screenshot from the demo
+      seed data at 1280 and 390 wide, in CI's environment, as WebP under 200 KB, and commits them.
       Only demo businesses and clients appear.
 - [ ] CI fails when a page uses an undeclared help topic, a topic has no article (coverage), an
       article links to a missing article or image, or a screen in a screenshot has changed
       since capture; the message names the recapture command. That is the review trigger: the
       PR that changes a screen recaptures it and re-reads the article (updating last reviewed).
-- [ ] AGENTS.md says "write or update the help article with each feature"; the PR template's
+- [x] AGENTS.md says "write or update the help article with each feature"; the PR template's
       checklist gains "Does this change a screen an article describes?".
 - [ ] Articles work at 360 px and with screen readers; alt text says what to do; axe passes.
 - [ ] Tests cover rendering safety, both copies, search, suggestions, "Learn more", votes and

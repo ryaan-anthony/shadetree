@@ -93,8 +93,8 @@ class HelpLibraryTest < ActiveSupport::TestCase
 
   test "images only from the help image folder, and declared screenshots as a picture" do
     shot = { "name" => "send-page", "path" => "/admin/quotes/:quote/send/new", "quote" => "Spring cleanup" }
+    HelpCentre.image_root = @dir.join("images").tap(&:mkpath) # not the real folder: tests run in parallel
     files = HelpCentre::WIDTHS.map { HelpCentre.image_root.join("send-page-#{_1}.webp") }
-    HelpCentre.image_root.mkpath
     files.each { |file| Vips::Image.black(20, 10).webpsave(file.to_s) }
     html, problems = render(<<~MD, { screenshots: [ shot ] })
       ![Press Send quote](send-page)
@@ -109,7 +109,7 @@ class HelpLibraryTest < ActiveSupport::TestCase
     assert_equal 2, html.css("img").size, "only the screenshot, used twice"
     assert_equal 4, problems.size, problems.inspect # three outside the folder, one without alt text
   ensure
-    files&.each { FileUtils.rm_f(_1) }
+    HelpCentre.image_root = Rails.root.join("app/assets/images/help")
   end
 
   test "an uncaptured screenshot is left out and reported" do
@@ -141,6 +141,25 @@ class HelpLibraryTest < ActiveSupport::TestCase
     assert_equal [ "one" ], HelpArticle.pluck(:slug)
     assert_includes HelpArticle.find_by!(slug: "one").body, "invoices"
     assert_no_changes(-> { HelpArticle.maximum(:updated_at) }) { HelpArticle.ensure_current!(library) }
+  end
+
+  test "boot syncs only in the web server, and a bad article never stops it starting" do
+    write("one")
+    HelpCentre.root = @dir
+    HelpCentre.reset!
+    HelpArticle.sync_at_boot
+    assert_equal 0, HelpArticle.count, "not in a task or a test"
+    program = $PROGRAM_NAME
+    $PROGRAM_NAME = "puma: cluster worker 0"
+    HelpArticle.sync_at_boot
+    assert_equal [ "one" ], HelpArticle.pluck(:slug)
+    @dir.join("articles/bad.md").write("---\ntitle: x\n---\n")
+    HelpCentre.reset!
+    assert_nothing_raised { HelpArticle.sync_at_boot }
+  ensure
+    $PROGRAM_NAME = program if program
+    HelpCentre.root = Rails.root.join("content/help")
+    HelpCentre.reset!
   end
 
   test "the repo's own articles load and render without problems" do

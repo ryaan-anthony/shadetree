@@ -3,7 +3,12 @@ title: Get help from the Shadetree team
 summary: Send the Shadetree team a question from any page, follow the answer, and know who on your team can see it.
 category: getting-started
 topics: [support]
-reviewed: 2026-11-23
+reviewed: 2026-11-24
+screenshots:
+  - name: ask-for-help-form
+    path: /admin/help/new
+  - name: your-questions
+    path: /admin/help
 ---
 
 Stuck on something, found something that isn't working, or have an idea? Ask us from the page
@@ -20,6 +25,8 @@ explain that part.
    they matter to the question.
 6. Press **Send**.
 
+![Ask for help: fill in Subject, Category and Message, add screenshots if they help, then press Send](ask-for-help-form)
+
 You'll see "Thanks. We'll reply here and by email." Your question now has its own page.
 
 > To attach screenshots, your email address needs to be confirmed first. You can still send the
@@ -28,7 +35,9 @@ You'll see "Thanks. We'll reply here and by email." Your question now has its ow
 ## Follow the answer
 
 We reply on the question's page and by email. To see every question your business has asked,
-open **Help** and choose **Your questions**.
+open **Help** and choose **Your questions**. They're listed on the page titled **Help**.
+
+![The Help page, listing your questions: open one to read our reply and answer it](your-questions)
 
 Each question shows where it stands:
 

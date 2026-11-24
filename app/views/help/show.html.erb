@@ -3,7 +3,7 @@
 <% page_meta description: @article.summary %>
 <div class="mx-auto max-w-3xl px-5 py-12 sm:px-8">
   <nav aria-label="Breadcrumb" class="text-sm">
-    <%= link_to "Help", help_path, class: "text-subtle hover:underline" %> <span aria-hidden="true" class="text-muted">/</span>
+    <%= link_to "Help", help_path, class: "text-subtle underline underline-offset-2" %> <span aria-hidden="true" class="text-muted">/</span>
     <span class="text-subtle"><%= @article.category_name %></span>
   </nav>
   <h1 class="mt-2 text-3xl font-bold tracking-tight text-ink"><%= @article.title %></h1>
