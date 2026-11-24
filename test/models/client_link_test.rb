@@ -37,11 +37,11 @@ class ClientLinkTest < ActiveSupport::TestCase
       travel_to(@business.time_zone.parse(now)) do
         as_business(@business) do
           assert_equal 30.days.from_now, ClientLink.issue!(@document, actions: %w[approve]).expires_at, now
-          assert_nil ClientLink.issue!(never.create!(title: "x")).expires_at
           assert_equal 90.days.from_now, ClientLink.issue!(plain.create!(title: "y")).expires_at, now
         end
       end
     end
+    as_business(@business) { assert_nil ClientLink.issue!(never.create!(title: "x")).expires_at }
   end
 
   test "status covers active, expired, revoked and suspended businesses" do
