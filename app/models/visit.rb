@@ -48,7 +48,7 @@ class Visit < ApplicationRecord
 
   scope :open, -> { where(status: OPEN_STATUSES) }
   scope :scheduled, -> { where(status: "scheduled") }
-  scope :in_order, -> { order(:scheduled_on, Arel.sql("starts_at NULLS LAST"), :id) }
+  scope :in_order, -> { order(:scheduled_on, Arel.sql("visits.starts_at NULLS LAST"), :id) }
   scope :upcoming, ->(today) { open.where(scheduled_on: today..) }
 
   # Members going, from the form's checkboxes (user ids). Checked against the business's
