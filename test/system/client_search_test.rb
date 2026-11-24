@@ -21,6 +21,8 @@ class ClientSearchSystemTest < ApplicationSystemTestCase
   # since only the last search counts. A real failure still fails, after 15 seconds.
   # The results must be this search's own (their summary names it): the list left by the last
   # search can already show and hide the same names while this one is still on its way.
+  # Waits for the summary line naming this search, so it only suits searches that find
+  # something; one that finds nothing shows the empty state instead and would time out here.
   def search_clients(text, shows:, hides: nil)
     field = find_field("Search clients")
     summary = /matching #{Regexp.escape(text)}\z/
