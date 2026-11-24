@@ -322,6 +322,36 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # PLT-21: a card whose main content is empty shows the kit's empty state (icon tile, title,
+  # one sentence, at most one action). A one-line muted note is only for a sub-list in a card
+  # with other content: a detail page's cards are parts of the record (a request's "Quotes: none
+  # yet"), so only the other pages are checked.
+  EMPTY_NOTE = /\A(None yet|Nothing\b|No \S+( \S+)? yet\b)/i
+
+  def card_body(node) = node.ancestors.find { classes(_1.parent).include?("card") if _1.parent.respond_to?(:[]) }
+
+  check :empty_states_use_the_kit, if: ->(page) { !page.detail? && !page.ops? } do |_page, html|
+    html.css(".card p").filter_map do |note|
+      next unless note.text.squish.match?(EMPTY_NOTE) && note.ancestors(".empty").none?
+      next if (body = card_body(note)).nil? || body.text.squish != note.text.squish
+
+      "#{note.text.squish.inspect} is a bare note in an empty card (use empty_state)"
+    end
+  end
+
+  # Built with two actions before PLT-21; which one stays is the owner's call (open question).
+  TWO_ACTIONS = [ "No services yet", "No invoices yet" ].freeze
+
+  check :empty_state_shape do |_page, html|
+    html.css(".empty").flat_map do |empty|
+      title = empty.at_css(".empty-title")&.text&.squish
+      next [] if TWO_ACTIONS.include?(title) && kit_buttons(empty).size == 2
+      [ ("an empty state without an icon tile" unless empty.at_css(".empty-icon svg")),
+        ("an empty state without a title" if title.blank?),
+        ("#{title.inspect} has #{kit_buttons(empty).size} actions; an empty state has at most one" if kit_buttons(empty).size > 1) ].compact
+    end
+  end
+
   setup do
     @business = businesses(:one)
     @owner = users(:one)

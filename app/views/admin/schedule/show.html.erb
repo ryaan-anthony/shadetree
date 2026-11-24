@@ -17,8 +17,9 @@
   <%= segmented_control({ "day" => "Day", "week" => "Week" }, selected: s.view, label: "View", class: "hidden self-center md:inline-flex",
                         href: ->(view) { admin_schedule_path(schedule_link_params(s, view:)) }) %>
 <% end %>
-<% if s.items.empty? && s.next_item_after %>
-  <p class="-mt-2 mb-4 text-sm2 text-muted" id="next-visit"><span class="hidden md:inline">Nothing booked <%= s.view == "day" ? "this day" : "this week" %>. </span><%= render "next_visit", s: %></p>
+<%# PLT-21: every empty period says so, on every screen, with the next visit when there is one. %>
+<% if s.items.empty? %>
+  <p class="-mt-2 mb-4 text-sm2 text-muted" id="next-visit">Nothing booked <%= s.view == "day" ? "this day" : "this week" %>. <%= render "next_visit", s: %></p>
 <% end %>
 
 <div class="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[16rem_minmax(0,1fr)]" data-controller="schedule-focus">
@@ -106,9 +107,6 @@
         </details>
       <% end %>
       <% shown = (coming.any? ? coming : s.dates).select { s.visits_on(_1).any? || _1 == s.business.today } %>
-      <% if shown.empty? && past.none? { s.visits_on(_1).any? } %>
-        <%= card do %><p class="text-sm2 text-muted">Nothing booked <%= s.view == "day" ? "this day" : "this week" %>.</p><% end %>
-      <% end %>
       <% shown.each do |date| %>
         <% day = s.visits_on(date) %>
         <% next if day.empty? && date != s.business.today %>

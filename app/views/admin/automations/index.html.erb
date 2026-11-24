@@ -12,9 +12,13 @@
   <%= card title: "Your automations",
            subtitle: "Each one waits for something to happen, checks it still makes sense, then does its steps. #{"Your plan includes #{pluralize(limit, "active automation")}." if limit&.positive?}",
            flush: true,
-           actions: (link_to(new_admin_automation_path, class: button_classes(:secondary, :sm)) { icon("plus") + " New automation" } if @editable) do %>
+           actions: (link_to(new_admin_automation_path, class: button_classes(:secondary, :sm)) { icon("plus") + " New automation" } if @editable && @rules.any?) do %>
+    <%# PLT-21: one way to add one at a time: the empty state's button, then the header's (as on Taxes). %>
     <% if @rules.empty? %>
-      <p class="px-5 py-4 text-sm text-muted">None yet.<%= " Start with a ready-made one below, or build your own." if @editable %></p>
+      <%= empty_state title: "No automations yet", level: 3, icon: "zap",
+                      text: (@editable ? "Start with a ready-made one below, or build your own." : "Automations you set up show up here.") do %>
+        <%= link_to(new_admin_automation_path, class: button_classes(:secondary)) { icon("plus") + " New automation" } if @editable %>
+      <% end %>
     <% else %>
       <ul class="list">
         <% @rules.each do |rule| %>
@@ -60,7 +64,7 @@
 
   <%= card title: "Recent activity", subtitle: "What your automations did, and what they skipped and why.", flush: true do %>
     <% if @runs.empty? %>
-      <p class="px-5 py-4 text-sm text-muted">Nothing yet. Each time an automation starts, it shows up here.</p>
+      <%= empty_state title: "Nothing yet", text: "Each time an automation starts, it shows up here.", level: 3, icon: "activity" %>
     <% else %>
       <ul class="list">
         <% @runs.each do |run| %>

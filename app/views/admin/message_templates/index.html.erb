@@ -47,9 +47,13 @@
   <% end %>
 
   <%= card title: "Your own templates", subtitle: "Extra wording to start a quote or invoice email from: a follow-up, a seasonal offer, a thank-you.", flush: true,
-           actions: (link_to(new_admin_custom_message_template_path, class: button_classes(:secondary, :sm)) { icon("plus") + " New template" } if @editable) do %>
+           actions: (link_to(new_admin_custom_message_template_path, class: button_classes(:secondary, :sm)) { icon("plus") + " New template" } if @editable && @custom.any?) do %>
+    <%# PLT-21: as on Taxes, the empty state's button until there's one, then the header's. %>
     <% if @custom.empty? %>
-      <p class="px-5 py-4 text-sm text-muted">None yet.<%= " Templates you add here show up in the send form for quotes and invoices." if @editable %></p>
+      <%= empty_state title: "No templates of your own yet", level: 3, icon: "mail",
+                      text: (@editable ? "Templates you add here show up in the send form for quotes and invoices." : "Templates added here show up in the send form for quotes and invoices.") do %>
+        <%= link_to(new_admin_custom_message_template_path, class: button_classes(:secondary)) { icon("plus") + " New template" } if @editable %>
+      <% end %>
     <% else %>
       <ul class="list">
         <% @custom.each do |template| %>

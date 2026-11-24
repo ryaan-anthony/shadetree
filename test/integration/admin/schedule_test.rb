@@ -79,7 +79,7 @@ class Admin::ScheduleTest < ActionDispatch::IntegrationTest
 
     get admin_schedule_path(date: "2027-12-29")
     assert_select ".page-lede", /\ADec 27, 2027 – Jan 2, 2028 ·/, "a week across the year says which"
-    assert_select "#schedule-agenda", text: /Nothing booked this week/
+    assert_select "#next-visit", text: /Nothing booked this week/ # PLT-21: one line on every screen
   end
 
   test "filter by member, or the visits nobody's on yet; colors by person or status" do
