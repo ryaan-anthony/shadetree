@@ -112,7 +112,7 @@ class AutomationTest < ActiveSupport::TestCase
       q.mark_sent!(by: @owner, channel: "link")
       q.reload.record_response!(:approve, by: @owner, signer_name: "Maria Lopez", message: "Phone")
     end
-    job = q.reload.job
+    job = q.reload.first_job
     assert job, "the automation created the job"
     assert_includes @maria.reload.tags, "approved"
     now { job.complete!(by: @owner) }

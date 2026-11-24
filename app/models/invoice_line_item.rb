@@ -9,6 +9,9 @@ class InvoiceLineItem < ApplicationRecord
 
   def document_currency = invoice.currency
 
+  # JOB-09: a line removed from a draft frees the quote work it billed directly (PAY-06 takes this over).
+  before_destroy { QuoteWork.release_direct!(JobClaim.where(invoice_line_item_id: id)) }
+
   before_validation { self.business ||= invoice&.business }
 
   validates :key, presence: true, length: { maximum: 64 }

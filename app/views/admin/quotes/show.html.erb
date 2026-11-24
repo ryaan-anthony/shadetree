@@ -5,7 +5,7 @@
 <%= page_header (quote.title || "Quote #{quote.number}"), lede: safe_join([ "#{quote.number} for ", link_to(quote.client.display_name, admin_client_path(quote.client), class: "font-medium text-ink hover:underline"), (" (#{quote.client.company_name})" if quote.client.company_name.present? && quote.client.company_name != quote.client.display_name), (", #{quote.property.one_line}" if quote.property), location_badge(quote) ].compact) do %>
   <%# PLT-14: the Primary is the next step: Create job, or Reopen job when its job was cancelled (interim
       until the multi-job spec; owner, 2026-11-22), then Create invoice; links to them are Secondary. %>
-  <% job = quote.job %>
+  <% job = quote.first_job %>
   <% live_job = job unless job&.status == "cancelled" %>
   <% if job %>
     <%= link_to admin_job_path(job), class: button_classes(:secondary) do %><%= icon "job" %> Job <%= job.number %><% end %>
@@ -16,7 +16,7 @@
     <%= button_to admin_quote_job_path(quote), class: button_classes(:primary), form: { class: "contents" } do %><%= icon "job" %> Create job<% end %>
   <% end %>
   <%# #289: once it's billed, the invoice is the next step, not a second one (that's in the menu). %>
-  <% billed = quote.approved? ? (quote.invoices.to_a + Array(quote.job&.invoices&.to_a)).uniq.reject(&:void?).sort_by(&:created_at) : [] %>
+  <% billed = quote.approved? ? (quote.invoices.to_a + Array(quote.first_job&.invoices&.to_a)).uniq.reject(&:void?).sort_by(&:created_at) : [] %>
   <% if billed.size > 1 %><%# progress billing: the Invoices card lists them all %>
     <%= link_to "#invoices", class: button_classes(:secondary), id: "quote-invoice-link" do %><%= icon "invoice" %> Invoices (<%= billed.size %>)<% end %>
   <% elsif (latest_invoice = billed.last) %>

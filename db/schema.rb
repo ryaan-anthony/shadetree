@@ -725,6 +725,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_100000) do
     t.check_constraint "status::text = ANY (ARRAY['draft'::character varying::text, 'sent'::character varying::text, 'partially_paid'::character varying::text, 'paid'::character varying::text, 'void'::character varying::text])", name: "invoices_status"
   end
 
+  create_table "job_claims", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "job_id"
+    t.bigint "quote_line_item_id", null: false
+    t.bigint "job_line_item_id"
+    t.bigint "invoice_line_item_id"
+    t.decimal "quantity", precision: 12, scale: 4, null: false
+    t.decimal "extra_quantity", precision: 12, scale: 4, default: "0.0", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id"], name: "index_job_claims_on_business_id"
+    t.index ["invoice_line_item_id"], name: "index_job_claims_on_invoice_line_item_id", unique: true, where: "(invoice_line_item_id IS NOT NULL)"
+    t.index ["job_id", "quote_line_item_id"], name: "index_job_claims_on_job_id_and_quote_line_item_id", unique: true, where: "(job_id IS NOT NULL)"
+    t.index ["job_line_item_id"], name: "index_job_claims_on_job_line_item_id", unique: true, where: "(job_line_item_id IS NOT NULL)"
+    t.index ["quote_line_item_id"], name: "index_job_claims_on_quote_line_item_id"
+    t.check_constraint "job_id IS NOT NULL OR invoice_line_item_id IS NOT NULL", name: "job_claims_job_or_invoice"
+    t.check_constraint "quantity >= 0::numeric", name: "job_claims_quantity_nonnegative"
+  end
+
   create_table "job_line_items", force: :cascade do |t|
     t.bigint "business_id", null: false
     t.bigint "job_id", null: false
@@ -741,6 +760,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_100000) do
     t.bigint "discount_amount_cents"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "price_pending", default: false, null: false
+    t.decimal "booked_quantity", precision: 12, scale: 4
     t.index ["catalog_item_id"], name: "index_job_line_items_on_catalog_item_id"
     t.index ["job_id", "position"], name: "index_job_line_items_on_job_id_and_position"
     t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying::text, 'amount'::character varying::text]))", name: "job_lines_discount_kind"
@@ -779,6 +800,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_100000) do
     t.datetime "ready_to_invoice_notified_at"
     t.datetime "client_notice_due_at"
     t.bigint "location_id", null: false
+    t.string "picker_token"
     t.index ["business_id", "location_id"], name: "index_jobs_on_business_id_and_location_id"
     t.index ["business_id", "number"], name: "index_jobs_on_business_id_and_number", unique: true
     t.index ["business_id", "status", "created_at"], name: "index_jobs_on_business_id_and_status_and_created_at"
@@ -786,7 +808,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_100000) do
     t.index ["client_notice_due_at"], name: "index_jobs_on_client_notice_due_at", where: "(client_notice_due_at IS NOT NULL)"
     t.index ["created_by_id"], name: "index_jobs_on_created_by_id"
     t.index ["property_id"], name: "index_jobs_on_property_id"
-    t.index ["quote_id"], name: "index_jobs_on_quote_id", unique: true
+    t.index ["quote_id", "picker_token"], name: "index_jobs_on_quote_id_and_picker_token", unique: true, where: "(picker_token IS NOT NULL)"
+    t.index ["quote_id"], name: "index_jobs_on_quote_id"
     t.index ["uid"], name: "index_jobs_on_uid", unique: true
     t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying::text, 'amount'::character varying::text]))", name: "jobs_discount_kind"
     t.check_constraint "status::text = ANY (ARRAY['unscheduled'::character varying::text, 'scheduled'::character varying::text, 'in_progress'::character varying::text, 'completed'::character varying::text, 'cancelled'::character varying::text])", name: "jobs_status"
@@ -1056,11 +1079,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_100000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "catalog_price_cents"
+    t.decimal "claimed_quantity", precision: 12, scale: 4, default: "0.0", null: false
     t.index ["business_id"], name: "index_quote_line_items_on_business_id"
     t.index ["catalog_item_id"], name: "index_quote_line_items_on_catalog_item_id"
     t.index ["quote_id", "key"], name: "index_quote_line_items_on_quote_id_and_key", unique: true
     t.index ["quote_id", "position"], name: "index_quote_line_items_on_quote_id_and_position"
     t.index ["quote_id"], name: "index_quote_line_items_on_quote_id"
+    t.check_constraint "claimed_quantity >= 0::numeric AND claimed_quantity <= quantity", name: "quote_lines_claims_within_quantity"
     t.check_constraint "discount_kind IS NULL OR (discount_kind::text = ANY (ARRAY['percent'::character varying::text, 'amount'::character varying::text]))", name: "quote_lines_discount_kind"
     t.check_constraint "quantity >= 0::numeric", name: "quote_lines_quantity_nonnegative"
   end
@@ -1513,6 +1538,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_100000) do
     t.check_constraint "timing::text = ANY (ARRAY['exact'::character varying::text, 'window'::character varying::text, 'anytime'::character varying::text])", name: "visits_timing"
   end
 
+  create_table "work_entries", force: :cascade do |t|
+    t.bigint "business_id", null: false
+    t.bigint "job_id", null: false
+    t.bigint "job_line_item_id"
+    t.string "item_name", null: false
+    t.bigint "visit_id"
+    t.bigint "user_id", null: false
+    t.bigint "recorded_by_id"
+    t.decimal "quantity", precision: 12, scale: 4, null: false
+    t.string "source", default: "logged", null: false
+    t.datetime "created_at", null: false
+    t.index ["business_id", "job_id"], name: "index_work_entries_on_business_id_and_job_id"
+    t.index ["job_line_item_id"], name: "index_work_entries_on_job_line_item_id"
+    t.index ["recorded_by_id"], name: "index_work_entries_on_recorded_by_id"
+    t.index ["user_id"], name: "index_work_entries_on_user_id"
+    t.index ["visit_id"], name: "index_work_entries_on_visit_id"
+    t.check_constraint "source::text = ANY (ARRAY['logged'::character varying, 'time'::character varying]::text[])", name: "work_entries_source"
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "automation_deliveries", "businesses", on_delete: :cascade
@@ -1587,6 +1631,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_100000) do
   add_foreign_key "invoices", "users", column: "created_by_id"
   add_foreign_key "invoices", "users", column: "sent_by_id"
   add_foreign_key "invoices", "users", column: "voided_by_id"
+  add_foreign_key "job_claims", "businesses"
+  add_foreign_key "job_claims", "invoice_line_items"
+  add_foreign_key "job_claims", "job_line_items", on_delete: :nullify
+  add_foreign_key "job_claims", "jobs", on_delete: :cascade
+  add_foreign_key "job_claims", "quote_line_items", on_delete: :cascade
   add_foreign_key "job_line_items", "businesses"
   add_foreign_key "job_line_items", "catalog_items", on_delete: :nullify
   add_foreign_key "job_line_items", "jobs", on_delete: :cascade
@@ -1702,4 +1751,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_100000) do
   add_foreign_key "visits", "jobs", on_delete: :cascade
   add_foreign_key "visits", "users", column: "created_by_id", on_delete: :nullify
   add_foreign_key "visits", "users", column: "on_the_way_by_id", on_delete: :nullify
+  add_foreign_key "work_entries", "businesses"
+  add_foreign_key "work_entries", "job_line_items", on_delete: :nullify
+  add_foreign_key "work_entries", "jobs", on_delete: :cascade
+  add_foreign_key "work_entries", "users"
+  add_foreign_key "work_entries", "users", column: "recorded_by_id"
+  add_foreign_key "work_entries", "visits", on_delete: :nullify
 end

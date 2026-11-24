@@ -32,7 +32,10 @@ class Quote < ApplicationRecord
   has_one :approval, -> { where(kind: "approved") }, class_name: "QuoteResponse", inverse_of: :quote
   has_many :events, -> { order(:occurred_at, :id) }, class_name: "QuoteEvent", inverse_of: :quote, dependent: :delete_all
   has_many :revisions, -> { order(:number) }, class_name: "QuoteRevision", inverse_of: :quote, dependent: :delete_all
-  has_one :job, dependent: :nullify # JOB-01: the work it became
+  # JOB-09: the work it became, in one or more jobs, each taking whole lines or part of a line's
+  # quantity. Before JOB-09's flag a quote has one job: first_job (PAY-06 replaces its billing uses).
+  has_many :jobs, -> { order(:id) }, inverse_of: :quote, dependent: :nullify
+  has_one :first_job, -> { order(:id) }, class_name: "Job", inverse_of: false
   has_many :invoices, dependent: :restrict_with_exception # PAY-01: what it was billed as
   has_many :line_items, -> { order(:position, :id) }, class_name: "QuoteLineItem", inverse_of: :quote,
            dependent: :delete_all, autosave: true
@@ -389,7 +392,7 @@ class Quote < ApplicationRecord
 
     ActiveRecord.after_all_transactions_commit do
       Tenancy.with_business(business) { Job.from_quote!(self, by:) }
-    rescue ActiveRecord::RecordInvalid, Job::NotOpen => e
+    rescue ActiveRecord::RecordInvalid, Job::NotOpen, QuoteWork::Refused => e
       Rails.logger.info("No automatic job for quote #{id}: #{e.message}")
     rescue StandardError => e
       Rails.error.report(e, context: { quote_id: id })

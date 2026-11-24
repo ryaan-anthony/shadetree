@@ -55,7 +55,7 @@ class Admin::JobsTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?] button", admin_quote_job_path(quote), /Create job/
 
     post admin_quote_job_path(quote)
-    job = as_business(@business) { quote.reload.job }
+    job = as_business(@business) { quote.reload.first_job }
     assert_redirected_to admin_job_path(job)
     post admin_quote_job_path(quote)
     assert_redirected_to admin_job_path(job)
