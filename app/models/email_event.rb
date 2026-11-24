@@ -135,17 +135,14 @@ class EmailEvent < ApplicationRecord
     block = { "mailbox" => "hard_bounce", "complaint" => "complaint" }[reason]
     EmailSuppression.suppress!(address, reason: block, email_message: message) if block
     message.update!(cc_problems: message.cc_problems + [ { "position" => cc_position, "reason" => reason, "code" => codes.presence, "at" => occurred_at.iso8601 } ])
+    ClientEvent.record!(message.client, :email_complained, subject: message, at: occurred_at) if reason == "complaint" && message.client
   end
 
-  # The warning and the team's notification are for a quote or invoice email while the client
-  # still hasn't answered or paid, and the invoice isn't void; otherwise it's only the send
-  # history and the timeline.
+  # The warning and the team's notification are for a quote or invoice email while it still waits
+  # on the client (awaiting_client?, as the page's warning: not answered, expired, paid or void);
+  # otherwise it's only the send history and the timeline.
   def warn?
     document = email_message.related
-    case email_message.kind
-    when "quote_sent" then document.is_a?(Quote) && !document.status.in?(%w[approved declined changes_requested])
-    when "invoice_sent" then document.is_a?(Invoice) && !document.status.in?(%w[paid void]) # void as paid (owner, 2026-11-24)
-    else false
-    end
+    email_message.kind.in?(%w[quote_sent invoice_sent]) && document.respond_to?(:awaiting_client?) && document.awaiting_client?
   end
 end

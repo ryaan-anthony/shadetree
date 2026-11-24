@@ -53,10 +53,12 @@ class EmailEventTest < ActiveSupport::TestCase
     assert_empty blocked
   end
 
-  test "once the client approved, declined or asked for changes: only the timeline, no notification or warning" do
-    %w[approved declined changes_requested].each do |status|
+  test "once the client approved, declined or asked for changes, or the quote expired: only the timeline" do
+    %w[approved declined changes_requested expired].each do |status|
       email = sent_email(@business)
-      as_business(@business) { email.related.update_column(:status, status) }
+      as_business(@business) do
+        status == "expired" ? email.related.update_column(:expires_on, 2.days.ago.to_date) : email.related.update_column(:status, status)
+      end
       assert_no_difference(-> { notifications }) do
         assert_difference(-> { timeline("email_bounced") }) { report(email) }
       end
@@ -93,6 +95,13 @@ class EmailEventTest < ActiveSupport::TestCase
 
     report(recipient: "ana@example.com", key: "again")
     assert_equal 2, fresh.cc_problems.size, "each CC once"
+  end
+
+  test "a CC's complaint blocks only that CC and goes on the timeline; the email stays delivered" do
+    report(type: "complaint", status: nil, reply_code: nil, recipient: "office@example.com")
+    assert_equal [ "sent", [ "complaint" ] ], [ fresh.status, fresh.cc_problems.map { _1["reason"] } ]
+    assert_equal [ [ "office@example.com", "complaint" ] ], blocked
+    assert_equal [ 0, 1 ], [ notifications, timeline("email_complained") ]
   end
 
   test "a complaint blocks the address, marks the email Marked as spam, goes on the timeline, and tells no one" do
