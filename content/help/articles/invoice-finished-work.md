@@ -29,7 +29,7 @@ what you're paid.
    go, just like a quote.
 3. Press **Preview as client** to see it as your client will.
 
-![A draft invoice: its lines, totals and tax, with Preview as client and Send invoice at the top](invoice-draft)
+![A draft invoice: check the lines and tax, press Preview as client, then Send invoice](invoice-draft)
 
 ## Take tax off one invoice
 
@@ -50,7 +50,7 @@ the invoice when it arrives.
 
 When you're paid by cash, check or bank transfer:
 
-![A sent invoice with its Status, Issued, Due and Balance, and Record payment at the top](invoice-sent)
+![A sent invoice: press Record payment when you're paid by cash, check or transfer](invoice-sent)
 
 1. Open the invoice and press **Record payment**.
 2. Enter the **Amount** and the **Date received**.
@@ -59,7 +59,7 @@ When you're paid by cash, check or bank transfer:
 5. Leave **Email a receipt** ticked to send your client what was received and what's left to pay.
 6. Press **Record payment**.
 
-![Record a payment: amount, date received, method, reference, and Email a receipt](record-a-payment)
+![Record a payment: enter the amount, date received and method, keep Email a receipt ticked, then press Record payment](record-a-payment)
 
 The invoice's **Balance** goes down. When it reaches zero, the invoice is **Paid**.
 

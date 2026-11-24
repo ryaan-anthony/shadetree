@@ -22,7 +22,7 @@ from a request they followed up, and the office checks it before it goes to the 
    **Quotes**. The draft says who marked it ready, and when.
 4. Someone in the office checks it, changes anything that needs it, and presses **Send quote**.
 
-![A technician's draft, ready for review: who marked it ready, and Send quote for the office](quote-ready-for-review)
+![A technician's draft, ready for review: check it, change anything needed, then press Send quote](quote-ready-for-review)
 
 Technicians see only the quotes they drafted, under **Your quotes** on **My day**, until each one is
 sent.

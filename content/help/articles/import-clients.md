@@ -12,7 +12,7 @@ screenshots:
 Moving from a spreadsheet or another tool? Import your clients in one go. You see a preview
 before anything is added, and you can undo the whole import afterwards.
 
-![Import clients: upload a CSV file, with how it works beside it](import-clients)
+![Import clients: choose your CSV file, then press Upload and preview](import-clients)
 
 ## Get your file ready
 

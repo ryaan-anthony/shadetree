@@ -649,3 +649,8 @@ Tenancy.with_business(business) do
     end
   end
 end
+
+# OPS-06: searches the help articles didn't answer, as operators see them at /ops/help.
+unless HelpSearchMiss.exists?
+  [ "snow plowing contract", "refund a deposit", "refund a deposit", "mileage" ].each { HelpSearchMiss.record(_1) }
+end

@@ -15,7 +15,7 @@ screenshots:
 **Schedule** shows every visit for the week or the day, colored by who's going. Your crew sees
 the visits they're on in **My day** on their phone.
 
-![The week's schedule: visits on the calendar by day and time, and the Crew list with each person's booked hours](schedule-week)
+![The week's schedule: press New visit to book one, or choose a person under Crew to see only their visits](schedule-week)
 
 ## Find your way around
 
@@ -40,7 +40,7 @@ the visits they're on in **My day** on their phone.
 7. Add **Instructions for this visit** for your crew, and a **Note for the client** if you like.
 8. Press **Schedule visit**.
 
-![Schedule a visit: the date, arrival, estimated hours, who's going and the notes](schedule-a-visit)
+![Schedule a visit: pick the date and arrival, tick who's going, add instructions, then press Schedule](schedule-a-visit)
 
 ## Tell the client, or not
 

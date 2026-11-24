@@ -22,7 +22,7 @@ until then, so take your time.
 
 ## Add what you're doing
 
-![The quote builder: the client and property, Valid until, the items with Qty, Unit and Price, and the Totals beside them](quote-builder)
+![The quote builder: choose the client, add items with Add a service, check the totals, then press Send quote](quote-builder)
 
 1. Give it a **Title** if you like, such as "Spring cleanup". It's shown at the top of the quote.
 2. Check **Valid until**. After that date your client can't approve it without asking you. The

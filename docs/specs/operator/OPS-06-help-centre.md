@@ -54,8 +54,8 @@ deploy; checks keep them complete and in step with the screens.
       PR that changes a screen recaptures it and re-reads the article (updating last reviewed).
 - [x] AGENTS.md says "write or update the help article with each feature"; the PR template's
       checklist gains "Does this change a screen an article describes?".
-- [ ] Articles work at 360 px and with screen readers; alt text says what to do; axe passes.
-- [ ] Tests cover rendering safety, both copies, search, suggestions, "Learn more", votes and
+- [x] Articles work at 360 px and with screen readers; alt text says what to do; axe passes.
+- [x] Tests cover rendering safety, both copies, search, suggestions, "Learn more", votes and
       counts with limits, the CI checks and mobile.
 
 ## Writing guide
@@ -89,11 +89,11 @@ deploy; checks keep them complete and in step with the screens.
   checked against the allow list; front-matter image paths validated when articles load.
 - Loading: at boot, an idempotent upsert of the files into a table (removed files deleted),
   searched with PostgreSQL full-text search, title weighted above text. No search service.
-- Screen digest, without Chrome: the rendered HTML of the captured region (Nokogiri), with
-  volatile parts removed (uids, CSRF tokens, nonces, asset digests, times and dates).
+- Screen digest, without Chrome: the region's HTML (Nokogiri) minus volatile parts (uids, ids, tokens,
+  nonces, asset digests, times, dates); `bin/help-screenshots` (demo seeds, own database, fixed clock).
 - As built: articles in `content/help/articles/<slug>.md`, images in `app/assets/images/help`;
   `HelpCentre` loads and checks them, `HelpCentre::Markdown` renders, `HelpArticle.sync!` stores.
-- No-result searches typed into the app's list aren't counted (a pause mid-word would count).
+- No-result searches typed into the app's list aren't counted (dev seeds add some for /ops/help).
 
 ## Open questions
 
