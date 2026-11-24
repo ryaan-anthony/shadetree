@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_25_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_25_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -564,9 +564,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_000000) do
     t.virtual "searchable", type: :tsvector, as: "((setweight(to_tsvector('english'::regconfig, (COALESCE(title, ''::character varying))::text), 'A'::\"char\") || setweight(to_tsvector('english'::regconfig, (COALESCE(summary, ''::character varying))::text), 'B'::\"char\")) || setweight(to_tsvector('english'::regconfig, COALESCE(body, ''::text)), 'C'::\"char\"))", stored: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "helpful_count", default: 0, null: false
+    t.integer "unhelpful_count", default: 0, null: false
     t.index ["category"], name: "index_help_articles_on_category"
     t.index ["searchable"], name: "index_help_articles_on_searchable", using: :gin
     t.index ["slug"], name: "index_help_articles_on_slug", unique: true
+  end
+
+  create_table "help_search_misses", force: :cascade do |t|
+    t.string "words", limit: 100, null: false
+    t.date "searched_on", null: false
+    t.integer "count", default: 1, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["searched_on"], name: "index_help_search_misses_on_searched_on"
+    t.index ["words", "searched_on"], name: "index_help_search_misses_on_words_and_searched_on", unique: true
   end
 
   create_table "industry_presets", force: :cascade do |t|

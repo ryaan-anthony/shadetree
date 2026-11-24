@@ -5,7 +5,7 @@ class HelpController < ApplicationController
   include HelpPages
   public_page!
   layout "marketing"
-  before_action :send_members_to_the_app
+  before_action :send_members_to_the_app, except: :vote
 
   def index
     search_articles

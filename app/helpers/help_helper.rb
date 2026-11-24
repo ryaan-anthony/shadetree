@@ -3,7 +3,8 @@
 module HelpHelper
   def help_in_app? = controller_path.start_with?("admin/")
 
-  def help_path_for(slug) = help_in_app? ? admin_help_article_path(slug) : help_article_path(slug)
+  def help_path_for(slug, **params) = help_in_app? ? admin_help_article_path(slug, **params) : help_article_path(slug, **params)
+  def help_vote_path_for(slug) = help_in_app? ? vote_admin_help_article_path(slug) : help_article_vote_path(slug)
   def help_home_path = help_in_app? ? admin_help_articles_path : help_path
 
   # Rendered once per article file, copy and set of articles, in this process (asset addresses
@@ -11,7 +12,7 @@ module HelpHelper
   HTML = Concurrent::Map.new
 
   def help_article_html(article)
-    render = -> { HelpCentre::Markdown.new(article, help_library, article_path: method(:help_path_for), image_path: ->(file) { image_path("help/#{file}") }).to_html }
+    render = -> { HelpCentre::Markdown.new(article, help_library, article_path: ->(slug) { help_path_for(slug) }, image_path: ->(file) { image_path("help/#{file}") }).to_html }
     return render.call if Rails.env.development? # pictures captured while it runs show at once
 
     HTML.compute_if_absent([ article.digest, help_in_app?, help_library.slugs.hash ], &render)

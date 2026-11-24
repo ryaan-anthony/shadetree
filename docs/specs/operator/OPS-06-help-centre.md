@@ -38,7 +38,7 @@ deploy; checks keep them complete and in step with the screens.
       `page` (the hidden field holding `from:`). Opening one keeps the draft; it can still be sent.
 - [ ] The Help menu gains "Help articles" and a labelled search box (`role="search"`). Pages
       show "Learn more" to their topic's article (send page, Settings, schedule, first-time tips).
-- [ ] "Was this helpful?" counts yes/no per article, nothing about who; after a no, members get
+- [x] "Was this helpful?" counts yes/no per article, nothing about who; after a no, members get
       "Ask Shadetree" and visitors "Contact us" (the marketing contact page). No-result searches
       are counted by words only: at most 100 characters, anything like an email or phone number
       dropped, kept 90 days, escaped in the operators' list. Votes and counts are rate limited.
@@ -93,6 +93,7 @@ deploy; checks keep them complete and in step with the screens.
   volatile parts removed (uids, CSRF tokens, nonces, asset digests, times and dates).
 - As built: articles in `content/help/articles/<slug>.md`, images in `app/assets/images/help`;
   `HelpCentre` loads and checks them, `HelpCentre::Markdown` renders, `HelpArticle.sync!` stores.
+- No-result searches typed into the app's list aren't counted (a pause mid-word would count).
 
 ## Open questions
 
