@@ -19,6 +19,7 @@
       <div><%= f.field :unit_price, as: :money, currency:, label: "Price each", required: false, disabled: removed, placeholder: "0.00",
                        value: (line.new_record? && line.unit_price_cents.to_i.zero? && line.errors.empty? ? nil : line.unit_price_before_type_cast), data: { line_field: "price" } %></div>
       <div class="sm:col-span-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+        <%= badge("Needs a price", tone: :warning) if line.price_pending %><%# JOB-09: added on site; a price typed here, or at completion, prices it %>
         <%= f.check :taxable, label: "Taxable", disabled: removed, data: { line_field: "taxable" } %>
         <% if line.discount_kind %><span class="text-sm2 text-muted">Keeps its <%= line.discount_kind == "percent" ? "#{line.discount_value}%" : money(line.discount_amount) %> discount from the quote.</span><% end %>
       </div>

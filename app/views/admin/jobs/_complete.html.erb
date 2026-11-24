@@ -19,6 +19,20 @@
           <% end %>
         </ul>
       <% end %>
+      <% unpriced = job.line_items.select(&:price_pending) %>
+      <% if unpriced.any? %><%# JOB-09 (owner, 2026-11-23): each is priced before completing; $0 is typed on purpose %>
+        <fieldset class="space-y-3 border-t border-line pt-4">
+          <legend class="text-sm font-semibold text-ink">Added on site: price each one</legend>
+          <% unpriced.each do |line| %>
+            <div class="flex items-center gap-3">
+              <label class="min-w-0 flex-1 text-sm text-ink" for="price_<%= line.id %>"><%= line.name %>
+                <span class="block text-sm2 text-muted">Price each, in <%= job.currency %>. Type 0 for no charge.</span></label>
+              <%= text_field_tag "prices[#{line.id}]", nil, inputmode: "decimal", required: true, pattern: "\\d+(\\.\\d{1,2})?", placeholder: "0.00",
+                                 class: "input w-28 text-right", id: "price_#{line.id}" %>
+            </div>
+          <% end %>
+        </fieldset>
+      <% end %>
       <div class="flex justify-end gap-2">
         <button type="button" class="<%= button_classes(:tertiary) %>" data-action="modal#close">Not yet</button>
         <%= submit_tag "Complete job", class: button_classes(:primary), name: nil %>

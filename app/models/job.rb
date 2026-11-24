@@ -229,12 +229,14 @@ class Job < ApplicationRecord
   # simply count as what the client knows.
   #
   # JOB-09: with the split_jobs flag, completing confirms what was done (`done`: { job line id =>
-  # quantity }, else each line's logged total, else what it booked); it's final.
-  def complete!(by:, notify_client: false, done: nil)
+  # quantity }, else each line's logged total, else what it booked); it's final. Lines added on
+  # site without a price get one first (`prices`: { job line id => amount }; $0 typed on purpose).
+  def complete!(by:, notify_client: false, done: nil, prices: nil)
     under_quote_lock do
       raise NotOpen, "#{number} is already #{status_label.downcase}." unless open?
 
       if QuoteWork.split?(business)
+        price_site_lines!(prices.to_h.transform_keys(&:to_i))
         QuoteWork.confirm!(self, done_so_far.merge(done.to_h.transform_keys(&:to_i)), quote_lines)
         line_items.reset
       end
@@ -352,6 +354,69 @@ class Job < ApplicationRecord
     kept, removed = rows.partition { !ActiveModel::Type::Boolean.new.cast(_1["_destroy"]) }
     kept = kept.first(MAX_LINES + 1) # one over, so the limit is reported rather than silently applied
     super(kept.each_with_index.map { |row, index| row.merge("position" => index) } + removed)
+  end
+
+  # JOB-09: someone's work from a visit (My day), or the office correcting it: `totals` is what
+  # `user` did on each line on that visit ({ job line id => quantity }). Each change is a new
+  # entry for the difference, so the log keeps its history and two people logging at once never
+  # overwrite each other. Takes the job's lock and needs the job open: done means done.
+  def log_work!(user:, by:, totals:, visit: nil)
+    with_lock do
+      raise NotOpen, "#{number} is #{status_label.downcase}, so its work can't change." unless open?
+
+      lines = line_items.index_by(&:id)
+      # Typed entries only: JOB-11's tracked time is its own (source "time").
+      had = WorkEntry.where(job_id: id, user_id: user.id, visit_id: visit&.id, source: "logged").group(:job_line_item_id).sum(:quantity)
+      totals.to_h.transform_keys(&:to_i).filter_map do |line_id, total|
+        next unless (line = lines[line_id])
+
+        total = total.to_d
+        raise QuoteWork::Refused, "#{line.name}: what was done can't be less than zero." if total.negative?
+
+        change = total - had.fetch(line_id, 0).to_d
+        WorkEntry.create!(job: self, job_line_item: line, visit:, user:, recorded_by: by, quantity: change) unless change.zero?
+      end
+    end
+  end
+
+  # JOB-09: something done on site that the job didn't have: a catalog service at its price at the
+  # job's location, or a custom line with no price, which the office prices before invoicing. It's
+  # the job's own (no quote line), logged as `user`'s work.
+  def add_site_line!(user:, by:, quantity:, visit: nil, catalog_item: nil, name: nil)
+    quantity = quantity.to_s.strip.presence&.to_d
+    raise QuoteWork::Refused, "Say how many were done." unless quantity&.positive?
+    raise QuoteWork::Refused, "Choose a service or type what was done." unless catalog_item || name.to_s.strip.present?
+
+    with_lock do
+      raise NotOpen, "#{number} is #{status_label.downcase}, so its work can't change." unless open?
+
+      attributes = { position: line_items.maximum(:position).to_i + 1, quantity: }
+      attributes.merge!(catalog_item ? catalog_item.line_attributes.except("catalog_item_uid").merge("catalog_item_id" => catalog_item.id, "unit_price_cents" => catalog_item.price_at(location)&.cents || 0)
+                                     : { name: name.to_s.squish.first(200), unit_price_cents: 0, price_pending: true })
+      line = line_items.create!(attributes)
+      WorkEntry.create!(job: self, job_line_item: line, visit:, user:, recorded_by: by, quantity:)
+      line_items.reset
+      save!
+      line
+    end
+  end
+
+  # Each unpriced line added on site needs a price typed for it (owner, 2026-11-23).
+  def price_site_lines!(prices)
+    unpriced = line_items.select(&:price_pending)
+    missing = unpriced.reject { prices[_1.id].to_s.strip.match?(/\A\d+(\.\d{1,2})?\z/) }
+    raise QuoteWork::Refused, "Price #{missing.map(&:name).to_sentence} before completing (type 0 for no charge)." if missing.any?
+
+    unpriced.each { _1.update!(unit_price: prices[_1.id].to_s.strip, price_pending: false) }
+    line_items.reset
+  end
+
+  # Who did what on each line: { job line id => [[user, quantity], ...] }, people with nothing
+  # left after corrections dropped ("Marcus 4, Riley 2").
+  def work_by_person
+    sums = WorkEntry.where(job_id: id).where.not(job_line_item_id: nil).group(:job_line_item_id, :user_id).sum(:quantity)
+    users = User.where(id: sums.keys.map(&:last).uniq).index_by(&:id)
+    sums.reject { _2.zero? }.each_with_object(Hash.new { |hash, key| hash[key] = [] }) { |((line_id, user_id), quantity), by_line| by_line[line_id] << [ users[user_id], quantity ] }
   end
 
   # JOB-09: what's been logged on each line, else what it booked: where completion starts.

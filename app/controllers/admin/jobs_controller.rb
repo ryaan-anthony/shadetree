@@ -65,7 +65,7 @@ class Admin::JobsController < Admin::BaseController
   end
 
   def complete
-    @job.complete!(by: current_user, done: done_param)
+    @job.complete!(by: current_user, done: done_param, prices: prices_param)
     redirect_to admin_job_path(@job), notice: "Job #{@job.number} completed."
   rescue Job::NotOpen, QuoteWork::Refused => error
     redirect_to admin_job_path(@job), alert: error.message
@@ -93,6 +93,14 @@ class Admin::JobsController < Admin::BaseController
     return unless rows.respond_to?(:key?) && QuoteWork.split?(current_business)
 
     @job.line_items.each_with_object({}) { |line, done| (value = rows[line.id.to_s].to_s.strip).match?(/\A-?\d*\.?\d+\z/) && done[line.id] = value }
+  end
+
+  # JOB-09: prices typed at completion for lines added on site ({ job line id => amount }).
+  def prices_param
+    rows = params[:prices]
+    return unless rows.respond_to?(:key?)
+
+    @job.line_items.select(&:price_pending).to_h { [ _1.id, rows[_1.id.to_s].to_s ] }
   end
 
   def set_job = @job = Job.includes(:client, :property, :quote, line_items: :catalog_item).find_by_param!(params[:id])

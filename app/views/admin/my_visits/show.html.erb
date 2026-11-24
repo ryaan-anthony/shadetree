@@ -57,21 +57,25 @@
     <% end %>
   <% end %>
 
-  <% lines = job.line_items.to_a %>
-  <% if lines.any? %>
-    <%= card title: "The work", subtitle: job.title, flush: true do %>
-      <% prices = current_business.technicians_see_prices || can?(:office) %>
-      <ul class="list" id="visit-work">
-        <% lines.each do |line| %>
-          <li class="items-start">
-            <div class="min-w-0 flex-1">
-              <p class="font-medium text-ink"><%= line.name %></p>
-              <% if line.description %><p class="whitespace-pre-line text-sm2 text-muted"><%= line.description %></p><% end %>
-              <p class="text-sm2 text-muted"><%= prices ? line_quantity(line) : line.quantity_label %></p><%# PLT-18: under the name, as on invoices %>
-            </div>
-          </li>
-        <% end %>
-      </ul>
+  <% if QuoteWork.split?(current_business) && job.open? %>
+    <%= render "admin/my_visits/work", visit:, job: %>
+  <% else %>
+    <% lines = job.line_items.to_a %>
+    <% if lines.any? %>
+      <%= card title: "The work", subtitle: job.title, flush: true do %>
+        <% prices = current_business.technicians_see_prices || can?(:office) %>
+        <ul class="list" id="visit-work">
+          <% lines.each do |line| %>
+            <li class="items-start">
+              <div class="min-w-0 flex-1">
+                <p class="font-medium text-ink"><%= line.name %></p>
+                <% if line.description %><p class="whitespace-pre-line text-sm2 text-muted"><%= line.description %></p><% end %>
+                <p class="text-sm2 text-muted"><%= prices ? line_quantity(line) : line.quantity_label %></p><%# PLT-18: under the name, as on invoices %>
+              </div>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
     <% end %>
   <% end %>
 
