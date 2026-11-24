@@ -15,7 +15,8 @@ class StyleguideController < ApplicationController
   def show
     @valid = SampleRecord.new(name: "Maria Lopez", email: "maria@example.com", timezone: "America/New_York", price: "1250.00", reminders: true)
     @invalid = SampleRecord.new(name: "", email: "maria@").tap(&:validate)
-    flash.now[:notice] = "Quote sent to Maria Lopez." if params[:toast]
+    flash.now[:notice] = "Quote sent to Maria Lopez." if params[:toast] == "1"
+    flash.now[:alert] = "Couldn't send the quote. Try again in a minute." if params[:toast] == "error"
   end
 
   def client

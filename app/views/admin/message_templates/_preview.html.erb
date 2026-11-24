@@ -2,7 +2,8 @@
 <%# NTF-03: the message as a client would get it, with sample details (and this business's name) or a real record's. %>
 <% subject, body = template.preview(current_business, values:) %>
 <% if template.errors[:base].any? %>
-  <div class="banner banner-warning mb-3" role="alert"><%= icon "alert-circle" %><p><%= template.errors[:base].join(" ") %></p></div>
+  <%# PLT-21: refreshed as you type, so a half-typed placeholder is a polite heads-up; saving shows the error. %>
+  <div class="banner banner-warning mb-3" data-controller="announce"><%= icon "alert-circle" %><p><%= template.errors[:base].join(" ") %></p></div>
 <% end %>
 <div class="rounded-card border border-line bg-surface">
   <div class="border-b border-line px-4 py-3 text-sm">

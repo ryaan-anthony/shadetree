@@ -23,7 +23,7 @@
   <% end %>
 
   <% unless @editable %>
-    <div class="banner banner-info" role="status"><%= icon "info" %>
+    <div class="banner banner-info"><%= icon "info" %>
       <p><span class="font-semibold">View only on <%= current_business.plan.name %>.</span> You can read every email below; changing them comes with <%= comes_with(:message_templates) %>. <%= link_to "See plans", admin_plan_path, class: "font-semibold underline" %><%= ". Messages you've already customized keep sending as they are." if @templates.any? %></p>
     </div>
   <% end %>

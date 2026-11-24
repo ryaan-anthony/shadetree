@@ -25,23 +25,23 @@ Triage: [#314 triage](../../audits/314-triage.md).
 
 ## Acceptance criteria
 
-- [ ] **Empty states** use the kit's pattern wherever a page or a card's main content is empty:
+- [x] **Empty states** use the kit's pattern wherever a page or a card's main content is empty:
       icon tile, title, one sentence, and at most one action (PLT-14). That covers
       Automations and their activity, Home's "Nothing booked today", My day's Today, the data
       log and message templates.
-- [ ] A one-line muted note stays only for a sub-list inside a card that has other content (a
+- [x] A one-line muted note stays only for a sub-list inside a card that has other content (a
       request's "Quotes: none yet").
-- [ ] Schedule says "Nothing booked this week" (or "this day") on every empty period, also when
+- [x] Schedule says "Nothing booked this week" (or "this day") on every empty period, also when
       no later visit is booked. Today that line only shows with a next visit (#299).
-- [ ] **Notifications:** unread items have a bold title and a dot, and read items are muted.
+- [x] **Notifications:** unread items have a bold title and a dot, and read items are muted.
       The "Unread" label (#280) stays, for assistive technology.
-- [ ] **Toast:** for the result of an action. Bottom centre, with an icon, the message and
+- [x] **Toast:** for the result of an action. Bottom centre, with an icon, the message and
       Dismiss. Success toasts fade after a few seconds, and errors stay until dismissed.
-- [ ] **Banner:** for a standing condition on a page. One icon, at most one link, and its tone
+- [x] **Banner:** for a standing condition on a page. One icon, at most one link, and its tone
       from PLT-17. The style guide shows when each applies.
-- [ ] The guided tour's targets keep working. On My day the Today card keeps its target when
+- [x] The guided tour's targets keep working. On My day the Today card keeps its target when
       empty, and on Home the setup checklist keeps its. The tour's tests pass unchanged.
-- [ ] An integration test over the shared page list (PLT-14), with empty fixtures where needed,
+- [x] An integration test over the shared page list (PLT-14), with empty fixtures where needed,
       fails when an empty page or card shows a bare note instead of the kit pattern.
 - [ ] Desktop (1280) and phone (390) screenshots of Automations, Home and My day (empty), an
       empty Schedule week and Notifications.
@@ -52,3 +52,30 @@ Triage: [#314 triage](../../audits/314-triage.md).
 - New icons or colours.
 - Client-facing pages.
 
+## Implementation notes
+
+- Kit: `empty_state` (level 3 in a titled card). As on Taxes, Automations and Messages show their
+  add button in the empty state, then in the card header once there's one. `.unread-dot`;
+  `dismiss_controller.js` fades a success toast. Style guide `#feedback-rules`.
+- Checks in `design_system_test.rb`: `empty_states_use_the_kit`, `empty_state_shape` and
+  `banners_follow_the_pattern` (its `DECISION_BANNERS`, with sweep states for each).
+  `StaffPages.empty` adds Home, My day, Schedule (week and day), Notifications, Automations,
+  Messages and Your data. `feedback_patterns_test.rb` scans staff views for banner roles.
+- Implementation decisions: "Unread" is screen-reader text beside the dot (as in the requests
+  mockup), and a detail page's cards (a request's Quotes, a job's Visits) and the schedule's
+  side cards keep one-line notes under the sub-list rule.
+- Seeds: unread and read notifications for the demo owner; Rivera Pest Control
+  (new@example.com) shows the empty states.
+
+## Decisions
+
+- Success toasts stay 10 seconds and wait while hovered, focused or the tab is hidden. Errors
+  and Undo toasts stay until dismissed (owner, 2026-11-23).
+- Live regions: a form's errors and an action that didn't happen (a stale save, an archived
+  client picked) are danger banners with `role="alert"`. Warnings that come back from an
+  action (booking clashes) use the polite region. Other banners are page content (owner,
+  2026-11-23).
+- Decision banners (location reprice, the $0.00 send, client matches) may carry more than one
+  action. The Services and Invoices empty states keep their two (owner, 2026-11-23).
+- The quote limit notice follows the owner's map (PLT-17): Nearly used warning, Limit reached
+  danger.

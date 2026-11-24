@@ -3,7 +3,7 @@
 <% if business.billing_status == "past_due" %>
   <% lapsed = business.plan.default %>
   <%# PLT-17: a failed payment is danger, as everywhere. %>
-  <div class="banner banner-danger mb-5 flex-wrap items-center" role="status" id="billing-banner">
+  <div class="banner banner-danger mb-5 flex-wrap items-center" id="billing-banner">
     <%= icon "alert-triangle" %>
     <p class="min-w-0 flex-1">
       <% if lapsed %>
@@ -15,7 +15,7 @@
     <%= link_to "Update payment", admin_plan_path(anchor: "billing"), class: "#{button_classes(:secondary, :sm)} shrink-0" %>
   </div>
 <% elsif business.billing_status == "trialing" && business.trial_ends_at && business.trial_ends_at <= 3.days.from_now %>
-  <div class="banner banner-info mb-5 flex-wrap items-center" role="status" id="billing-banner">
+  <div class="banner banner-info mb-5 flex-wrap items-center" id="billing-banner">
     <%= icon "clock" %>
     <p class="min-w-0 flex-1">Your <%= business.trial_plan&.name %> trial ends on <%= local_date(business.trial_ends_at) %>. Choose a plan to keep it.</p>
     <%= link_to "See plans", admin_plan_path, class: "#{button_classes(:secondary, :sm)} shrink-0" %>

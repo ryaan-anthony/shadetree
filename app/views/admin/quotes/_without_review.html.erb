@@ -9,7 +9,7 @@
     <% entitlements = current_business.entitlements %>
     <%= render "admin/usage/limit_notice", entitlements: %>
     <% unless current_user.can_send_to_clients? %>
-      <div class="banner banner-warning mb-4" role="status" id="confirm-to-send"><%= icon "alert-triangle" %>
+      <div class="banner banner-warning mb-4" id="confirm-to-send"><%= icon "alert-triangle" %>
         <p class="flex-1">Confirm your email address before sending anything to clients. Check your inbox for the link.</p>
       </div>
     <% end %>

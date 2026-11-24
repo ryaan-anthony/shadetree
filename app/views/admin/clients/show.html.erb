@@ -26,10 +26,10 @@
 <% end %>
 
 <% if @client.erased? %>
-  <div class="banner banner-info mb-4" role="status" id="erased-banner"><%= icon "user-x" %>
+  <div class="banner banner-info mb-4" id="erased-banner"><%= icon "user-x" %>
     <p>Their details were erased on <%= local_date(@client.erased_at.to_date) %>, at their request. Documents and payments are kept.</p></div>
 <% elsif @client.archived? %>
-  <div class="banner banner-warning mb-4" role="status"><%= icon "archive" %>
+  <div class="banner banner-warning mb-4"><%= icon "archive" %>
     <p>Archived on <%= local_date(@client.archived_at.to_date) %>. Hidden from pickers; history is kept.</p>
   </div>
 <% end %>

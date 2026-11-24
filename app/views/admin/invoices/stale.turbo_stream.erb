@@ -1,5 +1,5 @@
 <%= turbo_stream.update "builder_banner" do %>
-  <div class="banner banner-warning mb-4" role="alert"><%= icon "alert-triangle" %>
+  <div class="banner banner-danger mb-4" role="alert"><%= icon "alert-triangle" %>
     <p class="flex-1">This invoice was changed in another tab or by someone else, so this tab's changes weren't saved.</p>
     <%= link_to "Load the latest", edit_admin_invoice_path(@invoice), class: button_classes(:secondary, :sm), data: { turbo_frame: "_top" } %>
   </div>

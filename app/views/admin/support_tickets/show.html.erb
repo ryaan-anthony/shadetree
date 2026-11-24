@@ -3,13 +3,13 @@
 <%= page_header @ticket.subject, lede: safe_join([ render("status", ticket: @ticket), " #{@ticket.category_label} · #{@ticket.reference} · opened ", local_time(@ticket.created_at) ]) do %>
   <%= link_to admin_support_tickets_path, class: button_classes(:tertiary) do %><%= icon "arrow-left" %> Help<% end %>
 <% end %>
-<% if @ticket.status == "waiting" %><div class="banner banner-info mt-3" role="status"><p>We've replied and are waiting to hear from you.</p></div><% end %>
+<% if @ticket.status == "waiting" %><div class="banner banner-info mt-3"><%= icon "clock" %><p>We've replied and are waiting to hear from you.</p></div><% end %>
 <%= card flush: true, class: "mt-4" do %>
   <ul class="list" id="messages"><%= render partial: "message", collection: @ticket.visible_messages, as: :message %></ul>
 <% end %>
 <%= card title: (@ticket.status == "resolved" ? "Reply to reopen" : "Reply"), class: "mt-4" do %>
   <%= form_with model: @reply, url: reply_admin_support_ticket_path(@ticket), multipart: true do |f| %>
-    <% if @reply.errors.any? %><div class="banner banner-warning mb-3" role="alert"><p><%= @reply.errors.full_messages.to_sentence %></p></div><% end %>
+    <% if @reply.errors.any? %><div class="banner banner-danger mb-3" role="alert"><%= icon "alert-circle" %><p><%= @reply.errors.full_messages.to_sentence %></p></div><% end %>
     <%= f.text_area :body, rows: 4, class: "textarea", required: true, maxlength: 20_000, "aria-label": "Your reply" %>
     <div class="field mt-2">
       <%= f.label :files, class: "label" do %>Screenshots <span class="font-normal text-muted">(optional, up to <%= SupportMessage::MAX_FILES %>)</span><% end %>

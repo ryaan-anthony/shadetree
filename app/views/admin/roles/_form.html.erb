@@ -1,7 +1,7 @@
 <%# locals: (role:, editable: true) -%>
 <%= form_with model: [ :admin, role ], class: "form-split" do |f| %>
   <%= card do %>
-    <% if role.errors[:base].any? %><div class="banner banner-warning mb-4" role="alert"><%= icon "alert-circle" %><p><%= role.errors[:base].to_sentence %></p></div><% end %>
+    <% if role.errors[:base].any? %><div class="banner banner-danger mb-4" role="alert"><%= icon "alert-circle" %><p><%= role.errors[:base].to_sentence %></p></div><% end %>
     <fieldset class="space-y-5" <%= "disabled" unless editable %>>
       <%= f.field :name, maxlength: 40, placeholder: "Dispatcher", help: "Shown on the team page and in invitations." %>
       <fieldset>
