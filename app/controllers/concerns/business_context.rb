@@ -17,7 +17,7 @@ module BusinessContext
     Current.user = current_user
     return use_impersonated_membership if impersonation # OPS-03: pinned, and the member's records untouched
 
-    memberships = current_user.business_users.active.includes(:business)
+    memberships = current_user.business_users.active.includes(:business, photo_attachment: :blob) # ACC-09: the menu's avatar
     # This session's choice, then the user's last choice on any device, then their newest
     # membership. Every candidate must be an active membership.
     membership = [ session[:current_business_id], current_user.last_business_id ].compact.uniq

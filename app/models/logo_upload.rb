@@ -14,8 +14,9 @@ class LogoUpload
   TYPE_ERROR = "must be a PNG, JPEG or WebP image".freeze
   def self.size_error(max_bytes = MAX_BYTES) = "must be smaller than #{ActiveSupport::NumberHelper.number_to_human_size(max_bytes)}"
 
-  # Photos attached to quotes (QTE-01) go through the same cleaning with roomier limits.
-  def self.clean_photo(input, max_bytes:, max_side: 8_000) = prepare(input, max_bytes:, max_side:, min_side: 1)
+  # Photos attached to quotes (QTE-01) go through the same cleaning with roomier limits. Team
+  # profile photos (ACC-09) also need a minimum size, so a face isn't a blur when it's shown.
+  def self.clean_photo(input, max_bytes:, max_side: 8_000, min_side: 1) = prepare(input, max_bytes:, max_side:, min_side:)
   FORMATS = {
     "pngload_buffer" => [ "image/png", ".png", {} ],
     "jpegload_buffer" => [ "image/jpeg", ".jpg", { Q: 92 } ],
