@@ -1,0 +1,14 @@
+<%# locals: (users:, empty: "Not assigned", size: :sm) -%>
+<%# ACC-09: the people on a visit, each with their photo (or initials) and title. %>
+<% if users.empty? %>
+  <%= empty %>
+<% else %>
+  <ul class="flex flex-wrap gap-x-4 gap-y-1.5">
+    <% users.each do |user| %>
+      <li class="flex min-w-0 items-center gap-2">
+        <%= user_avatar user, size: %>
+        <span class="min-w-0"><span class="block truncate text-ink"><%= user.full_name %></span><% if (title = user_title(user)) %><span class="block truncate text-sm2 text-muted"><%= title %></span><% end %></span>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

@@ -7,6 +7,12 @@
       <span class="block truncate font-semibold text-ink"><%= job.client.display_name %></span>
       <span class="block truncate text-sm2 text-muted"><%= job.property&.one_line || "No address on file" %></span>
       <span class="block truncate text-sm2 text-subtle"><%= job.title %> · about <%= visit.duration_label %></span>
+      <%# ACC-09: who's going, you first %>
+      <% crew = visit.assignees.sort_by { _1.id == current_user.id ? 0 : 1 } %>
+      <% if crew.any? %>
+        <span class="mt-1.5 flex items-center gap-1.5 text-sm2 text-muted"><span class="flex -space-x-1.5"><% crew.first(4).each do |user| %><%= user_avatar user, class: "ring-2 ring-surface" %><% end %></span>
+          <span class="truncate"><%= (others = crew - [ current_user ]).any? ? "With #{others.map { _1.first_name.presence || _1.full_name }.to_sentence}" : "Just you" %></span></span>
+      <% end %>
     </span>
     <% unless visit.status == "scheduled" %>
       <%= visit_status_badge(visit) %>
