@@ -59,7 +59,7 @@ each invoice takes; what isn't used carries forward, and the last invoice takes 
 
 ## Out of scope
 
-- Refunds and credit notes for over-billing (later spec); deposits (PAY-07).
+- Refunds of what's owed to the client (later spec; staff refund by hand); deposits (PAY-07).
 
 ## Decisions
 
@@ -75,26 +75,26 @@ each invoice takes; what isn't used carries forward, and the last invoice takes 
 - Shortfall: the discount scales to the quoted value billed; the rest is "not used" (owner,
   2026-11-23). Applied past it already: the last invoice charges the extra back, "Quote discount
   adjusted for work not done +$X", at the rates it came off. More left than the last invoice
-  charges: it takes what fits, down to $0, and the rest is over-billed, owed to the client.
-  Neither blocks sending; with a staff discount too, staff lower theirs first (owner, 2026-11-24).
+  charges: it takes what fits, down to $0, and the rest is "Owed to the client", as is
+  over-billing once nothing is left to bill; staff refund it. Neither blocks sending; with a
+  staff discount too, staff lower theirs first (owner, 2026-11-24).
 - A final deducts only the net a progress invoice charged (unpaid too, which stays owed);
   progress never charges a line more than the final would. Clients see "Credit from INV-0004"
   with tax; staff figures include tax (owner, 2026-11-23).
-- Credited progress is voided only after the invoice crediting it (void-first). Credits count
-  only from invoices that went out, capped by the bill's line after its discounts.
+- Credited progress is voided after the invoice crediting it (the owner's void-first rule,
+  2026-11-23). Credits count only from invoices that went out, capped by the bill's line.
 
 ## Implementation notes
 
 - `invoices.kind`, `invoice_credits`; `BillingLedger` reads a quote's (or lone job's) bills under
-  PAY-06's lock; `BillingCredits` works shares and credits out on each draft save. `split_jobs`.
-- A credit is what progress charged for the line (its sent version), net, at its work's rates.
+  PAY-06's lock; `BillingCredits` works shares and credits out on each draft save, and again on
+  any send or void. A credit is what progress charged for the line (its sent version), net.
 - Fit: PAY-07 adds deposit/take_back credits, `nothing_due?` uses `total_due`; JOB-10 skips
   `quote_discount_off!`; QTE-09 adds Not going ahead to `nothing_left?`/`done?`/`all_done?`.
 - `quote_discount_chosen_cents` (nil: $0) is held to [min, max] in `quote_discount_share_cents`;
   `QuoteDiscountPlan` places it by line (needs, then credit room first) in `quote_discount_parts`.
 - Dev seeds: "Roof replacement" ($500 progress sent; the final draft credits it, applies $100).
-- When `split_jobs` goes on (OPS-06): update the help articles run-your-day,
-  turn-a-quote-into-a-job, invoice-finished-work and job-without-a-quote: add back logging what
-  was done on each visit (The work, How many, Add something done on site), Create invoice bills
-  what was done, and recapture screenshots (`bin/help-screenshots`). Progress invoices and quote
-  discounts need an article of their own.
+- When `split_jobs` goes on (OPS-06): in run-your-day, turn-a-quote-into-a-job,
+  invoice-finished-work and job-without-a-quote add back logging each visit's work (The work, How
+  many, Add something done on site), say Create invoice bills what was done, recapture their
+  screenshots; progress invoices and quote discounts get an article of their own.

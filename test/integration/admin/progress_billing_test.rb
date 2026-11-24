@@ -230,9 +230,20 @@ class Admin::ProgressBillingTest < ActionDispatch::IntegrationTest
     assert_select "#job-progress-invoice", 0
     assert_select "#job-progress-blocked", reason
     get admin_quote_path(@quote)
-    assert_select "button#quote-progress-invoice[disabled][aria-describedby=quote-progress-blocked]"
+    assert_select "#quote-progress-invoice", 0
     assert_select "#quote-progress-blocked", reason
     post admin_job_invoices_path(steps, progress: 1)
     assert_equal "Couldn't start an invoice: #{reason}", flash[:alert]
+  end
+
+  test "Create progress invoice isn't offered once a progress draft already bills everything left" do
+    job = make
+    get admin_job_path(job)
+    assert_select "#job-progress-invoice"
+    post admin_job_invoices_path(job, progress: 1) # a draft for all of it
+    get admin_job_path(job)
+    assert_select "#job-progress-invoice", 0
+    get admin_quote_path(@quote)
+    assert_select "#quote-progress-invoice", 0
   end
 end

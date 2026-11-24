@@ -356,6 +356,13 @@ class BillingLedger
   # the quote's discount left: any progress charge would leave too little.
   def progress_blocked? = quote.present? && outstanding_cents.positive? && work_left_cents - uncredited_cents - outstanding_cents <= 0
 
+  # Whether progress has anything to bill: a line of the job (or the quote) with something left,
+  # after progress already on invoices, drafts included.
+  def progress_left?(job: nil)
+    lines = job ? @job_lines.values.select { _1.job_id == job.id } : @quote_lines.values.reject { done?(_1) }
+    lines.any? { left_cents(_1).positive? }
+  end
+
   PROGRESS_BLOCKED = "Nothing is left to bill as progress: the work left is needed for the quote's discount."
 
   def self.rates_from(list) = Array(list).map { Pricing::TaxRate.new(name: _1["name"], percent: _1["percent"]) }
