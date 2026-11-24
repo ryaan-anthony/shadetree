@@ -104,6 +104,28 @@ class StaffShellTest < ApplicationSystemTestCase
     assert_no_selector "#app-sidebar[data-open='true']"
   end
 
+  # #456: closed, the phone drawer is inert, so Tab can't reach its links; open, it can.
+  test "the closed phone drawer is skipped by Tab, the open one and the desktop sidebar aren't" do
+    page.current_window.resize_to(390, 844)
+    visit admin_root_path
+    assert_selector "#app-sidebar[inert]", visible: :all
+    find("button[aria-label='Open navigation']").send_keys(:tab) # Tab from the top bar on
+    assert_not tabs_reach_sidebar?, "Tab reached a link in the closed drawer"
+
+    find("button[aria-label='Open navigation']").send_keys(:enter) # the skip link, focused, covers it
+    assert_no_selector "#app-sidebar[inert]"
+    assert tabs_reach_sidebar?, "the open drawer's links can't be reached"
+    page.send_keys(:escape)
+    assert_equal "Open navigation", evaluate_script("document.activeElement.getAttribute('aria-label')")
+    assert_selector "#app-sidebar[inert]", visible: :all
+
+    page.current_window.resize_to(1280, 900)
+    assert_no_selector "#app-sidebar[inert]"
+    visit admin_root_path
+    assert_no_selector "#app-sidebar[inert]"
+    assert tabs_reach_sidebar?, "the desktop sidebar's links can't be reached"
+  end
+
   test "desktop shows the sidebar with the business switcher" do
     page.current_window.resize_to(1400, 1400)
     visit admin_root_path
@@ -132,5 +154,15 @@ class StaffShellTest < ApplicationSystemTestCase
     drop_areas = all(".file-drop", count: 2)
     within(drop_areas[1]) { assert_selector ".file-drop-chosen", text: "site.png" }
     within(drop_areas[0]) { assert_no_selector ".file-drop-chosen" }
+  end
+
+  private
+
+  # Presses Tab up to `presses` times; true once focus lands on a link or button in the sidebar.
+  def tabs_reach_sidebar?(presses: 40)
+    presses.times.any? do
+      page.driver.browser.action.send_keys(:tab).perform
+      evaluate_script("!!document.activeElement?.closest('#app-sidebar') && document.activeElement.matches('a, button')")
+    end
   end
 end
