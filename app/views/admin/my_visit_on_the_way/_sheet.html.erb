@@ -13,20 +13,20 @@
     <div class="banner banner-danger" role="alert"><%= icon "alert-circle" %><p><%= refused %></p></div>
   <% end %>
   <% if warning && arrives_at %>
-    <div class="banner banner-warning" role="alert"><%= icon "alert-triangle" %>
-      <p><span class="font-semibold">About <%= visit.on_the_way_time_label(arrives_at) %>.</span> <%= warning %> You can still send it.</p>
+    <div class="banner banner-warning" data-controller="announce"><%= icon "alert-triangle" %>
+      <p data-announce-target="text"><span class="font-semibold">About <%= visit.on_the_way_time_label(arrives_at) %>.</span> <%= warning %> You can still send it.</p>
     </div>
     <%= button_to path, params: { arrives_at: arrives_at.utc.iso8601, seen_warning: arrives_at.iso8601, from: }, class: "#{button_classes(:primary)} h-auto min-h-12 w-full justify-center",
                         form: { class: "contents" } do %><%= icon "send" %> Send anyway<% end %>
   <% end %>
   <% if limit %>
-    <div class="banner banner-info" role="status"><%= icon "info" %><p><%= limit %></p></div>
+    <div class="banner banner-info"><%= icon "info" %><p><%= limit %></p></div>
   <% else %>
     <p class="text-sm text-body">
       <%= client.display_name %> is emailed the time, and again if it changes by <%= OnTheWay::UPDATE_EMAIL_MINUTES %>+ minutes; their visit page shows it at once. This doesn't start the visit.
     </p>
     <% unless visit.on_the_way_email %>
-      <div class="banner banner-warning" role="status"><%= icon "mail" %>
+      <div class="banner banner-warning"><%= icon "mail" %>
         <p><%= client.display_name %> has no email address we can use, so nothing is emailed. Their visit page still shows the time; you can call or text them after.</p>
       </div>
     <% end %>

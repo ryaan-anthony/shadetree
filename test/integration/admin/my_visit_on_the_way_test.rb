@@ -51,7 +51,7 @@ class Admin::MyVisitOnTheWayTest < ActionDispatch::IntegrationTest
     assert_select "p[id$='-30-warning']", "That's after the 9 am–12 pm window."
     post on_the_way, params: { minutes: 30 }
     assert_response :unprocessable_content
-    assert_select "[role=alert]", /About 12:15 pm\. That's after the 9 am–12 pm window\. You can still send it\./
+    assert_select ".banner-warning[data-controller=announce]", /About 12:15 pm\. That's after the 9 am–12 pm window\. You can still send it\./
     assert_nil @visit.reload.on_the_way_arrives_at
     post on_the_way, params: { minutes: 30, seen_warning: @visit.on_the_way_arrival(minutes: 30).iso8601 }
     assert_redirected_to admin_my_visit_path(@visit)
@@ -61,7 +61,7 @@ class Admin::MyVisitOnTheWayTest < ActionDispatch::IntegrationTest
   test "a picked time that warns rounds up and is sent with Send anyway" do
     post on_the_way, params: { at: "12:07" } # 12:10, after the window
     assert_response :unprocessable_content
-    assert_select "[role=alert]", /About 12:10 pm\. That's after the 9 am–12 pm window\./
+    assert_select ".banner-warning[data-controller=announce]", /About 12:10 pm\. That's after the 9 am–12 pm window\./
     anyway = css_select("form").find { _1.text.include?("Send anyway") }
     assert_equal "2026-12-10T17:10:00Z", anyway.at_css("input[name=arrives_at]")["value"], "an unambiguous UTC time"
     travel 30.seconds
@@ -97,14 +97,14 @@ class Admin::MyVisitOnTheWayTest < ActionDispatch::IntegrationTest
     post on_the_way, params: { minutes: 15 }
     assert_select "[role=alert]", /less than a minute ago/
     get new_admin_my_visit_on_the_way_path(@visit)
-    assert_select "[role=status]", /less than a minute ago/
+    assert_select ".banner-info", /less than a minute ago/
     assert_select "button", { text: /15 min/, count: 0 }
   end
 
   test "no usable email: the sheet says so, the time is kept, and the row offers call and text with the message filled in" do
     as_business(@business) { EmailSuppression.suppress!("maria@example.com", reason: "hard_bounce") }
     get new_admin_my_visit_on_the_way_path(@visit)
-    assert_select "[role=status]", /no email address we can use, so nothing is emailed/
+    assert_select ".banner-warning", /no email address we can use, so nothing is emailed/
     post on_the_way, params: { minutes: 30 }
     assert_match "no email address we can use", flash[:notice]
     follow_redirect!
