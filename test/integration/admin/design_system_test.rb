@@ -257,6 +257,22 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # PLT-19: one kit menu, a disclosure (ControlsHelper#menu): its button controls the panel, and
+  # the panel takes the width of its longest item (no fixed width).
+  check :kit_menus do |_page, html|
+    html.css("[data-controller~=menu]").flat_map do |menu|
+      panel = menu.at_css("[data-menu-target=menu]")
+      button = menu.at_css("[data-menu-target=button]")
+      name = button && label(button).presence || "a menu"
+      problems = []
+      problems << "#{name}: its button doesn't control its panel (aria-controls, aria-expanded)" unless panel && panel["id"] && button &&
+                                                                                                       button["aria-controls"] == panel["id"] && button["aria-expanded"]
+      problems << "#{name}: aria-haspopup promises an ARIA menu; the kit menu is a disclosure" if button&.[]("aria-haspopup")
+      problems << "#{name}: a fixed width (#{panel["class"]}) can wrap its items" if panel && classes(panel).grep(/\A(min-|max-)?w-(?!auto)/).any?
+      problems
+    end
+  end
+
   setup do
     @business = businesses(:one)
     @owner = users(:one)

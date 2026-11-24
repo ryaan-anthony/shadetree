@@ -45,20 +45,16 @@
           </div>
           <% if can_schedule %>
             <div class="contents" data-controller="modal">
-            <div class="relative" data-controller="menu" data-action="keydown->menu#keydown">
-              <button type="button" class="<%= button_classes(:tertiary, :sm, :icon) %>" data-menu-target="button" data-action="menu#toggle"
-                      aria-haspopup="true" aria-expanded="false" aria-label="Actions for the visit on <%= visit.when_label %>"><%= icon "more-horizontal" %></button>
-              <div class="menu right-0 top-full mt-1" data-menu-target="menu" hidden>
-                <% if visit.open? %>
-                  <%= link_to edit_admin_job_visit_path(job, visit), class: "menu-item", "aria-label": "Reschedule or reassign the visit on #{visit.when_label}" do %><%= icon "calendar" %> Reschedule or reassign<% end %>
-                  <%= button_to complete_admin_job_visit_path(job, visit), method: :patch, class: "menu-item", "aria-label": "Mark completed: the visit on #{visit.when_label}",
-                                form: { class: "contents", data: { turbo_confirm: "Mark the visit on #{visit.when_label} completed?", turbo_confirm_button: "Mark completed" } } do %><%= icon "check" %> Mark completed<% end %>
-                  <button type="button" class="menu-item" data-action="modal#open menu#close" aria-haspopup="dialog" aria-label="Cancel visit on <%= visit.when_label %>"><%= icon "x" %> Cancel visit</button>
-                <% elsif visit.status == "cancelled" && job.open? %>
-                  <%= button_to restore_admin_job_visit_path(job, visit), method: :patch, class: "menu-item", form: { class: "contents" }, "aria-label": "Restore the visit on #{visit.when_label}" do %><%= icon "rotate-ccw" %> Restore<% end %>
-                <% end %>
-              </div>
-            </div>
+            <%= menu label: "Actions for the visit on #{visit.when_label}", size: :sm do %>
+              <% if visit.open? %>
+                <%= link_to edit_admin_job_visit_path(job, visit), class: "menu-item", "aria-label": "Reschedule or reassign the visit on #{visit.when_label}" do %><%= icon "calendar" %> Reschedule or reassign<% end %>
+                <%= button_to complete_admin_job_visit_path(job, visit), method: :patch, class: "menu-item", "aria-label": "Mark completed: the visit on #{visit.when_label}",
+                              form: { class: "contents", data: { turbo_confirm: "Mark the visit on #{visit.when_label} completed?", turbo_confirm_button: "Mark completed" } } do %><%= icon "check" %> Mark completed<% end %>
+                <button type="button" class="menu-item" data-action="modal#open menu#close" aria-haspopup="dialog" aria-label="Cancel visit on <%= visit.when_label %>"><%= icon "x" %> Cancel visit</button>
+              <% elsif visit.status == "cancelled" && job.open? %>
+                <%= button_to restore_admin_job_visit_path(job, visit), method: :patch, class: "menu-item", form: { class: "contents" }, "aria-label": "Restore the visit on #{visit.when_label}" do %><%= icon "rotate-ccw" %> Restore<% end %>
+              <% end %>
+            <% end %>
             <% if visit.open? %>
               <%= modal id: "visit-cancel-#{visit.uid}", title: "Cancel the visit on #{visit.when_label}?", description: "It stays in the job's history. You can restore it while the job is open." do %>
                 <%= form_with url: cancel_admin_job_visit_path(job, visit), method: :patch, class: "space-y-4" do %>
