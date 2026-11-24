@@ -88,7 +88,8 @@
     <% billed = invoices.reject(&:void?) %><%# #289: a second invoice is possible (progress billing), but never the obvious button %>
     <%# PAY-08: before it's done, part of it can be billed as progress (credited on its final invoice). %>
     <%# PAY-08: with some of the quote's discount left, each asks how much to apply now (owner, 2026-11-23). %>
-    <% progress_ok = job.open? && !job.quote&.recurring? %>
+    <% progress_blocked = split && job.open? && ledger&.progress_blocked? %><%# B11: nothing it could bill would leave room for the discount %>
+    <% progress_ok = job.open? && !job.quote&.recurring? && !progress_blocked %>
     <% create = if split && discount_left.positive?
                   safe_join([ (render("admin/invoices/create_with_discount", url: admin_job_invoices_path(job, progress: 1), label: "Create progress invoice", left: discount_left, currency: job.currency,
                                       id: "job-progress-invoice", button_class: button_classes(:tertiary, :sm), confirm: "Bill part of #{job.number} before it's done. A progress invoice is credited when the work is billed.") if progress_ok),
@@ -104,6 +105,7 @@
                 end %>
     <%= card title: "Invoices", id: "invoices", flush: true, actions: create do %>
       <%= render "admin/invoices/list", invoices:, empty: split ? "Not invoiced yet. Once it's completed, Create invoice bills what was done." : "Not invoiced yet. Create invoice copies this job's items, discount and taxes." %>
+      <% if progress_blocked %><p class="border-t border-line px-5 py-3 text-sm2 text-muted" id="job-progress-blocked"><%= BillingLedger::PROGRESS_BLOCKED %></p><% end %>
       <%= render "admin/invoices/progress_summary", summary: ledger.summary(job:), currency: job.currency, id: "job-progress" if split %>
       <%= render "admin/invoices/unused_discount", ledger: (ledger if job.quote&.approved?), currency: job.currency, id: "job-discount-unused" %>
       <% job_payments = Payment.where(invoice_id: invoices.map(&:id)).includes(:invoice).chronological.to_a %>

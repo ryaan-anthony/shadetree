@@ -72,8 +72,13 @@
   <%= menu label: "More actions", button: { data: { modal_target: "return" } } do %>
     <%# PAY-08: before the work is done, part of it can be billed as progress (credited on the final invoice). %>
     <% if split && quote.approved? && !quote.recurring? && (quote.line_items.any? { _1.to_do_quantity.positive? } || jobs.any?(&:open?)) %>
+      <% if ledger&.progress_blocked? %><%# B11: offered disabled, with the reason %>
+        <button type="button" class="menu-item" id="quote-progress-invoice" disabled aria-describedby="quote-progress-blocked"><%= icon "plus" %> Create progress invoice</button>
+        <p class="px-3 pb-2 text-xs text-muted" id="quote-progress-blocked"><%= BillingLedger::PROGRESS_BLOCKED %></p>
+      <% else %>
       <%= button_to admin_quote_invoices_path(quote, progress: 1), class: "menu-item", id: "quote-progress-invoice",
                     form: { class: "contents", data: { turbo_confirm: "Bill part of #{quote.number} before it's done? A progress invoice is credited when the work is billed.#{" The draft asks how much of the quote's discount to apply now." if discount_left.to_i.positive?}", turbo_confirm_button: "Create progress invoice" } } do %><%= icon "plus" %> Create progress invoice<% end %>
+      <% end %>
     <% end %>
     <% if billed.any? && !split %><%# PAY-06: with split jobs the header's Create invoice bills what's left %>
       <%= button_to admin_quote_invoices_path(quote), class: "menu-item",

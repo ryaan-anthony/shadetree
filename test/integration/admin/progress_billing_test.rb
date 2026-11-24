@@ -215,4 +215,24 @@ class Admin::ProgressBillingTest < ActionDispatch::IntegrationTest
     get admin_invoice_path(last)
     assert_select "#invoice-owed", "$100.00 is owed to the client on #{@quote.number}: nothing is left to bill, so it's yours to refund."
   end
+
+  test "B11: with the work left needed for the quote's discount, progress isn't offered, and the page says why" do
+    as_business(@business) do
+      @quote.line_items.build(key: "s", name: "Steps", quantity: 1, position: 1).tap { _1.unit_price = "100" }.save!
+      @quote.update_columns(discount_kind: "amount", discount_amount_cents: 300_00)
+    end
+    roof, steps = as_business(@business) { @quote.reload.line_items.map { |line| Job.from_quote!(@quote.reload, picks: { line.id => "1" }) } }
+    as_business(@business) { roof.reload.complete!(by: users(:one)) }
+    post admin_job_invoices_path(roof)
+    as_business(@business) { Invoice.last.mark_sent!(by: users(:one), channel: "link") }
+    reason = "Nothing is left to bill as progress: the work left is needed for the quote's discount."
+    get admin_job_path(steps)
+    assert_select "#job-progress-invoice", 0
+    assert_select "#job-progress-blocked", reason
+    get admin_quote_path(@quote)
+    assert_select "button#quote-progress-invoice[disabled][aria-describedby=quote-progress-blocked]"
+    assert_select "#quote-progress-blocked", reason
+    post admin_job_invoices_path(steps, progress: 1)
+    assert_equal "Couldn't start an invoice: #{reason}", flash[:alert]
+  end
 end

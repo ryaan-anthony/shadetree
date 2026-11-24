@@ -205,12 +205,24 @@ class BillingLedger
   # proportions as the quote spreads it (scaled for a shortfall), so invoices' tax adds up to the
   # quote's where the work is taxed as quoted (owner, 2026-11-23).
   def discount_mix
+    @discount_mix ||= Hash.new(0).merge(scaled_mix)
+  end
+
+  # The full mix ({ group => cents } as the quote spreads D), scaled for a shortfall: D' spread by
+  # largest remainder, no group above its full part (a group done in full keeps all of its part).
+  def scaled_mix
     return {} unless quote_discount_cents.positive?
 
-    @discount_mix ||= begin
-      weights = line_parts.each_with_object(Hash.new(0)) { |(id, cents), mix| mix[group_of(@quote_lines[id])] += cents * done_fraction(@quote_lines[id]) }
-      self.class.largest_remainder(quote_discount_cents, weights.transform_values { [ _1, 0 ].max })
-    end
+    full = line_parts.each_with_object(Hash.new(0)) { |(id, cents), mix| mix[group_of(@quote_lines[id])] += cents }
+    weights = line_parts.each_with_object(Hash.new(0)) { |(id, cents), mix| mix[group_of(@quote_lines[id])] += cents * done_fraction(@quote_lines[id]) }
+    parts = self.class.largest_remainder(quote_discount_cents, weights.transform_values { [ _1, 0 ].max })
+    over = parts.sum { |group, cents| [ cents - full[group], 0 ].max }
+    return parts unless over.positive?
+
+    parts = parts.to_h { |group, cents| [ group, [ cents, full[group] ].min ] }
+    room = parts.to_h { |group, cents| [ group, full[group] - cents ] }.select { _2.positive? }
+    self.class.largest_remainder(over, room).each { |group, cents| parts[group] += cents }
+    parts
   end
 
   # What a line carries of the quote's discount, taxed or not: the quote's tax rates or none. A job
@@ -316,7 +328,7 @@ class BillingLedger
 
   # Unclamped: a group below zero took more than its scaled part.
   def net_outstanding_by_group
-    left = discount_mix.dup
+    left = Hash.new(0).merge(discount_mix)
     earlier_parts.each { |part| left[self.class.group(self.class.rates_from(part["from"] || part["rates"]))] -= part["cents"].to_i }
     left
   end
@@ -333,12 +345,18 @@ class BillingLedger
 
   def fit_outstanding(left)
     total = outstanding_cents
-    return left if left.values.sum <= total
-    return {} if total.zero?
+    return Hash.new(0).merge(left) if left.values.sum <= total
+    return Hash.new(0) if total.zero?
 
     # A group took more than its part (a shortfall scaled it after): the rest shares what's left.
-    Money.new(total, quote.currency).allocate(left.values).zip(left.keys).to_h { |part, group| [ group, part.cents ] }
+    Hash.new(0).merge(self.class.largest_remainder(total, left))
   end
+
+  # B11: progress can't be billed once the work left, less progress not yet credited, can't take
+  # the quote's discount left: any progress charge would leave too little.
+  def progress_blocked? = quote.present? && outstanding_cents.positive? && work_left_cents - uncredited_cents - outstanding_cents <= 0
+
+  PROGRESS_BLOCKED = "Nothing is left to bill as progress: the work left is needed for the quote's discount."
 
   def self.rates_from(list) = Array(list).map { Pricing::TaxRate.new(name: _1["name"], percent: _1["percent"]) }
 

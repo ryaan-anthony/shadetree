@@ -25,7 +25,8 @@ each invoice takes; what isn't used carries forward, and the last invoice takes 
 
 - [x] "Create progress invoice" (owner, 2026-11-23) on a job or quote before the work is done
       makes a progress invoice of its unbilled lines, which staff can lower; under PAY-06's lock
-      a line's progress can't pass what's left of it.
+      a line's progress can't pass what's left of it. Not offered once the work left is needed
+      for the quote's discount: "Nothing is left to bill as progress: …".
 - [x] Progress on a job line is credited on that line's final bill; on a quote line (or a
       cancelled job's), on its quote line's. Credit = min(progress not yet credited, this bill's
       amount for the line), the job line's own first: a negative line before tax at its rates, so
@@ -51,8 +52,8 @@ each invoice takes; what isn't used carries forward, and the last invoice takes 
       min(d, round(d × quantity billed ÷ q)), less what earlier bills of that line took.
 - [x] Shares are kept apart from a staff discount. After a void, drafts work shares and credits
       out again; sent invoices don't change. Recurring quotes don't share (JOB-10).
-- [x] The $0 rule (PAY-01) looks at the total before credits; nothing due is Paid at once.
-- [x] The quote page shows progress billed, credited, over-billed; the job page its own.
+- [x] The $0 rule (PAY-01) looks at the total before credits; nothing due is Paid at once. The
+      quote page shows progress billed, credited, over-billed; the job page its own.
 - [x] Tests: #356's examples 1–4, job and quote progress, over-billing, credit order, tax once,
       the line target, chosen amounts, the minimum, a re-tax, a shortfall, voids, $0, tenancy.
 
@@ -84,9 +85,8 @@ each invoice takes; what isn't used carries forward, and the last invoice takes 
 
 ## Implementation notes
 
-- `invoices.kind`, `invoice_line_items.discount_share_cents`, `invoice_credits`. `BillingLedger`
-  reads a quote's (or lone job's) bills under PAY-06's lock; `BillingCredits` works shares and
-  credits out on each draft save; `WorkBilling.bill_progress!`. Behind `split_jobs`.
+- `invoices.kind`, `invoice_credits`; `BillingLedger` reads a quote's (or lone job's) bills under
+  PAY-06's lock; `BillingCredits` works shares and credits out on each draft save. `split_jobs`.
 - A credit is what progress charged for the line (its sent version), net, at its work's rates.
 - Fit: PAY-07 adds deposit/take_back credits, `nothing_due?` uses `total_due`; JOB-10 skips
   `quote_discount_off!`; QTE-09 adds Not going ahead to `nothing_left?`/`done?`/`all_done?`.

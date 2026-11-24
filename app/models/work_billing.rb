@@ -180,6 +180,8 @@ module WorkBilling
       raise Refused, "#{quote.number} is recurring: each occurrence is billed from its own job." if quote&.recurring?
 
       ledger = BillingLedger.new(quote:, job: (job unless quote))
+      raise Refused, BillingLedger::PROGRESS_BLOCKED if ledger.progress_blocked?
+
       lines = if job
         raise Refused, "#{job.number} is #{job.status}. Progress billing is for work not done yet." unless job.open?
 

@@ -474,6 +474,13 @@ module BillingCredits
     end
   end
 
+  # How to undo a progress invoice, in the order the app allows: what credits it first (void
+  # first), then its own payments, then it.
+  def undo_steps(progress)
+    steps = progress.crediting_invoices.where.not(id:).map { _1.payments? ? "refund #{_1.number}'s payments and void it" : "void #{_1.number}" }
+    (steps << (progress.payments? ? "refund #{progress.number}'s payments and void it" : "void #{progress.number}")).join(", then ")
+  end
+
   def taxed(list) = list.any? ? list.map { "#{_1.name} #{_1.percent.to_d.round(4).to_s("F").sub(/\.?0+\z/, "")}%" }.to_sentence : "no tax"
 
   # A final bill credits its line's progress at the rates it was charged at: a line taxed
@@ -486,7 +493,7 @@ module BillingCredits
       next if other.empty?
 
       charged = other.group_by { ledger.rates_of(_1).to_set }.map { |set, lines| "#{lines.map { _1.invoice.number }.uniq.to_sentence} charged #{taxed(set.to_a)}" }
-      undo = other.map(&:invoice).uniq.map { _1.voidable? ? "void #{_1.number}" : "refund #{_1.number}'s payments and void it" }.to_sentence
+      undo = other.map(&:invoice).uniq.map { undo_steps(_1) }.to_sentence
       # One rate set elsewhere and none here: matching this invoice's tax is a way out too. Progress
       # at more than one set (a job re-taxed between progress invoices) leaves only the void.
       match = other.map { ledger.rates_of(_1).to_set }.uniq.one? && held.size == other.size ? "Set this invoice's tax to #{taxed(ledger.rates_of(other.first))} to credit it, or #{undo} first." : "#{undo.upcase_first} first."

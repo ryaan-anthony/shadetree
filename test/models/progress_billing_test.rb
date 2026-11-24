@@ -803,6 +803,8 @@ class ProgressBillingTest < ActiveSupport::TestCase
           end
         end
       end
+      # The client's "Credit from" rows add up to what the credits take off, to the cent.
+      as_business(@business) { finals.each { |final| assert_equal (final.totals(credits: false).total - final.totals.total).cents, final.client_credits.sum { _2.cents }, "scenario #{n}: #{final.number}'s Credit from rows" if final.credits.any?(&:pre_tax?) } }
       shown = finals.flat_map { client_credits(_1) }.group_by(&:first).transform_values { _1.sum(&:last) }
       fully = as_business(@business) { progress_sent.select { |p| InvoiceCredit.counted.where(source_invoice_id: p.id).sum(:amount_cents) == p.charged_by_key.values.sum } }
       fully.each { assert_in_delta _1.total_cents, shown[_1.number].to_i, rates.size * 2, "scenario #{n}: Credit from #{_1.number}" }
@@ -998,6 +1000,77 @@ class ProgressBillingTest < ActiveSupport::TestCase
     assert_equal expected, ledger.discount_mix.values.sum
     assert_equal({ a: 4, b: 3, c: 3 }, BillingLedger.largest_remainder(10, { a: 1, b: 1, c: 1 }))
     assert_equal({ a: 1, b: 2 }, BillingLedger.largest_remainder(3, { a: 1.4, b: 1.6 }))
+  end
+
+  test "B9: a one-cent discount scaled to nothing: the last invoice charges it back, no group missing" do
+    approved_quote([ [ "a", "A", 1, "0.01" ], [ "b", "B", 3, "0.01" ] ], tax: "10", discount: "0.01")
+    j1, j2 = make(a: 1), make(b: 3)
+    first = send!(as_business(@business) { Invoice.from_job!(complete(j1).reload, by: @owner, discount: "all") })
+    assert_equal 1, first.quote_discount_share_cents
+    last = send!(bill_job(complete(j2, "B" => 1)))
+    ledger = as_business(@business) { BillingLedger.new(quote: @quote.reload) }
+    assert_equal as_business(@business) { ledger.quote_discount_cents }, [ first, last ].sum { |invoice| invoice.reload.quote_discount_parts.sum { _1["cents"].to_i } }
+    assert_equal 0, as_business(@business) { ledger.net_outstanding_by_group[[ Pricing::TaxRate.new(name: "Nobody", percent: "1") ]] }, "an unknown group is 0, not nil"
+  end
+
+  test "B10: a shortfall in one group never gives another group more than its full part" do
+    approved_quote([ [ "k0", "Item 0", 2, "72834.68" ], [ "k1", "Item 1", 3, "333.33" ], [ "k2", "Item 2", 2, "244.00" ], [ "k3", "Item 3", 10, "728.00" ],
+                     [ "k4", "Item 4", 3, "333.33" ], [ "k5", "Item 5", 3, "0.01" ], [ "k6", "Item 6", 1, "477.00" ] ],
+                   tax: %w[6.25 2.5], discount: "9065.25", untaxed: %w[k1 k3 k5 k6], line_discounts: { "k0" => "14353.20", "k6" => "48.43" })
+    taxed, untaxed = make(k0: 2, k2: 2, k4: 3), make(k1: 3, k3: 10, k5: 3, k6: 1)
+    retax(untaxed, "8")
+    send!(lower(progress(@quote), "Item 0" => "122904.10", "Item 2" => "456.74", "Item 4" => "935.93"))
+    first = send!(bill_job(complete(untaxed, "Item 6" => 0)))
+    complete(taxed)
+    last = send!(bill_quote)
+    as_business(@business) do
+      ledger = BillingLedger.new(quote: @quote.reload)
+      assert_operator first.quote_discount_share_cents + last.quote_discount_share_cents, :<=, ledger.full_quote_discount_cents, "never more than the quote's discount"
+      assert_equal ledger.quote_discount_cents, [ first, last ].sum { |invoice| invoice.reload.quote_discount_parts.sum { _1["cents"].to_i } }
+      assert_equal 850738, ledger.discount_mix[ledger.group_of(@quote.line_items.first)], "the taxed work was all done: its whole part"
+    end
+  end
+
+  test "B11: once the work left is needed for the discount, progress isn't offered and says why" do
+    approved_quote([ [ "a", "Deck", 1, 1000 ], [ "b", "Steps", 1, 100 ] ], discount: "300")
+    deck, steps = make(a: 1), make(b: 1)
+    assert_equal 200_00, send!(bill_job(complete(deck))).quote_discount_share_cents, "the minimum"
+    assert as_business(@business) { BillingLedger.new(quote: @quote.reload).progress_blocked? }
+    [ steps, @quote ].each do |source|
+      error = assert_raises(WorkBilling::Refused) { progress(source) }
+      assert_equal "Nothing is left to bill as progress: the work left is needed for the quote's discount.", error.message
+    end
+  end
+
+  test "undoing progress credited on another job's final: void that one, then refund and void the progress" do
+    approved_quote([ [ "a", "Roof", 1, 1000 ], [ "b", "Gutters", 1, 500 ] ], tax: "10")
+    roof, gutters = make(a: 1), make(b: 1)
+    early = send!(lower(progress(@quote), "Roof" => 500, "Gutters" => 200))
+    as_business(@business) { early.reload.record_payment!(by: @owner, amount: "100", received_on: @business.today, payment_method: "cash") }
+    credited = send!(bill_job(complete(roof)))
+    retax(gutters, "8")
+    error = assert_raises(ActiveRecord::RecordInvalid) { send!(bill_job(complete(gutters))) }
+    assert_includes error.message, "Gutters is taxed at State 8%, but #{early.number} charged State 10% for it. Set this invoice's tax to State 10% to credit it, " \
+                                   "or void #{credited.number}, then refund #{early.number}'s payments and void it first."
+  end
+
+  test "progress already billed: what's left of each line is its value less its part of the discount, less that progress" do
+    approved_quote([ [ "a", "Roof", 1, 1000 ], [ "b", "Gutters", 1, 1000 ] ], discount: "200")
+    send!(lower(progress(@quote), "Roof" => 500, "Gutters" => nil))
+    again = progress(@quote)
+    assert_equal [ 400_00, 900_00 ], as_business(@business) { again.reload.current_line_items.map(&:line_amount_cents) }, "quote lines: $1,000 − $100 − $500, and $1,000 − $100"
+
+    approved_quote([ [ "a", "Roof", 1, 1000 ], [ "b", "Gutters", 1, 1000 ] ], discount: "200")
+    job = make(a: 1, b: 1)
+    send!(lower(progress(job), "Roof" => 500, "Gutters" => nil))
+    again = progress(job)
+    assert_equal [ 400_00, 900_00 ], as_business(@business) { again.reload.current_line_items.map(&:line_amount_cents) }, "job lines, the same"
+    assert_raises(ActiveRecord::RecordInvalid) { lower(again, "Roof" => "400.01") }
+
+    approved_quote([ [ "a", "Roof", 2, 500 ], [ "b", "Gutters", 1, 1000 ] ], discount: "200")
+    half = make(a: 1)
+    make(a: 1, b: 1)
+    assert_equal [ 450_00 ], as_business(@business) { progress(half).reload.current_line_items.map(&:line_amount_cents) }, "half the roof: $500 − half its $100 part"
   end
 
   test "Apply now takes plain dollars only, and says when it's held to the range" do
