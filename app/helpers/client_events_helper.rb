@@ -45,6 +45,15 @@ module ClientEventsHelper
       else [ ("“#{subject.subject}”" if subject&.subject), nil ]
       end
       [ "alert-triangle", subject ? "#{about || "An email"} to #{subject.to}: #{subject.problem_reason}" : "An email wasn't delivered", path ]
+    when "email_complained"
+      # NTF-05: a late report that the client marked an email as spam; the address is blocked.
+      related = subject&.related
+      about, path = case related
+      when Quote then [ " (Quote #{related.number})", staff_quote_path(related) ]
+      when Invoice then [ " (Invoice #{related.number})", staff_invoice_path(related) ]
+      else [ "", nil ]
+      end
+      [ "slash", "Marked an email as spam#{about}", path ]
     when "note_added" then [ "message-square", subject&.body || "Note deleted", nil ]
     end
   end

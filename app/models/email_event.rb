@@ -59,7 +59,10 @@ class EmailEvent < ApplicationRecord
       row = create_with(email_message: message, event_type: event.type, status_code: event.status, reply_code: event.reply_code,
                         reason: reason_for(event), recipient_role: role, cc_position: position, occurred_at:)
               .create_or_find_by!(event_key: key)
-      row.previously_new_record? ? :stored : :repeat
+      return :repeat unless row.previously_new_record?
+
+      ProcessEmailEventJob.perform_later(row.id)
+      :stored
     rescue ActiveRecord::RecordNotFound # stored meanwhile for another business
       :repeat
     end
@@ -84,9 +87,62 @@ class EmailEvent < ApplicationRecord
     [ "cc", position ] if position
   end
 
+  # Send time's rules (ClientMailDeliveryJob), once. Only an email still marked sent changes: one
+  # that already failed or bounced keeps what happened first. A CC's problem is only recorded
+  # (and a refused mailbox or complaint blocks that CC); the email stays delivered.
+  def process!
+    with_lock do
+      next if processed_at
+
+      if recipient_role == "cc" then apply_to_cc
+      elsif email_message.status == "sent" then apply_to_email
+      end
+      update!(processed_at: Time.current)
+    end
+  end
+
+  # "550 5.1.1", "5.7.1": what send time's errors carry, so EmailMessage#reply_code reads it.
+  def codes = [ reply_code, status_code ].compact_blank.join(" ")
+
   def self.reason_for(event)
     return "complaint" if event.type == "complaint"
 
     ClientMailDeliveryJob::RECIPIENT_STATUSES.include?(event.status) ? "mailbox" : "refused"
+  end
+
+  private
+
+  def apply_to_email
+    message = email_message
+    case reason
+    when "complaint"
+      message.mark!("complained", at: occurred_at, announce: false)
+      EmailSuppression.suppress!(message.to, reason: "complaint", email_message: message)
+      ClientEvent.record!(message.client, :email_complained, subject: message, at: occurred_at) if message.client
+    when "mailbox"
+      message.mark!("bounced", at: occurred_at, error: "The mail server refused this address (#{codes}).", notify: warn?)
+      EmailSuppression.suppress!(message.to, reason: "hard_bounce", email_message: message)
+    else
+      message.mark!("failed", at: occurred_at, error: "The mail server refused the email (#{codes}).", announce: true, notify: warn?)
+    end
+  end
+
+  def apply_to_cc
+    message = email_message
+    address = message.cc_addresses[cc_position.to_i] or return
+    return if message.cc_problems.any? { _1["position"] == cc_position }
+
+    block = { "mailbox" => "hard_bounce", "complaint" => "complaint" }[reason]
+    EmailSuppression.suppress!(address, reason: block, email_message: message) if block
+    message.update!(cc_problems: message.cc_problems + [ { "position" => cc_position, "reason" => reason, "code" => codes.presence, "at" => occurred_at.iso8601 } ])
+    ClientEvent.record!(message.client, :email_complained, subject: message, at: occurred_at) if reason == "complaint" && message.client
+  end
+
+  # The warning and the team's notification are for a quote or invoice email while it still waits
+  # on the client (awaiting_client?, as the page's warning: not answered, expired, paid or void);
+  # otherwise it's only the send history and the timeline.
+  def warn?
+    document = email_message.related
+    email_message.kind.in?(%w[quote_sent invoice_sent]) && document.respond_to?(:awaiting_client?) && document.awaiting_client?
   end
 end
