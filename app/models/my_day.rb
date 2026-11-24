@@ -32,7 +32,10 @@ class MyDay
       last = business.today + upcoming_days + 1
       recent = (business.today - 1)..last
       mine = Visit.joins(:assignments).where(visit_assignments: { user_id: user.id }).includes(:business, :assignees, job: [ { client: :contact_methods }, :property, :location ]) # JOB-12: the client's email
-      visits = mine.open.where(scheduled_on: ..last).or(mine.where(scheduled_on: recent).where.not(status: "cancelled")).to_a
+      # In order, like Home's team day (ActionDashboard#todays_visits): unordered, the rows come in
+      # whatever order the table holds them, so the preloads' id lists (and whether Home's second
+      # load of the same visits' assignments is answered from the query cache) varied by chance.
+      visits = mine.open.where(scheduled_on: ..last).or(mine.where(scheduled_on: recent).where.not(status: "cancelled")).in_order.to_a
       follow_ups = RequestFollowUp.where(user_id: user.id, scheduled_on: ..last).includes(service_request: %i[client property location]).to_a
       (visits + follow_ups).each { _1.association(:business).target = business }
       (visits + follow_ups).map { [ _1, _1.time_zone.today ] }

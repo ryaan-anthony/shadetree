@@ -249,6 +249,9 @@ class Admin::HomeTest < ActionDispatch::IntegrationTest
     2.times { book(@owner) }
     follow_up("Ana Diaz", kind: "call")
     follow_up("Kim Chu", scheduled_on: @business.today - 1)
+    # A rewritten row moves in the table, so an unordered query returns it last (CI saw 41 for 40
+    # when the table's order happened to differ from the visits' order).
+    as_business(@business) { Visit.order(:id).first.update_column(:updated_at, Time.current) }
     assert_equal one, count.call, "more visits and follow-ups, the same queries"
   end
 end
