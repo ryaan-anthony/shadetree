@@ -1,6 +1,45 @@
 # OPS-06: written by bin/help-screenshots; each screenshot's screen digest when it was captured.
+add-a-service:
+  digest: c944fb01e68e2ef6704c19d5bf39a7718242ae918f9c08ef28749920ff01b951
+  captured_on: '2026-11-24'
 ask-for-help-form:
   digest: e5cfe1fdb56ee5a76a207c8b0d55f8cb6ecca85f8ddab027e901dd071ea2eb45
+  captured_on: '2026-11-24'
+business-details:
+  digest: 740d4e7761159d5f111e03621e6f99bbd6cd8f9f9fcf75a2feb1ecb6eabc0eb8
+  captured_on: '2026-11-24'
+client-quote-page:
+  digest: 6b5d5b4b5ef38e17b50c19de7ffd3906e3c5559e51e57a802b20a7ceb9b0d16d
+  captured_on: '2026-11-24'
+invoice-draft:
+  digest: 05f988d4b7153a9cbb7e12b652a6da6752b138a6a83b506bfedcb73ade372b44
+  captured_on: '2026-11-24'
+invoice-sent:
+  digest: 204c888c7673f4d7148c081cf78bd690af14a5300dec98972d53b2ab662d772b
+  captured_on: '2026-11-24'
+quote-builder:
+  digest: 9c6a987297bfbda3958d1a03912bbfa95cd9f9af5819cc8512151a9a7e447913
+  captured_on: '2026-11-24'
+record-a-payment:
+  digest: 6ac6205c0081ff3b8b1f4856370c1bb05933c257f27cc41825ea3165d3ae6414
+  captured_on: '2026-11-24'
+request-page:
+  digest: 9f725429d5d0ba9b332c611f900608d75d8ba5c9c65903cb53fdaf7b97bc1b3d
+  captured_on: '2026-11-24'
+requests-list:
+  digest: 3687a38d9cd93e3ccf247395ea10a37e3a07f5c733d3387af3ce0b4ed8c948ee
+  captured_on: '2026-11-24'
+schedule-a-visit:
+  digest: c6a1739030d79688f72a440b36878ac91bbe49392bdab99eb5e144311868368a
+  captured_on: '2026-11-24'
+schedule-week:
+  digest: 64d39d899e92c5d0eb11f686f4903e351a1e510a591fa7de613fa06e329498bb
+  captured_on: '2026-11-24'
+send-quote-page:
+  digest: 286c2e94f315faa88648f4361d0d897cef3ff16e943ebb279bdec08a82b5f275
+  captured_on: '2026-11-24'
+services-list:
+  digest: b650a068bf3cdf4955c2d8a562cbd103c8eb7559071c859ded24dca6bd3b4af9
   captured_on: '2026-11-24'
 your-questions:
   digest: b20912d4b17c1e9b98056ca27cd7ad71178386c7f5eeca0703e49ab17fa78747
