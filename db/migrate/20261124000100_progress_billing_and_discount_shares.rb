@@ -20,19 +20,17 @@ class ProgressBillingAndDiscountShares < ActiveRecord::Migration[8.1]
     add_check_constraint :invoice_line_items, "discount_share_cents >= 0", name: "invoice_line_items_discount_share_nonnegative"
 
     create_table :invoice_credits do |t|
-      t.references :business, null: false, foreign_key: true, index: false
+      t.references :business, null: false, foreign_key: true
       t.references :invoice, null: false, foreign_key: { on_delete: :cascade }
       t.string :kind, null: false
       t.references :source_invoice, null: false, foreign_key: { to_table: :invoices }
       t.references :source_line_item, foreign_key: { to_table: :invoice_line_items, on_delete: :nullify } # drafts rework; void ones keep theirs
       t.bigint :amount_cents, null: false
-      t.integer :sign, null: false, default: -1
       t.jsonb :tax_rates, null: false, default: []
       t.integer :position, null: false, default: 0
       t.timestamps
     end
     add_check_constraint :invoice_credits, "kind IN ('progress', 'over_billed')", name: "invoice_credits_kind"
     add_check_constraint :invoice_credits, "amount_cents > 0", name: "invoice_credits_amount_positive"
-    add_check_constraint :invoice_credits, "sign IN (-1, 1)", name: "invoice_credits_sign"
   end
 end

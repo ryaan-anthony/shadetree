@@ -38,6 +38,7 @@ module InvoicesHelper
     revision = " (revision #{event.data["revision"]})" if event.kind == "sent" && event.data["revision"].to_i > 1
     how = " for #{event.data["location"]} (#{Array(event.data["changed"]).join(" and ")})" if event.kind == "repriced"
     label = event.kind == "sent" && event.data["channel"] == "payment" ? "Marked sent" : EVENT_LABELS.fetch(event.kind)
+    label = "Nothing due: marked paid" if event.kind == "paid" && event.data["nothing_due"] # PAY-08
     "#{label}#{how}#{revision}#{from}#{by}#{reason}"
   end
 end

@@ -654,17 +654,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_100000) do
     t.bigint "source_invoice_id", null: false
     t.bigint "source_line_item_id"
     t.bigint "amount_cents", null: false
-    t.integer "sign", default: -1, null: false
     t.jsonb "tax_rates", default: [], null: false
     t.integer "position", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["business_id"], name: "index_invoice_credits_on_business_id"
     t.index ["invoice_id"], name: "index_invoice_credits_on_invoice_id"
     t.index ["source_invoice_id"], name: "index_invoice_credits_on_source_invoice_id"
     t.index ["source_line_item_id"], name: "index_invoice_credits_on_source_line_item_id"
     t.check_constraint "amount_cents > 0", name: "invoice_credits_amount_positive"
     t.check_constraint "kind::text = ANY (ARRAY['progress'::character varying, 'over_billed'::character varying]::text[])", name: "invoice_credits_kind"
-    t.check_constraint "sign = ANY (ARRAY['-1'::integer, 1])", name: "invoice_credits_sign"
   end
 
   create_table "invoice_events", force: :cascade do |t|

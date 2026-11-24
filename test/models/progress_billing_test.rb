@@ -420,6 +420,28 @@ class ProgressBillingTest < ActiveSupport::TestCase
                  }.message
   end
 
+  test "sending a final works the quote's other drafts out again, so none keeps stale credits" do
+    approved_quote([ [ "r", "Roof", 2, 500 ] ])
+    early = send!(lower(progress(@quote), "Roof" => 300))
+    first, second = [ make(r: 1), make(r: 1) ].map { bill_job(complete(_1)) }
+    assert_equal [ [ "progress", early.number, 300_00 ] ], credits(second), "a draft credits it while nothing went out"
+    send!(first)
+    assert_equal [ [ "progress", early.number, 300_00 ] ], credits(first)
+    assert_empty credits(second), "worked out again when the first went out, not on its next save"
+    assert_equal 500_00, total(second)
+  end
+
+  test "an invoice with nothing due is marked paid at send, and its history says so" do
+    approved_quote([ [ "r", "Roof", 1, 500 ] ])
+    job = make(r: 1)
+    send!(progress(job))
+    final = send!(bill_job(complete(job)))
+    assert_equal [ "paid", 0 ], [ final.status, final.total_cents ]
+    paid = as_business(@business) { final.events.find_by!(kind: "paid") }
+    assert_equal [ nil, true ], [ paid.user, paid.data["nothing_due"] ]
+    assert_equal "Nothing due: marked paid", ApplicationController.helpers.extend(InvoicesHelper).invoice_event_text(paid).to_s[/\ANothing due: marked paid/]
+  end
+
   test "renaming a sent final's tax rate on a revision says only why" do
     approved_quote([ [ "r", "Roof", 1, 1000 ] ], tax: "10")
     job = make(r: 1)

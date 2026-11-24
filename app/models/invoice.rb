@@ -159,8 +159,8 @@ class Invoice < ApplicationRecord
       end
       record!(:sent, by:, channel:, revision:)
       ClientEvent.record!(client, :invoice_sent, subject: self, by:, channel:, revision:) # CLI-05
-      apply_payments!(by:) if status == "sent" && nothing_due? # PAY-08: Paid at once
-      rework_drafts! if progress? # PAY-08: drafts credit what it now charges
+      apply_payments!(by:, nothing_due: true) if status == "sent" && nothing_due? # PAY-08: Paid at once
+      rework_drafts! # PAY-08: the quote's other drafts credit what it now charges and leaves over-billed
       sends.create!(business:, user: by, channel:, recipient:, cc:, revision:)
     end
   end
@@ -396,7 +396,7 @@ class Invoice < ApplicationRecord
   # The amount paid, status and paid time from the payments: Paid once they cover the total
   # (paid_at: then), Partly paid, or back to Sent. Active client links follow (PLT-12): a year
   # after payment once it's paid, no end while it isn't.
-  def apply_payments!(by: nil)
+  def apply_payments!(by: nil, nothing_due: false)
     # PAY-04: refunds and lost disputes don't count as paid. A void invoice stays void; only
     # its amount paid follows (money taken online after it was voided).
     paid_cents = payments.unscope(:order).counted_sum.to_i
@@ -406,7 +406,8 @@ class Invoice < ApplicationRecord
     changed = status != self.status
     assign_attributes(amount_paid_cents: paid_cents, status:, paid_at: (status == "paid" ? (paid_at || Time.current) : nil))
     save!(validate: false)
-    record!({ "paid" => :paid, "partially_paid" => :partially_paid, "sent" => :reopened }.fetch(status), by:) if changed
+    # PAY-08: an invoice with nothing due is marked paid when it's sent; nobody paid it.
+    record!({ "paid" => :paid, "partially_paid" => :partially_paid, "sent" => :reopened }.fetch(status), by: (by unless nothing_due), **(nothing_due ? { nothing_due: true } : {})) if changed
     # CLI-05: paid in full, and no longer (a payment changed or deleted).
     ClientEvent.record!(client, :invoice_paid, subject: self, by:) if changed && status == "paid"
     ClientEvent.record!(client, :invoice_unpaid, subject: self, by:) if changed && status_previously_was == "paid"

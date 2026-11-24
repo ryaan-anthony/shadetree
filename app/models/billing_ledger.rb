@@ -27,7 +27,7 @@ class BillingLedger
     @quote_lines = (quote ? quote.line_items.to_a : []).index_by(&:id)
     @jobs_by_id = @jobs.index_by(&:id)
     @job_lines = JobLineItem.where(job_id: @jobs_by_id.keys).includes(:claim).to_a.index_by(&:id)
-    bills = InvoiceLineItem.where.not(invoice_status: "void").includes(:invoice)
+    bills = InvoiceLineItem.where.not(invoice_status: "void").includes(invoice: %i[line_items revisions]) # what each charged, without a query per invoice
                            .where("invoice_line_items.job_line_item_id IN (:jobs) OR invoice_line_items.quote_line_item_id IN (:quotes)",
                                   jobs: @job_lines.keys.presence || [ 0 ], quotes: @quote_lines.keys.presence || [ 0 ])
     bills = bills.where.not(invoice_id: @except_id) if @except_id
@@ -270,7 +270,7 @@ class BillingLedger
   private
 
   def credit(kind, progress, amount)
-    { kind: kind.to_s, source_invoice_id: progress.invoice_id, source_line_item_id: progress.id, amount_cents: amount, sign: -1,
+    { kind: kind.to_s, source_invoice_id: progress.invoice_id, source_line_item_id: progress.id, amount_cents: amount,
       tax_rates: (progress.taxable ? progress.tax_rates || progress.invoice.tax_rates : []) }
   end
 
