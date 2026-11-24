@@ -16,7 +16,7 @@ screenshots:
 here on their own, and so do the calls, emails and walk-ins you log. Nothing on this page is
 seen by your clients.
 
-![The Requests page: the request form link, Log a request, and each request with its client, status and who's following it up](requests-list)
+![Requests: press Log a request for a call or email, Copy form link to share your form, or open a request](requests-list)
 
 ## Log a call, email or visit
 
@@ -42,7 +42,7 @@ Put it on your website, in your email signature or in a text. Turn the form on o
 
 Open a request to see what they need, their photos and the client's details.
 
-![A request: the client, what they need, Internal notes, and Create quote at the top](request-page)
+![A request: read what they need, add internal notes, then press Create quote](request-page)
 
 - **Mark in progress** shows your team you're on it. **Mark new** puts it back in the pile.
 - **Internal notes**: type in **Add a note** and press **Add note**. Only your team sees notes.

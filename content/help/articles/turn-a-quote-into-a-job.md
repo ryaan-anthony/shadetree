@@ -29,7 +29,7 @@ job is made too.
 
 ## Work through the job
 
-![A job: its work to do, visits, instructions for the crew and invoices, with Schedule visit at the top](job-page)
+![A job: press Schedule visit to book the work, and Complete when it's done](job-page)
 
 - **Schedule visit** books the work on the schedule. See
   [Book visits on the schedule](book-visits-on-the-schedule).

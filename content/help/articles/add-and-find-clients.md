@@ -30,7 +30,7 @@ their quotes and invoices.
 6. Tick **Tax exempt** if no tax should be added to their quotes and invoices.
 7. Press **Add client**.
 
-![Add client: name, how to reach them, properties, tags, notes and Tax exempt](add-client-form)
+![Add client: type their name, how to reach them and their street address, then press Add client](add-client-form)
 
 If the email or phone matches someone you already have, Shadetree shows them before you save,
 so you don't end up with the same client twice.
@@ -46,7 +46,7 @@ Open a client to see their contact details and properties, their **Work** (reque
 jobs and invoices), their **Balance** (what's owed on invoices that are out) and a timeline of
 what's happened.
 
-![A client's page: contact details, properties, work, balance and the timeline](client-page)
+![A client's page: press New quote to quote them, or Edit to change their details](client-page)
 
 - **New quote** starts a quote for them.
 - **Edit** changes their details.

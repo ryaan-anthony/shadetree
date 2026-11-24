@@ -18,7 +18,7 @@ screenshots:
 follow-ups: today first, then what's coming up. Add it to your home screen and it opens like an
 app.
 
-![My day: today's visits and follow-ups with their times and addresses, and what's coming up](my-day)
+![My day: open a visit or follow-up to see where to go and what to do](my-day)
 
 ## Get to the job
 

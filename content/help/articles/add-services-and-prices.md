@@ -14,7 +14,7 @@ screenshots:
 **Services & prices** is the list you pick from when you build a quote or an invoice. Set each
 service up once with its usual price; you can still change the price on any quote.
 
-![Services & prices: your services by category, each with its price and unit](services-list)
+![Services & prices: press Add service to add one, or open a service to change its price](services-list)
 
 ## Add a service
 
@@ -27,7 +27,7 @@ service up once with its usual price; you can still change the price on any quot
 6. Add a **Typical duration (minutes)** if you know it. It helps fill in visit lengths.
 7. Press **Add service**.
 
-![Add a service: name, description for clients, default price, per, category and typical duration](add-a-service)
+![Add a service: fill in the name, description, default price and unit, then press Add service](add-a-service)
 
 ## Start from common services
 

@@ -11,7 +11,7 @@ screenshots:
 
 Your clients see your business details on every quote, invoice and email, so start here.
 
-![Settings, Details: Business profile, Contact details, Address, and Time zone and currency](business-details)
+![Settings, Details: fill in your business profile, contact details, address and time zone, then press Save changes](business-details)
 
 ## Your details
 

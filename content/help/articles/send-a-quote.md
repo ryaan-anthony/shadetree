@@ -17,7 +17,7 @@ screenshots:
 When your quote is ready, press **Send quote** at the top of it. You choose how it gets to your
 client: by email from Shadetree, or by a link you send yourself.
 
-![Email it, on the send page: To, CC, Subject and Message, and Send quote](send-quote-page)
+![Email it: check To, Subject and Message, then press Send quote](send-quote-page)
 
 ## Email it
 
@@ -40,7 +40,7 @@ then **Copy link**, and paste it into your own message. Getting the link marks t
 The link opens your quote with your name, logo and colors. Your client doesn't need an account
 or an app.
 
-![The quote as the client sees it: the work, the total and the buttons to answer](client-quote-page)
+![The quote as your client sees it: they press Approve quote, Ask for changes or Decline quote](client-quote-page)
 
 They can:
 
