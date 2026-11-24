@@ -155,16 +155,35 @@
       <h2 id="badges-h" class="section-title mb-3">Badges and status pills</h2>
       <%= card do %>
         <div class="flex flex-wrap gap-2">
-          <%= badge "Draft" %>
-          <%= badge "Sent", tone: :info %>
-          <%= badge "Approved", tone: :success %>
-          <%= badge "Due soon", tone: :warning %>
-          <%= badge "Overdue", tone: :danger %>
-          <%= badge "Scheduled", tone: :violet %>
+          <%= status_badge(:quote, "draft") %>
+          <%= status_badge(:quote, "sent") %>
+          <%= status_badge(:quote, "approved") %>
+          <%= status_badge(:job, "unscheduled") %>
+          <%= status_badge(:invoice, "overdue") %>
           <%= badge "Owner", tone: :dark, dot: false %>
           <%= badge "No dot", dot: false %>
         </div>
       <% end %>
+      <%# PLT-17: the colour language. Every status pill comes from StatusHelper::MAP. %>
+      <h3 class="mb-2 mt-6 text-sm font-bold text-ink" id="status-map">One colour, one meaning</h3>
+      <p class="mb-3 max-w-prose text-sm2 text-muted">A tone means the same thing everywhere, and every status pill takes its tone from
+        <code>StatusHelper::MAP</code> with <code>status_badge</code>. A pill always says its status in words, so colour is never the
+        only signal. A pill without a dot is a label (a tag, a role), not a status.</p>
+      <div class="grid gap-3 md:grid-cols-2">
+        <% StatusHelper::MEANINGS.each do |tone, meaning| %>
+          <%= card do %>
+            <p class="mb-2 flex items-center gap-2"><%= badge tone.to_s.capitalize, tone:, dot: false %><span class="font-semibold text-ink"><%= meaning %></span></p>
+            <dl class="grid grid-cols-[9rem_1fr] gap-x-3 gap-y-1.5 text-sm2" data-tone="<%= tone %>">
+              <% StatusHelper::MAP.each do |type, statuses| %>
+                <% here = statuses.select { |_, (t, _)| t == tone } %>
+                <% next if here.empty? %>
+                <dt class="text-muted"><%= StatusHelper::TYPE_NAMES.fetch(type) %></dt>
+                <dd class="flex flex-wrap gap-1"><% here.each_key do |status| %><%= status_badge(type, status) %><% end %></dd>
+              <% end %>
+            </dl>
+          <% end %>
+        <% end %>
+      </div>
     </section>
 
     <section id="cards" aria-labelledby="cards-h">

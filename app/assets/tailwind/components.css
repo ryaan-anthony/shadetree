@@ -543,11 +543,12 @@
   .quota-link { flex-shrink: 0; font-weight: 600; color: var(--color-leaf); text-decoration: underline; text-underline-offset: 2px; }
   .quota-link:hover { color: #fff; }
   .quota-bar { margin-top: 0.5rem; height: 0.375rem; overflow: hidden; border-radius: 999px; background: var(--color-side-line); outline: 1px solid #334155; }
-  .quota-bar > span { display: block; height: 100%; border-radius: 999px; background: var(--color-leaf); }
-  .quota-approaching > span { background: var(--color-shadetree-yellow); }
-  .quota-blocked > span { background: var(--color-shadetree-red); }
-  .quota-approaching ~ .quota-text .quota-state { color: var(--color-warning-100); font-weight: 600; }
-  .quota-blocked ~ .quota-text .quota-state { color: var(--color-danger-100); font-weight: 600; }
+  /* PLT-17: the fill is the colour map's tone for the state: neutral, warning when nearly used, danger at the limit. */
+  .quota-bar > span { display: block; height: 100%; border-radius: 999px; background: var(--color-faint); }
+  .quota-tone-warning > span { background: var(--color-shadetree-yellow); }
+  .quota-tone-danger > span { background: var(--color-shadetree-red); }
+  .quota-tone-warning ~ .quota-text .quota-state { color: var(--color-warning-100); font-weight: 600; }
+  .quota-tone-danger ~ .quota-text .quota-state { color: var(--color-danger-100); font-weight: 600; }
   .biz-switch {
     display: flex;
     align-items: center;

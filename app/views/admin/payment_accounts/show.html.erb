@@ -3,14 +3,13 @@
 <% content_for :title, "Payments" %>
 <%= render "admin/businesses/settings_header", current: "payments" %>
 <% owner = can?(:billing) %>
-<% tones = { "active" => :success, "pending_verification" => :info, "onboarding_incomplete" => :warning, "restricted" => :danger } %>
 
 <div class="form-split space-y-4">
   <%= card title: "Card payments", subtitle: "Clients pay invoices by card, Apple Pay or Google Pay from their invoice link. The money goes straight to your own Stripe account.", id: "payment-account" do %>
     <% if @account %>
       <div class="flex flex-wrap items-center gap-2" id="payment-status">
         <span class="text-sm text-subtle">Stripe account</span>
-        <%= badge @account.status_label, tone: tones.fetch(@account.status) %>
+        <%= status_badge(:payment_account, @account.status) %>
       </div>
       <% case @account.status %>
       <% when "active" %>

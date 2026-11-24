@@ -1,8 +1,6 @@
 module JobsHelper
-  JOB_STATUS_TONES = { "unscheduled" => :warning, "scheduled" => :info, "in_progress" => :info,
-                       "completed" => :success, "cancelled" => :neutral }.freeze
-
-  def job_status_badge(job) = badge(job.status_label, tone: JOB_STATUS_TONES.fetch(job.status))
+  def job_status_badge(job) = status_badge(:job, job.status)
+  def visit_status_badge(visit) = status_badge(:visit, visit.status)
 
   # CAT-07: " MST" after a time on My day when the work is in another zone than the business's
   # (My day names the business's zone once at the top).

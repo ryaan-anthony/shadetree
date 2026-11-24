@@ -306,6 +306,22 @@ class Admin::DesignSystemTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # PLT-17: a pill with a dot is a status, so it comes from the colour map (status_badge names
+  # its entry in data-status) with the map's tone, and says its status in words. Pills without
+  # a dot are labels (tags, roles, "Default"). The operator console keeps its own statuses.
+  def badge_tone(node) = (classes(node).grep(/\Abadge-(?!plain)/).first || "badge-neutral").delete_prefix("badge-").to_sym
+
+  check :status_pills_follow_the_map, if: ->(page) { !page.ops? } do |_page, html|
+    html.css(".badge").reject { classes(_1).include?("badge-plain") }.filter_map do |pill|
+      type, status = pill["data-status"].to_s.split(":", 2)
+      next "#{pill.text.squish.inspect} is a status pill not from the map (use status_badge)" unless status
+      next "#{pill["data-status"]} has no words" if pill.text.squish.empty?
+
+      tone = StatusHelper::MAP.dig(type.to_sym, status)&.first
+      "#{pill["data-status"]} is #{badge_tone(pill)}, the map says #{tone.inspect}" unless badge_tone(pill) == tone
+    end
+  end
+
   setup do
     @business = businesses(:one)
     @owner = users(:one)

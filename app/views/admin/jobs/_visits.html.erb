@@ -16,7 +16,7 @@
           </div>
           <div class="min-w-0 flex-1">
             <p class="font-medium text-ink"><%= visit.scheduled_on.strftime("%A") %>, <%= visit.time_label.sub(/\AArrive/, "arrive").sub("Anytime", "anytime") %>
-              <% unless visit.status == "scheduled" %><%= badge visit.status_label, tone: { "in_progress" => :info, "completed" => :success, "cancelled" => :neutral }.fetch(visit.status) %><% end %></p>
+              <% unless visit.status == "scheduled" %><%= visit_status_badge(visit) %><% end %></p>
             <p class="text-sm2 text-muted">About <%= visit.duration_label %> · <%= visit.assignees.any? ? visit.assignees.map(&:full_name).to_sentence : "Not assigned" %></p>
             <% if visit.instructions %><p class="mt-1 whitespace-pre-line text-sm2 text-subtle"><%= visit.instructions %></p><% end %>
             <% if visit.cancel_reason %><p class="mt-1 text-sm2 text-subtle">Cancelled: “<%= visit.cancel_reason %>”</p><% end %>

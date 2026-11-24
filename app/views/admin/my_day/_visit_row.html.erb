@@ -9,7 +9,7 @@
       <span class="block truncate text-sm2 text-subtle"><%= job.title %> · about <%= visit.duration_label %></span>
     </span>
     <% unless visit.status == "scheduled" %>
-      <%= badge visit.status_label, tone: { "in_progress" => :info, "completed" => :success, "cancelled" => :neutral }.fetch(visit.status) %>
+      <%= visit_status_badge(visit) %>
     <% end %>
     <%= icon "chevron-right", class: "mt-1 size-4 shrink-0 text-faint" %>
   <% end %>

@@ -39,7 +39,7 @@
                 <span class="text-right text-sm"><span class="money font-semibold text-ink"><%= money(invoice.outstanding? ? invoice.balance : invoice.total) %></span><span class="block text-sm2 text-muted"><%= invoice.outstanding? ? "due" : "total" %></span></span>
               </span>
               <span class="mt-0.5 block truncate text-sm2 text-muted"><%= invoice.number %><%= " · #{invoice.title}" if invoice.title %><%= location_badge(invoice) %></span>
-              <span class="mt-1.5 flex flex-wrap items-center gap-1.5 text-sm2 text-muted"><%= invoice_status_badge(invoice) %><%= badge "Email not delivered", tone: :danger if invoice.undelivered_email %>
+              <span class="mt-1.5 flex flex-wrap items-center gap-1.5 text-sm2 text-muted"><%= invoice_status_badge(invoice) %><%= status_badge(:email, "not_delivered") if invoice.undelivered_email %>
                 <span class="ml-auto">Due <%= local_date(invoice.due_on) %></span></span>
             <% end %>
           </li>
@@ -58,7 +58,7 @@
             <tr id="invoice-<%= invoice.uid %>">
               <td><%= link_to invoice.number, staff_invoice_path(invoice), class: "primary hover:underline", data: { turbo_frame: "_top" } %><span class="sub"><%= invoice.title %><%= location_badge(invoice) %></span></td>
               <td><%= invoice.client.display_name %></td>
-              <td><span class="flex flex-wrap items-center gap-1"><%= invoice_status_badge(invoice) %><%= badge "Email not delivered", tone: :danger if invoice.undelivered_email %></span></td>
+              <td><span class="flex flex-wrap items-center gap-1"><%= invoice_status_badge(invoice) %><%= status_badge(:email, "not_delivered") if invoice.undelivered_email %></span></td>
               <td class="whitespace-nowrap text-sm2 text-subtle"><%= local_date(invoice.due_on) %></td>
               <td class="money num"><%= money(invoice.total) %></td>
               <td class="money num"><%= invoice.outstanding? ? money(invoice.balance) : "—" %></td>

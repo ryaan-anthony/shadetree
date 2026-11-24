@@ -52,9 +52,9 @@
                 <td class="text-sm2"><%= safe_join(client.contact_methods.map { _1.value.truncate(60) }, tag.br) %></td>
                 <td class="text-sm2"><% if (property = client.properties.first) %><%= [ property.address_line1, property.city, property.region, property.postal_code ].compact_blank.join(", ").truncate(120) %><% end %></td>
                 <td>
-                  <% if problems.any? %><span class="badge badge-danger" title="<%= problems.to_sentence %>">Won't import</span><p class="mt-1 text-sm2 text-danger"><%= problems.to_sentence %></p>
-                  <% elsif duplicates.any? %><span class="badge badge-warning">Matches <%= duplicates.first.display_name %></span>
-                  <% else %><span class="badge badge-success">New</span><% end %>
+                  <% if problems.any? %><%= status_badge(:client_import_row, "invalid", title: problems.to_sentence) %><p class="mt-1 text-sm2 text-danger"><%= problems.to_sentence %></p>
+                  <% elsif duplicates.any? %><%= status_badge(:client_import_row, "duplicate", "Matches #{duplicates.first.display_name}") %>
+                  <% else %><%= status_badge(:client_import_row, "new") %><% end %>
                 </td>
               </tr>
             <% end %>

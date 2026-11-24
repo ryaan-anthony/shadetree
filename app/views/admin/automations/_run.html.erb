@@ -7,7 +7,7 @@
       <span class="font-semibold"><%= run.rule_name %></span>
       <% if show_rule %><span class="text-muted">for</span> <%= automation_run_subject(run) %><% end %>
     </p>
-    <% unless show_rule %><p class="mt-1"><%= badge automation_run_status(run), tone: automation_run_tone(run.status) %></p><% end %>
+    <% unless show_rule %><p class="mt-1"><%= automation_run_badge(run) %></p><% end %>
     <% if run.log.is_a?(Array) && run.log.any? %>
       <ul class="mt-1 space-y-0.5 text-sm2 text-muted">
         <% run.log.each do |entry| %>
@@ -19,5 +19,5 @@
       <% if run.status == "scheduled" %>Runs <%= local_time(run.run_at) %>, if it still applies.<% else %>Started <%= local_time_ago(run.created_at) %><% end %>
     </p>
   </div>
-  <% if show_rule %><%= badge automation_run_status(run), tone: automation_run_tone(run.status) %><% end %>
+  <% if show_rule %><%= automation_run_badge(run) %><% end %>
 </li>

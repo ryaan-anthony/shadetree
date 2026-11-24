@@ -46,18 +46,7 @@ module AutomationsHelper
     end
   end
 
-  def automation_run_tone(status)
-    { "done" => :success, "skipped" => :neutral, "failed" => :danger, "scheduled" => :info }.fetch(status, :neutral)
-  end
-
-  def automation_run_status(run)
-    case run.status
-    when "scheduled" then "Waiting"
-    when "done" then "Done"
-    when "skipped" then "Skipped"
-    when "failed" then "Didn't finish"
-    end
-  end
+  def automation_run_badge(run) = status_badge(:automation_run, run.status)
 
   # The record a run was about, linked where staff can see it.
   def automation_run_subject(run)
