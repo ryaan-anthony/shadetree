@@ -16,6 +16,8 @@ module EmailCatalog
     [ "visit_changed", "Visit moved (or several changes)", "Client", "Staff move a visit, or make mixed changes", "JOB-05", true ],
     [ "visit_cancelled", "Visit cancelled", "Client", "Staff cancel a visit or its job", "JOB-05", true ],
     [ "visit_reminder", "Visit reminder", "Client", "The day before a visit", "JOB-05", true ],
+    [ "visit_on_the_way", "On my way", "Client", "Someone going on a visit taps On my way", "JOB-12", true ],
+    [ "visit_on_the_way_update", "Updated arrival time", "Client", "The arrival time changes by 10+ minutes from the one emailed", "JOB-12", true ],
     [ "visit_assigned", "Visit assigned / changed", "Technician", "A visit is assigned or changed", "JOB-02", false ],
     [ "invoice_sent", "Invoice sent", "Client", "Staff send an invoice", "PAY-02", true ],
     [ "payment_receipt", "Payment receipt", "Client", "A payment succeeds, or staff record one and choose to send it", "PAY-04, PAY-05", true ],

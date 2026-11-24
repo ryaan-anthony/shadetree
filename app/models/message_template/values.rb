@@ -28,6 +28,13 @@ module MessageTemplate::Values
 
   def visit(job, when_label) = client(job.client).merge(business(job.business)).merge("visit_window" => when_label.to_s)
 
+  # JOB-12: "Marcus and Dee are on the way" (or the business's name) and "about 11:15 am".
+  def on_the_way(visit, arrives_at: visit.on_the_way_arrives_at || 30.minutes.from_now)
+    names = visit.on_the_way_team.map(&:client_first_name)
+    { "on_the_way" => "#{names.any? ? names.to_sentence : visit.business.name} #{names.size > 1 ? "are" : "is"} on the way",
+      "arrival_time" => "about #{visit.on_the_way_time_label(OnTheWay.round_to_five(arrives_at))}" }
+  end
+
   def request(request) = client(request.client, name: request.contact_name).merge(business(request.business))
 
   # The values for a real record, for the editor's preview (and manual sends).
@@ -35,7 +42,7 @@ module MessageTemplate::Values
     values = case record
     when Quote then quote(record).merge("signer_name" => record.approval&.signer_name.to_s)
     when Invoice then invoice(record)
-    when Visit then visit(record.job, record.when_label)
+    when Visit then visit(record.job, record.when_label).merge(on_the_way(record))
     when ServiceRequest then request(record)
     else raise ArgumentError, "No message values for #{record.class}"
     end

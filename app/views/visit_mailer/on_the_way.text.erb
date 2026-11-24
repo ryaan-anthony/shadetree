@@ -1,0 +1,12 @@
+<%= @intro %>
+
+<%= @headline %>.
+
+Your visit: <%= @visit.when_label %>
+<%= @job.title %><%= " - #{@job.property.one_line}" if @job.property %>
+<% @team.each do |member| %>
+<%= [ member.client_first_name, member.title, member.work_phone.presence ].compact.join(" - ") %>
+<% end %>
+<% if (@team.empty? || @team.any? { _1.work_phone.blank? }) && @contact.contact_phone.present? %>Need to reach us? Call <%= @contact.contact_phone %>.
+<% end %>
+See your visit: <%= client_link_url(@link.token) %>
