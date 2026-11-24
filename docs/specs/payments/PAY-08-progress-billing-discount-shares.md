@@ -69,13 +69,13 @@ each invoice takes; what isn't used carries forward, and the last invoice takes 
   the next invoice (owner, 2026-11-22).
 - A re-taxed job: the discount comes off the lines charged and lowers tax at their actual rates;
   the client gets all of it, and the tax total may differ from the quote's (owner, 2026-11-23).
-- A staff discount on the last final leaving too little for the rest of the quote's: sending is
-  refused until staff lower it, saying how much is left, as for progress (owner, 2026-11-23).
+- A staff discount on the last final leaving too little for the rest of the quote's discount
+  blocks sending until staff lower it, saying what's left (owner, 2026-11-23).
 - Shortfall: the discount scales to the quoted value billed; the rest is "not used" (owner,
   2026-11-23). Applied past it already: the last invoice charges the extra back, "Quote discount
   adjusted for work not done +$X", at the rates it came off. More left than the last invoice
   charges: it takes what fits, down to $0, and the rest is over-billed, owed to the client.
-  Neither blocks sending (owner, 2026-11-24).
+  Neither blocks sending; with a staff discount too, staff lower theirs first (owner, 2026-11-24).
 - A final deducts only the net a progress invoice charged (unpaid too, which stays owed);
   progress never charges a line more than the final would. Clients see "Credit from INV-0004"
   with tax; staff figures include tax (owner, 2026-11-23).
