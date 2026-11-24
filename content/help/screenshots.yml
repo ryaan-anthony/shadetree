@@ -14,6 +14,9 @@ assign-follow-up:
 automations:
   digest: f8102a896fd10a8e19c335a261659e8bf7f7b462af190396087a2ce113b84683
   captured_on: '2026-11-24'
+branding:
+  digest: 6a07aa14e55f5a6d09ea2262cb1bf7f4a4dacc7e302ffe0bcdca5e83b17ecf77
+  captured_on: '2026-11-24'
 business-details:
   digest: 2f55dbebab904f74747f345919236ad6bcb4a0548eb823b2490232d0821a0624
   captured_on: '2026-11-24'
@@ -22,6 +25,9 @@ client-page:
   captured_on: '2026-11-24'
 client-quote-page:
   digest: c51f43811d9f3419bc067a732fb95405a519c67153abfad58bf11dc8b697f1f3
+  captured_on: '2026-11-24'
+email-settings:
+  digest: 9157fca59691add56268f62e6c6f41d50b0cb8bd475f28e4027038d2be6806cf
   captured_on: '2026-11-24'
 emails-to-clients:
   digest: 9e4eee82da3ec1754186974b55ea8d4643c2d17d62aedcb12ae676f394a064de
@@ -44,6 +50,12 @@ invoice-sent:
 job-page:
   digest: 62d0592fc74cb9a5d9531c76698e2760db9a7a6b9a8c9ad370dc3a3f47f03263
   captured_on: '2026-11-24'
+location-prices:
+  digest: 1d15f80ab4cff1491271c31d3d74fbd79c3e1a5ae687764e47a52fd6ca202a2f
+  captured_on: '2026-11-24'
+locations-list:
+  digest: c90054e7e825cfcdf5b34cb676b368e58239ad62d6f92ea9b79fb31526634859
+  captured_on: '2026-11-24'
 my-day:
   digest: 99d4e98669ac7266e260f7aa7ac108878f8242a4af5a261b7c28d9d7f0a87455
   captured_on: '2026-11-24'
@@ -52,6 +64,9 @@ my-day-request:
   captured_on: '2026-11-24'
 my-visit:
   digest: 5e07847e11dbb8e48add2b1c980fa01d9aa415726938f59998506efa8d94c18f
+  captured_on: '2026-11-24'
+notifications:
+  digest: 1320d110ec5f9091d326c5192e644dc09c3ddf436b0c5fbcd497d11933832ec0
   captured_on: '2026-11-24'
 plan-page:
   digest: 86228dcbb70d5602084190bfc659b828e38bd25c5441abcdeea74fff20c30433
@@ -64,6 +79,9 @@ quote-ready-for-review:
   captured_on: '2026-11-24'
 record-a-payment:
   digest: 6cd173e2009f1b62f6023519579895bc96b04435f757fd56ce6cfab8088e4c9d
+  captured_on: '2026-11-24'
+request-form-settings:
+  digest: 54bf6421207a2df4f1f3f82d5688d80ef6102a5ed9c2e58828c967d055731b09
   captured_on: '2026-11-24'
 request-page:
   digest: 6ce4fb45f3ac060085312229f7068cabfcd553a9e8bce715d3d4a610e6b498b6
