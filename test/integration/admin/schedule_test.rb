@@ -51,6 +51,7 @@ class Admin::ScheduleTest < ActionDispatch::IntegrationTest
   end
 
   test "the week shows visits by time with who, where and what; anytime ones in their own row; cancelled ones aren't shown" do
+    travel_to @business.local_time(@monday, "12:00") # on the Monday, so the agenda doesn't fold it away as past
     week
     assert_select "h1", "Schedule"
     assert_select ".page-lede", /\ANovember 23 – 29, 2026 · Week view/
