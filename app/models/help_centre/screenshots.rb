@@ -17,6 +17,7 @@ module HelpCentre::Screenshots
   COMMAND = "bin/help-screenshots"
   MAX_BYTES = 200_000
   PASSWORD = "shadetree-demo-1"
+  PUBLIC_HOST = "getshadetree.com"
   # Who's signed in, by the front matter's `as:` (the demo users in db/seeds/development.rb).
   USERS = { "owner" => "owner@example.com", "admin" => "admin@example.com", "technician" => "tech@example.com",
             "new" => "new@example.com" }.freeze
@@ -97,7 +98,8 @@ module HelpCentre::Screenshots
       # your own, automations); Starter's limits would show "upgrade" notices instead.
       Business.find_by!(name: BUSINESS).update!(plan: Plan.find_by!(key: "pro"))
       User.update_all(tips_off: true)
-      BusinessUser.update_all(tour_status: "finished", tour_offered_at: Time.current, tour_ended_at: Time.current)
+      BusinessUser.update_all(tour_status: "finished", tour_offered_at: Time.current, tour_ended_at: Time.current,
+                              welcome_dismissed_at: Time.current) # and My day's welcome, so it covers nothing
       yield
     end
   end
@@ -176,8 +178,15 @@ module HelpCentre::Screenshots
   # Headless Chrome on the app, served in this process (as system tests are), so it sees the
   # same database and the same stopped clock.
   class Browser
+    # Links in the pictures (a request form's address, a client link) show the real site, not the
+    # capture's local server. Only in the capturing process; redirects to paths aren't affected.
+    module PublicHost
+      def default_url_options = super.merge(host: HelpCentre::Screenshots::PUBLIC_HOST, protocol: "https", port: nil)
+    end
+
     def capture(shots)
       require "capybara"
+      ApplicationController.prepend(PublicHost) unless ApplicationController < PublicHost
       Capybara.server = :puma, { Silent: true }
       server = Capybara::Server.new(Rails.application).boot
       base = "http://#{server.host}:#{server.port}"
@@ -210,9 +219,14 @@ module HelpCentre::Screenshots
       page.command("Emulation.setEmulatedMedia", features: [ { name: "prefers-reduced-motion", value: "reduce" } ])
       page.go_to(url)
       page.network.wait_for_idle(timeout: 10)
-      50.times { break if page.evaluate("document.fonts.status") == "loaded" && page.at_css("html[data-controllers-loaded]") && sleep(0.2) }
+      50.times do
+        break if page.evaluate("document.fonts.status") == "loaded" && page.at_css("html[data-controllers-loaded]")
+
+        sleep 0.2
+      end
       raise "#{shot.name}: #{url} went to #{page.current_url}" unless page.current_url == url
       raise "#{shot.name}: no #{shot.region} at #{url}" unless page.at_css(shot.region)
+      raise "#{shot.name}: shows the capture's local address" if page.at_css(shot.region).text.match?(/127\.0\.0\.1|localhost/)
 
       # Chrome paints only what's in the window: make it as tall as the page, so a long region
       # is captured whole.

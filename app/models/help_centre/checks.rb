@@ -60,7 +60,7 @@ module HelpCentre::Checks
 
   def brands(library)
     library.articles.flat_map do |article|
-      [ article.title, article.summary, article.body ].join("\n").scan(HelpCentre::BRANDS).uniq.map { "#{article.slug}: names #{_1}; say what it does instead" }
+      [ article.title, article.summary, article.body ].join("\n").scan(HelpCentre::BRANDS).map(&:squish).uniq.map { "#{article.slug}: names #{_1}; say what it does instead" }
     end
   end
 

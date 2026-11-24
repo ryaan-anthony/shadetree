@@ -60,8 +60,9 @@ bin/help-screenshots --check  # what CI runs: says which are out of date, change
 
 It uses its own database, `shadetree_test_help`. If `DATABASE_URL` is set, it uses the database
 that names with `_help` added to its name (`postgres:///x?application_name=dev` becomes
-`x_help`), or `HELP_DATABASE_URL` if you set it, whose name must end in `_help`. It refuses
-anything else before dropping anything. The database is wiped and filled with the demo data on
+`x_help`), or `HELP_DATABASE_URL` if you set it, whose name must end in `_help`. A URL whose
+query names a database (`?database=…` or `?dbname=…`) is refused, and so is anything Rails would
+resolve to a name without `_help`, before anything is dropped. The database is wiped and filled with the demo data on
 every run, so it never touches your development data. It writes the pictures to
 `app/assets/images/help/` and their records to `content/help/screenshots.yml`. Commit both.
 

@@ -51,7 +51,7 @@ module HelpCentre
   # does ("your card payment provider"), not whose it is. The app's own wording, and so the
   # screenshots of it, stay as they are (spec Decisions, 2026-11-24). Case-sensitive, whole
   # words: "apple trees" and "chrome trim" are fine.
-  BRANDS = /\b(?:Stripe|WhatsApp|Apple Pay|Google Pay|Google|iPhone|Android|Microsoft|Excel|QuickBooks|Facebook|Instagram|Mastercard|Visa)\b/
+  BRANDS = /\b(?:Stripe|WhatsApp|Apple\s+Pay|Google\s+Pay|Google|PayPal|Venmo|Zelle|Gmail|Outlook|iPhone|Android|Chrome|Safari|Microsoft|Excel|QuickBooks|Facebook|Instagram|Mastercard|Visa)\b/
   TOPIC = /\A[a-z0-9_]+\z/
   FIELDS = %w[title summary category topics reviewed screenshots].freeze
   SCREENSHOT_FIELDS = %w[name path as region].freeze

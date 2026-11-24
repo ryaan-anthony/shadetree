@@ -20,6 +20,19 @@ class HelpScreenshotsDatabaseTest < ActiveSupport::TestCase
     assert_raises(HelpScreenshotsDatabase::Refused) { url(nil, "postgres:///production") }
   end
 
+  test "refuses a query string that names another database, which Rails would use instead" do
+    error = assert_raises(HelpScreenshotsDatabase::Refused) { url("postgres:///x?database=junk2") }
+    assert_includes error.message, "database"
+    assert_raises(HelpScreenshotsDatabase::Refused) { url("postgres:///x?application_name=a&dbname=junk2") }
+    assert_raises(HelpScreenshotsDatabase::Refused) { url(nil, "postgres:///mine_help?database=junk2") }
+    assert_raises(HelpScreenshotsDatabase::Refused) { url(nil, "postgres:///mine_help?dbname=production") }
+  end
+
+  test "checks the name Rails resolves, not just the path" do
+    assert_equal "shadetree_test_help", ActiveRecord::DatabaseConfigurations::UrlConfig.new("test", "primary", url(nil), {}).database
+    assert_equal "x_help", ActiveRecord::DatabaseConfigurations::UrlConfig.new("test", "primary", url("postgres:///x?application_name=dev"), {}).database
+  end
+
   test "refuses what isn't a PostgreSQL URL naming a database" do
     [ "mysql://h/x", "postgres://host/", "postgres:///", "not a url at all", "postgres:///a;drop" ].each do |bad|
       assert_raises(HelpScreenshotsDatabase::Refused, bad) { url(bad) }

@@ -16,7 +16,7 @@ cd "$(dirname "$0")/.."
 export RAILS_ENV=test
 # The name is worked out in Ruby (lib/help_screenshots_database.rb), which refuses anything but a
 # database whose own name ends in _help, before anything is dropped.
-DATABASE_URL="$(ruby lib/help_screenshots_database.rb)" || exit 1
+DATABASE_URL="$(bundle exec ruby lib/help_screenshots_database.rb)" || exit 1
 export DATABASE_URL
 export DISABLE_DATABASE_ENVIRONMENT_CHECK=1
 

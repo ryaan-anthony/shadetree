@@ -25,8 +25,10 @@ concurrency:
 jobs:
   capture:
     name: Capture help screenshots
-    # Never on the default branch: pictures go through a pull request like any other change.
+    # Only on a branch (not a tag), and never the default branch: pictures go through a pull
+    # request like any other change.
     if: >-
+      (github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/')) &&
       (github.head_ref || github.ref_name) != github.event.repository.default_branch &&
       (github.event_name == 'workflow_dispatch' || (github.event.label.name == 'help screenshots' && github.event.pull_request.head.repo.full_name == github.repository))
     runs-on: ubuntu-24.04

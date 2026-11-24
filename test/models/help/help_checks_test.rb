@@ -69,11 +69,12 @@ class HelpChecksTest < ActiveSupport::TestCase
     dir = Pathname(Dir.mktmpdir).tap { _1.join("articles").mkpath }
     FileUtils.cp(HelpLibraryHelpers::FIXTURES.join("topics.yml"), dir)
     dir.join("articles/pay.md").write("---\ntitle: Get paid by card\nsummary: Online.\ncategory: invoices-payments\ntopics: []\nreviewed: 2026-11-24\n---\n" \
-                                      "Connect your Stripe account.\n\n![Press Pay with Apple Pay](x.webp)\n")
+                                      "Connect your Stripe account.\n\n![Press Pay with Apple Pay](x.webp)\n\nOr pay by Google\nPay, or Venmo.\n")
     dir.join("articles/trees.md").write("---\ntitle: Prune apple trees\nsummary: An outlook for spring.\ncategory: services-prices\ntopics: []\nreviewed: 2026-11-24\n---\n" \
                                         "Polish the chrome trim, then excel at edging.\n")
     use_help_library(dir)
-    assert_equal [ "pay: names Stripe; say what it does instead", "pay: names Apple Pay; say what it does instead" ], HelpCentre::Checks.brands(HelpCentre.library)
+    assert_equal [ "Stripe", "Apple Pay", "Google Pay", "Venmo" ].map { "pay: names #{_1}; say what it does instead" }, HelpCentre::Checks.brands(HelpCentre.library),
+                 "case-sensitive whole words, across line breaks; the trees article passes"
   ensure
     FileUtils.rm_rf(dir) if dir
   end
