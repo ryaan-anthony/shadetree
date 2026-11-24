@@ -78,6 +78,7 @@ export default class extends Controller {
     const move = { ArrowDown: index + 1, ArrowUp: index - 1, Home: 0, End: items.length - 1 }[event.key]
     if (event.key === "Escape") {
       event.preventDefault()
+      event.stopPropagation() // Escape closes the innermost layer only (a menu in the drawer)
       this.close()
       this.buttonTarget.focus()
     } else if (move !== undefined && items.length) {

@@ -126,6 +126,29 @@ class StaffShellTest < ApplicationSystemTestCase
     assert tabs_reach_sidebar?, "the desktop sidebar's links can't be reached"
   end
 
+  test "Back doesn't bring back an open drawer; a scrim click returns focus to the toggle" do
+    page.current_window.resize_to(390, 844)
+    visit admin_root_path
+    find("button[aria-label='Open navigation']").click
+    within("#app-sidebar") { click_link "Clients" }
+    assert_selector "h1", text: "Clients"
+    page.go_back
+    assert_selector "#app-sidebar[inert]:not([data-open='true'])", visible: :all
+    assert_selector ".side-scrim", visible: :hidden
+
+    find("button[aria-label='Open navigation']").click
+    assert_selector "#app-sidebar[data-open='true']"
+    # Click the scrim right of the drawer once the drawer has finished sliding in.
+    Timeout.timeout(Capybara.default_max_wait_time) do
+      sleep 0.05 until evaluate_script("document.elementFromPoint(370, 300)?.classList.contains('side-scrim') && document.querySelector('#app-sidebar').getBoundingClientRect().left >= 0")
+    end
+    page.driver.browser.action.move_to_location(370, 300).click.perform # the scrim, right of the drawer
+    assert_selector "#app-sidebar[inert]", visible: :all
+    assert_equal "Open navigation", evaluate_script("document.activeElement.getAttribute('aria-label')")
+  ensure
+    page.current_window.resize_to(1400, 1400)
+  end
+
   test "desktop shows the sidebar with the business switcher" do
     page.current_window.resize_to(1400, 1400)
     visit admin_root_path
@@ -159,10 +182,15 @@ class StaffShellTest < ApplicationSystemTestCase
   private
 
   # Presses Tab up to `presses` times; true once focus lands on a link or button in the sidebar.
-  def tabs_reach_sidebar?(presses: 40)
-    presses.times.any? do
+  # Tabs once round the whole page (until focus comes back to where it started), so the check
+  # doesn't depend on how many controls the page has.
+  def tabs_reach_sidebar?(limit: 300)
+    start = evaluate_script("document.activeElement")
+    limit.times do |i|
       page.driver.browser.action.send_keys(:tab).perform
-      evaluate_script("!!document.activeElement?.closest('#app-sidebar') && document.activeElement.matches('a, button')")
+      return true if evaluate_script("!!document.activeElement?.closest('#app-sidebar') && document.activeElement.matches('a, button')")
+      return false if i.positive? && evaluate_script("document.activeElement") == start
     end
+    flunk "Tab didn't come back round in #{limit} presses"
   end
 end
