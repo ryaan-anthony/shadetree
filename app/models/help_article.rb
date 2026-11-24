@@ -36,12 +36,14 @@ class HelpArticle < ApplicationRecord
   def self.current?(library = HelpCentre.library) = (library.articles.map { [ _1.slug, _1.digest ] } - pluck(:slug, :digest)).empty?
   def self.ensure_current!(library = HelpCentre.library) = (sync!(library, delete: false) unless current?(library))
 
-  # At boot, in the web server only: tasks and the asset build may run without the database.
+  # At boot, in the web server only (`rails server`, or Puma as the image runs it): tasks and
+  # the asset build may run without the database. Never stops the server from starting: a help
+  # page syncs again before it's shown.
   def self.sync_at_boot
-    return unless defined?(Rails::Server) || defined?(::Puma::Server)
+    return unless defined?(Rails::Server) || File.basename($PROGRAM_NAME).start_with?("puma")
 
     Rails.application.executor.wrap { sync! }
-  rescue ActiveRecord::ActiveRecordError => error
+  rescue ActiveRecord::ActiveRecordError, HelpCentre::InvalidArticle => error
     Rails.logger.warn("[help] articles not synced at boot: #{error.class}")
   end
 end

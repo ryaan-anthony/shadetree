@@ -115,6 +115,9 @@ jobs:
         run: bin/rails db:test:prepare
       - name: Unit and integration tests
         run: bin/rails test
+      # OPS-06: fails when a help screenshot shows a screen that changed since its capture.
+      - name: Help screenshots are current
+        run: bin/help-screenshots --check
       - name: Coverage summary
         if: always()
         run: |

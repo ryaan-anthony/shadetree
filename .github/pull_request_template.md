@@ -21,6 +21,7 @@
 - [ ] UI checked at 360 px; empty and error states handled (screenshots below)
 - [ ] No secrets or personal data in code, logs, fixtures or screenshots
 - [ ] Spec updated if scope or a decision changed (`script/plan/lint` passes)
+- [ ] Does this change a screen an article describes? Recapture it (`bin/help-screenshots`), re-read the article and update its `reviewed` date; a new feature gets its help article
 
 ## Screenshots
 

@@ -8,9 +8,12 @@
 #   topics: [send]                   # the help topics it explains (content/help/topics.yml)
 #   reviewed: 2026-11-23             # when it was last checked against the screens
 #   screenshots:                     # the pictures it shows (HelpScreenshots captures them)
-#     - name: send-quote
+#     - name: send-quote               # its files: send-quote-1280.webp and send-quote-390.webp
 #       path: /admin/quotes/:quote/send/new
-#       quote: Spring cleanup
+#       quote: Spring cleanup          # the demo record for :quote (HelpCentre::Screenshots::RECORDS)
+#       region: "#send-form"           # what's captured (default: main)
+#       as: owner                      # who's signed in: owner (default), admin, technician, or
+#                                      # new (the owner of the new, empty demo business)
 #   ---
 #
 # The files go live with the deploy: HelpArticle.sync! copies them into a table at boot for
@@ -44,14 +47,19 @@ module HelpCentre
   }.freeze
 
   SLUG = /\A[a-z0-9-]+\z/
+  # Articles (their words and alt text) don't name other companies' products: say what a thing
+  # does ("your card payment provider"), not whose it is. The app's own wording, and so the
+  # screenshots of it, stay as they are (spec Decisions, 2026-11-24). Case-sensitive, whole
+  # words: "apple trees" and "chrome trim" are fine.
+  BRANDS = /\b(?:Stripe|WhatsApp|Apple Pay|Google Pay|Google|iPhone|Android|Microsoft|Excel|QuickBooks|Facebook|Instagram|Mastercard|Visa)\b/
   TOPIC = /\A[a-z0-9_]+\z/
   FIELDS = %w[title summary category topics reviewed screenshots].freeze
-  SCREENSHOT_FIELDS = %w[name path as region scroll].freeze
+  SCREENSHOT_FIELDS = %w[name path as region].freeze
   # Placeholders a screenshot's path may use, each filled from a demo record named in the same
   # entry (`quote: Spring cleanup`): see HelpScreenshots::RECORDS.
   PLACEHOLDER = /:([a-z_]+)/
 
-  Screenshot = Data.define(:name, :path, :as, :region, :scroll, :records) do
+  Screenshot = Data.define(:name, :path, :as, :region, :records) do
     def files = HelpCentre::WIDTHS.map { "#{name}-#{_1}.webp" }
   end
 
@@ -65,7 +73,7 @@ module HelpCentre
 
   mattr_accessor :root, default: Rails.root.join("content/help")
 
-  def self.image_root = Rails.root.join("app/assets/images/help")
+  mattr_accessor :image_root, default: Rails.root.join("app/assets/images/help")
 
   # The articles, loaded once; in development, again whenever a file changes.
   def self.library
@@ -163,8 +171,8 @@ module HelpCentre
       fail_with(file, "screenshot #{name} names #{(records.keys - wanted).join(", ")}, which its path doesn't use") if (records.keys - wanted).any?
       fail_with(file, "screenshot #{name}'s path needs #{(wanted - records.keys).join(", ")}") if (wanted - records.keys).any?
       as = entry.fetch("as", "owner").to_s
-      fail_with(file, "screenshot #{name}: as must be owner, admin or technician") unless %w[owner admin technician].include?(as)
-      Screenshot.new(name:, path:, as:, region: entry.fetch("region", "main").to_s, scroll: entry["scroll"]&.to_s,
+      fail_with(file, "screenshot #{name}: as must be #{HelpCentre::Screenshots::USERS.keys.join(", ")}") unless HelpCentre::Screenshots::USERS.key?(as)
+      Screenshot.new(name:, path:, as:, region: entry.fetch("region", "main").to_s,
                      records: records.transform_values(&:to_s).freeze)
     end
 

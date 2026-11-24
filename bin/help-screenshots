@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# OPS-06: capture the help articles' screenshots from the demo seed data, or (--check) fail when
+# a screen in one has changed since it was captured. CI runs the check; the Help screenshots
+# workflow (.github/workflows/help-screenshots.yml) captures and commits in CI's environment.
+#
+#   bin/help-screenshots            # capture what changed or is new
+#   bin/help-screenshots --all      # capture every one
+#   bin/help-screenshots --check    # what CI runs
+#
+# Uses a database of its own, made afresh each run: the one DATABASE_URL names, with "_help"
+# added to its name (or HELP_DATABASE_URL, whose name must end in _help). Capturing needs Chrome
+# (BROWSER_PATH if it isn't found) and libvips. See docs/runbooks/help-screenshots.md.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+export RAILS_ENV=test
+# The name is worked out in Ruby (lib/help_screenshots_database.rb), which refuses anything but a
+# database whose own name ends in _help, before anything is dropped.
+DATABASE_URL="$(ruby lib/help_screenshots_database.rb)" || exit 1
+export DATABASE_URL
+export DISABLE_DATABASE_ENVIRONMENT_CHECK=1
+
+bin/rails db:drop db:create db:schema:load > /dev/null
+case "${1:-}" in
+  --check) exec bin/rails help:screenshots:check ;;
+  --all) ALL=1 exec bin/rails help:screenshots:capture ;;
+  "") exec bin/rails help:screenshots:capture ;;
+  *) echo "usage: bin/help-screenshots [--all | --check]" >&2; exit 2 ;;
+esac

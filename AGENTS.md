@@ -67,6 +67,18 @@ background sends check `user.can_send_to_clients?`. Unconfirmed users can do eve
   as toasts, behaviour goes in a Stimulus controller, not an inline `<script>`.
 - `bin/dev` runs the Tailwind watcher; CI and the Docker build compile the CSS.
 
+## Help articles
+
+Write or update the help article with each feature (OPS-06). Articles are Markdown in
+`content/help/articles/<slug>.md` (front matter: see `HelpCentre`), in plain words with the app's
+exact button labels, one action per step, each with a picture. Pages link to theirs with
+`learn_more(:topic)`; declare new topics in `content/help/topics.yml`. Declare each screenshot in
+the article's front matter and run `bin/help-screenshots` (or label the PR "help screenshots"):
+CI fails when a screen in one has changed since its capture, and the article must then be re-read
+and its `reviewed` date updated: see [the help screenshots runbook](docs/runbooks/help-screenshots.md).
+The check compares each screen's HTML, so a change only to CSS isn't noticed: after a restyle,
+retake every picture with `bin/help-screenshots --all`.
+
 ## Commands
 
 | Task | Command |
@@ -77,6 +89,7 @@ background sends check `user.can_send_to_clients?`. Unconfirmed users can do eve
 | Lint | `bin/rubocop` (`-a` to auto-fix) |
 | Security | `bin/brakeman`, `bin/bundler-audit`, `bin/importmap audit` |
 | Plan docs | `script/plan/lint`; `script/plan/sync_issues --dry-run` after editing specs |
+| Help screenshots | `bin/help-screenshots` (capture changed and new), `--check` (what CI runs); [runbook](docs/runbooks/help-screenshots.md) |
 
 Add demo data for new records to `db/seeds/development.rb`.
 

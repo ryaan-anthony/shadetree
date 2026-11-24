@@ -1,0 +1,71 @@
+# OPS-06: captures the help articles' screenshots in CI's environment and commits them to the
+# branch. bin/help-screenshots loads the demo seed data into a database of its own, photographs
+# each declared screen at 1280 and 390 wide with headless Chrome, saves WebP under 200 KB and
+# records each screen's digest. Run it from the Actions tab on a branch, or label a pull request
+# "help screenshots". A push made with the workflow's token doesn't start CI itself: push again
+# (or re-run CI) after reviewing the pictures and re-reading the articles.
+name: Help screenshots
+
+on:
+  workflow_dispatch:
+    inputs:
+      all:
+        description: Capture every screenshot, not only changed and new ones
+        type: boolean
+        default: false
+  pull_request:
+    types: [ labeled ]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: help-screenshots-${{ github.head_ref || github.ref }}
+
+jobs:
+  capture:
+    name: Capture help screenshots
+    # Never on the default branch: pictures go through a pull request like any other change.
+    if: >-
+      (github.head_ref || github.ref_name) != github.event.repository.default_branch &&
+      (github.event_name == 'workflow_dispatch' || (github.event.label.name == 'help screenshots' && github.event.pull_request.head.repo.full_name == github.repository))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: [ "5432:5432" ]
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/shadetree_test
+      BRANCH: ${{ github.head_ref || github.ref_name }}
+      CAPTURE_ALL: ${{ inputs.all && 'yes' || '' }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          persist-credentials: false # the token is given to the push step only
+      - name: Install libvips (image processing, ADR 0008)
+        run: script/ci/install-libvips
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+      - name: Build CSS
+        run: bin/rails tailwindcss:build
+      - name: Capture
+        run: if [ -n "$CAPTURE_ALL" ]; then bin/help-screenshots --all; else bin/help-screenshots; fi
+      - name: Commit the screenshots
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          git add app/assets/images/help content/help/screenshots.yml
+          if git diff --cached --quiet; then echo "Every help screenshot is current."; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "OPS-06: capture help screenshots (bin/help-screenshots)"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${REPOSITORY}.git" "HEAD:refs/heads/${BRANCH}"
