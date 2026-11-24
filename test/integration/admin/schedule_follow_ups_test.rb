@@ -84,17 +84,42 @@ class Admin::ScheduleFollowUpsTest < ActionDispatch::IntegrationTest
       sign_out @owner
       sign_in @owner
       post switch_admin_business_path, params: { business: @business.uid }
-      queries = 0
-      callback = ->(*, payload) { queries += 1 unless payload[:name] == "SCHEMA" || payload[:cached] }
+      queries = []
+      # Cached ones count too, so a repeated query hitting or missing the cache can't change the count.
+      callback = ->(*, payload) { queries << payload unless payload[:name].in?(%w[SCHEMA TRANSACTION]) }
       ActiveSupport::Notifications.subscribed(callback, "sql.active_record") { week }
       queries
     end
+    # Loads of people by id (not the signed-in user's lookup, nor the visits' assignees, which are ordered).
+    people = ->(queries) { queries.count { _1[:sql].match?(/\ASELECT "users"\.\* FROM "users" WHERE "users"\."id" (IN \(.*\)|= \$1)\z/) } }
     before = count.()
     as_business(@business) do
       client = Client.create!(display_name: "Busy", contact_methods_attributes: [ { kind: "phone", value: "5125550199" } ])
       10.times { |n| RequestFollowUp.assign!(ServiceRequest.create!(client:, source: "phone", description: "More #{n}"), { user: @tech, scheduled_on: @monday + (n % 5), timing: "exact", start_time: "10:00" }, by: @owner) }
+      # Booked later day first, so their ids run against the calendar's order.
+      [ 4, 3, 2, 1 ].each { |n| @one_pm.job.visits.new(scheduled_on: @monday + n, timing: "exact", start_time: "09:00", duration_minutes: 60, assignee_ids: [ @tech.id ]).schedule!(by: @owner) }
     end
-    assert_equal before, count.()
+    after = count.()
+    assert_equal before.size, after.size, "more visits and follow-ups, the same queries"
+    # The follow-ups' people are the members already loaded (CI saw an extra query when the two
+    # loads' rows came back in different orders): the members, and the Move dialog's same list.
+    assert_equal 2, people.(after)
+    # The members' booked hours ask for the calendar's visits' assignments again, in the same
+    # order, so the database is asked once.
+    assert_equal 1, after.count { _1[:sql].include?('FROM "visit_assignments"') && !_1[:cached] }
+
+    # Someone not among the members (here a membership switched off without its follow-ups being
+    # released; a location's team filter is the everyday case) still shows, loaded on their own.
+    gone = User.create!(email: "lee@example.com", password: "password123", first_name: "Lee", last_name: "Park", confirmed_at: Time.current)
+    BusinessUser.create!(user: gone, business: @business, role: "technician")
+    as_business(@business) do
+      @gate = ServiceRequest.create!(client: Client.first, source: "phone", description: "Gate")
+      RequestFollowUp.assign!(@gate, { user: gone, scheduled_on: @monday + 3 }, by: @owner)
+      BusinessUser.find_by!(user: gone).update_column(:active, false)
+    end
+    departed = count.()
+    assert_equal 3, people.(departed)
+    assert_select "#cal-request-#{@gate.uid}"
   end
 
   def move(request = @site, **params)

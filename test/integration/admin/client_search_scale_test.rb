@@ -3,8 +3,8 @@ require "test_helper"
 # CLI-02: the client list stays responsive at 10,000 clients in one business. Clients get a
 # phone, an email and a property each, and search_text is built by the production SQL
 # (Client.refresh_search_text, the same as the backfill migration). Requests are timed end
-# to end (controller, queries and view) with a generous budget so shared CI runners don't
-# flake; locally they take a small fraction of it.
+# to end (controller, queries and view), each after a warm-up run, with a generous budget so
+# shared CI runners don't flake; locally they take a small fraction of it.
 class Admin::ClientSearchScaleTest < ActionDispatch::IntegrationTest
   CLIENTS = 10_000
   BUDGET = 1.0 # seconds per request
@@ -44,7 +44,9 @@ class Admin::ClientSearchScaleTest < ActionDispatch::IntegrationTest
 
   private
 
+  # Each request runs once to warm up (templates, the planner, the first queries), then is timed.
   def timed
+    yield
     started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     yield
     elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
