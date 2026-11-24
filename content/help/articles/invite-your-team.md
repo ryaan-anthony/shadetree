@@ -38,8 +38,8 @@ what each role allows.
 - **Technician** works their own visits from their phone, and drafts quotes for the requests given
   to them for the office to check and send.
 
-On a paid plan you can make roles of your own, like a dispatcher: press **New role**, name it,
-tick what people with it can do, and press **Create role**. Billing and the plan, deleting the
+On plans that include custom roles you can make roles of your own, like a dispatcher: press
+**New role**, name it, tick what people with it can do, and press **Create role**. Billing and the plan, deleting the
 business, the payment account and who's an Owner always stay with Owners.
 
 To change someone's role, choose a new one beside their name on **Team** and press **Save**.
