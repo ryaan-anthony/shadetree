@@ -14,10 +14,13 @@ export default class extends Controller {
   connect() {
     this.outside = (event) => { if (!this.element.contains(event.target)) this.close() }
     document.addEventListener("click", this.outside)
+    this.resized = () => { if (!this.menuTarget.hidden) this.keepOnScreen() }
+    window.addEventListener("resize", this.resized)
   }
 
   disconnect() {
     document.removeEventListener("click", this.outside)
+    window.removeEventListener("resize", this.resized)
   }
 
   toggle() {
@@ -32,22 +35,26 @@ export default class extends Controller {
   }
 
   // A menu opens towards the side its alignment says; where that would run off the screen (a
-  // button near a phone's left edge), it shifts back on.
+  // button near a phone's edge), it shifts back on, in one move from one measurement. It moves
+  // again if the window is resized while it's open (a phone turned round).
   keepOnScreen() {
-    const style = this.menuTarget.style
-    style.left = style.right = ""
+    const menu = this.menuTarget
+    const style = menu.style
+    style.left = style.right = style.maxWidth = ""
     const margin = 8
-    let box = this.menuTarget.getBoundingClientRect()
-    if (box.left < margin) {
-      style.right = "auto"
-      style.left = `${margin - (box.left - this.menuTarget.offsetLeft)}px`
-      box = this.menuTarget.getBoundingClientRect()
-    }
-    const over = box.right - (document.documentElement.clientWidth - margin)
-    if (over > 0) {
-      style.right = "auto"
-      style.left = `${this.menuTarget.offsetLeft - over}px`
-    }
+    const box = menu.getBoundingClientRect()
+    const shift = box.left < margin ? margin - box.left : Math.min(0, document.documentElement.clientWidth - margin - box.right)
+    if (!shift) return
+    // left is measured from the inside of the menu's positioned ancestor (its padding edge). Every
+    // caller wraps the menu in its own non-scrolling relative box, so its scrollLeft is always 0.
+    const parent = menu.offsetParent
+    const origin = parent ? parent.getBoundingClientRect().left + parent.clientLeft : 0
+    style.right = "auto"
+    style.left = `${box.left + shift - origin}px`
+    // Shifted right off the left edge, a menu at its width cap can still pass the right margin
+    // (a desktop scrollbar narrows the page): hold it inside both margins.
+    const room = document.documentElement.clientWidth - 2 * margin
+    if (box.width > room) style.maxWidth = `${room}px`
   }
 
   close() {

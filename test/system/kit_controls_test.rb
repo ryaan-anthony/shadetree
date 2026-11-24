@@ -59,13 +59,40 @@ class KitControlsTest < ApplicationSystemTestCase
     assert_selector "##{button["aria-controls"]}[hidden]", visible: :all
   end
 
+  # Retries the block (Capybara's wait time) until it's truthy: for layout that settles after a
+  # resize, a click or a resize event.
+  def assert_eventually(message)
+    page.document.synchronize { yield || raise(Capybara::ExpectationNotMet, message.call) }
+  rescue Capybara::ExpectationNotMet => e
+    flunk e.message
+  end
+
+  def resize_window(width, height)
+    page.driver.browser.manage.window.resize_to(width, height)
+    assert_eventually(-> { "the window is #{width} wide" }) { evaluate_script("innerWidth") == width }
+  end
+
+  def assert_menu_on_screen(label)
+    box = -> { evaluate_script("(() => { const r = document.querySelector('.menu:not([hidden])').getBoundingClientRect(); return [r.left, r.right, document.documentElement.clientWidth] })()") }
+    last = nil
+    assert_eventually(-> { "#{label}: the open menu spans #{last.first(2)}, the screen 0..#{last.last}" }) do
+      last = box.call
+      left, right, width = last
+      left >= 0 && right <= width
+    end
+  end
+
   test "the menu fits a phone screen" do
-    page.driver.browser.manage.window.resize_to(390, 844)
+    resize_window(390, 844)
     visit admin_quote_path(sent_quote)
     find_button("More actions").click
-    box = evaluate_script("(() => { const r = document.querySelector('.menu:not([hidden])').getBoundingClientRect(); return [r.left, r.right] })()")
-    assert_operator box.first, :>=, 0
-    assert_operator box.last, :<=, 390
+    assert_menu_on_screen "at 390px"
+
+    page.send_keys(:escape)
+    resize_window(440, 844) # opened a little wider, then the phone turns: it moves back on
+    find_button("More actions").click
+    resize_window(390, 844)
+    assert_menu_on_screen "resized to 390px while open"
   ensure
     page.driver.browser.manage.window.resize_to(1400, 1400)
   end
