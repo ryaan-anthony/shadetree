@@ -44,7 +44,9 @@ class Admin::ClientSearchScaleTest < ActionDispatch::IntegrationTest
 
   private
 
+  # Each request runs once to warm up (templates, the planner, the first queries), then is timed.
   def timed
+    yield
     started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     yield
     elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
