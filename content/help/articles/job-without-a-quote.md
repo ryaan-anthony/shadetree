@@ -9,7 +9,8 @@ screenshots:
     path: /admin/jobs/new
 ---
 
-Jobs from approved quotes are made for you. For work agreed by phone or in person, make the job
+When **Make a job when a quote is approved** is on (in **Settings**, **Quotes, jobs & invoices**),
+jobs from approved quotes are made for you. For work agreed by phone or in person, make the job
 yourself.
 
 ![New job: choose the client, give it a title, add the work to do, then press Create job](new-job)

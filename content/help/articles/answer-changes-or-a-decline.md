@@ -7,14 +7,13 @@ reviewed: 2026-11-24
 screenshots:
   - name: quote-changes-requested
     path: /admin/quotes/:quote
-    quote: Fall cleanup
+    quote: Driveway edging
 ---
 
 Your client's answer comes to you as a notification, and the quote's status changes. Their
-message is on the quote, under **Client response**. (This quote has since been revised and sent
-again, so its status is back to **Sent**.)
+message is on the quote, under **Client response**.
 
-![A quote's Client response: read what the client asked for, then press Revise at the top](quote-changes-requested)
+![A quote with Changes requested: read the client's message under Client response, then press Revise](quote-changes-requested)
 
 ## They asked for changes
 
