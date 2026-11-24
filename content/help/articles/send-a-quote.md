@@ -22,8 +22,9 @@ client: by email from Shadetree, or by a link you send yourself.
 ## Email it
 
 1. Check the **To** address. It's your client's email, if you have it.
-2. Add anyone else under **CC**, separated by commas.
-3. Change the **Subject** and **Message** if you like.
+2. Add anyone else under **CC**: up to three addresses, separated by commas.
+3. Change the **Subject** and **Message** if you like. If you've added your own templates, pick
+   one under **Start from** to fill them in.
 4. Press **Send quote**.
 
 Your client gets your message, a button to open the quote and the quote as a PDF. If they reply,

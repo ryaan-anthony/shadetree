@@ -24,7 +24,7 @@ service up once with its usual price; you can still change the price on any quot
 4. Enter the **Default price**, and choose what it's **Per**: each, hour, visit, sq ft, linear ft,
    or custom for your own unit. Leave the price blank to price it on each quote.
 5. Choose a **Category**, or type a new one, to keep the list tidy.
-6. Add a **Typical duration** if you know it. It helps fill in visit lengths.
+6. Add a **Typical duration (minutes)** if you know it. It helps fill in visit lengths.
 7. Press **Add service**.
 
 ![Add a service: name, description for clients, default price, per, category and typical duration](add-a-service)
@@ -42,7 +42,7 @@ so nothing you've sent changes behind your client's back.
 
 ## Tax rates
 
-Your tax rates live in **Settings**, under **Money**, **Taxes**. Press **Add rate**, give it a name
-your clients will recognize, like "State sales tax", and its **Rate**. Rates marked default are
+Your tax rates live in **Settings**, under **Money**, **Taxes**. Press **Add a tax rate**, give it a
+name your clients will recognize, like "State sales tax", and its **Rate**, then press **Add rate**. Rates marked default are
 added to taxable items on new quotes and invoices. You can change the rates on any single quote or
 invoice.

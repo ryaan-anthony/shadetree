@@ -27,7 +27,8 @@ Your clients see your business details on every quote, invoice and email, so sta
 
 Settings is grouped at the top of the page:
 
-- **Business**: **Details**, **Hours** (when you're open, and days you're closed), **Branding**
+- **Business**: **Details**, **Hours** (when you're open, and days you're closed), **Locations**
+  (once you have more than one), **Branding**
   (your logo and color on what clients see) and **Request form** (your online form for new work).
 - **Money**: **Quotes, jobs & invoices** (how long quotes stay valid, numbering, terms and days
   to pay), **Taxes** and **Card payments** (getting paid online).
@@ -38,5 +39,5 @@ Changes to what new quotes and invoices start with don't change documents you've
 
 ## Who can change Settings
 
-The owner, and anyone whose role lets them change the business's settings. Others don't see
-Settings in their menu.
+The owner, Admins, and anyone whose role lets them change the business's settings. Others don't
+see Settings in their menu.

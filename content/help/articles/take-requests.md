@@ -22,10 +22,11 @@ seen by your clients.
 
 1. Open **Requests** and press **Log a request**.
 2. Choose the client. Search for someone you already have, or press **New client** and type
-   their name and an email or phone number.
+   their name and an email or phone number. Then pick the **Property** where the work is.
 3. Under **How did they reach you?**, pick **Phone**, **Email**, **In person** or **Other**.
 4. Tick the **Services** they asked about, if any, and say **What they need** in your own words.
 5. If they mentioned timing, add it under **When**, like "Next week, mornings".
+   If you have more than one location, choose which **Location** it's for.
 6. Press **Log request**.
 
 To hand the request to someone for a site visit or a call, fill in **Follow-up** before you

@@ -57,7 +57,7 @@ Under **Totals**:
 
 - The word **Saved** at the top tells you your changes are kept.
 - **Preview as client** opens the quote exactly as your client will see it, in a new tab.
-- **More actions** has **Download PDF**, and **Delete draft** if you don't need it.
+- The **···** menu has **Download PDF**, and **Delete draft** if you don't need it.
 
 When it's ready, press **Send quote**. See
 [Send a quote, and what your client sees](send-a-quote).

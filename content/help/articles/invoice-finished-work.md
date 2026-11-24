@@ -16,14 +16,14 @@ screenshots:
     invoice: INV-0003
 ---
 
-Make the invoice from the job, so its lines and prices come across and nothing gets billed
-twice. Then send it, and record what you're paid.
+Make the invoice from the job, so its lines and prices come across. Then send it, and record
+what you're paid.
 
 ## Make the invoice
 
-1. Open the finished job and press **Create invoice**. (Or open **Invoices** and press
-   **New invoice** to start one from scratch.)
-2. The invoice opens as a draft with the job's lines. Change anything you need: it saves as you
+1. Open the finished job and press **Create invoice**. (Or press **New invoice** on **Invoices**,
+   or on the client's page, to start one from scratch.)
+2. The invoice opens as a draft with the job's items. Change anything you need: it saves as you
    go, just like a quote.
 3. Press **Preview as client** to see it as your client will.
 
@@ -38,7 +38,8 @@ On the draft, untick **Taxed** on the lines that shouldn't have tax, or untick t
 
 Press **Send invoice**. As with a quote, you can **Email it** (your message, a button to the
 invoice and the PDF) or **Get the link** to send yourself. The due date comes from **Days to pay,
-after it's issued** in **Settings**.
+after it's issued** in **Settings**; change it for one invoice under **Payment terms** on the
+draft.
 
 If you take card payments, your client can pay online from the invoice. You'll see the payment on
 the invoice when it arrives.
