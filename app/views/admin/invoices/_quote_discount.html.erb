@@ -1,13 +1,14 @@
 <%# locals: (invoice:, range: invoice.quote_discount_range) -%>
 <%# PAY-08 (owner, 2026-11-23): how much of the quote's discount this draft applies, from $0 ("Apply
-    later") up to what's left, never under what the work left needs. %>
+    later") up to what's left, never under what the work left needs. Apply all fills the field, and
+    the builder saves it as if typed. %>
 <% if range %>
-  <div class="field" id="quote_discount_field">
-    <label class="label" for="invoice_quote_discount_applied">Quote discount: <%= money(Money.new(range[:left], invoice.currency)) %> left. Apply now</label>
+  <div class="field" id="quote_discount_field" data-controller="fill" data-fill-value-value="all">
+    <label class="label" for="invoice_quote_discount_applied" id="quote_discount_label">Quote discount: <%= money(Money.new(range[:left], invoice.currency)) %> left. Apply now</label>
     <div class="flex items-center gap-2">
       <%= text_field_tag "invoice[quote_discount_applied]", format("%.2f", range[:applied] / 100.0), id: "invoice_quote_discount_applied", inputmode: "decimal",
-                         class: "input min-w-0 flex-1 text-right tabular", aria: { describedby: "quote_discount_hint" } %>
-      <%= button_tag "Apply all", name: "invoice[quote_discount_applied]", value: "all", class: button_classes(:secondary, :sm) %>
+                         class: "input min-w-0 flex-1 text-right tabular", aria: { describedby: "quote_discount_hint" }, data: { fill_target: "field" } %>
+      <button type="button" class="<%= button_classes(:secondary, :sm) %>" data-action="fill#fill">Apply all</button>
     </div>
     <p class="help" id="quote_discount_hint"><%= render "admin/invoices/quote_discount_hint", invoice:, range: %></p>
   </div>

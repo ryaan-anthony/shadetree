@@ -7,7 +7,12 @@
   <%= turbo_stream.update "location_reprice" do %><%= render "admin/locations/reprice", document: @invoice %><% end %>
 <% end %>
 <% if (range = @invoice.quote_discount_range) %><%# PAY-08: the range moves with the lines %>
-  <%= turbo_stream.update "quote_discount_hint" do %><%= render "admin/invoices/quote_discount_hint", invoice: @invoice, range: %><% end %>
+  <% if (@invoice.quote_discount_chosen_cents || 0) != range[:applied] %><%# held to the range ("all" too): show what applies %>
+    <%= turbo_stream.replace "quote_discount_field" do %><%= render "admin/invoices/quote_discount", invoice: @invoice, range: %><% end %>
+  <% else %>
+    <%= turbo_stream.update "quote_discount_label" do %>Quote discount: <%= money(Money.new(range[:left], @invoice.currency)) %> left. Apply now<% end %>
+    <%= turbo_stream.update "quote_discount_hint" do %><%= render "admin/invoices/quote_discount_hint", invoice: @invoice, range: %><% end %>
+  <% end %>
 <% end %>
 <%= turbo_stream.update "builder_errors" do %><%= render "admin/quotes/errors", quote: @invoice %><% end %>
 <%= turbo_stream.replace "invoice_lock_version" do %><input type="hidden" name="invoice[lock_version]" id="invoice_lock_version" value="<%= @invoice.lock_version %>" autocomplete="off"><% end %>

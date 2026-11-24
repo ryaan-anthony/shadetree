@@ -44,9 +44,10 @@ each invoice takes; what isn't used carries forward, and the last invoice takes 
       A percent discount counts as the quote's discount in dollars. It starts at $0 and goes up
       to what's left; a minimum applies when the work left after it can't absorb the rest ("At
       least $X now; there's only $Y of work left"), so the last invoice takes all of it. It
-      changes only on a draft; a void returns it. Before tax, as its own row ("Quote discount").
-- [x] A line's fixed discount d over quantity q is shared the same way: target = min(d, round(d ×
-      quantity billed ÷ q)), less what earlier bills of that line took.
+      changes only on a draft; a void returns it. Before tax, as its own row ("Quote discount"),
+      spread over the quote's tax mix. *The quote page's progress item asks on the draft.*
+- [x] A line's fixed discount d over quantity q is shared by quantity billed: target =
+      min(d, round(d × quantity billed ÷ q)), less what earlier bills of that line took.
 - [x] Shares are kept apart from any discount staff type on a draft. After a void, drafts work
       out shares and credits again; sent invoices don't change. Recurring quotes don't share
       (JOB-10). *No legacy rule for pre-JOB-09 fixed discounts (owner, 2026-11-23).*
@@ -65,19 +66,17 @@ each invoice takes; what isn't used carries forward, and the last invoice takes 
 
 - Progress billing stays: a job or quote can be billed in part before it's done (owner, 2026-11-22).
 - When invoicing part of a quote with a discount, staff choose how much to apply now; the rest
-  carries forward and the last invoice takes it. Fixed and percent alike. This replaces the
-  proportional share and the cap after it (owner, 2026-11-23). Over-billing shows on the quote
-  and is credited on the next invoice (owner, 2026-11-22).
-- A line's fixed discount stays shared by quantity billed (coordinator; follows the model).
+  carries forward and the last invoice takes it. Fixed and percent alike, spread over the
+  quote's tax mix so total tax matches the quote's. A discount taken on progress only moves cash:
+  work invoices give exactly the quote's discount. Replaces the proportional share (owner,
+  2026-11-23). Over-billing is credited on the next invoice (owner, 2026-11-22).
 - A progress invoice's discounts apply to the cash it collected: the final deducts only the net
   it charged (an unpaid one still does, and stays owed). Progress never charges a line more than
   the final would after the discount still to come, or a lone job's own. Clients see
   "Credit from INV-0004" with tax; staff figures include tax (owner, 2026-11-23).
-- Credited progress is voided only after the invoice crediting it (follows the owner's
-  void-first rule, 2026-11-23).
-- Credits and shares count only from invoices that went out; a draft's are worked out again at
-  send; a sent invoice's stay. A credit is capped by the bill's line after the applied discount;
-  a staff percent applies before it (implementation).
+- Credited progress is voided only after the invoice crediting it (owner's void-first rule).
+- Credits count only from invoices that went out; a draft's are worked out again at send. A credit
+  is capped by the bill's line after the applied discount; a staff percent applies before it.
 
 ## Implementation notes
 
@@ -92,9 +91,10 @@ each invoice takes; what isn't used carries forward, and the last invoice takes 
 - Over-billed counts a final bill once it went out. Fit: PAY-07 adds deposit and take_back to
   both kind checks, keeps deposit credits in `work_out_credits`, and `nothing_due?` uses
   `total_due`; JOB-10 skips `quote_discount_off!` on recurring quotes; QTE-09 adds Not going ahead to
-  `nothing_left?`/`done?` (shortfalls stand in until then) with taxed figures; QTE-10's base
-  reads current quote lines.
-- `invoices.quote_discount_chosen_cents` (nil: $0) is clamped on each draft save to [minimum, max]
-  into `quote_discount_share_cents`; minimum = outstanding − (work left − uncredited progress).
+  `nothing_left?`/`done?` (shortfalls stand in until then) with taxed figures; QTE-10: a percent's
+  amount and the tax mix follow current quote prices.
+- `invoices.quote_discount_chosen_cents` (nil: $0) is held on each draft save to [minimum, max] in
+  `quote_discount_share_cents`, split by tax mix in `quote_discount_parts`; the minimum is checked
+  overall and per taxed part: outstanding − (work left − uncredited progress).
 - `split_jobs` can go on once PAY-06 and PAY-08 merge (Operator → Flags). Dev seeds: "Roof
   replacement" ($500 progress sent; the final draft credits it and applies $100).

@@ -122,7 +122,7 @@ class Pricing::DocumentTotalsTest < ActiveSupport::TestCase
     assert_equal [ usd("90"), usd("-20") ], credited.lines.map(&:taxable), "a credit isn't discounted again"
     assert_equal [ usd("100"), usd("10"), usd("-20") ], [ credited.subtotal, credited.discount, credited.credit_total ]
     assert_equal usd("70") + credited.tax_total, credited.total
-    shared = Pricing::DocumentTotals.new(currency: "USD", lines: [ line(2, "50", share: usd("15")) ], share: usd("10"))
+    shared = Pricing::DocumentTotals.new(currency: "USD", lines: [ line(2, "50", share: usd("15")) ], share: [ [ [], usd("10") ] ])
     assert_equal [ usd("85"), usd("10"), usd("75") ], [ shared.subtotal, shared.discount, shared.total ]
   end
 end

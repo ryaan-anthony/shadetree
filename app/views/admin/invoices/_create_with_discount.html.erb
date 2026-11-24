@@ -1,7 +1,10 @@
-<%# locals: (url:, label:, left:, currency:, id:, button_class: nil, menu: false, confirm: nil) -%>
+<%# locals: (url:, label:, left:, currency:, id:, button_class: nil, menu: false, confirm: nil, whole: false) -%>
 <%# PAY-08 (owner, 2026-11-23): billing part of a quote with a discount asks how much of it to apply
     now. $0 is "Apply later": what isn't used carries forward, and the last invoice takes the rest.
     The draft shows the range again, with any minimum the work left needs. %>
+<% if whole %><%# it finishes the quote: it takes all that's left, nothing to ask %>
+  <%= button_to url, class: button_class, id:, form: { class: "contents", data: { turbo_confirm: "#{"#{confirm} " if confirm}This invoice takes the whole #{money(Money.new(left, currency))} of the quote's discount left.", turbo_confirm_button: label } } do %><%= icon "invoice" %> <%= label %><% end %>
+<% else %>
 <div class="contents" data-controller="modal">
   <button type="button" class="<%= menu ? "menu-item" : button_class %>" id="<%= id %>" data-action="modal#open<%= " menu#close" if menu %>" data-modal-target="return" aria-haspopup="dialog"><%= icon(label.include?("progress") ? "plus" : "invoice") %> <%= label %></button>
   <%= modal id: "#{id}-dialog", title: label, description: confirm do %>
@@ -11,11 +14,13 @@
         <%= text_field_tag :discount, "0.00", id: "#{id}-discount", inputmode: "decimal", class: "input text-right tabular", aria: { describedby: "#{id}-discount-hint" } %>
         <p class="help" id="<%= id %>-discount-hint">$0 applies it later. What isn't used carries forward, and the last invoice takes the rest; the draft shows any minimum the work left needs.</p>
       </div>
-      <div class="flex flex-wrap justify-end gap-2">
-        <button type="button" class="<%= button_classes(:tertiary) %>" data-action="modal#close">Cancel</button>
-        <%= button_tag "Apply all", name: "discount", value: "all", class: button_classes(:secondary) %>
+      <%# The Primary comes first, so Enter in the field sends the amount typed (shown last). %>
+      <div class="flex flex-row-reverse flex-wrap justify-start gap-2">
         <%= button_tag label, name: nil, class: button_classes(:primary) %>
+        <%= button_tag "Apply all", name: "discount", value: "all", class: button_classes(:secondary) %>
+        <button type="button" class="<%= button_classes(:tertiary) %>" data-action="modal#close">Cancel</button>
       </div>
     <% end %>
   <% end %>
 </div>
+<% end %>

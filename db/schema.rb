@@ -807,6 +807,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_100000) do
     t.string "kind", default: "work", null: false
     t.bigint "quote_discount_share_cents", default: 0, null: false
     t.bigint "quote_discount_chosen_cents"
+    t.jsonb "quote_discount_parts", default: [], null: false
     t.index ["business_id", "location_id"], name: "index_invoices_on_business_id_and_location_id"
     t.index ["business_id", "number"], name: "index_invoices_on_business_id_and_number", unique: true
     t.index ["business_id", "status", "due_on"], name: "index_invoices_on_business_id_and_status_and_due_on"
