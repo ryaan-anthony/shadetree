@@ -1,0 +1,17 @@
+<%# OPS-06: the help articles in the app, by category. %>
+<%= page_header "Help articles", lede: "Step-by-step guides to every part of Shadetree, with pictures of each screen." do %>
+  <%= link_to new_admin_support_ticket_path(from: request.path), class: button_classes(:secondary) do %><%= icon "message-square" %> Ask Shadetree<% end %>
+<% end %>
+<div class="grid gap-4 md:grid-cols-2" id="help-categories">
+  <% HelpCentre::CATEGORIES.each do |key, name| %>
+    <% articles = help_library.in_category(key) %>
+    <% next if articles.empty? %>
+    <%= card title: name, subtitle: HelpCentre::CATEGORY_SUMMARIES.fetch(key), flush: true, id: "help-category-#{key}" do %>
+      <ul class="list">
+        <% articles.each do |article| %>
+          <li><%= link_to article.title, admin_help_article_path(article.slug), class: "font-medium text-ink hover:underline" %></li>
+        <% end %>
+      </ul>
+    <% end %>
+  <% end %>
+</div>

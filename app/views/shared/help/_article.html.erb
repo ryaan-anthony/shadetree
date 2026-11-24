@@ -1,0 +1,6 @@
+<%# locals: (article:) -%>
+<%# OPS-06: an article's text, the same in both copies; links point into the copy being read. %>
+<article class="help-text">
+  <%= help_article_html(article) %>
+</article>
+<p class="mt-6 text-sm2 text-muted" id="help-reviewed">Last reviewed <%= local_date(article.reviewed_on) %></p>

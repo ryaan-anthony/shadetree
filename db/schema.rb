@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_24_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_25_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -551,6 +551,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_24_000000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_feature_flags_on_name", unique: true
+  end
+
+  create_table "help_articles", force: :cascade do |t|
+    t.string "slug", null: false
+    t.string "title", null: false
+    t.string "summary", null: false
+    t.string "category", null: false
+    t.string "topics", default: [], null: false, array: true
+    t.text "body", null: false
+    t.string "digest", null: false
+    t.virtual "searchable", type: :tsvector, as: "((setweight(to_tsvector('english'::regconfig, (COALESCE(title, ''::character varying))::text), 'A'::\"char\") || setweight(to_tsvector('english'::regconfig, (COALESCE(summary, ''::character varying))::text), 'B'::\"char\")) || setweight(to_tsvector('english'::regconfig, COALESCE(body, ''::text)), 'C'::\"char\"))", stored: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["category"], name: "index_help_articles_on_category"
+    t.index ["searchable"], name: "index_help_articles_on_searchable", using: :gin
+    t.index ["slug"], name: "index_help_articles_on_slug", unique: true
   end
 
   create_table "industry_presets", force: :cascade do |t|

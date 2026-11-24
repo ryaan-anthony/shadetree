@@ -7,7 +7,7 @@
         <p class="mt-4 max-w-xs text-sm">Quotes, scheduling and payments for small service businesses.</p>
       </div>
       <% { "Product" => [ [ "How it works", root_path(anchor: "how-it-works") ], [ "Features", features_path ], [ "Pricing", pricing_path ], [ "Sign in", new_user_session_path ] ],
-           "Company" => [ [ "About", about_path ], [ "Contact", contact_path ] ],
+           "Company" => [ [ "About", about_path ], [ "Help", help_path ], [ "Contact", contact_path ] ],
            "Legal" => [ [ "Terms", terms_path ], [ "Privacy", privacy_path ], [ "Security", legal_document_path("security") ], [ "All legal documents", legal_path ] ] }.each do |heading, items| %>
         <div>
           <h2 class="text-sm font-semibold text-white"><%= heading %></h2>

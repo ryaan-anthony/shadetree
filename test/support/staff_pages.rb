@@ -101,6 +101,7 @@ module StaffPages
       page :services, "Services", admin_catalog_items_path, :list
       page :notifications, "Notifications", admin_notifications_path, :list
       page :help, "Help", admin_support_tickets_path, :list
+      page :help_articles, "Help articles", admin_help_articles_path, :list # OPS-06
     end
 
     def forms
@@ -183,6 +184,7 @@ module StaffPages
       page :invoice_void, "Invoice: void", admin_invoice_path(@void_invoice), :detail
       page :invoice_paid_online, "Invoice: paid online", admin_invoice_path(@online_invoice), :detail
       page :support_ticket, "Support ticket", admin_support_ticket_path(@ticket), :detail
+      page :help_article, "Help article", admin_help_article_path("get-help-from-shadetree"), :detail # OPS-06
       page :client_import, "Client import: finished", admin_client_import_path(@finished_import), :detail
     end
 

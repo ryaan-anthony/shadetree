@@ -328,6 +328,8 @@ Rails.application.routes.draw do
       get :resume
       get :return, action: :returned
     end
+    # OPS-06: help articles for members (before the tickets, which live at /admin/help)
+    resources :help_articles, only: %i[index show], path: "help/articles", param: :slug, constraints: { slug: /[a-z0-9-]+/ }
     # OPS-05: asking Shadetree for help
     resources :support_tickets, only: %i[index new create show], path: "help" do
       post :reply, on: :member
@@ -396,9 +398,11 @@ Rails.application.routes.draw do
   get "terms", to: "legal#show", defaults: { slug: "terms" }
   get "privacy", to: "legal#show", defaults: { slug: "privacy" }
   get "legal", to: "legal#index", as: :legal
-  # QA #274: short links people type or guess. /help asks for sign-in first when signed out.
+  # QA #274: short links people type or guess.
   get "security", to: redirect("/legal/security")
-  get "help", to: redirect("/admin/help", status: 302) # not permanent: a public help center may live here one day
+  # OPS-06: the help centre, public (members are sent to the copy in the app)
+  get "help", to: "help#index", as: :help
+  get "help/:slug", to: "help#show", as: :help_article, constraints: { slug: /[a-z0-9-]+/ }
   resource :legal_acceptance, only: %i[show create], path: "legal/accept", controller: "users/legal_acceptances"
   get "legal/:slug(/:version)", to: "legal#show", as: :legal_document, constraints: { slug: /[a-z-]+/, version: /\d{4}-\d{2}-\d{2}/ }
 

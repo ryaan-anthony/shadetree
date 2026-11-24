@@ -3,7 +3,7 @@ require "test_helper"
 # QA/accessibility audit #274, marketing and public pages: the Shadetree wordmark, landmarks,
 # real lists, short links, branded error pages, the contact form and pricing.
 class MarketingAccessibilityTest < ActionDispatch::IntegrationTest
-  PAGES = %w[/ /features /pricing /about /contact /legal /terms /privacy /legal/security /users/sign_in /users/sign_up].freeze
+  PAGES = %w[/ /features /pricing /about /contact /legal /terms /privacy /legal/security /help /help/get-help-from-shadetree /users/sign_in /users/sign_up].freeze
 
   test "every marketing page has a skip link, header with the main nav, main and footer, and the wordmark" do
     PAGES.each do |path|
@@ -58,9 +58,7 @@ class MarketingAccessibilityTest < ActionDispatch::IntegrationTest
     get "/security"
     assert_redirected_to "/legal/security"
     get "/help"
-    assert_redirected_to "/admin/help"
-    follow_redirect!
-    assert_redirected_to new_user_session_path, "signed out, help asks for sign-in first"
+    assert_response :success, "OPS-06: the public help articles, no longer a redirect"
     get "/terms"
     assert_response :success
     get "/privacy"
