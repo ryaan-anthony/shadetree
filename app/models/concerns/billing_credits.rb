@@ -223,6 +223,9 @@ module BillingCredits
     net = net_by_line(priced).transform_values { [ _1, 0 ].max }
     caps = finals.map { |line| [ line, net[line], rates_for(line) ] }
     others = lines.reject { _1.job_line_item_id || _1.quote_line_item_id }.sum { net[_1] }
+    # B13: a charge-back (a shortfall's discount added back) is charged too, on no line: over-billing
+    # comes off it as well. Its rates' bases already include it (tax_bases), so its tax goes too.
+    others += quote_discount_charge_back.cents
     ledger.credits_for(caps, others_cap: others, bases: tax_bases(priced), taken:)
   end
 
@@ -285,10 +288,12 @@ module BillingCredits
     max = [ most, [ plan.fits, min ].max ].min
     applied = [ (quote_discount_chosen_cents || 0).clamp(0, max), min ].max.clamp(0, max)
     short = min > most
-    # What the last invoice can't take of a scaled discount is owed to the client, tracked as
-    # over-billed (owner, 2026-11-24). A staff discount leaving too little is still refused (R4).
+    # What the last invoice can't take of a scaled discount is owed to the client (owner,
+    # 2026-11-24); an earlier one takes what fits and the rest carries to the last. Only a staff
+    # discount leaving too little refuses a work invoice (R4); progress always leaves room.
     owed = short && last && discount_kind.blank? ? min - most : 0
-    { left:, min: [ min, max ].min, max:, applied:, work_left: [ room, 0 ].max, short: short && owed.zero?, charge: net.values.sum,
+    refuse = short && (progress? || discount_kind.present?)
+    { left:, min: [ min, max ].min, max:, applied:, work_left: [ room, 0 ].max, short: refuse, charge: net.values.sum,
       unused: ledger.unused_discount_cents, plan:, back:, owed:, charge_back: -back.sum { _1["cents"] } }
   end
 

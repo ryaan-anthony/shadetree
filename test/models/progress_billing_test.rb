@@ -22,9 +22,10 @@ class ProgressBillingTest < ActiveSupport::TestCase
 
         crediting = Invoice.where(id: InvoiceCredit.counted.where(source_invoice_id: progress.id).select(:invoice_id)).to_a
         shown = crediting.sum { |invoice| invoice.client_credits.sum { |source, amount| source == progress ? amount.cents : 0 } }
-        # Tax rounds once per rate on each invoice: within a cent per rate per invoice crediting it
-        # (quote progress can be credited on each job's final).
-        assert_in_delta progress.total_cents, shown, progress.totals.taxes.size * crediting.size, "Credit from #{progress.number} equals what it charged"
+        # Tax rounds once per rate on each invoice, and an invoice's rounding is shared by its
+        # sources: within a cent per rate for each invoice crediting it (quote progress can be
+        # credited on each job's final).
+        assert_in_delta progress.total_cents, shown, crediting.sum { [ progress.totals.taxes.size, _1.totals.taxes.size ].max }, "Credit from #{progress.number} equals what it charged"
       end
     end
   end
@@ -676,7 +677,7 @@ class ProgressBillingTest < ActiveSupport::TestCase
       finals = direct ? [ send!(bill_quote) ] : []
       finals += jobs.shuffle(random: rng).each_with_index.map do |job, index|
         done = {}
-        if rng.rand < 0.15 # less done than quoted: the discount scales once it's all done
+        if rng.rand < (progress_sent.any? ? 0.3 : 0.15) # less done than quoted: the discount scales once it's all done (B13: after progress, more often)
           item = as_business(@business) { job.reload.line_items.select { _1.quantity.to_d > 1 }.first }
           (done[item.name] = rng.rand(1...item.quantity.to_i)) && shortfall = true if item
         end
@@ -696,7 +697,7 @@ class ProgressBillingTest < ActiveSupport::TestCase
           as_business(@business) do
             range = final.reload.quote_discount_range
             ledger = BillingLedger.for(final)
-            later = ledger.work_left_cents(billed: final.current_line_items.select(&:final)) - (ledger.uncredited_cents - final.credits.select { _1.kind == "progress" }.sum(&:amount_cents))
+            later = ledger.work_left_cents(billed: final.current_line_items.select(&:final)) - (ledger.uncredited_cents - final.credits.sum(&:amount_cents))
             assert_equal [ range[:left] - later.clamp(0..), 0 ].max.clamp(0, range[:max]), range[:min], "scenario #{n}: #{final.number}'s minimum" if range && final.quote_discount_share_cents == range[:min]
           end
         end
@@ -705,6 +706,9 @@ class ProgressBillingTest < ActiveSupport::TestCase
           as_business(@business) { final.reload.tap { _1.set_discount("percent", %w[5 20 90].sample(random: rng)) }.save! }
         end
         choose.(final)
+        # B13's shape: all of the discount on a job done short after its progress, so a later
+        # invoice charges some back while the progress is over-billed.
+        as_business(@business) { final.reload.update!(quote_discount_applied: "all") } if done.any? && progress_sent.any? && rng.rand < 0.5
         final = begin
           send!(final)
         rescue ActiveRecord::RecordInvalid => error # R4: too little left for the quote's discount
@@ -752,7 +756,7 @@ class ProgressBillingTest < ActiveSupport::TestCase
         as_business(@business) do
           credits = final.credits.to_a
           taken = credits.select { _1.kind == "over_billed" }.sum(&:amount_cents)
-          room = final.send(:net_by_line).values.sum - credits.select { _1.kind == "progress" }.sum(&:amount_cents)
+          room = final.send(:net_by_line).values.sum + final.quote_discount_charge_back.cents - credits.select { _1.kind == "progress" }.sum(&:amount_cents) # B13: the charge-back takes it too
           bases = final.send(:tax_bases)
           credits.select { _1.kind == "progress" }.each { |credit| credit.tax_rate_list.each { bases[_1] -= credit.amount_cents } }
           cap = [ over, room, *rates_over.map { bases[_1] } ].min
@@ -1071,6 +1075,28 @@ class ProgressBillingTest < ActiveSupport::TestCase
     half = make(a: 1)
     make(a: 1, b: 1)
     assert_equal [ 450_00 ], as_business(@business) { progress(half).reload.current_line_items.map(&:line_amount_cents) }, "half the roof: $500 − half its $100 part"
+  end
+
+  test "B13: over-billing comes off a charge-back too: a client owed more than an invoice charges is never billed" do
+    [ [ nil, [], 0 ], [ "10", [], 0 ], [ %w[10 2.5], [], 0 ] ].each do |tax, untaxed, total|
+      approved_quote([ [ "a", "A", 2, 1000 ], [ "b", "B", 1, 100 ] ], tax:, untaxed:, discount: "900")
+      j1, j2 = make(a: 2), make(b: 1)
+      early = send!(progress(j1))
+      first = send!(bill_job(complete(j1, "A" => 1)))
+      over = as_business(@business) { BillingLedger.new(quote: @quote.reload).over_billed_cents }
+      last = send!(bill_job(complete(j2)))
+      as_business(@business) do
+        back = last.quote_discount_charge_back.cents
+        assert_operator back, :>, 0, "taxed at #{tax.inspect}: the discount scaled down, so some comes back"
+        taken = last.credits.select { _1.kind == "over_billed" }.sum(&:amount_cents)
+        assert_equal [ total, [ over, 100_00 + back ].min ], [ last.total_cents, taken ], "taxed at #{tax.inspect}: it credits against its whole charge, the charge-back too"
+        ledger = BillingLedger.new(quote: @quote.reload)
+        paid = [ early, first, last ].sum { _1.reload.total_cents - _1.tax_cents }
+        assert_equal 1100_00 - ledger.quote_discount_cents + ledger.over_billed_cents, paid, "the work less the scaled discount, plus what's owed"
+        shown = last.client_credits.sum { _2.cents }
+        assert_equal (last.totals(credits: false).total - last.totals.total).cents, shown, "the client's Credit from rows add up"
+      end
+    end
   end
 
   test "Apply now takes plain dollars only, and says when it's held to the range" do
