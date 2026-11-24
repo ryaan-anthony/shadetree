@@ -78,23 +78,23 @@ deploy; checks keep them complete and in step with the screens.
   confident decisions; with screenshots; thorough without being too verbose; every workflow;
   the PR checklist line; public and in the app; no-result counts and "Was this helpful?";
   review whenever a release changes a screen an article shows (owner, 2026-11-22).
-- The eight categories (owner, 2026-11-23).
+- The eight categories (owner, 2026-11-23). Articles and their pictures name no outside product;
+  in-app wording that does stays as it is (owner, 2026-11-24).
 - In-app path, canonical and `noindex` (follows `/admin` for staff pages); rendering rules
   (follows the CSP); limits and scrubbing (follows `rate_limit` and `Observability.scrub`);
   sizes and WebP (follows the 360 px rule and `image_processing`).
 
 ## Implementation notes
 
-- Rendering: Commonmarker (GitHub-flavoured Markdown, unsafe HTML off), links and images
-  checked against the allow list; front-matter image paths validated when articles load.
-- Loading: at boot, an idempotent upsert of the files into a table (removed files deleted),
-  searched with PostgreSQL full-text search, title weighted above text. No search service.
+- Rendering: Commonmarker (unsafe HTML off), links and images checked; front matter checked at load.
+- Loading: at boot, an idempotent upsert of the files into a table (removed files deleted), searched
+  with PostgreSQL full-text search, title weighted above text. No search service. No-result searches
+  typed into the app's list aren't counted (dev seeds add some for /ops/help).
 - Screen digest, without Chrome: the region's HTML (Nokogiri) minus volatile parts (uids, ids, tokens,
   nonces, asset digests, times, dates); `bin/help-screenshots` (demo seeds, own database, fixed clock).
 - As built: articles in `content/help/articles/<slug>.md`, images in `app/assets/images/help`;
   `HelpCentre` loads and checks them, `HelpCentre::Markdown` renders, `HelpArticle.sync!` stores.
-- No-result searches typed into the app's list aren't counted (dev seeds add some for /ops/help).
 
 ## Open questions
 
-- None. The owner answered them on 2026-11-22 and 2026-11-23.
+- None. The owner answered them on 2026-11-22, 2026-11-23 and 2026-11-24.
