@@ -415,6 +415,12 @@ module BillingCredits
     # Only a staff discount leaving too little refuses a work invoice (R4); progress always leaves room.
     # Owed only once the shortfall is final, on the last invoice (owner, 2026-11-24); before, it carries.
     owed_by_group = !last || discount_kind.present? ? {} : bounds.select { _2[:over].positive? }.transform_values { _1[:over] }
+    # Progress is refused only when it makes a group shorter than it already was without it (what
+    # was already short is the work's, not this invoice's: progress always leaves room).
+    if progress?
+      own = lines.group_by { ledger.group_of(_1) }.transform_values { |list| list.sum { net[_1] } }
+      short = bounds.any? { |group, b| b[:over] > (outstanding[group] - (work[group] - owed[group] + own.fetch(group, 0)).clamp(0..)).clamp(0..) }
+    end
     refuse = short && (progress? || discount_kind.present?)
     { left:, min:, max:, applied:, work_left: [ room, 0 ].max, short: refuse, charge: net.values.sum,
       unused: ledger.unused_discount_cents, plan:, back:, owed: owed_by_group.values.sum, owed_by_group:, charge_back: -back.sum { _1["cents"] } }

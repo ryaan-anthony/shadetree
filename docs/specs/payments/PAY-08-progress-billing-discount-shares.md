@@ -40,9 +40,9 @@ once. Staff choose how much of a quote's discount each invoice takes; the last t
       least $X now: the work left after this invoice can take only $Y"), so the last invoice
       takes all of it. Plain dollars only ("40,00" and "1e3" are refused); an amount held to the
       range says so. It changes only on a draft; a void returns it. Before tax, as its own row
-      ("Quote discount"), off the lines charged, at their rates; per group (taxed, untaxed), its
-      part, minimum and maximum are on its own lines and later work. *Progress from the quote page
-      asks on the draft.* A staff discount leaving too little for what must come off blocks send.
+      ("Quote discount"), off the lines charged; per group (taxed, untaxed), its part, minimum and
+      maximum are on its own lines and later work (one already short never refuses progress).
+      *Progress from the quote page asks on the draft.* Too big a staff discount blocks sending.
 - [x] **Shortfall:** once the quote's work is all done (nothing to do; every job completed or
       cancelled) with less than quoted, its discount is D × quoted value done ÷ quoted value,
       rounded once, spread by largest remainder; the rest shows as "not used" (quote, job,
@@ -94,7 +94,7 @@ once. Staff choose how much of a quote's discount each invoice takes; the last t
 - Fit: PAY-07 adds deposit/take_back credits; JOB-10 skips `quote_discount_off!`; QTE-09 adds Not
   going ahead to `nothing_left?`/`done?`/`all_done?`. Dev seeds: "Roof replacement".
 - `quote_discount_chosen_cents` (nil: $0) is held to [min, max] in `quote_discount_share_cents`;
-  `QuoteDiscountPlan` places it by group, then line (needs, credit room first): `quote_discount_parts`.
+  `QuoteDiscountPlan` places it by group, then line (needs, credit room first): `…_parts`.
 - When `split_jobs` goes on (OPS-06): run-your-day, turn-a-quote-into-a-job, invoice-finished-work
   and job-without-a-quote add back logging each visit's work (The work, How many, Add something
   done on site), say Create invoice bills what was done, are recaptured; new articles on progress.

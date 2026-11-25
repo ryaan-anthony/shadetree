@@ -1366,6 +1366,44 @@ class ProgressBillingTest < ActiveSupport::TestCase
     assert_equal @quote.reload.total_cents, first.total_cents + held.total_cents, "billed = the quote's $80.00"
   end
 
+  # B22: a group with no work left (done short) can't block another group's progress: what it was
+  # already short is the work's, not the progress invoice's.
+  test "B22: progress on untaxed work isn't refused because the taxed work was done short" do
+    approved_quote([ [ "a", "Shingles", 2, 679 ], [ "b", "Haul away", 10, "33.33" ] ], tax: "10", percent: "15", untaxed: [ "b" ])
+    taxed, untaxed = make(a: 2), make(b: 10)
+    send!(bill_job(complete(taxed, "Shingles" => 0)))
+    early = progress(untaxed)
+    as_business(@business) do
+      assert_empty early.reload.tap(&:validate).errors.full_messages
+      assert_operator early.total_cents, :<=, 333_30 - 50_00, "no more than the final will charge, the untaxed $50.00 of the discount to come"
+    end
+  end
+
+  # R03 (owner, 2026-11-23/24): with a staff discount on the last final, nothing is owed: it's
+  # refused until staff lower theirs.
+  test "R03: a shortfall's last final with a staff discount owes nothing and is refused until it's lowered" do
+    approved_quote([ [ "a", "Deck", 1, 1000 ], [ "s", "Stump grinding", 3, 100 ] ], discount: "130")
+    send!(bill_job(complete(make(a: 1))))
+    last = bill_job(complete(make(s: 3), "Stump grinding" => 1))
+    as_business(@business) { last.reload.tap { _1.set_discount("percent", "90") }.save! }
+    range = as_business(@business) { last.reload.quote_discount_range }
+    assert_equal [ 0, true ], range.values_at(:owed, :short), "$110 left, $10 fits: not owed, refused"
+    assert_raises(ActiveRecord::RecordInvalid) { send!(last) }
+    assert_empty as_business(@business) { last.reload.quote_discount_parts.select { _1["owed"] } }
+  end
+
+  # R04: a charge-back is taxed at the rates its discount came off, not the last invoice's.
+  test "R04: the charge-back is taxed at the rates the discount came off (a re-taxed job's 8%)" do
+    approved_quote([ [ "t", "Tree removal", 10, 100 ] ], tax: "10", discount: "100")
+    early = make(t: 5)
+    retax(early, "8")
+    first = send!(as_business(@business) { Invoice.from_job!(complete(early).reload, by: @owner, discount: "all") })
+    assert_equal [ 100_00, 32_00 ], [ first.quote_discount_share_cents, first.tax_cents ], "8% of $400"
+    last = send!(bill_job(complete(make(t: 5), "Tree removal" => 1)))
+    assert_equal [ 40_00, 13_20, 153_20 ], [ as_business(@business) { last.quote_discount_charge_back.cents }, last.tax_cents, last.total_cents ],
+                 "$40 back at 8% ($3.20) with $100 at 10%"
+  end
+
   test "B14: a progress draft is taxed on what went out before it, whichever draft goes out first" do
     approved_quote([ [ "r", "Roof", 1, "10.05" ] ], tax: "10")
     job = make(r: 1)
