@@ -1,8 +1,9 @@
 <%# locals: (invoice:, range:) -%>
 <% amount = ->(cents) { money(Money.new(cents, invoice.currency)) } %>
 <% held = invoice.quote_discount_held(range) %>
+<%# PLT-21: what an autosave comes back with (a refusal, an amount held, what's owed) is read out. %>
 <% if range[:short] %><%# R4 (owner, 2026-11-23): it can't be sent like this %>
-  <span class="text-warning"><%= icon "alert-triangle", class: "mr-1 inline size-4 align-text-bottom" %>Only <%= amount.(range[:max]) %> of the <%= amount.(range[:left]) %> left fits: this invoice charges too little to take the rest. <%= invoice.discount_kind.present? ? "Lower its own discount" : "Add to what it bills" %> to send it.</span>
+  <span class="text-warning" data-controller="announce"><%= icon "alert-triangle", class: "mr-1 inline size-4 align-text-bottom" %>Only <%= amount.(range[:max]) %> of the <%= amount.(range[:left]) %> left fits: this invoice charges too little to take the rest. <%= invoice.discount_kind.present? ? "Lower its own discount" : "Add to what it bills" %> to send it.</span>
 <% elsif range[:max].zero? %>
   <% free = range[:plan]&.slots.to_a.sum(&:free) %>
   <%= if range[:charge].to_i.zero? then "This invoice charges nothing, so none of it can come off here."
@@ -17,13 +18,13 @@
   Up to <%= amount.(range[:max]) %> on this invoice. What isn't used carries forward; the last invoice takes the rest.
 <% end %>
 <% if held && !range[:short] %>
-  <span class="block"><%= amount.(invoice.quote_discount_chosen_cents) %> was held to the <%= held == :min ? "least" : "most" %> this invoice can take, <%= amount.(range[:applied]) %>.</span>
+  <span class="block" data-controller="announce"><%= amount.(invoice.quote_discount_chosen_cents) %> was held to the <%= held == :min ? "least" : "most" %> this invoice can take, <%= amount.(range[:applied]) %>.</span>
 <% end %>
 <% if range[:owed].to_i.positive? %><%# owner, 2026-11-24 %>
-  <span class="block"><%= amount.(range[:owed]) %> more of the quote's discount doesn't fit on this invoice: it's owed to the client, shown as over-billed.</span>
+  <span class="block" data-controller="announce"><%= amount.(range[:owed]) %> more of the quote's discount doesn't fit on this invoice: it's owed to the client, for you to refund.</span>
 <% end %>
 <% if range[:charge_back].to_i.positive? %>
-  <span class="block">Earlier invoices applied <%= amount.(range[:charge_back]) %> more than the discount for the work done: this invoice adds it back ("Quote discount adjusted for work not done").</span>
+  <span class="block" data-controller="announce">Earlier invoices applied <%= amount.(range[:charge_back]) %> more than the discount for the work done: this invoice adds it back ("Quote discount adjusted for work not done").</span>
 <% end %>
 <% if range[:unused].to_i.positive? %>
   <span class="block"><%= amount.(range[:unused]) %> of the quote's discount isn't used: less work was done than quoted.</span>

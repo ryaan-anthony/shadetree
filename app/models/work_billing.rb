@@ -180,6 +180,8 @@ module WorkBilling
       raise Refused, "#{quote.number} is recurring: each occurrence is billed from its own job." if quote&.recurring?
 
       ledger = BillingLedger.new(quote:, job: (job unless quote))
+      raise Refused, BillingLedger::PROGRESS_BLOCKED if ledger.progress_blocked?
+
       lines = if job
         raise Refused, "#{job.number} is #{job.status}. Progress billing is for work not done yet." unless job.open?
 
@@ -231,12 +233,19 @@ module WorkBilling
   # With "Apply later", progress leaves room for the quote's discount still to come: the work left,
   # less progress not yet credited, must take it (owner, 2026-11-23). Lines are lowered in
   # proportion when they'd charge more; with no room at all, the minimum applies instead.
+  # Per group (taxed, untaxed: B20): each group's lines leave room for that group's part.
   def leave_room_for_the_discount!(invoice, ledger, items)
-    room = ledger.work_left_cents - ledger.uncredited_cents - ledger.outstanding_cents
     charges = invoice.totals(credits: false).lines.map { [ _1.taxable.cents, 0 ].max }
-    return unless room.positive? && charges.sum > room
+    work, owed, outstanding = ledger.work_left_by_group, ledger.uncredited_by_group, ledger.outstanding_by_group
+    lefts = charges.dup
+    items.each_index.group_by { ledger.group_of(items[_1]) }.each do |group, indexes|
+      room = work[group] - owed[group] - outstanding.fetch(group, 0)
+      asked = indexes.sum { charges[_1] }
+      next unless room.positive? && asked > room
 
-    fit_progress!(invoice, items.zip(Money.new(room, invoice.currency).allocate(charges).map(&:cents)))
+      Money.new(room, invoice.currency).allocate(indexes.map { charges[_1] }).zip(indexes) { |part, i| lefts[i] = part.cents }
+    end
+    fit_progress!(invoice, items.zip(lefts)) if lefts != charges
   end
 
   # A quote's discount, fixed or percent, comes off its invoices as staff choose (PAY-08, owner

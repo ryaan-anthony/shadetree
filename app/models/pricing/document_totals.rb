@@ -14,7 +14,11 @@ module Pricing
   #    Progress credited (PAY-08) is a credit line (Line#credit): what that invoice charged, net
   #    of its discounts, taken off after this one's discount and before tax.
   # 5. Tax is calculated once per rate on the sum of the lines carrying it, then rounded,
-  #    not per line. Rates on the same line apply side by side, never compounded.
+  #    not per line. Rates on the same line apply side by side, never compounded. PAY-08: a credit
+  #    comes off the base like any line (tax-inclusive: Line#fixed_tax, the tax inside it as charged).
+  #    PAY-08 (owner, 2026-11-24): an invoice's tax is on the cumulative base (`prior`:
+  #    { rate => [base, tax] } the earlier invoices billed and charged), less the tax they charged,
+  #    never below zero; `carried` ({ rate => Money }) adds the tax its credits carry.
   # 6. Tax-inclusive prices: the tax inside each group of lines sharing the same rates is
   #    extracted (gross ÷ (1 + rates)), split between rates by percentage, and the total
   #    stays what the client saw on the lines.
@@ -31,8 +35,10 @@ module Pricing
 
     attr_reader :currency, :lines, :discount, :share, :credit_total, :taxes, :subtotal, :total
 
-    def initialize(currency:, lines:, discount: nil, prices_include_tax: false, share: nil)
+    def initialize(currency:, lines:, discount: nil, prices_include_tax: false, share: nil, prior: nil, carried: nil)
       @currency = Money.currency(currency).code
+      @prior = prior || {}
+      @carried = carried || {}
       @prices_include_tax = prices_include_tax
       @share_parts = Array(share).reject { _2.zero? }.map { |rates, amount| [ Array(rates), check_currency(amount) ] }
       @share = Money.sum(@share_parts.map(&:last), @currency)
@@ -77,8 +83,12 @@ module Pricing
 
     def exclusive_taxes(raw_lines, taxable)
       rates_in_order(raw_lines).map do |rate|
-        base = Money.sum(raw_lines.each_index.select { |i| raw_lines[i].tax_rates.include?(rate) }.map { |i| taxable[i] }, currency)
-        TaxResult.new(rate:, base:, amount: base * (rate.percent / 100))
+        indexes = raw_lines.each_index.select { |i| raw_lines[i].tax_rates.include?(rate) }
+        base = Money.sum(indexes.map { |i| taxable[i] }, currency)
+        prior_base, prior_tax = @prior.fetch(rate) { [ Money.zero(currency), Money.zero(currency) ] }
+        # Never below zero (B19): what earlier invoices charged past the true tax is owed back.
+        amount = [ (base + prior_base) * (rate.percent / 100) - prior_tax, Money.zero(currency) ].max + @carried.fetch(rate) { Money.zero(currency) }
+        TaxResult.new(rate:, base:, amount:)
       end
     end
 
@@ -86,7 +96,15 @@ module Pricing
       amounts = Hash.new { |hash, rate| hash[rate] = Money.zero(currency) }
       bases = Hash.new { |hash, rate| hash[rate] = Money.zero(currency) }
 
-      raw_lines.each_index.group_by { |i| raw_lines[i].tax_rates.uniq }.each do |rates, indexes|
+      fixed, rest = raw_lines.each_index.partition { |i| raw_lines[i].fixed_tax }
+      fixed.each do |i| # credits: the tax inside them as charged, taken off; the rest off the base
+        raw_lines[i].tax_rates.uniq.each do |rate|
+          tax = raw_lines[i].fixed_tax.fetch(rate) { Money.zero(currency) }
+          amounts[rate] -= tax
+          bases[rate] += taxable[i] + tax
+        end
+      end
+      rest.group_by { |i| raw_lines[i].tax_rates.uniq }.each do |rates, indexes|
         next if rates.empty?
 
         gross = Money.sum(indexes.map { |i| taxable[i] }, currency)

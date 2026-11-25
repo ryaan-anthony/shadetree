@@ -125,4 +125,15 @@ class Pricing::DocumentTotalsTest < ActiveSupport::TestCase
     shared = Pricing::DocumentTotals.new(currency: "USD", lines: [ line(2, "50", share: usd("15")) ], share: [ [ [], usd("10") ] ])
     assert_equal [ usd("85"), usd("10"), usd("75") ], [ shared.subtotal, shared.discount, shared.total ]
   end
+
+  test "PAY-08: tax on prior progress: the cumulative base's tax, less what was charged (owner, 2026-11-24)" do
+    ten = Pricing::TaxRate.new(name: "Tax", percent: "10")
+    prior = { ten => [ usd("6.70"), usd("0.67") ] }
+    third = Pricing::DocumentTotals.new(currency: "USD", lines: [ line(1, "3.35", tax_rates: [ ten ]) ], prior:)
+    assert_equal usd("0.34"), third.tax_total, "10% of $10.05 is $1.01 (half up), less the $0.67 charged"
+    alone = Pricing::DocumentTotals.new(currency: "USD", lines: [ line(1, "3.35", tax_rates: [ ten ]) ])
+    assert_equal usd("0.34"), alone.tax_total
+    second = Pricing::DocumentTotals.new(currency: "USD", lines: [ line(1, "3.35", tax_rates: [ ten ]) ], prior: { ten => [ usd("3.35"), usd("0.34") ] })
+    assert_equal usd("0.33"), second.tax_total, "10% of $6.70 is $0.67, less the $0.34 charged"
+  end
 end

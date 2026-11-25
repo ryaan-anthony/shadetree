@@ -71,7 +71,9 @@
   <div class="contents" data-controller="modal">
   <%= menu label: "More actions", button: { data: { modal_target: "return" } } do %>
     <%# PAY-08: before the work is done, part of it can be billed as progress (credited on the final invoice). %>
-    <% if split && quote.approved? && !quote.recurring? && (quote.line_items.any? { _1.to_do_quantity.positive? } || jobs.any?(&:open?)) %>
+    <%# Not offered when nothing is left to bill as progress, or (B11) when the work left is needed
+        for the quote's discount: the Invoices card says why, as the job page does. %>
+    <% if split && quote.approved? && !quote.recurring? && (quote.line_items.any? { _1.to_do_quantity.positive? } || jobs.any?(&:open?)) && ledger&.progress_left? && !ledger.progress_blocked? %>
       <%= button_to admin_quote_invoices_path(quote, progress: 1), class: "menu-item", id: "quote-progress-invoice",
                     form: { class: "contents", data: { turbo_confirm: "Bill part of #{quote.number} before it's done? A progress invoice is credited when the work is billed.#{" The draft asks how much of the quote's discount to apply now." if discount_left.to_i.positive?}", turbo_confirm_button: "Create progress invoice" } } do %><%= icon "plus" %> Create progress invoice<% end %>
     <% end %>
@@ -197,6 +199,7 @@
     <% end %>
     <% if (invoices = quote.invoices.order(:created_at, :id).to_a).any? %>
       <%= card title: "Invoices", id: "invoices", flush: true do %><%= render "admin/invoices/list", invoices: %>
+        <% if split && quote.approved? && !quote.recurring? && ledger.progress_blocked? %><p class="border-t border-line px-5 py-3 text-sm2 text-muted" id="quote-progress-blocked"><%= BillingLedger::PROGRESS_BLOCKED %></p><% end %>
         <%= render "admin/invoices/progress_summary", summary: ledger.summary, currency: quote.currency, id: "quote-progress" if split && quote.approved? %>
         <%= render "admin/invoices/unused_discount", ledger:, currency: quote.currency, id: "quote-discount-unused" %><% end %>
     <% end %>

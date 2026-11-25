@@ -705,7 +705,7 @@ end
 # (sent), then the job completed and its final invoice a draft that credits the $500 before tax
 # and applies all $100 of the quote's discount (owner, 2026-11-23). The gutters are still to do.
 # Made last, and its send counted before this billing period, so the rest of the demo (numbers,
-# the quote allowance) and the help screenshots taken from it stay as they were.
+# the quote allowance) stays as it was.
 Tenancy.with_business(business) do
   owner = User.find_by!(email: "owner@example.com")
   client = Client.order(:id).fourth || Client.order(:id).first
