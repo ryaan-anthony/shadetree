@@ -1,8 +1,8 @@
 <%# PAY-01: an invoice that's no longer a draft, with the client's view and its PDF (PAY-02), and its payments (PAY-05). %>
 <% invoice = @invoice %>
 <% totals = invoice.totals %>
-<% content_for :title, "Invoice #{invoice.number}" %>
-<%= page_header "Invoice #{invoice.number}", lede: safe_join([ "For ", link_to(invoice.client.display_name, admin_client_path(invoice.client), class: "font-medium text-ink hover:underline"), location_badge(invoice) ].compact) do %>
+<% content_for :title, "#{invoice.kind_label} #{invoice.number}" %>
+<%= page_header "#{invoice.kind_label} #{invoice.number}", lede: safe_join([ "For ", link_to(invoice.client.display_name, admin_client_path(invoice.client), class: "font-medium text-ink hover:underline"), location_badge(invoice) ].compact) do %>
   <% if invoice.payable? %>
     <%= link_to new_admin_invoice_payment_path(invoice), class: button_classes(:primary) do %><%= icon "dollar-sign" %> Record payment<% end %>
   <% end %>
@@ -15,6 +15,10 @@
   <%= render "void", invoice: invoice if invoice.voidable? %>
 <% end %>
 
+<% if invoice.credited_later? && !invoice.payments? %><%# PAY-08: Void waits for the invoice that credits it %>
+  <div class="banner banner-info mb-4" id="invoice-credited"><%= icon "info" %>
+    <p>Its progress is credited on <%= safe_join(invoice.crediting_invoices.map { link_to(_1.number, admin_invoice_path(_1), class: "font-medium underline") }, ", ") %>, so it can be voided only after that invoice is.</p></div>
+<% end %>
 <% if invoice.void? %>
   <div class="banner banner-warning mb-4"><%= icon "x-circle" %>
     <p>Voided <%= local_time(invoice.voided_at) %><%= " by #{invoice.voided_by.full_name}" if invoice.voided_by %>: “<%= invoice.void_reason %>”</p></div>

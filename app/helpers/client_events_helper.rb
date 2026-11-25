@@ -27,7 +27,7 @@ module ClientEventsHelper
     when "visit_reopened" then [ "rotate-ccw", "Visit reopened#{" for #{subject.job.number}" if subject}", subject && admin_job_path(subject.job) ]
     when "visit_cancelled" then [ "x-circle", "Visit on #{data["when"]} cancelled#{" (#{subject.job.number})" if subject}", subject && admin_job_path(subject.job) ]
     when "invoice_sent"
-      [ "send", "Invoice #{subject&.number} sent #{CHANNELS[data["channel"]]} #{revision_note(data)}".squish, subject && staff_invoice_path(subject) ]
+      [ "send", "#{subject&.kind_label || "Invoice"} #{subject&.number} sent #{CHANNELS[data["channel"]]} #{revision_note(data)}".squish, subject && staff_invoice_path(subject) ]
     when "invoice_paid" then [ "check-circle", "Invoice #{subject&.number} paid in full", subject && staff_invoice_path(subject) ]
     when "invoice_unpaid" then [ "rotate-ccw", "Invoice #{subject&.number} no longer paid in full", subject && staff_invoice_path(subject) ]
     when "payment_recorded"
@@ -41,7 +41,7 @@ module ClientEventsHelper
       related = subject&.related
       about, path = case related
       when Quote then [ "Quote #{related.number}", staff_quote_path(related) ]
-      when Invoice then [ "Invoice #{related.number}", staff_invoice_path(related) ]
+      when Invoice then [ "#{related.kind_label} #{related.number}", staff_invoice_path(related) ]
       else [ ("“#{subject.subject}”" if subject&.subject), nil ]
       end
       [ "alert-triangle", subject ? "#{about || "An email"} to #{subject.to}: #{subject.problem_reason}" : "An email wasn't delivered", path ]

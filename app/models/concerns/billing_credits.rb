@@ -34,6 +34,9 @@ module BillingCredits
 
   def progress? = kind == "progress"
 
+  # What it's called wherever it's named: "Progress invoice INV-0004", as on the client's page.
+  def kind_label = progress? ? "Progress invoice" : "Invoice"
+
   # Prices the lines with the shares, and the pre-tax credits as negative lines (credits: false is
   # the total before credits, which the $0 rule looks at).
   def totals(credits: true)

@@ -139,10 +139,10 @@ class Admin::DataExportsTest < ActionDispatch::IntegrationTest
       Invoice.from_quote!(quote.reload).tap { assert_equal 2, jobs.size }
     end
     lines = download("invoice_lines").select { _1["Invoice number"] == invoice.number }
-    assert_equal [ "Job number", "Job line position", "Quote number", "Quote line position", "Final bill" ], lines.first.headers.last(5)
+    assert_equal [ "Job number", "Job line position", "Quote number", "Quote line position", "Final bill", "Discount share" ], lines.first.headers.last(6)
     numbers, quote = as_business(@business) { [ invoice.jobs.map(&:number), invoice.quote.number ] }
-    assert_equal numbers.map { [ _1, "0", quote, "0", "yes" ] }, lines.map { _1.fields.last(5) }
+    assert_equal numbers.map { [ _1, "0", quote, "0", "yes", "0.00" ] }, lines.map { _1.fields.last(6) }
     row = download("invoices").find { _1["Invoice number"] == invoice.number }
-    assert_equal [ quote, numbers.join(", ") ], row.fields.last(2)
+    assert_equal [ quote, numbers.join(", "), "work", "0.00", "0.00", "" ], row.fields.last(6) # PAY-08: kind, share, credits
   end
 end

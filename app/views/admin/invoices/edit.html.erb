@@ -1,12 +1,12 @@
 <% content_for :head, tag.meta(name: "turbo-cache-control", content: "no-cache") %>
-<% content_for :title, "Invoice #{@invoice.number}" %>
+<% content_for :title, "#{@invoice.kind_label} #{@invoice.number}" %>
 <% totals = @invoice.totals %>
 <% lines = @invoice.current_line_items %>
 <%# The quote builder's form, partials and script, for an invoice (scope "invoice"). %>
 <div data-controller="quote-builder" data-quote-builder-scope-value="invoice"
      data-quote-builder-property-url-value="<%= property_options_admin_quotes_path(name: "invoice[property]") %>">
 <% lede = @invoice.revising? ? "Revision #{@invoice.revision} for #{@invoice.client.display_name}. Changes save as you go." : "Draft for #{@invoice.client.display_name}. Changes save as you go." %>
-<%= page_header "Invoice #{@invoice.number}", lede: do %>
+<%= page_header "#{@invoice.kind_label} #{@invoice.number}", lede: do %>
   <%# A sent invoice being revised can still be voided instead of re-sent. %>
   <%= render "void", invoice: @invoice if @invoice.voidable? %>
   <%= link_to preview_admin_invoice_path(@invoice), class: button_classes(:secondary), target: "_blank", rel: "noopener",

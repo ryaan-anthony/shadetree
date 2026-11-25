@@ -17,5 +17,5 @@ class InvoiceMailer < ClientMailer
     client_mail subject:, cc: params[:cc].presence
   end
 
-  def self.default_subject(invoice) = "Invoice #{invoice.number} from #{invoice.business.name}#{": #{invoice.title}" if invoice.title}"
+  def self.default_subject(invoice) = "#{invoice.kind_label} #{invoice.number} from #{invoice.business.name}#{": #{invoice.title}" if invoice.title}"
 end
