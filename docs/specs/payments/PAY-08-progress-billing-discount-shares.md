@@ -17,15 +17,14 @@ once. Staff choose how much of a quote's discount each invoice takes; the last t
 
 ## User stories
 
-- As an owner, I want to bill half the roof now and have it taken off the final invoice, and to
-  choose when a quote's discount comes off, the client getting all of it.
+- As an owner, I want to bill half the roof now, take it off the final, and choose when a quote's discount comes off.
 
 ## Acceptance criteria
 
 - [x] "Create progress invoice" (owner, 2026-11-23) on a job or quote before the work is done
       makes a progress invoice of its unbilled lines, which staff can lower; under PAY-06's lock
       a line's progress can't pass what's left of it. Not offered once the work left is needed
-      for the quote's discount: "Nothing is left to bill as progress: …".
+      for the quote's discount.
 - [x] Progress on a job line is credited on that line's final bill; on a quote line (or a
       cancelled job's), on its quote line's. Credit = min(progress not yet credited, this bill's
       amount for the line), the job line's own first: a negative line before tax at its rates, so
@@ -47,12 +46,13 @@ once. Staff choose how much of a quote's discount each invoice takes; the last t
       cancelled) with less than quoted, its discount is D × quoted value done ÷ quoted value,
       rounded once, spread by largest remainder; the rest shows as "not used" (quote, job,
       invoice) and isn't outstanding. A direct bill's own lines count as done.
-- [x] A line's fixed discount d over quantity q is shared by quantity billed: min(d, round(d ×
-      billed ÷ q)), less what earlier bills of it took.
-- [x] Shares are kept apart from a staff discount. After a void, drafts work shares and credits
-      out again; sent invoices don't change. Recurring quotes don't share (JOB-10). The $0 rule
-      (PAY-01) looks at the total before credits; nothing due is Paid at once. The quote page
-      shows progress billed, credited, over-billed; the job page its own.
+- [x] A line's fixed discount d (quantity q) is shared by quantity billed: min(d, round(d × billed
+      ÷ q)), less what earlier bills took; a percent one, round(percent × gross billed so far).
+- [x] Shares are kept apart from a staff discount. After a void or a send, drafts work shares and
+      credits out again (progress drafts refit to what's left); sent invoices don't change.
+      Recurring quotes don't share (JOB-10). The $0 rule (PAY-01) looks at the total before
+      credits; nothing due is Paid at once. The quote and job pages show progress billed,
+      credited, over-billed.
 - [x] Tests: #356's examples 1–4, progress, over-billing, credits, tax, discounts, voids, tenancy.
 
 ## Out of scope
@@ -64,8 +64,7 @@ once. Staff choose how much of a quote's discount each invoice takes; the last t
 - Progress billing stays: a job or quote can be billed in part before it's done (owner, 2026-11-22).
 - Staff choose how much of a quote's discount each invoice applies; the rest carries and the
   last takes it, fixed or percent, in the quote's taxed/untaxed mix. On progress it only moves
-  cash: work invoices give exactly the discount (owner, 2026-11-23). Over-billing is credited on the
-  next invoice (owner, 2026-11-22).
+  cash: work invoices give exactly the discount (owner, 2026-11-23). Over-billing is credited next (2026-11-22).
 - A re-taxed job: the discount comes off the lines charged and lowers tax at their actual rates;
   the client gets all of it; the tax total may differ from the quote's (owner, 2026-11-23).
 - A staff discount on the last final leaving too little for the quote's discount blocks sending
@@ -78,9 +77,10 @@ once. Staff choose how much of a quote's discount each invoice takes; the last t
   staff discount too, staff lower theirs first (owner, 2026-11-24).
 - A final deducts only the net a progress invoice charged (unpaid too, which stays owed);
   progress never charges a line more than the final would. Staff figures include tax.
-- Tax reconciles to the whole job's: progress is taxed on all progress sent before it plus its
-  own, less the tax charged; the final on its full base, less what its credits carry. "Credit
-  from" is exactly what it charged; no cent is kept or owed (owner, 2026-11-24).
+- Tax and discounts reconcile to the quote's: progress is taxed on all progress sent before it
+  plus its own, less the tax charged; finals likewise (the last takes the rounding), less what
+  their credits carry. "Credit from" is exactly what it charged; no cent is kept or owed (owner,
+  2026-11-24).
 - Credited progress is voided after the invoice crediting it (void-first, owner, 2026-11-23).
   Credits count only from invoices that went out, capped by the bill's line.
 
@@ -91,10 +91,10 @@ once. Staff choose how much of a quote's discount each invoice takes; the last t
   any send or void. A credit is what progress charged, with its tax (`invoice_credits.tax_charged`;
   `invoices.tax_prior`: what went out before a progress invoice).
 - Fit: PAY-07 adds deposit/take_back credits; JOB-10 skips `quote_discount_off!`; QTE-09 adds Not
-  going ahead to `nothing_left?`/`done?`/`all_done?`. Dev seeds: "Roof replacement" ($500 progress).
+  going ahead to `nothing_left?`/`done?`/`all_done?`. Dev seeds: "Roof replacement".
 - `quote_discount_chosen_cents` (nil: $0) is held to [min, max] in `quote_discount_share_cents`;
   `QuoteDiscountPlan` places it by line (needs, credit room first) in `quote_discount_parts`.
 - When `split_jobs` goes on (OPS-06): run-your-day, turn-a-quote-into-a-job, invoice-finished-work
   and job-without-a-quote add back logging each visit's work (The work, How many, Add something
-  done on site), say Create invoice bills what was done, and are recaptured; progress invoices and
-  quote discounts get an article.
+  done on site), say Create invoice bills what was done, and are recaptured; new articles on
+  progress invoices and quote discounts.

@@ -18,7 +18,7 @@
 #   ledger = BillingLedger.new(quote:, except: invoice)
 #   ledger.over_billed_cents, ledger.left_cents(job_line), ledger.outstanding_cents
 class BillingLedger
-  attr_reader :quote, :jobs, :progress
+  attr_reader :quote, :jobs, :progress, :finals
 
   def initialize(quote: nil, job: nil, except: nil, current: [])
     @quote = quote
@@ -115,8 +115,10 @@ class BillingLedger
   # A line's progress is credited only at the tax rates it was charged at (BillingCredits refuses
   # a bill whose line is taxed otherwise), so a credit always equals what was charged.
   # `taken` ({ line => cents }) gathers what each final bill's own progress credits take.
-  def credits_for(lines_with_caps, others_cap: 0, bases: {}, taken: Hash.new(0))
+  def credits_for(lines_with_caps, others_cap: 0, bases: {}, taken: Hash.new(0), tax_room: {})
     @tax_credited = taxes_credited.dup # what each progress invoice's credits have taken, per rate, so far
+    @tax_carried = taxes_carried.dup # and the tax they carry
+    @tax_room = tax_room.dup # the tax this invoice charges, per rate, for its credits to carry
     left = Hash.new { |hash, line| hash[line] = remaining_cents(line) }
     bases = Hash.new(0).merge(bases)
     credits = []
@@ -443,6 +445,36 @@ class BillingLedger
     (target - earlier.sum(&:discount_share_cents)).clamp(0..)
   end
 
+  # A quote line's percent discount, shared out the same way (B16, owner, 2026-11-24): each bill's
+  # share is round(percent × gross billed so far on the line) less what earlier bills of it took,
+  # so a line's bills add up to the discount on its whole quantity whichever way it's split (rounded
+  # per job line, they could be a cent out). Returns one share per bill in `current`; a bill whose
+  # job line carries another percent keeps its own discount and takes none.
+  def percent_shares(line, current)
+    return current.map { 0 } unless shares? && line.discount_kind == "percent"
+
+    earlier = sent_finals.select { _1.quote_line_item_id == line.id && percent_bill?(line, _1) }
+    gross = earlier.sum(&:line_amount_cents)
+    given = earlier.sum(&:discount_share_cents)
+    current.map do |item|
+      next 0 unless percent_bill?(line, item)
+
+      gross += item.line_amount_cents
+      share = (round(gross * line.discount_percent.to_d / 100) - given).clamp(0..[ item.line_amount_cents, 0 ].max)
+      given += share
+      share
+    end
+  end
+
+  # Whether a bill of this quote line takes the quote line's percent as a share: its job line
+  # carries that percent (a direct bill copies it).
+  def percent_bill?(line, item)
+    return true unless item.job_line_item_id
+
+    job_line = @job_lines[item.job_line_item_id]
+    job_line.nil? || (job_line.discount_kind == "percent" && job_line.discount_percent.to_d == line.discount_percent.to_d)
+  end
+
   # Recurring quotes don't share (JOB-10).
   def shares? = quote.present? && !quote.recurring?
 
@@ -503,7 +535,12 @@ class BillingLedger
       base = @progress.select { _1.invoice_id == invoice.id && rates_of(_1).include?(rate) }.sum { amount_cents(_1) }
       tax = taxes.fetch(rate, 0)
       before = @tax_credited[[ invoice.id, rate ]]
-      cents = base.positive? ? round(tax * (before + amount) / base.to_d) - round(tax * before / base.to_d) : 0
+      # What all its credits so far should carry, less what they do: a credit that couldn't carry
+      # its share (the invoice crediting it charges less tax) leaves it to the next one.
+      owed = base.positive? ? round(tax * (before + amount) / base.to_d) - @tax_carried[[ invoice.id, rate ]] : 0
+      cents = owed.clamp(0..[ @tax_room.fetch(rate, 0), 0 ].max)
+      @tax_room[rate] = @tax_room.fetch(rate, 0) - cents
+      @tax_carried[[ invoice.id, rate ]] += cents
       @tax_credited[[ invoice.id, rate ]] += amount
       { "name" => rate.name, "percent" => rate.percent.to_d.to_s("F"), "cents" => cents }
     end
@@ -517,6 +554,14 @@ class BillingLedger
     @taxes_credited ||= InvoiceCredit.counted.where(source_invoice_id: @progress.map(&:invoice_id).uniq).where.not(invoice_id: @except_id)
                                      .pluck(:source_invoice_id, :amount_cents, :tax_rates)
                                      .each_with_object(Hash.new(0)) { |(id, cents, rates), sums| self.class.rates_from(rates).each { sums[[ id, _1 ]] += cents } }
+  end
+
+  # What credits that went out (on other invoices) carry of each progress invoice's tax, per rate.
+  def taxes_carried
+    @taxes_carried ||= InvoiceCredit.counted.where(source_invoice_id: @progress.map(&:invoice_id).uniq).where.not(invoice_id: @except_id)
+                                    .pluck(:source_invoice_id, :tax_charged).each_with_object(Hash.new(0)) do |(id, taxes), sums|
+      taxes.each { sums[[ id, Pricing::TaxRate.new(name: _1["name"], percent: _1["percent"]) ]] += _1["cents"].to_i }
+    end
   end
 
   # A line's subtotal in its document's currency, without loading its document again.
