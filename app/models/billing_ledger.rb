@@ -115,10 +115,9 @@ class BillingLedger
   # A line's progress is credited only at the tax rates it was charged at (BillingCredits refuses
   # a bill whose line is taxed otherwise), so a credit always equals what was charged.
   # `taken` ({ line => cents }) gathers what each final bill's own progress credits take.
-  def credits_for(lines_with_caps, others_cap: 0, bases: {}, taken: Hash.new(0), tax_room: {})
+  def credits_for(lines_with_caps, others_cap: 0, bases: {}, taken: Hash.new(0))
     @tax_credited = taxes_credited.dup # what each progress invoice's credits have taken, per rate, so far
     @tax_carried = taxes_carried.dup # and the tax they carry
-    @tax_room = tax_room.dup # the tax this invoice charges, per rate, for its credits to carry
     left = Hash.new { |hash, line| hash[line] = remaining_cents(line) }
     bases = Hash.new(0).merge(bases)
     credits = []
@@ -535,11 +534,9 @@ class BillingLedger
       base = @progress.select { _1.invoice_id == invoice.id && rates_of(_1).include?(rate) }.sum { amount_cents(_1) }
       tax = taxes.fetch(rate, 0)
       before = @tax_credited[[ invoice.id, rate ]]
-      # What all its credits so far should carry, less what they do: a credit that couldn't carry
-      # its share (the invoice crediting it charges less tax) leaves it to the next one.
-      owed = base.positive? ? round(tax * (before + amount) / base.to_d) - @tax_carried[[ invoice.id, rate ]] : 0
-      cents = owed.clamp(0..[ @tax_room.fetch(rate, 0), 0 ].max)
-      @tax_room[rate] = @tax_room.fetch(rate, 0) - cents
+      # What all its credits so far should carry, less what they do (B17), so its credits carry
+      # exactly what it charged once it's all credited.
+      cents = base.positive? ? (round(tax * (before + amount) / base.to_d) - @tax_carried[[ invoice.id, rate ]]).clamp(0..) : 0
       @tax_carried[[ invoice.id, rate ]] += cents
       @tax_credited[[ invoice.id, rate ]] += amount
       { "name" => rate.name, "percent" => rate.percent.to_d.to_s("F"), "cents" => cents }

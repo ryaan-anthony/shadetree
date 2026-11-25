@@ -77,9 +77,9 @@ once. Staff choose how much of a quote's discount each invoice takes; the last t
   staff discount too, staff lower theirs first (owner, 2026-11-24).
 - A final deducts only the net a progress invoice charged (unpaid too, which stays owed);
   progress never charges a line more than the final would. Staff figures include tax.
-- Tax and discounts reconcile to the quote's: progress is taxed on all progress sent before it
-  plus its own, less the tax charged; finals likewise (the last takes the rounding), less what
-  their credits carry. "Credit from" is exactly what it charged; no cent is kept or owed (owner,
+- Tax reconciles to the true cumulative tax: per quote (or lone job) and rate, an invoice's tax is
+  on the net base (credits off) of all invoices sent before it, not void, plus its own, less the
+  tax they charged. "Credit from" is exactly what it charged; no cent is kept or owed (owner,
   2026-11-24).
 - Credited progress is voided after the invoice crediting it (void-first, owner, 2026-11-23).
   Credits count only from invoices that went out, capped by the bill's line.
@@ -89,7 +89,7 @@ once. Staff choose how much of a quote's discount each invoice takes; the last t
 - `invoices.kind`, `invoice_credits`; `BillingLedger` reads a quote's (or lone job's) bills under
   PAY-06's lock; `BillingCredits` works shares and credits out on each draft save, and again on
   any send or void. A credit is what progress charged, with its tax (`invoice_credits.tax_charged`;
-  `invoices.tax_prior`: what went out before a progress invoice).
+  `invoices.tax_prior`: what went out before an invoice, net, per rate).
 - Fit: PAY-07 adds deposit/take_back credits; JOB-10 skips `quote_discount_off!`; QTE-09 adds Not
   going ahead to `nothing_left?`/`done?`/`all_done?`. Dev seeds: "Roof replacement".
 - `quote_discount_chosen_cents` (nil: $0) is held to [min, max] in `quote_discount_share_cents`;

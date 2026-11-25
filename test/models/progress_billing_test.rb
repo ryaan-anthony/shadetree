@@ -785,25 +785,20 @@ class ProgressBillingTest < ActiveSupport::TestCase
       # Tax is worked on each line's own rates, after what comes off it (R3, owner 2026-11-23).
       unless inclusive
         as_business(@business) do
-          # Progress is taxed on everything billed so far, less the tax charged (owner, 2026-11-24).
-          billed = Hash.new(0)
-          charged = Hash.new(0)
+          # Every invoice is taxed on the quote's net base so far (credits off), less the tax charged
+          # (owner, 2026-11-24): what went out before it is as it was when it went out.
           invoices.each do |invoice|
             net = invoice.send(:net_by_line)
             # A charge-back is taxed at the rates its discount came off (owner, 2026-11-24).
             backs = invoice.quote_discount_parts.select { !_1["key"] && !_1["owed"] }.flat_map { BillingLedger.rates_from(_1["rates"]) }
             expected = (invoice.tax_rate_list | backs).sum do |rate|
               back = invoice.quote_discount_parts.select { !_1["key"] && !_1["owed"] && BillingLedger.rates_from(_1["rates"]).include?(rate) }.sum { _1["cents"].to_i }
-              base = net.sum { |line, cents| invoice.send(:rates_for, line).include?(rate) ? cents : 0 } - back
-              if invoice.progress?
-                tax = (((billed[rate] + base) * rate.percent / 100).round(0, Money::ROUNDING).to_i) - charged[rate]
-                billed[rate] += base
-                charged[rate] += tax
-                tax
-              else # the tax on everything billed on finals so far, less what they charged and what its credits carry (B14, B15)
-                prior_base, prior_tax = invoice.prior_tax.fetch(rate) { [ Money.zero(invoice.currency), Money.zero(invoice.currency) ] }.map(&:cents)
-                ((prior_base + base) * rate.percent / 100).round(0, Money::ROUNDING).to_i - prior_tax - invoice.credits.sum { |credit| credit.fixed_tax.fetch(rate, Money.zero(invoice.currency)).cents }
-              end
+              base = net.sum { |line, cents| invoice.send(:rates_for, line).include?(rate) ? cents : 0 } - back -
+                     invoice.credits.select { _1.pre_tax? && _1.tax_rate_list.include?(rate) }.sum(&:amount_cents)
+              prior_base, prior_tax = invoice.prior_tax.fetch(rate) { [ Money.zero(invoice.currency), Money.zero(invoice.currency) ] }.map(&:cents)
+              tax = ((prior_base + base) * rate.percent / 100).round(0, Money::ROUNDING).to_i - prior_tax
+              assert_operator tax, :>=, 0, "scenario #{n}: #{invoice.number}'s tax at #{rate.percent}% is never below zero"
+              tax
             end
             assert_equal expected, invoice.tax_cents, "scenario #{n}: #{invoice.number}'s tax on its lines' own rates"
           end
@@ -815,7 +810,7 @@ class ProgressBillingTest < ActiveSupport::TestCase
         # Progress and the finals charge the tax on the whole job, rounded once, however many finals (owner, 2026-11-24).
         if progress_sent.sum { _1.line_items.size } == as_business(@business) { finals.sum { _1.credits.size } }
           assert_equal quote_tax, invoices.sum(&:tax_cents), "scenario #{n}: tax as the quote's, to the cent"
-          assert_equal as_business(@business) { @quote.reload.total_cents }, invoices.sum(&:total_cents), "scenario #{n}: billed = the quote's total, to the cent" if over_billed.zero?
+          assert_equal as_business(@business) { @quote.reload.total_cents }, invoices.sum(&:total_cents), "scenario #{n}: billed = the quote's total, to the cent" if over_billed.zero? && invoices.none? { |i| i.quote_discount_parts.any? { _1["owed"] } } # what's owed is refunded by hand
         end
       end
       # Progress never charges a line more than its final does (owner, 2026-11-23), before any
@@ -1228,6 +1223,22 @@ class ProgressBillingTest < ActiveSupport::TestCase
     now = total(draft)
     assert_equal [ 100_00, 75_00 ], [ held, now ], "the Roof's $100 held no discount; with $50 to come, its final charges $75"
     assert_empty as_business(@business) { draft.reload.tap(&:validate).errors.full_messages }, "and the draft is within the limit, not saved over it"
+  end
+
+  # Seed 55, scenario 62's shape (owner, 2026-11-24): one cumulative base for all of a quote's
+  # invoices, so a final never charges less tax than the credits it carries leave room for.
+  test "one cumulative base: progress, another job's final, then the progress's final: exact rows, no negative tax, the quote's tax" do
+    approved_quote([ [ "e", "Eaves", 1, "460.24" ], [ "l", "Ledger", 1, "347.44" ] ], tax: "6.25")
+    eaves, ledger = make(e: 1), make(l: 1)
+    early = send!(lower(progress(ledger), "Ledger" => "347.44"))
+    assert_equal 21_72, early.tax_cents, "6.25% of $347.44 is $21.715"
+    first = send!(bill_job(complete(eaves)))
+    assert_equal 28_76, first.tax_cents, "6.25% of $807.68 is $50.48, less the $21.72 charged (alone it would round up to $28.77)"
+    last = send!(bill_job(complete(ledger)))
+    assert_equal [ [ early.number, early.total_cents ] ], client_credits(last), "Credit from is what it charged"
+    assert_equal [ 0, 0 ], [ last.tax_cents, last.total_cents ]
+    assert_equal 21_72, as_business(@business) { last.reload.totals(credits: false).tax_total.cents }, "the client sees its tax with the credit's, then the credit"
+    assert_equal @quote.reload.total_cents, [ early, first, last ].sum(&:total_cents), "billed = the quote's $858.16"
   end
 
   test "B14: a progress draft is taxed on what went out before it, whichever draft goes out first" do

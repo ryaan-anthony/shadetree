@@ -46,9 +46,10 @@ module BillingCredits
   def kind_label = progress? ? "Progress invoice" : "Invoice"
 
   # Prices the lines with the shares, and the pre-tax credits as negative lines (credits: false is
-  # the total before credits, which the $0 rule looks at).
+  # the total before credits, which the $0 rule looks at and the client sees: its tax is this
+  # invoice's tax plus what its credits carry, so lines, tax and "Credit from" rows add up).
   def totals(credits: true)
-    Pricing::DocumentTotals.new(currency:, discount: pricing_discount, prices_include_tax:, share: share_parts, prior: prior_tax,
+    Pricing::DocumentTotals.new(currency:, discount: pricing_discount, prices_include_tax:, share: share_parts, prior: credits ? prior_tax : prior_before_credits,
                                 lines: current_line_items.map { _1.to_pricing(tax_rate_list) } + (credits ? pre_tax_credits.map(&:to_pricing) : []))
   end
 
@@ -117,15 +118,11 @@ module BillingCredits
     priced.taxes.to_h { [ _1.rate, _1.amount.cents ] }
   end
 
-  # { rate => cents } this invoice charges tax on (the version the client has, while revised).
-  def charged_tax_bases = (version = sent_version) ? copy_from(version.snapshot).send(:tax_bases) : tax_bases
-
-  # An invoice's tax is the whole's so far (owner, 2026-11-24): tax on everything billed on the
-  # invoices of its kind (progress, or final) that went out before it plus its own, less the tax
-  # they charged (before credits). Progress can then never round past the tax on the whole job, so
-  # the final (the whole job's tax, less what progress charged) is never short, and every "Credit
-  # from" is exactly what it charged; with several finals, the last takes the rounding, so the
-  # quote's invoices charge its tax to the cent.
+  # An invoice's tax is the whole's so far (owner, 2026-11-24): per rate, tax on the net base (credits
+  # off) of every invoice of the quote (or lone job) that went out before it, not void, plus its
+  # own, less the tax they charged. That base never goes down, so no invoice's tax is below zero,
+  # and the last lands on the true tax of what was billed. Each credit still carries exactly the
+  # tax its progress invoice charged on it ("Credit from").
   # { rate => [base, tax] } as Money, from `tax_prior` (set when it's drafted and when it's sent).
   def prior_tax
     return {} if prices_include_tax
@@ -135,16 +132,38 @@ module BillingCredits
     end
   end
 
-  # What the invoices of its kind that went out earlier billed and charged, per rate; worked out
-  # again on every draft save and when it goes out, then kept as it was sent.
+  # Before credits the prior counts them as not yet billed: the tax shown is this invoice's tax plus
+  # what its credits carry.
+  def prior_before_credits
+    prior = prior_tax
+    return prior if prices_include_tax || progress? # progress never carries credits
+
+    pre_tax_credits.each do |credit|
+      credit.fixed_tax.each do |rate, tax|
+        base, charged = prior.fetch(rate) { [ Money.zero(currency), Money.zero(currency) ] }
+        prior[rate] = [ base - Money.new(credit.amount_cents, currency), charged - tax ]
+      end
+    end
+    prior
+  end
+
+  # { rate => [net base, tax] } in cents this invoice charges, credits off (the version the client
+  # has, while revised).
+  def charged_net_by_rate
+    priced = (version = sent_version) ? copy_from(version.snapshot, credits: true).totals : totals
+    priced.taxes.to_h { [ _1.rate, [ _1.base.cents, _1.amount.cents ] ] }
+  end
+
+  # What the quote's (or lone job's) invoices that went out earlier, not void, billed net and
+  # charged, per rate; worked out again on every draft save and when it goes out, then kept as it
+  # was sent.
   def assign_tax_prior
     sums = Hash.new { |hash, rate| hash[rate] = [ 0, 0 ] }
     ledger = BillingLedger.for(self)
-    (progress? ? ledger.progress : ledger.finals).map(&:invoice).uniq.select { _1.progress? == progress? && _1.sent_at && _1.currency == currency }.sort_by { [ _1.sent_at, _1.id ] }.each do |earlier|
-      taxes = earlier.charged_tax_by_rate
-      earlier.charged_tax_bases.each do |rate, base|
+    (ledger.progress + ledger.finals).map(&:invoice).uniq.select { _1.sent_at && _1.currency == currency }.sort_by { [ _1.sent_at, _1.id ] }.each do |earlier|
+      earlier.charged_net_by_rate.each do |rate, (base, tax)|
         sums[rate][0] += base
-        sums[rate][1] += taxes.fetch(rate, 0)
+        sums[rate][1] += tax
       end
     end
     self.tax_prior = sums.map { |rate, (base, tax)| { "name" => rate.name, "percent" => rate.percent.to_d.to_s("F"), "base_cents" => base, "tax_cents" => tax } }
@@ -258,7 +277,7 @@ module BillingCredits
   # A revision snapshot priced again, in memory.
   def charges_from(data) = copy_from(data).send(:current_charges)
 
-  def copy_from(data)
+  def copy_from(data, credits: false)
     copy = Invoice.new(business:, currency:, kind:, tax_rates: data["tax_rates"], prices_include_tax: data["prices_include_tax"], tax_prior: data["tax_prior"].to_a,
                        quote_discount_share_cents: data["quote_discount_share_cents"].to_i, quote_discount_parts: data["quote_discount_parts"].to_a)
     copy.set_discount(data["discount_kind"], data["discount"])
@@ -266,6 +285,7 @@ module BillingCredits
       item = copy.line_items.build(line.slice(*%w[key name quantity unit_price_cents taxable tax_rates discount_share_cents]).merge("position" => position))
       item.set_discount(line["discount_kind"], line["discount"])
     end
+    data["credits"].to_a.each { copy.credits.build(**_1.symbolize_keys, business:) } if credits
     copy
   end
 
@@ -298,7 +318,7 @@ module BillingCredits
     # B13: a charge-back (a shortfall's discount added back) is charged too, on no line: over-billing
     # comes off it as well. Its rates' bases already include it (tax_bases), so its tax goes too.
     others += quote_discount_charge_back.cents
-    ledger.credits_for(caps, others_cap: others, bases: tax_bases(priced), taken:, tax_room: priced.taxes.to_h { [ _1.rate, _1.amount.cents ] })
+    ledger.credits_for(caps, others_cap: others, bases: tax_bases(priced), taken:)
   end
 
   # The quote's discount this invoice may apply (owner, 2026-11-23), in cents:
@@ -332,13 +352,20 @@ module BillingCredits
     if progress?
       lines.each { owed[ledger.group_of(_1)] += net[_1] } # its own charge waits to be credited too
     else
-      over = 0
+      over = Hash.new(0)
       credits_wanted(ledger, finals, taken:).each do |credit|
         owed[ledger.progress_group(credit[:source_line_item_id])] -= credit[:amount_cents]
-        over += credit[:amount_cents] if credit[:kind] == "over_billed"
+        over[BillingLedger.rates_from(credit[:tax_rates]).to_set] += credit[:amount_cents] if credit[:kind] == "over_billed"
       end
-      free = lines.to_h { [ _1, net[_1] - taken[_1] ] }
-      Money.new([ over, free.values.sum ].min, currency).allocate(free.values.map { [ _1, 0 ].max }).zip(free.keys) { |part, line| taken[line] += part.cents } if over.positive? && free.values.sum.positive?
+      # Over-billing taken off this invoice's room: taxed progress only off lines at its rates (their
+      # base is what it can come off), so the plan keeps that room free; untaxed off any line.
+      over.sort_by { -_1.first.size }.each do |rates, cents|
+        eligible = lines.select { rates.subset?(rates_for(_1).to_set) }
+        free = eligible.to_h { [ _1, [ net[_1] - taken[_1], 0 ].max ] }
+        next unless cents.positive? && free.values.sum.positive?
+
+        Money.new([ cents, free.values.sum ].min, currency).allocate(free.values).zip(free.keys) { |part, line| taken[line] += part.cents }
+      end
     end
     self.quote_discount_share_cents, self.quote_discount_parts = saved
     slots = lines.map { QuoteDiscountPlan::Slot.new(key: _1.key, group: ledger.group_of(_1), rates: BillingLedger.group(rates_for(_1)), capacity: net[_1], free: net[_1] - taken[_1]) }

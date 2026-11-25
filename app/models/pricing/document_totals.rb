@@ -15,9 +15,8 @@ module Pricing
   #    of its discounts, taken off after this one's discount and before tax.
   # 5. Tax is calculated once per rate on the sum of the lines carrying it, then rounded,
   #    not per line. Rates on the same line apply side by side, never compounded. PAY-08: a credit
-  #    with its tax fixed (Line#fixed_tax) isn't taxed again: the tax the credited invoice charged
-  #    comes off that rate's tax, so "Credit from INV-x" is exactly what INV-x charged.
-  #    PAY-08 (owner, 2026-11-24): a progress invoice's tax is on the cumulative base (`prior`:
+  #    comes off the base like any line (tax-inclusive: Line#fixed_tax, the tax inside it as charged).
+  #    PAY-08 (owner, 2026-11-24): an invoice's tax is on the cumulative base (`prior`:
   #    { rate => [base, tax] } the earlier invoices billed and charged), less the tax they charged.
   # 6. Tax-inclusive prices: the tax inside each group of lines sharing the same rates is
   #    extracted (gross ÷ (1 + rates)), split between rates by percentage, and the total
@@ -83,14 +82,12 @@ module Pricing
     def exclusive_taxes(raw_lines, taxable)
       rates_in_order(raw_lines).map do |rate|
         indexes = raw_lines.each_index.select { |i| raw_lines[i].tax_rates.include?(rate) }
-        fixed, taxed = indexes.partition { |i| raw_lines[i].fixed_tax }
+        base = Money.sum(indexes.map { |i| taxable[i] }, currency)
         prior_base, prior_tax = @prior.fetch(rate) { [ Money.zero(currency), Money.zero(currency) ] }
-        amount = (Money.sum(taxed.map { |i| taxable[i] }, currency) + prior_base) * (rate.percent / 100) - prior_tax - fixed_tax(raw_lines, fixed, rate)
-        TaxResult.new(rate:, base: Money.sum(indexes.map { |i| taxable[i] }, currency), amount:)
+        amount = (base + prior_base) * (rate.percent / 100) - prior_tax
+        TaxResult.new(rate:, base:, amount:)
       end
     end
-
-    def fixed_tax(raw_lines, indexes, rate) = Money.sum(indexes.map { |i| raw_lines[i].fixed_tax.fetch(rate) { Money.zero(currency) } }, currency)
 
     def inclusive_taxes(raw_lines, taxable)
       amounts = Hash.new { |hash, rate| hash[rate] = Money.zero(currency) }
