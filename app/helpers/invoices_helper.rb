@@ -39,6 +39,7 @@ module InvoicesHelper
     revision = " (revision #{event.data["revision"]})" if event.kind == "sent" && event.data["revision"].to_i > 1
     how = " for #{event.data["location"]} (#{Array(event.data["changed"]).join(" and ")})" if event.kind == "repriced"
     how = refit_text(event.data) if event.kind == "progress_refitted"
+    return "Nothing left to bill on #{Array(event.data["zeroed"]).to_sentence}#{by}" if event.kind == "progress_refitted" && Array(event.data["zeroed"]).any? && Array(event.data["lowered"]).empty? && Array(event.data["removed"]).empty?
     label = event.kind == "sent" && event.data["channel"] == "payment" ? "Marked sent" : EVENT_LABELS.fetch(event.kind)
     label = "Nothing due: marked paid" if event.kind == "paid" && event.data["nothing_due"] # PAY-08
     "#{label}#{how}#{revision}#{from}#{by}#{reason}"
@@ -47,7 +48,8 @@ module InvoicesHelper
   # PAY-08 (B18): ": Roof lowered to what's left; Gutters taken off, nothing left to bill".
   def refit_text(data)
     parts = [ ("#{Array(data["lowered"]).to_sentence} lowered to what's left" if Array(data["lowered"]).any?),
-              ("#{Array(data["removed"]).to_sentence} taken off, nothing left to bill" if Array(data["removed"]).any?) ].compact
+              ("#{Array(data["removed"]).to_sentence} taken off, nothing left to bill" if Array(data["removed"]).any?),
+              ("nothing left to bill on #{Array(data["zeroed"]).to_sentence}" if Array(data["zeroed"]).any?) ].compact
     ": #{parts.join("; ")}"
   end
 end

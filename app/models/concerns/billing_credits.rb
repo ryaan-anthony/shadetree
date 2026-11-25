@@ -221,9 +221,10 @@ module BillingCredits
       next unless draft.refit_progress!
       next draft.reload unless draft.save
 
-      lowered = draft.current_line_items.select { before.key?(_1.name) && before[_1.name] != _1.unit_price_cents }.map(&:name)
+      zeroed = draft.current_line_items.select { _1.unit_price_cents.zero? && before[_1.name].to_i.positive? }.map(&:name)
+      lowered = draft.current_line_items.select { before.key?(_1.name) && before[_1.name] != _1.unit_price_cents }.map(&:name) - zeroed
       removed = before.keys - draft.current_line_items.map(&:name)
-      draft.record!(:progress_refitted, lowered:, removed:) if lowered.any? || removed.any?
+      draft.record!(:progress_refitted, lowered:, removed:, zeroed:) if lowered.any? || removed.any? || zeroed.any?
     end
   end
 
@@ -246,12 +247,16 @@ module BillingCredits
         work = kind == :job ? ledger.job_line(id) : ledger.quote_line(id)
         left = work ? ledger.left_cents(work) : 0
         asked = group.sum { net[_1.key].clamp(0..) }
+        next group.each(&:mark_for_destruction) if left <= 0 # nothing left (on its final, or $0): it comes off, even at $0 (B21)
         next if asked <= left
-        next group.each(&:mark_for_destruction) if left <= 0
 
         group.zip(Money.new(left, currency).allocate(group.map { net[_1.key].clamp(0..) }).map(&:cents)).each { |item, cents| lefts[current_line_items.index(item)] = cents }
       end
-      return false if current_line_items.empty?
+      if current_line_items.empty? # nothing left at all: kept at $0 for staff to delete; sending it is refused
+        line_items.each { _1.reload if _1.marked_for_destruction? }
+        line_items.each { _1.assign_attributes(quantity: 1, unit: nil, unit_price_cents: 0) }
+        return true
+      end
       next if current_line_items.size < lefts.size # lines came off: work it out again
 
       return true if current_line_items.zip(lefts).all? { |item, left| net[item.key] <= left }
@@ -281,7 +286,7 @@ module BillingCredits
     self.quote_discount_share_cents = range[:applied]
     parts = range[:plan] ? range[:plan].parts(range[:applied]) : []
     taken = parts.group_by(&:from).transform_values { _1.sum(&:cents) }
-    owed = range[:owed].to_i.positive? ? range[:plan].outstanding.map { |group, cents| [ group, cents - taken.fetch(group, 0) ] }.select { _2.positive? } : []
+    owed = range[:owed_by_group].to_a
     self.quote_discount_parts = parts.map { { "from" => rates_json(_1.from), "key" => _1.key, "rates" => rates_json(_1.rates), "cents" => _1.cents } } +
                                 range[:back].to_a + owed.map { |group, cents| { "from" => rates_json(group), "rates" => rates_json(group), "owed" => true, "cents" => cents } }
   end
@@ -391,24 +396,28 @@ module BillingCredits
     outstanding = last ? ledger.net_outstanding_by_group.select { _2.positive? } : ledger.outstanding_by_group
     left = outstanding.values.sum if last
     back = last ? charge_back_parts(ledger, over_applied) : []
+    # Per group, in the quote's taxed/untaxed mix (B20): a group's part only comes off its own lines.
+    # Its minimum is what its own later work (after its credits and over-billing) can't take, as far
+    # as its lines here allow; its maximum, what fits on them keeping the credits whole (or the
+    # minimum, if more). What a group can't fit is owed on the last invoice (no staff discount:
+    # owner, 2026-11-24); before that, it carries.
     plan = QuoteDiscountPlan.new(outstanding:, slots:)
-    # Each group takes now what its own work left can't, as far as its lines here allow (beyond
-    # that, a later invoice's other lines take it, or the minimum overall does).
-    needs = outstanding.to_h { |group, cents| [ group, (cents - (work[group] - owed[group])).clamp(0, [ cents, plan.capacity(group) ].min) ] }
-    plan = QuoteDiscountPlan.new(outstanding:, slots:, needs:)
-    must = left - room.clamp(0..) # what no later invoice can take (progress billed past the work is over-billed, not this)
-    min = [ must, needs.values.sum ].max
-    most = [ left, net.values.sum ].min
-    max = [ most, [ plan.fits, min ].max ].min
-    applied = [ (quote_discount_chosen_cents || 0).clamp(0, max), min ].max.clamp(0, max)
-    short = min > most
-    # What the last invoice can't take of a scaled discount is owed to the client (owner,
-    # 2026-11-24); an earlier one takes what fits and the rest carries to the last. Only a staff
-    # discount leaving too little refuses a work invoice (R4); progress always leaves room.
-    owed = short && last && discount_kind.blank? ? min - most : 0
+    bounds = outstanding.to_h do |group, cents|
+      must = (cents - (work[group] - owed[group]).clamp(0..)).clamp(0..)
+      need = [ must, plan.capacity(group) ].min
+      [ group, { need:, max: [ cents, plan.capacity(group), [ plan.free(group), need ].max ].min, over: must - need } ]
+    end
+    plan = QuoteDiscountPlan.new(outstanding:, slots:, needs: bounds.transform_values { _1[:need] }, maxes: bounds.transform_values { _1[:max] })
+    min = bounds.values.sum { _1[:need] }
+    max = bounds.values.sum { _1[:max] }
+    applied = (quote_discount_chosen_cents || 0).clamp(min, max)
+    short = bounds.values.any? { _1[:over].positive? }
+    # Only a staff discount leaving too little refuses a work invoice (R4); progress always leaves room.
+    # Owed only once the shortfall is final, on the last invoice (owner, 2026-11-24); before, it carries.
+    owed_by_group = !last || discount_kind.present? ? {} : bounds.select { _2[:over].positive? }.transform_values { _1[:over] }
     refuse = short && (progress? || discount_kind.present?)
-    { left:, min: [ min, max ].min, max:, applied:, work_left: [ room, 0 ].max, short: refuse, charge: net.values.sum,
-      unused: ledger.unused_discount_cents, plan:, back:, owed:, charge_back: -back.sum { _1["cents"] } }
+    { left:, min:, max:, applied:, work_left: [ room, 0 ].max, short: refuse, charge: net.values.sum,
+      unused: ledger.unused_discount_cents, plan:, back:, owed: owed_by_group.values.sum, owed_by_group:, charge_back: -back.sum { _1["cents"] } }
   end
 
   # The parts charged back: each over-applied group's excess, at the rates its parts came off.
@@ -500,7 +509,8 @@ module BillingCredits
 
       work = kind == :job ? ledger.job_line(id) : ledger.quote_line(id)
       left = work ? ledger.left_cents(work) : 0
-      next if asked <= left
+      # A $0 line with nothing left (B18 keeps it for staff to delete) isn't sent either.
+      next if asked <= left && !(asked.zero? && left.zero? && status == "sent")
 
       finals = work && left.zero? ? ledger.final_invoices(work) : []
       if finals.any?
@@ -510,6 +520,10 @@ module BillingCredits
         errors.add(:base, "#{group.first.name.presence || "Item"}: only #{Money.new(left, currency).format} is left to bill.")
       end
     end
+    # B21: a progress invoice charging nothing isn't sent.
+    return unless status == "sent" && errors.empty? && totals.total.zero?
+
+    errors.add(:base, "Nothing on #{(job || quote)&.number} is left to bill as progress.")
   end
 
   # Progress credited on a later invoice stays as it was charged: a revision can't change what a

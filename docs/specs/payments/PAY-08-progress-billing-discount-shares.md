@@ -17,7 +17,7 @@ once. Staff choose how much of a quote's discount each invoice takes; the last t
 
 ## User stories
 
-- As an owner, I want to bill half the roof now, take it off the final, and choose when a quote's discount comes off.
+- As an owner, I want to bill half the roof now and choose when a quote's discount comes off.
 
 ## Acceptance criteria
 
@@ -40,7 +40,8 @@ once. Staff choose how much of a quote's discount each invoice takes; the last t
       least $X now: the work left after this invoice can take only $Y"), so the last invoice
       takes all of it. Plain dollars only ("40,00" and "1e3" are refused); an amount held to the
       range says so. It changes only on a draft; a void returns it. Before tax, as its own row
-      ("Quote discount"), off the lines charged, at their rates. *Progress from the quote page
+      ("Quote discount"), off the lines charged, at their rates; per group (taxed, untaxed), its
+      part, minimum and maximum are on its own lines and later work. *Progress from the quote page
       asks on the draft.* A staff discount leaving too little for what must come off blocks send.
 - [x] **Shortfall:** once the quote's work is all done (nothing to do; every job completed or
       cancelled) with less than quoted, its discount is D × quoted value done ÷ quoted value,
@@ -64,7 +65,7 @@ once. Staff choose how much of a quote's discount each invoice takes; the last t
 - Progress billing stays: a job or quote can be billed in part before it's done (owner, 2026-11-22).
 - Staff choose how much of a quote's discount each invoice applies; the rest carries and the
   last takes it, fixed or percent, in the quote's taxed/untaxed mix. On progress it only moves
-  cash: work invoices give exactly the discount (owner, 2026-11-23). Over-billing is credited next (2026-11-22).
+  cash: work invoices give exactly the discount (owner, 2026-11-23). Over-billing is credited next.
 - A re-taxed job: the discount comes off the lines charged and lowers tax at their actual rates;
   the client gets all of it; the tax total may differ from the quote's (owner, 2026-11-23).
 - A staff discount on the last final leaving too little for the quote's discount blocks sending
@@ -93,8 +94,7 @@ once. Staff choose how much of a quote's discount each invoice takes; the last t
 - Fit: PAY-07 adds deposit/take_back credits; JOB-10 skips `quote_discount_off!`; QTE-09 adds Not
   going ahead to `nothing_left?`/`done?`/`all_done?`. Dev seeds: "Roof replacement".
 - `quote_discount_chosen_cents` (nil: $0) is held to [min, max] in `quote_discount_share_cents`;
-  `QuoteDiscountPlan` places it by line (needs, credit room first) in `quote_discount_parts`.
+  `QuoteDiscountPlan` places it by group, then line (needs, credit room first): `quote_discount_parts`.
 - When `split_jobs` goes on (OPS-06): run-your-day, turn-a-quote-into-a-job, invoice-finished-work
   and job-without-a-quote add back logging each visit's work (The work, How many, Add something
-  done on site), say Create invoice bills what was done, and are recaptured; new articles on
-  progress invoices and quote discounts.
+  done on site), say Create invoice bills what was done, are recaptured; new articles on progress.

@@ -178,6 +178,10 @@ class ProgressBillingTest < ActiveSupport::TestCase
     job = make(r: 1)
     draft = lower(progress(job), "Roof" => 400)
     final = send!(bill_job(complete(job)))
+    as_business(@business) do # B18: kept at $0 for staff to delete, within its cap, and its history says why
+      assert_equal [ 0, [] ], [ draft.reload.total_cents, draft.tap(&:validate).errors.full_messages ]
+      assert_equal "Nothing left to bill on Roof", ApplicationController.helpers.invoice_event_text(draft.events.find_by!(kind: "progress_refitted"))
+    end
     error = assert_raises(ActiveRecord::RecordInvalid) { send!(draft) }
     assert_match "Roof is on #{final.number}, its final bill, so nothing is left to bill as progress.", error.message
     assert_equal "draft", draft.reload.status
@@ -1330,6 +1334,36 @@ class ProgressBillingTest < ActiveSupport::TestCase
     assert_equal [ 10_10, 6_75 ], [ early.total_cents + final.total_cents, final.total_cents ]
     taxes = as_business(@business) { [ early, final ].map { _1.reload.totals.taxes.sum { |t| t.amount.cents } } }
     assert_equal as_business(@business) { @quote.reload.totals.tax_total.cents }, taxes.sum, "the tax inside $10.10, once: #{taxes}"
+  end
+
+  # B21: a $0.00 progress invoice is never sent; a line on its final comes off even at $0.
+  test "B21: a progress draft refit to $0 after its job's final goes out is refused at send" do
+    approved_quote([ [ "a", "Roof", 1, 100 ], [ "b", "Gutters", 1, 50 ] ], tax: "10")
+    job = make(a: 1, b: 1)
+    draft = lower(progress(job), "Roof" => 0, "Gutters" => 20)
+    send!(bill_job(complete(job)))
+    as_business(@business) { assert_equal 0, draft.reload.total_cents }
+    error = assert_raises(ActiveRecord::RecordInvalid) { send!(draft) }
+    assert_match "nothing is left to bill as progress", error.message
+    assert_equal "draft", draft.reload.status
+
+    approved_quote([ [ "r", "Roof", 1, 100 ] ])
+    zero = lower(progress(make(r: 1)), "Roof" => 0)
+    error = assert_raises(ActiveRecord::RecordInvalid) { send!(zero) }
+    assert_match "is left to bill as progress", error.message, "a $0.00 progress invoice isn't sent, with work left or not"
+  end
+
+  # X02: a draft final holding a share of the quote's discount: that share isn't room for more, so
+  # the invoice going out first takes what the draft's work can't.
+  test "B20: a draft final's held share isn't counted again as room for the discount" do
+    approved_quote([ [ "a", "Roof", 1, 40 ], [ "b", "Gutters", 1, 100 ] ], discount: "60")
+    held = bill_job(complete(make(a: 1)))
+    as_business(@business) { held.reload.update!(quote_discount_applied: "30") }
+    first = bill_job(complete(make(b: 1)))
+    assert_equal 20_00, as_business(@business) { first.reload.quote_discount_range[:min] }, "$30 left; the Roof's draft can take only $10 more"
+    send!(first)
+    held = send!(held)
+    assert_equal @quote.reload.total_cents, first.total_cents + held.total_cents, "billed = the quote's $80.00"
   end
 
   test "B14: a progress draft is taxed on what went out before it, whichever draft goes out first" do
