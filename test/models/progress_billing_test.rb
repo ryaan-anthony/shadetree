@@ -1404,6 +1404,28 @@ class ProgressBillingTest < ActiveSupport::TestCase
                  "$40 back at 8% ($3.20) with $100 at 10%"
   end
 
+  # Y04 (owner, 2026-11-24): what a group can't fit on an earlier invoice carries; it's owed only
+  # on the last invoice, once the shortfall is final (here the last charges the extra back
+  # instead; "shortfall to nothing" has one owed on the last).
+  test "Y04: a group's part that doesn't fit on an earlier invoice carries, and is owed only on the last" do
+    approved_quote([ [ "d", "Deck", 1, 100 ], [ "f", "Fence", 1, 900 ], [ "h", "Haul away", 1, 100 ] ], tax: "10", discount: "300", untaxed: [ "h" ])
+    deck, fence, haul = make(d: 1), make(f: 1), make(h: 1)
+    complete(fence, "Fence" => 0) # done short: no taxed work left after the deck
+    first = send!(bill_job(complete(deck)))
+    as_business(@business) do
+      assert_empty first.reload.quote_discount_parts.select { _1["owed"] }, "the haul is still to bill: nothing is owed yet"
+      assert_operator BillingLedger.new(quote: @quote.reload).outstanding_cents, :>, 0, "it carries"
+    end
+    last = send!(bill_job(complete(haul, "Haul away" => 0)))
+    as_business(@business) do
+      ledger = BillingLedger.new(quote: @quote.reload)
+      parts = [ first, last ].flat_map { _1.reload.quote_discount_parts }
+      applied = parts.reject { _1["owed"] }.sum { _1["cents"].to_i }
+      owed = parts.select { _1["owed"] }.sum { _1["cents"].to_i }
+      assert_equal ledger.quote_discount_cents, applied + owed, "the scaled discount, given or owed, once"
+    end
+  end
+
   test "B14: a progress draft is taxed on what went out before it, whichever draft goes out first" do
     approved_quote([ [ "r", "Roof", 1, "10.05" ] ], tax: "10")
     job = make(r: 1)
