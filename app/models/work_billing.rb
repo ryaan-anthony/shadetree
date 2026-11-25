@@ -68,6 +68,7 @@ module WorkBilling
 
       invoice = Invoice.new(client: job.client, property: job.property, job:, quote: job.quote, created_by: by, title: job.title, currency: job.currency)
       invoice.copy_pricing_from(job, lines: [])
+      percent_only!(invoice) if split
       add_job_lines(invoice, lines)
       invoice.save!
       invoice.record!(:created, by:, from: "job", number: job.number)
@@ -111,6 +112,7 @@ module WorkBilling
     invoice = Invoice.new(client: quote.client, property: quote.property, quote:, job: first, created_by: by, title: quote.title, currency: quote.currency,
                           tax_rates: first.tax_rates, prices_include_tax: first.prices_include_tax)
     invoice.assign_attributes(discount_kind: discount&.discount_kind, discount_percent: discount&.discount_percent, discount_amount_cents: discount&.discount_amount_cents)
+    percent_only!(invoice)
     invoice.jobs = billing.map(&:first)
     add_job_lines(invoice, billing.flat_map { |job, lines| lines.map { [ _1, (job.tax_rates if job.tax_rates != first.tax_rates) ] } })
     invoice.save!
@@ -134,8 +136,12 @@ module WorkBilling
 
     invoice = Invoice.new(client: quote.client, property: quote.property, quote:, created_by: by, title: quote.title, currency: quote.currency)
     invoice.copy_pricing_from(quote, lines: [])
+    percent_only!(invoice) if split # PAY-08: fixed discounts come as shares
     items = invoice.sync_line_items(BuiltDocument.rows_from(rows.map(&:first)))
-    items.zip(rows) { |item, (line, quantity, final)| item.assign_attributes(quantity:, quote_line_item_id: line.id, final:) }
+    items.zip(rows) do |item, (line, quantity, final)|
+      item.assign_attributes(quantity:, quote_line_item_id: line.id, final:)
+      item.set_discount(nil, nil) if split && item.discount_kind == "amount"
+    end
     invoice.save!
     invoice
   end
@@ -153,6 +159,74 @@ module WorkBilling
     end
     invoice.save!
     invoice
+  end
+
+  # PAY-08: "Create another invoice" before the work is done: a progress invoice of what's left of
+  # each line of an open job, or of a quote's lines not yet done, which staff can lower. Its lines
+  # aren't final bills; each is credited when its line is billed for real. No fixed discount
+  # share: a percent discount applies as on any invoice. Not for recurring quotes (JOB-10).
+  def bill_progress!(source, by: nil)
+    Invoice.transaction do
+      job = source if source.is_a?(Job)
+      quote = job ? job.quote : source
+      if quote
+        Quote.where(id: quote.id).lock.pluck(:id)
+        lock!(quote_id: quote.id, jobs: job ? [ job ] : quote.jobs.where.not(status: "cancelled").order(:id).to_a)
+      else
+        lock!(jobs: [ job ])
+      end
+      source.reload
+      raise Refused, "#{quote.number} is recurring: each occurrence is billed from its own job." if quote&.recurring?
+
+      ledger = BillingLedger.new(quote:, job: (job unless quote))
+      lines = if job
+        raise Refused, "#{job.number} is #{job.status}. Progress billing is for work not done yet." unless job.open?
+
+        job.line_items.to_a
+      else
+        raise Invoice::NotApproved, "Only an approved quote can be invoiced." unless quote.approved?
+
+        quote.line_items.reject { ledger.done?(_1) }
+      end
+      rows = lines.map { [ _1, ledger.left_cents(_1) ] }.select { _2.positive? }
+      raise Refused, "Nothing on #{source.number} is left to bill as progress." if rows.empty?
+
+      invoice = Invoice.new(kind: "progress", client: source.client, property: source.property, job:, quote:, created_by: by, title: source.title, currency: source.currency)
+      invoice.copy_pricing_from(source, lines: [])
+      percent_only!(invoice)
+      items = invoice.sync_line_items(BuiltDocument.rows_from(rows.map(&:first)))
+      items.zip(rows) do |item, (line, _)|
+        item.assign_attributes(job_line_item_id: (line.id if job), quote_line_item_id: (job ? line.claim&.quote_line_item_id : line.id), final: false)
+        item.set_discount(nil, nil) if item.discount_kind == "amount"
+      end
+      fit_progress!(invoice, items.zip(rows.map(&:last)))
+      invoice.save!
+      invoice.record!(:created, by:, from: job ? "job" : "quote", number: source.number)
+      invoice
+    end
+  end
+
+  # Each progress line charges, net of the invoice's discounts, at most what's left of its line (the
+  # final's net for the rest): one over becomes 1 × the price that charges what's left, found from
+  # what the discounts leave of it, then lowered a cent at a time for rounding.
+  def fit_progress!(invoice, items_with_left)
+    8.times do
+      over = items_with_left.zip(invoice.totals(credits: false).lines).select { |(_, left), result| result.taxable.cents > left }
+      break if over.empty?
+
+      over.each do |(item, left), result|
+        gross = result.subtotal.cents
+        price = result.taxable.cents.positive? ? (left * gross / result.taxable.cents.to_d).floor : left
+        price = [ price, item.unit_price_cents.to_i - 1 ].min if item.quantity.to_d == 1
+        item.set_discount(nil, nil) if item.discount_kind == "amount"
+        item.assign_attributes(quantity: 1, unit: nil, unit_price_cents: [ price, 0 ].max)
+      end
+    end
+  end
+
+  # Fixed discounts on work from a quote are shared on its invoices (PAY-08); a percent applies.
+  def percent_only!(invoice)
+    invoice.set_discount(nil, nil) if invoice.quote_id && invoice.discount_kind == "amount"
   end
 
   # Job lines (or [line, own tax rates]) as invoice lines that bill them: the final bill unless
