@@ -49,7 +49,7 @@ once. Staff choose how much of a quote's discount each invoice takes; the last t
 - [x] A line's fixed discount d (quantity q) is shared by quantity billed: min(d, round(d × billed
       ÷ q)), less what earlier bills took; a percent one, round(percent × gross billed so far).
 - [x] Shares are kept apart from a staff discount. After a void or a send, drafts work shares and
-      credits out again (progress drafts refit to what's left); sent invoices don't change.
+      credits out again (progress drafts refit, noted in history); sent invoices don't change.
       Recurring quotes don't share (JOB-10). The $0 rule (PAY-01) looks at the total before
       credits; nothing due is Paid at once. The quote and job pages show progress billed,
       credited, over-billed.
@@ -79,8 +79,8 @@ once. Staff choose how much of a quote's discount each invoice takes; the last t
   progress never charges a line more than the final would. Staff figures include tax.
 - Tax reconciles to the true cumulative tax: per quote (or lone job) and rate, an invoice's tax is
   on the net base (credits off) of all invoices sent before it, not void, plus its own, less the
-  tax they charged. "Credit from" is exactly what it charged; no cent is kept or owed (owner,
-  2026-11-24).
+  tax they charged, never below $0; tax charged past it after a void is over-billed (owed once
+  nothing is left). "Credit from" is exactly what it charged (owner, 2026-11-24).
 - Credited progress is voided after the invoice crediting it (void-first, owner, 2026-11-23).
   Credits count only from invoices that went out, capped by the bill's line.
 

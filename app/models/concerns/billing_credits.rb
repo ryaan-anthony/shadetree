@@ -49,7 +49,7 @@ module BillingCredits
   # the total before credits, which the $0 rule looks at and the client sees: its tax is this
   # invoice's tax plus what its credits carry, so lines, tax and "Credit from" rows add up).
   def totals(credits: true)
-    Pricing::DocumentTotals.new(currency:, discount: pricing_discount, prices_include_tax:, share: share_parts, prior: credits ? prior_tax : prior_before_credits,
+    Pricing::DocumentTotals.new(currency:, discount: pricing_discount, prices_include_tax:, share: share_parts, prior: credits ? prior_tax : prior_before_credits, carried: (credits_carried unless credits),
                                 lines: current_line_items.map { _1.to_pricing(tax_rate_list) } + (credits ? pre_tax_credits.map(&:to_pricing) : []))
   end
 
@@ -132,19 +132,25 @@ module BillingCredits
     end
   end
 
-  # Before credits the prior counts them as not yet billed: the tax shown is this invoice's tax plus
-  # what its credits carry.
+  # Before credits the prior counts them as billed, so the tax is this invoice's own; what its
+  # credits carry is added (credits_carried): the tax shown is its tax plus its credits'.
   def prior_before_credits
     prior = prior_tax
     return prior if prices_include_tax || progress? # progress never carries credits
 
     pre_tax_credits.each do |credit|
-      credit.fixed_tax.each do |rate, tax|
+      credit.tax_rate_list.each do |rate|
         base, charged = prior.fetch(rate) { [ Money.zero(currency), Money.zero(currency) ] }
-        prior[rate] = [ base - Money.new(credit.amount_cents, currency), charged - tax ]
+        prior[rate] = [ base - Money.new(credit.amount_cents, currency), charged ]
       end
     end
     prior
+  end
+
+  def credits_carried
+    return {} if prices_include_tax || progress?
+
+    pre_tax_credits.each_with_object(Hash.new { Money.zero(currency) }) { |credit, sums| credit.fixed_tax.each { |rate, tax| sums[rate] += tax } }
   end
 
   # { rate => [net base, tax] } in cents this invoice charges, credits off (the version the client
@@ -210,15 +216,21 @@ module BillingCredits
       next draft.save!(validate: false) unless draft.progress?
 
       # B18: a progress draft is fitted to what's left of each line, then saved with its checks; one
-      # that can't fit is left as it was, and says why when it's sent.
-      draft.refit_progress! && (draft.save || draft.reload)
+      # with nothing left at all is left as it was, and says why when it's sent.
+      before = draft.current_line_items.to_h { [ _1.name, _1.unit_price_cents ] }
+      next unless draft.refit_progress!
+      next draft.reload unless draft.save
+
+      lowered = draft.current_line_items.select { before.key?(_1.name) && before[_1.name] != _1.unit_price_cents }.map(&:name)
+      removed = before.keys - draft.current_line_items.map(&:name)
+      draft.record!(:progress_refitted, lowered:, removed:) if lowered.any? || removed.any?
     end
   end
 
   # Lowers a progress draft's lines, where the quote discount or a void has changed what's left, to
   # what each line's final would charge, net of the discount it now takes (earlier invoices take
-  # what fits). False where a line has nothing left at all, or still doesn't fit: it's left as it
-  # was, for the checks to explain.
+  # what fits); a line with nothing left (on a final, or $0 left) comes off. False where nothing is
+  # left at all, or it still doesn't fit: it's left as it was, for the checks to explain.
   def refit_progress!
     return false unless progress? && sent_at.nil? && billing_credits?
 
@@ -235,10 +247,13 @@ module BillingCredits
         left = work ? ledger.left_cents(work) : 0
         asked = group.sum { net[_1.key].clamp(0..) }
         next if asked <= left
-        return false if left <= 0
+        next group.each(&:mark_for_destruction) if left <= 0
 
         group.zip(Money.new(left, currency).allocate(group.map { net[_1.key].clamp(0..) }).map(&:cents)).each { |item, cents| lefts[current_line_items.index(item)] = cents }
       end
+      return false if current_line_items.empty?
+      next if current_line_items.size < lefts.size # lines came off: work it out again
+
       return true if current_line_items.zip(lefts).all? { |item, left| net[item.key] <= left }
 
       # fit_progress! works on what a line charges before the quote's discount parts: allow for them.

@@ -28,7 +28,7 @@ class BillingLedger
     @quote_lines = (quote ? quote.line_items.to_a : []).index_by(&:id)
     @jobs_by_id = @jobs.index_by(&:id)
     @job_lines = JobLineItem.where(job_id: @jobs_by_id.keys).includes(:claim).order(:id).to_a.index_by(&:id)
-    bills = InvoiceLineItem.where.not(invoice_status: "void").includes(invoice: %i[line_items revisions]) # what each charged, without a query per invoice
+    bills = InvoiceLineItem.where.not(invoice_status: "void").includes(invoice: %i[line_items revisions credits]) # what each charged, without a query per invoice
                            .where("invoice_line_items.job_line_item_id IN (:jobs) OR invoice_line_items.quote_line_item_id IN (:quotes)",
                                   jobs: @job_lines.keys.presence || [ 0 ], quotes: @quote_lines.keys.presence || [ 0 ])
     bills = bills.where.not(invoice_id: @except_id) if @except_id
@@ -374,8 +374,10 @@ class BillingLedger
   end
 
   # The same, by the tax it will carry: { rates => cents }.
+  # A line on another invoice's draft is still to bill (B20): that draft works its share out again
+  # when this one goes out, so this one isn't the last for its group.
   def work_left_by_group(billed: [])
-    billed_ids = billed_job_line_ids + billed.filter_map(&:job_line_item_id)
+    billed_ids = sent_finals.filter_map(&:job_line_item_id).to_set + billed.filter_map(&:job_line_item_id)
     left = Hash.new(0)
     @job_lines.values.select { @jobs_by_id[_1.job_id].status != "cancelled" && !billed_ids.include?(_1.id) }.each do |line|
       left[group_of(line)] += subtotal(line) - expected_line_share(line, @quote_lines[line.claim&.quote_line_item_id])
@@ -384,6 +386,10 @@ class BillingLedger
     direct = billed.select { _1.new_record? && _1.job_line_item_id.nil? && _1.quote_line_item_id }.group_by(&:quote_line_item_id)
     @quote_lines.each_value do |line|
       left[group_of(line)] += to_do_value(line, less: direct.fetch(line.id, []).sum { |item| item.quantity.to_d })
+    end
+    # What those drafts already hold of the discount isn't room for more.
+    @finals.reject { _1.invoice.sent_at }.map(&:invoice).uniq.each do |draft|
+      Array(draft.quote_discount_parts).reject { _1["owed"] }.each { left[self.class.group(self.class.rates_from(_1["from"]))] -= _1["cents"].to_i }
     end
     left
   end
@@ -490,6 +496,7 @@ class BillingLedger
     sent = lines.select { _1.invoice.sent_at }
     over = (over_billed & lines).sum { charged_with_tax(_1) - credited_with_tax(_1) }
     owed = job ? 0 : discount_owed_cents(with_tax: true, sent: true)
+    over += tax_over_charged_cents unless job
     over, owed = 0, owed + over if nothing_left_to_bill?
     { billed: sent.sum { charged_with_tax(_1) }, credited: sent.sum { credited_with_tax(_1) }, over_billed: over, owed: }
   end
@@ -511,6 +518,22 @@ class BillingLedger
     @used_tax ||= InvoiceCredit.counted.where(source_line_item_id: @progress.map(&:id)).where.not(invoice_id: @except_id)
                                .pluck(:source_line_item_id, :tax_charged).each_with_object(Hash.new(0)) { |(id, taxes), sums| sums[id] += taxes.sum { _1["cents"].to_i } }
   end
+
+  # B19: tax charged past the true cumulative tax, per rate (a void took an invoice out of the base
+  # after a later one had rounded up on it). An invoice's tax never goes below zero, so a later one
+  # takes it back if it can; once nothing is left to bill it's owed to the client.
+  def tax_over_charged_by_rate
+    sums = Hash.new { |hash, rate| hash[rate] = [ 0, 0 ] }
+    (@progress + @finals).map(&:invoice).uniq.select { _1.sent_at && !_1.prices_include_tax }.each do |invoice|
+      invoice.charged_net_by_rate.each do |rate, (base, tax)|
+        sums[rate][0] += base
+        sums[rate][1] += tax
+      end
+    end
+    sums.to_h { |rate, (base, tax)| [ rate, [ tax - round(base * rate.percent.to_d / 100), 0 ].max ] }.select { _2.positive? }
+  end
+
+  def tax_over_charged_cents = tax_over_charged_by_rate.values.sum
 
   # No work is left to bill, so no later invoice can credit anything: every live job line billed
   # and nothing to do.
