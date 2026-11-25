@@ -1,14 +1,22 @@
 <%# locals: (summary:, currency:, id:) -%>
 <%# PAY-08: progress billed before the work was done, what's been credited of it on final invoices,
     and what was billed past the work (credited on the next invoice). Sent invoices only, with tax:
-    what the client was charged (owner, 2026-11-23). %>
-<% if summary[:billed].positive? %>
+    what the client was charged (owner, 2026-11-23). Once nothing is left to bill, what's over is
+    owed to the client, with a shortfall's discount the last invoice couldn't take (owner,
+    2026-11-24); staff refund it, nothing credits it. %>
+<% if summary[:billed].positive? || summary[:over_billed].positive? || summary[:owed].to_i.positive? %>
   <dl class="flex flex-wrap gap-x-6 gap-y-2 border-t border-line px-5 py-3 text-sm2" id="<%= id %>">
-    <div><dt class="text-muted">Progress billed</dt><dd class="money font-semibold text-ink"><%= money(Money.new(summary[:billed], currency)) %></dd></div>
-    <div><dt class="text-muted">Credited on final invoices</dt><dd class="money font-semibold text-ink"><%= money(Money.new(summary[:credited], currency)) %></dd></div>
+    <% if summary[:billed].positive? %>
+      <div><dt class="text-muted">Progress billed</dt><dd class="money font-semibold text-ink"><%= money(Money.new(summary[:billed], currency)) %></dd></div>
+      <div><dt class="text-muted">Credited on final invoices</dt><dd class="money font-semibold text-ink"><%= money(Money.new(summary[:credited], currency)) %></dd></div>
+    <% end %>
     <% if summary[:over_billed].positive? %>
       <div><dt class="text-muted">Over-billed</dt><dd class="money font-semibold text-ink"><%= money(Money.new(summary[:over_billed], currency)) %></dd>
         <dd class="text-muted">Credited on the next invoice.</dd></div>
+    <% end %>
+    <% if summary[:owed].to_i.positive? %>
+      <div id="<%= id %>-owed"><dt class="text-muted">Owed to the client</dt><dd class="money font-semibold text-ink"><%= money(Money.new(summary[:owed], currency)) %></dd>
+        <dd class="text-muted">Nothing is left to bill, so it's yours to refund.</dd></div>
     <% end %>
     <p class="basis-full text-muted">Amounts include tax.</p>
   </dl>

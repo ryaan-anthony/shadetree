@@ -23,16 +23,13 @@ each invoice takes; what isn't used carries forward, and the last invoice takes 
 
 ## Acceptance criteria
 
-- [x] "Create another invoice" on a job or a quote before the work is done makes a progress
-      invoice (kind progress) of its unbilled lines, which staff can lower. Its lines are
-      progress amounts, not final bills (PAY-06). On autosave and on send, under PAY-06's lock, a
-      line's progress can't pass what's left of it. *"Create progress invoice" (owner, 2026-11-23).*
-- [x] Progress on a job line is credited on that line's final bill; progress on a quote line, or
-      on the line of a job later cancelled, is credited on its quote line's final bills. Each
-      credit = min(progress on the line not yet credited, this bill's amount for that line), the
-      job line's own first. It's a negative line before tax, at the credited line's tax rates
-      ("Billed earlier on INV-0003"), so tax is charged once. Clients see "Credit from INV-0003"
-      with its tax (owner, 2026-11-23). *No tax rate's base goes below zero; the rest carries.*
+- [x] "Create progress invoice" (owner, 2026-11-23) on a job or quote before the work is done
+      makes a progress invoice of its unbilled lines, which staff can lower; under PAY-06's lock
+      a line's progress can't pass what's left of it.
+- [x] Progress on a job line is credited on that line's final bill; on a quote line (or a
+      cancelled job's), on its quote line's. Credit = min(progress not yet credited, this bill's
+      amount for the line), the job line's own first: a negative line before tax at its rates, so
+      tax is charged once. Clients see "Credit from INV-0003" with its tax (owner, 2026-11-23).
 - [x] **Over-billed** = progress not yet credited on lines with nothing left to bill (no to-do
       quantity, and every claim billed, cancelled or Not going ahead). The quote shows
       "Over-billed $X" and the next invoice for the quote credits it the same way.
@@ -45,10 +42,11 @@ each invoice takes; what isn't used carries forward, and the last invoice takes 
       takes all of it. Plain dollars only ("40,00" and "1e3" are refused); an amount held to the
       range says so. It changes only on a draft; a void returns it. Before tax, as its own row
       ("Quote discount"), off the lines charged, at their rates. *Progress from the quote page
-      asks on the draft.* A work invoice charging too little for what must come off can't be sent.
+      asks on the draft.* A staff discount leaving too little for what must come off blocks send.
 - [x] **Shortfall:** once the quote's work is all done (nothing to do; every job completed or
       cancelled) with less than quoted, its discount is D × quoted value done ÷ quoted value,
-      rounded once; the rest shows as "not used" (quote, job, invoice) and isn't outstanding.
+      rounded once, spread by largest remainder; the rest shows as "not used" (quote, job,
+      invoice) and isn't outstanding. A direct bill's own lines count as done.
 - [x] A line's fixed discount d over quantity q is shared by quantity billed: target =
       min(d, round(d × quantity billed ÷ q)), less what earlier bills of that line took.
 - [x] Shares are kept apart from a staff discount. After a void, drafts work shares and credits
@@ -71,11 +69,13 @@ each invoice takes; what isn't used carries forward, and the last invoice takes 
   the next invoice (owner, 2026-11-22).
 - A re-taxed job: the discount comes off the lines charged and lowers tax at their actual rates;
   the client gets all of it, and the tax total may differ from the quote's (owner, 2026-11-23).
-- A staff discount on the last final leaving too little for the rest of the quote's: sending is
-  refused until staff lower it, saying how much is left, as for progress (owner, 2026-11-23).
+- A staff discount on the last final leaving too little for the rest of the quote's discount
+  blocks sending until staff lower it, saying what's left (owner, 2026-11-23).
 - Shortfall: the discount scales to the quoted value billed; the rest is "not used" (owner,
-  2026-11-23). *Open: a scaled discount below what earlier invoices applied, or above what the
-  last can take; asked of the owner.*
+  2026-11-23). Applied past it already: the last invoice charges the extra back, "Quote discount
+  adjusted for work not done +$X", at the rates it came off. More left than the last invoice
+  charges: it takes what fits, down to $0, and the rest is over-billed, owed to the client.
+  Neither blocks sending; with a staff discount too, staff lower theirs first (owner, 2026-11-24).
 - A final deducts only the net a progress invoice charged (unpaid too, which stays owed);
   progress never charges a line more than the final would. Clients see "Credit from INV-0004"
   with tax; staff figures include tax (owner, 2026-11-23).

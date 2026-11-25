@@ -19,6 +19,12 @@
 <% if held && !range[:short] %>
   <span class="block"><%= amount.(invoice.quote_discount_chosen_cents) %> was held to the <%= held == :min ? "least" : "most" %> this invoice can take, <%= amount.(range[:applied]) %>.</span>
 <% end %>
+<% if range[:owed].to_i.positive? %><%# owner, 2026-11-24 %>
+  <span class="block"><%= amount.(range[:owed]) %> more of the quote's discount doesn't fit on this invoice: it's owed to the client, shown as over-billed.</span>
+<% end %>
+<% if range[:charge_back].to_i.positive? %>
+  <span class="block">Earlier invoices applied <%= amount.(range[:charge_back]) %> more than the discount for the work done: this invoice adds it back ("Quote discount adjusted for work not done").</span>
+<% end %>
 <% if range[:unused].to_i.positive? %>
   <span class="block"><%= amount.(range[:unused]) %> of the quote's discount isn't used: less work was done than quoted.</span>
 <% end %>

@@ -54,13 +54,17 @@ module BillingCredits
   # The applied quote discount by the rates of the lines it comes off: [[rates, Money]] (owner,
   # 2026-11-23).
   def share_parts
-    Array(quote_discount_parts).group_by { BillingLedger.group(BillingLedger.rates_from(_1["rates"])) }
+    Array(quote_discount_parts).reject { _1["owed"] }.group_by { BillingLedger.group(BillingLedger.rates_from(_1["rates"])) }
                                .map { |rates, parts| [ rates, Money.new(parts.sum { _1["cents"].to_i }, currency) ] }
   end
 
   def pre_tax_credits = credits.reject(&:marked_for_destruction?).select(&:pre_tax?)
 
   def quote_discount_share = Money.new(quote_discount_share_cents.to_i, currency)
+
+  # What this invoice charges back of the quote's discount: a shortfall after more was applied
+  # (owner, 2026-11-24).
+  def quote_discount_charge_back = Money.new(-Array(quote_discount_parts).sum { _1["cents"].to_i.negative? && !_1["owed"] ? _1["cents"].to_i : 0 }, currency)
 
   # The builder's "Apply now" (dollars, or "all"): staff's choice of how much of the quote's
   # discount this invoice applies (owner, 2026-11-23). It's held to the range on each save.
@@ -95,7 +99,7 @@ module BillingCredits
 
     lock_billing!
     range = discount_range(BillingLedger.for(self))
-    range if range[:left].positive?
+    range if range[:left].positive? || range[:charge_back].to_i.positive?
   end
 
   # What the client sees (owner, 2026-11-23): one "Credit from INV-0004" per invoice credited, as
@@ -171,8 +175,13 @@ module BillingCredits
 
   def apply_quote_discount!(range)
     self.quote_discount_share_cents = range[:applied]
-    self.quote_discount_parts = range[:plan] ? range[:plan].parts(range[:applied]).map { { "from" => rates_json(_1.from), "key" => _1.key, "rates" => rates_json(_1.rates), "cents" => _1.cents } } : []
+    parts = range[:plan] ? range[:plan].parts(range[:applied]) : []
+    taken = parts.group_by(&:from).transform_values { _1.sum(&:cents) }
+    owed = range[:owed].to_i.positive? ? range[:plan].outstanding.map { |group, cents| [ group, cents - taken.fetch(group, 0) ] }.select { _2.positive? } : []
+    self.quote_discount_parts = parts.map { { "from" => rates_json(_1.from), "key" => _1.key, "rates" => rates_json(_1.rates), "cents" => _1.cents } } +
+                                range[:back].to_a + owed.map { |group, cents| { "from" => rates_json(group), "rates" => rates_json(group), "owed" => true, "cents" => cents } }
   end
+
 
   def rates_json(rates) = rates.map { { "name" => _1.name, "percent" => _1.percent.to_d.to_s("F") } }
 
@@ -231,7 +240,10 @@ module BillingCredits
   # This bill's credits are what they are with none of it applied: the plan keeps them whole.
   def discount_range(ledger, finals: nil)
     left = ledger.outstanding_cents
-    return { left: 0, min: 0, max: 0, applied: 0, work_left: 0, short: false, charge: 0, unused: ledger.unused_discount_cents } unless left.positive?
+    over_applied = ledger.net_outstanding_by_group.select { _2.negative? }
+    unless left.positive? || over_applied.any?
+      return { left: 0, min: 0, max: 0, applied: 0, work_left: 0, short: false, charge: 0, unused: ledger.unused_discount_cents }
+    end
 
     saved = [ quote_discount_share_cents, quote_discount_parts ]
     self.quote_discount_share_cents = 0
@@ -256,7 +268,12 @@ module BillingCredits
     self.quote_discount_share_cents, self.quote_discount_parts = saved
     slots = lines.map { QuoteDiscountPlan::Slot.new(key: _1.key, group: ledger.group_of(_1), rates: BillingLedger.group(rates_for(_1)), capacity: net[_1], free: net[_1] - taken[_1]) }
     room = work.values.sum - owed.values.sum
-    outstanding = ledger.outstanding_by_group
+    # The last invoice once a shortfall is final (owner, 2026-11-24): it charges back what earlier
+    # invoices applied past a group's scaled part, at the rates it came off, and takes the rest.
+    last = !progress? && ledger.all_done? && work.values.sum.zero?
+    outstanding = last ? ledger.net_outstanding_by_group.select { _2.positive? } : ledger.outstanding_by_group
+    left = outstanding.values.sum if last
+    back = last ? charge_back_parts(ledger, over_applied) : []
     plan = QuoteDiscountPlan.new(outstanding:, slots:)
     # Each group takes now what its own work left can't, as far as its lines here allow (beyond
     # that, a later invoice's other lines take it, or the minimum overall does).
@@ -267,8 +284,25 @@ module BillingCredits
     most = [ left, net.values.sum ].min
     max = [ most, [ plan.fits, min ].max ].min
     applied = [ (quote_discount_chosen_cents || 0).clamp(0, max), min ].max.clamp(0, max)
-    { left:, min: [ min, max ].min, max:, applied:, work_left: [ room, 0 ].max, short: min > most, charge: net.values.sum,
-      unused: ledger.unused_discount_cents, plan: }
+    short = min > most
+    # What the last invoice can't take of a scaled discount is owed to the client, tracked as
+    # over-billed (owner, 2026-11-24). A staff discount leaving too little is still refused (R4).
+    owed = short && last && discount_kind.blank? ? min - most : 0
+    { left:, min: [ min, max ].min, max:, applied:, work_left: [ room, 0 ].max, short: short && owed.zero?, charge: net.values.sum,
+      unused: ledger.unused_discount_cents, plan:, back:, owed:, charge_back: -back.sum { _1["cents"] } }
+  end
+
+  # The parts charged back: each over-applied group's excess, at the rates its parts came off.
+  def charge_back_parts(ledger, over_applied)
+    applied = ledger.applied_by_group
+    over_applied.flat_map do |group, cents|
+      by_rates = applied[group].select { _2.positive? }
+      next [] if by_rates.empty?
+
+      Money.new(-cents, currency).allocate(by_rates.values).zip(by_rates.keys).filter_map do |part, rates|
+        { "from" => rates_json(group), "rates" => rates_json(rates), "cents" => -part.cents } if part.positive?
+      end
+    end
   end
 
   # R4 (owner, 2026-11-23): a work invoice that can't take what the work left can't is refused,
@@ -447,13 +481,16 @@ module BillingCredits
   def progress_matches_on_tax_rates(ledger)
     current_line_items.select { _1.final && (_1.job_line_item_id || _1.quote_line_item_id) }.each do |line|
       rates = rates_for(line).to_set
-      other = ledger.pools_of(line).select { ledger.remaining_cents(_1).positive? && ledger.rates_of(_1).to_set != rates }
+      held = ledger.pools_of(line).select { ledger.remaining_cents(_1).positive? }
+      other = held.select { ledger.rates_of(_1).to_set != rates }
       next if other.empty?
 
-      sources = other.map(&:invoice).uniq
-      undo = sources.all?(&:voidable?) ? "void #{sources.one? ? "it" : "them"} first" : "refund #{sources.one? ? "its" : "their"} payments and void #{sources.one? ? "it" : "them"} first"
-      errors.add(:base, "#{line.name.presence || "Item"} is taxed at #{taxed(rates.to_a)}, but #{sources.map(&:number).to_sentence} " \
-                        "charged #{taxed(ledger.rates_of(other.first))} for it. Set this invoice's tax to #{taxed(ledger.rates_of(other.first))} to credit it, or #{undo}.")
+      charged = other.group_by { ledger.rates_of(_1).to_set }.map { |set, lines| "#{lines.map { _1.invoice.number }.uniq.to_sentence} charged #{taxed(set.to_a)}" }
+      undo = other.map(&:invoice).uniq.map { _1.voidable? ? "void #{_1.number}" : "refund #{_1.number}'s payments and void it" }.to_sentence
+      # One rate set elsewhere and none here: matching this invoice's tax is a way out too. Progress
+      # at more than one set (a job re-taxed between progress invoices) leaves only the void.
+      match = other.map { ledger.rates_of(_1).to_set }.uniq.one? && held.size == other.size ? "Set this invoice's tax to #{taxed(ledger.rates_of(other.first))} to credit it, or #{undo} first." : "#{undo.upcase_first} first."
+      errors.add(:base, "#{line.name.presence || "Item"} is taxed at #{taxed(rates.to_a)}, but #{charged.to_sentence} for it. #{match}")
     end
   end
 end

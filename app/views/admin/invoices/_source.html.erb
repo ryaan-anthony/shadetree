@@ -4,6 +4,13 @@
 <% if invoice.progress? %><%# PAY-08 %>
   <p class="text-sm2 text-muted" id="invoice-progress">Progress invoice: it bills part of the work before it's done, and is credited on the final invoice.</p>
 <% end %>
+<% if invoice.quote && invoice.sent_at && invoice.kind == "work" && QuoteWork.split?(invoice.business) &&
+      invoice.quote.invoices.where(kind: "work").where.not(sent_at: nil).where.not(status: "void").order(:sent_at, :id).last == invoice %>
+  <%# PAY-08 (owner, 2026-11-24): the quote's last invoice says what's owed to the client: progress
+      billed past the work, and a shortfall's discount it couldn't take. Staff refund it. %>
+  <% owed = BillingLedger.new(quote: invoice.quote).summary[:owed] %>
+  <% if owed.positive? %><p class="text-sm2 text-muted" id="invoice-owed"><%= money(Money.new(owed, invoice.currency)) %> is owed to the client on <%= invoice.quote.number %>: nothing is left to bill, so it's yours to refund.</p><% end %>
+<% end %>
 <% if jobs.any? || invoice.quote %>
   <% link = ->(text, path) { link_to(text, path, class: "font-medium text-ink hover:underline", data: { turbo_frame: "_top" }) } %>
   <p class="text-sm2 text-muted">For <%= safe_join([ (jobs.one? ? link.("job #{jobs.first.number}", admin_job_path(jobs.first)) : safe_join([ "jobs ", safe_join(jobs.map { link.(_1.number, admin_job_path(_1)) }, ", ") ]) if jobs.any?),
