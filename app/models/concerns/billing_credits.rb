@@ -35,6 +35,7 @@ module BillingCredits
     # Chosen before the checks, so a line's net is checked with the discount it takes now.
     before_validation :choose_progress_discount, if: -> { progress? && sent_at_in_database.nil? && status_in_database.in?([ nil, "draft" ]) && billing_credits? }
     validate :progress_leaves_room_for_the_discount, if: -> { progress? && status_in_database.in?([ nil, "draft" ]) && sent_at_in_database.nil? && billing_credits? }
+    before_save(prepend: true, if: -> { progress? && billing_credits? && (sent_at.nil? || will_save_change_to_sent_at?) }) { assign_tax_prior }
     before_save { @progress_changed = progress? && sent_at_in_database && line_items.any?(&:changed_for_autosave?) }
     after_save(if: -> { @progress_changed }) { rework_drafts! }
   end
@@ -47,7 +48,7 @@ module BillingCredits
   # Prices the lines with the shares, and the pre-tax credits as negative lines (credits: false is
   # the total before credits, which the $0 rule looks at).
   def totals(credits: true)
-    Pricing::DocumentTotals.new(currency:, discount: pricing_discount, prices_include_tax:, share: share_parts,
+    Pricing::DocumentTotals.new(currency:, discount: pricing_discount, prices_include_tax:, share: share_parts, prior: prior_tax,
                                 lines: current_line_items.map { _1.to_pricing(tax_rate_list) } + (credits ? pre_tax_credits.map(&:to_pricing) : []))
   end
 
@@ -116,6 +117,36 @@ module BillingCredits
     priced.taxes.to_h { [ _1.rate, _1.amount.cents ] }
   end
 
+  # { rate => cents } this invoice charges tax on (the version the client has, while revised).
+  def charged_tax_bases = (version = sent_version) ? copy_from(version.snapshot).send(:tax_bases) : tax_bases
+
+  # A progress invoice's tax is the whole's so far (owner, 2026-11-24): tax on everything billed
+  # on the invoices that went out before it plus its own, less the tax they charged. Progress
+  # can then never round past the tax on the whole job, so the final (the whole job's tax, less
+  # what progress charged) is never short and every "Credit from" is exactly what it charged.
+  # { rate => [base, tax] } as Money, from `tax_prior` (set when it's drafted and when it's sent).
+  def prior_tax
+    return {} if prices_include_tax || !progress?
+
+    Array(tax_prior).to_h do |entry|
+      [ Pricing::TaxRate.new(name: entry["name"], percent: entry["percent"]), [ Money.new(entry["base_cents"].to_i, currency), Money.new(entry["tax_cents"].to_i, currency) ] ]
+    end
+  end
+
+  # What the progress invoices that went out earlier billed and charged, per rate; worked out
+  # again on every draft save and when it goes out, then kept as it was sent.
+  def assign_tax_prior
+    sums = Hash.new { |hash, rate| hash[rate] = [ 0, 0 ] }
+    BillingLedger.for(self).progress.map(&:invoice).uniq.select { _1.progress? && _1.sent_at && _1.currency == currency }.sort_by { [ _1.sent_at, _1.id ] }.each do |earlier|
+      taxes = earlier.charged_tax_by_rate
+      earlier.charged_tax_bases.each do |rate, base|
+        sums[rate][0] += base
+        sums[rate][1] += taxes.fetch(rate, 0)
+      end
+    end
+    self.tax_prior = sums.map { |rate, (base, tax)| { "name" => rate.name, "percent" => rate.percent.to_d.to_s("F"), "base_cents" => base, "tax_cents" => tax } }
+  end
+
   # { line key => net charged } for this invoice: what each line charged, net of its discounts and
   # before tax. While a sent invoice is being revised, what the version the client has charged.
   def charged_by_key = (version = sent_version) ? charges_from(version.snapshot) : current_charges
@@ -151,7 +182,7 @@ module BillingCredits
   def rework_drafts!
     return unless billing_credits?
 
-    drafts = Invoice.where(status: "draft", kind: "work", sent_at: nil).where.not(id:)
+    drafts = Invoice.where(status: "draft", kind: %w[work progress], sent_at: nil).where.not(id:)
     drafts = quote_id ? drafts.where(quote_id:) : drafts.where(id: InvoiceJob.where(job_id:).select(:invoice_id))
     drafts.order(:id).each { _1.save!(validate: false) }
   end
@@ -187,7 +218,7 @@ module BillingCredits
   def charges_from(data) = copy_from(data).send(:current_charges)
 
   def copy_from(data)
-    copy = Invoice.new(business:, currency:, tax_rates: data["tax_rates"], prices_include_tax: data["prices_include_tax"],
+    copy = Invoice.new(business:, currency:, kind:, tax_rates: data["tax_rates"], prices_include_tax: data["prices_include_tax"], tax_prior: data["tax_prior"].to_a,
                        quote_discount_share_cents: data["quote_discount_share_cents"].to_i, quote_discount_parts: data["quote_discount_parts"].to_a)
     copy.set_discount(data["discount_kind"], data["discount"])
     data["lines"].each_with_index do |line, position|
