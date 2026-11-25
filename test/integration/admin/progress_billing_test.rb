@@ -80,7 +80,7 @@ class Admin::ProgressBillingTest < ActionDispatch::IntegrationTest
     assert_select "button#job-progress-invoice", /Create progress invoice/
     assert_select "#job-progress-invoice-dialog form[action=?]", admin_job_invoices_path(job, progress: 1) do
       assert_select "label", /Quote discount: \$100\.00 left\. Apply now/
-      assert_select "button[name=discount][value=all]", "Apply all"
+      assert_select "button[data-action=\"fill#fill\"]", "Apply all"
     end
 
     early = as_business(@business) do

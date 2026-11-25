@@ -88,13 +88,13 @@ each invoice takes; what isn't used carries forward, and the last invoice takes 
 - A credit is what the progress invoice charged for the line (the sent version while revised),
   net of its discounts, before tax; it comes off after the final's discount at its work's rates
   (quote progress: those of the live job holding the line; a final can be matched on its draft).
-- Over-billed counts a final bill once it went out. Fit: PAY-07 adds deposit and take_back to
-  both kind checks, keeps deposit credits in `work_out_credits`, and `nothing_due?` uses
-  `total_due`; JOB-10 skips `quote_discount_off!` on recurring quotes; QTE-09 adds Not going ahead to
-  `nothing_left?`/`done?` (shortfalls stand in until then) with taxed figures; QTE-10: a percent's
-  amount and the tax mix follow current quote prices.
-- `invoices.quote_discount_chosen_cents` (nil: $0) is held on each draft save to [minimum, max] in
-  `quote_discount_share_cents`, split by tax mix in `quote_discount_parts`; the minimum is checked
-  overall and per taxed part: outstanding − (work left − uncredited progress).
+- Fit: PAY-07 adds deposit and take_back to both kind checks, keeps deposit credits in
+  `work_out_credits`, `nothing_due?` uses `total_due`; JOB-10 skips `quote_discount_off!`; QTE-09
+  adds Not going ahead to `nothing_left?`/`done?`; QTE-10: the discount follows current prices.
+- `quote_discount_chosen_cents` (nil: $0) is held on each draft save to [min, max] (by choice,
+  no more than leaves a final's credits whole) in `quote_discount_share_cents`; `QuoteDiscountPlan`
+  splits it by tax group (outstanding, needs first) into `quote_discount_parts`, each off lines at
+  its rates, or onto other lines when it has none (a re-taxed job): the work invoices always give
+  the whole discount unless the work left charges less than what's left (shown; open).
 - `split_jobs` can go on once PAY-06 and PAY-08 merge (Operator → Flags). Dev seeds: "Roof
   replacement" ($500 progress sent; the final draft credits it and applies $100).

@@ -8,17 +8,21 @@
 <div class="contents" data-controller="modal">
   <button type="button" class="<%= menu ? "menu-item" : button_class %>" id="<%= id %>" data-action="modal#open<%= " menu#close" if menu %>" data-modal-target="return" aria-haspopup="dialog"><%= icon(label.include?("progress") ? "plus" : "invoice") %> <%= label %></button>
   <%= modal id: "#{id}-dialog", title: label, description: confirm do %>
-    <%= form_with url:, class: "space-y-4" do %>
+    <%= form_with url:, class: "space-y-4", data: { controller: "fill", fill_value_value: "all", fill_submit_value: true } do %>
       <div class="field">
         <label class="label" for="<%= id %>-discount">Quote discount: <%= money(Money.new(left, currency)) %> left. Apply now</label>
-        <%= text_field_tag :discount, "0.00", id: "#{id}-discount", inputmode: "decimal", class: "input text-right tabular", aria: { describedby: "#{id}-discount-hint" } %>
+        <%# Empty with a 0.00 placeholder ($0: Apply later), focused when the dialog opens, and what's
+            typed replaces what's there, so a click never leaves "50" typed before "0.00". %>
+        <%= text_field_tag :discount, "", id: "#{id}-discount", inputmode: "decimal", placeholder: "0.00", autofocus: true, class: "input text-right tabular",
+                           aria: { describedby: "#{id}-discount-hint" }, data: { fill_target: "field", action: "focus->fill#select" } %>
         <p class="help" id="<%= id %>-discount-hint">$0 applies it later. What isn't used carries forward, and the last invoice takes the rest; the draft shows any minimum the work left needs.</p>
       </div>
-      <%# The Primary comes first, so Enter in the field sends the amount typed (shown last). %>
-      <div class="flex flex-row-reverse flex-wrap justify-start gap-2">
-        <%= button_tag label, name: nil, class: button_classes(:primary) %>
-        <%= button_tag "Apply all", name: "discount", value: "all", class: button_classes(:secondary) %>
+      <%# The Primary is the only submit button, so Enter sends the amount typed; Apply all fills
+          the field with "all" and submits (the fill controller). Visual order matches tab order. %>
+      <div class="flex flex-wrap justify-end gap-2">
         <button type="button" class="<%= button_classes(:tertiary) %>" data-action="modal#close">Cancel</button>
+        <button type="button" class="<%= button_classes(:secondary) %>" data-action="fill#fill">Apply all</button>
+        <%= button_tag label, name: nil, class: button_classes(:primary) %>
       </div>
     <% end %>
   <% end %>
