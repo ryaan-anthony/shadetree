@@ -102,20 +102,18 @@ module BillingCredits
     range if range[:left].positive? || range[:charge_back].to_i.positive?
   end
 
-  # What the client sees (owner, 2026-11-23): one "Credit from INV-0004" per invoice credited, as
-  # it charged: each source's credits with their own tax at their own rates. Only the rounding
-  # left over (the invoice rounds tax once per rate) is split, so together they make the difference.
+  # What the client sees (owner, 2026-11-23): one "Credit from INV-0004" per invoice credited,
+  # exactly as it charged: each credit with the tax that invoice charged on it (B14).
   def client_credits
-    groups = pre_tax_credits.group_by(&:source_invoice)
-    return [] if groups.empty?
-
-    charged = groups.values.map do |list|
-      tax = prices_include_tax ? 0 : list.flat_map { |credit| credit.tax_rate_list.map { [ _1, credit.amount_cents ] } }
-                                         .group_by(&:first).sum { |rate, pairs| (pairs.sum(&:last) * rate.percent / 100).round(0, Money::ROUNDING).to_i }
-      list.sum(&:amount_cents) + tax
+    pre_tax_credits.group_by(&:source_invoice).map do |source, list|
+      [ source, Money.new(list.sum { _1.amount_cents + (prices_include_tax ? 0 : _1.tax_cents) }, currency) ]
     end
-    rest = Money.new((totals(credits: false).total - totals.total).cents - charged.sum, currency).allocate(charged.map { [ _1, 1 ].max })
-    groups.keys.zip(charged.zip(rest).map { Money.new(_1, currency) + _2 })
+  end
+
+  # { rate => cents } of tax this invoice charges (the version the client has, while revised).
+  def charged_tax_by_rate
+    priced = (version = sent_version) ? copy_from(version.snapshot).totals(credits: false) : totals(credits: false)
+    priced.taxes.to_h { [ _1.rate, _1.amount.cents ] }
   end
 
   # { line key => net charged } for this invoice: what each line charged, net of its discounts and
@@ -186,7 +184,9 @@ module BillingCredits
   def rates_json(rates) = rates.map { { "name" => _1.name, "percent" => _1.percent.to_d.to_s("F") } }
 
   # A revision snapshot priced again, in memory.
-  def charges_from(data)
+  def charges_from(data) = copy_from(data).send(:current_charges)
+
+  def copy_from(data)
     copy = Invoice.new(business:, currency:, tax_rates: data["tax_rates"], prices_include_tax: data["prices_include_tax"],
                        quote_discount_share_cents: data["quote_discount_share_cents"].to_i, quote_discount_parts: data["quote_discount_parts"].to_a)
     copy.set_discount(data["discount_kind"], data["discount"])
@@ -194,7 +194,7 @@ module BillingCredits
       item = copy.line_items.build(line.slice(*%w[key name quantity unit_price_cents taxable tax_rates discount_share_cents]).merge("position" => position))
       item.set_discount(line["discount_kind"], line["discount"])
     end
-    copy.send(:current_charges)
+    copy
   end
 
   def lock_billing!
@@ -226,7 +226,23 @@ module BillingCredits
     # B13: a charge-back (a shortfall's discount added back) is charged too, on no line: over-billing
     # comes off it as well. Its rates' bases already include it (tax_bases), so its tax goes too.
     others += quote_discount_charge_back.cents
-    ledger.credits_for(caps, others_cap: others, bases: tax_bases(priced), taken:)
+    within_tax(ledger.credits_for(caps, others_cap: others, bases: tax_bases(priced), taken:), priced)
+  end
+
+  # Credits never take more tax at a rate than this invoice charges at it, so its total never
+  # goes below zero: progress invoices that each rounded their tax up can between them have
+  # charged a cent more than this one's tax on the same work. That cent comes off the last credits'
+  # tax (their "Credit from" is then a cent under what was charged, and the client paid it once).
+  def within_tax(credits, priced)
+    left = priced.taxes.to_h { [ _1.rate, _1.amount.cents ] }
+    credits.each do |credit|
+      credit[:tax_charged] = credit[:tax_charged].map do |tax|
+        rate = Pricing::TaxRate.new(name: tax["name"], percent: tax["percent"])
+        cents = tax["cents"].clamp(..[ left.fetch(rate, 0), 0 ].max)
+        left[rate] = left.fetch(rate, 0) - cents
+        tax.merge("cents" => cents)
+      end
+    end
   end
 
   # The quote's discount this invoice may apply (owner, 2026-11-23), in cents:

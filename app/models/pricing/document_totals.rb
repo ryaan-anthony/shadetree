@@ -14,7 +14,9 @@ module Pricing
   #    Progress credited (PAY-08) is a credit line (Line#credit): what that invoice charged, net
   #    of its discounts, taken off after this one's discount and before tax.
   # 5. Tax is calculated once per rate on the sum of the lines carrying it, then rounded,
-  #    not per line. Rates on the same line apply side by side, never compounded.
+  #    not per line. Rates on the same line apply side by side, never compounded. PAY-08: a credit
+  #    with its tax fixed (Line#fixed_tax) isn't taxed again: the tax the credited invoice charged
+  #    comes off that rate's tax, so "Credit from INV-x" is exactly what INV-x charged.
   # 6. Tax-inclusive prices: the tax inside each group of lines sharing the same rates is
   #    extracted (gross ÷ (1 + rates)), split between rates by percentage, and the total
   #    stays what the client saw on the lines.
@@ -77,16 +79,28 @@ module Pricing
 
     def exclusive_taxes(raw_lines, taxable)
       rates_in_order(raw_lines).map do |rate|
-        base = Money.sum(raw_lines.each_index.select { |i| raw_lines[i].tax_rates.include?(rate) }.map { |i| taxable[i] }, currency)
-        TaxResult.new(rate:, base:, amount: base * (rate.percent / 100))
+        indexes = raw_lines.each_index.select { |i| raw_lines[i].tax_rates.include?(rate) }
+        fixed, taxed = indexes.partition { |i| raw_lines[i].fixed_tax }
+        amount = Money.sum(taxed.map { |i| taxable[i] }, currency) * (rate.percent / 100) - fixed_tax(raw_lines, fixed, rate)
+        TaxResult.new(rate:, base: Money.sum(indexes.map { |i| taxable[i] }, currency), amount:)
       end
     end
+
+    def fixed_tax(raw_lines, indexes, rate) = Money.sum(indexes.map { |i| raw_lines[i].fixed_tax.fetch(rate) { Money.zero(currency) } }, currency)
 
     def inclusive_taxes(raw_lines, taxable)
       amounts = Hash.new { |hash, rate| hash[rate] = Money.zero(currency) }
       bases = Hash.new { |hash, rate| hash[rate] = Money.zero(currency) }
 
-      raw_lines.each_index.group_by { |i| raw_lines[i].tax_rates.uniq }.each do |rates, indexes|
+      fixed, rest = raw_lines.each_index.partition { |i| raw_lines[i].fixed_tax }
+      fixed.each do |i| # credits: the tax inside them as charged, taken off; the rest off the base
+        raw_lines[i].tax_rates.uniq.each do |rate|
+          tax = raw_lines[i].fixed_tax.fetch(rate) { Money.zero(currency) }
+          amounts[rate] -= tax
+          bases[rate] += taxable[i] + tax
+        end
+      end
+      rest.group_by { |i| raw_lines[i].tax_rates.uniq }.each do |rates, indexes|
         next if rates.empty?
 
         gross = Money.sum(indexes.map { |i| taxable[i] }, currency)

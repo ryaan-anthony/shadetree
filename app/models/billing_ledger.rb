@@ -65,14 +65,6 @@ class BillingLedger
     progress_line.own_tax_rate_list || progress_line.invoice.tax_rate_list
   end
 
-  # What the client paid for these cents of a progress line: with its tax (already in a
-  # tax-inclusive price), each rate rounded.
-  def with_tax_cents(cents, progress_line)
-    return cents if progress_line.invoice.prices_include_tax
-
-    cents + rates_of(progress_line).sum { (cents * _1.percent / 100).round(0, Money::ROUNDING).to_i }
-  end
-
   # Progress that went out, less what's been credited of it.
   def remaining_cents(progress_line)
     return 0 unless progress_line.invoice.sent_at
@@ -124,6 +116,7 @@ class BillingLedger
   # a bill whose line is taxed otherwise), so a credit always equals what was charged.
   # `taken` ({ line => cents }) gathers what each final bill's own progress credits take.
   def credits_for(lines_with_caps, others_cap: 0, bases: {}, taken: Hash.new(0))
+    @tax_credited = taxes_credited.dup # what each progress invoice's credits have taken, per rate, so far
     left = Hash.new { |hash, line| hash[line] = remaining_cents(line) }
     bases = Hash.new(0).merge(bases)
     credits = []
@@ -459,13 +452,33 @@ class BillingLedger
   # the quote, or only a job's own lines. Over-billing is credited on the next invoice while there's
   # work left to bill; once there's none, it's owed to the client, as is what a last invoice
   # couldn't take of a scaled discount (owner, 2026-11-24). Nothing credits that: staff refund it.
+  # With tax as charged (B14): a line's share of its invoice's tax at each rate (largest
+  # remainder, so an invoice's lines add up to what it charged), and each credit's tax as stored.
   def summary(job: nil)
     lines = job ? @progress.select { (jl = @job_lines[_1.job_line_item_id]) && jl.job_id == job.id } : @progress
     sent = lines.select { _1.invoice.sent_at }
-    over = (over_billed & lines).sum { with_tax_cents(remaining_cents(_1), _1) }
+    over = (over_billed & lines).sum { charged_with_tax(_1) - credited_with_tax(_1) }
     owed = job ? 0 : discount_owed_cents(with_tax: true, sent: true)
     over, owed = 0, owed + over if nothing_left_to_bill?
-    { billed: sent.sum { with_tax_cents(amount_cents(_1), _1) }, credited: sent.sum { with_tax_cents(@used.fetch(_1.id, 0), _1) }, over_billed: over, owed: }
+    { billed: sent.sum { charged_with_tax(_1) }, credited: sent.sum { credited_with_tax(_1) }, over_billed: over, owed: }
+  end
+
+  # What a progress line charged, with its share of its invoice's tax.
+  def charged_with_tax(line)
+    return amount_cents(line) if line.invoice.prices_include_tax
+
+    amount_cents(line) + charged_taxes(line.invoice).sum do |rate, tax|
+      lines = @progress.select { _1.invoice_id == line.invoice_id && rates_of(_1).include?(rate) }
+      lines.include?(line) ? self.class.largest_remainder(tax, lines.to_h { [ _1, amount_cents(_1) ] })[line] : 0
+    end
+  end
+
+  # What's been credited of a progress line, with the tax each credit carries.
+  def credited_with_tax(line) = @used.fetch(line.id, 0) + (line.invoice.prices_include_tax ? 0 : used_tax.fetch(line.id, 0))
+
+  def used_tax
+    @used_tax ||= InvoiceCredit.counted.where(source_line_item_id: @progress.map(&:id)).where.not(invoice_id: @except_id)
+                               .pluck(:source_line_item_id, :tax_charged).each_with_object(Hash.new(0)) { |(id, taxes), sums| sums[id] += taxes.sum { _1["cents"].to_i } }
   end
 
   # No work is left to bill, so no later invoice can credit anything: every live job line billed
@@ -476,7 +489,34 @@ class BillingLedger
 
   def credit(kind, progress, amount)
     { kind: kind.to_s, source_invoice_id: progress.invoice_id, source_line_item_id: progress.id, amount_cents: amount,
-      tax_rates: (progress.taxable ? progress.tax_rates || progress.invoice.tax_rates : []) }
+      tax_rates: (progress.taxable ? progress.tax_rates || progress.invoice.tax_rates : []), tax_charged: credit_tax(progress, amount) }
+  end
+
+  # B14: the tax a credit carries at each rate, as its progress invoice charged it. That invoice's
+  # tax at a rate, T on a base B (what its lines at that rate charged), goes to its credits in step
+  # with what they've taken: round(T × after ÷ B) − round(T × before ÷ B). So once all of it is
+  # credited, its credits carry exactly the T it charged, however they're split.
+  def credit_tax(progress, amount)
+    invoice = progress.invoice
+    taxes = charged_taxes(invoice)
+    rates_of(progress).filter_map do |rate|
+      base = @progress.select { _1.invoice_id == invoice.id && rates_of(_1).include?(rate) }.sum { amount_cents(_1) }
+      tax = taxes.fetch(rate, 0)
+      before = @tax_credited[[ invoice.id, rate ]]
+      cents = base.positive? ? round(tax * (before + amount) / base.to_d) - round(tax * before / base.to_d) : 0
+      @tax_credited[[ invoice.id, rate ]] += amount
+      { "name" => rate.name, "percent" => rate.percent.to_d.to_s("F"), "cents" => cents }
+    end
+  end
+
+  # { rate => cents } a progress invoice charged in tax (the version the client has).
+  def charged_taxes(invoice) = (@charged_taxes ||= {})[invoice.id] ||= invoice.charged_tax_by_rate
+
+  # What credits that went out (on other invoices) have taken of each progress invoice, per rate.
+  def taxes_credited
+    @taxes_credited ||= InvoiceCredit.counted.where(source_invoice_id: @progress.map(&:invoice_id).uniq).where.not(invoice_id: @except_id)
+                                     .pluck(:source_invoice_id, :amount_cents, :tax_rates)
+                                     .each_with_object(Hash.new(0)) { |(id, cents, rates), sums| self.class.rates_from(rates).each { sums[[ id, _1 ]] += cents } }
   end
 
   # A line's subtotal in its document's currency, without loading its document again.

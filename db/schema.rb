@@ -658,6 +658,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_100000) do
     t.integer "position", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "tax_charged", default: [], null: false
     t.index ["business_id"], name: "index_invoice_credits_on_business_id"
     t.index ["invoice_id"], name: "index_invoice_credits_on_invoice_id"
     t.index ["source_invoice_id"], name: "index_invoice_credits_on_source_invoice_id"

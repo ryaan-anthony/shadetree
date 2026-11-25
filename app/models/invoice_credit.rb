@@ -31,11 +31,18 @@ class InvoiceCredit < ApplicationRecord
 
   def tax_rate_list = tax_rates.map { Pricing::TaxRate.new(name: _1["name"], percent: _1["percent"]) }
 
-  # A negative line, so tax is worked out on what's left.
-  def to_pricing = Pricing::Line.new(quantity: 1, unit_price: Money.new(-amount_cents, invoice.currency), tax_rates: tax_rate_list, credit: true)
+  # A negative line carrying the tax the credited invoice charged on it (B14): that comes off each
+  # rate's tax as it was charged, so "Credit from INV-x" is exactly what INV-x charged.
+  def to_pricing = Pricing::Line.new(quantity: 1, unit_price: Money.new(-amount_cents, invoice.currency), tax_rates: tax_rate_list, credit: true, fixed_tax:)
+
+  # { rate => Money } from tax_charged.
+  def fixed_tax = tax_rate_list.to_h { |rate| [ rate, Money.new(tax_charged.find { _1["name"] == rate.name && _1["percent"].to_d == rate.percent.to_d }&.dig("cents").to_i, invoice.currency) ] }
+
+  # The tax it carries, in cents.
+  def tax_cents = tax_charged.sum { _1["cents"].to_i }
 
   def label = "#{kind == "progress" ? "Billed earlier" : "Over-billed"} on #{source_invoice.number}"
 
   # What a revision keeps, so a discarded revision puts the same credits back.
-  def snapshot = attributes.slice(*%w[kind source_invoice_id source_line_item_id amount_cents tax_rates position])
+  def snapshot = attributes.slice(*%w[kind source_invoice_id source_line_item_id amount_cents tax_rates tax_charged position])
 end

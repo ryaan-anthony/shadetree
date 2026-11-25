@@ -88,7 +88,7 @@ each invoice takes; what isn't used carries forward, and the last invoice takes 
 
 - `invoices.kind`, `invoice_credits`; `BillingLedger` reads a quote's (or lone job's) bills under
   PAY-06's lock; `BillingCredits` works shares and credits out on each draft save, and again on
-  any send or void. A credit is what progress charged for the line (its sent version), net.
+  any send or void. A credit is what progress charged (its sent version), with the tax it charged.
 - Fit: PAY-07 adds deposit/take_back credits, `nothing_due?` uses `total_due`; JOB-10 skips
   `quote_discount_off!`; QTE-09 adds Not going ahead to `nothing_left?`/`done?`/`all_done?`.
 - `quote_discount_chosen_cents` (nil: $0) is held to [min, max] in `quote_discount_share_cents`;

@@ -22,10 +22,13 @@ class ProgressBillingTest < ActiveSupport::TestCase
 
         crediting = Invoice.where(id: InvoiceCredit.counted.where(source_invoice_id: progress.id).select(:invoice_id)).to_a
         shown = crediting.sum { |invoice| invoice.client_credits.sum { |source, amount| source == progress ? amount.cents : 0 } }
-        # Tax rounds once per rate on each invoice, and an invoice's rounding is shared by its
-        # sources: within a cent per rate for each invoice crediting it (quote progress can be
-        # credited on each job's final).
-        assert_in_delta progress.total_cents, shown, crediting.sum { [ progress.totals.taxes.size, _1.totals.taxes.size ].max }, "Credit from #{progress.number} equals what it charged"
+        # Each credit carries the tax its progress charged on it (B14): exactly, however it's split,
+        # unless a crediting invoice's own tax at a rate ran out (it never goes below zero).
+        if crediting.any? { |invoice| invoice.totals.taxes.any? { _1.amount.zero? && progress.tax_rate_list.include?(_1.rate) } }
+          assert_includes 0..progress.tax_rate_list.size * crediting.size, progress.total_cents - shown, "Credit from #{progress.number}: a cent under, where tax ran out"
+        else
+          assert_equal progress.total_cents, shown, "Credit from #{progress.number} equals what it charged"
+        end
       end
     end
   end
@@ -780,11 +783,11 @@ class ProgressBillingTest < ActiveSupport::TestCase
             backs = invoice.quote_discount_parts.select { !_1["key"] && !_1["owed"] }.flat_map { BillingLedger.rates_from(_1["rates"]) }
             expected = (invoice.tax_rate_list | backs).sum do |rate|
               back = invoice.quote_discount_parts.select { !_1["key"] && !_1["owed"] && BillingLedger.rates_from(_1["rates"]).include?(rate) }.sum { _1["cents"].to_i }
-              base = net.sum { |line, cents| invoice.send(:rates_for, line).include?(rate) ? cents : 0 } - back -
-                     invoice.credits.select { |credit| credit.tax_rate_list.include?(rate) }.sum(&:amount_cents)
-              (base * rate.percent / 100).round(0, Money::ROUNDING).to_i
+              base = net.sum { |line, cents| invoice.send(:rates_for, line).include?(rate) ? cents : 0 } - back
+              # Credits carry the tax their invoices charged (B14), off the tax on the full base.
+              (base * rate.percent / 100).round(0, Money::ROUNDING).to_i - invoice.credits.sum { |credit| credit.fixed_tax.fetch(rate, Money.zero(invoice.currency)).cents }
             end
-            assert_in_delta expected, invoice.tax_cents, rates.size, "scenario #{n}: #{invoice.number}'s tax on its lines' own rates"
+            assert_equal expected, invoice.tax_cents, "scenario #{n}: #{invoice.number}'s tax on its lines' own rates"
           end
         end
       end
@@ -811,7 +814,12 @@ class ProgressBillingTest < ActiveSupport::TestCase
       as_business(@business) { finals.each { |final| assert_equal (final.totals(credits: false).total - final.totals.total).cents, final.client_credits.sum { _2.cents }, "scenario #{n}: #{final.number}'s Credit from rows" if final.credits.any?(&:pre_tax?) } }
       shown = finals.flat_map { client_credits(_1) }.group_by(&:first).transform_values { _1.sum(&:last) }
       fully = as_business(@business) { progress_sent.select { |p| InvoiceCredit.counted.where(source_invoice_id: p.id).sum(:amount_cents) == p.charged_by_key.values.sum } }
-      fully.each { assert_in_delta _1.total_cents, shown[_1.number].to_i, rates.size * 2, "scenario #{n}: Credit from #{_1.number}" }
+      fully.each do |early|
+        ran_out = as_business(@business) { finals.any? { |final| final.credits.any? { _1.source_invoice_id == early.id } && final.totals.taxes.any? { _1.amount.zero? && early.tax_rate_list.include?(_1.rate) } } }
+        next assert_includes 0..rates.size * finals.size, early.total_cents - shown[early.number].to_i, "scenario #{n}: Credit from #{early.number}, where tax ran out" if ran_out
+
+        assert_equal early.total_cents, shown[early.number].to_i, "scenario #{n}: Credit from #{early.number} is exactly what it charged (B14)"
+      end
       credited += 1 if shown.any?
       @client ||= as_business(@business) { @quote.client }
     end
@@ -1097,6 +1105,36 @@ class ProgressBillingTest < ActiveSupport::TestCase
         assert_equal (last.totals(credits: false).total - last.totals.total).cents, shown, "the client's Credit from rows add up"
       end
     end
+  end
+
+  test "B14: Credit from INV-x is exactly what INV-x charged, its tax as charged; the work is billed once to the cent" do
+    approved_quote([ [ "r", "Roof", 1, "10.10" ] ], tax: "10")
+    job = make(r: 1)
+    early = send!(lower(progress(job), "Roof" => "3.35"))
+    assert_equal [ 34, 3_69 ], [ early.tax_cents, early.total_cents ]
+    final = send!(bill_job(complete(job)))
+    assert_equal [ [ early.number, 3_69 ] ], client_credits(final), "not $3.68"
+    assert_equal [ 67, 7_42 ], [ final.tax_cents, final.total_cents ], "$1.01 of tax in all, less the $0.34 charged"
+    assert_equal 11_11, early.total_cents + final.total_cents, "the quote's $11.11"
+
+    approved_quote([ [ "r", "Roof", 1, "10.10" ] ], tax: %w[10 2.5])
+    job = make(r: 1)
+    early = send!(lower(progress(job), "Roof" => "3.35"))
+    final = send!(bill_job(complete(job)))
+    assert_equal [ [ early.number, early.total_cents ] ], client_credits(final), "two rates, each as charged"
+    assert_equal @quote.reload.total_cents, early.total_cents + final.total_cents
+    assert_equal [ 1_01, 25 ], as_business(@business) { [ early, final ].map { _1.reload.totals.taxes.map { |t| t.amount.cents } }.transpose.map(&:sum) }
+  end
+
+  test "B14: a progress invoice credited in parts on two finals: its tax split so the parts add up to what it charged" do
+    approved_quote([ [ "r", "Roof", 2, "5.05" ] ], tax: "10")
+    early = send!(lower(progress(@quote), "Roof" => "7.00"))
+    finals = [ make(r: 1), make(r: 1) ].map { send!(bill_job(complete(_1))) }
+    rows = finals.flat_map { client_credits(_1) }
+    assert_equal [ early.number ] * 2, rows.map(&:first)
+    assert_equal early.total_cents, rows.sum(&:last), "the parts carry all $0.70 of its tax"
+    assert_equal as_business(@business) { finals.sum { _1.totals(credits: false).total.cents } }, early.total_cents + finals.sum(&:total_cents),
+                 "the finals' own totals to the cent: the progress is billed once (each final rounds its own tax)"
   end
 
   test "Apply now takes plain dollars only, and says when it's held to the range" do
