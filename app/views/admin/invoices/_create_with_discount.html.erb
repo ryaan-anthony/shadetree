@@ -1,4 +1,4 @@
-<%# locals: (url:, label:, left:, currency:, id:, button_class: nil, menu: false, confirm: nil, whole: false) -%>
+<%# locals: (url:, label:, left:, currency:, id:, button_class: nil, menu: false, confirm: nil, whole: false, unused: 0) -%>
 <%# PAY-08 (owner, 2026-11-23): billing part of a quote with a discount asks how much of it to apply
     now. $0 is "Apply later": what isn't used carries forward, and the last invoice takes the rest.
     The draft shows the range again, with any minimum the work left needs. %>
@@ -15,7 +15,7 @@
             typed replaces what's there, so a click never leaves "50" typed before "0.00". %>
         <%= text_field_tag :discount, "", id: "#{id}-discount", inputmode: "decimal", placeholder: "0.00", autofocus: true, class: "input text-right tabular",
                            aria: { describedby: "#{id}-discount-hint" }, data: { fill_target: "field", action: "focus->fill#select" } %>
-        <p class="help" id="<%= id %>-discount-hint">$0 applies it later. What isn't used carries forward, and the last invoice takes the rest; the draft shows any minimum the work left needs.</p>
+        <p class="help" id="<%= id %>-discount-hint">$0 applies it later. What isn't used carries forward, and the last invoice takes the rest; the draft shows any minimum the work left needs.<% if unused.positive? %> <%= money(Money.new(unused, currency)) %> isn't used: less work was done than quoted.<% end %></p>
       </div>
       <%# The Primary is the only submit button, so Enter sends the amount typed; Apply all fills
           the field with "all" and submits (the fill controller). Visual order matches tab order. %>

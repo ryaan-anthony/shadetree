@@ -1,0 +1,9 @@
+<%# locals: (ledger:, currency:, id:) -%>
+<%# PAY-08 shortfall (owner, 2026-11-23): once the quote's work is all done with less than quoted,
+    its discount scales to the quoted value done; the rest is shown, never left outstanding. %>
+<% if ledger && (unused = ledger.unused_discount_cents).positive? %>
+  <p class="border-t border-line px-5 py-3 text-sm2 text-muted" id="<%= id %>">
+    Quote discount not used: <span class="money font-semibold text-ink"><%= money(Money.new(unused, currency)) %></span>
+    of <%= money(Money.new(ledger.full_quote_discount_cents, currency)) %>, as less work was done than quoted.
+  </p>
+<% end %>

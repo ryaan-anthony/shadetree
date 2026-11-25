@@ -40,7 +40,7 @@
     <% discount_left = ledger&.outstanding_cents.to_i %><%# PAY-08: asked when there's some %>
     <% if (unbilled || direct) && discount_left.positive? %>
       <% whole = ledger.finishes?(unbilled ? live.select { _1.status == "completed" }.flat_map { WorkBilling.unbilled_lines(_1) } : []) %>
-      <%= render "admin/invoices/create_with_discount", url: admin_quote_invoices_path(quote), label: "Create invoice", left: discount_left, currency: quote.currency,
+      <%= render "admin/invoices/create_with_discount", url: admin_quote_invoices_path(quote), label: "Create invoice", left: discount_left, unused: ledger.unused_discount_cents, currency: quote.currency,
                                                         id: "quote-create-invoice", button_class: button_classes(unbilled ? :primary : :secondary), whole: %>
     <% elsif unbilled || direct %>
       <%= button_to admin_quote_invoices_path(quote), class: button_classes(unbilled ? :primary : :secondary), form: { class: "contents" } do %><%= icon "invoice" %> Create invoice<% end %>
@@ -197,7 +197,8 @@
     <% end %>
     <% if (invoices = quote.invoices.order(:created_at, :id).to_a).any? %>
       <%= card title: "Invoices", id: "invoices", flush: true do %><%= render "admin/invoices/list", invoices: %>
-        <%= render "admin/invoices/progress_summary", summary: ledger.summary, currency: quote.currency, id: "quote-progress" if split && quote.approved? %><% end %>
+        <%= render "admin/invoices/progress_summary", summary: ledger.summary, currency: quote.currency, id: "quote-progress" if split && quote.approved? %>
+        <%= render "admin/invoices/unused_discount", ledger:, currency: quote.currency, id: "quote-discount-unused" %><% end %>
     <% end %>
     <%= card title: "Activity" do %>
       <ol class="space-y-3 text-sm2" id="quote-activity">
