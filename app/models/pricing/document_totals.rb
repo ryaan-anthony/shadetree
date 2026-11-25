@@ -8,8 +8,9 @@ module Pricing
   # 4. A document discount comes off the subtotal and is spread across lines in proportion
   #    to their amounts (cent-exact; never onto a PAY-08 credit), so each tax rate sees its
   #    correct base.
-  #    PAY-08: an invoice's share of its quote's fixed discount comes off alongside it (`share`),
-  #    and a line's share of its quote line's fixed discount comes off that line (Line#share).
+  #    PAY-08: the quote's discount an invoice applies (`share`: [[tax rates, Money]], spread over
+  #    the quote's tax mix) comes off after its own discount, before tax, at those rates; a line's
+  #    share of its quote line's fixed discount comes off that line (Line#share).
   #    Progress credited (PAY-08) is a credit line (Line#credit): what that invoice charged, net
   #    of its discounts, taken off after this one's discount and before tax.
   # 5. Tax is calculated once per rate on the sum of the lines carrying it, then rounded,
@@ -33,7 +34,8 @@ module Pricing
     def initialize(currency:, lines:, discount: nil, prices_include_tax: false, share: nil)
       @currency = Money.currency(currency).code
       @prices_include_tax = prices_include_tax
-      @share = share ? check_currency(share) : Money.zero(@currency)
+      @share_parts = Array(share).reject { _2.zero? }.map { |rates, amount| [ Array(rates), check_currency(amount) ] }
+      @share = Money.sum(@share_parts.map(&:last), @currency)
       compute(lines, discount)
       freeze
     end
@@ -57,14 +59,18 @@ module Pricing
       work = raw_lines.each_index.reject { raw_lines[_1].credit }
       @subtotal = Money.sum(work.map { line_subtotals[_1] }, currency)
       @credit_total = Money.sum(raw_lines.each_index.select { raw_lines[_1].credit }.map { line_subtotals[_1] }, currency)
-      @discount = [ discount_for(document_discount, @subtotal) + @share, [ @subtotal, Money.zero(currency) ].max ].min
-      spread = @discount.allocate(raw_lines.zip(line_subtotals).map { |line, amount| line.credit ? 0 : amount.cents })
+      own = [ discount_for(document_discount, @subtotal), [ @subtotal, Money.zero(currency) ].max ].min
+      spread = own.allocate(raw_lines.zip(line_subtotals).map { |line, amount| line.credit ? 0 : amount.cents })
       taxable = line_subtotals.zip(spread).map { |amount, share| amount - share }
+      @discount = own + @share
 
       @lines = raw_lines.each_with_index.map do |line, i|
         LineResult.new(line:, amount: line_amounts[i], discount: line_discounts[i], subtotal: line_subtotals[i], taxable: taxable[i])
       end
-      @taxes = prices_include_tax? ? inclusive_taxes(raw_lines, taxable) : exclusive_taxes(raw_lines, taxable)
+      # The quote's discount, part by tax mix, taxed as negative amounts at its rates.
+      taxed_lines = raw_lines + @share_parts.map { |rates, amount| Pricing::Line.new(quantity: 1, unit_price: Money.zero(currency) - amount, tax_rates: rates, credit: true) }
+      taxed = taxable + @share_parts.map { Money.zero(currency) - _2 }
+      @taxes = prices_include_tax? ? inclusive_taxes(taxed_lines, taxed) : exclusive_taxes(taxed_lines, taxed)
       after_discount = @subtotal - @discount + @credit_total
       @total = prices_include_tax? ? after_discount : after_discount + Money.sum(@taxes.map(&:amount), currency)
     end

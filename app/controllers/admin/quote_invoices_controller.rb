@@ -8,7 +8,7 @@ class Admin::QuoteInvoicesController < Admin::BaseController
 
   def create
     quote = Quote.find_by_param!(params[:quote_id])
-    invoice = progress? ? WorkBilling.bill_progress!(quote, by: current_user) : Invoice.from_quote!(quote, by: current_user)
+    invoice = progress? ? WorkBilling.bill_progress!(quote, by: current_user, discount: params[:discount]) : Invoice.from_quote!(quote, by: current_user, discount: params[:discount])
     redirect_to edit_admin_invoice_path(invoice), notice: "#{progress? ? "Progress invoice" : "Invoice"} #{invoice.number} started from quote #{quote.number}."
   rescue Invoice::NotApproved, Invoice::Unpriced, WorkBilling::Refused, ActiveRecord::RecordInvalid => error
     redirect_to admin_quote_path(quote), alert: "Couldn't start an invoice: #{error.message.delete_prefix("Validation failed: ")}"

@@ -55,7 +55,8 @@ module WorkBilling
   end
 
   # The job's Create invoice.
-  def bill_job!(job, by: nil)
+  # discount: "Apply now" for the quote's discount (dollars, "all" or blank; PAY-08).
+  def bill_job!(job, by: nil, discount: nil)
     Invoice.transaction do
       lock!(quote_id: job.quote_id, jobs: [ job ])
       job.reload
@@ -68,8 +69,9 @@ module WorkBilling
 
       invoice = Invoice.new(client: job.client, property: job.property, job:, quote: job.quote, created_by: by, title: job.title, currency: job.currency)
       invoice.copy_pricing_from(job, lines: [])
-      percent_only!(invoice) if split
+      quote_discount_off!(invoice) if split
       add_job_lines(invoice, lines)
+      invoice.quote_discount_applied = discount if split && invoice.quote_id
       invoice.save!
       invoice.record!(:created, by:, from: "job", number: job.number)
       invoice
@@ -77,7 +79,7 @@ module WorkBilling
   end
 
   # The quote's Create invoice.
-  def bill_quote!(quote, by: nil)
+  def bill_quote!(quote, by: nil, discount: nil)
     Invoice.transaction do
       Quote.where(id: quote.id).lock.pluck(:id) # first, so the jobs read next can't change
       jobs = quote.jobs.where.not(status: "cancelled").order(:id).to_a
@@ -85,8 +87,8 @@ module WorkBilling
       quote.reload
       raise Invoice::NotApproved, "Only an approved quote can be invoiced." unless quote.approved?
 
-      invoice = if jobs.empty? then bill_directly(quote, by:)
-      elsif QuoteWork.split?(quote.business) then bill_completed_jobs(quote, jobs, by:)
+      invoice = if jobs.empty? then bill_directly(quote, by:, discount:)
+      elsif QuoteWork.split?(quote.business) then bill_completed_jobs(quote, jobs, by:, discount:)
       else bill_as_agreed(quote, jobs.first, by:)
       end
       invoice.record!(:created, by:, from: "quote", number: quote.number)
@@ -96,7 +98,7 @@ module WorkBilling
 
   # Each completed job's unbilled lines, in one invoice linked to the quote and every job. A line
   # keeps its job's tax rates where they differ from the first job's.
-  def bill_completed_jobs(quote, jobs, by:)
+  def bill_completed_jobs(quote, jobs, by:, discount: nil)
     billing = jobs.select { _1.status == "completed" }.map { [ _1, unbilled_lines(_1) ] }.reject { _2.empty? }
     if billing.empty?
       unfinished = jobs.select(&:open?).map(&:number)
@@ -108,20 +110,18 @@ module WorkBilling
     end
 
     first = billing.first.first
-    discount = billing.one? ? first : (quote if quote.discount_kind == "percent")
     invoice = Invoice.new(client: quote.client, property: quote.property, quote:, job: first, created_by: by, title: quote.title, currency: quote.currency,
                           tax_rates: first.tax_rates, prices_include_tax: first.prices_include_tax)
-    invoice.assign_attributes(discount_kind: discount&.discount_kind, discount_percent: discount&.discount_percent, discount_amount_cents: discount&.discount_amount_cents)
-    percent_only!(invoice)
     invoice.jobs = billing.map(&:first)
     add_job_lines(invoice, billing.flat_map { |job, lines| lines.map { [ _1, (job.tax_rates if job.tax_rates != first.tax_rates) ] } })
+    invoice.quote_discount_applied = discount
     invoice.save!
     invoice
   end
 
   # No live job: the quote's lines, as done and billed with no job, so no job can take them.
   # With split jobs, what's still to do of each; before, its lines in full (repeats are progress).
-  def bill_directly(quote, by:)
+  def bill_directly(quote, by:, discount: nil)
     raise Refused, "#{quote.number} is recurring: each occurrence is billed from its own job." if quote.recurring?
 
     split = QuoteWork.split?(quote.business)
@@ -136,12 +136,13 @@ module WorkBilling
 
     invoice = Invoice.new(client: quote.client, property: quote.property, quote:, created_by: by, title: quote.title, currency: quote.currency)
     invoice.copy_pricing_from(quote, lines: [])
-    percent_only!(invoice) if split # PAY-08: fixed discounts come as shares
+    quote_discount_off!(invoice) if split # PAY-08: fixed discounts come as shares
     items = invoice.sync_line_items(BuiltDocument.rows_from(rows.map(&:first)))
     items.zip(rows) do |item, (line, quantity, final)|
       item.assign_attributes(quantity:, quote_line_item_id: line.id, final:)
       item.set_discount(nil, nil) if split && item.discount_kind == "amount"
     end
+    invoice.quote_discount_applied = discount if split
     invoice.save!
     invoice
   end
@@ -163,9 +164,9 @@ module WorkBilling
 
   # PAY-08: "Create another invoice" before the work is done: a progress invoice of what's left of
   # each line of an open job, or of a quote's lines not yet done, which staff can lower. Its lines
-  # aren't final bills; each is credited when its line is billed for real. No fixed discount
-  # share: a percent discount applies as on any invoice. Not for recurring quotes (JOB-10).
-  def bill_progress!(source, by: nil)
+  # aren't final bills; each is credited when its line is billed for real. The quote's discount
+  # comes off as staff choose (`discount`). Not for recurring quotes (JOB-10).
+  def bill_progress!(source, by: nil, discount: nil)
     Invoice.transaction do
       job = source if source.is_a?(Job)
       quote = job ? job.quote : source
@@ -186,20 +187,23 @@ module WorkBilling
       else
         raise Invoice::NotApproved, "Only an approved quote can be invoiced." unless quote.approved?
 
-        quote.line_items.reject { ledger.done?(_1) }
+        # A line a live job holds at other rates is billed as progress from that job's page.
+        quote.line_items.reject { |line| ledger.done?(line) || ledger.live_jobs_of(line).any? { _1.tax_rate_list.to_set != quote.tax_rate_list.to_set } }
       end
       rows = lines.map { [ _1, ledger.left_cents(_1) ] }.select { _2.positive? }
       raise Refused, "Nothing on #{source.number} is left to bill as progress." if rows.empty?
 
       invoice = Invoice.new(kind: "progress", client: source.client, property: source.property, job:, quote:, created_by: by, title: source.title, currency: source.currency)
       invoice.copy_pricing_from(source, lines: [])
-      percent_only!(invoice)
+      quote_discount_off!(invoice)
       items = invoice.sync_line_items(BuiltDocument.rows_from(rows.map(&:first)))
       items.zip(rows) do |item, (line, _)|
         item.assign_attributes(job_line_item_id: (line.id if job), quote_line_item_id: (job ? line.claim&.quote_line_item_id : line.id), final: false)
         item.set_discount(nil, nil) if item.discount_kind == "amount"
       end
       fit_progress!(invoice, items.zip(rows.map(&:last)))
+      invoice.quote_discount_applied = discount
+      leave_room_for_the_discount!(invoice, ledger, items) if quote && invoice.quote_discount_chosen_cents.to_i.zero?
       invoice.save!
       invoice.record!(:created, by:, from: job ? "job" : "quote", number: source.number)
       invoice
@@ -224,9 +228,21 @@ module WorkBilling
     end
   end
 
-  # Fixed discounts on work from a quote are shared on its invoices (PAY-08); a percent applies.
-  def percent_only!(invoice)
-    invoice.set_discount(nil, nil) if invoice.quote_id && invoice.discount_kind == "amount"
+  # With "Apply later", progress leaves room for the quote's discount still to come: the work left,
+  # less progress not yet credited, must take it (owner, 2026-11-23). Lines are lowered in
+  # proportion when they'd charge more; with no room at all, the minimum applies instead.
+  def leave_room_for_the_discount!(invoice, ledger, items)
+    room = ledger.work_left_cents - ledger.uncredited_cents - ledger.outstanding_cents
+    charges = invoice.totals(credits: false).lines.map { [ _1.taxable.cents, 0 ].max }
+    return unless room.positive? && charges.sum > room
+
+    fit_progress!(invoice, items.zip(Money.new(room, invoice.currency).allocate(charges).map(&:cents)))
+  end
+
+  # A quote's discount, fixed or percent, comes off its invoices as staff choose (PAY-08, owner
+  # 2026-11-23), so invoices for its work don't copy it.
+  def quote_discount_off!(invoice)
+    invoice.set_discount(nil, nil) if invoice.quote_id
   end
 
   # Job lines (or [line, own tax rates]) as invoice lines that bill them: the final bill unless

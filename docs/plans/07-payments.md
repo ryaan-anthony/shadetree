@@ -24,8 +24,8 @@ Nothing implemented. The original plan bundled client payments with a large set 
   keeping an audit of changes. Paid invoices are locked.
 - **R5** Invoice list with filters (status, overdue), search and totals outstanding.
 - **R17** An invoice bills completed work: a job's bills that job, and a quote's bills all its
-  completed jobs not yet billed, again as more finish. Each takes its share of a fixed quote
-  discount, progress billing stays (credited when the work is billed; over-billing is credited
+  completed jobs not yet billed, again as more finish. Staff choose how much of a quote's
+  discount each takes (the last takes the rest), progress billing stays (credited when the work is billed; over-billing is credited
   on the next invoice), and nothing is billed twice (locks and a database backstop).
 - **R18** A deposit is an invoice against an approved quote, not tied to work; later invoices for
   the quote credit it until it's used up.

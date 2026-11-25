@@ -95,11 +95,11 @@ class Invoice < ApplicationRecord
   # JOB-09: lines added on site without a price are priced by the office first.
   class Unpriced < StandardError; end
 
-  def self.from_job!(job, by: nil) = WorkBilling.bill_job!(job, by:)
+  def self.from_job!(job, by: nil, discount: nil) = WorkBilling.bill_job!(job, by:, discount:)
 
   # PAY-01: an approved quote, billed. PAY-06 (WorkBilling): its completed jobs' unbilled lines, or
   # with no jobs its own lines directly.
-  def self.from_quote!(quote, by: nil) = WorkBilling.bill_quote!(quote, by:)
+  def self.from_quote!(quote, by: nil, discount: nil) = WorkBilling.bill_quote!(quote, by:, discount:)
 
   def copy_pricing_from(document, lines: document.current_line_items)
     assign_attributes(tax_rates: document.tax_rates, prices_include_tax: document.prices_include_tax,
@@ -236,7 +236,7 @@ class Invoice < ApplicationRecord
       "title" => title, "issued_on" => issued_on.iso8601, "due_on" => due_on.iso8601, "payment_terms" => payment_terms,
       "message" => message, "terms" => terms, "currency" => currency, "tax_rates" => tax_rates, "prices_include_tax" => prices_include_tax,
       "discount" => discount_value&.to_s, "discount_kind" => discount_kind, "subtotal_cents" => subtotal_cents, "tax_cents" => tax_cents,
-      "total_cents" => total_cents, "quote_discount_share_cents" => quote_discount_share_cents, "credits" => credits.map(&:snapshot),
+      "total_cents" => total_cents, "quote_discount_share_cents" => quote_discount_share_cents, "quote_discount_parts" => quote_discount_parts, "credits" => credits.map(&:snapshot),
       "lines" => current_line_items.map { _1.attributes.slice(*%w[name description quantity unit unit_price_cents taxable discount_kind]).merge("discount" => _1.discount_value&.to_s, **_1.links) },
       "files" => attachments_attachments.includes(:blob).map { { "blob_id" => _1.blob_id, "filename" => _1.filename.to_s } }
     }
@@ -568,6 +568,7 @@ class Invoice < ApplicationRecord
     end
     # PAY-08: the shares and credits it was sent with (a sent invoice's aren't worked out again).
     self.quote_discount_share_cents = data["quote_discount_share_cents"].to_i
+    self.quote_discount_parts = data["quote_discount_parts"].to_a
     credits.each(&:mark_for_destruction)
     data["credits"].to_a.each { credits.build(**_1.symbolize_keys, business:) }
     kept = data["files"].pluck("blob_id")

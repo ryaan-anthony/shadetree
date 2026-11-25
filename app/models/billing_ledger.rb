@@ -11,12 +11,12 @@
 #   and every claim billed or cancelled; QTE-09's Not going ahead counts once it exists).
 # - Only what's on invoices that went out is credited, and only credits on invoices that went out
 #   count as used; a draft's are worked out again when it's sent.
-# - Discount base S: the quote's value after line discounts, billed quantity at the price it was
-#   billed at, completed quantity at the job's, the rest at the quote's current price (QTE-10).
-#   W: quote work on final bills that went out, and this invoice's.
+# - The quote's discount is applied as staff choose on each invoice (owner, 2026-11-23):
+#   outstanding_cents, work_left_cents and uncredited_cents give the range BillingCredits holds
+#   the choice to. A line's fixed discount stays shared by quantity billed (line_share_cents).
 #
 #   ledger = BillingLedger.new(quote:, except: invoice)
-#   ledger.over_billed_cents, ledger.left_cents(job_line), ledger.quote_share_cents(lines)
+#   ledger.over_billed_cents, ledger.left_cents(job_line), ledger.outstanding_cents
 class BillingLedger
   attr_reader :quote, :jobs, :progress
 
@@ -158,11 +158,35 @@ class BillingLedger
       return 0 if billed_job_line_ids.include?(line.id) || job.nil? || job.status == "cancelled"
 
       quote_line = @quote_lines[line.claim&.quote_line_item_id]
-      own = after_discounts(subtotal(line) - expected_line_share(line, quote_line), job) - held(@progress.select { _1.job_line_item_id == line.id })
+      own = after_discounts(subtotal(line) - expected_line_share(line, quote_line), job) - held(@progress.select { _1.job_line_item_id == line.id }) -
+            (quote_line ? discount_left_part(quote_line, line.quantity.to_d / [ quote_line.quantity.to_d, 1 ].max) : 0)
       [ own, (left_cents(quote_line) if quote_line) ].compact.min.clamp(0..)
     when QuoteLineItem
       billed = @finals.select { _1.quote_line_item_id == line.id }.sum { subtotal(_1) }
-      (after_discounts(kept_value_cents(line) - billed) - held(@progress.select { _1.quote_line_item_id == line.id })).clamp(0..)
+      (after_discounts(kept_value_cents(line) - billed) - held(@progress.select { _1.quote_line_item_id == line.id }) - discount_left_part(line)).clamp(0..)
+    end
+  end
+
+  # A quote line's part of the quote's discount still to come (its share of D, as the quote spreads
+  # it, scaled by what's outstanding): progress leaves it for the final (owner, 2026-11-23).
+  def discount_left_part(line, fraction = 1)
+    total = quote_discount_cents
+    return 0 unless total.positive?
+
+    @line_parts ||= quote.line_items.to_a.zip(quote.totals.lines).to_h { |item, result| [ item.id, (result.subtotal - result.taxable).cents ] }
+    round(@line_parts.fetch(line.id, 0) * fraction * (@outstanding ||= outstanding_cents) / total.to_d)
+  end
+
+  # Tax rates as a key: the same rates in any order are one group.
+  def self.group(rates) = rates.sort_by { [ _1.name, _1.percent ] }
+
+  # The quote's discount by the tax its lines carry: { rates => cents }, in the same proportions
+  # as the quote spreads it, so invoices' tax adds up to the quote's (owner, 2026-11-23).
+  def discount_mix
+    return {} unless quote_discount_cents.positive?
+
+    @discount_mix ||= quote.line_items.to_a.zip(quote.totals.lines).each_with_object(Hash.new(0)) do |(item, result), mix|
+      mix[self.class.group(item.taxable ? quote.tax_rate_list : [])] += (result.subtotal - result.taxable).cents
     end
   end
 
@@ -173,22 +197,92 @@ class BillingLedger
     [ round(quote_line.discount_amount_cents.to_i * job_line.quantity.to_d / quote_line.quantity.to_d), quote_line.discount_amount_cents.to_i ].min
   end
 
+  # The live jobs doing a quote line, whose rates its final bills will be taxed at.
+  def live_jobs_of(line) = live_job_lines(line).map { @jobs_by_id[_1.job_id] }.uniq
+
   # The invoices holding a line's final bills (drafts too), which leave nothing to bill as progress.
   def final_invoices(work)
     key = work.is_a?(JobLineItem) ? :job_line_item_id : :quote_line_item_id
     @finals.select { _1.public_send(key) == work.id }.map(&:invoice).uniq
   end
 
-  # Line subtotal cents after the document discount the final will apply.
+  # Line subtotal cents after the document discount the final will apply: a lone job's own. A
+  # quote's discount is chosen per invoice (owner, 2026-11-23); what's still to come is held back
+  # from progress as a whole (BillingCredits' minimum), not line by line.
   def after_discounts(cents, job = nil)
-    return cents unless cents.positive?
+    return cents if quote || !cents.positive?
 
-    document = quote || job
-    case document&.discount_kind
-    when "percent" then round(cents * (100 - document.discount_percent.to_d) / 100)
-    when "amount" then quote ? after_share(cents) : lone_job_share(cents, job)
+    case job&.discount_kind
+    when "percent" then round(cents * (100 - job.discount_percent.to_d) / 100)
+    when "amount" then lone_job_share(cents, job)
     else cents
     end
+  end
+
+  # --- The quote's discount, chosen per invoice (owner, 2026-11-23) ------------------------
+
+  # D: the quote's discount in dollars, after line discounts, as the quote shows it (a percent
+  # becomes its amount). None for a recurring quote (JOB-10) or a job without a quote.
+  def quote_discount_cents
+    return 0 unless shares? && quote.discount_kind.in?(%w[amount percent])
+
+    @quote_discount_cents ||= quote.totals.discount.cents
+  end
+
+  # What's left of it: D less what work invoices that aren't void apply (drafts hold theirs). What
+  # a progress invoice applies only lowers the cash it collects: its final bill credits the net it
+  # charged, so the work's invoices still give the whole discount (owner, 2026-11-23).
+  def outstanding_cents
+    applied = Invoice.where(quote_id: quote&.id, kind: "work").where.not(status: "void").where.not(id: @except_id).sum(:quote_discount_share_cents)
+    [ quote_discount_cents - applied, 0 ].max
+  end
+
+  # The quote's work still to bill after these final bills, after line discounts: lines on live
+  # jobs without a final bill (added on site too) and what's still to do.
+  def work_left_cents(billed: []) = work_left_by_group(billed:).values.sum
+
+  # Whether billing these job lines (or, with none, the quote's to-do work directly) leaves no work
+  # to bill: that invoice takes the whole of the quote's discount left.
+  def finishes?(job_lines)
+    ids = job_lines.map(&:id).to_set
+    rest = @job_lines.values.reject { ids.include?(_1.id) || billed_job_line_ids.include?(_1.id) || @jobs_by_id[_1.job_id].status == "cancelled" }
+    rest.empty? && (job_lines.any? ? @quote_lines.values.none? { _1.to_do_quantity.positive? } : true)
+  end
+
+  # The same, by the tax it will carry: { rates => cents }.
+  def work_left_by_group(billed: [])
+    billed_ids = billed_job_line_ids + billed.filter_map(&:job_line_item_id)
+    left = Hash.new(0)
+    @job_lines.values.select { @jobs_by_id[_1.job_id].status != "cancelled" && !billed_ids.include?(_1.id) }.each do |line|
+      job = @jobs_by_id[line.job_id]
+      left[self.class.group(line.taxable ? job.tax_rate_list : [])] += subtotal(line) - expected_line_share(line, @quote_lines[line.claim&.quote_line_item_id])
+    end
+    # A line billed directly on this invoice claims its work when it's saved: it isn't to do.
+    direct = billed.select { _1.new_record? && _1.job_line_item_id.nil? && _1.quote_line_item_id }.group_by(&:quote_line_item_id)
+    @quote_lines.each_value do |line|
+      left[self.class.group(line.taxable ? quote.tax_rate_list : [])] += to_do_value(line, less: direct.fetch(line.id, []).sum { |item| item.quantity.to_d })
+    end
+    left
+  end
+
+  # Progress charged and not yet credited, on invoices that aren't void: what later final bills
+  # must still take off.
+  def uncredited_cents = held(@progress)
+
+  # The same, by the tax it was charged at.
+  def uncredited_by_group = @progress.each_with_object(Hash.new(0)) { |line, sums| sums[self.class.group(rates_of(line))] += held([ line ]) }
+
+  def to_do_value(line, less: 0)
+    quantity = line.to_do_quantity - less
+    return 0 unless quantity.positive?
+
+    gross = round(quantity * line.unit_price_cents.to_i)
+    off = case line.discount_kind
+    when "percent" then round(gross * line.discount_percent.to_d / 100)
+    when "amount" then line.quantity.to_d.positive? ? round(line.discount_amount_cents.to_i * quantity / line.quantity.to_d) : 0
+    else 0
+    end
+    [ gross - off, 0 ].max
   end
 
   # A job without a quote keeps its own fixed discount D: × (its subtotal − D) ÷ its subtotal.
@@ -197,20 +291,10 @@ class BillingLedger
     base.positive? ? round(cents * [ base - job.discount_amount_cents.to_i, 0 ].max / base.to_d) : cents
   end
 
-  # Cents of quote work less their expected share of a fixed quote discount D: × (S − D) ÷ S.
-  def after_share(cents)
-    total = shares? && quote.discount_kind == "amount" ? quote.discount_amount_cents.to_i : 0
-    return cents unless total.positive? && cents.positive?
-
-    base = (@base ||= discount_base_cents)
-    base.positive? ? round(cents * [ base - total, 0 ].max / base.to_d) : cents
-  end
-
   # --- Discount shares ---------------------------------------------------------------------
 
-  # S: each quote line's kept value after its discount. `current` adds this invoice's final bills.
-  def discount_base_cents(current: []) = @quote_lines.values.sum { kept_value_cents(_1, current:) }
-
+  # A quote line's value after its discount: billed quantity at the price it was billed at,
+  # completed at the job's, the rest at the current price (QTE-10).
   def kept_value_cents(line, current: [])
     billed = (@finals + current).select { _1.final && _1.quote_line_item_id == line.id }
     billed_ids = billed.filter_map(&:job_line_item_id)
@@ -234,23 +318,6 @@ class BillingLedger
     quantity = (earlier + current).sum { _1.quantity.to_d }
     target = [ line.discount_amount_cents.to_i, round(line.discount_amount_cents.to_i * quantity / line.quantity.to_d) ].min
     (target - earlier.sum(&:discount_share_cents)).clamp(0..)
-  end
-
-  # The quote's fixed discount D: target = min(D, round(D × W ÷ S)), less the shares on other
-  # invoices that went out, from zero up to this invoice's quote work (the cap's hold-back falls
-  # into the next target).
-  def quote_share_cents(current)
-    total = quote&.discount_kind == "amount" ? quote.discount_amount_cents.to_i : 0
-    return 0 unless shares? && total.positive?
-
-    work = current.select { _1.final && _1.quote_line_item_id }
-    base = discount_base_cents(current: work)
-    return 0 unless base.positive?
-
-    billed = (sent_finals.select(&:quote_line_item_id) + work).sum { subtotal(_1) }
-    target = [ total, round(total * billed / base.to_d) ].min
-    others = Invoice.where(quote_id: quote.id).where.not(sent_at: nil).where.not(status: "void").where.not(id: @except_id).sum(:quote_discount_share_cents)
-    (target - others).clamp(0, work.sum { subtotal(_1) })
   end
 
   # Recurring quotes don't share (JOB-10).

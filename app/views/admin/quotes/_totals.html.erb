@@ -16,7 +16,7 @@
     <div><dt>Discount</dt><dd class="money">−<%= money(own) %></dd></div>
   <% end %>
   <% if share.positive? %>
-    <div><dt>Share of the quote's discount</dt><dd class="money">−<%= money(share) %></dd></div>
+    <div><dt>Quote discount</dt><dd class="money">−<%= money(share) %></dd></div>
   <% end %>
   <% if client_credits.empty? %>
     <% credits.group_by(&:label).each do |label, same| %>

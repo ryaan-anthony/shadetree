@@ -36,9 +36,9 @@ moment. Progress billing, credits and discount shares are PAY-08.
 - [x] A line is billed once a final bill for it is on an invoice that isn't void. Voiding, or
       deleting a draft, frees it, and its claim (JOB-09), in the same transaction.
 - [x] A quote invoice can combine jobs with different tax rates: each line keeps its job's rates.
-      Tax is rounded per invoice, and split lines and discount shares can each leave a rounding
-      cent, so invoices can differ from the quote by a few cents; this isn't adjusted (QTE-09
-      explains it).
+      Tax is rounded per invoice, and split lines can leave a rounding cent, so invoices can
+      differ from the quote by a few cents; this isn't adjusted (QTE-09 explains it). A quote's
+      discount comes off as staff choose on each invoice (PAY-08, owner 2026-11-23).
 - [x] Every billing path (both buttons, direct billing, PAY-08's progress invoices, NTF-04
       "invoice the job") locks the quote, then its jobs by id, then the lines by id (the job
       alone without a quote), and re-reads what's unbilled. The database refuses a second final
