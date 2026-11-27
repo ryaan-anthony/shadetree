@@ -30,6 +30,9 @@ module ClearCookiesForWildcardOrigin
 end
 Selenium::WebDriver::Chrome::Driver.prepend(ClearCookiesForWildcardOrigin)
 
+Selenium::WebDriver.logger.level = :debug
+Selenium::WebDriver.logger.output = $stdout
+
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   driven_by :selenium, using: :headless_chrome, screen_size: [ 1400, 1400 ] do |options|
     options.add_option("goog:loggingPrefs", { browser: "ALL" }) # so a failure can show the console
