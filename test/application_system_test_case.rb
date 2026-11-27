@@ -17,6 +17,19 @@ module StaleNodeAsStaleElement
 end
 Selenium::WebDriver::Remote::Response.prepend(StaleNodeAsStaleElement)
 
+# Chrome 158 refuses Storage.clearDataForOrigin with origin "*" ("* is not a valid URL"), which
+# Capybara sends at the end of every reset, so every system test failed. Capybara only wants
+# the cookies gone there (local storage was cleared on the page before it went to about:blank),
+# so clear the cookies instead. Remove once Capybara stops sending "*".
+module ClearCookiesForWildcardOrigin
+  def execute_cdp(cmd, **params)
+    return super("Network.clearBrowserCookies") if cmd == "Storage.clearDataForOrigin" && params[:origin] == "*"
+
+    super
+  end
+end
+Selenium::WebDriver::DriverExtensions::HasCDP.prepend(ClearCookiesForWildcardOrigin)
+
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   driven_by :selenium, using: :headless_chrome, screen_size: [ 1400, 1400 ] do |options|
     options.add_option("goog:loggingPrefs", { browser: "ALL" }) # so a failure can show the console
