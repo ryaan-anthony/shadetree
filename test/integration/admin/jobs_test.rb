@@ -52,17 +52,20 @@ class Admin::JobsTest < ActionDispatch::IntegrationTest
   test "an approved quote's page makes its job once, then links to it" do
     quote = approved_quote
     get admin_quote_path(quote)
-    assert_select "form[action=?] button", admin_quote_job_path(quote), /Create job/
+    assert_select "a[href=?]", new_admin_quote_job_path(quote), /Create job/
+    get new_admin_quote_job_path(quote)
+    token = css_select("input[name=picker_token]").first["value"]
+    picks = as_business(@business) { quote.line_items.to_h { [ _1.key, { take: "1", quantity: _1.quantity.to_i.to_s } ] } }
 
-    post admin_quote_job_path(quote)
-    job = as_business(@business) { quote.reload.first_job }
+    post admin_quote_job_path(quote), params: { picker_token: token, picks: }
+    job = as_business(@business) { quote.reload.jobs.first }
     assert_redirected_to admin_job_path(job)
-    post admin_quote_job_path(quote)
+    post admin_quote_job_path(quote), params: { picker_token: token, picks: } # the same picker again
     assert_redirected_to admin_job_path(job)
     assert_equal 2, as_business(@business) { Job.count }
 
     get admin_job_path(job)
-    assert_select "a[href=?]", admin_quote_path(quote), /quote #{quote.number}/
+    assert_select "a[href=?]", admin_quote_path(quote), /#{quote.number}/
     assert_select "#job-lines", /Leaf cleanup/
     get admin_quote_path(quote)
     assert_select "a[href=?]", admin_job_path(job), /Job #{job.number}/
@@ -114,6 +117,7 @@ class Admin::JobsTest < ActionDispatch::IntegrationTest
   end
 
   test "complete, cancel with a reason, and reopen" do
+    as_business(@business) { @job.line_items.create!(name: "Gutters", quantity: 1, unit_price: "80", position: 0) }
     patch complete_admin_job_path(@job)
     assert_redirected_to admin_job_path(@job)
     follow_redirect!

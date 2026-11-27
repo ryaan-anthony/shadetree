@@ -33,9 +33,8 @@ class Quote < ApplicationRecord
   has_many :events, -> { order(:occurred_at, :id) }, class_name: "QuoteEvent", inverse_of: :quote, dependent: :delete_all
   has_many :revisions, -> { order(:number) }, class_name: "QuoteRevision", inverse_of: :quote, dependent: :delete_all
   # JOB-09: the work it became, in one or more jobs, each taking whole lines or part of a line's
-  # quantity. Before JOB-09's flag a quote has one job: first_job (PAY-06 replaces its billing uses).
+  # quantity.
   has_many :jobs, -> { order(:id) }, inverse_of: :quote, dependent: :nullify
-  has_one :first_job, -> { order(:id) }, class_name: "Job", inverse_of: false
   has_many :invoices, dependent: :restrict_with_exception # PAY-01: what it was billed as
 
   # JOB-10 makes quotes recurring (each occurrence billed from its own job, never directly, PAY-06);

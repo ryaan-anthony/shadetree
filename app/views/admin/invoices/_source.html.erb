@@ -4,7 +4,7 @@
 <% if invoice.progress? %><%# PAY-08 %>
   <p class="text-sm2 text-muted" id="invoice-progress">Progress invoice: it bills part of the work before it's done, and is credited on the final invoice.</p>
 <% end %>
-<% if invoice.quote && invoice.sent_at && invoice.kind == "work" && QuoteWork.split?(invoice.business) &&
+<% if invoice.quote && invoice.sent_at && invoice.kind == "work" &&
       invoice.quote.invoices.where(kind: "work").where.not(sent_at: nil).where.not(status: "void").order(:sent_at, :id).last == invoice %>
   <%# PAY-08 (owner, 2026-11-24): the quote's last invoice says what's owed to the client: progress
       billed past the work, and a shortfall's discount it couldn't take. Staff refund it. %>

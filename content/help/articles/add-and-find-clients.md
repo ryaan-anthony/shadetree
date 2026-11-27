@@ -3,7 +3,7 @@ title: Add a client and keep their details
 summary: Add the people and businesses you work for, with their contact details and properties, and find everything about a client in one place.
 category: clients-requests
 topics: []
-reviewed: 2026-11-24
+reviewed: 2026-11-27
 screenshots:
   - name: add-client-form
     path: /admin/clients/new

@@ -8,9 +8,6 @@
 # quote's lines by id; a job without a quote alone) and reads what's unbilled again under it; the
 # database refuses a second final bill if anything gets past that.
 #
-# Behind split_jobs (JOB-09). With it off, billing works as before PAY-06: a job's invoice copies
-# all its lines at any status, and a quote's bills the quote's lines as agreed; each line still
-# links to what it bills and is the final bill only if there's none yet (repeats are progress).
 module WorkBilling
   # Nothing to bill, or not yet: the message says why.
   class Refused < StandardError; end
@@ -60,18 +57,17 @@ module WorkBilling
     Invoice.transaction do
       lock!(quote_id: job.quote_id, jobs: [ job ])
       job.reload
-      split = QuoteWork.split?(job.business)
-      raise Refused, "#{job.number} isn't completed yet. An invoice bills completed work." if split && job.status != "completed"
+      raise Refused, "#{job.number} isn't completed yet. An invoice bills completed work." if job.status != "completed"
 
-      lines = split ? unbilled_lines(job) : job.line_items.to_a
-      raise Refused, "Everything on #{job.number} is billed#{" (#{billed_on(job.line_items)})" if job.line_items.any?}." if lines.empty? && split
+      lines = unbilled_lines(job)
+      raise Refused, "Everything on #{job.number} is billed#{" (#{billed_on(job.line_items)})" if job.line_items.any?}." if lines.empty?
       check_priced!(lines)
 
       invoice = Invoice.new(client: job.client, property: job.property, job:, quote: job.quote, created_by: by, title: job.title, currency: job.currency)
       invoice.copy_pricing_from(job, lines: [])
-      quote_discount_off!(invoice) if split
+      quote_discount_off!(invoice)
       add_job_lines(invoice, lines)
-      invoice.quote_discount_applied = discount if split && invoice.quote_id
+      invoice.quote_discount_applied = discount if invoice.quote_id
       invoice.save!
       invoice.record!(:created, by:, from: "job", number: job.number)
       invoice
@@ -88,8 +84,7 @@ module WorkBilling
       raise Invoice::NotApproved, "Only an approved quote can be invoiced." unless quote.approved?
 
       invoice = if jobs.empty? then bill_directly(quote, by:, discount:)
-      elsif QuoteWork.split?(quote.business) then bill_completed_jobs(quote, jobs, by:, discount:)
-      else bill_as_agreed(quote, jobs.first, by:)
+      else bill_completed_jobs(quote, jobs, by:, discount:)
       end
       invoice.record!(:created, by:, from: "quote", number: quote.number)
       invoice
@@ -120,44 +115,22 @@ module WorkBilling
   end
 
   # No live job: the quote's lines, as done and billed with no job, so no job can take them.
-  # With split jobs, what's still to do of each; before, its lines in full (repeats are progress).
+  # What's still to do of each line.
   def bill_directly(quote, by:, discount: nil)
     raise Refused, "#{quote.number} is recurring: each occurrence is billed from its own job." if quote.recurring?
 
-    split = QuoteWork.split?(quote.business)
-    rows = if split
-      directly_billable_lines(quote).map { [ _1, _1.to_do_quantity, true ] }
-    else # as before: every line in full, the final bill where there's none yet and work is free
-      lines = quote.line_items.to_a
-      billed = billed_quote_line_ids(lines.map(&:id))
-      lines.map { [ _1, _1.quantity.to_d, !billed.include?(_1.id) && _1.to_do_quantity.positive? ] }
-    end
-    raise Refused, "Everything on #{quote.number} is billed." if split && rows.empty?
+    rows = directly_billable_lines(quote).map { [ _1, _1.to_do_quantity, true ] }
+    raise Refused, "Everything on #{quote.number} is billed." if rows.empty?
 
     invoice = Invoice.new(client: quote.client, property: quote.property, quote:, created_by: by, title: quote.title, currency: quote.currency)
     invoice.copy_pricing_from(quote, lines: [])
-    quote_discount_off!(invoice) if split # PAY-08: fixed discounts come as shares
+    quote_discount_off!(invoice) # PAY-08: fixed discounts come as shares
     items = invoice.sync_line_items(BuiltDocument.rows_from(rows.map(&:first)))
     items.zip(rows) do |item, (line, quantity, final)|
       item.assign_attributes(quantity:, quote_line_item_id: line.id, final:)
-      item.set_discount(nil, nil) if split && item.discount_kind == "amount"
+      item.set_discount(nil, nil) if item.discount_kind == "amount"
     end
-    invoice.quote_discount_applied = discount if split
-    invoice.save!
-    invoice
-  end
-
-  # Before split jobs: the quote's lines as agreed, each linked to its job line.
-  def bill_as_agreed(quote, job, by:)
-    invoice = Invoice.new(client: quote.client, property: quote.property, quote:, job:, created_by: by, title: quote.title, currency: quote.currency)
-    invoice.copy_pricing_from(quote, lines: [])
-    claims = job.claims.index_by(&:quote_line_item_id)
-    billed = billed_job_line_ids(claims.values.filter_map(&:job_line_item_id))
-    lines = quote.line_items.to_a
-    invoice.sync_line_items(BuiltDocument.rows_from(lines)).zip(lines) do |item, line|
-      job_line_id = claims[line.id]&.job_line_item_id
-      item.assign_attributes(job_line_item_id: job_line_id, quote_line_item_id: line.id, final: job_line_id.present? && !billed.include?(job_line_id))
-    end
+    invoice.quote_discount_applied = discount
     invoice.save!
     invoice
   end
@@ -255,7 +228,7 @@ module WorkBilling
   end
 
   # Job lines (or [line, own tax rates]) as invoice lines that bill them: the final bill unless
-  # one exists (before split jobs a job can be billed again; those are progress).
+  # one exists.
   def add_job_lines(invoice, lines)
     lines = lines.map { Array(_1) }
     billed = billed_job_line_ids(lines.map { _1.first.id })

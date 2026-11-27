@@ -73,16 +73,11 @@ class Job < ApplicationRecord
               "completed" => "Completed", "to_invoice" => "Ready to invoice", "cancelled" => "Cancelled", "all" => "All" }.freeze
 
   # INS-01: finished, and not billed yet: no invoice that went out (a draft or a void one doesn't
-  # count) for the job, or for the quote it came from. PAY-06, with split jobs: a job from a quote
+  # count) for the job, or for the quote it came from. PAY-06: a job from a quote
   # stays until each of its lines has a final bill on an invoice that went out, so another job's
   # invoice from the same quote doesn't hide it, and a job with no lines left counts as billed.
   def self.ready_to_invoice
     sent = Invoice.where.not(status: "void").where.not(sent_at: nil).select(:id)
-    unless Current.business && QuoteWork.split?(Current.business)
-      return where(status: "completed").where.not(id: Invoice.where(id: sent).where.not(job_id: nil).select(:job_id))
-                                       .where("jobs.quote_id IS NULL OR jobs.quote_id NOT IN (?)", Invoice.where(id: sent).where.not(quote_id: nil).select(:quote_id))
-    end
-
     billed = InvoiceLineItem.final_bills.where(invoice_id: sent).where.not(job_line_item_id: nil).select(:job_line_item_id)
     unbilled = JobLineItem.where("job_line_items.job_id = jobs.id").where.not(id: billed)
     where(status: "completed").where("(jobs.quote_id IS NULL AND jobs.id NOT IN (:invoiced)) OR (jobs.quote_id IS NOT NULL AND EXISTS (:unbilled))",
@@ -125,44 +120,33 @@ class Job < ApplicationRecord
   # approval and NTF-04). It's refused when nothing is left, or when a line hasn't that much to
   # do, naming the jobs that hold it. `token` is the picker's: sending the same picker again opens
   # the job it made, or the picker again if that job was cancelled.
-  #
-  # With the flag off a quote has one job, as before JOB-09: a second call (a double click, the
-  # automatic one racing the button) returns it, and its lines copy the quote's in full, each
-  # claiming what's still free (work billed straight from the quote isn't claimed twice).
   def self.from_quote!(quote, by: nil, picks: nil, token: nil)
-    split = QuoteWork.split?(quote.business)
-    return quote.first_job if !split && quote.first_job
-
     transaction(requires_new: true) do # a savepoint: a failure here can't spoil a surrounding approval
       lines = QuoteWork.lock!(quote.id)
       quote.reload
       raise NotOpen, "Only an approved quote becomes a job." unless quote.status == "approved"
-      next quote.first_job if !split && quote.first_job
       if token.present? && (made = quote.jobs.find_by(picker_token: token))
         raise NotOpen, "#{made.number}, made from this picker, was cancelled. Choose the work again." if made.status == "cancelled"
 
         next made
       end
 
-      taken = pick_list(quote, lines, picks, split:)
-      job = build_for_quote(quote, taken, by:, split:, token: (token.presence if split))
+      taken = pick_list(quote, lines, picks)
+      job = build_for_quote(quote, taken, by:, token: token.presence)
       job.save!
-      taken.each { |line, quantity, job_line| QuoteWork.claim!(job, line, split ? quantity : [ quantity, line.to_do_quantity ].min, job_line:) }
+      taken.each { |line, quantity, job_line| QuoteWork.claim!(job, line, quantity, job_line:) }
       quote.attachments.each { job.attachments.attach(_1.blob) }
-      %i[first_job jobs].each { quote.association(_1).reset } # the caller's quote now has it
+      quote.association(:jobs).reset # the caller's quote now has it
       job
     end
   rescue ActiveRecord::RecordNotUnique
     quote.reload
-    (token.present? && quote.jobs.find_by(picker_token: token)) || (!split && quote.first_job) || raise
+    (token.present? && quote.jobs.find_by(picker_token: token)) || raise
   end
 
   # [quote line, quantity] for each line a new job (or more of an open one) takes, in quote order.
-  # With the flag off, every line in full, as before.
-  def self.pick_list(quote, lines, picks, split: true)
+  def self.pick_list(quote, lines, picks)
     ordered = lines.values.sort_by { [ _1.position, _1.id ] }
-    return ordered.map { [ _1, _1.quantity.to_d ] } unless split
-
     taken = if picks.nil?
       ordered.select { _1.to_do_quantity.positive? || _1.quantity.to_d.zero? }.map { [ _1, _1.to_do_quantity ] }
     else
@@ -177,27 +161,27 @@ class Job < ApplicationRecord
     taken
   end
 
-  # The job, its lines copied with what it takes. Split jobs carry no fixed discount, the quote's
+  # The job, its lines copied with what it takes. Jobs carry no fixed discount, the quote's
   # or a line's (PAY-08 shares them on invoices); a percent discount is copied as before.
-  def self.build_for_quote(quote, taken, by:, split:, token:)
-    discount = split && quote.discount_kind == "amount" ? {} : { discount_kind: quote.discount_kind, discount_percent: quote.discount_percent, discount_amount_cents: quote.discount_amount_cents }
+  def self.build_for_quote(quote, taken, by:, token:)
+    discount = quote.discount_kind == "amount" ? {} : { discount_kind: quote.discount_kind, discount_percent: quote.discount_percent, discount_amount_cents: quote.discount_amount_cents }
     job = new(client: quote.client, property: quote.property || quote.client.primary_property, quote:, created_by: by, currency: quote.currency,
-              title: title_for(quote, taken, split:), picker_token: token, internal_notes: quote.internal_notes,
+              title: title_for(quote, taken), picker_token: token, internal_notes: quote.internal_notes,
               tax_rates: quote.tax_rates, prices_include_tax: quote.prices_include_tax, **discount)
     taken.each_with_index do |(line, quantity), index|
       job_line = job.line_items.build(line.attributes.slice(*JobLineItem::COPIED).merge("quantity" => quantity, "position" => index))
       job_line.name = "Item" if job_line.name.blank?
-      job_line.set_discount(nil, nil) if split && job_line.discount_kind == "amount"
+      job_line.set_discount(nil, nil) if job_line.discount_kind == "amount"
       taken[index] << job_line
     end
     job
   end
 
   # The quote's title when the job takes everything, else its lines: "Tree removal (6 of 10)".
-  def self.title_for(quote, taken, split:)
-    whole = !split || (taken.size == quote.line_items.size && taken.all? { |line, quantity| quantity == line.quantity.to_d })
+  def self.title_for(quote, taken)
+    whole = taken.size == quote.line_items.size && taken.all? { |line, quantity| quantity == line.quantity.to_d }
     title = (quote.title.presence if whole) ||
-            (split && taken.map { |line, quantity| quantity == line.quantity.to_d ? line.name : "#{line.name} (#{QuoteWork.number(quantity)} of #{QuoteWork.number(line.quantity)})" }.join(", ").presence) ||
+            taken.map { |line, quantity| quantity == line.quantity.to_d ? line.name : "#{line.name} (#{QuoteWork.number(quantity)} of #{QuoteWork.number(line.quantity)})" }.join(", ").presence ||
             quote.line_items.first&.name.presence || "Work for #{quote.client.display_name}"
     title.truncate(120, separator: " ")
   end
@@ -241,18 +225,16 @@ class Job < ApplicationRecord
   # Completing a job doesn't email the client about visits it cancels (the work is done); they
   # simply count as what the client knows.
   #
-  # JOB-09: with the split_jobs flag, completing confirms what was done (`done`: { job line id =>
+  # JOB-09: completing confirms what was done (`done`: { job line id =>
   # quantity }, else each line's logged total, else what it booked); it's final. Lines added on
   # site without a price get one first (`prices`: { job line id => amount }; $0 typed on purpose).
   def complete!(by:, notify_client: false, done: nil, prices: nil)
     under_quote_lock do
       raise NotOpen, "#{number} is already #{status_label.downcase}." unless open?
 
-      if QuoteWork.split?(business)
-        price_site_lines!(prices.to_h.transform_keys(&:to_i))
-        QuoteWork.confirm!(self, done_so_far.merge(done.to_h.transform_keys(&:to_i)), quote_lines)
-        line_items.reset
-      end
+      price_site_lines!(prices.to_h.transform_keys(&:to_i))
+      QuoteWork.confirm!(self, done_so_far.merge(done.to_h.transform_keys(&:to_i)), quote_lines)
+      line_items.reset
       update!(status: "completed", completed_at: Time.current, completed_by: by)
       ActiveRecord.after_all_transactions_commit { Automation.trigger("job_completed", self) } unless Current.automation_run # NTF-04
       ended = visits.open.lock.to_a.each { _1.finish!(_1.status == "in_progress" ? "completed" : "cancelled", by:, reason: "Job completed", notify: false) }
@@ -329,7 +311,7 @@ class Job < ApplicationRecord
   end
 
   # Back to the status its visits give it, undoing Complete or Cancel. JOB-09: a cancelled job
-  # takes back what it held, refused while that's in another job. With the split_jobs flag a
+  # takes back what it held, refused while that's in another job. A
   # completed job reopens only while no invoice that isn't void bills it, and its lines go back
   # to what they booked.
   def reopen!
@@ -337,7 +319,7 @@ class Job < ApplicationRecord
       raise NotOpen, "#{number} is already open." if open?
 
       QuoteWork.reclaim!(self, quote_lines) if status == "cancelled" && quote_id
-      if status == "completed" && QuoteWork.split?(business)
+      if status == "completed"
         billing = invoices.where.not(status: "void").order(:id).pluck(:number)
         raise NotOpen, "#{number} can't be reopened while #{billing.to_sentence} bills it. Void #{billing.one? ? "it" : "them"} first." if billing.any?
 

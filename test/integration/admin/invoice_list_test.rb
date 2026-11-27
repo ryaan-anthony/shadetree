@@ -103,7 +103,7 @@ class Admin::InvoiceListTest < ActionDispatch::IntegrationTest
       visit.photos.attach(io: file_fixture("logo.png").open, filename: "after.png", content_type: "image/png")
       [ job, visit.photos.attachments.first ]
     end
-    invoice = as_business(@business) { Invoice.from_job!(job) }
+    invoice = as_business(@business) { Invoice.from_job!(job.tap { _1.complete!(by: nil) }) }
     get edit_admin_invoice_path(invoice)
     assert_select "input[type=checkbox][name='invoice[job_photos][]'][value=?]", photo.id.to_s
     assert_select "input[type=file][name='invoice[attachments][]']"
@@ -139,7 +139,7 @@ class Admin::InvoiceListTest < ActionDispatch::IntegrationTest
       job = Job.create!(client:, title: "Theirs", line_items_attributes: [ { name: "Work", quantity: 1, unit_price: "10" } ])
       visit = job.visits.new(scheduled_on: Date.current, timing: "anytime").tap { _1.schedule!(by: users(:two), notify_client: false) }
       visit.photos.attach(io: file_fixture("logo.png").open, filename: "theirs.png", content_type: "image/png")
-      invoice = Invoice.from_job!(job)
+      invoice = Invoice.from_job!(job.tap { _1.complete!(by: nil) })
       invoice.attachments.attach(io: file_fixture("logo.png").open, filename: "theirs.png", content_type: "image/png")
       [ invoice, visit.photos.attachments.first ]
     end
@@ -162,7 +162,7 @@ class Admin::InvoiceListTest < ActionDispatch::IntegrationTest
       [ job, visit.photos.attachments.to_a ]
     end
     invoice = as_business(@business) do
-      Invoice.from_job!(job).tap do |invoice|
+      Invoice.from_job!(job.tap { _1.complete!(by: nil) }).tap do |invoice|
         9.times { |n| invoice.attachments.attach(io: file_fixture("logo.png").open, filename: "f#{n}.png", content_type: "image/png") }
       end
     end

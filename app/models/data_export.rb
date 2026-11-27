@@ -125,7 +125,7 @@ class DataExport < ApplicationRecord
     end,
     Table.new("quote_lines", "Quote line items", "Each line on each quote.", scope: -> { QuoteLineItem.includes(:quote) }, cursor: %i[quote_id position id]) do
       instance_exec(&lines.("quote", "Quote number"))
-      column("In jobs", number: true, flag: :split_jobs) { _1.claimed_quantity.to_d.to_s("F") } # JOB-09
+      column("In jobs", number: true) { _1.claimed_quantity.to_d.to_s("F") } # JOB-09
     end,
     # QTE-05: each client answer with its evidence; the IP address is here, not on any page (QA #274).
     Table.new("quote_responses", "Quote responses", "Each approval, decline and change request, with who gave it and its evidence.",
@@ -169,14 +169,14 @@ class DataExport < ApplicationRecord
     Table.new("job_lines", "Job line items", "Each line on each job.", scope: -> { JobLineItem.includes(:job, claim: :quote_line_item) }, cursor: %i[job_id position id]) do
       instance_exec(&lines.("job", "Job number"))
       # JOB-09: the quote line it does (by position, as quote_lines lists it) and how much of it the job holds.
-      column("Quote line position", number: true, flag: :split_jobs) { _1.claim&.quote_line_item&.position }
-      column("Claimed from quote", number: true, flag: :split_jobs) { _1.claim&.quantity&.to_d&.to_s("F") }
-      column("Needs a price", flag: :split_jobs, &:price_pending)
+      column("Quote line position", number: true) { _1.claim&.quote_line_item&.position }
+      column("Claimed from quote", number: true) { _1.claim&.quantity&.to_d&.to_s("F") }
+      column("Needs a price", &:price_pending)
     end,
     # JOB-09: who holds each quote line's work: a job (with or without its own line) or, billed
     # straight from the quote, an invoice line; and whether the claim is live.
     Table.new("job_claims", "Quote work in jobs", "How much of each quote line each job holds, or an invoice billed straight from the quote.",
-              scope: -> { JobClaim.includes(:job, :job_line_item, quote_line_item: :quote, invoice_line_item: :invoice) }, cursor: %i[quote_line_item_id id], flag: :split_jobs) do
+              scope: -> { JobClaim.includes(:job, :job_line_item, quote_line_item: :quote, invoice_line_item: :invoice) }, cursor: %i[quote_line_item_id id]) do
       column("Quote number") { _1.quote_line_item.quote.number }
       column("Quote line position", number: true) { _1.quote_line_item.position }
       column("Item") { _1.quote_line_item.name }
@@ -188,7 +188,7 @@ class DataExport < ApplicationRecord
     end,
     # JOB-09: every entry of the work log: who did what on which line, from which visit.
     Table.new("work_log", "Work log", "What each person logged on each job line, from which visit; a correction is another row.",
-              scope: -> { WorkEntry.includes(:job, :job_line_item, :visit, :user, :recorded_by) }, flag: :split_jobs) do
+              scope: -> { WorkEntry.includes(:job, :job_line_item, :visit, :user, :recorded_by) }) do
       column("Job number") { _1.job.number }
       column("Item", &:item_name) # kept when the line is removed
       column("Visit ID") { _1.visit&.uid }
@@ -241,26 +241,26 @@ class DataExport < ApplicationRecord
       column("Internal notes", &:internal_notes)
       column("Location") { _1.location.name }
       # PAY-06: the quote it bills and every job (a quote's invoice can bill several).
-      column("From quote", flag: :split_jobs) { _1.quote&.number }
-      column("Jobs", flag: :split_jobs) { _1.jobs.map(&:number).join(", ") }
+      column("From quote") { _1.quote&.number }
+      column("Jobs") { _1.jobs.map(&:number).join(", ") }
       # PAY-08: progress or work, its share of the quote's fixed discount, and what it credits
       # before tax for progress billed earlier (and on which invoices).
-      column("Kind", flag: :split_jobs, &:kind)
-      column("Quote discount share", number: true, flag: :split_jobs) { money.(_1.quote_discount_share_cents, _1.currency) }
-      column("Credits before tax", number: true, flag: :split_jobs) { money.(_1.credits.sum(&:amount_cents), _1.currency) }
-      column("Credits from", flag: :split_jobs) { _1.credits.map { |credit| credit.source_invoice.number }.uniq.join(", ") }
+      column("Kind", &:kind)
+      column("Quote discount share", number: true) { money.(_1.quote_discount_share_cents, _1.currency) }
+      column("Credits before tax", number: true) { money.(_1.credits.sum(&:amount_cents), _1.currency) }
+      column("Credits from") { _1.credits.map { |credit| credit.source_invoice.number }.uniq.join(", ") }
     end,
     Table.new("invoice_lines", "Invoice line items", "Each line on each invoice.", scope: -> { InvoiceLineItem.includes(:invoice, job_line_item: :job, quote_line_item: :quote) },
               cursor: %i[invoice_id position id]) do
       instance_exec(&lines.("invoice", "Invoice number"))
       # PAY-06: what it bills (a job line, by its job and position, and the quote line, by its quote and
       # position, as job_lines and quote_lines list them) and whether it's that line's final bill.
-      column("Job number", flag: :split_jobs) { _1.job_line_item&.job&.number }
-      column("Job line position", number: true, flag: :split_jobs) { _1.job_line_item&.position }
-      column("Quote number", flag: :split_jobs) { _1.quote_line_item&.quote&.number }
-      column("Quote line position", number: true, flag: :split_jobs) { _1.quote_line_item&.position }
-      column("Final bill", flag: :split_jobs, &:final)
-      column("Discount share", number: true, flag: :split_jobs) { money.(_1.discount_share_cents, _1.invoice.currency) } # PAY-08
+      column("Job number") { _1.job_line_item&.job&.number }
+      column("Job line position", number: true) { _1.job_line_item&.position }
+      column("Quote number") { _1.quote_line_item&.quote&.number }
+      column("Quote line position", number: true) { _1.quote_line_item&.position }
+      column("Final bill", &:final)
+      column("Discount share", number: true) { money.(_1.discount_share_cents, _1.invoice.currency) } # PAY-08
     end,
     Table.new("payments", "Payments", "Each payment recorded against an invoice, by date received.", scope: -> { Payment.includes(:invoice, :recorded_by) }, cursor: %i[received_on id]) do
       column("Payment ID", &:uid)
@@ -283,8 +283,7 @@ class DataExport < ApplicationRecord
 
   def self.table(key) = TABLES.fetch(key.to_s)
 
-  # The tables the current business gets (a table behind a release flag only once it's on).
-  def self.tables = TABLES.values.select(&:available?)
+  def self.tables = TABLES.values
 
   # Logs a CSV download; returns [csv, filename].
   def self.download!(key, by:)

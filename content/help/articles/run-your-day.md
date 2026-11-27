@@ -3,7 +3,7 @@ title: Run your day from your phone with My day
 summary: "For the crew: today's visits and follow-ups, getting there, telling the client you're on your way, and logging the work with photos."
 category: schedule-jobs
 topics: []
-reviewed: 2026-11-24
+reviewed: 2026-11-27
 screenshots:
   - name: my-day
     path: /admin/my-day
@@ -12,6 +12,11 @@ screenshots:
     path: /admin/my-day/visits/:visit
     visit: Hedge touch-up
     as: technician
+  - name: my-visit-work
+    path: /admin/my-day/visits/:visit
+    visit: Tree removal (6 of 10)
+    as: technician
+    region: "#visit-work"
 ---
 
 **My day** is the page your crew opens on their phone. It shows only their own visits and
@@ -37,10 +42,28 @@ Open a visit to see the client, the address, **Getting in** (gate codes and acce
 ## Do the work
 
 1. Press **Start visit** when you arrive.
-2. Add **Photos**: before and after, damage, anything the office should see.
-3. Add a note under **Notes**, like "Side gate was locked; came back at 2.", and press
+2. Under **The work**, log what you did (see below).
+3. Add **Photos**: before and after, damage, anything the office should see.
+4. Add a note under **Notes**, like "Side gate was locked; came back at 2.", and press
    **Add note**.
-4. Press **Complete visit**.
+5. Press **Complete visit**.
+
+## Log the work you did
+
+**The work** lists what the job covers. Each line shows how much was booked, and what your
+teammates have already logged.
+
+![The work: type how many you did on each line, then press Save what I did](my-visit-work)
+
+1. Next to each line, type **How many** you did on this visit, like 4 of 10 trees.
+2. Press **Save what I did**. You can come back and change it.
+
+Your teammates log their own. The office sees everyone's totals, and uses them when the job is
+completed.
+
+Did something the job didn't list? Open **Add something done on site**. Pick a **Service**, or
+type **What was done**, like "Removed a wasp nest". Set **How many**, and press **Add it**. The
+office adds the price before it's invoiced.
 
 Made a mistake? **Reopen it** puts the visit back so you can change it.
 

@@ -39,8 +39,8 @@ class JobTest < ActiveSupport::TestCase
       assert_equal [ "yard.png" ], job.attachments.map { _1.filename.to_s }
       assert_equal quote.total_cents, job.total_cents, "same items, discount and tax as the quote"
       assert_equal quote.tax_rates, job.tax_rates
-      assert_equal job, quote.reload.first_job
-      assert_equal job, Job.from_quote!(quote), "made once"
+      assert_equal job, quote.reload.jobs.first
+      assert_raises(Job::NotOpen) { Job.from_quote!(quote) }
       assert_equal 1, Job.count
     end
   end
@@ -69,7 +69,7 @@ class JobTest < ActiveSupport::TestCase
 
   test "approving makes the job when the business has that on, and never undoes the approval" do
     quote = approved_quote # made with the setting off
-    assert_nil as_business(@business) { quote.first_job }
+    assert_nil as_business(@business) { quote.jobs.first }
 
     @business.update!(auto_create_jobs: true)
     second = as_business(@business) do
@@ -80,7 +80,7 @@ class JobTest < ActiveSupport::TestCase
       q
     end
     as_business(@business) { second.record_response!(:approve, signer_name: "Maria Lopez", terms_accepted: true) } # as the client does, through their link
-    job = as_business(@business) { second.reload.first_job }
+    job = as_business(@business) { second.reload.jobs.first }
     assert_equal "Hedges", job.title, "the first line names a quote without a title"
     assert_nil job.created_by
 
@@ -88,7 +88,7 @@ class JobTest < ActiveSupport::TestCase
     as_business(@business) { @maria.archive! } # a job can't be made for an archived client
     as_business(@business) { third.record_response!(:approve, signer_name: "Maria Lopez", terms_accepted: true) }
     assert_equal "approved", as_business(@business) { third.reload.status }
-    assert_nil as_business(@business) { third.first_job }
+    assert_nil as_business(@business) { third.jobs.first }
   end
 
   test "complete, cancel with a reason, and reopen" do

@@ -1,5 +1,5 @@
 # PAY-08: progress billing, credits and discount shares on an invoice (BillingLedger does the
-# arithmetic). Behind split_jobs, with PAY-06.
+# arithmetic). With PAY-06.
 #
 # - kind: "work" bills work (final bills); "progress" bills part of it before it's done, never more
 #   than what's left of each line: every line when it's made and when it's first sent, and a line
@@ -199,7 +199,7 @@ module BillingCredits
   # Nothing to pay once sent: Paid at once (a credit can bring a total to zero).
   def nothing_due? = billing_credits? && total_cents.zero?
 
-  def billing_credits? = (quote_id || job_id).present? && QuoteWork.split?(business)
+  def billing_credits? = (quote_id || job_id).present?
 
   # The invoices that went out whose credits use this one's progress, which a void would undo.
   def crediting_invoices = Invoice.where(id: InvoiceCredit.counted.where(source_invoice_id: id).where.not(invoice_id: id).select(:invoice_id)).order(:id)

@@ -5,7 +5,7 @@
 <%= card title: "Jobs (#{jobs.size})", id: "jobs", flush: true do %>
   <ul class="list" aria-label="Jobs from this quote">
     <% jobs.each do |job| %>
-      <li><%= link_to job.number, admin_job_path(job), class: "font-medium text-ink hover:underline" %>
+      <li><%= link_to job.number, admin_job_path(job), class: "font-medium text-ink underline-offset-2 hover:underline" %>
         <span class="min-w-0 flex-1 truncate text-sm2 text-subtle"><%= job.title %></span><%= job_status_badge(job) %></li>
     <% end %>
   </ul>
@@ -17,7 +17,7 @@
           <tr>
             <td><span class="font-medium text-ink"><%= line.name.presence || "Item" %></span><span class="sub"><%= line.quantity_label %></span></td>
             <td class="text-sm2"><%= safe_join(Array(claims[line.id]).sort_by(&:job_id).map { |claim| job = by_id[claim.job_id]
-                                     safe_join([ link_to(job.number, admin_job_path(job), class: "text-ink hover:underline"), " #{QuoteWork.number(claim.quantity)} (#{job.status_label.downcase})" ]) }, ", ").presence || "None" %></td>
+                                     safe_join([ link_to(job.number, admin_job_path(job), class: "text-ink underline"), " #{QuoteWork.number(claim.quantity)} (#{job.status_label.downcase})" ]) }, ", ").presence || "None" %></td>
             <td class="num"><%= QuoteWork.number(line.to_do_quantity) %></td>
           </tr>
         <% end %>

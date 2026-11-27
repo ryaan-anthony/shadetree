@@ -5,7 +5,6 @@ require "application_system_test_case"
 # in the dialog and in the builder (which saves it as if typed).
 class QuoteDiscountSystemTest < ApplicationSystemTestCase
   setup do
-    enable_feature(:split_jobs)
     @business = businesses(:one)
     @owner = users(:one)
     @deck, @steps = Tenancy.with_business(@business) do

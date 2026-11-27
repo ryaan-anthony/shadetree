@@ -3,7 +3,7 @@ title: Choose the emails your clients get
 summary: Read every email Shadetree sends your clients, choose the visit emails, add your own wording, and let automations follow up for you.
 category: settings-team
 topics: []
-reviewed: 2026-11-24
+reviewed: 2026-11-27
 screenshots:
   - name: emails-to-clients
     path: /admin/messages

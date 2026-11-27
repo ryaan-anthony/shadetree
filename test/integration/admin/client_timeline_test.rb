@@ -29,6 +29,7 @@ class Admin::ClientTimelineTest < ActionDispatch::IntegrationTest
       job = Job.find_by!(quote:)
       visit = job.visits.new(scheduled_on: @business.today, timing: "anytime").tap { _1.schedule!(by: @owner, notify_client: false) }
       visit.complete!(by: @owner)
+      job.complete!(by: @owner)
       invoice = Invoice.from_job!(job, by: @owner)
       invoice.mark_sent!(by: @owner, channel: "link")
       invoice.record_payment!(by: @owner, amount: "50", received_on: @business.today, payment_method: "check", reference: "1042")

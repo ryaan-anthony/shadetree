@@ -32,7 +32,8 @@ class Admin::MoneyTrustTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "an invoiced quote links to its invoice; another invoice is only in the menu, with a confirm" do
+  test "an invoiced quote links to its invoice, and offers no second one to start" do
+    as_business(@business) { @business.update!(auto_create_jobs: false) }
     quote = approve(quote_for("Grace Chen"))
     get admin_quote_path(quote)
     assert_select "form[action=?] button", admin_quote_invoices_path(quote), text: /Create invoice/
@@ -40,22 +41,18 @@ class Admin::MoneyTrustTest < ActionDispatch::IntegrationTest
     invoice = as_business(@business) { Invoice.from_quote!(quote, by: @owner) }
     get admin_quote_path(quote)
     assert_select "a#quote-invoice-link[href=?]", admin_invoice_path(invoice), text: /Invoice #{invoice.number}/
-    assert_select "form[action=?]", admin_quote_invoices_path(quote), 1, "only the menu's"
-    assert_select ".menu form[action=?][data-turbo-confirm*=?] button", admin_quote_invoices_path(quote), invoice.number, text: /Create another invoice/
-
-    as_business(@business) { Invoice.from_quote!(quote, by: @owner) } # progress billing
-    get admin_quote_path(quote)
-    assert_select "a#quote-invoice-link[href='#invoices']", text: /Invoices \(2\)/
+    assert_select "form[action=?]", admin_quote_invoices_path(quote), 0, "everything is billed"
+    assert_raises(WorkBilling::Refused) { as_business(@business) { Invoice.from_quote!(quote, by: @owner) } }
   end
 
-  test "a job with an invoice offers only 'Create another invoice', with a confirm" do
+  test "a completed job offers Create invoice until its work is billed, then no second invoice" do
     quote = approve(quote_for("Grace Chen"))
-    job = as_business(@business) { Job.from_quote!(quote, by: @owner) }
+    job = as_business(@business) { Job.find_by!(quote:).tap { _1.complete!(by: @owner) } }
     get admin_job_path(job)
     assert_select "#invoices form[action=?]:not([data-turbo-confirm]) button", admin_job_invoices_path(job), text: /Create invoice/
     as_business(@business) { Invoice.from_job!(job, by: @owner) }
     get admin_job_path(job)
-    assert_select "#invoices form[action=?][data-turbo-confirm] button", admin_job_invoices_path(job), text: /Create another invoice/
+    assert_select "#invoices form[action=?]", admin_job_invoices_path(job), 0
   end
 
   test "a client's recent emails are about their own records, not everyone at the same address" do
@@ -96,6 +93,7 @@ class Admin::MoneyTrustTest < ActionDispatch::IntegrationTest
   end
 
   test "a $0.00 invoice waits for confirmation too" do
+    as_business(@business) { @business.update!(auto_create_jobs: false) }
     quote = approve(quote_for("Grace", price: "0"))
     invoice = as_business(@business) { Invoice.from_quote!(quote, by: @owner) }
     get new_admin_invoice_send_path(invoice)

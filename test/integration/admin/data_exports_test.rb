@@ -100,11 +100,7 @@ class Admin::DataExportsTest < ActionDispatch::IntegrationTest
     DataExport.tables.map(&:key).each { assert_no_match(/Zed|Theirs/, download(_1).to_s, _1) }
   end
 
-  test "JOB-09: with split jobs on, the quote lines' claims, the job lines' quote lines and the work log, in new columns at the end" do
-    get download_admin_data_exports_path("work_log")
-    assert_response :not_found, "behind the flag"
-    assert_not_includes download("quote_lines").headers, "In jobs"
-    enable_feature(:split_jobs)
+  test "JOB-09: the quote lines' claims, the job lines' quote lines and the work log, in new columns at the end" do
     job = as_business(@business) do
       client = Client.create!(display_name: "Pat Lee", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ])
       quote = Quote.start(client:)
@@ -125,9 +121,7 @@ class Admin::DataExportsTest < ActionDispatch::IntegrationTest
     assert_equal [ [ job.number, "Tree removal", @owner.full_name, "4.0", "logged" ] ], log.map { _1.fields.values_at(0, 1, 3, 4, 5) }
   end
 
-  test "PAY-06: with split jobs on, invoice lines say what they bill and whether final; invoices their quote and every job" do
-    assert_not_includes download("invoice_lines").headers, "Final bill"
-    enable_feature(:split_jobs)
+  test "PAY-06: invoice lines say what they bill and whether final; invoices their quote and every job" do
     invoice = as_business(@business) do
       @business.update!(auto_create_jobs: false)
       client = Client.create!(display_name: "Pat Lee", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ])

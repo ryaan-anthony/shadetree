@@ -80,14 +80,15 @@ work back. Billing: PAY-06, PAY-08; the client's view: QTE-09; changes: QTE-10; 
 - More done than the quote has: refused at completion, interim until QTE-10 (owner, 2026-11-23).
 - Removing a job line keeps its work log (owner, 2026-11-23). The quote page's Create invoice is
   the Primary only while completed work is unbilled (owner, 2026-11-23).
+- The `split_jobs` flag and the old one-job-per-quote path are deleted: the picker, work logging
+  and confirmed completion are on for everyone, with PAY-08's help articles (owner, 2026-11-27).
 
 ## Implementation notes
 
-- Behind `split_jobs` (PLT-11; on after PAY-06 and PAY-08). Off: one job per quote, its lines in
-  full, claiming what's free. `job_claims` (job, or invoice line for direct billing): live while the
+- `job_claims` (job, or invoice line for direct billing): live while the
   job isn't cancelled or the invoice void. Check: `claimed_quantity >= 0 AND claimed_quantity <=
   quantity`, kept by `QuoteWork`. Lock order: quote, jobs by id, lines by id, then visits.
-- `jobs.picker_token` (a cancelled job's token asks again); `Quote#first_job` replaces `has_one :job`.
+- `jobs.picker_token` (a cancelled job's token asks again); `Quote#jobs` replaces `has_one :job`.
   Completion keeps `booked_quantity` and the claim's `extra_quantity` for a reopen.
 - `work_entries` is append-only and keeps `item_name` (the line's key nullifies). Migration: jobs'
   and directly billed invoices' claims, matched and clamped; down refuses two jobs. Export:

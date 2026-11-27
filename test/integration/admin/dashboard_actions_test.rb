@@ -35,11 +35,11 @@ class Admin::DashboardActionsTest < ActionDispatch::IntegrationTest
       quote(@sam, status: "draft")
       @unscheduled = Job.create!(client: @maria, title: "Gutters")
       @done = Job.create!(client: @sam, title: "Aeration").tap { _1.complete!(by: @owner) }
-      billed = Job.create!(client: @sam, title: "Billed").tap { _1.complete!(by: @owner) }
+      billed = Job.create!(client: @sam, title: "Billed", line_items_attributes: [ { name: "Billed", quantity: 1, unit_price: "50" } ]).tap { _1.complete!(by: @owner) }
       Invoice.from_job!(billed).update_columns(status: "sent", sent_at: 1.day.ago)
-      voided = Job.create!(client: @sam, title: "Voided bill").tap { _1.complete!(by: @owner) }
+      voided = Job.create!(client: @sam, title: "Voided bill", line_items_attributes: [ { name: "Voided", quantity: 1, unit_price: "50" } ]).tap { _1.complete!(by: @owner) }
       Invoice.from_job!(voided).update_columns(status: "void", sent_at: 1.day.ago)
-      @drafted = Job.create!(client: @sam, title: "Draft only").tap { _1.complete!(by: @owner) }
+      @drafted = Job.create!(client: @sam, title: "Draft only", line_items_attributes: [ { name: "Draft", quantity: 1, unit_price: "50" } ]).tap { _1.complete!(by: @owner) }
       Invoice.from_job!(@drafted)
       @late = Invoice.start(client: @maria).tap { _1.update_columns(status: "sent", sent_at: 1.month.ago, issued_on: @today - 40, due_on: @today - 10, total_cents: 5_000) }
       Invoice.start(client: @sam).tap { _1.update_columns(status: "sent", sent_at: 1.day.ago, issued_on: @today, due_on: @today + 10, total_cents: 5_000) }
@@ -158,15 +158,12 @@ class Admin::DashboardActionsTest < ActionDispatch::IntegrationTest
     assert_operator count.call, :<=, few + 6, "more records mustn't mean more queries"
   end
 
-  test "JOB-09: with split jobs, approved work no job has taken shows as Work not booked" do
+  test "JOB-09: approved work no job has taken shows as Work not booked" do
     as_business(@business) do
       @maria = client("Maria Lopez")
       @open = quote(@maria, status: "approved")
       @taken = quote(@maria, status: "approved").tap { |q| Job.from_quote!(q) }
     end
-    get admin_root_path
-    assert_select "#group-work_not_booked", 0, "behind the flag"
-    enable_feature(:split_jobs)
     get admin_root_path
     assert_select "#group-work_not_booked h2", "Work not booked (1)"
     assert_select "#group-work_not_booked li", /#{@open.number}.*Maria Lopez.*1 service to book/m

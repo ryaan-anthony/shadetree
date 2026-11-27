@@ -73,7 +73,8 @@ class Admin::ClientNotesTest < ActionDispatch::IntegrationTest
     as_business(@business) do
       job = Job.create!(client: @maria, title: "Spring cleanup", line_items_attributes: [ { name: "Mowing", quantity: 1, unit_price: "200" } ])
       job.visits.new(scheduled_on: @business.today + 3, timing: "anytime").tap { _1.schedule!(by: @owner, notify_client: false) }
-      invoice = Invoice.from_job!(job)
+      done = Job.create!(client: @maria, title: "Mowing done", line_items_attributes: [ { name: "Mowing", quantity: 1, unit_price: "200" } ]).tap { _1.complete!(by: @owner) }
+      invoice = Invoice.from_job!(done)
       invoice.update!(tax_rates: [])
       invoice.mark_sent!(by: @owner, channel: "link")
       invoice.record_payment!(by: @owner, amount: "75", received_on: @business.today, payment_method: "cash")

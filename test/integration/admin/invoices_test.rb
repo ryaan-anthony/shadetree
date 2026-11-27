@@ -40,6 +40,7 @@ class Admin::InvoicesTest < ActionDispatch::IntegrationTest
   end
 
   test "from a job: one tap makes a draft with its items, opened in the builder; the job lists it" do
+    as_business(@business) { @job.complete!(by: users(:one)) }
     post admin_job_invoices_path(@job)
     invoice = as_business(@business) { Invoice.last }
     assert_redirected_to edit_admin_invoice_path(invoice)
@@ -128,6 +129,7 @@ class Admin::InvoicesTest < ActionDispatch::IntegrationTest
   end
 
   test "a draft that was never sent can be deleted; a sent one opens its page, not the builder" do
+    as_business(@business) { @job.complete!(by: users(:one)) }
     invoice = as_business(@business) { Invoice.from_job!(@job, by: users(:one)) }
     delete admin_invoice_path(invoice)
     assert_redirected_to admin_job_path(@job)

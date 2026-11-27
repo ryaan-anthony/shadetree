@@ -3,13 +3,13 @@ title: Book visits on the schedule
 summary: See your crew's week, book a visit for a job, choose who's going and when, and tell the client.
 category: schedule-jobs
 topics: [schedule]
-reviewed: 2026-11-24
+reviewed: 2026-11-27
 screenshots:
   - name: schedule-week
     path: /admin/schedule
   - name: schedule-a-visit
     path: /admin/jobs/:job/visits/new
-    job: Gutter cleaning
+    job: Tree removal (6 of 10)
 ---
 
 **Schedule** shows every visit for the week or the day, colored by who's going. Your crew sees

@@ -90,7 +90,7 @@ class Admin::JobsController < Admin::BaseController
   # JOB-09: what was done on each line, from the Complete dialog ({ job line id => quantity }).
   def done_param
     rows = params[:done]
-    return unless rows.respond_to?(:key?) && QuoteWork.split?(current_business)
+    return unless rows.respond_to?(:key?)
 
     @job.line_items.each_with_object({}) { |line, done| (value = rows[line.id.to_s].to_s.strip).match?(/\A-?\d*\.?\d+\z/) && done[line.id] = value }
   end

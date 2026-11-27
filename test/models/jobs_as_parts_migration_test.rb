@@ -29,6 +29,17 @@ class JobsAsPartsMigrationTest < ActiveSupport::TestCase
     end
   end
 
+  # A second invoice of the same quote's lines, as the app made them before JOB-09 (it refuses them now).
+  def legacy_copy(quote)
+    as_business(@business) do
+      invoice = Invoice.new(client: quote.client, property: quote.property, quote:, title: quote.title, currency: quote.currency)
+      invoice.copy_pricing_from(quote, lines: [])
+      invoice.sync_line_items(BuiltDocument.rows_from(quote.line_items.to_a))
+      invoice.save!
+      invoice
+    end
+  end
+
   def migrate = ActiveRecord::Migration.suppress_messages { JobsAsPartsOfAQuote.new.tap { _1.claim_existing_jobs && _1.claim_direct_billing } }
 
   test "existing jobs claim their quote's lines, matched and clamped, with no total changed" do
@@ -81,8 +92,8 @@ class JobsAsPartsMigrationTest < ActiveSupport::TestCase
   test "a quote billed directly, with no job, claims what its invoices bill, so it isn't to do again" do
     quote = approved_quote([ [ "Trees", 10, 100 ], [ "Gutters", 1, 200 ] ])
     first = as_business(@business) { Invoice.from_quote!(quote) }
-    second = as_business(@business) { Invoice.from_quote!(quote) } # progress billing: nothing left to claim
-    voided = as_business(@business) { Invoice.from_quote!(quote).tap { _1.update_columns(status: "void") } }
+    second = legacy_copy(quote) # made before JOB-09, when a repeat was progress: nothing left to claim
+    voided = legacy_copy(quote).tap { |invoice| as_business(@business) { invoice.update_columns(status: "void") } }
     forget_claims
     migrate
     as_business(@business) do

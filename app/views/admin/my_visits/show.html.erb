@@ -57,7 +57,7 @@
     <% end %>
   <% end %>
 
-  <% if QuoteWork.split?(current_business) && job.open? %>
+  <% if job.open? %>
     <%= render "admin/my_visits/work", visit:, job: %>
   <% else %>
     <% lines = job.line_items.to_a %>

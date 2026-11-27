@@ -143,7 +143,11 @@ Tenancy.with_business(business) do
     quote.mark_sent!(by: owner, channel: "link")
     link = quote.client_link!
     attributes = attributes.merge(signer_name: client.display_name) if action == :approve
+    # Hedge trimming gets no job: it's billed straight from the quote below (PAY-06).
+    auto = business.auto_create_jobs
+    business.update_columns(auto_create_jobs: false) if title == "Hedge trimming"
     quote.record_response!(action, link:, version: quote.lock_version, **attributes)
+    business.update_columns(auto_create_jobs: auto)
   end
 
   # QTE-06: the changes request answered with a revision, sent again.
@@ -165,20 +169,6 @@ Tenancy.with_business(business) do
     gutters.line_items.build(name: "Gutter cleaning", description: "Front and back, with downspouts flushed", quantity: 1, unit: "visit", unit_price: "165")
     gutters.save!
     Job.create!(client: first_client, property: first_client.primary_property, created_by: owner, title: "Spring aeration").complete!(by: owner)
-  end
-
-  # JOB-02: the job from the approved quote booked over two days with the technician, one in
-  # an arrival window and one at a start time.
-  from_quote = Job.where.not(quote_id: nil).first
-  if from_quote && from_quote.visits.none?
-    tech = User.find_by(email: "tech@example.com")
-    monday = business.today.next_occurring(:monday)
-    from_quote.visits.new(scheduled_on: monday, timing: "window", start_time: "08:00", window_end_time: "10:00", duration_minutes: 180,
-                          assignee_ids: [ tech&.id ].compact, instructions: "Start with the front hedges.", created_by: owner,
-                          client_note: "Please leave the side gate unlocked.").schedule!(by: owner, notify_client: false) # JOB-05
-    from_quote.visits.new(scheduled_on: monday + 1, timing: "exact", start_time: "13:00", duration_minutes: 120,
-                          assignee_ids: [ tech&.id, owner.id ].compact, created_by: owner).schedule!(by: owner, notify_client: false)
-    from_quote.visits.first.notes.create!(user: tech, body: "Side gate was locked; the client let us in at 9.") if tech # JOB-04
   end
 
   # JOB-03: a full week on the calendar: weekly mowing for a few clients, spread over the crew,
@@ -216,10 +206,13 @@ Tenancy.with_business(business) do
                             reference: "1042", note: "Half now, the rest when the job's done.")
   end
   gutters = Job.find_by(title: "Gutter cleaning")
-  Invoice.from_job!(gutters, by: owner) if gutters && Invoice.where(job: gutters).none?
+  if gutters&.open? # done, and a draft invoice for it
+    gutters.complete!(by: owner)
+    Invoice.from_job!(gutters, by: owner)
+  end
 end
 
-# PLT-14: an approved quote whose job isn't billed yet, so its page's Primary is Create invoice.
+# PLT-14: an approved quote whose job isn't billed yet.
 Tenancy.with_business(business) do
   owner = User.find_by!(email: "owner@example.com")
   client = Client.order(:id).second
@@ -234,10 +227,26 @@ Tenancy.with_business(business) do
   end
 end
 
-# JOB-09: a quote's work split among jobs (with split_jobs on: bin/rails flags:enable[split_jobs]):
-# 6 of 10 trees this week, with the technician's and the owner's logged work and a stump ground
-# on site that still needs a price; the rest of the trees and the gutters still to do. Made
-# directly with picks, so it works with the flag off too.
+Tenancy.with_business(business) do
+  owner = User.find_by!(email: "owner@example.com")
+  # JOB-02: the job from the approved Tree removal quote booked over two days with the technician, one in
+  # an arrival window and one at a start time.
+  from_quote = Job.find_by(title: "Tree removal")
+  if from_quote && from_quote.visits.none?
+    tech = User.find_by(email: "tech@example.com")
+    monday = business.today.next_occurring(:monday)
+    from_quote.visits.new(scheduled_on: monday, timing: "window", start_time: "08:00", window_end_time: "10:00", duration_minutes: 180,
+                          assignee_ids: [ tech&.id ].compact, instructions: "Start with the tree by the fence.", created_by: owner,
+                          client_note: "Please leave the side gate unlocked.").schedule!(by: owner, notify_client: false) # JOB-05
+    from_quote.visits.new(scheduled_on: monday + 1, timing: "exact", start_time: "13:00", duration_minutes: 120,
+                          assignee_ids: [ tech&.id, owner.id ].compact, created_by: owner).schedule!(by: owner, notify_client: false)
+    from_quote.visits.first.notes.create!(user: tech, body: "Side gate was locked; the client let us in at 9.") if tech # JOB-04
+  end
+end
+
+# JOB-09: a quote's work split among jobs: 6 of 10 trees this week, with the technician's and the
+# owner's logged work and a stump ground on site that still needs a price; the rest of the trees
+# and the gutters still to do.
 Tenancy.with_business(business) do
   owner = User.find_by!(email: "owner@example.com")
   tech = User.find_by(email: "tech@example.com")
@@ -255,10 +264,7 @@ Tenancy.with_business(business) do
     quote.record_response!(:approve, by: owner, signer_name: client.display_name, message: "Agreed on site")
     business.update_columns(auto_create_jobs: auto)
     trees = quote.line_items.find_by!(key: "seed-0")
-    split = Feature.overrides.key?("split_jobs")
-    Feature.overrides["split_jobs"] = true unless split
     job = Job.from_quote!(quote.reload, by: owner, picks: { trees.id => "6" })
-    Feature.overrides.delete("split_jobs") unless split
     visit = job.visits.new(scheduled_on: business.today, timing: "exact", start_time: "09:00", duration_minutes: 240,
                            assignee_ids: [ tech&.id, owner.id ].compact, created_by: owner).tap { _1.schedule!(by: owner, notify_client: false) }
     line = job.line_items.first
@@ -268,7 +274,7 @@ Tenancy.with_business(business) do
   end
 end
 
-# PAY-06: billing completed work (with split_jobs on): two jobs from one quote, both completed.
+# PAY-06: billing completed work: two jobs from one quote, both completed.
 # The hedges' job is billed on its own sent invoice; the fence's is ready to invoice, so the quote's
 # Create invoice is its Primary; 3 hedges are still to do.
 Tenancy.with_business(business) do
@@ -286,11 +292,8 @@ Tenancy.with_business(business) do
     quote.record_response!(:approve, by: owner, signer_name: client.display_name, message: "Agreed by phone")
     business.update_columns(auto_create_jobs: auto)
     hedges, fence = quote.line_items.to_a
-    split = Feature.overrides.key?("split_jobs")
-    Feature.overrides["split_jobs"] = true unless split
     jobs = [ { hedges.id => "5" }, { fence.id => "1" } ].map { Job.from_quote!(quote.reload, by: owner, picks: _1).tap { |job| job.complete!(by: owner) } }
     Invoice.from_job!(jobs.first, by: owner).mark_sent!(by: owner, channel: "link")
-    Feature.overrides.delete("split_jobs") unless split
   end
 end
 
@@ -634,7 +637,7 @@ end
 # timeline, and her address blocked). The operator console's home counts them, plus some noise.
 Tenancy.with_business(business) do
   owner = User.find_by!(email: "owner@example.com")
-  invoice = Invoice.joins(:job).find_by(jobs: { title: "Hedge trimming" }, status: "partially_paid")
+  invoice = Invoice.joins(:quote).find_by(quotes: { title: "Hedge trimming" }, status: "partially_paid")
   paid = Invoice.joins(:job).find_by(jobs: { title: "Window washing" })
   if invoice && paid && !EmailEvent.exists?
     reports = [ [ invoice, "bounce", "office@example.com" ], [ paid, "complaint", nil ] ].flat_map do |document, type, cc|
@@ -710,8 +713,6 @@ Tenancy.with_business(business) do
   owner = User.find_by!(email: "owner@example.com")
   client = Client.order(:id).fourth || Client.order(:id).first
   if client && !Quote.exists?(title: "Roof replacement")
-    split = Feature.overrides.key?("split_jobs")
-    Feature.overrides["split_jobs"] = true unless split
     quote = Quote.start(client:, created_by: owner)
     quote.title = "Roof replacement"
     quote.set_discount("amount", "100")
@@ -731,6 +732,5 @@ Tenancy.with_business(business) do
     early.mark_sent!(by: owner, channel: "link")
     job.reload.complete!(by: owner)
     Invoice.from_job!(job.reload, by: owner, discount: "100")
-    Feature.overrides.delete("split_jobs") unless split
   end
 end

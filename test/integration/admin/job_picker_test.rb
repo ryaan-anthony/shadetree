@@ -1,6 +1,6 @@
 require "test_helper"
 
-# JOB-09 (split_jobs flag): Create job's picker, a resubmitted picker, refusals, the quote page's
+# JOB-09: Create job's picker, a resubmitted picker, refusals, the quote page's
 # Jobs card and Primary, the job page's "From Q-0004: 1 of 2 services", adding to-do work,
 # confirming what was done, the job form's limit, reopening, roles and tenancy.
 class Admin::JobPickerTest < ActionDispatch::IntegrationTest
@@ -17,7 +17,6 @@ class Admin::JobPickerTest < ActionDispatch::IntegrationTest
       quote.update_columns(status: "approved")
       quote
     end
-    enable_feature(:split_jobs)
     sign_in users(:one)
     post switch_admin_business_path, params: { business: @business.uid }
   end
@@ -131,14 +130,6 @@ class Admin::JobPickerTest < ActionDispatch::IntegrationTest
     pick(trees: 3, token: "again")
     assert_redirected_to new_admin_quote_job_path(@quote)
     assert_match "was cancelled. Choose the work again.", flash[:alert]
-  end
-
-  test "flag off: the quote page makes its one job straight away, as before" do
-    disable_feature(:split_jobs)
-    get admin_quote_path(@quote)
-    assert_select "form[action=?] button", admin_quote_job_path(@quote), /Create job/
-    get new_admin_quote_job_path(@quote)
-    assert_redirected_to admin_quote_path(@quote)
   end
 
   test "only office access makes jobs, and another business's quotes aren't found" do

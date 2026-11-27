@@ -1,6 +1,6 @@
 require "test_helper"
 
-# JOB-09 (split_jobs flag): everyone on a job's visits logs their own work from My day, lines
+# JOB-09: everyone on a job's visits logs their own work from My day, lines
 # added on site (a catalog service at its price, or an unpriced custom line the office prices
 # before invoicing), the job page's "Marcus 4, Riley 2" and log, the office's corrections, and
 # done means done.
@@ -17,7 +17,6 @@ class Admin::WorkLoggingTest < ActionDispatch::IntegrationTest
       @visit = @job.visits.new(scheduled_on: @business.today, timing: "exact", start_time: "09:00", duration_minutes: 60, assignee_ids: [ @marcus.id, @riley.id ]).tap { _1.schedule!(by: @owner) }
       @mowing = CatalogItem.create!(name: "Mowing", unit: "visit", unit_price: "45")
     end
-    enable_feature(:split_jobs)
   end
 
   def as(user)
@@ -117,7 +116,7 @@ class Admin::WorkLoggingTest < ActionDispatch::IntegrationTest
     assert_equal 0, as_business(@business) { WorkEntry.count }
   end
 
-  test "only people on the visit log its work; another business's visits aren't found; flag off, there's nothing to log" do
+  test "only people on the visit log its work; another business's visits aren't found" do
     other = member_with_role(:technician)
     as(other) do
       patch work_admin_my_visit_path(@visit), params: { done: { @trees.id => "4" } }
@@ -129,11 +128,6 @@ class Admin::WorkLoggingTest < ActionDispatch::IntegrationTest
         Job.create!(client:, title: "Theirs").visits.new(scheduled_on: @business.today, assignee_ids: []).tap { _1.schedule!(by: nil) }
       end
       assert_not_found_across_businesses { patch work_admin_my_visit_path(theirs), params: { done: {} } }
-      disable_feature(:split_jobs)
-      get admin_my_visit_path(@visit)
-      assert_select "#visit-work-lines", 0
-      patch work_admin_my_visit_path(@visit), params: { done: { @trees.id => "4" } }
-      assert_response :not_found
     end
     assert_permission_matrix(owner: true, admin: true, technician: false) { patch work_log_admin_job_path(@job), params: { log: {} } }
   end

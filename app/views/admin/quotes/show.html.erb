@@ -1,17 +1,14 @@
 <%# QTE-06: a sent quote's page for staff. Drafts open in the builder instead. %>
 <% quote = @quote %>
 <% totals = quote.totals %>
-<% split = QuoteWork.split?(current_business) %>
-<% ledger = (BillingLedger.new(quote:) if split && quote.approved?) %><%# PAY-08: read once for the page %>
-<% jobs = split ? quote.jobs.to_a : Array(quote.first_job) %>
+<% ledger = (BillingLedger.new(quote:) if quote.approved?) %><%# PAY-08: read once for the page %>
+<% jobs = quote.jobs.to_a %>
 <% content_for :title, "#{quote.number}#{" #{quote.title}" if quote.title}" %>
 <%= page_header (quote.title || "Quote #{quote.number}"), lede: safe_join([ "#{quote.number} for ", link_to(quote.client.display_name, admin_client_path(quote.client), class: "font-medium text-ink hover:underline"), (" (#{quote.client.company_name})" if quote.client.company_name.present? && quote.client.company_name != quote.client.display_name), (", #{quote.property.one_line}" if quote.property), location_badge(quote) ].compact) do %>
-  <%# PLT-14: the Primary is the next step: Create job, or Reopen job when its job was cancelled (interim
-      until split jobs; owner, 2026-11-22), then Create invoice; links to them are Secondary.
-      JOB-09 (split_jobs): Create job opens the picker while work is to do; the jobs are linked,
-      several through the Jobs card. PAY-06's order below. %>
+  <%# PLT-14: the Primary is the next step, then Create invoice; links to them are Secondary.
+      JOB-09: Create job opens the picker while work is to do; the jobs are linked, several
+      through the Jobs card. PAY-06's order below. %>
   <% job = jobs.first %>
-  <% live_job = jobs.find { _1.status != "cancelled" } %>
   <% if jobs.many? %>
     <%= link_to "#jobs", class: button_classes(:secondary), id: "quote-jobs-link" do %><%= icon "job" %> Jobs (<%= jobs.size %>)<% end %>
   <% elsif job %>
@@ -19,46 +16,29 @@
   <% end %>
   <%# #289: once it's billed, the invoice is the next step, not a second one (that's in the menu). %>
   <% billed = quote.approved? ? Invoice.where(quote_id: quote.id).or(Invoice.where(id: InvoiceJob.where(job_id: jobs.map(&:id)).select(:invoice_id))).where.not(status: "void").order(:created_at, :id).to_a : [] %>
-  <% if split %>
-    <%# PAY-06: Create invoice is the Primary while completed work is unbilled, else Create job while
-        work is to do (Secondary when both), else neither. With no live job the quote is billed
-        directly: a Secondary Create invoice beside Create job (owner, 2026-11-23). The interim
-        Reopen job is gone. %>
-    <% live = jobs.reject { _1.status == "cancelled" } %>
-    <% to_do = quote.approved? && quote.line_items.any? { _1.to_do_quantity.positive? } %>
-    <% unbilled = quote.approved? && WorkBilling.billable_job_ids(live).any? %><%# two queries for all the jobs %>
-    <%# Hidden once every to-do line already has a direct bill that isn't void (it can't be billed again). %>
-    <% direct = to_do && live.empty? && !quote.recurring? && WorkBilling.directly_billable_lines(quote).any? %>
-    <% if to_do %>
-      <%= link_to new_admin_quote_job_path(quote), class: button_classes(unbilled ? :secondary : :primary) do %><%= icon "job" %> Create job<% end %>
-    <% end %>
-    <% if billed.many? %>
-      <%= link_to "#invoices", class: button_classes(:secondary), id: "quote-invoice-link" do %><%= icon "invoice" %> Invoices (<%= billed.size %>)<% end %>
-    <% elsif billed.one? %>
-      <%= link_to admin_invoice_path(billed.first), class: button_classes(:secondary), id: "quote-invoice-link" do %><%= icon "invoice" %> <%= billed.first.kind_label %> <%= billed.first.number %><% end %>
-    <% end %>
-    <% discount_left = ledger&.outstanding_cents.to_i %><%# PAY-08: asked when there's some %>
-    <% if (unbilled || direct) && discount_left.positive? %>
-      <% whole = ledger.finishes?(unbilled ? live.select { _1.status == "completed" }.flat_map { WorkBilling.unbilled_lines(_1) } : []) %>
-      <%= render "admin/invoices/create_with_discount", url: admin_quote_invoices_path(quote), label: "Create invoice", left: discount_left, unused: ledger.unused_discount_cents, currency: quote.currency,
-                                                        id: "quote-create-invoice", button_class: button_classes(unbilled ? :primary : :secondary), whole: %>
-    <% elsif unbilled || direct %>
-      <%= button_to admin_quote_invoices_path(quote), class: button_classes(unbilled ? :primary : :secondary), form: { class: "contents" } do %><%= icon "invoice" %> Create invoice<% end %>
-    <% end %>
-  <% else %>
-    <% invoice_primary = quote.approved? && billed.empty? && live_job %>
-    <% if quote.approved? && job && !live_job %>
-      <%= button_to reopen_admin_job_path(job), method: :patch, class: button_classes(:primary), form: { class: "contents" } do %><%= icon "rotate-ccw" %> Reopen job<% end %>
-    <% elsif quote.approved? && !job %>
-      <%= button_to admin_quote_job_path(quote), class: button_classes(:primary), form: { class: "contents" } do %><%= icon "job" %> Create job<% end %>
-    <% end %>
-    <% if billed.size > 1 %><%# progress billing: the Invoices card lists them all %>
-      <%= link_to "#invoices", class: button_classes(:secondary), id: "quote-invoice-link" do %><%= icon "invoice" %> Invoices (<%= billed.size %>)<% end %>
-    <% elsif (latest_invoice = billed.last) %>
-      <%= link_to admin_invoice_path(latest_invoice), class: button_classes(:secondary), id: "quote-invoice-link" do %><%= icon "invoice" %> <%= latest_invoice.kind_label %> <%= latest_invoice.number %><% end %>
-    <% elsif quote.approved? %>
-      <%= button_to admin_quote_invoices_path(quote), class: button_classes(invoice_primary ? :primary : :secondary), form: { class: "contents" } do %><%= icon "invoice" %> Create invoice<% end %>
-    <% end %>
+  <%# PAY-06: Create invoice is the Primary while completed work is unbilled, else Create job while
+      work is to do (Secondary when both), else neither. With no live job the quote is billed
+      directly: a Secondary Create invoice beside Create job (owner, 2026-11-23). %>
+  <% live = jobs.reject { _1.status == "cancelled" } %>
+  <% to_do = quote.approved? && quote.line_items.any? { _1.to_do_quantity.positive? } %>
+  <% unbilled = quote.approved? && WorkBilling.billable_job_ids(live).any? %><%# two queries for all the jobs %>
+  <%# Hidden once every to-do line already has a direct bill that isn't void (it can't be billed again). %>
+  <% direct = to_do && live.empty? && !quote.recurring? && WorkBilling.directly_billable_lines(quote).any? %>
+  <% if to_do %>
+    <%= link_to new_admin_quote_job_path(quote), class: button_classes(unbilled ? :secondary : :primary) do %><%= icon "job" %> Create job<% end %>
+  <% end %>
+  <% if billed.many? %>
+    <%= link_to "#invoices", class: button_classes(:secondary), id: "quote-invoice-link" do %><%= icon "invoice" %> Invoices (<%= billed.size %>)<% end %>
+  <% elsif billed.one? %>
+    <%= link_to admin_invoice_path(billed.first), class: button_classes(:secondary), id: "quote-invoice-link" do %><%= icon "invoice" %> <%= billed.first.kind_label %> <%= billed.first.number %><% end %>
+  <% end %>
+  <% discount_left = ledger&.outstanding_cents.to_i %><%# PAY-08: asked when there's some %>
+  <% if (unbilled || direct) && discount_left.positive? %>
+    <% whole = ledger.finishes?(unbilled ? live.select { _1.status == "completed" }.flat_map { WorkBilling.unbilled_lines(_1) } : []) %>
+    <%= render "admin/invoices/create_with_discount", url: admin_quote_invoices_path(quote), label: "Create invoice", left: discount_left, unused: ledger.unused_discount_cents, currency: quote.currency,
+                                                      id: "quote-create-invoice", button_class: button_classes(unbilled ? :primary : :secondary), whole: %>
+  <% elsif unbilled || direct %>
+    <%= button_to admin_quote_invoices_path(quote), class: button_classes(unbilled ? :primary : :secondary), form: { class: "contents" } do %><%= icon "invoice" %> Create invoice<% end %>
   <% end %>
   <% if quote.revisable? %>
     <%= button_to revise_admin_quote_path(quote), class: button_classes(:secondary),
@@ -73,13 +53,9 @@
     <%# PAY-08: before the work is done, part of it can be billed as progress (credited on the final invoice). %>
     <%# Not offered when nothing is left to bill as progress, or (B11) when the work left is needed
         for the quote's discount: the Invoices card says why, as the job page does. %>
-    <% if split && quote.approved? && !quote.recurring? && (quote.line_items.any? { _1.to_do_quantity.positive? } || jobs.any?(&:open?)) && ledger&.progress_left? && !ledger.progress_blocked? %>
+    <% if quote.approved? && !quote.recurring? && (quote.line_items.any? { _1.to_do_quantity.positive? } || jobs.any?(&:open?)) && ledger.progress_left? && !ledger.progress_blocked? %>
       <%= button_to admin_quote_invoices_path(quote, progress: 1), class: "menu-item", id: "quote-progress-invoice",
                     form: { class: "contents", data: { turbo_confirm: "Bill part of #{quote.number} before it's done? A progress invoice is credited when the work is billed.#{" The draft asks how much of the quote's discount to apply now." if discount_left.to_i.positive?}", turbo_confirm_button: "Create progress invoice" } } do %><%= icon "plus" %> Create progress invoice<% end %>
-    <% end %>
-    <% if billed.any? && !split %><%# PAY-06: with split jobs the header's Create invoice bills what's left %>
-      <%= button_to admin_quote_invoices_path(quote), class: "menu-item",
-                    form: { class: "contents", data: { turbo_confirm: "#{quote.number} already has #{billed.map(&:number).to_sentence}. Create another invoice?", turbo_confirm_button: "Create another invoice" } } do %><%= icon "plus" %> Create another invoice<% end %>
     <% end %>
     <%= link_to pdf_admin_quote_path(quote), class: "menu-item", data: { turbo: false } do %><%= icon "download" %> Download PDF<% end %>
     <%= button_to duplicate_admin_quote_path(quote), class: "menu-item", form: { class: "contents" } do %><%= icon "copy" %> Duplicate<% end %>
@@ -145,7 +121,7 @@
       </dl>
     <% end %>
 
-    <% if split && quote.approved? && jobs.any? %><%= render "admin/quotes/jobs", quote:, jobs: %><% end %>
+    <% if quote.approved? && jobs.any? %><%= render "admin/quotes/jobs", quote:, jobs: %><% end %>
     <%= render "admin/quotes/responses", quote:, sends_by_revision: @sends_by_revision %>
 
     <%= card do %>
@@ -199,8 +175,8 @@
     <% end %>
     <% if (invoices = quote.invoices.order(:created_at, :id).to_a).any? %>
       <%= card title: "Invoices", id: "invoices", flush: true do %><%= render "admin/invoices/list", invoices: %>
-        <% if split && quote.approved? && !quote.recurring? && ledger.progress_blocked? %><p class="border-t border-line px-5 py-3 text-sm2 text-muted" id="quote-progress-blocked"><%= BillingLedger::PROGRESS_BLOCKED %></p><% end %>
-        <%= render "admin/invoices/progress_summary", summary: ledger.summary, currency: quote.currency, id: "quote-progress" if split && quote.approved? %>
+        <% if quote.approved? && !quote.recurring? && ledger.progress_blocked? %><p class="border-t border-line px-5 py-3 text-sm2 text-muted" id="quote-progress-blocked"><%= BillingLedger::PROGRESS_BLOCKED %></p><% end %>
+        <%= render "admin/invoices/progress_summary", summary: ledger.summary, currency: quote.currency, id: "quote-progress" if quote.approved? %>
         <%= render "admin/invoices/unused_discount", ledger:, currency: quote.currency, id: "quote-discount-unused" %><% end %>
     <% end %>
     <%= card title: "Activity" do %>

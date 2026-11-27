@@ -1,9 +1,9 @@
 ---
 title: Invoice finished work and record a payment
-summary: Make an invoice from a job, send it, record cash and check payments, and fix or take tax off an invoice.
+summary: Bill finished work, send the invoice, record cash and check payments, and fix or take tax off an invoice.
 category: invoices-payments
 topics: [invoices]
-reviewed: 2026-11-24
+reviewed: 2026-11-27
 screenshots:
   - name: invoice-draft
     path: /admin/invoices/:invoice/edit
@@ -21,15 +21,22 @@ what you're paid.
 
 ## Make the invoice
 
-1. Open the finished job and press **Create invoice**. (Or press **New invoice** on **Invoices**,
-   or on the client's page, to start one from scratch.)
-   Work you didn't make a job for? On an approved quote, press **Create invoice** (beside
-   **Create job**) to bill the quote's items straight away.
-2. The invoice opens as a draft with the job's (or the quote's) items. Change anything you need: it saves as you
-   go, just like a quote.
+1. Open the finished job and press **Create invoice**. It bills what was done: the amounts you
+   confirmed when you completed the job, and anything added on site. (Or press **New invoice**
+   on **Invoices**, or on the client's page, to start one from scratch.)
+   On an approved quote, **Create invoice** bills the unbilled work of every finished job in one
+   invoice. A quote with no job can be billed straight away, beside **Create job**.
+2. The invoice opens as a draft. Change anything you need: it saves as you go, just like a quote.
+   Work is billed once, so a second invoice never bills the same work again. To bill again, void
+   the first invoice.
+   If the quote has a discount, you're asked how much of it to take on this invoice. See
+   [Progress invoices and the quote discount](progress-invoices).
 3. Press **Preview as client** to see it as your client will.
 
 ![A draft invoice: check the lines and tax, press Preview as client, then Send invoice](invoice-draft)
+
+Not finished yet? You can bill part of the work first with a progress invoice. See
+[Progress invoices and the quote discount](progress-invoices).
 
 ## Take tax off one invoice
 
