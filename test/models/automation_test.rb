@@ -112,7 +112,7 @@ class AutomationTest < ActiveSupport::TestCase
       q.mark_sent!(by: @owner, channel: "link")
       q.reload.record_response!(:approve, by: @owner, signer_name: "Maria Lopez", message: "Phone")
     end
-    job = q.reload.first_job
+    job = q.reload.jobs.first
     assert job, "the automation created the job"
     assert_includes @maria.reload.tags, "approved"
     now { job.complete!(by: @owner) }
@@ -135,8 +135,7 @@ class AutomationTest < ActiveSupport::TestCase
     assert_includes AutomationRun.where(subject: job).sole.log.to_s, "Created #{invoice.number} as a draft: it comes to $0.00."
   end
 
-  test "PAY-06: with split jobs, invoice the job skips a job with nothing left to bill, saying so" do
-    enable_feature(:split_jobs)
+  test "PAY-06: invoice the job skips a job with nothing left to bill, saying so" do
     rule(trigger: "job_completed", delay: 0, conditions: {}, actions: [ { "type" => "invoice_job" } ], name: "Invoice it")
     job = Job.create!(client: @maria, title: "Fence", line_items_attributes: [ { name: "Fence", quantity: 1, unit_price: 400 } ])
     job.update_columns(status: "completed")
@@ -148,7 +147,6 @@ class AutomationTest < ActiveSupport::TestCase
   end
 
   test "PAY-08: invoice the job sends a final bill its progress covers, as any other, and it's Paid at once" do
-    enable_feature(:split_jobs)
     rule(trigger: "job_completed", delay: 0, conditions: {}, actions: [ { "type" => "invoice_job" } ], name: "Invoice it")
     job = Job.create!(client: @maria, title: "Fence", line_items_attributes: [ { name: "Fence", quantity: 1, unit_price: 400 } ])
     WorkBilling.bill_progress!(job, by: @owner).mark_sent!(by: @owner, channel: "link")

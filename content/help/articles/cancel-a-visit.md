@@ -3,11 +3,11 @@ title: Cancel or move a single visit
 summary: "Rain, a sick day or a client who can't make it: cancel one visit and tell the client, or move it, and bring it back if plans change again."
 category: schedule-jobs
 topics: []
-reviewed: 2026-11-24
+reviewed: 2026-11-27
 screenshots:
   - name: job-visits
     path: /admin/jobs/:job
-    job: Hedge trimming
+    job: Tree removal
     region: "main section.card:nth-of-type(2)"
 ---
 

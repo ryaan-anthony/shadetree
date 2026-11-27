@@ -86,7 +86,7 @@ moment. Progress billing, credits and discount shares are PAY-08.
 
 ## Implementation notes
 
-- `WorkBilling` bills work. With `split_jobs` off: billing, "Ready to invoice", NTF-04 as before.
+- `WorkBilling` bills work: billing, "Ready to invoice" and NTF-04 all read what's unbilled.
 - `invoice_line_items.job_line_item_id`, `.quote_line_item_id`, `.final`, `.tax_rates` (the job's;
   mixed tax-inclusive jobs are refused); `invoice_jobs` (`invoices.job_id` holds the first).
 - Backstop DDL: unique `invoices (id, status)`; `invoice_line_items.invoice_status` NOT NULL

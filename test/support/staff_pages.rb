@@ -281,7 +281,7 @@ module StaffPages
       respond(@approved, :approve)
       business.update!(auto_create_jobs: true)
       respond(@job_cancelled, :approve)
-      @job_cancelled.reload.first_job.cancel!(by: user, notify_client: false)
+      @job_cancelled.reload.jobs.first.cancel!(by: user, notify_client: false)
       @with_job = quote("Tree removal").tap { respond(_1, :approve) }
       @billed = quote("Mulching").tap { respond(_1, :approve) }
       @bounced = quote("Hedge planting", send: false).tap do |quote| # its email bounced, then the link was copied
@@ -290,7 +290,7 @@ module StaffPages
         email.mark!("failed", error: "The mail server refused the email (554 5.7.1).")
         quote.mark_sent!(by: user, channel: "link")
       end
-      Invoice.from_job!(@billed.reload.first_job, by: user)
+      Invoice.from_job!(@billed.reload.jobs.first.tap { _1.complete!(by: user) }, by: user)
     end
 
     def jobs
@@ -307,8 +307,8 @@ module StaffPages
     end
 
     def invoices
-      @draft_invoice = Invoice.from_job!(job("Leaf removal"), by: user)
-      @zero_invoice = Invoice.from_job!(job("Free check", price: "0"), by: user)
+      @draft_invoice = Invoice.from_job!(finished_job("Leaf removal"), by: user)
+      @zero_invoice = Invoice.from_job!(finished_job("Free check", price: "0"), by: user)
       @sent_invoice = sent_invoice("Window cleaning")
       @part_paid_invoice = sent_invoice("Fence painting").tap { pay(_1, _1.total_cents / 2) }
       @payment = @part_paid_invoice.payments.first
@@ -353,7 +353,10 @@ module StaffPages
       job.tap(&:save!)
     end
 
-    def sent_invoice(title) = Invoice.from_job!(job(title), by: user).tap { _1.mark_sent!(by: user, channel: "link") }
+    # A completed job: only finished work is billed (PAY-06).
+    def finished_job(title, price: "120") = job(title, price:).tap { _1.complete!(by: user) }
+
+    def sent_invoice(title) = Invoice.from_job!(finished_job(title), by: user).tap { _1.mark_sent!(by: user, channel: "link") }
 
     def pay(invoice, cents)
       invoice.record_payment!(by: user, amount: Money.new(cents, invoice.currency), received_on: business.today, payment_method: "check")

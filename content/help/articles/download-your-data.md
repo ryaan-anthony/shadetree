@@ -3,7 +3,7 @@ title: Download your data
 summary: Download your clients, quotes, jobs, invoices and payments as spreadsheets, one list at a time or everything at once.
 category: plan-billing
 topics: []
-reviewed: 2026-11-24
+reviewed: 2026-11-27
 screenshots:
   - name: your-data
     path: /admin/data

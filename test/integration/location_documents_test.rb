@@ -25,9 +25,12 @@ class LocationDocumentsTest < ActionDispatch::IntegrationTest
       request = ServiceRequest.create!(client: @maria, source: "phone", description: "Hedges", location: @north)
       quote = request.create_quote!(by: users(:one))
       assert_equal @north, quote.location
+      quote.sync_line_items([ { "key" => "a", "name" => "Hedges", "quantity" => "1", "unit_price" => "100" } ])
+      quote.save!
       quote.update_columns(status: "approved")
       job = Job.from_quote!(quote)
       assert_equal @north, job.location
+      job.complete!(by: users(:one))
       assert_equal @north, Invoice.from_job!(job).location
       assert_equal @north, quote.duplicate!.location
       assert_equal @main, Quote.start(client: @maria).location, "nobody signed in: the main location"

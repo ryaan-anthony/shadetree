@@ -1,6 +1,6 @@
 # PAY-01: invoice an approved quote. PAY-06 (WorkBilling): its completed jobs' unbilled lines, or
 # with no jobs its own lines directly; with nothing to bill it's refused, saying why. PAY-08:
-# progress=1 (split jobs) bills part of what isn't done yet.
+# progress=1 bills part of what isn't done yet.
 class Admin::QuoteInvoicesController < Admin::BaseController
   # OPS-03: what support may do while viewing as a member
   impersonation :allowed
@@ -16,5 +16,5 @@ class Admin::QuoteInvoicesController < Admin::BaseController
 
   private
 
-  def progress? = params[:progress].present? && QuoteWork.split?(current_business)
+  def progress? = params[:progress].present?
 end

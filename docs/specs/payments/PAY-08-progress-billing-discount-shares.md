@@ -95,6 +95,5 @@ once. Staff choose how much of a quote's discount each invoice takes; the last t
   going ahead to `nothing_left?`/`done?`/`all_done?`. Dev seeds: "Roof replacement".
 - `quote_discount_chosen_cents` (nil: $0) is held to [min, max] in `quote_discount_share_cents`;
   `QuoteDiscountPlan` places it by group, then line (needs, credit room first): `…_parts`.
-- When `split_jobs` goes on (OPS-06): run-your-day, turn-a-quote-into-a-job, invoice-finished-work
-  and job-without-a-quote add back logging each visit's work (The work, How many, Add something
-  done on site), say Create invoice bills what was done, are recaptured; new articles on progress.
+- Done with `split_jobs`'s removal (owner, 2026-11-27): run-your-day, turn-a-quote-into-a-job,
+  invoice-finished-work and job-without-a-quote are updated and recaptured; new: progress-invoices.

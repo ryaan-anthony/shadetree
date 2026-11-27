@@ -12,8 +12,8 @@ assign-follow-up:
   digest: dff48bc84b31162aeb577c789eedcd9ecb7d400288150e7eae8129c3a93637fc
   captured_on: '2026-11-24'
 automations:
-  digest: f8102a896fd10a8e19c335a261659e8bf7f7b462af190396087a2ce113b84683
-  captured_on: '2026-11-24'
+  digest: 39af2eacd6e0b3508c077829c416eecd8e942879a2b93712c3fba3f5b7afe495
+  captured_on: '2026-11-27'
 branding:
   digest: 6a07aa14e55f5a6d09ea2262cb1bf7f4a4dacc7e302ffe0bcdca5e83b17ecf77
   captured_on: '2026-11-24'
@@ -24,8 +24,8 @@ client-invoice-page:
   digest: 355e5314fbd05a855966c10f3b4f87f8ca92ea7a04d50693b617fbbdda69b825
   captured_on: '2026-11-24'
 client-page:
-  digest: 0adb84f704aa0f0d07f5b8b4e221c60160417842d3287dcc3116ccff3fc275d2
-  captured_on: '2026-11-24'
+  digest: 69b0daae8df73a54b76705cfbe7cfd21f128e0faac5720d3fe78b9d47e21ad34
+  captured_on: '2026-11-27'
 client-quote-page:
   digest: c51f43811d9f3419bc067a732fb95405a519c67153abfad58bf11dc8b697f1f3
   captured_on: '2026-11-24'
@@ -38,6 +38,9 @@ emails-to-clients:
 erase-client:
   digest: 3c71650897c537bd8f1a0788ed94c2c9ba243dc2024c95af5ff27137b580a5e5
   captured_on: '2026-11-24'
+final-invoice-credit:
+  digest: 763209a1e670f6a1fbb8e210627e2bf577f1da10e54e5b1c8a6b2dc05735467e
+  captured_on: '2026-11-27'
 home-get-set-up:
   digest: 1feac51cd9cbd7e5e693a9758f42d5d64568a1978b05d9db4912693eb97a376d
   captured_on: '2026-11-24'
@@ -48,20 +51,23 @@ import-clients:
   digest: '06175547913c4119e13f88e7e265bc7c88e10eb5558573256a6de01006a1945f'
   captured_on: '2026-11-24'
 invoice-draft:
-  digest: 82be05678d9f55f4e2117e655abb57371e539844bcef22fecb3506f2f1314fcb
-  captured_on: '2026-11-24'
+  digest: 8ad6d1565684539bc22943d96f673568be07bcf0a5abf16a8051c3a12c243033
+  captured_on: '2026-11-27'
 invoice-payments:
   digest: 6392bcf83191f66053ecf1f40796b54fb4f554d6bb12c1edcf6e3ae3b0207341
   captured_on: '2026-11-24'
 invoice-sent:
-  digest: 26c257aab9a61eaf0d405730f68a94fcff0c42a09193bfded91e67a3ebdda99d
-  captured_on: '2026-11-24'
+  digest: ce5557a1d0dc2e525607f18b9b75db774486d3a415ee1f6acf604e4375516234
+  captured_on: '2026-11-27'
 job-page:
-  digest: 62d0592fc74cb9a5d9531c76698e2760db9a7a6b9a8c9ad370dc3a3f47f03263
-  captured_on: '2026-11-24'
+  digest: 28b43bbc5981f75684f104b73a5d9a83cf30c03513a281a6b3ee7d65d3075fb0
+  captured_on: '2026-11-27'
+job-picker:
+  digest: 8df7100777001f8f2097f6a1e17741872a7dfb8dee5c4816026b8ce005877236
+  captured_on: '2026-11-27'
 job-visits:
-  digest: 1c7b609d23aedb48c04fcdda3913bc91dff508f2cf24fb3b01df572915c25889
-  captured_on: '2026-11-24'
+  digest: 3d8a9082c7e6fbaf1e533a68d4c5aaa8df9aecdabd2a9901786a1b316be8c636
+  captured_on: '2026-11-27'
 location-prices:
   digest: 1d15f80ab4cff1491271c31d3d74fbd79c3e1a5ae687764e47a52fd6ca202a2f
   captured_on: '2026-11-24'
@@ -69,14 +75,17 @@ locations-list:
   digest: c90054e7e825cfcdf5b34cb676b368e58239ad62d6f92ea9b79fb31526634859
   captured_on: '2026-11-24'
 my-day:
-  digest: 99d4e98669ac7266e260f7aa7ac108878f8242a4af5a261b7c28d9d7f0a87455
-  captured_on: '2026-11-24'
+  digest: b31c5874e6e3313a321b3cf01da48534eeda32e037758691f737ded0c1f54227
+  captured_on: '2026-11-27'
 my-day-request:
   digest: c7def4f2ff882786332cc314fcced614d0b20a76ba3e651e8c3b1092055231a5
   captured_on: '2026-11-24'
 my-visit:
-  digest: 5e07847e11dbb8e48add2b1c980fa01d9aa415726938f59998506efa8d94c18f
-  captured_on: '2026-11-24'
+  digest: de060b5b52542b53a91cc0d35f4cecafc68826c6f250959c06381af97b5b9d02
+  captured_on: '2026-11-27'
+my-visit-work:
+  digest: af92e7da42ebadf5b399aff249a34a7e399c4d6004b133e7f99d1d1dd63c7c53
+  captured_on: '2026-11-27'
 new-job:
   digest: 228ee8ad120a91ada65446bed6057840e76bec2d4d4d06178d596799215ba99e
   captured_on: '2026-11-24'
@@ -86,6 +95,9 @@ notifications:
 plan-page:
   digest: 4b45f6c31b864905dbac101eae2fcb1372606f4fb516c8c11c8fb07461f7435a
   captured_on: '2026-11-24'
+progress-summary:
+  digest: 25898fe2e0202ce72c0bcdb532ed9041273005daf0303cab3be2201c661b1042
+  captured_on: '2026-11-27'
 quote-builder:
   digest: 62a6e2f808ea598d726abfff6b69b5d592aed695d06bea30df51d77d833d9698
   captured_on: '2026-11-24'
@@ -114,11 +126,11 @@ roles-page:
   digest: 5f3f4ce7bfbf68955047b3b3b936f6642389f3012a39dbe246da89fa5c1271c9
   captured_on: '2026-11-24'
 schedule-a-visit:
-  digest: 6cdbd51da68026caf7fe7a6bf86625c554abb1ded02dca81415fe05959cf62bd
-  captured_on: '2026-11-24'
+  digest: b0805a33ff17ffec933a3778009ffdcaca88bcf522629454e036a6cea840876b
+  captured_on: '2026-11-27'
 schedule-week:
-  digest: 35f0edef29651a124ebedb49c5ea29a6ced09c161d0c3bdb471099f8b7a7e25f
-  captured_on: '2026-11-24'
+  digest: 850b80a3e6bdb43ec6072a20917159a525192886debc5bf9b43e796ceb2eba98
+  captured_on: '2026-11-27'
 send-quote-page:
   digest: 8671f62c8a2cae0f91653d38cf159376f9b84c3d79e810b93434218c949b6398
   captured_on: '2026-11-24'
@@ -132,8 +144,8 @@ team-page:
   digest: b05e9e940d00a7078d1f61086ce58d9432f01670809525e0a9e173a5ca08767a
   captured_on: '2026-11-24'
 your-data:
-  digest: 4e9ec84ee86b55f2fd012175bba28d23b7094651a9f28bf239117fec3176e5e0
-  captured_on: '2026-11-24'
+  digest: 7e36f58b7f0b3aa267a4ee456d4f93b7a6260952f6e7c3e2d6aba429d237dce0
+  captured_on: '2026-11-27'
 your-profile:
   digest: a053626b6af15e4ae0f203ff54f7e6d073cea137408511710320390b686971d8
   captured_on: '2026-11-24'

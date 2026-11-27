@@ -35,8 +35,7 @@ class WorkBillingTest < ActiveSupport::TestCase
   def bill_quote = as_business(@business) { Invoice.from_quote!(@quote.reload, by: @owner) }
   def billed(invoice) = as_business(@business) { invoice.line_items.reload.map { [ _1.name, _1.quantity.to_i, _1.final ] } }
 
-  test "split: a completed job's invoice bills its lines as done; an open job and a billed one are refused" do
-    enable_feature(:split_jobs)
+  test "a completed job's invoice bills its lines as done; an open job and a billed one are refused" do
     job = make(t: 6)
     error = assert_raises(WorkBilling::Refused) { bill_job(job) }
     assert_equal "#{job.number} isn't completed yet. An invoice bills completed work.", error.message
@@ -52,8 +51,7 @@ class WorkBillingTest < ActiveSupport::TestCase
     assert_equal "Everything on #{job.number} is billed (#{invoice.number}).", error.message
   end
 
-  test "split: the quote's invoice bills every completed job's unbilled lines, again as more finish, alongside a job's own invoice" do
-    enable_feature(:split_jobs)
+  test "the quote's invoice bills every completed job's unbilled lines, again as more finish, alongside a job's own invoice" do
     trees, more_trees, gutters = make(t: 6), make(t: 4), make(g: 1)
     error = assert_raises(WorkBilling::Refused) { bill_quote }
     assert_equal "Nothing on #{@quote.number} is ready to bill: #{trees.number}, #{more_trees.number}, and #{gutters.number} aren't completed yet.", error.message
@@ -72,8 +70,7 @@ class WorkBillingTest < ActiveSupport::TestCase
     assert own
   end
 
-  test "split: a quote invoice over jobs with different tax rates keeps each job's rates on its lines" do
-    enable_feature(:split_jobs)
+  test "a quote invoice over jobs with different tax rates keeps each job's rates on its lines" do
     trees, gutters = make(t: 10), make(g: 1)
     as_business(@business) { gutters.update_columns(tax_rates: [ { "name" => "County", "percent" => "5" } ]) }
     [ trees, gutters ].each { complete(_1) }
@@ -85,8 +82,7 @@ class WorkBillingTest < ActiveSupport::TestCase
     end
   end
 
-  test "split: a quote with no jobs is billed directly, so no job can take its work; voiding frees it, and it can be billed again" do
-    enable_feature(:split_jobs)
+  test "a quote with no jobs is billed directly, so no job can take its work; voiding frees it, and it can be billed again" do
     invoice = bill_quote
     assert_equal [ [ "Tree removal", 10, true ], [ "Gutters", 1, true ] ], billed(invoice)
     assert_equal [ 0, 0 ], [ line("t"), line("g") ].map { _1.to_do_quantity.to_i }
@@ -98,8 +94,7 @@ class WorkBillingTest < ActiveSupport::TestCase
     assert_equal [ [ "Tree removal", 10, true ], [ "Gutters", 1, true ] ], billed(bill_quote)
   end
 
-  test "split: every job cancelled bills the quote directly; a recurring quote isn't billed directly" do
-    enable_feature(:split_jobs)
+  test "every job cancelled bills the quote directly; a recurring quote isn't billed directly" do
     job = make(t: 4)
     as_business(@business) { job.cancel!(by: @owner, notify_client: false) }
     assert_equal [ [ "Tree removal", 10, true ], [ "Gutters", 1, true ] ], billed(bill_quote)
@@ -111,7 +106,6 @@ class WorkBillingTest < ActiveSupport::TestCase
   end
 
   test "deleting a draft frees its lines; a directly billed line follows its quantity on the draft and frees what it drops" do
-    enable_feature(:split_jobs)
     invoice = bill_quote
     as_business(@business) do
       invoice.reload.sync_line_items(invoice.line_items.map { { "key" => _1.key, "name" => _1.name, "quantity" => _1.key == invoice.line_items.first.key ? "7" : _1.quantity.to_s, "unit_price" => _1.unit_price.to_s } })
@@ -125,7 +119,6 @@ class WorkBillingTest < ActiveSupport::TestCase
   end
 
   test "voiding a job's invoice frees its lines to be billed again; a discarded revision keeps what its lines bill" do
-    enable_feature(:split_jobs)
     job = complete(make(t: 10))
     invoice = bill_job(job)
     as_business(@business) do
@@ -154,7 +147,6 @@ class WorkBillingTest < ActiveSupport::TestCase
   end
 
   test "B1: a direct line on a draft can't bill more than its claim covers: lowered, a job takes the rest, raising it back is refused" do
-    enable_feature(:split_jobs)
     invoice = bill_quote
     assert edit_lines(invoice, { "Tree removal" => 7 })
     job = make(t: 3)
@@ -168,7 +160,6 @@ class WorkBillingTest < ActiveSupport::TestCase
   end
 
   test "R1: a sent invoice's revision frees nothing: lowering holds the work, taking off a billed line is refused, discarding restores it" do
-    enable_feature(:split_jobs)
     invoice = bill_quote
     as_business(@business) { invoice.reload.mark_sent!(by: @owner, channel: "link") && invoice.reload.revise!(by: @owner) }
     assert edit_lines(invoice, { "Tree removal" => 7 })
@@ -183,7 +174,6 @@ class WorkBillingTest < ActiveSupport::TestCase
   end
 
   test "a card payment during a revision that took a line off records, back on the version the client was sent" do
-    enable_feature(:split_jobs)
     invoice = bill_quote
     as_business(@business) do
       invoice.reload.sync_line_items(invoice.line_items.map { { "key" => _1.key, "name" => _1.name, "quantity" => _1.quantity.to_s, "unit_price" => _1.unit_price.to_s } } +
@@ -201,7 +191,7 @@ class WorkBillingTest < ActiveSupport::TestCase
   end
 
   test "a job line billed on an invoice that isn't void can't be removed from the job" do
-    job = as_business(@business) { Job.from_quote!(@quote, by: @owner) }
+    job = complete(as_business(@business) { Job.from_quote!(@quote, by: @owner) })
     invoice = bill_job(job)
     as_business(@business) do
       gutters = job.reload.line_items.find_by!(name: "Gutters")
@@ -211,7 +201,6 @@ class WorkBillingTest < ActiveSupport::TestCase
   end
 
   test "a quote invoice over jobs that differ on whether prices include tax is refused" do
-    enable_feature(:split_jobs)
     trees, gutters = make(t: 10), make(g: 1)
     as_business(@business) { gutters.update_columns(prices_include_tax: true) }
     [ trees, gutters ].each { complete(_1) }
@@ -221,32 +210,12 @@ class WorkBillingTest < ActiveSupport::TestCase
   end
 
   test "the database refuses a second final bill that got past the lock" do
-    enable_feature(:split_jobs)
     job = complete(make(t: 10))
     invoice = bill_job(job)
     copy = as_business(@business) { Invoice.start(client: @quote.client) }
     assert_raises(ActiveRecord::RecordNotUnique) do
       as_business(@business) { InvoiceLineItem.create!(invoice: copy, key: "x", name: "Again", quantity: 1, unit_price: "1", job_line_item_id: invoice.line_items.sole.job_line_item_id, final: true) }
     end
-  end
-
-  test "flag off: as before, a job is billed at any status and again, and the quote bills its lines as agreed; repeats are progress" do
-    job = as_business(@business) { Job.from_quote!(@quote, by: @owner) }
-    first, second = bill_job(job), bill_job(job)
-    assert_equal [ [ "Tree removal", 10, true ], [ "Gutters", 1, true ] ], billed(first)
-    assert_equal [ [ "Tree removal", 10, false ], [ "Gutters", 1, false ] ], billed(second)
-    from_quote = bill_quote
-    assert_equal [ [ "Tree removal", 10, false ], [ "Gutters", 1, false ] ], billed(from_quote)
-    assert_equal as_business(@business) { job.line_items.ids }, as_business(@business) { from_quote.line_items.map(&:job_line_item_id) }
-    assert_equal [ first, second, from_quote ].map(&:id), as_business(@business) { job.invoices.order(:id).ids }
-  end
-
-  test "flag off: a quote with no job is billed directly, as JOB-09 claimed it; a repeat is progress with no claim" do
-    first, second = bill_quote, bill_quote
-    assert_equal [ [ "Tree removal", 10, true ], [ "Gutters", 1, true ] ], billed(first)
-    assert_equal [ [ "Tree removal", 10, false ], [ "Gutters", 1, false ] ], billed(second)
-    assert_equal [ 0, 0 ], [ line("t"), line("g") ].map { _1.to_do_quantity.to_i }
-    assert_equal 2, as_business(@business) { JobClaim.where(job_id: nil).count }
   end
 
   test "another business's job isn't found for billing" do
@@ -262,7 +231,6 @@ class WorkBillingRaceTest < ActiveSupport::TestCase
 
   test "two invoices for the same completed job at once: one gets it" do
     business = businesses(:one)
-    Feature.overrides["split_jobs"] = true
     job = as_business(business) do
       client = Client.create!(display_name: "Race", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ])
       quote = Quote.start(client:).tap do
@@ -284,7 +252,6 @@ class WorkBillingRaceTest < ActiveSupport::TestCase
     assert_equal %i[billed refused], results.sort
     assert_equal 1, as_business(business) { InvoiceLineItem.final_bills.where(job_line_item_id: job.line_items.ids).count }
   ensure
-    Feature.overrides.delete("split_jobs")
     if job
       as_business(business) do
         client_id = job.client_id

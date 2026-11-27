@@ -33,7 +33,7 @@ class Admin::FormPolishTest < ActionDispatch::IntegrationTest
   end
 
   test "recording a payment shows what's owed first: total, paid so far, left to pay, due" do
-    invoice = as_business(@business) { Invoice.from_job!(@job, by: @owner).tap { _1.mark_sent!(by: @owner, channel: "link") } }
+    invoice = as_business(@business) { Invoice.from_job!(@job.tap { _1.complete!(by: @owner) }, by: @owner).tap { _1.mark_sent!(by: @owner, channel: "link") } }
     as_business(@business) { invoice.record_payment!(by: @owner, amount: "50", received_on: @business.today, payment_method: "cash") }
     get new_admin_invoice_payment_path(invoice)
     assert_equal %w[aside form], order
@@ -42,7 +42,7 @@ class Admin::FormPolishTest < ActionDispatch::IntegrationTest
   end
 
   test "a payment on a draft invoice (paid on the spot) shows what's owed without 'Paid so far'" do
-    invoice = as_business(@business) { Invoice.from_job!(@job, by: @owner) }
+    invoice = as_business(@business) { Invoice.from_job!(@job.tap { _1.complete!(by: @owner) }, by: @owner) }
     get new_admin_invoice_payment_path(invoice)
     assert_select "#payment-invoice-summary", /Left to pay\s*\$160\.00/
     assert_select "#payment-invoice-summary", { text: /Paid so far/, count: 0 }

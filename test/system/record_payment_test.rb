@@ -9,7 +9,7 @@ class RecordPaymentSystemTest < ApplicationSystemTestCase
     @invoice = Tenancy.with_business(@business) do
       client = Client.create!(display_name: "Maria Lopez", contact_methods_attributes: [ { kind: "email", value: "maria@example.com" } ])
       job = Job.create!(client:, title: "Ants", line_items_attributes: [ { name: "Spraying", quantity: 1, unit_price: 40 } ])
-      Invoice.from_job!(job, by: users(:one)).tap { _1.mark_sent!(by: users(:one), channel: "link") }
+      Invoice.from_job!(job.tap { _1.complete!(by: users(:one)) }, by: users(:one)).tap { _1.mark_sent!(by: users(:one), channel: "link") }
     end
     visit new_user_session_path
     sign_in_with_form(users(:one).email)

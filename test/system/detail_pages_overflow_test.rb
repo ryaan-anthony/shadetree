@@ -21,6 +21,7 @@ class DetailPagesOverflowTest < ApplicationSystemTestCase
       quote.save!
       quote.mark_sent!(by: @user, channel: "link")
       job = Job.create!(client:, property:, title: "Ants", line_items_attributes: [ { name: "Spraying", quantity: 1, unit_price: 40 } ])
+      job.complete!(by: @user)
       invoice = Invoice.from_job!(job, by: @user).tap { _1.mark_sent!(by: @user, channel: "link") }
       [ admin_client_path(client), admin_quote_path(quote), admin_job_path(job), admin_invoice_path(invoice), admin_service_request_path(request) ]
     end

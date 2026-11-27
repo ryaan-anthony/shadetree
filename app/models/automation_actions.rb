@@ -76,9 +76,7 @@ module AutomationActions
 
   def create_job(_action, quote, _run)
     return [ "skipped", "The quote isn't approved." ] unless quote.status == "approved"
-    # JOB-09: with split jobs it takes everything still to do, or is skipped saying why.
-    return [ "skipped", "#{quote.first_job.number} already exists." ] if quote.first_job && !QuoteWork.split?(quote.business)
-
+    # JOB-09: it takes everything still to do, or is skipped saying why.
     job = Job.from_quote!(quote)
     [ "done", "Created #{job.number}." ]
   rescue Job::NotOpen, QuoteWork::Refused => e
@@ -87,13 +85,9 @@ module AutomationActions
 
   def invoice_job(_action, job, run)
     return [ "skipped", "The job isn't completed." ] unless job.status == "completed"
-    # PAY-06, with split jobs: what's left to bill (WorkBilling re-reads it under the lock, so a click
-    # at the same moment can't bill it twice). Before, any invoice for the job.
-    if QuoteWork.split?(job.business)
-      return [ "skipped", "Nothing on the job is left to bill." ] if WorkBilling.unbilled_lines(job).empty?
-    elsif job.invoices.exists?
-      return [ "skipped", "The job already has an invoice." ]
-    end
+    # PAY-06: what's left to bill (WorkBilling re-reads it under the lock, so a click at the same
+    # moment can't bill it twice).
+    return [ "skipped", "Nothing on the job is left to bill." ] if WorkBilling.unbilled_lines(job).empty?
     return [ "skipped", "A line added on site needs a price first." ] if job.line_items.any?(&:price_pending) # JOB-09
 
     invoice = Invoice.from_job!(job)

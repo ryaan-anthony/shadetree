@@ -33,7 +33,7 @@ class Admin::FormattingTest < ActionDispatch::IntegrationTest
   test "a line's quantity is written under its name, as on invoices" do
     assert_match(/Gutter cleaning 1 visit × \$120\.00 \$120\.00/, page_text(:job))
     assert_match(/Window cleaning 1 visit × \$120\.00 \$120\.00/, page_text(:invoice_sent))
-    assert_match(/Gutter cleaning 1 visit × \$120\.00/, page_text(:my_visit))
+    assert_match(/Gutter cleaning Booked 1 visit at \$120\.00 each/, page_text(:my_visit))
     assert_match(/Gutter cleaning 1 visit × \$120\.00/, page_text(:new_visit))
   end
 

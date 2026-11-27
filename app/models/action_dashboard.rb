@@ -21,7 +21,7 @@ class ActionDashboard
       group(:new_requests, "New requests", ServiceRequest.where(status: "new").includes(:client).order(:created_at, :id), [ :admin_service_requests_path, {} ]),
       group(:changes_requested, "Changes asked for", quotes.where(status: "changes_requested").order(:updated_at, :id), [ :admin_quotes_path, { filter: "changes_requested" } ]),
       group(:awaiting_answer, "Quotes awaiting an answer", Quote.filtered("awaiting", today:).includes(:client).order(:sent_at, :id), [ :admin_quotes_path, { filter: "awaiting" } ]),
-      (group(:work_not_booked, "Work not booked", quotes.with_work_to_do.includes(:line_items).order(:updated_at, :id), [ :admin_quotes_path, { filter: "approved" } ]) if QuoteWork.split?(business)),
+      group(:work_not_booked, "Work not booked", quotes.with_work_to_do.includes(:line_items).order(:updated_at, :id), [ :admin_quotes_path, { filter: "approved" } ]),
       group(:to_schedule, "Jobs to schedule", Job.where(status: "unscheduled").includes(:client).order(:created_at, :id), [ :admin_jobs_path, { filter: "unscheduled" } ]),
       group(:to_invoice, "Ready to invoice", Job.ready_to_invoice.includes(:client).order(:completed_at, :id), [ :admin_jobs_path, { filter: "to_invoice" } ]),
       group(:overdue, "Overdue invoices", Invoice.where(status: Invoice::OUTSTANDING).where(due_on: ...today).includes(:client).order(:due_on, :id), [ :admin_invoices_path, { filter: "overdue" } ])

@@ -30,8 +30,21 @@ class BillingCompletedWorkMigrationTest < ActiveSupport::TestCase
     as_business(@business) { invoice.update_columns(status:, sent_at: Time.current) }
     invoice
   end
-  def from_job(job) = as_business(@business) { Invoice.from_job!(job) }
-  def from_quote(quote) = as_business(@business) { Invoice.from_quote!(quote) }
+
+  # An invoice as made before PAY-06: a copy of a job's lines (or a quote's) with no links, which
+  # the app no longer makes (a second bill of the same work is refused), so built by hand.
+  def legacy_invoice(source)
+    as_business(@business) do
+      job = source if source.is_a?(Job)
+      invoice = Invoice.new(client: source.client, property: source.property, job:, quote: job ? job.quote : source, title: source.title, currency: source.currency)
+      invoice.copy_pricing_from(source, lines: [])
+      invoice.sync_line_items(BuiltDocument.rows_from(source.line_items.to_a))
+      invoice.save!
+      invoice
+    end
+  end
+  def from_job(job) = legacy_invoice(job)
+  def from_quote(quote) = legacy_invoice(quote)
 
   # As before PAY-06: no links, no join rows.
   def forget_links
@@ -121,7 +134,7 @@ class BillingCompletedWorkMigrationTest < ActiveSupport::TestCase
     assert_equal [ "void" ], as_business(@business) { first.line_items.reload.map(&:invoice_status) }
   end
 
-  test "with split jobs, Ready to invoice lists the same jobs before and after for matched data" do
+  test "Ready to invoice lists the same jobs before and after for matched data" do
     never = job_for(approved_quote("Never billed", [ [ "Trees", 3, 100 ] ]))
     billed = job_for(approved_quote("Billed", [ [ "Trees", 3, 100 ], [ "Mulch", 2, 30 ] ])).tap { sent(from_job(_1)) }
     twice = job_for(approved_quote("Twice", [ [ "Trees", 3, 100 ] ])).tap { |job| 2.times { sent(from_job(job)) } }
@@ -138,7 +151,6 @@ class BillingCompletedWorkMigrationTest < ActiveSupport::TestCase
     end
     sent(from_job(loose_billed))
     forget_links
-    enable_feature(:split_jobs) # the new rule; the data above was billed as before
     before = legacy_ready_to_invoice
     migrate
 

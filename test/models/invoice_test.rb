@@ -71,18 +71,18 @@ class InvoiceTest < ActiveSupport::TestCase
     assert_raises(Invoice::NotApproved) { Invoice.from_quote!(quote.reload) }
   end
 
-  test "from a job: the job's items as they are now (with on-site changes), and the job's quote too; a job can be billed twice" do
+  test "from a job: the job's items as they are now (with on-site changes), and the job's quote too; its work is billed once" do
     quote = approved_quote
     job = Job.from_quote!(quote)
     job.line_items.create!(name: "Extra mulch", quantity: 3, unit_price: "20", position: 9)
     job.save!
-    first = Invoice.from_job!(job.reload, by: @owner)
+    job.reload.complete!(by: @owner)
+    first = Invoice.from_job!(job.reload, by: @owner, discount: "all") # the quote's whole 10% now
     assert_equal [ "Mowing", "Hedge trim", "Extra mulch" ], first.line_items.map(&:name)
-    assert_equal job.total, first.total
+    assert_equal job.subtotal, first.subtotal, "the discount is the quote's, shared by PAY-08"
     assert_equal [ job, quote ], [ first.job, first.quote ]
-    second = Invoice.from_job!(job)
-    assert_equal [ first, second ], job.invoices.order(:id).to_a
-    assert_not_equal first.number, second.number
+    assert_raises(WorkBilling::Refused) { Invoice.from_job!(job) }
+    assert_equal [ first ], job.invoices.order(:id).to_a
   end
 
   test "lines price exactly as on a quote: the same rows, the same totals" do
@@ -130,6 +130,7 @@ class InvoiceTest < ActiveSupport::TestCase
 
   test "from a job or quote, in that document's currency; an unapproved quote can't be billed" do
     job = Job.create!(client: @maria, property: @maria.primary_property, title: "Spring cleanup", currency: "CAD", line_items_attributes: [ { name: "Mowing", quantity: 1, unit_price: "50" } ])
+    job.complete!(by: @owner)
     assert_equal "CAD", Invoice.from_job!(job).currency
     quote = approved_quote
     quote.update_columns(currency: "CAD")

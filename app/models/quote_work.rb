@@ -6,18 +6,12 @@
 # jobs by id, then the quote's lines by id. Work entries take only the job's lock (they don't
 # claim), and visits the job's then their own, so nothing waits on a lock earlier in the order.
 #
-# Behind the split_jobs flag (on only once PAY-06 and PAY-08 ship) a job takes what staff pick,
-# and asking for more than is free is refused. With it off a quote has one job, as before, and a
-# job line raised past the quote claims only what's free; claims are kept either way.
+# A job takes what staff pick, and asking for more than is free is refused.
 module QuoteWork
-  FLAG = :split_jobs
-
   # Refused: the lines named didn't have that much to do. The transaction rolls back.
   class Refused < StandardError; end
 
   module_function
-
-  def split?(business) = Feature.enabled?(FLAG, business:)
 
   # Takes the locks in order and returns the quote's lines, fresh, by id. The quote row and the
   # jobs are locked without reloading, so a record with unsaved changes keeps them.
@@ -54,8 +48,8 @@ module QuoteWork
   end
 
   # A job line's quantity changed on an open job (the job form): its claim follows, taking free
-  # quantity or freeing the difference. Past what's free is refused with the flag on (that needs
-  # a change order, QTE-10), and claims only what's free with it off.
+  # quantity or freeing the difference. Past what's free is refused (that needs a change order,
+  # QTE-10).
   # Lowering a line that's still past what it can claim (an old line above the quote) is allowed:
   # only an increase is refused.
   def follow!(job_line, lines)
@@ -65,7 +59,7 @@ module QuoteWork
     wanted = job_line.quantity.to_d
     held = claim.quantity.to_d
     if wanted > held + line.to_do_quantity
-      raise Refused, refusal(line, wanted - held) if split?(job_line.business) && wanted > job_line.quantity_before_last_save.to_d
+      raise Refused, refusal(line, wanted - held) if wanted > job_line.quantity_before_last_save.to_d
 
       wanted = held + line.to_do_quantity
     end

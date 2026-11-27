@@ -1,6 +1,6 @@
 require "test_helper"
 
-# PAY-08 (split_jobs flag): progress invoices from a job or a quote before the work is done,
+# PAY-08: progress invoices from a job or a quote before the work is done,
 # credited on the final bill; roles and tenancy.
 class Admin::ProgressBillingTest < ActionDispatch::IntegrationTest
   setup do
@@ -15,7 +15,6 @@ class Admin::ProgressBillingTest < ActionDispatch::IntegrationTest
       quote.update_columns(status: "approved")
       quote
     end
-    enable_feature(:split_jobs)
     sign_in users(:one)
     post switch_admin_business_path, params: { business: @business.uid }
   end

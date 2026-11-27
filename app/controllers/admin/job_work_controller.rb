@@ -21,8 +21,6 @@ class Admin::JobWorkController < Admin::BaseController
 
   # The log's rows as the job page lists them: "<line id>-<user id>-<visit id or 0>" => total.
   def correct
-    return head(:not_found) unless QuoteWork.split?(current_business)
-
     rows = params[:log].respond_to?(:key?) ? params[:log] : {}
     pairs = WorkEntry.where(job_id: @job.id).where.not(job_line_item_id: nil).distinct.pluck(:job_line_item_id, :user_id, :visit_id)
     changed = pairs.group_by { [ _2, _3 ] }.sum do |(user_id, visit_id), group|
@@ -39,7 +37,7 @@ class Admin::JobWorkController < Admin::BaseController
   def set_job = @job = Job.find_by_param!(params[:job_id] || params[:id])
 
   def require_quote_work
-    return if QuoteWork.split?(current_business) && @job.quote && @job.open?
+    return if @job.quote && @job.open?
 
     redirect_to admin_job_path(@job), alert: ("#{@job.number} is #{@job.status_label.downcase}. Reopen it to add work." if @job.quote && !@job.open?)
   end

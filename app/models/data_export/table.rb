@@ -7,24 +7,22 @@ require "csv"
 # prefixed with ' (numbers we write, and phone numbers, are left alone). Files start with a
 # byte-order mark, so Excel opens them as UTF-8.
 class DataExport::Table
-  Column = Data.define(:header, :value, :number, :flag)
+  Column = Data.define(:header, :value, :number)
   BOM = "﻿".freeze
   PHONE = /\A[+-]?[\d\s().-]+\z/
 
   attr_reader :key, :label, :description
 
-  # cursor: the (non-null, unique together) columns rows come out in, read in batches. flag: a
-  # release flag (PLT-11) the table, or a column, is shown under, for the current business.
-  def initialize(key, label, description, scope:, cursor: :id, flag: nil, &columns)
-    @key, @label, @description, @scope, @cursor, @flag = key, label, description, scope, cursor, flag
+  # cursor: the (non-null, unique together) columns rows come out in, read in batches.
+  def initialize(key, label, description, scope:, cursor: :id, &columns)
+    @key, @label, @description, @scope, @cursor = key, label, description, scope, cursor
     @columns = []
     instance_exec(&columns)
   end
 
-  def column(header, number: false, flag: nil, &value) = @columns << Column.new(header:, value:, number:, flag:)
+  def column(header, number: false, &value) = @columns << Column.new(header:, value:, number:)
 
-  def columns = @columns.select { _1.flag.nil? || Feature.enabled?(_1.flag) }
-  def available? = @flag.nil? || Feature.enabled?(@flag)
+  def columns = @columns
 
   def records = @scope.call
 
@@ -33,10 +31,9 @@ class DataExport::Table
   def write(io)
     count = 0
     zone = Current.business.time_zone
-    shown = columns # flags are checked once per file, not per row
-    io << BOM << CSV.generate_line(shown.map(&:header))
+    io << BOM << CSV.generate_line(columns.map(&:header))
     records.find_each(cursor: @cursor) do |record|
-      io << CSV.generate_line(shown.map { |column| cell(column.value.call(record), zone, column.number) })
+      io << CSV.generate_line(columns.map { |column| cell(column.value.call(record), zone, column.number) })
       count += 1
     end
     count

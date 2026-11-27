@@ -1,6 +1,6 @@
 require "test_helper"
 
-# PAY-06 (split_jobs flag): the quote page's Primary (Create invoice while completed work is
+# PAY-06: the quote page's Primary (Create invoice while completed work is
 # unbilled, else Create job), the job page's Create invoice, refusals with their reason, an invoice
 # over several jobs, roles and tenancy.
 class Admin::BillingCompletedWorkTest < ActionDispatch::IntegrationTest
@@ -17,7 +17,6 @@ class Admin::BillingCompletedWorkTest < ActionDispatch::IntegrationTest
       quote.update_columns(status: "approved")
       quote
     end
-    enable_feature(:split_jobs)
     sign_in users(:one)
     post switch_admin_business_path, params: { business: @business.uid }
   end

@@ -1,6 +1,6 @@
 # PAY-01: "Create invoice" on a job: a draft with the job's client, property, items, discount and
-# taxes, opened in the builder. PAY-06: with split jobs, once completed, its unbilled lines as done
-# (WorkBilling); with nothing to bill it's refused, saying why. PAY-08: progress=1 (split jobs)
+# taxes, opened in the builder. PAY-06: once completed, its unbilled lines as done
+# (WorkBilling); with nothing to bill it's refused, saying why. PAY-08: progress=1
 # bills part of an open job before it's done.
 class Admin::JobInvoicesController < Admin::BaseController
   # OPS-03: what support may do while viewing as a member
@@ -19,5 +19,5 @@ class Admin::JobInvoicesController < Admin::BaseController
 
   private
 
-  def progress? = params[:progress].present? && QuoteWork.split?(current_business)
+  def progress? = params[:progress].present?
 end

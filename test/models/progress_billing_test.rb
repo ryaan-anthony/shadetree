@@ -1,10 +1,9 @@
 require "test_helper"
 
-# PAY-08: progress billing, credits and discount shares, with split jobs on. The worked examples
+# PAY-08: progress billing, credits and discount shares. The worked examples
 # from #356 are rerun here, in exact cents. Every test ends reconciled (JOB-09).
 class ProgressBillingTest < ActiveSupport::TestCase
   setup do
-    enable_feature(:split_jobs)
     @business = businesses(:one)
     @owner = users(:one)
     as_business(@business) { @business.update!(auto_create_jobs: false) }
@@ -139,15 +138,6 @@ class ProgressBillingTest < ActiveSupport::TestCase
     assert_equal [ 70_00, 430_00 ], [ second.quote_discount_share_cents, second.total_cents ], "the last invoice takes the rest"
   end
 
-  test "flag off: no shares or credits" do
-    disable_feature(:split_jobs)
-    approved_quote([ [ "r", "Roof", 1, 1000 ] ], discount: "100")
-    job = as_business(@business) { Job.from_quote!(@quote, by: @owner) }
-    first = send!(bill_job(job))
-    second = bill_job(job)
-    assert_equal [ 0, 0 ], [ first.quote_discount_share_cents, second.quote_discount_share_cents ]
-    assert_empty credits(second)
-  end
 
   test "progress leaves room for the discount still to come; charging more applies the minimum now" do
     approved_quote([ [ "r", "Roof", 1, 1000 ] ], discount: "100")
@@ -1542,7 +1532,6 @@ class ProgressBillingRaceTest < ActiveSupport::TestCase
   test "two drafts sent at once credit over-billing once" do
     business = businesses(:one)
     owner = users(:one)
-    Feature.overrides["split_jobs"] = true
     quote = as_business(business) do
       client = Client.create!(display_name: "Race", contact_methods_attributes: [ { kind: "phone", value: "5550100100" } ])
       Quote.start(client:).tap do
@@ -1575,7 +1564,6 @@ class ProgressBillingRaceTest < ActiveSupport::TestCase
     end.each(&:join)
     assert_equal 200_00, as_business(business) { InvoiceCredit.counted.where(invoice_id: drafts.map(&:id)).sum(:amount_cents) }
   ensure
-    Feature.overrides.delete("split_jobs")
     if quote
       as_business(business) do
         client_id = quote.client_id

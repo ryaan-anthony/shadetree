@@ -3,7 +3,7 @@ title: Make a job without a quote, and change its items
 summary: For work agreed by phone or in person, make a job straight away, and change what it covers before you invoice.
 category: schedule-jobs
 topics: []
-reviewed: 2026-11-24
+reviewed: 2026-11-27
 screenshots:
   - name: new-job
     path: /admin/jobs/new
@@ -26,10 +26,15 @@ yourself.
    **Add a custom item**. It's optional, but the invoice uses these items.
 6. Press **Create job**.
 
+Your crew logs what they did on each visit, under **The work** in **My day**. See
+[Run your day from your phone with My day](run-your-day). When it's done, press **Complete** and
+confirm how much of each item was done.
+
 Then book it: press **Schedule visit** on the job. See
 [Book visits on the schedule](book-visits-on-the-schedule).
 
 ## Change what a job covers
 
 While a job is open, press **Edit items** under **Work to do** on the job. Add, change or remove
-items, and press **Save job**. Its invoice, when you create it, copies the items as they are then.
+items, and press **Save job**. Its invoice, when you create it after completing the job, bills
+what was done. Something your crew added on site needs a price before you can complete the job.

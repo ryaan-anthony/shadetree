@@ -163,7 +163,8 @@ class AccessibilityTest < ApplicationSystemTestCase
     job, invoice = as_business(@business) do
       client = Client.create!(display_name: "Maria Lopez", contact_methods_attributes: [ { kind: "phone", value: "2155551212" } ])
       job = Job.create!(client:, title: "Ants", line_items_attributes: [ { name: "Spraying", quantity: 1, unit_price: 40 } ])
-      [ job, Invoice.from_job!(job, by: users(:one)).tap { _1.mark_sent!(by: users(:one), channel: "link") } ]
+      done = Job.create!(client:, title: "Done", line_items_attributes: [ { name: "Spraying", quantity: 1, unit_price: 40 } ]).tap { _1.complete!(by: users(:one)) }
+      [ job, Invoice.from_job!(done, by: users(:one)).tap { _1.mark_sent!(by: users(:one), channel: "link") } ]
     end
     assert_accessible new_admin_job_visit_path(job), new_admin_invoice_payment_path(invoice), new_admin_service_request_path
   end
