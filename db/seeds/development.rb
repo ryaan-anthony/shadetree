@@ -255,7 +255,7 @@ Tenancy.with_business(business) do
     quote = Quote.start(client:, created_by: owner)
     quote.title = "Backyard trees and gutters"
     quote.set_discount("amount", "50")
-    quote.sync_line_items([ { "key" => "seed-0", "name" => "Tree removal", "quantity" => "10", "unit" => "visit", "unit_price" => "120", "taxable" => "1" },
+    quote.sync_line_items([ { "key" => "seed-0", "name" => "Tree removal", "quantity" => "10", "unit_price" => "120", "taxable" => "1" },
                             { "key" => "seed-1", "name" => "Gutter cleaning", "quantity" => "1", "unit_price" => "165", "taxable" => "1" } ])
     quote.save!
     quote.mark_sent!(by: owner, channel: "link")

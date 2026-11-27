@@ -1,6 +1,6 @@
 require "test_helper"
 
-# PAY-08: progress billing, credits and discount shares, with split jobs on. The worked examples
+# PAY-08: progress billing, credits and discount shares. The worked examples
 # from #356 are rerun here, in exact cents. Every test ends reconciled (JOB-09).
 class ProgressBillingTest < ActiveSupport::TestCase
   setup do

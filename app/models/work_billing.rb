@@ -7,7 +7,6 @@
 # .final_bills). Every billing path takes JOB-09's lock order (the quote, its jobs by id, the
 # quote's lines by id; a job without a quote alone) and reads what's unbilled again under it; the
 # database refuses a second final bill if anything gets past that.
-#
 module WorkBilling
   # Nothing to bill, or not yet: the message says why.
   class Refused < StandardError; end
@@ -135,7 +134,7 @@ module WorkBilling
     invoice
   end
 
-  # PAY-08: "Create another invoice" before the work is done: a progress invoice of what's left of
+  # PAY-08: "Create progress invoice" before the work is done: a progress invoice of what's left of
   # each line of an open job, or of a quote's lines not yet done, which staff can lower. Its lines
   # aren't final bills; each is credited when its line is billed for real. The quote's discount
   # comes off as staff choose (`discount`). Not for recurring quotes (JOB-10).

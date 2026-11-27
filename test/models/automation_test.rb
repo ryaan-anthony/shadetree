@@ -135,7 +135,7 @@ class AutomationTest < ActiveSupport::TestCase
     assert_includes AutomationRun.where(subject: job).sole.log.to_s, "Created #{invoice.number} as a draft: it comes to $0.00."
   end
 
-  test "PAY-06: with split jobs, invoice the job skips a job with nothing left to bill, saying so" do
+  test "PAY-06: invoice the job skips a job with nothing left to bill, saying so" do
     rule(trigger: "job_completed", delay: 0, conditions: {}, actions: [ { "type" => "invoice_job" } ], name: "Invoice it")
     job = Job.create!(client: @maria, title: "Fence", line_items_attributes: [ { name: "Fence", quantity: 1, unit_price: 400 } ])
     job.update_columns(status: "completed")

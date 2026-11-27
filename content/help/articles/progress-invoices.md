@@ -45,11 +45,11 @@ A percent discount works the same way, in dollars.
 
 ## When you invoice the finished work
 
-![The quote's page shows what you billed as progress, and what has been credited](progress-summary)
+![The quote's page shows what you billed as progress; once the final invoice is sent, it shows how much was credited](progress-summary)
 
-The final invoice takes off what the progress invoice charged. In your draft the row reads
-**Billed earlier on INV-0006**. Your client sees it as **Credit from INV-0006**. The credit is
-exactly what that progress invoice charged, tax included.
+The final invoice takes off what the progress invoice billed, before tax. In your draft the row
+reads **Billed earlier on INV-0006**. Your client sees it as **Credit from INV-0006**. The tax on
+that work is taken off too, so tax is only charged once.
 
 ![A final invoice draft: the quote discount box beside Apply now, and what was billed earlier taken off the total](final-invoice-credit)
 

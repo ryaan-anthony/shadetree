@@ -55,7 +55,8 @@ teammates have already logged.
 
 ![The work: type how many you did on each line, then press Save what I did](my-visit-work)
 
-1. Next to each line, type **How many** you did on this visit, like 4 of 10 trees.
+1. Next to each line, type **How many** you did on this visit, like 4 of the 10 trees you were
+   booked for.
 2. Press **Save what I did**. You can come back and change it.
 
 Your teammates log their own. The office sees everyone's totals, and uses them when the job is

@@ -158,6 +158,26 @@ class Admin::DashboardActionsTest < ActionDispatch::IntegrationTest
     assert_operator count.call, :<=, few + 6, "more records mustn't mean more queries"
   end
 
+  test "JOB-09: the Work not booked group takes a fixed number of queries however many quotes have work to do" do
+    count = lambda do
+      queries = 0
+      callback = ->(*, payload) { queries += 1 unless payload[:name] == "SCHEMA" || payload[:cached] }
+      ActiveSupport::Notifications.subscribed(callback, "sql.active_record") { get admin_root_path }
+      queries
+    end
+    as_business(@business) { quote(client("Maria Lopez"), status: "approved") }
+    get admin_root_path
+    assert_select "#group-work_not_booked li", 1
+    few = count.call
+    as_business(@business) do
+      sam = client("Sam Okafor")
+      15.times { quote(sam, status: "approved") }
+    end
+    get admin_root_path
+    assert_select "#group-work_not_booked h2", "Work not booked (16)"
+    assert_operator count.call, :<=, few + 2, "more quotes with work to do mustn't mean more queries"
+  end
+
   test "JOB-09: approved work no job has taken shows as Work not booked" do
     as_business(@business) do
       @maria = client("Maria Lopez")

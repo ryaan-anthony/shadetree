@@ -36,5 +36,5 @@ Then book it: press **Schedule visit** on the job. See
 ## Change what a job covers
 
 While a job is open, press **Edit items** under **Work to do** on the job. Add, change or remove
-items, and press **Save job**. Its invoice, when you create it after completing the job, bills what was done. Something your
-crew added on site needs a price before you can complete the job.
+items, and press **Save job**. Its invoice, when you create it after completing the job, bills
+what was done. Something your crew added on site needs a price before you can complete the job.
