@@ -1,4 +1,4 @@
-# OPS-04 (with BIL-05): comp a plan with an optional end date, extend (or give) a trial, and apply
+# OPS-04 (with BIL-05): comp a plan with an optional end date, extend, give or end a trial, and apply
 # a Stripe coupon to a business's subscription. Each needs a reason and a recent code, is audited
 # and written to the business's billing history; the plan is worked out again at once
 # (Billing::PlanResolver). Comps and trials don't change what Stripe bills; a coupon does.
@@ -45,6 +45,22 @@ class Ops::BillingController < Ops::BaseController
     history("trial_extended", "plan" => plan.name, "ends_on" => ends_at.to_date.iso8601)
     audit!("business.trial_changed", business: @business, reason:, from: previous&.to_date&.iso8601, to: ends_at.to_date.iso8601)
     note = @business.billing_status == "trialing" ? "The #{plan.name} trial runs until #{ends_at.to_date.to_fs(:long)}." : "Trial saved; a subscription or comp takes precedence."
+    redirect_back_to_business(notice: note)
+  end
+
+  # End a running trial now: the business moves back to Free (unless a subscription or comp keeps
+  # it on a paid plan), the same as when the date passes, and its Owners get the usual "moved to
+  # Free" email. Refused if there's no trial running.
+  def end_trial
+    previous = @business.trial_ends_at
+    return redirect_back_to_business(alert: "There's no trial running to end.") unless @business.trial_plan && previous&.future?
+
+    plan = @business.trial_plan
+    now = Time.current
+    resolve { @business.update!(trial_ends_at: now) }
+    history("trial_ended_early", "plan" => plan.name, "was_due" => previous.to_date.iso8601)
+    audit!("business.trial_ended", business: @business, reason:, from: previous.to_date.iso8601, to: now.to_date.iso8601)
+    note = @business.reload.plan.free? ? "The #{plan.name} trial is ended; #{@business.name} is back on #{@business.plan.name}." : "The trial is ended; a subscription or comp keeps #{@business.name} on #{@business.plan.name}."
     redirect_back_to_business(notice: note)
   end
 

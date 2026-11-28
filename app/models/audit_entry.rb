@@ -30,6 +30,7 @@ class AuditEntry < ApplicationRecord
     "business.plan_overrides_changed" => "Changed a business's limits or features",
     "business.plan_comped" => "Comped a business's plan",
     "business.trial_changed" => "Changed a business's trial",
+    "business.trial_ended" => "Ended a business's trial",
     "business.coupon_applied" => "Applied a coupon to a business's subscription",
     "plan.updated" => "Edited a plan",
     "preset.updated" => "Edited an industry preset",

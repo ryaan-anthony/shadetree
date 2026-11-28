@@ -29,6 +29,12 @@
     <div class="field"><label class="label" for="trial_reason">Reason</label><%= text_field_tag :reason, nil, class: "input", id: "trial_reason", required: true, maxlength: 500, placeholder: "e.g. Asked for another week to try automations" %></div>
     <%= submit_tag "Save trial", class: button_classes(:secondary, :sm), name: nil %>
   <% end %>
+  <% if business.trial_plan && business.trial_ends_at&.future? %>
+    <%= form_with url: ops_business_billing_end_trial_path(business), id: "end-trial", class: "mt-3 flex flex-wrap items-end gap-2", data: { turbo_confirm: "End #{business.name}'s trial now? They move back to Free and their Owners are emailed.", turbo_confirm_variant: "destructive" } do %>
+      <div class="field min-w-0 flex-1"><label class="label" for="end_trial_reason">Reason for ending the trial</label><%= text_field_tag :reason, nil, class: "input", id: "end_trial_reason", required: true, maxlength: 500, placeholder: "e.g. Asked to cancel before it ends" %></div>
+      <%= submit_tag "End trial", class: button_classes(:secondary, :sm), name: nil %>
+    <% end %>
+  <% end %>
   <% if subscription&.live? %>
     <%= form_with url: ops_business_billing_coupon_path(business), class: "mt-4 space-y-2 border-t border-line pt-4", data: { turbo_confirm: "Apply this coupon to #{business.name}'s Stripe subscription? It replaces any discount it has." } do %>
       <div class="field"><label class="label" for="coupon">Stripe coupon or promotion code id</label><%= text_field_tag :coupon, nil, class: "input", id: "coupon", required: true, maxlength: 100, autocomplete: "off" %></div>

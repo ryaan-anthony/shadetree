@@ -68,6 +68,45 @@ class Ops::BillingActionsTest < ActionDispatch::IntegrationTest
     assert_match "in the future", flash[:alert]
   end
 
+  test "ending a trial moves the business back to Free now, tells its Owners, and is audited" do
+    @business.update_columns(trial_plan_id: plans(:starter).id, trial_ends_at: 10.days.from_now)
+    Billing::PlanResolver.apply!(@business)
+    assert_equal [ plans(:starter), "trialing" ], [ @business.reload.plan, @business.billing_status ]
+
+    get ops_business_path(@business)
+    assert_select "form#end-trial input[type=submit][value='End trial']"
+
+    post ops_business_billing_end_trial_path(@business), params: { reason: "" }
+    assert_equal "Give a reason.", flash[:alert]
+    assert_equal plans(:starter), @business.reload.plan, "a reason is needed"
+
+    assert_enqueued_emails 1 do
+      post ops_business_billing_end_trial_path(@business), params: { reason: "Asked to cancel before it ends" }
+    end
+    assert_redirected_to ops_business_path(@business, anchor: "billing-actions")
+    assert_match "back on Free", flash[:notice]
+    @business.reload
+    assert_equal [ plans(:free), "free", true ], [ @business.plan, @business.billing_status, @business.trial_ends_at <= Time.current ]
+    entry = AuditEntry.find_by!(action: "business.trial_ended", business_id: @business.id)
+    assert_equal "Asked to cancel before it ends", entry.reason
+    assert_includes history, [ "trial_ended_early", "Starter, was due #{10.days.from_now.to_date.iso8601}, Asked to cancel before it ends" ]
+    assert_includes history.map(&:first), "plan_changed"
+
+    get ops_business_path(@business)
+    assert_select "#trial", /ended/
+    assert_select "form#end-trial", 0
+    post ops_business_billing_end_trial_path(@business), params: { reason: "Again" }
+    assert_equal "There's no trial running to end.", flash[:alert]
+  end
+
+  test "ending a trial leaves a comp or subscription's plan alone" do
+    @business.update_columns(trial_plan_id: plans(:starter).id, trial_ends_at: 10.days.from_now, comp_plan_id: plans(:business).id)
+    Billing::PlanResolver.apply!(@business)
+    post ops_business_billing_end_trial_path(@business), params: { reason: "Trial no longer needed" }
+    assert_match "keeps", flash[:notice]
+    assert_equal [ plans(:business), "comped" ], [ @business.reload.plan, @business.billing_status ]
+  end
+
   test "a coupon is applied to the Stripe subscription; without one it's refused, and Stripe's refusal is shown" do
     post ops_business_billing_coupon_path(@business), params: { coupon: "BETA50", reason: "Beta" }
     assert_match "no subscription", flash[:alert]
