@@ -15,7 +15,7 @@
         <li id="trial-plan-<%= plan.key %>">
           <div class="min-w-0 flex-1">
             <p class="font-semibold text-ink">Trial <span class="font-normal text-muted">· <%= plan.name %></span></p>
-            <p class="text-sm2 text-muted">Not paying yet · <%= link_to pluralize(trials, "business"), ops_businesses_path(status: "trial"), class: "underline" %></p>
+            <p class="text-sm2 text-muted">Not paying yet · <%= link_to pluralize(trials, "business"), ops_businesses_path(status: "trial", plan: plan.id), class: "underline" %></p>
           </div>
         </li>
       <% end %>
