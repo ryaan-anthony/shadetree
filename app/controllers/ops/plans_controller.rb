@@ -7,7 +7,12 @@ class Ops::PlansController < Ops::BaseController
 
   def index
     @plans = Plan.order(:position, :id)
-    @counts = Business.group(:plan_id).count
+    # A business on a trial has the trial's plan but isn't paying for it, so trials are counted
+    # on their own and left out of the plan's count. "Trial" means what the directory's trial
+    # filter means (active and trialing), so the count matches the list it links to.
+    trials = Business.where(active: true, billing_status: "trialing")
+    @trial_counts = trials.group(:plan_id).count
+    @counts = Business.where.not(id: trials.select(:id)).group(:plan_id).count
   end
 
   def edit; end
