@@ -63,7 +63,7 @@ Rails.application.routes.draw do
       resource :suspension, only: %i[create destroy] # OPS-04
       resource :plan_overrides, only: %i[edit update], path: "overrides" # OPS-04: comped limits and features
       resource :deletion, only: %i[create update destroy] # OPS-04: schedule, expedite, cancel
-      %w[comp trial coupon].each { post "billing/#{_1}", to: "billing##{_1}", as: "billing_#{_1}" } # OPS-04 / BIL-05
+      %w[comp trial end_trial coupon].each { post "billing/#{_1}", to: "billing##{_1}", as: "billing_#{_1}" } # OPS-04 / BIL-05
     end
     resource :impersonation, only: %i[edit update destroy]
     resources :plans, only: %i[index edit update] # OPS-04

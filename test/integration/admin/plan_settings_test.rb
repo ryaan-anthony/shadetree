@@ -28,6 +28,15 @@ class Admin::PlanSettingsTest < ActionDispatch::IntegrationTest
     assert_permission_matrix(owner: true, admin: true, technician: false) { get admin_plan_path }
   end
 
+  test "a comp's end date is shown as a date, not as markup" do
+    @business.update_columns(comp_plan_id: plans(:starter).id, comp_ends_at: 30.days.from_now)
+    Billing::PlanResolver.apply!(@business)
+    get admin_plan_path
+    assert_select "#comp-status", /Shadetree has given you Starter until/
+    assert_select "#comp-status time[datetime]", 1
+    assert_no_match "&lt;time", response.body
+  end
+
   test "invitations stop at the plan's team size, counting pending ones" do
     post admin_invitations_path, params: { invitation: { email: "first@example.com", role: "technician" } }
     assert_match "Invitation sent", flash[:notice]

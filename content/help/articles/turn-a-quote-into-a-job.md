@@ -3,7 +3,7 @@ title: Turn an approved quote into a job
 summary: What happens when your client approves, how to record an approval they gave you by phone, and how a job takes the work from quote to invoice.
 category: schedule-jobs
 topics: []
-reviewed: 2026-11-27
+reviewed: 2026-11-28
 screenshots:
   - name: job-page
     path: /admin/jobs/:job

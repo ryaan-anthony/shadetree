@@ -411,7 +411,8 @@ class Job < ApplicationRecord
   def work_by_person
     sums = WorkEntry.where(job_id: id).where.not(job_line_item_id: nil).group(:job_line_item_id, :user_id).sum(:quantity)
     users = User.where(id: sums.keys.map(&:last).uniq).index_by(&:id)
-    sums.reject { _2.zero? }.each_with_object(Hash.new { |hash, key| hash[key] = [] }) { |((line_id, user_id), quantity), by_line| by_line[line_id] << [ users[user_id], quantity ] }
+    by_line = sums.reject { _2.zero? }.each_with_object(Hash.new { |hash, key| hash[key] = [] }) { |((line_id, user_id), quantity), lines| lines[line_id] << [ users[user_id], quantity ] }
+    by_line.each_value { |people| people.sort_by! { |user, quantity| [ -quantity, user&.first_name.to_s, user&.id.to_i ] } } # a grouped query has no order
   end
 
   # JOB-09: what's been logged on each line, else what it booked: where completion starts.

@@ -60,8 +60,8 @@ invoice-sent:
   digest: ce5557a1d0dc2e525607f18b9b75db774486d3a415ee1f6acf604e4375516234
   captured_on: '2026-11-27'
 job-page:
-  digest: 28b43bbc5981f75684f104b73a5d9a83cf30c03513a281a6b3ee7d65d3075fb0
-  captured_on: '2026-11-27'
+  digest: 8b148bd6488426bf86d5174564a5f32927cbead43895f7122f3c52d56c7c0e89
+  captured_on: '2026-11-28'
 job-picker:
   digest: 8df7100777001f8f2097f6a1e17741872a7dfb8dee5c4816026b8ce005877236
   captured_on: '2026-11-27'
@@ -84,8 +84,8 @@ my-visit:
   digest: de060b5b52542b53a91cc0d35f4cecafc68826c6f250959c06381af97b5b9d02
   captured_on: '2026-11-27'
 my-visit-work:
-  digest: af92e7da42ebadf5b399aff249a34a7e399c4d6004b133e7f99d1d1dd63c7c53
-  captured_on: '2026-11-27'
+  digest: c5f3e4d178104e7b09c90037b45ab35c2f32c9eb5a0e4e9be9190d5666b0f3da
+  captured_on: '2026-11-28'
 new-job:
   digest: 228ee8ad120a91ada65446bed6057840e76bec2d4d4d06178d596799215ba99e
   captured_on: '2026-11-24'

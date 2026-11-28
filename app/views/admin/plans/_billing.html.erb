@@ -7,7 +7,7 @@
       It ends on <%= local_date(business.trial_ends_at) %>; choose a plan to keep <%= business.trial_plan.name %>, or you'll move to Free with nothing deleted.
       <% if (kept = Billing::Checkout.trial_kept_until(business)) %>If you subscribe now, you're on the plan you choose straight away and your first payment is on <%= local_date(kept) %>, when the trial would have ended.<% else %>If you subscribe now, the trial ends and billing starts straight away.<% end %></p>
   <% elsif business.billing_status == "comped" %>
-    <p class="text-ink" id="comp-status">Shadetree has given you <%= business.comp_plan.name %><%= business.comp_ends_at ? " until #{local_date(business.comp_ends_at)}" : "" %>.</p>
+    <p class="text-ink" id="comp-status">Shadetree has given you <%= business.comp_plan.name %><% if business.comp_ends_at %> until <%= local_date(business.comp_ends_at) %><% end %>.</p>
   <% end %>
   <% if grace_ends %>
     <div class="banner banner-danger mb-3" id="past-due">

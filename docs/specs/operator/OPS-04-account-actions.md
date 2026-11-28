@@ -26,7 +26,7 @@ feature flags — each one audited and hard to do by accident.
 - [x] Suspend/reactivate a business with a required reason: suspended businesses' members can't
       use the app (they see a contact-support page); client links show a neutral unavailable
       page; in-flight provider payments still settle and are recorded.
-- [x] Comp a plan (with optional end date), extend a trial, and apply a provider coupon, all
+- [x] Comp a plan (with optional end date), extend or end a trial, and apply a provider coupon, all
       reflected in BIL-01 entitlements; the coupon is applied in the billing provider. *(BIL-05: the business page's
       "Plan, trial and coupon" card. A comp or trial changes the plan, not what Stripe bills,
       and a comp is refused while there's a live subscription; a coupon is applied to the
@@ -65,6 +65,10 @@ feature flags — each one audited and hard to do by accident.
   a comp stays refused while a subscription is live. Coupons are the way to change what Stripe
   bills. An extended trial still delays the first charge if the Owner subscribes during it
   (BIL-05) (owner, 2026-11-22).
+- Operators can end a running trial now ("End trial" on the same card, with a reason and a recent
+  code): the business moves back to Free, as when the date passes, and its Owners get the usual
+  "moved to Free" email; refused while a Stripe subscription is live, since its own trial ends
+  in Stripe (owner, 2026-11-28).
 
 ## Implementation notes
 
