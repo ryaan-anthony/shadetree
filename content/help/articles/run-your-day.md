@@ -3,7 +3,7 @@ title: Run your day from your phone with My day
 summary: "For the crew: today's visits and follow-ups, getting there, telling the client you're on your way, and logging the work with photos."
 category: schedule-jobs
 topics: []
-reviewed: 2026-11-27
+reviewed: 2026-11-28
 screenshots:
   - name: my-day
     path: /admin/my-day
