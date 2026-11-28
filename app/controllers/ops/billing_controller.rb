@@ -48,19 +48,30 @@ class Ops::BillingController < Ops::BaseController
     redirect_back_to_business(notice: note)
   end
 
-  # End a running trial now: the business moves back to Free (unless a subscription or comp keeps
-  # it on a paid plan), the same as when the date passes, and its Owners get the usual "moved to
-  # Free" email. Refused if there's no trial running.
+  # End a running trial now: the business moves back to Free (unless a comp keeps it on a paid
+  # plan), the same as when the date passes, and its Owners get the usual "moved to Free" email.
+  # Refused if there's no trial running, or a live subscription (it keeps its own trial and
+  # billing date in Stripe; ending that would charge the card, so it's done in Stripe).
   def end_trial
-    previous = @business.trial_ends_at
-    return redirect_back_to_business(alert: "There's no trial running to end.") unless @business.trial_plan && previous&.future?
+    return redirect_back_to_business(alert: SUBSCRIPTION_TRIAL) if live_subscription?
 
-    plan = @business.trial_plan
-    now = Time.current
-    resolve { @business.update!(trial_ends_at: now) }
-    history("trial_ended_early", "plan" => plan.name, "was_due" => previous.to_date.iso8601)
-    audit!("business.trial_ended", business: @business, reason:, from: previous.to_date.iso8601, to: now.to_date.iso8601)
-    note = @business.reload.plan.free? ? "The #{plan.name} trial is ended; #{@business.name} is back on #{@business.plan.name}." : "The trial is ended; a subscription or comp keeps #{@business.name} on #{@business.plan.name}."
+    ended = nil
+    @business.with_lock do # checked under the lock, so a double click or the hourly job can't end it twice
+      plan, previous = @business.trial_plan, @business.trial_ends_at
+      next unless plan && previous&.future?
+
+      now = Time.current
+      @business.update!(trial_ends_at: now)
+      Billing::PlanResolver.apply!(@business)
+      ended = [ plan, previous, now ]
+    end
+    return redirect_back_to_business(alert: "There's no trial running to end.") unless ended
+
+    plan, previous, now = ended
+    zone = @business.time_zone
+    history("trial_ended_early", "plan" => plan.name, "was_due" => previous.in_time_zone(zone).to_date.iso8601)
+    audit!("business.trial_ended", business: @business, reason:, from: previous.in_time_zone(zone).to_date.iso8601, to: now.in_time_zone(zone).to_date.iso8601)
+    note = @business.plan.free? ? "The #{plan.name} trial is ended; #{@business.name} is back on #{@business.plan.name}." : "The trial is ended; a comp keeps #{@business.name} on #{@business.plan.name}."
     redirect_back_to_business(notice: note)
   end
 
@@ -82,6 +93,9 @@ class Ops::BillingController < Ops::BaseController
 
   LIVE_SUBSCRIPTION = "This business has a live Stripe subscription, so its plan follows what Stripe charges. " \
                       "To give it away, apply a 100%-off coupon below, or cancel the subscription in Stripe first."
+
+  SUBSCRIPTION_TRIAL = "This business has a live Stripe subscription, so a trial that's still running is Stripe's: " \
+                       "the card is charged when it ends. End it, or cancel the subscription, in Stripe."
 
   private
 

@@ -67,7 +67,8 @@ feature flags — each one audited and hard to do by accident.
   (BIL-05) (owner, 2026-11-22).
 - Operators can end a running trial now ("End trial" on the same card, with a reason and a recent
   code): the business moves back to Free, as when the date passes, and its Owners get the usual
-  "moved to Free" email (owner, 2026-11-28).
+  "moved to Free" email; refused while a Stripe subscription is live, since its own trial ends
+  in Stripe (owner, 2026-11-28).
 
 ## Implementation notes
 

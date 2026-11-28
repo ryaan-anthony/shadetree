@@ -103,8 +103,22 @@ class Ops::BillingActionsTest < ActionDispatch::IntegrationTest
     @business.update_columns(trial_plan_id: plans(:starter).id, trial_ends_at: 10.days.from_now, comp_plan_id: plans(:business).id)
     Billing::PlanResolver.apply!(@business)
     post ops_business_billing_end_trial_path(@business), params: { reason: "Trial no longer needed" }
-    assert_match "keeps", flash[:notice]
+    assert_match "a comp keeps", flash[:notice]
     assert_equal [ plans(:business), "comped" ], [ @business.reload.plan, @business.billing_status ]
+  end
+
+  test "ending a trial is refused while there's a live subscription, and the button isn't offered" do
+    @business.update_columns(trial_plan_id: plans(:starter).id, trial_ends_at: 10.days.from_now)
+    customer = with_stripe_customer(@business)
+    id = stripe.add_subscription(customer:, plan: plans(:starter))
+    Billing::SubscriptionSync.refresh!(@business, id)
+    get ops_business_path(@business)
+    assert_select "form#end-trial", 0
+
+    post ops_business_billing_end_trial_path(@business), params: { reason: "Stop it" }
+    assert_match "live Stripe subscription", flash[:alert]
+    assert @business.reload.trial_ends_at.future?
+    assert_not AuditEntry.exists?(action: "business.trial_ended")
   end
 
   test "a coupon is applied to the Stripe subscription; without one it's refused, and Stripe's refusal is shown" do
