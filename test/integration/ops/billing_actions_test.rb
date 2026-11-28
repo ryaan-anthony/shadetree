@@ -22,6 +22,8 @@ class Ops::BillingActionsTest < ActionDispatch::IntegrationTest
     assert_equal [ "comped", "Business, until #{ends_on.iso8601}, Beta user" ], history.find { _1.first == "comped" }
     get ops_business_path(@business)
     assert_select "#comp", /Business, until/
+    assert_select "#comp time[datetime]", 1
+    assert_no_match "&lt;time", response.body, "the end date is a date, not escaped markup"
 
     post ops_business_billing_comp_path(@business), params: { plan: "", reason: "Beta over" }
     assert_equal "Choose a paid plan to comp.", flash[:alert]
@@ -75,6 +77,9 @@ class Ops::BillingActionsTest < ActionDispatch::IntegrationTest
 
     get ops_business_path(@business)
     assert_select "form#end-trial input[type=submit][value='End trial']"
+    assert_select "#trial", /Starter, ends/
+    assert_select "#trial time[datetime]", 1
+    assert_no_match "&lt;time", response.body, "the end date is a date, not escaped markup"
 
     post ops_business_billing_end_trial_path(@business), params: { reason: "" }
     assert_equal "Give a reason.", flash[:alert]

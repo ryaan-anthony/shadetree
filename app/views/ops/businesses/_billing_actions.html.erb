@@ -2,8 +2,8 @@
 <%= card title: "Plan, trial and coupon", subtitle: "Each needs a reason and a recent code, and is audited.", id: "billing-actions" do %>
   <dl class="mb-4 space-y-1 text-sm">
     <div class="flex justify-between gap-3"><dt class="text-subtle">Billing status</dt><dd class="text-ink" id="billing-status"><%= business.billing_status.humanize %></dd></div>
-    <div class="flex justify-between gap-3"><dt class="text-subtle">Comp</dt><dd class="text-right text-ink" id="comp"><%= business.comp_plan ? "#{business.comp_plan.name}, #{business.comp_ends_at ? "until #{local_date(business.comp_ends_at)}" : "no end date"}" : "None" %></dd></div>
-    <div class="flex justify-between gap-3"><dt class="text-subtle">Trial</dt><dd class="text-right text-ink" id="trial"><%= business.trial_ends_at ? "#{business.trial_plan&.name}, #{business.trial_ends_at.future? ? "ends" : "ended"} #{local_date(business.trial_ends_at)}" : "None" %></dd></div>
+    <div class="flex justify-between gap-3"><dt class="text-subtle">Comp</dt><dd class="text-right text-ink" id="comp"><% if business.comp_plan %><%= business.comp_plan.name %>, <% if business.comp_ends_at %>until <%= local_date(business.comp_ends_at) %><% else %>no end date<% end %><% else %>None<% end %></dd></div>
+    <div class="flex justify-between gap-3"><dt class="text-subtle">Trial</dt><dd class="text-right text-ink" id="trial"><% if business.trial_ends_at %><%= business.trial_plan&.name %>, <%= business.trial_ends_at.future? ? "ends" : "ended" %> <%= local_date(business.trial_ends_at) %><% else %>None<% end %></dd></div>
   </dl>
   <% if subscription&.live? %>
     <p class="border-t border-line pt-4 text-sm2 text-subtle" id="comp-refused">No comp while there's a live Stripe subscription: the plan follows what Stripe charges. To give the plan away, apply a 100%-off coupon below, or cancel the subscription in Stripe.</p>
