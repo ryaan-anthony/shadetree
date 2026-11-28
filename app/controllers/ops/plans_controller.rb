@@ -7,7 +7,10 @@ class Ops::PlansController < Ops::BaseController
 
   def index
     @plans = Plan.order(:position, :id)
-    @counts = Business.group(:plan_id).count
+    # A business on a trial has the trial's plan but isn't paying for it, so trials are counted
+    # on their own and left out of the plan's count.
+    @counts = Business.where.not(billing_status: "trialing").group(:plan_id).count
+    @trial_counts = Business.where(billing_status: "trialing").group(:plan_id).count
   end
 
   def edit; end

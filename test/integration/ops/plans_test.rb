@@ -4,6 +4,22 @@ require "test_helper"
 class Ops::PlansTest < ActionDispatch::IntegrationTest
   setup { @business = businesses(:one) }
 
+  test "businesses on a trial are listed apart from the plan's paying businesses" do
+    pro = plans(:starter)
+    Business.update_all(plan_id: plans(:free).id, billing_status: "free")
+    paying = Business.limit(1).first
+    paying.update_columns(plan_id: pro.id, billing_status: "active")
+    Business.where.not(id: paying.id).update_all(plan_id: pro.id, billing_status: "trialing")
+    trials = Business.where(billing_status: "trialing").count
+
+    sign_in_operator
+    get ops_plans_path
+    assert_select "#plan-starter", /· 1 business/
+    assert_select "#trial-plan-starter", /Trial\s*· Starter/
+    assert_select "#trial-plan-starter", /#{trials} business/
+    assert_select "#trial-plan-free", false
+  end
+
   test "operators edit a plan's name, prices, limits and features" do
     plan = plans(:starter)
     sign_in users(:two)
